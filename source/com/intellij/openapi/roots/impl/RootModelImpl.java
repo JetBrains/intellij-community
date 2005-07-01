@@ -117,16 +117,16 @@ class RootModelImpl implements ModifiableRootModel {
 
     myVirtualFilePointerListener = null;
     final List contentChildren = element.getChildren(ContentEntryImpl.ELEMENT_NAME);
-    for (int i = 0; i < contentChildren.size(); i++) {
-      Element child = (Element)contentChildren.get(i);
+    for (Object aContentChildren : contentChildren) {
+      Element child = (Element)aContentChildren;
       ContentEntryImpl contentEntry = new ContentEntryImpl(child, this);
       myContent.add(contentEntry);
     }
 
     final List orderElements = element.getChildren(OrderEntryFactory.ORDER_ENTRY_ELEMENT_NAME);
     boolean moduleSourceAdded = false;
-    for (int i = 0; i < orderElements.size(); i++) {
-      Element child = (Element)orderElements.get(i);
+    for (Object orderElement : orderElements) {
+      Element child = (Element)orderElement;
       final OrderEntry orderEntry = OrderEntryFactory.createOrderEntryByElement(child, this, myProjectRootManager, myFilePointerManager);
       if (orderEntry instanceof ModuleSourceOrderEntry) {
         if (moduleSourceAdded) continue;
@@ -197,16 +197,14 @@ class RootModelImpl implements ModifiableRootModel {
     myExcludeExploded = rootModel.myExcludeExploded;
 
     final TreeSet<ContentEntry> thatContent = rootModel.myContent;
-    for (Iterator<ContentEntry> iterator = thatContent.iterator(); iterator.hasNext();) {
-      ContentEntry contentEntry = iterator.next();
+    for (ContentEntry contentEntry : thatContent) {
       if (contentEntry instanceof ClonableContentEntry) {
         myContent.add(((ClonableContentEntry)contentEntry).cloneEntry(this));
       }
     }
 
     final List<OrderEntry> order = rootModel.myOrder;
-    for (int i = 0; i < order.size(); i++) {
-      OrderEntry orderEntry = order.get(i);
+    for (OrderEntry orderEntry : order) {
       if (orderEntry instanceof ClonableOrderEntry) {
         myOrder.add(((ClonableOrderEntry)orderEntry).cloneEntry(this, myProjectRootManager, myFilePointerManager));
       }
@@ -219,8 +217,7 @@ class RootModelImpl implements ModifiableRootModel {
   public VirtualFile[] getOrderedRoots(OrderRootType type) {
     final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
 
-    for (Iterator<OrderEntry> iterator = myOrder.iterator(); iterator.hasNext();) {
-      OrderEntry orderEntry = iterator.next();
+    for (OrderEntry orderEntry : myOrder) {
       result.addAll(Arrays.asList(orderEntry.getFiles(type)));
     }
     return CollectionUtil.toArray(result, new VirtualFile[result.size()]);
@@ -229,8 +226,7 @@ class RootModelImpl implements ModifiableRootModel {
   public String[] getOrderedRootUrls(OrderRootType type) {
     final ArrayList<String> result = new ArrayList<String>();
 
-    for (Iterator<OrderEntry> iterator = myOrder.iterator(); iterator.hasNext();) {
-      OrderEntry orderEntry = iterator.next();
+    for (OrderEntry orderEntry : myOrder) {
       result.addAll(Arrays.asList(orderEntry.getUrls(type)));
     }
     return CollectionUtil.toArray(result, new String[result.size()]);
@@ -239,8 +235,7 @@ class RootModelImpl implements ModifiableRootModel {
   public VirtualFile[] getContentRoots() {
     final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
 
-    for (Iterator<ContentEntry> iterator = myContent.iterator(); iterator.hasNext();) {
-      ContentEntry contentEntry = iterator.next();
+    for (ContentEntry contentEntry : myContent) {
       final VirtualFile file = contentEntry.getFile();
       if (file != null) {
         result.add(file);
@@ -252,8 +247,7 @@ class RootModelImpl implements ModifiableRootModel {
   public String[] getContentRootUrls() {
     final ArrayList<String> result = new ArrayList<String>();
 
-    for (Iterator<ContentEntry> iterator = myContent.iterator(); iterator.hasNext();) {
-      ContentEntry contentEntry = iterator.next();
+    for (ContentEntry contentEntry : myContent) {
       result.add(contentEntry.getUrl());
     }
     return CollectionUtil.toArray(result, new String[result.size()]);
@@ -261,11 +255,9 @@ class RootModelImpl implements ModifiableRootModel {
 
   public String[] getExcludeRootUrls() {
     final ArrayList<String> result = new ArrayList<String>();
-    for (Iterator<ContentEntry> iterator = myContent.iterator(); iterator.hasNext();) {
-      ContentEntry contentEntry = iterator.next();
+    for (ContentEntry contentEntry : myContent) {
       final ExcludeFolder[] excludeFolders = contentEntry.getExcludeFolders();
-      for (int i = 0; i < excludeFolders.length; i++) {
-        ExcludeFolder excludeFolder = excludeFolders[i];
+      for (ExcludeFolder excludeFolder : excludeFolders) {
         result.add(excludeFolder.getUrl());
       }
     }
@@ -274,11 +266,9 @@ class RootModelImpl implements ModifiableRootModel {
 
   public VirtualFile[] getExcludeRoots() {
     final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
-    for (Iterator<ContentEntry> iterator = myContent.iterator(); iterator.hasNext();) {
-      ContentEntry contentEntry = iterator.next();
+    for (ContentEntry contentEntry : myContent) {
       final ExcludeFolder[] excludeFolders = contentEntry.getExcludeFolders();
-      for (int i = 0; i < excludeFolders.length; i++) {
-        ExcludeFolder excludeFolder = excludeFolders[i];
+      for (ExcludeFolder excludeFolder : excludeFolders) {
         final VirtualFile file = excludeFolder.getFile();
         if (file != null) {
           result.add(file);
@@ -291,11 +281,9 @@ class RootModelImpl implements ModifiableRootModel {
 
   public String[] getSourceRootUrls() {
     final ArrayList<String> result = new ArrayList<String>();
-    for (Iterator<ContentEntry> iterator = myContent.iterator(); iterator.hasNext();) {
-      ContentEntry contentEntry = iterator.next();
+    for (ContentEntry contentEntry : myContent) {
       final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
-      for (int i = 0; i < sourceFolders.length; i++) {
-        SourceFolder sourceFolder = sourceFolders[i];
+      for (SourceFolder sourceFolder : sourceFolders) {
         result.add(sourceFolder.getUrl());
       }
     }
@@ -304,11 +292,9 @@ class RootModelImpl implements ModifiableRootModel {
 
   public String[] getSourceRootUrls(boolean testFlagValue) {
     final ArrayList<String> result = new ArrayList<String>();
-    for (Iterator<ContentEntry> iterator = myContent.iterator(); iterator.hasNext();) {
-      ContentEntry contentEntry = iterator.next();
+    for (ContentEntry contentEntry : myContent) {
       final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
-      for (int i = 0; i < sourceFolders.length; i++) {
-        SourceFolder sourceFolder = sourceFolders[i];
+      for (SourceFolder sourceFolder : sourceFolders) {
         if (sourceFolder.isTestSource() == testFlagValue) {
           result.add(sourceFolder.getUrl());
         }
@@ -319,11 +305,9 @@ class RootModelImpl implements ModifiableRootModel {
 
   public VirtualFile[] getSourceRoots() {
     final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
-    for (Iterator<ContentEntry> iterator = myContent.iterator(); iterator.hasNext();) {
-      ContentEntry contentEntry = iterator.next();
+    for (ContentEntry contentEntry : myContent) {
       final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
-      for (int i = 0; i < sourceFolders.length; i++) {
-        SourceFolder sourceFolder = sourceFolders[i];
+      for (SourceFolder sourceFolder : sourceFolders) {
         final VirtualFile file = sourceFolder.getFile();
         if (file != null) {
           result.add(file);
@@ -392,8 +376,7 @@ class RootModelImpl implements ModifiableRootModel {
   }
 
   public LibraryOrderEntry findLibraryOrderEntry(Library library) {
-    for (Iterator<OrderEntry> iterator = myOrder.iterator(); iterator.hasNext();) {
-      OrderEntry orderEntry = iterator.next();
+    for (OrderEntry orderEntry : myOrder) {
       if (orderEntry instanceof LibraryOrderEntry && library.equals(((LibraryOrderEntry)orderEntry).getLibrary())) {
         return (LibraryOrderEntry)orderEntry;
       }
@@ -415,8 +398,7 @@ class RootModelImpl implements ModifiableRootModel {
     assertWritable();
     assertValidRearrangement(newEntries);
     myOrder.clear();
-    for (int i = 0; i < newEntries.length; i++) {
-      OrderEntry newEntry = newEntries[i];
+    for (OrderEntry newEntry : newEntries) {
       myOrder.add(newEntry);
     }
   }
@@ -424,8 +406,7 @@ class RootModelImpl implements ModifiableRootModel {
   private void assertValidRearrangement(OrderEntry[] newEntries) {
     LOG.assertTrue(newEntries.length == myOrder.size(), "Invalid rearranged order");
     Set<OrderEntry> set = new com.intellij.util.containers.HashSet<OrderEntry>();
-    for (int i = 0; i < newEntries.length; i++) {
-      OrderEntry newEntry = newEntries[i];
+    for (OrderEntry newEntry : newEntries) {
       LOG.assertTrue(myOrder.contains(newEntry), "Invalid rearranged order");
       LOG.assertTrue(!set.contains(newEntry), "Invalid rearranged order");
       set.add(newEntry);
@@ -451,8 +432,7 @@ class RootModelImpl implements ModifiableRootModel {
 
   public <R> R processOrder(RootPolicy<R> policy, R initialValue) {
     R result = initialValue;
-    for (Iterator<OrderEntry> iterator = myOrder.iterator(); iterator.hasNext();) {
-      OrderEntry orderEntry = iterator.next();
+    for (OrderEntry orderEntry : myOrder) {
       result = orderEntry.accept(policy, result);
     }
     return result;
@@ -501,8 +481,7 @@ class RootModelImpl implements ModifiableRootModel {
       element.addContent(pathElement);
     }
 
-    for (Iterator<ContentEntry> iterator = myContent.iterator(); iterator.hasNext();) {
-      ContentEntry contentEntry = iterator.next();
+    for (ContentEntry contentEntry : myContent) {
       if (contentEntry instanceof ContentEntryImpl) {
         final Element subElement = new Element(ContentEntryImpl.ELEMENT_NAME);
         ((ContentEntryImpl)contentEntry).writeExternal(subElement);
@@ -510,8 +489,7 @@ class RootModelImpl implements ModifiableRootModel {
       }
     }
 
-    for (int i = 0; i < myOrder.size(); i++) {
-      OrderEntry orderEntry = myOrder.get(i);
+    for (OrderEntry orderEntry : myOrder) {
       if (orderEntry instanceof WritableOrderEntry) {
         ((WritableOrderEntry)orderEntry).writeExternal(element);
       }
@@ -564,8 +542,7 @@ class RootModelImpl implements ModifiableRootModel {
   }
 
   public ProjectJdk getJdk() {
-    for (int i = 0; i < myOrder.size(); i++) {
-      OrderEntry orderEntry = myOrder.get(i);
+    for (OrderEntry orderEntry : myOrder) {
       if (orderEntry instanceof JdkOrderEntry) {
         return ((JdkOrderEntry)orderEntry).getJdk();
       }
@@ -574,8 +551,7 @@ class RootModelImpl implements ModifiableRootModel {
   }
 
   public boolean isJdkInherited() {
-    for (int i = 0; i < myOrder.size(); i++) {
-      OrderEntry orderEntry = myOrder.get(i);
+    for (OrderEntry orderEntry : myOrder) {
       if (orderEntry instanceof InheritedJdkOrderEntry) {
         return true;
       }
@@ -588,8 +564,7 @@ class RootModelImpl implements ModifiableRootModel {
   }
 
   public boolean isDependsOn(final Module module) {
-    for (int i = 0; i < myOrder.size(); i++) {
-      OrderEntry entry = myOrder.get(i);
+    for (OrderEntry entry : myOrder) {
       if (entry instanceof ModuleOrderEntry) {
         final Module module1 = ((ModuleOrderEntry)entry).getModule();
         if (module1 == module) {
@@ -805,8 +780,7 @@ class RootModelImpl implements ModifiableRootModel {
   }
 
   void addExportedFiles(OrderRootType type, List<VirtualFile> result, Set<Module> processed) {
-    for (Iterator<OrderEntry> iterator = myOrder.iterator(); iterator.hasNext();) {
-      final OrderEntry orderEntry = iterator.next();
+    for (final OrderEntry orderEntry : myOrder) {
       if (orderEntry instanceof ModuleSourceOrderEntryImpl) {
         ((ModuleSourceOrderEntryImpl)orderEntry).addExportedFiles(type, result);
       }
@@ -822,8 +796,7 @@ class RootModelImpl implements ModifiableRootModel {
   }
 
   void addExportedUrs(OrderRootType type, List<String> result, Set<Module> processed) {
-    for (Iterator<OrderEntry> iterator = myOrder.iterator(); iterator.hasNext();) {
-      final OrderEntry orderEntry = iterator.next();
+    for (final OrderEntry orderEntry : myOrder) {
       if (orderEntry instanceof ModuleSourceOrderEntry) {
         ((ModuleSourceOrderEntryImpl)orderEntry).addExportedUrls(type, result);
       }
@@ -878,8 +851,7 @@ class RootModelImpl implements ModifiableRootModel {
     }
 
     final OrderRootType[] allTypes = OrderRootType.ALL_TYPES;
-    for (int i = 0; i < allTypes.length; i++) {
-      OrderRootType type = allTypes[i];
+    for (OrderRootType type : allTypes) {
       final String[] orderedRootUrls1 = orderEntry1.getUrls(type);
       final String[] orderedRootUrls2 = orderEntry2.getUrls(type);
       if (!Arrays.equals(orderedRootUrls1, orderedRootUrls2)) {
@@ -912,13 +884,11 @@ class RootModelImpl implements ModifiableRootModel {
   void disposeModel() {
     final RootModelComponentBase[] rootModelComponentBases = myComponents.toArray(
       new RootModelComponentBase[myComponents.size()]);
-    for (int i = 0; i < rootModelComponentBases.length; i++) {
-      RootModelComponentBase rootModelComponentBase = rootModelComponentBases[i];
+    for (RootModelComponentBase rootModelComponentBase : rootModelComponentBases) {
       rootModelComponentBase.dispose();
     }
 
-    for (Iterator<VirtualFilePointer> iterator = myPointersToDispose.iterator(); iterator.hasNext();) {
-      VirtualFilePointer pointer = iterator.next();
+    for (VirtualFilePointer pointer : myPointersToDispose) {
       myFilePointerManager.kill(pointer);
     }
     myDisposed = true;
@@ -1016,8 +986,7 @@ class RootModelImpl implements ModifiableRootModel {
   public Module[] getModuleDependencies() {
     final List<Module> result = new ArrayList<Module>();
 
-    for (int i = 0; i < myOrder.size(); i++) {
-      OrderEntry entry = myOrder.get(i);
+    for (OrderEntry entry : myOrder) {
       if (entry instanceof ModuleOrderEntry) {
         final Module module1 = ((ModuleOrderEntry)entry).getModule();
         if (module1 != null) {
@@ -1058,8 +1027,7 @@ class RootModelImpl implements ModifiableRootModel {
   public void setJavadocUrls(String[] urls) {
     assertWritable();
     myJavadocPointerContainer.clear();
-    for (int i = 0; i < urls.length; i++) {
-      final String url = urls[i];
+    for (final String url : urls) {
       myJavadocPointerContainer.add(url);
     }
   }

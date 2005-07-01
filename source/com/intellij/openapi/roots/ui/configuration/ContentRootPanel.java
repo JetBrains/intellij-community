@@ -71,8 +71,7 @@ public class ContentRootPanel extends JPanel {
     final java.util.List<ContentFolder> testSources = new ArrayList<ContentFolder>();
     final java.util.List<ContentFolder> excluded = new ArrayList<ContentFolder>();
     final SourceFolder[] sourceFolders = myContentEntry.getSourceFolders();
-    for (int idx = 0; idx < sourceFolders.length; idx++) {
-      SourceFolder folder = sourceFolders[idx];
+    for (SourceFolder folder : sourceFolders) {
       if (folder.isSynthetic()) {
         continue;
       }
@@ -89,8 +88,7 @@ public class ContentRootPanel extends JPanel {
     }
 
     final ExcludeFolder[] excludeFolders = myContentEntry.getExcludeFolders();
-    for (int idx = 0; idx < excludeFolders.length; idx++) {
-      final ExcludeFolder excludeFolder = excludeFolders[idx];
+    for (final ExcludeFolder excludeFolder : excludeFolders) {
       if (!excludeFolder.isSynthetic()) {
         excluded.add(excludeFolder);
       }
@@ -254,8 +252,8 @@ public class ContentRootPanel extends JPanel {
       return false;
     }
     final ExcludeFolder[] excludeFolders = myContentEntry.getExcludeFolders();
-    for (int idx = 0; idx < excludeFolders.length; idx++) {
-      final VirtualFile excludedDir = excludeFolders[idx].getFile();
+    for (ExcludeFolder excludeFolder : excludeFolders) {
+      final VirtualFile excludedDir = excludeFolder.getFile();
       if (excludedDir == null) {
         continue;
       }
@@ -271,8 +269,7 @@ public class ContentRootPanel extends JPanel {
       return null;
     }
     final ExcludeFolder[] excludeFolders = myContentEntry.getExcludeFolders();
-    for (int idx = 0; idx < excludeFolders.length; idx++) {
-      final ExcludeFolder excludeFolder = excludeFolders[idx];
+    for (final ExcludeFolder excludeFolder : excludeFolders) {
       final VirtualFile f = excludeFolder.getFile();
       if (f == null) {
         continue;
@@ -304,8 +301,7 @@ public class ContentRootPanel extends JPanel {
       myHeader.setBackground(SELECTED_HEADER_COLOR);
       setBackground(SELECTED_CONTENT_COLOR);
       myBottom.setBackground(SELECTED_HEADER_COLOR);
-      for (Iterator<JComponent> it = myComponentToForegroundMap.keySet().iterator(); it.hasNext();) {
-        final JComponent component = it.next();
+      for (final JComponent component : myComponentToForegroundMap.keySet()) {
         component.setForeground(myComponentToForegroundMap.get(component));
       }
     }
@@ -313,8 +309,7 @@ public class ContentRootPanel extends JPanel {
       myHeader.setBackground(HEADER_COLOR);
       setBackground(CONTENT_COLOR);
       myBottom.setBackground(HEADER_COLOR);
-      for (Iterator<JComponent> it = myComponentToForegroundMap.keySet().iterator(); it.hasNext();) {
-        final JComponent component = it.next();
+      for (final JComponent component : myComponentToForegroundMap.keySet()) {
         component.setForeground(UNSELECTED_TEXT_COLOR);
       }
     }

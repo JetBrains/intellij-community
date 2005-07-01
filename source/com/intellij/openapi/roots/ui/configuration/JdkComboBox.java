@@ -112,8 +112,8 @@ class JdkComboBox extends JComboBox{
     public JdkComboBoxModel() {
       addElement(new NoneJdkComboBoxItem());
       final ProjectJdk[] jdks = ProjectJdkTable.getInstance().getAllJdks();
-      for (int i = 0; i < jdks.length; i++) {
-        addElement(new JdkComboBoxItem(jdks[i]));
+      for (ProjectJdk jdk : jdks) {
+        addElement(new JdkComboBoxItem(jdk));
       }
     }
 

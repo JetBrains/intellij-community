@@ -50,8 +50,7 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
   private String getPrefix(final ContentEntry entry, final VirtualFile file) {
     final SourceFolder[] sourceFolders = entry.getSourceFolders();
     final String url = file.getUrl();
-    for (int idx = 0; idx < sourceFolders.length; idx++) {
-      final SourceFolder sourceFolder = sourceFolders[idx];
+    for (final SourceFolder sourceFolder : sourceFolders) {
       if (url.equals(sourceFolder.getUrl())) {
         return sourceFolder.getPackagePrefix();
       }
@@ -61,8 +60,7 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
 
   private Icon updateIcon(final ContentEntry entry, final VirtualFile file, Icon originalIcon, final boolean expanded) {
     final ExcludeFolder[] excludeFolders = entry.getExcludeFolders();
-    for (int idx = 0; idx < excludeFolders.length; idx++) {
-      ExcludeFolder excludeFolder = excludeFolders[idx];
+    for (ExcludeFolder excludeFolder : excludeFolders) {
       final VirtualFile f = excludeFolder.getFile();
       if (f == null) {
         continue;
@@ -74,8 +72,7 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
     }
 
     final SourceFolder[] sourceFolders = entry.getSourceFolders();
-    for (int idx = 0; idx < sourceFolders.length; idx++) {
-      SourceFolder sourceFolder = sourceFolders[idx];
+    for (SourceFolder sourceFolder : sourceFolders) {
       final VirtualFile f = sourceFolder.getFile();
       if (f == null) {
         continue;
@@ -86,8 +83,7 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
     }
 
     VirtualFile currentRoot = null;
-    for (int idx = 0; idx < sourceFolders.length; idx++) {
-      SourceFolder sourceFolder = sourceFolders[idx];
+    for (SourceFolder sourceFolder : sourceFolders) {
       final VirtualFile f = sourceFolder.getFile();
       if (f == null) {
         continue;

@@ -382,16 +382,14 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
   public void projectOpened() {
     final ArrayList<RootModelComponentBase> components = myRootModel.myComponents;
-    for (int i = 0; i < components.size(); i++) {
-      RootModelComponentBase rootModelComponentBase = components.get(i);
+    for (RootModelComponentBase rootModelComponentBase : components) {
       rootModelComponentBase.projectOpened();
     }
   }
 
   public void projectClosed() {
     final ArrayList<RootModelComponentBase> components = myRootModel.myComponents;
-    for (int i = 0; i < components.size(); i++) {
-      RootModelComponentBase rootModelComponentBase = components.get(i);
+    for (RootModelComponentBase rootModelComponentBase : components) {
       rootModelComponentBase.projectClosed();
     }
   }
@@ -403,8 +401,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     myRootModel = new RootModelImpl(myRootModel, this, false, listener, myFilePointerManager, myProjectRootManager);
     oldModel.disposeModel();
     final ArrayList<RootModelComponentBase> components = myRootModel.myComponents;
-    for (int i = 0; i < components.size(); i++) {
-      RootModelComponentBase rootModelComponentBase = components.get(i);
+    for (RootModelComponentBase rootModelComponentBase : components) {
       rootModelComponentBase.moduleAdded();
     }
     isModuleAdded = true;
@@ -420,8 +417,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
   private static DFSTBuilder<RootModelImpl> createDFSTBuilder(List<RootModelImpl> rootModels, final ModifiableModuleModel moduleModel) {
     final Map<String, RootModelImpl> nameToModel = new HashMap<String, RootModelImpl>();
-    for (int i = 0; i < rootModels.size(); i++) {
-      final RootModelImpl rootModel = rootModels.get(i);
+    for (final RootModelImpl rootModel : rootModels) {
       final String name = rootModel.getModule().getName();
       LOG.assertTrue(!nameToModel.containsKey(name));
       nameToModel.put(name, rootModel);

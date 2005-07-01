@@ -131,8 +131,7 @@ public class JavadocEditor extends ModuleElementsEditor {
   protected DefaultTableModel createModel() {
     final MyTableModel tableModel = new MyTableModel();
     final String[] javadocUrls = myModel.getJavadocUrls();
-    for (int idx = 0; idx < javadocUrls.length; idx++) {
-      String javadocUrl = javadocUrls[idx];
+    for (String javadocUrl : javadocUrls) {
       tableModel.addTableItem(new TableItem(javadocUrl));
     }
     return tableModel;
@@ -220,8 +219,7 @@ public class JavadocEditor extends ModuleElementsEditor {
       VirtualFile[] files = getFiles();
       final MyTableModel tableModel = (MyTableModel)myTable.getModel();
       boolean changes = false;
-      for (int idx = 0; idx < files.length; idx++) {
-        final VirtualFile file = files[idx];
+      for (final VirtualFile file : files) {
         if (file != null) {
           tableModel.addTableItem(new TableItem(file));
           changes = true;

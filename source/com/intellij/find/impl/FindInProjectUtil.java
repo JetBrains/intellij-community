@@ -214,9 +214,10 @@ public class FindInProjectUtil {
     });
   }
   private static Collection<PsiFile> getFilesToSearchInReadAction(final FindModel findModel, final Project project, final PsiDirectory psiDirectory) {
-    final FileIndex fileIndex = findModel.getModuleName() == null ?
+    Module module = findModel.getModuleName() == null ? null : ModuleManager.getInstance(project).findModuleByName(findModel.getModuleName());
+    final FileIndex fileIndex = module == null ?
                                 (FileIndex)ProjectRootManager.getInstance(project).getFileIndex() :
-                                ModuleRootManager.getInstance(ModuleManager.getInstance(project).findModuleByName(findModel.getModuleName())).getFileIndex();
+                                ModuleRootManager.getInstance(module).getFileIndex();
 
     final Pattern fileMaskRegExp = createFileMaskRegExp(findModel);
     if (psiDirectory == null || (findModel.isWithSubdirectories() && fileIndex.isInContent(psiDirectory.getVirtualFile()))) {
@@ -225,8 +226,11 @@ public class FindInProjectUtil {
         CacheManager cacheManager = ((PsiManagerImpl)PsiManager.getInstance(project)).getCacheManager();
 
         GlobalSearchScope scope = psiDirectory == null ?
+                                  module == null ?
                                   GlobalSearchScope.projectScope(project) :
+                                  moduleContentScope(module) :
                                   GlobalSearchScope.directoryScope(psiDirectory, true);
+
         List<String> words = StringUtil.getWordsIn(findModel.getStringToFind());
         // if no words specified in search box, fallback to brute force search
         if (words.size() != 0) {
@@ -268,8 +272,7 @@ public class FindInProjectUtil {
         public Collection<PsiFile> getFiles() {
           final ArrayList<PsiFile> psiFiles = new ArrayList<PsiFile>(myVirtualFiles.size());
           final PsiManager manager = PsiManager.getInstance(project);
-          for (int i = 0; i < myVirtualFiles.size(); i++) {
-            VirtualFile virtualFile = myVirtualFiles.get(i);
+          for (VirtualFile virtualFile : myVirtualFiles) {
             final PsiFile psiFile = manager.findFile(virtualFile);
             if (psiFile != null) {
               psiFiles.add(psiFile);
@@ -297,6 +300,23 @@ public class FindInProjectUtil {
                              createFileMaskRegExp(findModel));
       return fileList;
     }
+  }
+
+  private static GlobalSearchScope moduleContentScope(final Module module) {
+    VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
+    GlobalSearchScope result = null;
+    PsiManager psiManager = PsiManager.getInstance(module.getProject());
+    for (VirtualFile root : contentRoots) {
+      PsiDirectory directory = psiManager.findDirectory(root);
+      GlobalSearchScope moduleContent = GlobalSearchScope.directoryScope(directory, true);
+      if (result == null) {
+        result = moduleContent;
+      }
+      else {
+        result = result.uniteWith(moduleContent);
+      }
+    }
+    return result;
   }
 
   private static void filterMaskedFiles(final Set<PsiFile> resultFiles, final Pattern fileMaskRegExp) {

@@ -99,17 +99,14 @@ public abstract class LibraryTableBase implements JDOMExternalizable, LibraryTab
     List<LibraryImpl> removedLibraries = new ArrayList<LibraryImpl>(myModel.myLibraries);
     removedLibraries.removeAll(model.myLibraries);
 
-    for (Iterator<LibraryImpl> iterator = removedLibraries.iterator(); iterator.hasNext();) {
-      LibraryImpl library = iterator.next();
+    for (LibraryImpl library : removedLibraries) {
       fireBeforeLibraryRemoved(library);
     }
     myModel = model;
-    for (Iterator<LibraryImpl> iterator = removedLibraries.iterator(); iterator.hasNext();) {
-      LibraryImpl library = iterator.next();
+    for (LibraryImpl library : removedLibraries) {
       fireAfterLibraryRemoved(library);
     }
-    for (Iterator<LibraryImpl> iterator = addedLibraries.iterator(); iterator.hasNext();) {
-      LibraryImpl library = iterator.next();
+    for (LibraryImpl library : addedLibraries) {
       fireLibraryAdded(library);
     }
   }
@@ -141,8 +138,8 @@ public abstract class LibraryTableBase implements JDOMExternalizable, LibraryTab
     }
 
     public Library getLibraryByName(String name) {
-      for (int i = 0; i < myLibraries.size(); i++) {
-        LibraryImpl library = (LibraryImpl) myLibraries.get(i);
+      for (LibraryImpl myLibrary : myLibraries) {
+        LibraryImpl library = (LibraryImpl)myLibrary;
         if (Comparing.equal(name, library.getName())) return library;
       }
       return null;
@@ -178,19 +175,18 @@ public abstract class LibraryTableBase implements JDOMExternalizable, LibraryTab
 
     public void readExternal(Element element) throws InvalidDataException {
       HashMap<String, LibraryImpl> libraries = new HashMap<String, LibraryImpl>();
-      for (Iterator<LibraryImpl> iterator = myLibraries.iterator(); iterator.hasNext();) {
-        LibraryImpl library = iterator.next();
+      for (LibraryImpl library : myLibraries) {
         libraries.put(library.getName(), library);
       }
 
       final List libraryElements = element.getChildren(LibraryImpl.ELEMENT);
-      for (int i = 0; i < libraryElements.size(); i++) {
-        Element libraryElement = (Element) libraryElements.get(i);
+      for (Object libraryElement1 : libraryElements) {
+        Element libraryElement = (Element)libraryElement1;
         final LibraryImpl library = new LibraryImpl(LibraryTableBase.this);
         library.readExternal(libraryElement);
         if (library.getName() != null) {
           LibraryImpl oldLibrary = libraries.get(library.getName());
-          if(oldLibrary != null) {
+          if (oldLibrary != null) {
             myLibraries.remove(oldLibrary);
           }
           myLibraries.add(library);
@@ -200,8 +196,8 @@ public abstract class LibraryTableBase implements JDOMExternalizable, LibraryTab
     }
 
     public void writeExternal(Element element) throws WriteExternalException {
-      for (int i = 0; i < myLibraries.size(); i++) {
-        LibraryImpl library = (LibraryImpl) myLibraries.get(i);
+      for (LibraryImpl myLibrary : myLibraries) {
+        LibraryImpl library = (LibraryImpl)myLibrary;
         if (library.getName() != null) {
           library.writeExternal(element);
         }

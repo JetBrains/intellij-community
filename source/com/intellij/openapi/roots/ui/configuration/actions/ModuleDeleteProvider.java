@@ -45,8 +45,7 @@ public class ModuleDeleteProvider  implements DeleteProvider  {
     ModuleManager moduleManager = ModuleManager.getInstance(module.getProject());
     Module[] modules = moduleManager.getModules();
     List<ModifiableRootModel> otherModuleRootModels = new ArrayList<ModifiableRootModel>();
-    for (int i = 0; i < modules.length; i++) {
-      final Module otherModule = modules[i];
+    for (final Module otherModule : modules) {
       if (otherModule == module) continue;
       otherModuleRootModels.add(ModuleRootManager.getInstance(otherModule).getModifiableModel());
     }
@@ -61,11 +60,9 @@ public class ModuleDeleteProvider  implements DeleteProvider  {
                                      List<ModifiableRootModel> otherModuleRootModels,
                                      final ModifiableModuleModel moduleModel) {
     // remove all dependencies on the module that is about to be removed
-    for (int i = 0; i < otherModuleRootModels.size(); i++) {
-      final ModifiableRootModel modifiableRootModel = otherModuleRootModels.get(i);
+    for (final ModifiableRootModel modifiableRootModel : otherModuleRootModels) {
       final OrderEntry[] orderEntries = modifiableRootModel.getOrderEntries();
-      for (int idx = 0; idx < orderEntries.length; idx++) {
-        final OrderEntry orderEntry = orderEntries[idx];
+      for (final OrderEntry orderEntry : orderEntries) {
         if (orderEntry.isValid() && orderEntry instanceof ModuleOrderEntry) {
           final Module orderEntryModule = ((ModuleOrderEntry)orderEntry).getModule();
           if (orderEntryModule != null && orderEntryModule.equals(moduleToRemove)) {

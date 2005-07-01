@@ -61,8 +61,7 @@ public class LibraryImpl implements Library.ModifiableModel, LibraryEx {
     myRoots = initRoots();
     mySource = that;
     myLibraryTable = that.myLibraryTable;
-    for (int i = 0; i < SERIALIZABLE_ROOT_TYPES.length; i++) {
-      OrderRootType rootType = SERIALIZABLE_ROOT_TYPES[i];
+    for (OrderRootType rootType : SERIALIZABLE_ROOT_TYPES) {
       final VirtualFilePointerContainer thisContainer = myRoots.get(rootType);
       final VirtualFilePointerContainer thatContainer = that.myRoots.get(rootType);
       thisContainer.addAll(thatContainer);
@@ -133,8 +132,7 @@ public class LibraryImpl implements Library.ModifiableModel, LibraryEx {
   public void readExternal(Element element) throws InvalidDataException {
     final String nameAttribute = element.getAttributeValue(LIBRARY_NAME_ATTR);
     myName = nameAttribute;
-    for (int rootIndex = 0; rootIndex < SERIALIZABLE_ROOT_TYPES.length; rootIndex++) {
-      OrderRootType rootType = SERIALIZABLE_ROOT_TYPES[rootIndex];
+    for (OrderRootType rootType : SERIALIZABLE_ROOT_TYPES) {
       VirtualFilePointerContainer roots = myRoots.get(rootType);
       final Element rootChild = element.getChild(rootType.getName());
       if (rootChild == null) continue;
@@ -149,8 +147,7 @@ public class LibraryImpl implements Library.ModifiableModel, LibraryEx {
       element.setAttribute(LIBRARY_NAME_ATTR, myName);
     }
 
-    for (int rootIndex = 0; rootIndex < SERIALIZABLE_ROOT_TYPES.length; rootIndex++) {
-      OrderRootType rootType = SERIALIZABLE_ROOT_TYPES[rootIndex];
+    for (OrderRootType rootType : SERIALIZABLE_ROOT_TYPES) {
       final Element rootTypeElement = new Element(rootType.getName());
       final VirtualFilePointerContainer roots = myRoots.get(rootType);
       roots.writeExternal(rootTypeElement, ROOT_PATH_ELEMENT);
@@ -221,8 +218,7 @@ public class LibraryImpl implements Library.ModifiableModel, LibraryEx {
     }
     final boolean sameName = Comparing.equal(model.myName, myName);
     boolean sameRoots = true;
-    for (int i = 0; i < SERIALIZABLE_ROOT_TYPES.length; i++) {
-      final OrderRootType rootType = SERIALIZABLE_ROOT_TYPES[i];
+    for (final OrderRootType rootType : SERIALIZABLE_ROOT_TYPES) {
       final VirtualFilePointerContainer container = myRoots.get(rootType);
       final VirtualFilePointerContainer thatContainer = model.myRoots.get(rootType);
       sameRoots = Arrays.equals(container.getUrls(), thatContainer.getUrls());

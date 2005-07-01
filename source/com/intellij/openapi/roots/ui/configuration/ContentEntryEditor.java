@@ -252,8 +252,8 @@ public final class ContentEntryEditor implements ContentRootPanel.ActionCallback
       return false;
     }
     final ExcludeFolder[] excludeFolders = myContentEntry.getExcludeFolders();
-    for (int idx = 0; idx < excludeFolders.length; idx++) {
-      final VirtualFile excludedDir = excludeFolders[idx].getFile();
+    for (ExcludeFolder excludeFolder : excludeFolders) {
+      final VirtualFile excludedDir = excludeFolder.getFile();
       if (excludedDir == null) {
         continue;
       }
@@ -269,8 +269,7 @@ public final class ContentEntryEditor implements ContentRootPanel.ActionCallback
       return null;
     }
     final ExcludeFolder[] excludeFolders = myContentEntry.getExcludeFolders();
-    for (int idx = 0; idx < excludeFolders.length; idx++) {
-      final ExcludeFolder excludeFolder = excludeFolders[idx];
+    for (final ExcludeFolder excludeFolder : excludeFolders) {
       final VirtualFile f = excludeFolder.getFile();
       if (f == null) {
         continue;
@@ -287,8 +286,7 @@ public final class ContentEntryEditor implements ContentRootPanel.ActionCallback
       return null;
     }
     final SourceFolder[] sourceFolders = myContentEntry.getSourceFolders();
-    for (int idx = 0; idx < sourceFolders.length; idx++) {
-      SourceFolder sourceFolder = sourceFolders[idx];
+    for (SourceFolder sourceFolder : sourceFolders) {
       final VirtualFile f = sourceFolder.getFile();
       if (f == null) {
         continue;

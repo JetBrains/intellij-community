@@ -41,8 +41,8 @@ public class OldModuleRootsKeeper implements ModuleComponent, JDOMExternalizable
   public void writeExternal(Element element) throws WriteExternalException {
     if (myElement != null) {
       final List children = myElement.getChildren();
-      for (Iterator iterator = children.iterator(); iterator.hasNext();) {
-        Element child = (Element)iterator.next();
+      for (final Object aChildren : children) {
+        Element child = (Element)aChildren;
         element.addContent((Element)child.clone());
       }
     }

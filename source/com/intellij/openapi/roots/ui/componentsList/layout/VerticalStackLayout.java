@@ -22,8 +22,7 @@ public class VerticalStackLayout implements LayoutManager2 {
 
   public static void withAllVisibleDo(Container container, ComponentOperation operation) {
     Component[] components = container.getComponents();
-    for (int i = 0; i < components.length; i++) {
-      Component component = components[i];
+    for (Component component : components) {
       if (!component.isVisible()) continue;
       operation.applyTo(component);
     }

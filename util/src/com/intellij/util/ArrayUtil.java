@@ -168,4 +168,12 @@ public class ArrayUtil {
 
     return true;
   }
+
+  public static <T> T[] reverseArray(T[] array) {
+    T[] newArray = array.clone();
+    for (int i = 0; i < array.length; i++) {
+      newArray[array.length - i - 1] = array[i];
+    }
+    return newArray;
+  }
 }

@@ -245,8 +245,8 @@ public class LibraryTableEditor {
     if (myTableModifiableModel.isChanged()) {
       return true;
     }
-    for (Iterator<Library> it = myLibraryToEditorMap.keySet().iterator(); it.hasNext();) {
-      final LibraryEditor libraryEditor = myLibraryToEditorMap.get(it.next());
+    for (final Library library : myLibraryToEditorMap.keySet()) {
+      final LibraryEditor libraryEditor = myLibraryToEditorMap.get(library);
       if (libraryEditor.hasChanges()) {
         return true;
       }
@@ -269,8 +269,7 @@ public class LibraryTableEditor {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
     List elements = new ArrayList();
-    for (int idx = 0; idx < selectionPaths.length; idx++) {
-      TreePath selectionPath = selectionPaths[idx];
+    for (TreePath selectionPath : selectionPaths) {
       final Object pathElement = getPathElement(selectionPath);
       if (pathElement != null) {
         elements.add(pathElement);
@@ -309,8 +308,8 @@ public class LibraryTableEditor {
   private Library[] getSelectedLibraries() {
     final List<Library> libs = new ArrayList<Library>();
     final Object[] selectedElements = getSelectedElements();
-    for (int idx = 0; idx < selectedElements.length; idx++) {
-      final Library library = convertElementToLibrary(selectedElements[idx]);
+    for (Object selectedElement : selectedElements) {
+      final Library library = convertElementToLibrary(selectedElement);
       if (library != null) {
         libs.add(library);
       }
@@ -457,17 +456,17 @@ public class LibraryTableEditor {
     final Set<VirtualFile> alreadyAdded = new HashSet<VirtualFile>();
     if (lib == null) {
       final Library[] libraries = myTableModifiableModel.getLibraries();
-      for (int idx = 0; idx < libraries.length; idx++) {
-        final VirtualFile[] libraryFiles = getLibraryEditor(libraries[idx]).getFiles(rootType);
-        for (int i = 0; i < libraryFiles.length; i++) {
-          alreadyAdded.add(libraryFiles[i]);
+      for (Library library : libraries) {
+        final VirtualFile[] libraryFiles = getLibraryEditor(library).getFiles(rootType);
+        for (VirtualFile libraryFile : libraryFiles) {
+          alreadyAdded.add(libraryFile);
         }
       }
     }
     else {
       final VirtualFile[] libraryFiles = getLibraryEditor(lib).getFiles(rootType);
-      for (int i = 0; i < libraryFiles.length; i++) {
-        alreadyAdded.add(libraryFiles[i]);
+      for (VirtualFile libraryFile : libraryFiles) {
+        alreadyAdded.add(libraryFile);
       }
     }
     chosenFilesSet.removeAll(alreadyAdded);
@@ -691,8 +690,7 @@ public class LibraryTableEditor {
         return null;
       }
       Class cls = null;
-      for (int idx = 0; idx < elements.length; idx++) {
-        Object element = elements[idx];
+      for (Object element : elements) {
         if (cls == null) {
           cls = element.getClass();
         }

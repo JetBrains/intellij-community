@@ -76,8 +76,7 @@ public class ModuleEditor {
   }
 
   public boolean isModified() {
-    for (int i = 0; i < myEditors.size(); i++) {
-      ModuleConfigurationEditor moduleElementsEditor = myEditors.get(i);
+    for (ModuleConfigurationEditor moduleElementsEditor : myEditors) {
       if (moduleElementsEditor.isModified()) {
         return true;
       }

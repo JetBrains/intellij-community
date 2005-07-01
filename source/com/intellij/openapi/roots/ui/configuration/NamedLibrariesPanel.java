@@ -109,8 +109,8 @@ public class NamedLibrariesPanel extends JPanel {
 
   private Library[] convertToLibraries(final List<LibraryChooserElement> selectedElements) {
     List<Library> libs = new ArrayList<Library>();
-    for (Iterator it = selectedElements.iterator(); it.hasNext();) {
-      final LibraryChooserElement chooserElement = (LibraryChooserElement)it.next();
+    for (final LibraryChooserElement selectedElement : selectedElements) {
+      final LibraryChooserElement chooserElement = (LibraryChooserElement)selectedElement;
       final Library library = chooserElement.getLibrary();
       if (library != null) {
         libs.add(library);
@@ -152,13 +152,11 @@ public class NamedLibrariesPanel extends JPanel {
 
       final List<LibraryChooserElement> elements = new ArrayList<LibraryChooserElement>();
       final Library[] libraries = myLibraryTable.getLibraries();
-      for (int idx = 0; idx < libraries.length; idx++) {
-        final Library library = libraries[idx];
+      for (final Library library : libraries) {
         elements.add(new LibraryChooserElement(library, myRootModel.findLibraryOrderEntry(library)));
       }
       final LibraryOrderEntry[] invalidLibraryOrderEntries = getInvalidLibraryOrderEntries();
-      for (int idx = 0; idx < invalidLibraryOrderEntries.length; idx++) {
-        LibraryOrderEntry entry = invalidLibraryOrderEntries[idx];
+      for (LibraryOrderEntry entry : invalidLibraryOrderEntries) {
         elements.add(new LibraryChooserElement(null, entry));
       }
       elements.addAll(unmarkedInvalidElems);
@@ -168,14 +166,18 @@ public class NamedLibrariesPanel extends JPanel {
         }
       });
       List<LibraryChooserElement> elementsToSelect = new ArrayList<LibraryChooserElement>();
-      for (Iterator it = elements.iterator(); it.hasNext();) {
-        LibraryChooserElement chooserElement = (LibraryChooserElement)it.next();
+      for (final LibraryChooserElement element : elements) {
+        LibraryChooserElement chooserElement = (LibraryChooserElement)element;
         if (librariesToMark != null && chooserElement.isValid()) {
           if (librariesToMark.contains(chooserElement.getLibrary())) {
             setChooserElementMarked(chooserElement, true);
           }
         }
-        myLibrariesChooser.addElement(chooserElement, chooserElement.isAttachedToProject(), chooserElement.isValid()? LibraryChooserElement.VALID_LIBRARY_ELEMENT_PROPERTIES : LibraryChooserElement.INVALID_LIBRARY_ELEMENT_PROPERTIES);
+        myLibrariesChooser
+          .addElement(chooserElement, chooserElement.isAttachedToProject(),
+                      chooserElement.isValid()
+                      ? LibraryChooserElement.VALID_LIBRARY_ELEMENT_PROPERTIES
+                      : LibraryChooserElement.INVALID_LIBRARY_ELEMENT_PROPERTIES);
         if (librariesToSelect != null && librariesToSelect.contains(chooserElement.getLibrary())) {
           elementsToSelect.add(chooserElement);
         }
@@ -215,8 +217,7 @@ public class NamedLibrariesPanel extends JPanel {
   private LibraryOrderEntry[] getInvalidLibraryOrderEntries() {
     final OrderEntry[] orderEntries = myRootModel.getOrderEntries();
     ArrayList<LibraryOrderEntry> entries = new ArrayList<LibraryOrderEntry>();
-    for (int idx = 0; idx < orderEntries.length; idx++) {
-      OrderEntry orderEntry = orderEntries[idx];
+    for (OrderEntry orderEntry : orderEntries) {
       if (orderEntry instanceof LibraryOrderEntry) {
         final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)orderEntry;
         if (!libraryOrderEntry.isValid() && libraryOrderEntry.getLibraryLevel().equals(myLibraryTable.getTableLevel())) {

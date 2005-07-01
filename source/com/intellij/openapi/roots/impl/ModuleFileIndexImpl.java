@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -31,9 +30,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
 
   public boolean iterateContent(ContentIterator iterator) {
     VirtualFile[] contentRoots = ModuleRootManager.getInstance(myModule).getContentRoots();
-    for (int j = 0; j < contentRoots.length; j++) {
-      VirtualFile contentRoot = contentRoots[j];
-
+    for (VirtualFile contentRoot : contentRoots) {
       VirtualFile parent = contentRoot.getParent();
       if (parent != null) {
         DirectoryInfo parentInfo = myDirectoryIndex.getInfoForDirectory(parent);
@@ -89,8 +86,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     if (info == null) return null;
     final Set<OrderEntry> orderEntries = info.orderEntries;
     List<OrderEntry> result = new ArrayList<OrderEntry>();
-    for (Iterator<OrderEntry> iterator = orderEntries.iterator(); iterator.hasNext();) {
-      OrderEntry orderEntry = iterator.next();
+    for (OrderEntry orderEntry : orderEntries) {
       if (orderEntry.getOwnerModule() == myModule) {
         result.add(orderEntry);
       }
@@ -104,8 +100,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     final DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(dir);
     if (info == null) return null;
     final Set<OrderEntry> orderEntries = info.orderEntries;
-    for (Iterator<OrderEntry> iterator = orderEntries.iterator(); iterator.hasNext();) {
-      OrderEntry orderEntry = iterator.next();
+    for (OrderEntry orderEntry : orderEntries) {
       if (orderEntry.getOwnerModule() == myModule) return orderEntry;
     }
     return null;
@@ -128,8 +123,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     if (allDirs.length == 0) return allDirs;
 
     ArrayList<VirtualFile> list = new ArrayList<VirtualFile>();
-    for (int i = 0; i < allDirs.length; i++) {
-      VirtualFile dir = allDirs[i];
+    for (VirtualFile dir : allDirs) {
       if (getOrderEntryForFile(dir) != null) {
         list.add(dir);
       }

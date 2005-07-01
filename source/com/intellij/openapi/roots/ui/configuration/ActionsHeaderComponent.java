@@ -28,8 +28,7 @@ public class ActionsHeaderComponent extends JPanel/*ScalableIconComponent*/ {
     final Component[] components = container.getComponents();
     int maxWidth = 0;
     int maxHeight = 0;
-    for (int idx = 0; idx < components.length; idx++) {
-      Component component = components[idx];
+    for (Component component : components) {
       if (component instanceof Container) {
         calcPreferredSize((Container)component, dimension);
         maxWidth = Math.max(maxWidth, dimension.width);

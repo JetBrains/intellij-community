@@ -30,8 +30,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
     super(rootModel);
     myRootModel = rootModel;
     myRootContainers = new HashMap<OrderRootType, VirtualFilePointerContainer>();
-    for (int i = 0; i < OrderRootType.ALL_TYPES.length; i++) {
-      OrderRootType type = OrderRootType.ALL_TYPES[i];
+    for (OrderRootType type : OrderRootType.ALL_TYPES) {
       myRootContainers.put(type, filePointerManager.createContainer(myRootModel.pointerFactory()));
     }
     myProjectRootManagerImpl = instanceImpl;
@@ -49,14 +48,12 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
 
   private void updatePathsFromProvider(final RootProvider rootProvider) {
     final OrderRootType[] allTypes = OrderRootType.ALL_TYPES;
-    for (int i = 0; i < allTypes.length; i++) {
-      OrderRootType type = allTypes[i];
+    for (OrderRootType type : allTypes) {
       final VirtualFilePointerContainer container = myRootContainers.get(type);
       container.clear();
       if (rootProvider != null) {
         final String[] urls = rootProvider.getUrls(type);
-        for (int j = 0; j < urls.length; j++) {
-          String url = urls[j];
+        for (String url : urls) {
           container.add(url);
         }
       }
@@ -65,8 +62,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
 
   private boolean needUpdateFromProvider(final RootProvider rootProvider) {
     final OrderRootType[] allTypes = OrderRootType.ALL_TYPES;
-    for (int i = 0; i < allTypes.length; i++) {
-      OrderRootType type = allTypes[i];
+    for (OrderRootType type : allTypes) {
       final VirtualFilePointerContainer container = myRootContainers.get(type);
       final String[] urls = container.getUrls();
       final String[] providerUrls = rootProvider.getUrls(type);
@@ -142,8 +138,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
   protected void dispose() {
     super.dispose();
     final Collection<VirtualFilePointerContainer> virtualFilePointerContainers = myRootContainers.values();
-    for (Iterator<VirtualFilePointerContainer> iterator = virtualFilePointerContainers.iterator(); iterator.hasNext();) {
-      VirtualFilePointerContainer virtualFilePointerContainer = iterator.next();
+    for (VirtualFilePointerContainer virtualFilePointerContainer : virtualFilePointerContainers) {
       virtualFilePointerContainer.killAll();
     }
     unsubscribe();

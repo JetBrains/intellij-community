@@ -52,8 +52,7 @@ public class ModuleLevelConfigurablesEditorProvider implements ModuleConfigurati
   public ModuleConfigurationEditor[] createEditors(ModuleConfigurationState state) {
     ArrayList<ModuleConfigurationEditor> result = new ArrayList<ModuleConfigurationEditor>();
     Configurable[] moduleConfigurables = myModule.getComponents(Configurable.class);
-    for (int i = 0; i < moduleConfigurables.length; i++) {
-      final Configurable moduleConfigurable = moduleConfigurables[i];
+    for (final Configurable moduleConfigurable : moduleConfigurables) {
       result.add(new ConfigurableWrapper(moduleConfigurable));
     }
     return result.toArray(new ModuleConfigurationEditor[result.size()]);

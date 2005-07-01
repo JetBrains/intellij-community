@@ -75,8 +75,8 @@ public class LibraryTreeStructure extends AbstractTreeStructure{
     final Set<String> validUrls;
     if (files.length > 0) {
       validUrls = new HashSet<String>();
-      for (int idx = 0; idx < files.length; idx++) {
-        validUrls.add(files[idx].getUrl());
+      for (VirtualFile file : files) {
+        validUrls.add(file.getUrl());
       }
     }
     else {
@@ -87,8 +87,7 @@ public class LibraryTreeStructure extends AbstractTreeStructure{
 
     final String[] urls = myParentEditor.getLibraryEditor(library).getUrls(orderRootType);
     Arrays.sort(urls, myParentEditor.ourUrlComparator);
-    for (int idx = 0; idx < urls.length; idx++) {
-      String url = urls[idx];
+    for (String url : urls) {
       items.add(new ItemElement(parent, library, url, orderRootType, validUrls.contains(url)));
     }
 

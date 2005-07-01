@@ -219,8 +219,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
 
     public void modulesRenamed(Project project, List<Module> modules) {
       if (myModule != null) return;
-      for (Iterator<Module> iterator = modules.iterator(); iterator.hasNext();) {
-        Module module = iterator.next();
+      for (Module module : modules) {
         if (module.getName().equals(myModuleName)) {
           setModule(module);
           break;

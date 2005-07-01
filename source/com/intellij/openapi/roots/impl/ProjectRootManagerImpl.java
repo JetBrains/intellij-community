@@ -369,8 +369,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     myModuleRootEventDispatcher.getMulticaster().rootsChanged(new ModuleRootEventImpl(myProject, filetypes));
 
     final FileSystemSynchronizer synchronizer = new FileSystemSynchronizer();
-    for (int i = 0; i < myChangeUpdaters.size(); i++) {
-      CacheUpdater updater = myChangeUpdaters.get(i);
+    for (CacheUpdater updater : myChangeUpdaters) {
       synchronizer.registerCacheUpdater(updater);
     }
 

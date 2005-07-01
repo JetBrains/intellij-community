@@ -12,8 +12,8 @@ class FileIndexImplUtil {
 
     if (root.isDirectory()){
       VirtualFile[] children = root.getChildren();
-      for(int i = 0; i < children.length; i++){
-        if (!iterateRecursively(children[i], filter, iterator)) return false;
+      for (VirtualFile aChildren : children) {
+        if (!iterateRecursively(aChildren, filter, iterator)) return false;
       }
     }
 
