@@ -2,12 +2,20 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.pom.java.LanguageLevel;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class CallToSimpleGetterInClassInspection extends ExpressionInspection{
+    private final InlineCallFix fix = new InlineCallFix();
+
     public String getID(){
         return "CallToSimpleGetterFromWithinClass";
     }
@@ -23,6 +31,34 @@ public class CallToSimpleGetterInClassInspection extends ExpressionInspection{
         return "Call to simple getter '#ref()' from within class #loc";
     }
 
+    public InspectionGadgetsFix buildFix(PsiElement location){
+        return fix;
+    }
+
+    private static class InlineCallFix extends InspectionGadgetsFix{
+        public String getName(){
+            return "Inline call to getter";
+        }
+
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
+            final PsiElement methodIdentifier = descriptor.getPsiElement();
+            final PsiReferenceExpression methodExpression =
+                    (PsiReferenceExpression) methodIdentifier.getParent();
+            assert methodExpression != null;
+            final PsiMethodCallExpression call =
+                    (PsiMethodCallExpression) methodExpression.getParent();
+            assert call != null;
+            final PsiMethod method = call.resolveMethod();
+            assert method != null;
+            final PsiCodeBlock body = method.getBody();
+            final PsiStatement[] statements = body.getStatements();
+            final PsiReturnStatement returnStatement = (PsiReturnStatement) statements[0];
+            final PsiExpression returnValue = returnStatement.getReturnValue();
+            final String returnValueText = returnValue.getText();
+            replaceExpression(call, returnValueText);
+        }
+    }
     public BaseInspectionVisitor buildVisitor(){
         return new CallToSimpleGetterInClassVisitor();
     }
