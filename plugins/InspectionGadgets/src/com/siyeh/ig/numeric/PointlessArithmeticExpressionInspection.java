@@ -177,8 +177,7 @@ public class PointlessArithmeticExpressionInspection
                 !(expression instanceof PsiLiteralExpression)){
             return false;
         }
-        final Double value;
-        value = (Double) ConstantExpressionUtil
+        final Double value= (Double) ConstantExpressionUtil
                 .computeCastTo(expression, PsiType.DOUBLE);
         return value != null && value == 0.0;
     }
