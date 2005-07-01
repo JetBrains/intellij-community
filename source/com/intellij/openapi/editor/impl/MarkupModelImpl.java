@@ -22,15 +22,16 @@ import gnu.trove.THashSet;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.MarkupModelImpl");
-  private DocumentImpl myDocument;
+  private final DocumentImpl myDocument;
 
   private final HighlighterList myHighlighterList;
-  private Collection<RangeHighlighter> myHighlighters = new THashSet<RangeHighlighter>();
+  private final Collection<RangeHighlighter> myHighlighters = new THashSet<RangeHighlighter>();
   private RangeHighlighter[] myCachedHighlighters;
-  private ArrayList<MarkupModelListener> myListeners = new ArrayList<MarkupModelListener>();
+  private final List<MarkupModelListener> myListeners = new ArrayList<MarkupModelListener>();
   private MarkupModelListener[] myCachedListeners;
 
   MarkupModelImpl(DocumentImpl document) {
