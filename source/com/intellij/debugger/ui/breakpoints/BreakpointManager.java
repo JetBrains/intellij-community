@@ -9,6 +9,7 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.actions.ViewBreakpointsAction;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -32,6 +33,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiField;
 import com.intellij.util.Alarm;
@@ -817,11 +819,21 @@ public class BreakpointManager implements JDOMExternalizable {
     if (myAllowMulticasting) {
       // can be invoked from non-AWT thread
       myAlarm.cancelAllRequests();
-      myAlarm.addRequest(new Runnable() {
+      final Runnable runnable = new Runnable() {
         public void run() {
-          myDispatcher.getMulticaster().breakpointsChanged();
+          myAlarm.addRequest(new Runnable() {
+            public void run() {
+              myDispatcher.getMulticaster().breakpointsChanged();
+            }
+          }, 100);
         }
-      }, 100);
+      };
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        runnable.run();
+      }
+      else {
+        SwingUtilities.invokeLater(runnable);
+      }
     }
   }
 
