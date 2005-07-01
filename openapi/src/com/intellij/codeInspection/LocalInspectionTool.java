@@ -13,6 +13,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -32,6 +33,7 @@ public abstract class LocalInspectionTool {
    * @param isOnTheFly true if called during on the fly editor highlighting. Called from Inspect Code action otherwise.
    * @return <code>null</code> if no problems found or not applicable at method level.
    */
+  @Nullable
   public ProblemDescriptor[] checkMethod(PsiMethod method, InspectionManager manager, boolean isOnTheFly) {
     return null;
   }
@@ -44,6 +46,7 @@ public abstract class LocalInspectionTool {
    * @param isOnTheFly true if called during on the fly editor highlighting. Called from Inspect Code action otherwise.
    * @return <code>null</code> if no problems found or not applicable at class level.
    */
+  @Nullable
   public ProblemDescriptor[] checkClass(PsiClass aClass, InspectionManager manager, boolean isOnTheFly) {
     return null;
   }
@@ -56,6 +59,7 @@ public abstract class LocalInspectionTool {
    * @param isOnTheFly true if called during on the fly editor highlighting. Called from Inspect Code action otherwise.
    * @return <code>null</code> if no problems found or not applicable at field level.
    */
+  @Nullable
   public ProblemDescriptor[] checkField(PsiField field, InspectionManager manager, boolean isOnTheFly) {
     return null;
   }
@@ -68,6 +72,7 @@ public abstract class LocalInspectionTool {
      * @param isOnTheFly true if called during on the fly editor highlighting. Called from Inspect Code action otherwise.
      * @return <code>null</code> if no problems found or not applicable at field level.
      */
+  @Nullable
   public ProblemDescriptor[] checkFile(PsiFile file, InspectionManager manager, boolean isOnTheFly) {
     return null;
   }
@@ -98,6 +103,7 @@ public abstract class LocalInspectionTool {
   /**
    * @return null if no UI options required
    */
+  @Nullable
   public JComponent createOptionsPanel() {
     return null;
   }
