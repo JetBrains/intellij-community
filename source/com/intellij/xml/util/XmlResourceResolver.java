@@ -95,6 +95,25 @@ public class XmlResourceResolver implements XMLEntityResolver {
           String fullUrl = baseSystemId.substring( 0, baseSystemId.lastIndexOf('/') + 1 ) + systemId;
           psiFile = XmlUtil.findXmlFile(baseFile,fullUrl);
         }
+        
+        if (psiFile == null && systemId != null && baseSystemId == null) { // entity file
+          File workingFile = new File("");
+          String workingDir = workingFile.getAbsoluteFile().getAbsolutePath().replace(File.separatorChar, '/');
+            
+          for(String path:myExternalResourcesMap.values()) {
+            String id = StringUtil.replace(
+              systemId, 
+              workingDir, 
+              path.substring(path.startsWith("file://")?"file://".length():0,path.lastIndexOf('/'))
+            );
+            final VirtualFile relativeFile = VfsUtil.findRelativeFile(id, null);
+            
+            if (relativeFile != null) {
+              psiFile = PsiManager.getInstance(myProject).findFile(relativeFile);
+              if (psiFile != null) break;
+            }
+          }
+        }     
 
         if (LOG.isDebugEnabled()) {
           LOG.debug("resolveEntity: psiFile='" + (psiFile != null ? psiFile.getVirtualFile() : null) + "'");

@@ -48,10 +48,10 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
   private final Map<Pair<String, XmlTag>, CachedValue<TypeDescriptor>> myTypesMap = new HashMap<Pair<String,XmlTag>, CachedValue<TypeDescriptor>>();
 
   public XmlElementDescriptor getElementDescriptor(String localName, String namespace) {
-    return getElementDescriptor(localName, namespace, new HashSet<XmlNSDescriptorImpl>());
+    return getElementDescriptor(localName, namespace, new HashSet<XmlNSDescriptorImpl>(),false);
   }
 
-  private XmlElementDescriptor getElementDescriptor(String localName, String namespace, Set<XmlNSDescriptorImpl> visited) {
+  public XmlElementDescriptor getElementDescriptor(String localName, String namespace, Set<XmlNSDescriptorImpl> visited, boolean reference) {
     if(visited.contains(this)) return null;
     final Pair<String, String> pair = new Pair<String, String>(namespace, localName);
     final CachedValue<XmlElementDescriptor> descriptor = myDescriptorsMap.get(pair);
@@ -80,7 +80,12 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
           }
         }
       }
-      else if (equalsToSchemaName(tag, "include")) {
+      else if (equalsToSchemaName(tag, "include") ||
+               (reference &&
+                equalsToSchemaName(tag, "import") && 
+                namespace.equals(tag.getAttributeValue("namespace"))
+               )
+              ) {
         final XmlAttribute schemaLocation = tag.getAttribute("schemaLocation", tag.getNamespace());
         if (schemaLocation != null) {
           final XmlFile xmlFile = XmlUtil.findXmlFile(rootTag.getContainingFile(), schemaLocation.getValue());

@@ -99,7 +99,14 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
           final String namespace = "".equals(namespacePrefix) ?
             myDocumentDescriptor.getDefaultNamespace() :
             tag.getNamespaceByPrefix(namespacePrefix);
-          final XmlElementDescriptor element = myDocumentDescriptor.getElementDescriptor(local, namespace);
+          
+          final XmlElementDescriptor element = myDocumentDescriptor.getElementDescriptor(
+            local, 
+            namespace, 
+            new HashSet<XmlNSDescriptorImpl>(),
+            true
+          );
+          
           if (element != null) {
             addElementDescriptor(result, element);
           }
