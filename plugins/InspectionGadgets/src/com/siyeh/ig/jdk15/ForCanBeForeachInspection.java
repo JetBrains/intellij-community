@@ -431,7 +431,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
             return type != null && type.equals(var.getType());
         }
 
-        private boolean isIteratorNextDeclaration(PsiStatement statement,
+        private static boolean isIteratorNextDeclaration(PsiStatement statement,
                                                   String iteratorName,
                                                   String contentType){
             if(!(statement instanceof PsiDeclarationStatement)){
@@ -474,7 +474,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
             return arrayName.equals(arrayExpression.getText());
         }
 
-        private boolean isIteratorNext(PsiElement element,
+        private static boolean isIteratorNext(PsiElement element,
                                        String iteratorName, String contentType){
             if(element == null){
                 return false;
@@ -945,6 +945,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
     final PsiMethodCallExpression reference = (PsiMethodCallExpression) strippedExpression;
     PsiReferenceExpression methodExpression = reference.getMethodExpression();
     if (methodExpression == null) return false;
+    if (!(methodExpression.getQualifierExpression() instanceof PsiReferenceExpression)) return false;
     PsiElement resolved = methodExpression.resolve();
     if (!(resolved instanceof PsiMethod)) return false;
     final PsiMethod method = (PsiMethod)resolved;
