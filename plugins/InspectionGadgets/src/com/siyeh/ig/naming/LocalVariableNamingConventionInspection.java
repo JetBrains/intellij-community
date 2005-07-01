@@ -8,6 +8,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.RegExFormatter;
 import com.siyeh.ig.RegExInputVerifier;
+import com.siyeh.ig.ui.FormattedTextFieldMacFix;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -178,11 +179,13 @@ public class LocalVariableNamingConventionInspection extends ConventionInspectio
         minLengthField.setFont(panelFont);
         minLengthField.setValue(m_minLength);
         minLengthField.setColumns(2);
+        FormattedTextFieldMacFix.apply(minLengthField);
 
         final JFormattedTextField maxLengthField = new JFormattedTextField(formatter);
         maxLengthField.setFont(panelFont);
         maxLengthField.setValue(m_maxLength);
         maxLengthField.setColumns(2);
+        FormattedTextFieldMacFix.apply(maxLengthField);
 
         final JFormattedTextField regexField = new JFormattedTextField(new RegExFormatter());
         regexField.setFont(panelFont);
@@ -190,6 +193,7 @@ public class LocalVariableNamingConventionInspection extends ConventionInspectio
         regexField.setColumns(LOCAL_REGEX_COLUMN_COUNT);
         regexField.setInputVerifier(new RegExInputVerifier());
         regexField.setFocusLostBehavior(JFormattedTextField.COMMIT);
+        FormattedTextFieldMacFix.apply(regexField);
 
         final DocumentListener listener = new DocumentListener() {
             public void changedUpdate(DocumentEvent e) {
