@@ -2,12 +2,18 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
+    private final InlineCallFix fix = new InlineCallFix();
+
     public String getID(){
         return "CallToSimpleSetterFromWithinClass";
     }
@@ -22,6 +28,40 @@ public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
 
     public String buildErrorString(PsiElement location){
         return "Call to simple setter '#ref()' from within class #loc";
+    }
+
+    public InspectionGadgetsFix buildFix(PsiElement location){
+        return fix;
+    }
+
+    private static class InlineCallFix extends InspectionGadgetsFix{
+        public String getName(){
+            return "Inline call to setter";
+        }
+
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
+            final PsiElement methodIdentifier = descriptor.getPsiElement();
+            final PsiReferenceExpression methodExpression =
+                    (PsiReferenceExpression) methodIdentifier.getParent();
+            assert methodExpression != null;
+            final PsiMethodCallExpression call =
+                    (PsiMethodCallExpression) methodExpression.getParent();
+            assert call != null;
+            final PsiExpressionList argList = call.getArgumentList();
+            assert argList != null;
+            final PsiExpression[] args = argList.getExpressions();
+            final PsiExpression arg = args[0];
+            final PsiMethod method = call.resolveMethod();
+            assert method != null;
+            final PsiCodeBlock body = method.getBody();
+            final PsiStatement[] statements = body.getStatements();
+            final PsiExpressionStatement assignmentStatemnt = (PsiExpressionStatement) statements[0];
+            final PsiAssignmentExpression assignment = (PsiAssignmentExpression) assignmentStatemnt.getExpression();
+            final String newExpression = assignment.getLExpression().getText() +
+                    " = " + arg.getText();
+            replaceExpression(call, newExpression);
+        }
     }
 
     public BaseInspectionVisitor buildVisitor(){
