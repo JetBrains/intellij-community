@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ui.FormattedTextFieldMacFix;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -51,6 +52,7 @@ public class MethodCouplingInspection
         final JFormattedTextField valueField = new JFormattedTextField(formatter);
         valueField.setValue(m_limit);
         valueField.setColumns(4);
+        FormattedTextFieldMacFix.apply(valueField);
         final Document document = valueField.getDocument();
         document.addDocumentListener(new DocumentListener() {
             public void changedUpdate(DocumentEvent e) {
