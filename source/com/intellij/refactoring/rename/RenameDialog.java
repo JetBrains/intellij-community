@@ -53,7 +53,7 @@ public class RenameDialog extends RefactoringDialog {
   private JLabel myNameLabel;
   private NameSuggestionsField myNameSuggestionsField;
   private JCheckBox myCbSearchInComments;
-  private JCheckBox myCbSearchInNonJavaFiles;
+  private JCheckBox myCbSearchTextOccurences;
   private JCheckBox myCbRenameVariables;
   private JCheckBox myCbRenameInheritors;
   private JCheckBox myCbRenameBoundForms;
@@ -85,13 +85,13 @@ public class RenameDialog extends RefactoringDialog {
       RefactoringSettings.getInstance().isToSearchInNonJavaFilesForRename(myPsiElement);
     myCbSearchInComments.setSelected(toSearchInComments);
 
-    if (myCbSearchInNonJavaFiles.isEnabled()) {
-      myCbSearchInNonJavaFiles.setSelected(toSearchInNonJava);
+    if (myCbSearchTextOccurences.isEnabled()) {
+      myCbSearchTextOccurences.setSelected(toSearchInNonJava);
     }
 
     if (!showSearchCheckboxes(myPsiElement)) {
       myCbSearchInComments.setVisible(false);
-      myCbSearchInNonJavaFiles.setVisible(false);
+      myCbSearchTextOccurences.setVisible(false);
     }
 
     validateButtons();
@@ -268,7 +268,7 @@ public class RenameDialog extends RefactoringDialog {
   }
 
   public boolean isSearchInNonJavaFiles() {
-    return myCbSearchInNonJavaFiles.isSelected();
+    return myCbSearchTextOccurences.isSelected();
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -336,14 +336,14 @@ public class RenameDialog extends RefactoringDialog {
     gbConstraints.gridx = 1;
     gbConstraints.weightx = 1;
     gbConstraints.fill = GridBagConstraints.BOTH;
-    myCbSearchInNonJavaFiles = new NonFocusableCheckBox("Search in non-java files");
-    myCbSearchInNonJavaFiles.setMnemonic('e');
-    myCbSearchInNonJavaFiles.setSelected(true);
-    panel.add(myCbSearchInNonJavaFiles, gbConstraints);
-    if (!RefactoringUtil.isSearchInNonJavaEnabled(myPsiElement)) {
-      myCbSearchInNonJavaFiles.setEnabled(false);
-      myCbSearchInNonJavaFiles.setSelected(false);
-      myCbSearchInNonJavaFiles.setVisible(false);
+    myCbSearchTextOccurences = new NonFocusableCheckBox("Search for text occurences");
+    myCbSearchTextOccurences.setMnemonic('t');
+    myCbSearchTextOccurences.setSelected(true);
+    panel.add(myCbSearchTextOccurences, gbConstraints);
+    if (!RefactoringUtil.isSearchTextOccurencesEnabled(myPsiElement)) {
+      myCbSearchTextOccurences.setEnabled(false);
+      myCbSearchTextOccurences.setSelected(false);
+      myCbSearchTextOccurences.setVisible(false);
     }
 
     if (myPsiElement instanceof PsiClass) {
@@ -401,7 +401,7 @@ public class RenameDialog extends RefactoringDialog {
     }
 
     settings.setToSearchInCommentsForRename(myPsiElement, isSearchInComments());
-    if (myCbSearchInNonJavaFiles.isEnabled()) {
+    if (myCbSearchTextOccurences.isEnabled()) {
       settings.setToSearchInNonJavaFilesForRename(myPsiElement, isSearchInNonJavaFiles());
     }
     if (mySuggestedNameInfo != null) {

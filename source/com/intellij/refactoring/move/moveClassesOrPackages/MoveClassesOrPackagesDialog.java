@@ -41,18 +41,16 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   private final JLabel myPromptTo;
   private final ReferenceEditorComboWithBrowseButton myWithBrowseButtonReference;
   private JCheckBox myCbSearchInComments;
-  private JCheckBox myCbSearchInNonJavaFiles;
+  private JCheckBox myCbSearchTextOccurences;
   private JCheckBox myCbPreserveSourceFolders;
   private String myHelpID;
   private Project myProject;
-  private boolean mySearchInNonJavaEnabled;
+  private boolean mySearchTextOccurencesEnabled;
   private PsiDirectory myInitialTargetDirectory;
   private final PsiManager myManager;
-  private boolean myTargetDirectoryFixed;
-
 
   public MoveClassesOrPackagesDialog(Project project,
-                                     boolean searchInNonJavaEnabled,
+                                     boolean searchTextOccurences,
                                      PsiElement[] elementsToMove,
                                      MoveCallback moveCallback) {
     super(project, true);
@@ -60,7 +58,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     myMoveCallback = moveCallback;
     setTitle("Move");
     myProject = project;
-    mySearchInNonJavaEnabled = searchInNonJavaEnabled;
+    mySearchTextOccurencesEnabled = searchTextOccurences;
 
     myNameLabel = new JLabel();
     myPromptTo = new JLabel("To package: ");
@@ -128,16 +126,16 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     gbConstraints.weightx = 1;
     gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
     gbConstraints.fill = GridBagConstraints.BOTH;
-    myCbSearchInNonJavaFiles =
-    new NonFocusableCheckBox("Search in non-java files");
-    myCbSearchInNonJavaFiles.setMnemonic('e');
-    panel.add(myCbSearchInNonJavaFiles, gbConstraints);
+    myCbSearchTextOccurences =
+    new NonFocusableCheckBox("Search for text occurences");
+    myCbSearchTextOccurences.setMnemonic('t');
+    panel.add(myCbSearchTextOccurences, gbConstraints);
 
 
-    if (!mySearchInNonJavaEnabled) {
-      myCbSearchInNonJavaFiles.setEnabled(false);
-      myCbSearchInNonJavaFiles.setVisible(false);
-      myCbSearchInNonJavaFiles.setSelected(false);
+    if (!mySearchTextOccurencesEnabled) {
+      myCbSearchTextOccurences.setEnabled(false);
+      myCbSearchTextOccurences.setVisible(false);
+      myCbSearchTextOccurences.setSelected(false);
     }
 
     gbConstraints.gridx = 0;
@@ -174,7 +172,6 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
       myWithBrowseButtonReference.prependItem(targetPackageName);
     }
 
-    myTargetDirectoryFixed = isTargetDirectoryFixed;
     if (psiElements.length == 1) {
       PsiElement firstElement = psiElements[0];
       PsiElement parent = firstElement.getParent();
@@ -194,14 +191,14 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     }
 
     myCbSearchInComments.setSelected(searchInComments);
-    myCbSearchInNonJavaFiles.setSelected(searchInNonJavaFiles);
+    myCbSearchTextOccurences.setSelected(searchInNonJavaFiles);
 
     if (getSourceRoots().length == 1) {
       myCbPreserveSourceFolders.setSelected(true);
       myCbPreserveSourceFolders.setEnabled(false);
     }
     else {
-      myCbPreserveSourceFolders.setSelected(!myTargetDirectoryFixed);
+      myCbPreserveSourceFolders.setSelected(!isTargetDirectoryFixed);
       //myCbPreserveSourceFolders.setEnabled(!myTargetDirectoryFixed);
     }
 
@@ -296,7 +293,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   }
 
   public boolean isSearchInNonJavaFiles() {
-    return myCbSearchInNonJavaFiles.isSelected();
+    return myCbSearchTextOccurences.isSelected();
   }
 
   private MoveDestination selectDestination() {

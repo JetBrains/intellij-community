@@ -20,7 +20,7 @@ public class SafeDeleteDialog extends DialogWrapper {
   private final Callback myCallback;
 
   private JCheckBox myCbSearchInComments;
-  private JCheckBox myCbSearchInNonJava;
+  private JCheckBox myCbSearchTextOccurences;
 
   public interface Callback {
     void run(SafeDeleteDialog dialog);
@@ -40,8 +40,8 @@ public class SafeDeleteDialog extends DialogWrapper {
   }
 
   public boolean isSearchInNonJava() {
-    if (myCbSearchInNonJava != null) {
-      return myCbSearchInNonJava.isSelected();
+    if (myCbSearchTextOccurences != null) {
+      return myCbSearchTextOccurences.isSelected();
     } else {
       return false;
     }
@@ -79,17 +79,17 @@ public class SafeDeleteDialog extends DialogWrapper {
     myCbSearchInComments.setMnemonic('S');
     panel.add(myCbSearchInComments, gbc);
 
-    if (needSearchInNonJava()) {
+    if (needSearchForTextOccurences()) {
       gbc.gridx++;
-      myCbSearchInNonJava = new JCheckBox("Search in non-java files");
-      myCbSearchInNonJava.setMnemonic('e');
-      panel.add(myCbSearchInNonJava, gbc);
+      myCbSearchTextOccurences = new JCheckBox("Search for text occurences");
+      myCbSearchTextOccurences.setMnemonic('t');
+      panel.add(myCbSearchTextOccurences, gbc);
     }
 
     final RefactoringSettings refactoringSettings = RefactoringSettings.getInstance();
     myCbSearchInComments.setSelected(refactoringSettings.SAFE_DELETE_SEARCH_IN_COMMENTS);
-    if (myCbSearchInNonJava != null) {
-      myCbSearchInNonJava.setSelected(refactoringSettings.SAFE_DELETE_SEARCH_IN_NON_JAVA);
+    if (myCbSearchTextOccurences != null) {
+      myCbSearchTextOccurences.setSelected(refactoringSettings.SAFE_DELETE_SEARCH_IN_NON_JAVA);
     }
     return panel;
   }
@@ -98,10 +98,9 @@ public class SafeDeleteDialog extends DialogWrapper {
     return null;
   }
 
-  private boolean needSearchInNonJava() {
-    for (int i = 0; i < myElements.length; i++) {
-      PsiElement element = myElements[i];
-      if(RefactoringUtil.isSearchInNonJavaEnabled(element)) {
+  private boolean needSearchForTextOccurences() {
+    for (PsiElement element : myElements) {
+      if (RefactoringUtil.isSearchTextOccurencesEnabled(element)) {
         return true;
       }
     }
@@ -117,7 +116,7 @@ public class SafeDeleteDialog extends DialogWrapper {
     }
     final RefactoringSettings refactoringSettings = RefactoringSettings.getInstance();
     refactoringSettings.SAFE_DELETE_SEARCH_IN_COMMENTS = isSearchInComments();
-    if (myCbSearchInNonJava != null) {
+    if (myCbSearchTextOccurences != null) {
       refactoringSettings.SAFE_DELETE_SEARCH_IN_NON_JAVA = isSearchInNonJava();
     }
   }

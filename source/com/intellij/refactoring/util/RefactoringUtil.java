@@ -43,6 +43,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
+import com.intellij.lang.StdLanguages;
 import gnu.trove.THashMap;
 
 import java.util.*;
@@ -183,8 +184,9 @@ public class RefactoringUtil {
     }
   }
 
-  public static boolean isSearchInNonJavaEnabled(PsiElement element) {
-    return element instanceof PsiPackage || (element instanceof PsiClass && ((PsiClass)element).getQualifiedName() != null);
+  public static boolean isSearchTextOccurencesEnabled(PsiElement element) {
+    return element instanceof PsiPackage || (element instanceof PsiClass && ((PsiClass)element).getQualifiedName() != null) ||
+      (element instanceof PsiFile && !StdLanguages.JAVA.equals(element.getLanguage()));
   }
 
   public static PsiElement getVariableScope(PsiLocalVariable localVar) {

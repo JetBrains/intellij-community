@@ -89,13 +89,13 @@ public class MoveClassesOrPackagesImpl {
     final PsiDirectory initialTargetDirectory = getInitialTargetDirectory(initialTargetElement, psiElements);
     final boolean isTargetDirectoryFixed = getContainerDirectory(initialTargetElement) != null;
 
-    boolean searchInNonJavaEnabled = false;
-    for (int i = 0; i < psiElements.length && !searchInNonJavaEnabled; i++) {
+    boolean searchTextOccurences = false;
+    for (int i = 0; i < psiElements.length && !searchTextOccurences; i++) {
       PsiElement psiElement = psiElements[i];
-      searchInNonJavaEnabled = RefactoringUtil.isSearchInNonJavaEnabled(psiElement);
+      searchTextOccurences = RefactoringUtil.isSearchTextOccurencesEnabled(psiElement);
     }
     final MoveClassesOrPackagesDialog moveDialog = new MoveClassesOrPackagesDialog(project,
-                                                                                   searchInNonJavaEnabled, psiElements, moveCallback);
+                                                                                   searchTextOccurences, psiElements, moveCallback);
     boolean searchInComments = RefactoringSettings.getInstance().MOVE_SEARCH_IN_COMMENTS;
     boolean searchInNonJavaFiles = RefactoringSettings.getInstance().MOVE_SEARCH_IN_NONJAVA_FILES;
     moveDialog.setData(
