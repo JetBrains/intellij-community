@@ -163,8 +163,7 @@ public class MoveClassesOrPackagesImpl {
   private static PsiDirectory getCommonDirectory(PsiElement[] movedElements) {
     PsiDirectory commonDirectory = null;
 
-    for (int i = 0; i < movedElements.length; i++) {
-      PsiElement movedElement = movedElements[i];
+    for (PsiElement movedElement : movedElements) {
       final PsiFile containingFile = movedElement.getContainingFile();
       if (containingFile != null) {
         final PsiDirectory containingDirectory = containingFile.getContainingDirectory();
@@ -245,8 +244,7 @@ public class MoveClassesOrPackagesImpl {
   private static void checkMove(PsiElement elementToMove, List<VirtualFile> readOnly) {
     if (elementToMove instanceof PsiPackage) {
       final PsiDirectory[] directories = ((PsiPackage)elementToMove).getDirectories();
-      for (int i = 0; i < directories.length; i++) {
-        PsiDirectory directory = directories[i];
+      for (PsiDirectory directory : directories) {
         checkMove(directory, readOnly);
       }
     }
@@ -256,13 +254,11 @@ public class MoveClassesOrPackagesImpl {
         readOnly.add(((PsiDirectory)elementToMove).getVirtualFile());
         return;
       }
-      for (int i = 0; i < files.length; i++) {
-        PsiFile file = files[i];
+      for (PsiFile file : files) {
         checkMove(file, readOnly);
       }
       final PsiDirectory[] subdirectories = ((PsiDirectory)elementToMove).getSubdirectories();
-      for (int i = 0; i < subdirectories.length; i++) {
-        PsiDirectory subdirectory = subdirectories[i];
+      for (PsiDirectory subdirectory : subdirectories) {
         checkMove(subdirectory, readOnly);
       }
     }
@@ -291,8 +287,7 @@ public class MoveClassesOrPackagesImpl {
 
   public static void doRearrangePackage(final Project project, final PsiDirectory[] directories) {
     final ArrayList<VirtualFile> readOnly = new ArrayList<VirtualFile>();
-    for (int i = 0; i < directories.length; i++) {
-      PsiDirectory directory = directories[i];
+    for (PsiDirectory directory : directories) {
       checkMove(directory, readOnly);
     }
     if (!readOnly.isEmpty()) {
@@ -340,21 +335,19 @@ public class MoveClassesOrPackagesImpl {
     final VirtualFile[] sourceRoots = ProjectRootManager.getInstance(project).getContentSourceRoots();
     List<PsiDirectory> sourceRootDirectories = new ArrayList<PsiDirectory>();
     sourceRoots:
-    for (int i = 0; i < sourceRoots.length; i++) {
-      final VirtualFile sourceRoot = sourceRoots[i];
+    for (final VirtualFile sourceRoot : sourceRoots) {
       PsiDirectory sourceRootDirectory = PsiManager.getInstance(project).findDirectory(sourceRoot);
       if (sourceRootDirectory == null) {
-               LOG.error("Cannot find PsiDirectory for: " + sourceRoot.getPresentableUrl());
-      continue sourceRoots;
+        LOG.error("Cannot find PsiDirectory for: " + sourceRoot.getPresentableUrl());
+        continue sourceRoots;
       }
       final PsiPackage aPackage = sourceRootDirectory.getPackage();
       if (aPackage == null) continue;
       final String packagePrefix = aPackage.getQualifiedName();
-      for (int j = 0; j < directories.length; j++) {
-        final PsiDirectory directory = directories[j];
+      for (final PsiDirectory directory : directories) {
         String qualifiedName = directory.getPackage().getQualifiedName();
         if (!qualifiedName.startsWith(packagePrefix)) {
-        continue sourceRoots;
+          continue sourceRoots;
         }
       }
       sourceRootDirectories.add(sourceRootDirectory);
@@ -365,8 +358,7 @@ public class MoveClassesOrPackagesImpl {
   private static void rearrangeDirectoriesToTarget(PsiDirectory[] directories, PsiDirectory selectedTarget)
     throws IncorrectOperationException {
     final VirtualFile sourceRoot = selectedTarget.getVirtualFile();
-    for (int i = 0; i < directories.length; i++) {
-      PsiDirectory directory = directories[i];
+    for (PsiDirectory directory : directories) {
       final PsiPackage parentPackage = directory.getPackage().getParentPackage();
       final PackageWrapper wrapper = new PackageWrapper(parentPackage);
       final PsiDirectory moveTarget = RefactoringUtil.createPackageDirectoryInSourceRoot(wrapper, sourceRoot);
