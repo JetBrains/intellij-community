@@ -247,7 +247,13 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
           return new ComplexTypeDescriptor(this, tag);
         }
       }
-      else if (equalsToSchemaName(tag, "include")) {
+      else if (equalsToSchemaName(tag, "include") ||
+               ( equalsToSchemaName(tag, "import") &&
+                 rootTag.getNamespaceByPrefix(
+                   XmlUtil.findPrefixByQualifiedName(name)
+                 ).equals(tag.getAttributeValue("namespace"))
+               )  
+              ) {
         final String schemaLocation = tag.getAttributeValue("schemaLocation");
         if (schemaLocation != null) {
           final XmlFile xmlFile = XmlUtil.findXmlFile(rootTag.getContainingFile(), schemaLocation);
