@@ -750,19 +750,19 @@ public class HighlightUtil {
             || PsiModifier.PRIVATE.equals(modifier)
             || PsiModifier.PROTECTED.equals(modifier)
             || PsiModifier.PACKAGE_LOCAL.equals(modifier)) {
-          isAllowed &= modifierOwnerParent instanceof PsiClass;
+          isAllowed = modifierOwnerParent instanceof PsiClass;
         }
       }
       else {
         if (PsiModifier.PUBLIC.equals(modifier)) {
-          isAllowed &= modifierOwnerParent instanceof PsiJavaFile
+          isAllowed = modifierOwnerParent instanceof PsiJavaFile
                        || modifierOwnerParent instanceof PsiClass;
         }
         else if (PsiModifier.STATIC.equals(modifier)
                  || PsiModifier.PRIVATE.equals(modifier)
                  || PsiModifier.PROTECTED.equals(modifier)
                  || PsiModifier.PACKAGE_LOCAL.equals(modifier)) {
-          isAllowed &= modifierOwnerParent instanceof PsiClass;
+          isAllowed = modifierOwnerParent instanceof PsiClass;
         }
 
         if (aClass.isEnum()) {
@@ -772,7 +772,7 @@ public class HighlightUtil {
     }
     else if (modifierOwner instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)modifierOwner;
-      isAllowed &= !(method.isConstructor() && ourConstructorNotAllowedModifiers.contains(modifier));
+      isAllowed = !(method.isConstructor() && ourConstructorNotAllowedModifiers.contains(modifier));
       if ((method.hasModifierProperty(PsiModifier.PUBLIC) || method.hasModifierProperty(PsiModifier.PROTECTED))
           && method.isConstructor()
           && method.getContainingClass() != null
@@ -798,17 +798,17 @@ public class HighlightUtil {
           || PsiModifier.SYNCHRONIZED.equals(modifier)
       ) {
         boolean isInterface = modifierOwnerParent instanceof PsiClass && !((PsiClass)modifierOwnerParent).isInterface();
-        isAllowed &= isInterface & !(modifierOwner instanceof PsiIntertypeField && PsiModifier.PROTECTED.equals(modifier));
+        isAllowed = isInterface & !(modifierOwner instanceof PsiIntertypeField && PsiModifier.PROTECTED.equals(modifier));
       }
     }
     else if (modifierOwner instanceof PsiClassInitializer) {
-      isAllowed &= PsiModifier.STATIC.equals(modifier);
+      isAllowed = PsiModifier.STATIC.equals(modifier);
     }
     else if (modifierOwner instanceof PsiLocalVariable || modifierOwner instanceof PsiParameter) {
-      isAllowed &= PsiModifier.FINAL.equals(modifier);
+      isAllowed = PsiModifier.FINAL.equals(modifier);
     }
     else if (modifierOwner instanceof PsiPointcutDef) {
-      isAllowed &=
+      isAllowed =
       PsiModifier.FINAL.equals(modifier) || PsiModifier.ABSTRACT.equals(modifier) ||
       PsiModifier.PUBLIC.equals(modifier) || PsiModifier.PRIVATE.equals(modifier) || PsiModifier.PACKAGE_LOCAL.equals(modifier);
     }
@@ -932,7 +932,7 @@ public class HighlightUtil {
     PsiExpression lOperand = expression.getLOperand();
     PsiExpression rOperand = expression.getROperand();
     PsiJavaToken operationSign = expression.getOperationSign();
-    if (operationSign != null && !TypeConversionUtil.isBinaryOperatorApplicable(operationSign.getTokenType(), lOperand, rOperand, false)) {
+    if (!TypeConversionUtil.isBinaryOperatorApplicable(operationSign.getTokenType(), lOperand, rOperand, false)) {
       String message = MessageFormat.format(BINARY_OPERATOR_NOT_APPLICABLE,
                                             new Object[]{
                                               operationSign.getText(),
@@ -1544,7 +1544,7 @@ public class HighlightUtil {
     if (assignment.getOperationSign().getTokenType() != JavaTokenType.EQ) return null;
     PsiExpression lExpression = assignment.getLExpression();
     PsiExpression rExpression = assignment.getRExpression();
-    if (lExpression == null || rExpression == null) return null;
+    if (rExpression == null) return null;
     lExpression = PsiUtil.deparenthesizeExpression(lExpression);
     rExpression = PsiUtil.deparenthesizeExpression(rExpression);
     if (!(lExpression instanceof PsiReferenceExpression) || !(rExpression instanceof PsiReferenceExpression)) return null;
