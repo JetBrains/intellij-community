@@ -206,7 +206,8 @@ public class TooBroadScopeInspection extends StatementInspection
             }
             assert statementParent != null;
 
-            if (statement instanceof PsiExpressionStatement)
+            final PsiExpression initializer = variable.getInitializer();
+            if (initializer == null && statement instanceof PsiExpressionStatement)
             {
                 final PsiExpressionStatement expressionStatement =
                         (PsiExpressionStatement)statement;
@@ -234,7 +235,7 @@ public class TooBroadScopeInspection extends StatementInspection
             }
 
             PsiDeclarationStatement newDeclaration =
-                    createNewDeclaration(variable, variable.getInitializer());
+                    createNewDeclaration(variable, initializer);
             if (statement instanceof PsiForStatement)
             {
                 final PsiForStatement forStatement = (PsiForStatement)statement;
@@ -325,7 +326,26 @@ public class TooBroadScopeInspection extends StatementInspection
             final PsiElement insertionPoint = ScopeUtils.findInsertionPoint(blockChild, variable);
             if (insertionPoint == null)
             {
+                if (initializer != null)
+                {
                 return;
+            }
+                if (!(blockChild instanceof PsiExpressionStatement))
+                {
+                    return;
+                }
+                final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)blockChild;
+                final PsiExpression expression = expressionStatement.getExpression();
+                if (!(expression instanceof PsiAssignmentExpression))
+                {
+                    return;
+                }
+                final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
+                final PsiExpression lExpression = assignmentExpression.getLExpression();
+                if (!lExpression.equals(firstReference))
+                {
+                    return;
+                }
             }
             registerVariableError(variable);
         }
