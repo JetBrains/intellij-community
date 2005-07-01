@@ -368,7 +368,8 @@ public class CompletionUtil {
         type = factory.createType(aClass, substitutor);
       }
     } else if (type instanceof PsiArrayType) {
-      return eliminateWildcardsInner(((PsiArrayType)type).getComponentType(), false).createArrayType();
+      final PsiType psiType = eliminateWildcardsInner(((PsiArrayType)type).getComponentType(), false);
+      if (psiType != null) return psiType.createArrayType();
     } else if (type instanceof PsiWildcardType) {
       return ((PsiWildcardType)type).getExtendsBound();
     }
