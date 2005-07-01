@@ -7,7 +7,6 @@ import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.TypeConversionUtil;
 
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -38,9 +37,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       int maxCheckLevel = -1;
       int[] checkLevels = new int[conflictsCount];
       int index = 0;
-      Iterator<CandidateInfo> iterator = conflicts.iterator();
-      while (iterator.hasNext()) {
-        final MethodCandidateInfo method = (MethodCandidateInfo)iterator.next();
+      for (final CandidateInfo conflict1 : conflicts) {
+        final MethodCandidateInfo method = (MethodCandidateInfo)conflict1;
         final int level = getCheckLevel(method, args);
         checkLevels[index++] = level;
         maxCheckLevel = Math.max(maxCheckLevel, level);
@@ -64,14 +62,12 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 outer:
       for(int i = 0; i < conflictsCount; i++){
         final CandidateInfo method = conflictsArray[i];
-        iterator = conflicts.iterator();
         // check overloading
-        while(iterator.hasNext()){
-          final CandidateInfo info = iterator.next();
-          if(info == method) break;
+        for (final CandidateInfo info : conflicts) {
+          if (info == method) break;
           // candidates should go in order of class hierarchy traversal
           // in order for this to work
-          if(checkOverriding(method, info)){
+          if (checkOverriding(method, info)) {
             conflicts.remove(method);
             continue outer;
           }

@@ -149,12 +149,11 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
           // namespace attributes processing (XSD declaration via ExternalResourceManager)
           if(containNamespaceDeclarations()){
             final XmlAttribute[] attributes = getAttributes();
-            for (int i = 0; i < attributes.length; i++) {
-              final XmlAttribute attribute = attributes[i];
-              if(attribute.isNamespaceDeclaration()){
+            for (final XmlAttribute attribute : attributes) {
+              if (attribute.isNamespaceDeclaration()) {
                 String ns = attribute.getValue();
                 if (ns == null) ns = XmlUtil.EMPTY_URI;
-                if(myNSDescriptorsMap == null || !myNSDescriptorsMap.containsKey(ns)) initializeSchema(ns, ns);
+                if (myNSDescriptorsMap == null || !myNSDescriptorsMap.containsKey(ns)) initializeSchema(ns, ns);
               }
             }
           }
@@ -334,12 +333,11 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
   public XmlTag[] findSubTags(final String name, final String namespace) {
     final XmlTag[] subTags = getSubTags();
     final List<XmlTag> result = new ArrayList<XmlTag>();
-    for (int i = 0; i < subTags.length; i++) {
-      final XmlTag subTag = subTags[i];
-      if(namespace == null){
-        if(name.equals(subTag.getName())) result.add(subTag);
+    for (final XmlTag subTag : subTags) {
+      if (namespace == null) {
+        if (name.equals(subTag.getName())) result.add(subTag);
       }
-      else if(name.equals(subTag.getLocalName()) && namespace.equals(subTag.getNamespace())){
+      else if (name.equals(subTag.getLocalName()) && namespace.equals(subTag.getNamespace())) {
         result.add(subTag);
       }
     }
@@ -365,10 +363,9 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
 
     final CharSequence charTableIndex = charTableByTree.intern(qname);
 
-    for (int i = 0; i < attributes.length; i++) {
-      final XmlAttribute attribute = attributes[i];
+    for (final XmlAttribute attribute : attributes) {
       final LeafElement attrNameElement = (LeafElement)XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(attribute.getNode());
-      if(attrNameElement.getInternedText() == charTableIndex) return attribute;
+      if (attrNameElement.getInternedText() == charTableIndex) return attribute;
     }
     return null;
   }
@@ -427,9 +424,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     if(myNamespaceMap == null && containNamespaceDeclarations()){
       myNamespaceMap = new BidirectionalMap<String, String>();
       final XmlAttribute[] attributes = getAttributes();
-      for (int i = 0; i < attributes.length; i++) {
-        final XmlAttribute attribute = attributes[i];
-        if(attribute.isNamespaceDeclaration()){
+      for (final XmlAttribute attribute : attributes) {
+        if (attribute.isNamespaceDeclaration()) {
           final String name = attribute.getName();
           int splitIndex = name.indexOf(':');
           if (splitIndex < 0) {
@@ -446,8 +442,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     if(parent instanceof XmlDocument && myNamespaceMap == null){
       myNamespaceMap = new BidirectionalMap<String, String>();
       final String[][] defaultNamespace = XmlUtil.getDefaultNamespaces((XmlDocument)parent);
-      for (int i = 0; i < defaultNamespace.length; i++) {
-        final String[] prefix2ns = defaultNamespace[i];
+      for (final String[] prefix2ns : defaultNamespace) {
         myNamespaceMap.put(prefix2ns[0], prefix2ns[1]);
       }
     }
@@ -502,15 +497,14 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     final List<PsiElement> bodyElements = new ArrayList<PsiElement>(elements.length);
 
     boolean insideBody = false;
-    for (int i = 0; i < elements.length; i++) {
-      final PsiElement element = elements[i];
+    for (final PsiElement element : elements) {
       final ASTNode treeElement = element.getNode();
-      if(insideBody){
-        if(treeElement.getElementType() == XmlTokenType.XML_END_TAG_START) break;
-        if(!(element instanceof XmlTagChild)) continue;
+      if (insideBody) {
+        if (treeElement.getElementType() == XmlTokenType.XML_END_TAG_START) break;
+        if (!(element instanceof XmlTagChild)) continue;
         bodyElements.add(element);
       }
-      else if(treeElement.getElementType() == XmlTokenType.XML_TAG_END) insideBody = true;
+      else if (treeElement.getElementType() == XmlTokenType.XML_TAG_END) insideBody = true;
     }
 
     return myValue = new XmlTagValueImpl(bodyElements.toArray(XmlTagChild.EMPTY_ARRAY), this);
@@ -678,8 +672,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
         if (parentDescriptor != null && subTags.length > 0){
           final XmlElementDescriptor[] childElementDescriptors = parentDescriptor.getElementsDescriptors(XmlTagImpl.this);
           int subTagNum = -1;
-          for (int i = 0; i < childElementDescriptors.length; i++) {
-            final XmlElementDescriptor childElementDescriptor = childElementDescriptors[i];
+          for (final XmlElementDescriptor childElementDescriptor : childElementDescriptors) {
             final String childElementName = childElementDescriptor.getName();
             while (subTagNum < subTags.length - 1 && subTags[subTagNum + 1].getName().equals(childElementName)) {
               subTagNum++;
@@ -687,16 +680,17 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
             if (childElementName.equals(XmlChildRole.START_TAG_NAME_FINDER.findChild(myChild).getText())) {
               // insert child just after anchor
               // insert into the position specified by index
-              if(subTagNum >= 0){
-                  final ASTNode subTag = (ASTNode)subTags[subTagNum];
-                if(subTag.getTreeParent() != XmlTagImpl.this){
+              if (subTagNum >= 0) {
+                final ASTNode subTag = (ASTNode)subTags[subTagNum];
+                if (subTag.getTreeParent() != XmlTagImpl.this) {
                   // in entity
                   final XmlEntityRef entityRef = PsiTreeUtil.getParentOfType(subTags[subTagNum], XmlEntityRef.class);
-                  throw new IncorrectOperationException("Can't insert subtag to entity! Entity reference text: " + entityRef != null ? entityRef.getText() : "");
+                  throw new IncorrectOperationException(
+                    "Can't insert subtag to entity! Entity reference text: " + entityRef != null ? entityRef.getText() : "");
                 }
                 myNewElement = XmlTagImpl.super.addInternal(myChild, myChild, subTag, Boolean.FALSE);
               }
-              else{
+              else {
                 final ASTNode child = XmlChildRole.START_TAG_END_FINDER.findChild(XmlTagImpl.this);
                 myNewElement = XmlTagImpl.super.addInternal(myChild, myChild, child, Boolean.FALSE);
               }

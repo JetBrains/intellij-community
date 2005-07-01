@@ -118,9 +118,7 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
           }
         }
         else {
-          Iterator<PsiClass> iter = myPseudoImports.values().iterator();
-          while (iter.hasNext()) {
-            PsiClass aClass = iter.next();
+          for (PsiClass aClass : myPseudoImports.values()) {
             if (!processor.execute(aClass, substitutor)) return false;
           }
         }

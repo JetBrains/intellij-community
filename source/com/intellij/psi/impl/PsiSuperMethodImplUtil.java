@@ -90,8 +90,7 @@ public class PsiSuperMethodImplUtil {
 
     List<MethodSignatureBackedByPsiMethod> outputMethods = new ArrayList<MethodSignatureBackedByPsiMethod>();
     AllMethodsLoop:
-    for (int i = 0; i < sameSignatureMethods.size(); i++) {
-      final MethodSignatureBackedByPsiMethod methodSignature = sameSignatureMethods.get(i);
+    for (final MethodSignatureBackedByPsiMethod methodSignature : sameSignatureMethods) {
       PsiMethod superMethod = methodSignature.getMethod();
       PsiClass superClass = superMethod.getContainingClass();
       if (superClass == null || manager.areElementsEquivalent(superClass, parentClass)) continue;

@@ -45,9 +45,8 @@ public class AllClassesGetter implements ContextGetter{
     final GlobalSearchScope scope = context.getContainingFile().getResolveScope();
 
     final String[] names = cache.getAllClassNames(true);
-    for (int i = 0; i < names.length; i++) {
-      final String name = names[i];
-      if(prefix != null && !(CompletionUtil.checkName(name, prefix) || myMatcher.matches(name, myPattern))) continue;
+    for (final String name : names) {
+      if (prefix != null && !(CompletionUtil.checkName(name, prefix) || myMatcher.matches(name, myPattern))) continue;
       classesList.addAll(Arrays.asList(cache.getClassesByName(name, scope)));
     }
 

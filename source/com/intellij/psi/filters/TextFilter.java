@@ -53,16 +53,16 @@ public class TextFilter
 
   public boolean isAcceptable(Object element, PsiElement context){
     if(element != null) {
-      for(int i = 0; i < myValue.length; i++){
-        final String value = myValue[i];
-        if(value == null)
+      for (final String value : myValue) {
+        if (value == null) {
           return true;
-        final String elementText = getTextByElement(element);
-        if(myCaseInsensitiveFlag){
-          if(value.equalsIgnoreCase(elementText)) return true;
         }
-        else{
-          if(value.equals(elementText)) return true;
+        final String elementText = getTextByElement(element);
+        if (myCaseInsensitiveFlag) {
+          if (value.equalsIgnoreCase(elementText)) return true;
+        }
+        else {
+          if (value.equals(elementText)) return true;
         }
       }
     }

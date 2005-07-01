@@ -405,8 +405,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     String text = "void method() ";
     if (references.length > 0) text += "throws ";
     String sep = "";
-    for (int i = 0; i < references.length; i++) {
-      final PsiJavaCodeReferenceElement reference = references[i];
+    for (final PsiJavaCodeReferenceElement reference : references) {
       text += sep + reference.getCanonicalText();
       sep = ",";
     }
@@ -739,12 +738,12 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   public PsiComment createCommentFromText(String text, PsiElement context) throws IncorrectOperationException {
     PsiJavaFile aFile = createDummyJavaFile(text);
     PsiElement[] children = aFile.getChildren();
-    for (int i = 0; i < children.length; i++) {
-      if (children[i] instanceof PsiComment) {
-        if (!children[i].getText().equals(text)) {
+    for (PsiElement aChildren : children) {
+      if (aChildren instanceof PsiComment) {
+        if (!aChildren.getText().equals(text)) {
           throw new IncorrectOperationException("Incorrect comment \"" + text + "\".");
         }
-        PsiComment comment = (PsiComment)children[i];
+        PsiComment comment = (PsiComment)aChildren;
         new DummyHolder(myManager, (TreeElement)SourceTreeToPsiMap.psiElementToTree(comment), context);
         return comment;
       }

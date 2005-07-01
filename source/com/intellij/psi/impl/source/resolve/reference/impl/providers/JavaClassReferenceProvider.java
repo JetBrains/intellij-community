@@ -52,10 +52,8 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider{
     if(position == null) return;
     if(hint == null || hint.shouldProcess(PsiPackage.class) || hint.shouldProcess(PsiClass.class)){
       final List<PsiElement> cachedPackages = getDefaultPackages(position);
-      final Iterator<PsiElement> iterator = cachedPackages.iterator();
-      while (iterator.hasNext()) {
-        final PsiElement psiPackage = iterator.next();
-        if(!processor.execute(psiPackage, PsiSubstitutor.EMPTY)) return;
+      for (final PsiElement psiPackage : cachedPackages) {
+        if (!processor.execute(psiPackage, PsiSubstitutor.EMPTY)) return;
       }
     }
   }

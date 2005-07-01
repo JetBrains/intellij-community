@@ -29,8 +29,7 @@ class ClsDocCommentImpl extends ClsElementImpl implements PsiDocComment, JavaTok
     getTags();
     StringBuffer buffer = new StringBuffer();
     buffer.append("/**\n");
-    for(int i = 0; i < myTags.length; i++){
-      PsiDocTag tag = myTags[i];
+    for (PsiDocTag tag : myTags) {
       buffer.append("* ");
       buffer.append(tag.getText());
       buffer.append("\n");

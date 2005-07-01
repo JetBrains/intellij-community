@@ -80,8 +80,7 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
     ArrayList<PsiDocTag> array = new ArrayList<PsiDocTag>();
     PsiDocTag[] tags = getTags();
     name = "@" + name;
-    for (int i = 0; i < tags.length; i++) {
-      PsiDocTag tag = tags[i];
+    for (PsiDocTag tag : tags) {
       if (tag.getNameElement().getText().equals(name)) {
         array.add(tag);
       }

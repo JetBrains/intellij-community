@@ -75,9 +75,9 @@ public class PsiDeclarationStatementImpl extends CompositePsiElement implements 
   public boolean processDeclarations(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
     PsiElement[] decls = getDeclaredElements();
-    for (int i = 0; i < decls.length; i++) {
-      if (decls[i] != lastParent) {
-        if (!processor.execute(decls[i], substitutor)) return false;
+    for (PsiElement decl : decls) {
+      if (decl != lastParent) {
+        if (!processor.execute(decl, substitutor)) return false;
       }
       else {
         final ElementClassHint hint = processor.getHint(ElementClassHint.class);

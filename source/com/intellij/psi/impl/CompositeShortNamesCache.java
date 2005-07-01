@@ -54,16 +54,14 @@ public class CompositeShortNamesCache implements PsiShortNamesCache {
   }
 
   public void runStartupActivity() {
-    for (int i = 0; i < myCaches.size(); i++) {
-      PsiShortNamesCache cache = myCaches.get(i);
+    for (PsiShortNamesCache cache : myCaches) {
       cache.runStartupActivity();
     }
   }
 
   public PsiFile[] getFilesByName(String name) {
     Merger<PsiFile> merger = new Merger<PsiFile>();
-    for (int i = 0; i < myCaches.size(); i++) {
-      PsiShortNamesCache cache = myCaches.get(i);
+    for (PsiShortNamesCache cache : myCaches) {
       merger.add(cache.getFilesByName(name));
     }
     PsiFile[] result = merger.getResult();
@@ -72,8 +70,7 @@ public class CompositeShortNamesCache implements PsiShortNamesCache {
 
   public String[] getAllFileNames() {
     Merger<String> merger = new Merger<String>();
-    for (int i = 0; i < myCaches.size(); i++) {
-      PsiShortNamesCache cache = myCaches.get(i);
+    for (PsiShortNamesCache cache : myCaches) {
       merger.add(cache.getAllFileNames());
     }
     String[] result = merger.getResult();
@@ -82,8 +79,7 @@ public class CompositeShortNamesCache implements PsiShortNamesCache {
 
   public PsiClass[] getClassesByName(String name, GlobalSearchScope scope) {
     Merger<PsiClass> merger = new Merger<PsiClass>();
-    for (int i = 0; i < myCaches.size(); i++) {
-      PsiShortNamesCache cache = myCaches.get(i);
+    for (PsiShortNamesCache cache : myCaches) {
       merger.add(cache.getClassesByName(name, scope));
     }
     PsiClass[] result = merger.getResult();
@@ -92,8 +88,7 @@ public class CompositeShortNamesCache implements PsiShortNamesCache {
 
   public String[] getAllClassNames(boolean searchInLibraries) {
     Merger<String> merger = new Merger<String>();
-    for (int i = 0; i < myCaches.size(); i++) {
-      PsiShortNamesCache cache = myCaches.get(i);
+    for (PsiShortNamesCache cache : myCaches) {
       merger.add(cache.getAllClassNames(searchInLibraries));
     }
     String[] result = merger.getResult();
@@ -101,16 +96,14 @@ public class CompositeShortNamesCache implements PsiShortNamesCache {
   }
 
   public void getAllClassNames(boolean searchInLibraries, HashSet<String> dest) {
-    for (int i = 0; i < myCaches.size(); i++) {
-      PsiShortNamesCache cache = myCaches.get(i);
+    for (PsiShortNamesCache cache : myCaches) {
       cache.getAllClassNames(searchInLibraries, dest);
     }
   }
 
   public PsiMethod[] getMethodsByName(String name, GlobalSearchScope scope) {
     Merger<PsiMethod> merger = new Merger<PsiMethod>();
-    for (int i = 0; i < myCaches.size(); i++) {
-      PsiShortNamesCache cache = myCaches.get(i);
+    for (PsiShortNamesCache cache : myCaches) {
       merger.add(cache.getMethodsByName(name, scope));
     }
     PsiMethod[] result = merger.getResult();
@@ -119,8 +112,7 @@ public class CompositeShortNamesCache implements PsiShortNamesCache {
 
   public String[] getAllMethodNames(boolean searchInLibraries) {
     Merger<String> merger = new Merger<String>();
-    for (int i = 0; i < myCaches.size(); i++) {
-      PsiShortNamesCache cache = myCaches.get(i);
+    for (PsiShortNamesCache cache : myCaches) {
       merger.add(cache.getAllMethodNames(searchInLibraries));
     }
     String[] result = merger.getResult();
@@ -128,16 +120,14 @@ public class CompositeShortNamesCache implements PsiShortNamesCache {
   }
 
   public void getAllMethodNames(boolean searchInLibraries, HashSet<String> set) {
-    for (int i = 0; i < myCaches.size(); i++) {
-      PsiShortNamesCache cache = myCaches.get(i);
+    for (PsiShortNamesCache cache : myCaches) {
       cache.getAllMethodNames(searchInLibraries, set);
     }
   }
 
   public PsiField[] getFieldsByName(String name, GlobalSearchScope scope) {
     Merger<PsiField> merger = new Merger<PsiField>();
-    for (int i = 0; i < myCaches.size(); i++) {
-      PsiShortNamesCache cache = myCaches.get(i);
+    for (PsiShortNamesCache cache : myCaches) {
       merger.add(cache.getFieldsByName(name, scope));
     }
     PsiField[] result = merger.getResult();
@@ -146,8 +136,7 @@ public class CompositeShortNamesCache implements PsiShortNamesCache {
 
   public String[] getAllFieldNames(boolean searchInLibraries) {
     Merger<String> merger = new Merger<String>();
-    for (int i = 0; i < myCaches.size(); i++) {
-      PsiShortNamesCache cache = myCaches.get(i);
+    for (PsiShortNamesCache cache : myCaches) {
       merger.add(cache.getAllFieldNames(searchInLibraries));
     }
     String[] result = merger.getResult();
@@ -155,8 +144,7 @@ public class CompositeShortNamesCache implements PsiShortNamesCache {
   }
 
   public void getAllFieldNames(boolean checkBoxState, HashSet<String> set) {
-    for (int i = 0; i < myCaches.size(); i++) {
-      PsiShortNamesCache cache = myCaches.get(i);
+    for (PsiShortNamesCache cache : myCaches) {
       cache.getAllFieldNames(checkBoxState, set);
     }
   }

@@ -105,8 +105,7 @@ public class PsiTypeParameterListImpl extends SlaveRepositoryPsiElement implemen
 
   public boolean processDeclarations(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
     final PsiTypeParameter[] parameters = getTypeParameters();
-    for (int i = 0; i < parameters.length; i++) {
-      final PsiTypeParameter parameter = parameters[i];
+    for (final PsiTypeParameter parameter : parameters) {
       if (!processor.execute(parameter, substitutor)) return false;
     }
     return true;

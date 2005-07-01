@@ -36,16 +36,16 @@ public class AssignableToFilter implements InitializableFilter{
   public void init(Object[] type){
     myFilter = new OrFilter();
     final List<ElementFilter> filters = new ArrayList<ElementFilter>();
-    for (int i = 0; i < type.length; i++) {
-      final Object o = type[i];
+    for (final Object o : type) {
       PsiType currentType = null;
-      if(o instanceof PsiType)
-        currentType = (PsiType) o;
-      else if(o instanceof PsiClass){
+      if (o instanceof PsiType) {
+        currentType = (PsiType)o;
+      }
+      else if (o instanceof PsiClass) {
         final PsiClass psiClass = (PsiClass)o;
         currentType = psiClass.getManager().getElementFactory().createType(psiClass);
       }
-      if(currentType != null){
+      if (currentType != null) {
         filters.add(new AssignableToFilter(currentType));
       }
     }

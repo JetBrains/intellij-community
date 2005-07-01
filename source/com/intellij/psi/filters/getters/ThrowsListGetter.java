@@ -22,10 +22,11 @@ public class ThrowsListGetter implements ContextGetter{
     final PsiMethod method = PsiTreeUtil.getContextOfType(context, PsiMethod.class, true);
     if(method != null){
       final PsiClassType[] refs = method.getThrowsList().getReferencedTypes();
-      for(int i = 0; i < refs.length; i++){
-        final PsiClass exception = refs[i].resolve();
-        if(exception != null)
+      for (PsiClassType ref : refs) {
+        final PsiClass exception = ref.resolve();
+        if (exception != null) {
           throwsSet.add(exception);
+        }
       }
     }
     return throwsSet.toArray();

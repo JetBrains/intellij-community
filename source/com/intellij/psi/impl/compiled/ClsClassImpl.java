@@ -304,8 +304,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
           refs[i] = new ClsJavaCodeReferenceElementImpl(null, refTexts[i]);
         }
         myExtendsList = new ClsReferenceListImpl(this, refs, PsiKeyword.EXTENDS);
-        for (int i = 0; i < refs.length; i++) {
-          ClsJavaCodeReferenceElementImpl ref = refs[i];
+        for (ClsJavaCodeReferenceElementImpl ref : refs) {
           ref.setParent(myExtendsList);
         }
       }
@@ -387,8 +386,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
             refs[i] = new ClsJavaCodeReferenceElementImpl(null, refTexts[i]);
           }
           myImplementsList = new ClsReferenceListImpl(this, refs, PsiKeyword.IMPLEMENTS);
-          for (int i = 0; i < refs.length; i++) {
-            ClsJavaCodeReferenceElementImpl ref = refs[i];
+          for (ClsJavaCodeReferenceElementImpl ref : refs) {
             ref.setParent(myImplementsList);
           }
         }
@@ -621,8 +619,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
         String prefix = name + "$";
         ArrayList<PsiClass> array = new ArrayList<PsiClass>();
         VirtualFile[] children = parentFile.getChildren();
-        for (int i = 0; i < children.length; i++) {
-          VirtualFile child = children[i];
+        for (VirtualFile child : children) {
           String childName = child.getNameWithoutExtension();
           if (childName.startsWith(prefix)) {
             String innerName = childName.substring(prefix.length());
@@ -676,8 +673,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
       if (myCachedFieldsMap == null) {
         myCachedFieldsMap = new HashMap<String, PsiField>();
         final PsiField[] fields = getFields();
-        for (int i = 0; i < fields.length; i++) {
-          final PsiField field = fields[i];
+        for (final PsiField field : fields) {
           myCachedFieldsMap.put(field.getName(), field);
         }
       }
@@ -700,8 +696,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
         myCachedMethodsMap = new HashMap<String, PsiMethod[]>();
         Map<String, List<PsiMethod>> cachedMethodsMap = new HashMap<String, List<PsiMethod>>();
         final PsiMethod[] methods = getMethods();
-        for (int i = 0; i < methods.length; i++) {
-          final PsiMethod method = methods[i];
+        for (final PsiMethod method : methods) {
           List<PsiMethod> list = cachedMethodsMap.get(method.getName());
           if (list == null) {
             list = new ArrayList<PsiMethod>(1);
@@ -709,9 +704,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
           }
           list.add(method);
         }
-        final Iterator<String> iterator = cachedMethodsMap.keySet().iterator();
-        while (iterator.hasNext()) {
-          final String methodName = iterator.next();
+        for (final String methodName : cachedMethodsMap.keySet()) {
           myCachedMethodsMap.put(methodName, cachedMethodsMap.get(methodName).toArray(PsiMethod.EMPTY_ARRAY));
         }
       }
@@ -735,8 +728,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
       if (myCachedInnersMap == null) {
         myCachedInnersMap = new HashMap<String, PsiClass>();
         final PsiClass[] classes = getInnerClasses();
-        for (int i = 0; i < classes.length; i++) {
-          final PsiClass psiClass = classes[i];
+        for (final PsiClass psiClass : classes) {
           myCachedInnersMap.put(psiClass.getName(), psiClass);
         }
       }
@@ -975,12 +967,12 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
       }
     }
     PsiMethod[] methods = getMethods();
-    for (int i = 0; i < methods.length; i++) {
-      buffer.append(((ClsElementImpl)methods[i]).getMirrorText());
+    for (PsiMethod method : methods) {
+      buffer.append(((ClsElementImpl)method).getMirrorText());
     }
     PsiClass[] classes = getInnerClasses();
-    for (int i = 0; i < classes.length; i++) {
-      buffer.append(((ClsElementImpl)classes[i]).getMirrorText());
+    for (PsiClass aClass : classes) {
+      buffer.append(((ClsElementImpl)aClass).getMirrorText());
     }
     buffer.append('}');
     return buffer.toString();
@@ -1066,21 +1058,20 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
       final VirtualFile vFile = getContainingFile().getVirtualFile();
       ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
       final OrderEntry[] orderEntries = projectFileIndex.getOrderEntriesForFile(vFile);
-      for (int i = 0; i < orderEntries.length; i++) {
-        VirtualFile[] files = orderEntries[i].getFiles(OrderRootType.SOURCES);
-        for (int j = 0; j < files.length; j++) {
-          VirtualFile source = files[j].findFileByRelativePath(relativeFilePath);
+      for (OrderEntry orderEntry : orderEntries) {
+        VirtualFile[] files = orderEntry.getFiles(OrderRootType.SOURCES);
+        for (VirtualFile file : files) {
+          VirtualFile source = file.findFileByRelativePath(relativeFilePath);
           if (source != null) {
             PsiFile psiSource = getManager().findFile(source);
             if (psiSource == null) continue;
             if (!(psiSource instanceof PsiJavaFile)) {
               LOG.error("Not PsiJavaFile:" + psiSource);
-            continue;
+              continue;
             }
             PsiJavaFile psiJavaFile = (PsiJavaFile)psiSource;
             PsiClass[] classes = psiJavaFile.getClasses();
-            for (int k = 0; k < classes.length; k++) {
-              PsiClass aClass = classes[k];
+            for (PsiClass aClass : classes) {
               if (aClass.getName().equals(getName())) return aClass;
             }
           }
@@ -1092,8 +1083,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
       PsiClass parentSourceMirror = parentClass.getSourceMirrorClass();
       if (parentSourceMirror == null) return null;
       PsiClass[] innerClasses = parentSourceMirror.getInnerClasses();
-      for (int i = 0; i < innerClasses.length; i++) {
-        PsiClass innerClass = innerClasses[i];
+      for (PsiClass innerClass : innerClasses) {
         if (innerClass.getName().equals(getName())) return innerClass;
       }
     }

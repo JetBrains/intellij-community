@@ -27,9 +27,8 @@ public class FilterGetter implements ContextGetter{
   public Object[] get(PsiElement context, CompletionContext completionContext){
     final List results = new ArrayList();
     final Object[] elements = myBaseGetter.get(context, null);
-    for(int i = 0; i < elements.length; i++){
-      final Object element = elements[i];
-      if(myFilter.isClassAcceptable(element.getClass()) && myFilter.isAcceptable(element, context)){
+    for (final Object element : elements) {
+      if (myFilter.isClassAcceptable(element.getClass()) && myFilter.isAcceptable(element, context)) {
         results.add(element);
       }
     }

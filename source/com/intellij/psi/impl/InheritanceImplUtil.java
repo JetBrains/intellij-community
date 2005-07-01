@@ -106,8 +106,8 @@ public class InheritanceImplUtil {
   }
 
   private static boolean checkInheritor(PsiClass[] supers, PsiClass baseClass, boolean checkDeep, List<PsiClass> checkedClasses) {
-    for (int i = 0; i < supers.length; i++) {
-      if (checkInheritor(supers[i], baseClass, checkDeep, checkedClasses)) {
+    for (PsiClass aSuper : supers) {
+      if (checkInheritor(aSuper, baseClass, checkDeep, checkedClasses)) {
         return true;
       }
     }

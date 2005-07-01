@@ -216,14 +216,13 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
         final XmlAttribute[] attributes = declarationTag.getAttributes();
         final XmlAttributeDescriptor[] descriptors = parentDescriptor.getAttributesDescriptors();
         outer:
-        for(int i = 0; i < descriptors.length; i++){
-          for (int j = 0; j < attributes.length; j++) {
-            final XmlAttribute attribute = attributes[j];
-            if(attribute == XmlAttributeImpl.this) continue;
+        for (XmlAttributeDescriptor descriptor1 : descriptors) {
+          for (final XmlAttribute attribute : attributes) {
+            if (attribute == XmlAttributeImpl.this) continue;
             final String name = attribute.getName();
-            if(name != null && name.equals(descriptors[i].getName())) continue outer;
+            if (name != null && name.equals(descriptor1.getName())) continue outer;
           }
-          final XmlAttributeDescriptor descriptor = descriptors[i];
+          final XmlAttributeDescriptor descriptor = descriptor1;
           variants.add(descriptor.getName());
         }
       }

@@ -51,8 +51,7 @@ public class JavadocManagerImpl implements JavadocManager {
   public JavadocTagInfo[] getTagInfos(PsiElement context) {
     List result = new ArrayList();
 
-    for (int i = 0; i < myInfos.length; i++) {
-      JavadocTagInfo info = myInfos[i];
+    for (JavadocTagInfo info : myInfos) {
       if (info.isValidInContext(context)) result.add(info);
     }
 
@@ -60,8 +59,7 @@ public class JavadocManagerImpl implements JavadocManager {
   }
 
   public JavadocTagInfo getTagInfo(String name) {
-    for (int i = 0; i < myInfos.length; i++) {
-      JavadocTagInfo info = myInfos[i];
+    for (JavadocTagInfo info : myInfos) {
       if (info.getName().equals(name)) return info;
     }
 

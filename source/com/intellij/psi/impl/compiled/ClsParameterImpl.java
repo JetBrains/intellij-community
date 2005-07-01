@@ -93,8 +93,8 @@ public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, Cl
   public String getMirrorText() {
     StringBuffer buffer = new StringBuffer();
     ClsAnnotationImpl[] annotations = getAnnotations();
-    for (int i = 0; i < annotations.length; i++) {
-      buffer.append(annotations[i].getMirrorText());
+    for (ClsAnnotationImpl annotation : annotations) {
+      buffer.append(annotation.getMirrorText());
       buffer.append(" ");
     }
     buffer.append(((ClsElementImpl)getTypeElement()).getMirrorText());
@@ -120,12 +120,12 @@ public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, Cl
       PsiParameter[] parms = ((PsiParameterList)getParent()).getParameters();
       AttemptsLoop:
       while (true) {
-        for (int i = 0; i < parms.length; i++) {
-          if (parms[i] == this) break AttemptsLoop;
-          String name1 = ((ClsParameterImpl)parms[i]).getMirrorName();
+        for (PsiParameter parm : parms) {
+          if (parm == this) break AttemptsLoop;
+          String name1 = ((ClsParameterImpl)parm).getMirrorName();
           if (name.equals(name1)) {
-                   name = nextName(name);
-          continue AttemptsLoop;
+            name = nextName(name);
+            continue AttemptsLoop;
           }
         }
       }

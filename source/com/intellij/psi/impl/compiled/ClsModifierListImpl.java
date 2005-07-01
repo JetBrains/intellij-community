@@ -83,8 +83,7 @@ public class ClsModifierListImpl extends ClsElementImpl implements PsiModifierLi
   public String getMirrorText() {
     StringBuffer buffer = new StringBuffer();
     PsiAnnotation[] annotations = getAnnotations();
-    for (int i = 0; i < annotations.length; i++) {
-      PsiAnnotation annotation = annotations[i];
+    for (PsiAnnotation annotation : annotations) {
       buffer.append(((ClsAnnotationImpl)annotation).getMirrorText());
       buffer.append(" ");
     }

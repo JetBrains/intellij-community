@@ -24,8 +24,8 @@ public class OrFilter
   public OrFilter(){}
 
   public OrFilter(ElementFilter[] filters){
-    for(int i = 0; i < filters.length; i++){
-      addFilter(filters[i]);
+    for (ElementFilter filter : filters) {
+      addFilter(filter);
     }
   }
 
@@ -44,9 +44,9 @@ public class OrFilter
   public boolean isAcceptable(Object element, PsiElement context){
     if(myFilters.isEmpty())
       return true;
-    for(int i = 0; i < myFilters.size(); i++){
-      final ElementFilter elementFilter = (ElementFilter) myFilters.get(i);
-      if(elementFilter.isAcceptable(element, context)){
+    for (Object myFilter : myFilters) {
+      final ElementFilter elementFilter = (ElementFilter)myFilter;
+      if (elementFilter.isAcceptable(element, context)) {
         return true;
       }
     }
@@ -56,9 +56,9 @@ public class OrFilter
   public boolean isClassAcceptable(Class elementClass){
     if(myFilters.isEmpty())
       return true;
-    for(int i = 0; i < myFilters.size(); i++){
-      final ElementFilter elementFilter = (ElementFilter) myFilters.get(i);
-      if(elementFilter.isClassAcceptable(elementClass)){
+    for (Object myFilter : myFilters) {
+      final ElementFilter elementFilter = (ElementFilter)myFilter;
+      if (elementFilter.isClassAcceptable(elementClass)) {
         return true;
       }
     }

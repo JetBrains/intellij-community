@@ -23,12 +23,12 @@ public class AssignableGroupFilter extends OrFilter implements InitializableFilt
   }
 
   public void init(Object[] classes){
-    for(int i = 0; i < classes.length; i++){
-      if (classes[i] instanceof PsiClass) {
-        addFilter(new InheritorFilter((PsiClass)classes[i]));
+    for (Object aClass : classes) {
+      if (aClass instanceof PsiClass) {
+        addFilter(new InheritorFilter((PsiClass)aClass));
       }
-      if (classes[i] instanceof PsiType) {
-        addFilter(new AssignableFromFilter((PsiType)classes[i]));
+      if (aClass instanceof PsiType) {
+        addFilter(new AssignableFromFilter((PsiType)aClass));
       }
     }
     addFilter(new FalseFilter());

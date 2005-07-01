@@ -190,8 +190,8 @@ public class JDParser {
   public static String toLines(ArrayList l) {
     if (l == null || l.size() == 0) return null;
     StringBuffer sb = new StringBuffer();
-    for (int i = 0; i < l.size(); i++) {
-      String s = (String)l.get(i);
+    for (Object aL : l) {
+      String s = (String)aL;
       if (sb.length() > 0) {
         sb.append(lineSeparator);
       }

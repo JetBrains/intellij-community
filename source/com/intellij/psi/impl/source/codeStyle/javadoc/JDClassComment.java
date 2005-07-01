@@ -17,8 +17,8 @@ public class JDClassComment extends JDComment {
 
   protected void generateSpecial(String prefix, StringBuffer sb) {
     if (!isNull(authorsList)) {
-      for (int i = 0; i < authorsList.size(); i++) {
-        String s = (String) authorsList.get(i);
+      for (Object aAuthorsList : authorsList) {
+        String s = (String)aAuthorsList;
         sb.append(prefix);
         sb.append("@author ");
         sb.append(myFormatter.getParser().splitIntoCLines(s, prefix + "        ", false));

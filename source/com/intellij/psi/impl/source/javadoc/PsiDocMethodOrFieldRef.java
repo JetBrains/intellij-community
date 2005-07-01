@@ -44,8 +44,8 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
 
     final PsiMethod[] methods = getAllMethods(scope, this);
 
-    nextMethod: for (int i = 0; i < methods.length; i++) {
-      PsiMethod method = methods[i];
+    nextMethod:
+    for (PsiMethod method : methods) {
       if (!method.getName().equals(name)) continue;
 
       if (signature == null) {
@@ -59,12 +59,11 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
           if (!TypeConversionUtil.erasure(parameter.getType()).equals(signature[j])) continue nextMethod;
         }
 
-        return new MyReference(method){
-          public Object[] getVariants(){
+        return new MyReference(method) {
+          public Object[] getVariants() {
             final List<PsiMethod> lst = new ArrayList<PsiMethod>();
-            for(int i = 0; i < methods.length; i++){
-              final PsiMethod method = methods[i];
-              if(name.equals(method.getName())){
+            for (PsiMethod method : methods) {
+              if (name.equals(method.getName())) {
                 lst.add(method);
               }
             }
@@ -77,8 +76,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     if (signature != null) return new MyReference(null);
 
     final PsiVariable[] vars = getAllVariables(scope, this);
-    for (int i = 0; i < vars.length; i++) {
-      PsiVariable var = vars[i];
+    for (PsiVariable var : vars) {
       if (!var.getName().equals(name)) continue;
       return new MyReference(var);
     }

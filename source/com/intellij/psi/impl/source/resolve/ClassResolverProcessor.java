@@ -50,8 +50,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
       // normalizing
       if (myAccessibleResultsFlag && myCandidates.size() > 1) {
         final ClassCandidateInfo[] infos = myCandidates.toArray(new ClassCandidateInfo[myCandidates.size()]);
-        for (int i = 0; i < infos.length; i++) {
-          final ClassCandidateInfo info = infos[i];
+        for (final ClassCandidateInfo info : infos) {
           if (!info.isAccessible()) {
             myCandidates.remove(info);
           }
@@ -119,9 +118,8 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
         else {
           String fqName = aClass.getQualifiedName();
           if (fqName != null) {
-            final Iterator iterator = myCandidates.iterator();
-            while (iterator.hasNext()) {
-              final ClassCandidateInfo info = (ClassCandidateInfo)iterator.next();
+            for (final CandidateInfo myCandidate : myCandidates) {
+              final ClassCandidateInfo info = (ClassCandidateInfo)myCandidate;
               if (fqName.equals(info.getCandidate().getQualifiedName())) {
                 return true;
               }

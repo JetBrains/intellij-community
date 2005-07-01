@@ -53,17 +53,15 @@ public class VfsIndexer {
     }
 
     int childrenCount = 0;
-    for (int i = 0; i < children.length; i++) {
-      VirtualFile child = children[i];
+    for (VirtualFile child : children) {
       if (filter.accept(child)) childrenCount++;
     }
 
     if (out != null){
       out.writeInt(childrenCount);
     }
-    for (int i = 0; i < children.length; i++) {
-      VirtualFile child = children[i];
-      if (filter.accept(child)){
+    for (VirtualFile child : children) {
+      if (filter.accept(child)) {
         _writeFileIndex(out, child, filter, result);
       }
     }

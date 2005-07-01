@@ -73,8 +73,8 @@ public class PsiLabeledStatementImpl extends CompositePsiElement implements PsiL
   public boolean processDeclarations(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
     if (lastParent != null && lastParent.getParent() != this){
       PsiElement[] children = getChildren();
-      for(int i = 0; i < children.length; i++){
-        if (!PsiScopesUtil.processScope(children[i], processor, substitutor, null, place)){
+      for (PsiElement aChildren : children) {
+        if (!PsiScopesUtil.processScope(aChildren, processor, substitutor, null, place)) {
           return false;
         }
       }

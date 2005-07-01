@@ -27,20 +27,19 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
     final XmlTag[] subTags = getSubTags();
     final List<XmlTag> result = new ArrayList<XmlTag>();
 
-    for (int i = 0; i < subTags.length; i++) {
-      final XmlTag subTag = subTags[i];
-      if(namespace == null) {
+    for (final XmlTag subTag : subTags) {
+      if (namespace == null) {
         String tagName = subTag.getName();
         if (tagName == null) continue;
         tagName = tagName.toLowerCase();
 
-        if(name == null || name.equals(tagName)){
+        if (name == null || name.equals(tagName)) {
           result.add(subTag);
         }
       }
       else if (namespace.equals(subTag.getNamespace()) &&
                (name == null || name.equals(subTag.getLocalName()))
-              ) {
+        ) {
         result.add(subTag);
       }
     }
@@ -52,10 +51,8 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
     final XmlAttribute[] attributes = getAttributes();
     name = name.toLowerCase();
 
-    for (int i = 0; i < attributes.length; i++) {
-      final XmlAttribute attribute = attributes[i];
-
-      if(attribute.getName().toLowerCase().equals(name)) {
+    for (final XmlAttribute attribute : attributes) {
+      if (attribute.getName().toLowerCase().equals(name)) {
         return attribute;
       }
     }

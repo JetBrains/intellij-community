@@ -36,8 +36,7 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement,N
 
   public void acceptChildren(PsiElementVisitor visitor) {
     PsiElement[] children = getChildren();
-    for (int i = 0; i < children.length; i++) {
-      PsiElement child = children[i];
+    for (PsiElement child : children) {
       child.accept(visitor);
     }
   }

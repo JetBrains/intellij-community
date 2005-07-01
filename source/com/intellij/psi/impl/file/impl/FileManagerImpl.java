@@ -187,8 +187,7 @@ public class FileManagerImpl implements FileManager {
   public void checkConsistency() {
     Map<VirtualFile, PsiFile> fileToPsiFileMap = myVFileToPsiFileMap;
     myVFileToPsiFileMap = new WeakValueHashMap<VirtualFile, PsiFile>();
-    for (Iterator<VirtualFile> iterator = fileToPsiFileMap.keySet().iterator(); iterator.hasNext();) {
-      VirtualFile vFile = iterator.next();
+    for (VirtualFile vFile : fileToPsiFileMap.keySet()) {
       PsiFile psiFile = fileToPsiFileMap.get(vFile);
 
       LOG.assertTrue(vFile.isValid());
@@ -204,9 +203,7 @@ public class FileManagerImpl implements FileManager {
 
     com.intellij.util.containers.HashMap<VirtualFile, PsiDirectory> fileToPsiDirMap = myVFileToPsiDirMap;
     myVFileToPsiDirMap = new com.intellij.util.containers.HashMap<VirtualFile, PsiDirectory>();
-    for (Iterator<VirtualFile> iterator = fileToPsiDirMap.keySet().iterator(); iterator.hasNext();) {
-      VirtualFile vFile = iterator.next();
-
+    for (VirtualFile vFile : fileToPsiDirMap.keySet()) {
       LOG.assertTrue(vFile.isValid());
       PsiDirectory psiDir1 = findDirectory(vFile);
       LOG.assertTrue(psiDir1 != null);
@@ -333,8 +330,7 @@ public class FileManagerImpl implements FileManager {
       final ProjectRootManager rootManager = myProjectRootManager;
       final VirtualFile[] sourceRoots = rootManager.getContentSourceRoots();
       final ProjectFileIndex fileIndex = rootManager.getFileIndex();
-      for (int i = 0; i < sourceRoots.length; i++) {
-        final VirtualFile sourceRoot = sourceRoots[i];
+      for (final VirtualFile sourceRoot : sourceRoots) {
         final String packageName = fileIndex.getPackageNameByDirectory(sourceRoot);
         if (packageName != null && packageName.length() > 0) {
           myNontrivialPackagePrefixes.add(packageName);
@@ -429,8 +425,7 @@ public class FileManagerImpl implements FileManager {
     if (classIds.length == 0) return PsiClass.EMPTY_ARRAY;
 
     ArrayList<PsiClass> result = new ArrayList<PsiClass>();
-    for (int i = 0; i < classIds.length; i++) {
-      long classId = classIds[i];
+    for (long classId : classIds) {
       PsiClass aClass = (PsiClass)myManager.getRepositoryElementsManager().findOrCreatePsiElementById(classId);
       VirtualFile vFile = aClass.getContainingFile().getVirtualFile();
       if (scope.contains(vFile)) {
@@ -457,8 +452,7 @@ public class FileManagerImpl implements FileManager {
           myCachedObjectClassMap = new HashMap<GlobalSearchScope, PsiClass>();
 
           Module[] modules = ModuleManager.getInstance(myManager.getProject()).getModules();
-          for (int i = 0; i < modules.length; i++) {
-            Module aModule = modules[i];
+          for (Module aModule : modules) {
             GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(aModule);
             PsiClass objectClass = _findClass(qName, moduleScope);
             myCachedObjectClassMap.put(moduleScope, objectClass);
@@ -506,11 +500,11 @@ public class FileManagerImpl implements FileManager {
 
       for (int type = 0; type < 2; type++) {
         VirtualFile[] vDirs = type == sourceType ? sourcePath : classPath;
-        for (int i = 0; i < vDirs.length; i++) {
-          if (vDirs[i] != null) {
+        for (VirtualFile vDir : vDirs) {
+          if (vDir != null) {
             VirtualFile vChild = type == sourceType
-                                 ? vDirs[i].findChild(name + ".java")
-                                 : vDirs[i].findChild(name + ".class");
+                                 ? vDir.findChild(name + ".java")
+                                 : vDir.findChild(name + ".class");
             if (vChild != null) {
               PsiFile file = findFile(vChild);
               if (file instanceof PsiJavaFile) {
@@ -561,8 +555,7 @@ public class FileManagerImpl implements FileManager {
 
   private static PsiClass findClassByName(PsiJavaFile scope, String name) {
     PsiClass[] classes = scope.getClasses();
-    for (int i = 0; i < classes.length; i++) {
-      PsiClass aClass = classes[i];
+    for (PsiClass aClass : classes) {
       if (aClass.getName().equals(name)) {
         return aClass;
       }
@@ -572,8 +565,7 @@ public class FileManagerImpl implements FileManager {
 
   private static PsiClass findClassByName(PsiClass scope, String name) {
     PsiClass[] classes = scope.getInnerClasses();
-    for (int i = 0; i < classes.length; i++) {
-      PsiClass aClass = classes[i];
+    for (PsiClass aClass : classes) {
       if (aClass.getName().equals(name)) {
         return aClass;
       }
@@ -591,13 +583,12 @@ public class FileManagerImpl implements FileManager {
     RepositoryElementsManager repositoryElementsManager = myManager.getRepositoryElementsManager();
     VirtualFile bestFile = null;
     PsiClass bestClass = null;
-    for (int i = 0; i < classIds.length; i++) {
-      long classId = classIds[i];
+    for (long classId : classIds) {
       PsiClass aClass = (PsiClass)repositoryElementsManager.findOrCreatePsiElementById(classId);
       LOG.assertTrue(aClass != null);
       LOG.assertTrue(aClass.isValid());
       PsiFile file = aClass.getContainingFile();
-      if (file == null){
+      if (file == null) {
         LOG.error("aClass=" + aClass);
         continue;
       }
@@ -932,8 +923,7 @@ public class FileManagerImpl implements FileManager {
       Module module = myProjectRootManager.getFileIndex().getModuleForFile(parent);
       if (module == null) return false;
       VirtualFile[] excludeRoots = ModuleRootManager.getInstance(module).getExcludeRoots();
-      for (int i = 0; i < excludeRoots.length; i++) {
-        VirtualFile root = excludeRoots[i];
+      for (VirtualFile root : excludeRoots) {
         if (root.equals(file)) return true;
       }
       return false;
@@ -1161,8 +1151,7 @@ public class FileManagerImpl implements FileManager {
         myVFileToPsiDirMap.remove(vFile);
 
         VirtualFile[] children = vFile.getChildren();
-        for (int i = 0; i < children.length; i++) {
-          VirtualFile child = children[i];
+        for (VirtualFile child : children) {
           removeFilesAndDirsRecursively(child);
         }
       }
@@ -1229,8 +1218,7 @@ public class FileManagerImpl implements FileManager {
   public void dumpFilesWithContentLoaded(Writer out) throws IOException {
     out.write("Files with content loaded cached in FileManagerImpl:\n");
     Set<VirtualFile> vFiles = myVFileToPsiFileMap.keySet();
-    for (Iterator<VirtualFile> iterator = vFiles.iterator(); iterator.hasNext();) {
-      VirtualFile vFile = iterator.next();
+    for (VirtualFile vFile : vFiles) {
       PsiFile psiFile = myVFileToPsiFileMap.get(vFile);
       if (psiFile instanceof PsiFileImpl && ((PsiFileImpl)psiFile).isContentsLoaded()) {
         out.write(vFile.getPresentableUrl());

@@ -76,8 +76,7 @@ public class HtmlPolicy extends XmlFormattingPolicy{
   private boolean checkName(XmlTag tag, String option) {
     if (option == null) return false;
     final String[] names = option.split(",");
-    for (int i = 0; i < names.length; i++) {
-      String name = names[i];
+    for (String name : names) {
       if (name.trim().equalsIgnoreCase(tag.getName())) return true;
     }
     return false;

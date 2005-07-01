@@ -68,8 +68,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     FileIndex projectFileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
     VirtualFile[] dirs = projectFileIndex.getDirectoriesByPackageName(myQualifiedName, false);
     ArrayList<PsiDirectory> list = new ArrayList<PsiDirectory>();
-    for (int i = 0; i < dirs.length; i++) {
-      VirtualFile dir = dirs[i];
+    for (VirtualFile dir : dirs) {
       if (!scope.contains(dir)) continue;
       PsiDirectory psiDir = myManager.findDirectory(dir);
       LOG.assertTrue(psiDir != null);
@@ -95,16 +94,16 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
   public PsiElement setName(String name) throws IncorrectOperationException {
     checkSetName(name);
     PsiDirectory[] dirs = getDirectories();
-    for (int i = 0; i < dirs.length; i++) {
-      dirs[i].setName(name);
+    for (PsiDirectory dir : dirs) {
+      dir.setName(name);
     }
     return this;
   }
 
   public void checkSetName(String name) throws IncorrectOperationException {
     PsiDirectory[] dirs = getDirectories();
-    for (int i = 0; i < dirs.length; i++) {
-      dirs[i].checkSetName(name);
+    for (PsiDirectory dir : dirs) {
+      dir.checkSetName(name);
     }
   }
 
@@ -136,16 +135,13 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
   private boolean changePackagePrefixes(final String oldQualifiedName, final String newQualifiedName) {
     final Module[] modules = ModuleManager.getInstance(myManager.getProject()).getModules();
     List<ModifiableRootModel> modelsToCommit = new ArrayList<ModifiableRootModel>();
-    for (int i = 0; i < modules.length; i++) {
-      final Module module = modules[i];
+    for (final Module module : modules) {
       boolean anyChange = false;
       final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
       final ContentEntry[] contentEntries = rootModel.getContentEntries();
-      for (int j = 0; j < contentEntries.length; j++) {
-        final ContentEntry contentEntry = contentEntries[j];
+      for (final ContentEntry contentEntry : contentEntries) {
         final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
-        for (int k = 0; k < sourceFolders.length; k++) {
-          final SourceFolder sourceFolder = sourceFolders[k];
+        for (final SourceFolder sourceFolder : sourceFolders) {
           final String packagePrefix = sourceFolder.getPackagePrefix();
           if (packagePrefix.startsWith(oldQualifiedName)) {
             sourceFolder.setPackagePrefix(newQualifiedName + packagePrefix.substring(oldQualifiedName.length()));
@@ -172,14 +168,11 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     final Module[] modules = ModuleManager.getInstance(myManager.getProject()).getModules();
 
-    for (int i = 0; i < modules.length; i++) {
-      final Module module = modules[i];
+    for (final Module module : modules) {
       final ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
-      for (int j = 0; j < contentEntries.length; j++) {
-        final ContentEntry contentEntry = contentEntries[j];
+      for (final ContentEntry contentEntry : contentEntries) {
         final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
-        for (int k = 0; k < sourceFolders.length; k++) {
-          final SourceFolder sourceFolder = sourceFolders[k];
+        for (final SourceFolder sourceFolder : sourceFolders) {
           final String packagePrefix = sourceFolder.getPackagePrefix();
           if (packagePrefix.startsWith(myQualifiedName)) {
             final VirtualFile file = sourceFolder.getFile();
@@ -286,15 +279,15 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
   public void delete() throws IncorrectOperationException {
     checkDelete();
     PsiDirectory[] dirs = getDirectories();
-    for (int i = 0; i < dirs.length; i++) {
-      dirs[i].delete();
+    for (PsiDirectory dir : dirs) {
+      dir.delete();
     }
   }
 
   public void checkDelete() throws IncorrectOperationException {
     PsiDirectory[] dirs = getDirectories();
-    for (int i = 0; i < dirs.length; i++) {
-      dirs[i].checkDelete();
+    for (PsiDirectory dir : dirs) {
+      dir.checkDelete();
     }
   }
 
@@ -308,8 +301,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
 
   public boolean isWritable() {
     PsiDirectory[] dirs = getDirectories();
-    for (int i = 0; i < dirs.length; i++) {
-      PsiDirectory dir = dirs[i];
+    for (PsiDirectory dir : dirs) {
       if (!dir.isWritable()) return false;
     }
     return true;
@@ -381,8 +373,8 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
       }
       else {
         PsiClass[] classes = getClasses(scope);
-        for (int i = 0; i < classes.length; i++) {
-          if (!processor.execute(classes[i], substitutor)) {
+        for (PsiClass aClass : classes) {
+          if (!processor.execute(aClass, substitutor)) {
             return false;
           }
         }
@@ -407,8 +399,8 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
       }
       else {
         PsiPackage[] packs = getSubPackages(scope);
-        for (int i = 0; i < packs.length; i++) {
-          if (!processor.execute(packs[i], substitutor)) {
+        for (PsiPackage pack : packs) {
+          if (!processor.execute(pack, substitutor)) {
             return false;
           }
         }

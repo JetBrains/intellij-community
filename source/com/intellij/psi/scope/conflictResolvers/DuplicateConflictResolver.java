@@ -23,22 +23,22 @@ public class DuplicateConflictResolver implements PsiConflictResolver{
     final Map uniqueItems = new HashMap();
 
     Object[] elements = conflicts.toArray();
-    for(int i = 0; i < elements.length; i++){
-      final CandidateInfo info = ((CandidateInfo)elements[i]);
+    for (Object element1 : elements) {
+      final CandidateInfo info = ((CandidateInfo)element1);
       final PsiElement element = info.getElement();
       Object key;
-      if(element instanceof PsiMethod){
+      if (element instanceof PsiMethod) {
         key = ((PsiMethod)element).getSignature(info.getSubstitutor());
       }
       else {
         key = PsiUtil.getName(element);
       }
 
-      if(!uniqueItems.containsKey(key)){
+      if (!uniqueItems.containsKey(key)) {
         uniqueItems.put(key, element);
       }
-      else{
-        conflicts.remove(elements[i]);
+      else {
+        conflicts.remove(element1);
       }
     }
     if(uniqueItems.size() == 1) return conflicts.get(0);

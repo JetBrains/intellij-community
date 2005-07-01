@@ -146,8 +146,8 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
   public PsiDirectory[] getSubdirectories() {
     VirtualFile[] files = myFile.getChildren();
     ArrayList<PsiDirectory> dirs = new ArrayList<PsiDirectory>();
-    for (int i = 0; i < files.length; i++) {
-      PsiDirectory dir = myManager.findDirectory(files[i]);
+    for (VirtualFile file : files) {
+      PsiDirectory dir = myManager.findDirectory(file);
       if (dir != null) {
         dirs.add(dir);
       }
@@ -159,8 +159,8 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     LOG.assertTrue(myFile.isValid());
     VirtualFile[] files = myFile.getChildren();
     ArrayList<PsiFile> psiFiles = new ArrayList<PsiFile>();
-    for (int i = 0; i < files.length; i++) {
-      PsiFile psiFile = myManager.findFile(files[i]);
+    for (VirtualFile file : files) {
+      PsiFile psiFile = myManager.findFile(file);
       if (psiFile != null) {
         psiFiles.add(psiFile);
       }
@@ -185,12 +185,12 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
 
     VirtualFile[] vFiles = myFile.getChildren();
     ArrayList<PsiClass> classes = new ArrayList<PsiClass>();
-    for (int i = 0; i < vFiles.length; i++) {
-      PsiFile file = myManager.findFile(vFiles[i]);
+    for (VirtualFile vFile : vFiles) {
+      PsiFile file = myManager.findFile(vFile);
       if (file instanceof PsiJavaFile && !(file instanceof JspFile)) {
         PsiClass[] fileClasses = ((PsiJavaFile)file).getClasses();
-        for (int j = 0; j < fileClasses.length; j++) {
-          classes.add(fileClasses[j]);
+        for (PsiClass fileClass : fileClasses) {
+          classes.add(fileClass);
         }
       }
     }
@@ -202,8 +202,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
 
     VirtualFile[] files = myFile.getChildren();
     ArrayList<PsiElement> children = new ArrayList<PsiElement>();
-    for (int i = 0; i < files.length; i++) {
-      VirtualFile vFile = files[i];
+    for (VirtualFile vFile : files) {
       if (vFile.isDirectory()) {
         PsiDirectory dir = myManager.findDirectory(vFile);
         if (dir != null) {
@@ -515,22 +514,20 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     if (element instanceof PsiDirectory) {
       String name = ((PsiDirectory)element).getName();
       PsiDirectory[] subpackages = getSubdirectories();
-      for (int i = 0; i < subpackages.length; i++) {
-        PsiDirectory dir = subpackages[i];
+      for (PsiDirectory dir : subpackages) {
         if (dir.getName().equals(name)) {
           throw new IncorrectOperationException(
-              "File " + dir.getVirtualFile().getPresentableUrl() + " already exists.");
+            "File " + dir.getVirtualFile().getPresentableUrl() + " already exists.");
         }
       }
     }
     else if (element instanceof PsiFile) {
       String name = ((PsiFile)element).getName();
       PsiFile[] files = getFiles();
-      for (int i = 0; i < files.length; i++) {
-        PsiFile file = files[i];
+      for (PsiFile file : files) {
         if (file.getName().equals(name)) {
           throw new IncorrectOperationException(
-              "File " + file.getVirtualFile().getPresentableUrl() + " already exists.");
+            "File " + file.getVirtualFile().getPresentableUrl() + " already exists.");
         }
       }
     }

@@ -139,9 +139,7 @@ public class PsiClassImplUtil {
       final List<Pair<T, PsiSubstitutor>> list = allMethodsMap.get(name);
       if (list == null) return emptyArrayByType(type);
       final List<T> ret = new ArrayList<T>();
-      final Iterator<Pair<T, PsiSubstitutor>> iterator = list.iterator();
-      while (iterator.hasNext()) {
-        final Pair<T, PsiSubstitutor> info = iterator.next();
+      for (final Pair<T, PsiSubstitutor> info : list) {
         ret.add(info.getFirst());
       }
 
@@ -164,9 +162,7 @@ public class PsiClassImplUtil {
     }
 
     final List<T> ret = new ArrayList<T>(pairs.size());
-    final Iterator<Pair<T, PsiSubstitutor>> iterator = pairs.iterator();
-    while (iterator.hasNext()) {
-      final Pair<T, PsiSubstitutor> pair = iterator.next();
+    for (final Pair<T, PsiSubstitutor> pair : pairs) {
       ret.add(pair.getFirst());
     }
     return ret.toArray(emptyArrayByType(type));
@@ -213,9 +209,7 @@ public class PsiClassImplUtil {
     LOG.assertTrue(list != null);
     Map<String, List> map = new HashMap<String, List>();
     map.put(ALL, list);
-    final Iterator<Pair<T, PsiSubstitutor>> iterator = list.iterator();
-    while (iterator.hasNext()) {
-      final Pair<T, PsiSubstitutor> info = iterator.next();
+    for (final Pair<T, PsiSubstitutor> info : list) {
       final T element = info.getFirst();
       final String currentName = element.getName();
       List<Pair<T, PsiSubstitutor>> listByName = map.get(currentName);
@@ -283,9 +277,7 @@ public class PsiClassImplUtil {
 
           final List<Pair<PsiField, PsiSubstitutor>> list = allFieldsMap.get(nameHint.getName());
           if (list != null) {
-            final Iterator<Pair<PsiField, PsiSubstitutor>> iterator = list.iterator();
-            while (iterator.hasNext()) {
-              final Pair<PsiField, PsiSubstitutor> candidate = iterator.next();
+            for (final Pair<PsiField, PsiSubstitutor> candidate : list) {
               PsiField candidateField = candidate.getFirst();
               PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(candidateField.getContainingClass(), candidate.getSecond(), aClass,
                                                                        substitutor);
@@ -316,9 +308,7 @@ public class PsiClassImplUtil {
 
             final List<Pair<PsiClass, PsiSubstitutor>> list = allClassesMap.get(nameHint.getName());
             if (list != null) {
-              final Iterator<Pair<PsiClass, PsiSubstitutor>> iterator = list.iterator();
-              while (iterator.hasNext()) {
-                final Pair<PsiClass, PsiSubstitutor> candidate = iterator.next();
+              for (final Pair<PsiClass, PsiSubstitutor> candidate : list) {
                 final PsiClass inner = candidate.getFirst();
                 final PsiClass containingClass = inner.getContainingClass();
                 if (containingClass != null) {
@@ -347,9 +337,7 @@ public class PsiClassImplUtil {
         final Map<String, List<Pair<PsiMethod, PsiSubstitutor>>> allMethodsMap = getMap(aClass, PsiMethod.class);
         final List<Pair<PsiMethod, PsiSubstitutor>> list = allMethodsMap.get(nameHint.getName());
         if (list != null) {
-          final Iterator<Pair<PsiMethod, PsiSubstitutor>> iterator = list.iterator();
-          while (iterator.hasNext()) {
-            final Pair<PsiMethod, PsiSubstitutor> candidate = iterator.next();
+          for (final Pair<PsiMethod, PsiSubstitutor> candidate : list) {
             PsiMethod candidateMethod = candidate.getFirst();
             if (processor instanceof MethodResolverProcessor) {
               if (candidateMethod.isConstructor() != ((MethodResolverProcessor)processor).isConstructor()) continue;

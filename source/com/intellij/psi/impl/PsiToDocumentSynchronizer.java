@@ -247,18 +247,16 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       boolean isReadOnly = !document.isWritable();
       ex.setReadOnly(false);
       final Set<Pair<MutableTextRange, StringBuffer>> affectedFragments = documentChangeTransaction.getAffectedFragments();
-      final Iterator<Pair<MutableTextRange, StringBuffer>> iterator = affectedFragments.iterator();
-      while (iterator.hasNext()) {
-        final Pair<MutableTextRange, StringBuffer> pair = iterator.next();
+      for (final Pair<MutableTextRange, StringBuffer> pair : affectedFragments) {
         final StringBuffer replaceBuffer = pair.getSecond();
         final MutableTextRange range = pair.getFirst();
-        if(replaceBuffer.length() == 0){
+        if (replaceBuffer.length() == 0) {
           ex.deleteString(range.getStartOffset(), range.getEndOffset());
         }
-        else if(range.getLength() == 0){
+        else if (range.getLength() == 0) {
           ex.insertString(range.getStartOffset(), replaceBuffer);
         }
-        else{
+        else {
           ex.replaceString(range.getStartOffset(),
                            range.getEndOffset(),
                            replaceBuffer);

@@ -84,14 +84,13 @@ public class FilterUtil{
 
   public static List<ElementFilter> readFilterGroup(Element element){
     final List<ElementFilter> list = new ArrayList<ElementFilter>();
-    final Iterator filtersIterator = element.getChildren().iterator();
-    while(filtersIterator.hasNext()){
-      final Element current = (Element)filtersIterator.next();
-      if(current.getNamespace().equals(FILTER_NS)){
-        try{
+    for (final Object o : element.getChildren()) {
+      final Element current = (Element)o;
+      if (current.getNamespace().equals(FILTER_NS)) {
+        try {
           list.add(FilterUtil.readFilter(current));
         }
-        catch(UnknownFilterException ufe){
+        catch (UnknownFilterException ufe) {
           LOG.error(ufe);
         }
       }
@@ -108,9 +107,9 @@ public class FilterUtil{
       "com.intellij.aspects.psi."
     };
 
-    for(int i = 0; i < packs.length; i++){
-      final Class aClass = tryClass(packs[i] + shortName);
-      if(aClass != null){
+    for (String pack : packs) {
+      final Class aClass = tryClass(pack + shortName);
+      if (aClass != null) {
         return aClass;
       }
     }

@@ -47,8 +47,7 @@ class SeeDocTagInfo implements JavadocTagInfo {
 
         List result = new ArrayList();
         final PsiMethod[] methods = PsiDocMethodOrFieldRef.getAllMethods(targetContext, place);
-        for (int i = 0; i < methods.length; i++) {
-          final PsiMethod method = methods[i];
+        for (final PsiMethod method : methods) {
           if (method.getName().equals(methodName)) {
             result.add(method);
           }
@@ -68,13 +67,13 @@ class SeeDocTagInfo implements JavadocTagInfo {
     PsiElement targetContext = getTargetContext(context, place);
 
     final PsiMethod[] methods = PsiDocMethodOrFieldRef.getAllMethods(targetContext, place);
-    for (int i = 0; i < methods.length; i++) {
-      result.add(methods[i]);
+    for (PsiMethod method : methods) {
+      result.add(method);
     }
 
     final PsiVariable[] variables = PsiDocMethodOrFieldRef.getAllVariables(targetContext, place);
-    for (int i = 0; i < variables.length; i++) {
-      result.add(variables[i]);
+    for (PsiVariable variable : variables) {
+      result.add(variable);
     }
 
     return result.toArray(new Object[result.size()]);

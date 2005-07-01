@@ -34,8 +34,7 @@ public class ModifierFilter extends ClassFilter{
 
   public ModifierFilter(String[] modifiers){
     this();
-    for(int i = 0; i < modifiers.length; i++){
-      final String modifier = modifiers[i];
+    for (final String modifier : modifiers) {
       addModiferRestriction(modifier, true);
     }
   }
@@ -48,12 +47,12 @@ public class ModifierFilter extends ClassFilter{
     if(element instanceof PsiModifierListOwner){
       final PsiModifierList list = ((PsiModifierListOwner)element).getModifierList();
       if(list == null) return true;
-      final Iterator iter = myModifierRestrictions.iterator();
-      while(iter.hasNext()){
-        final ModifierRestriction psiModifer = (ModifierRestriction)iter.next();
+      for (final Object myModifierRestriction : myModifierRestrictions) {
+        final ModifierRestriction psiModifer = (ModifierRestriction)myModifierRestriction;
         boolean shouldHave = psiModifer.myIsSet;
-        if(shouldHave != list.hasModifierProperty(psiModifer.myModifierName))
+        if (shouldHave != list.hasModifierProperty(psiModifer.myModifierName)) {
           return false;
+        }
       }
       return true;
     }
@@ -72,10 +71,9 @@ public class ModifierFilter extends ClassFilter{
 
   public void readExternal(Element element)
     throws InvalidDataException{
-    final Iterator iter = element.getChildren("modifier", FilterUtil.FILTER_NS).iterator();
 
-    while(iter.hasNext()){
-      final Element modifierElement = (Element) iter.next();
+    for (final Object o : element.getChildren("modifier", FilterUtil.FILTER_NS)) {
+      final Element modifierElement = (Element)o;
       final String attribute = modifierElement.getAttribute("is-set").getValue();
       myModifierRestrictions.add(
         new ModifierRestriction(modifierElement.getTextTrim(),

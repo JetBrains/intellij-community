@@ -34,10 +34,9 @@ public class SimpleProviderBinding implements ProviderBinding {
 
   private boolean isAcceptable(PsiElement position){
     if(position == null) return false;
-    final Iterator iter = myScopes.iterator();
-    while(iter.hasNext()){
-      final Class scopeClass = (Class) iter.next();
-      if(scopeClass.isAssignableFrom(position.getClass())){
+    for (final Object myScope : myScopes) {
+      final Class scopeClass = (Class)myScope;
+      if (scopeClass.isAssignableFrom(position.getClass())) {
         return myPosition == null || myPosition.isAcceptable(position, position);
       }
     }

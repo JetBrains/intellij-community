@@ -56,8 +56,8 @@ public class CheckUtil {
     }
     if (file.isDirectory()){
       VirtualFile[] children = file.getChildren();
-      for(int i = 0; i < children.length; i++) {
-        checkDelete(children[i]);
+      for (VirtualFile aChildren : children) {
+        checkDelete(aChildren);
       }
     }
   }

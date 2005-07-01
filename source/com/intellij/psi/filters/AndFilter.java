@@ -24,8 +24,8 @@ public class AndFilter implements ElementFilter{
   }
 
   public AndFilter(ElementFilter[] filters){
-    for(int i = 0; i < filters.length; i++){
-      addFilter(filters[i]);
+    for (ElementFilter filter : filters) {
+      addFilter(filter);
     }
   }
 
@@ -38,9 +38,9 @@ public class AndFilter implements ElementFilter{
   }
 
   public boolean isAcceptable(Object element, PsiElement context){
-    for(int i = 0; i < myFilters.size(); i++){
-      final ElementFilter elementFilter = (ElementFilter) myFilters.get(i);
-      if(!elementFilter.isAcceptable(element, context)){
+    for (Object myFilter : myFilters) {
+      final ElementFilter elementFilter = (ElementFilter)myFilter;
+      if (!elementFilter.isAcceptable(element, context)) {
         return false;
       }
     }
@@ -48,9 +48,9 @@ public class AndFilter implements ElementFilter{
   }
 
   public boolean isClassAcceptable(Class elementClass){
-    for(int i = 0; i < myFilters.size(); i++){
-      final ElementFilter elementFilter = (ElementFilter) myFilters.get(i);
-      if(!elementFilter.isClassAcceptable(elementClass)){
+    for (Object myFilter : myFilters) {
+      final ElementFilter elementFilter = (ElementFilter)myFilter;
+      if (!elementFilter.isClassAcceptable(elementClass)) {
         return false;
       }
     }

@@ -505,8 +505,7 @@ public class CodeEditUtil {
   }
 
   private static ASTNode findFirstValid(final List<ASTNode> treePrev) {
-    for (Iterator<ASTNode> iterator = treePrev.iterator(); iterator.hasNext();) {
-      ASTNode treeElement = iterator.next();
+    for (ASTNode treeElement : treePrev) {
       if (treeElement.getPsi().isValid()) return treeElement;
     }
     return null;
@@ -698,8 +697,8 @@ public class CodeEditUtil {
   }
 
   private static void clearIndentInfo(final Collection<PsiElement> dirtyElements) {
-    for (Iterator<PsiElement> iterator = dirtyElements.iterator(); iterator.hasNext();) {
-      iterator.next().putUserData(INDENT_INFO_KEY, null);
+    for (final PsiElement dirtyElement : dirtyElements) {
+      dirtyElement.putUserData(INDENT_INFO_KEY, null);
     }
   }
 

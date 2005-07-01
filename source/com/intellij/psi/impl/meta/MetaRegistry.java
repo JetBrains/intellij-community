@@ -342,18 +342,17 @@ public class MetaRegistry {
     PsiMetaData ret = null;
     SoftReference<CachedValue<PsiMetaData>> value = element.getUserData(META_DATA_KEY);
     if (value == null || (value != NULL && value.get() == null)) {
-      final Iterator<MyBinding> iter = ourBindings.iterator();
-      while (iter.hasNext()) {
-        final MyBinding binding = iter.next();
+      for (final MyBinding binding : ourBindings) {
         try {
           if (binding.myFilter.isClassAcceptable(element.getClass()) && binding.myFilter.isAcceptable(element, element.getParent())) {
             final PsiMetaData data = binding.myDataClass.newInstance();
-            final CachedValue<PsiMetaData> cachedValue = element.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<PsiMetaData>() {
-              public CachedValueProvider.Result<PsiMetaData> compute() {
-                data.init(element);
-                return new Result<PsiMetaData>(data, data.getDependences());
-              }
-            },false);
+            final CachedValue<PsiMetaData> cachedValue = element.getManager().getCachedValuesManager()
+              .createCachedValue(new CachedValueProvider<PsiMetaData>() {
+                public Result<PsiMetaData> compute() {
+                  data.init(element);
+                  return new Result<PsiMetaData>(data, data.getDependences());
+                }
+              }, false);
             value = new SoftReference<CachedValue<PsiMetaData>>(cachedValue);
             ret = cachedValue.getValue();
             break;
@@ -362,7 +361,7 @@ public class MetaRegistry {
         catch (IllegalAccessException iae) {
           value = null;
         }
-        catch(InstantiationException ie){
+        catch (InstantiationException ie) {
           value = null;
         }
       }

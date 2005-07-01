@@ -115,8 +115,7 @@ public class CachedValueImpl<T> implements CachedValue<T> {
   }
 
   private void collectDependencies(TLongArrayList timeStamps, List resultingDeps, Object[] dependencies) {
-    for (int i = 0; i < dependencies.length; i++) {
-      Object dependency = dependencies[i];
+    for (Object dependency : dependencies) {
       if (dependency == null) continue;
       if (dependency.getClass().isArray()) {
         Object[] objects = (Object[])dependency;

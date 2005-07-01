@@ -128,8 +128,7 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
     mySchemes.clear();
 
     File[] files = getSchemeFiles();
-    for (int i = 0; i < files.length; i++) {
-      File file = files[i];
+    for (File file : files) {
       if (file.getName().toLowerCase().endsWith(".xml")) {
         try {
           addScheme(CodeStyleSchemeImpl.readScheme(file));
@@ -141,15 +140,14 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
     }
 
     final CodeStyleScheme[] schemes = getSchemes();
-    for (int i = 0; i < schemes.length; i++) {
-      ((CodeStyleSchemeImpl)schemes[i]).init(this);
+    for (CodeStyleScheme scheme : schemes) {
+      ((CodeStyleSchemeImpl)scheme).init(this);
     }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     File[] files = getSchemeFiles();
-    for (int i = 0; i < files.length; i++) {
-      File file = files[i];
+    for (File file : files) {
       String fileName = file.getName().toLowerCase();
       String xmlExtension = ".xml";
       if (fileName.endsWith(xmlExtension)) {
@@ -166,8 +164,7 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
     }
 
     final CodeStyleScheme[] schemes = getSchemes();
-    for (int i = 0; i < schemes.length; i++) {
-      CodeStyleScheme scheme = schemes[i];
+    for (CodeStyleScheme scheme : schemes) {
       if (!scheme.isDefault()) {
         File dir = getDir(true);
         if (dir == null) break;

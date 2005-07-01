@@ -50,10 +50,9 @@ public class JspText extends LeafPsiElement {
     final JspFile jspFile = (JspFile)getContainingFile();
     final XmlTag[] directiveTags = jspFile.getDirectiveTags(JspDirectiveKind.INCLUDE, false);
     final Set<XmlTag> includeDirectives = new HashSet<XmlTag>();
-    for (int i = 0; i < directiveTags.length; i++) {
-      final XmlTag directiveTag = directiveTags[i];
-      if(directiveTag.getNode().getStartOffset() < textRange.getStartOffset()) continue;
-      if(directiveTag.getNode().getStartOffset() >= textRange.getEndOffset()) break;
+    for (final XmlTag directiveTag : directiveTags) {
+      if (directiveTag.getNode().getStartOffset() < textRange.getStartOffset()) continue;
+      if (directiveTag.getNode().getStartOffset() >= textRange.getEndOffset()) break;
       includeDirectives.add(directiveTag);
     }
     return myIncludes = includeDirectives.toArray(XmlTag.EMPTY);

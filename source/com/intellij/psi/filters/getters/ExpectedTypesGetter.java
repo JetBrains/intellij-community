@@ -32,13 +32,13 @@ public class ExpectedTypesGetter implements ContextGetter{
 
     infos = extractUnique(infos, typesProvider);
     if (expression instanceof PsiNewExpression) {
-      for(int i = 0; i < infos.length; i++) {
-        result.add(CompletionUtil.eliminateWildcards(infos[i].getType()));
+      for (ExpectedTypeInfo info : infos) {
+        result.add(CompletionUtil.eliminateWildcards(info.getType()));
       }
 
     } else {
-      for(int i = 0; i < infos.length; i++) {
-        result.add(infos[i].getType());
+      for (ExpectedTypeInfo info : infos) {
+        result.add(info.getType());
       }
     }
     return (PsiType[]) result.toArray(new PsiType[result.size()]);
@@ -47,21 +47,20 @@ public class ExpectedTypesGetter implements ContextGetter{
   private ExpectedTypeInfo[] extractUnique(ExpectedTypeInfo[] infos, ExpectedTypesProvider typesProvider){
     ArrayList infoV = new ArrayList();
     AddInfosLoop:
-      for(int i = 0; i < infos.length; i++) {
-        ExpectedTypeInfo info = infos[i];
-        PsiType type = info.getType();
-        for(int j = 0; j < infoV.size(); j++) {
-          ExpectedTypeInfo info1 = (ExpectedTypeInfo)infoV.get(j);
-          PsiType type1 = info1.getType();
-          if (type.equals(type1)){ //?
-            if (info.getTailType() != info1.getTailType()){
-              infoV.set(j, typesProvider.createInfo(type1, info1.getKind(), info1.getDefaultType(), TailType.NONE));
-            }
-            continue AddInfosLoop;
+    for (ExpectedTypeInfo info : infos) {
+      PsiType type = info.getType();
+      for (int j = 0; j < infoV.size(); j++) {
+        ExpectedTypeInfo info1 = (ExpectedTypeInfo)infoV.get(j);
+        PsiType type1 = info1.getType();
+        if (type.equals(type1)) { //?
+          if (info.getTailType() != info1.getTailType()) {
+            infoV.set(j, typesProvider.createInfo(type1, info1.getKind(), info1.getDefaultType(), TailType.NONE));
           }
+          continue AddInfosLoop;
         }
-        infoV.add(info);
       }
+      infoV.add(info);
+    }
     infos = (ExpectedTypeInfo[])infoV.toArray(new ExpectedTypeInfo[infoV.size()]);
     return infos;
   }

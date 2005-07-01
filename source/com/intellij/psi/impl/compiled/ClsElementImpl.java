@@ -147,8 +147,8 @@ abstract class ClsElementImpl extends PsiElementBase implements PsiCompiledEleme
     PsiElement[] children = getChildren();
     if (children.length == 0) return null;
 
-    for(int i = 0; i < children.length; i++){
-      PsiElement element = ((ClsElementImpl)children[i]).mirrorToElement(mirror);
+    for (PsiElement aChildren : children) {
+      PsiElement element = ((ClsElementImpl)aChildren).mirrorToElement(mirror);
       if (element != null) return element;
     }
 

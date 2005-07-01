@@ -62,72 +62,70 @@ public class ControlFlowUtil {
     ArrayList<PsiVariable> result = new ArrayList<PsiVariable>(1);
 
     variables:
-        for (int k = 0; k < writtenVariables.length; k++) {
-          PsiVariable psiVariable = writtenVariables[k];
+    for (PsiVariable psiVariable : writtenVariables) {
+      Set<SSAInstructionState> processedStates = new THashSet<SSAInstructionState>();
 
-          Set<SSAInstructionState> processedStates = new THashSet<SSAInstructionState>();
+      final List<SSAInstructionState> queue = new ArrayList<SSAInstructionState>();
+      queue.add(new SSAInstructionState(0, from));
 
-          final List<SSAInstructionState> queue = new ArrayList<SSAInstructionState>();
-          queue.add(new SSAInstructionState(0, from));
+      while (queue.size() > 0) {
+        final SSAInstructionState state = queue.remove(0);
+        if (state.getWriteCount() > 1) continue variables;
+        if (!processedStates.contains(state)) {
+          processedStates.add(state);
+          int i = state.getInstructionIdx();
+          if (i < to) {
+            Instruction instruction = instructions[i];
 
-          while (queue.size() > 0) {
-            final SSAInstructionState state = queue.remove(0);
-            if (state.getWriteCount() > 1) continue variables;
-            if (!processedStates.contains(state)) {
-              processedStates.add(state);
-              int i = state.getInstructionIdx();
-              if (i < to) {
-                Instruction instruction = instructions[i];
-
-                if (instruction instanceof ReturnInstruction) {
-                  int[] offsets = ((ReturnInstruction)instruction).getPossibleReturnOffsets();
-                  for (int j = 0; j < offsets.length; j++) {
-                    queue.add(new SSAInstructionState(state.getWriteCount(), Math.min(offsets[j], to)));
-                  }
-                }
-                else if (instruction instanceof GoToInstruction) {
-                  int nextOffset = ((GoToInstruction)instruction).offset;
-                  nextOffset = Math.min(nextOffset, to);
-                  queue.add(new SSAInstructionState(state.getWriteCount(), nextOffset));
-                }
-                else if (instruction instanceof ThrowToInstruction) {
-                  int nextOffset = ((ThrowToInstruction)instruction).offset;
-                  nextOffset = Math.min(nextOffset, to);
-                  queue.add(new SSAInstructionState(state.getWriteCount(), nextOffset));
-                }
-                else if (instruction instanceof ConditionalGoToInstruction) {
-                  int nextOffset = ((ConditionalGoToInstruction)instruction).offset;
-                  nextOffset = Math.min(nextOffset, to);
-                  queue.add(new SSAInstructionState(state.getWriteCount(), nextOffset));
-                  queue.add(new SSAInstructionState(state.getWriteCount(), i + 1));
-                }
-                else if (instruction instanceof ConditionalThrowToInstruction) {
-                  int nextOffset = ((ConditionalThrowToInstruction)instruction).offset;
-                  nextOffset = Math.min(nextOffset, to);
-                  queue.add(new SSAInstructionState(state.getWriteCount(), nextOffset));
-                  queue.add(new SSAInstructionState(state.getWriteCount(), i + 1));
-                }
-                else if (instruction instanceof WriteVariableInstruction) {
-                  WriteVariableInstruction write = (WriteVariableInstruction)instruction;
-                  queue.add(
-                    new SSAInstructionState(state.getWriteCount() + (write.variable == psiVariable ? 1 : 0), i + 1)
-                  );
-                }
-                else if (instruction instanceof ReadVariableInstruction) {
-                  ReadVariableInstruction read = (ReadVariableInstruction)instruction;
-                  if (read.variable == psiVariable && state.getWriteCount() == 0) continue variables;
-                  queue.add(new SSAInstructionState(state.getWriteCount(), i + 1));
-                }
-                else {
-                  queue.add(new SSAInstructionState(state.getWriteCount(), i + 1));
-                }
+            if (instruction instanceof ReturnInstruction) {
+              int[] offsets = ((ReturnInstruction)instruction).getPossibleReturnOffsets();
+              for (int offset : offsets) {
+                queue.add(new SSAInstructionState(state.getWriteCount(), Math.min(offset, to)));
               }
-              else if (!reportVarsIfNonInitializingPathExists && state.getWriteCount() == 0) continue variables;
+            }
+            else if (instruction instanceof GoToInstruction) {
+              int nextOffset = ((GoToInstruction)instruction).offset;
+              nextOffset = Math.min(nextOffset, to);
+              queue.add(new SSAInstructionState(state.getWriteCount(), nextOffset));
+            }
+            else if (instruction instanceof ThrowToInstruction) {
+              int nextOffset = ((ThrowToInstruction)instruction).offset;
+              nextOffset = Math.min(nextOffset, to);
+              queue.add(new SSAInstructionState(state.getWriteCount(), nextOffset));
+            }
+            else if (instruction instanceof ConditionalGoToInstruction) {
+              int nextOffset = ((ConditionalGoToInstruction)instruction).offset;
+              nextOffset = Math.min(nextOffset, to);
+              queue.add(new SSAInstructionState(state.getWriteCount(), nextOffset));
+              queue.add(new SSAInstructionState(state.getWriteCount(), i + 1));
+            }
+            else if (instruction instanceof ConditionalThrowToInstruction) {
+              int nextOffset = ((ConditionalThrowToInstruction)instruction).offset;
+              nextOffset = Math.min(nextOffset, to);
+              queue.add(new SSAInstructionState(state.getWriteCount(), nextOffset));
+              queue.add(new SSAInstructionState(state.getWriteCount(), i + 1));
+            }
+            else if (instruction instanceof WriteVariableInstruction) {
+              WriteVariableInstruction write = (WriteVariableInstruction)instruction;
+              queue.add(
+                new SSAInstructionState(state.getWriteCount() + (write.variable == psiVariable ? 1 : 0), i + 1)
+              );
+            }
+            else if (instruction instanceof ReadVariableInstruction) {
+              ReadVariableInstruction read = (ReadVariableInstruction)instruction;
+              if (read.variable == psiVariable && state.getWriteCount() == 0) continue variables;
+              queue.add(new SSAInstructionState(state.getWriteCount(), i + 1));
+            }
+            else {
+              queue.add(new SSAInstructionState(state.getWriteCount(), i + 1));
             }
           }
-
-          result.add(psiVariable);
+          else if (!reportVarsIfNonInitializingPathExists && state.getWriteCount() == 0) continue variables;
         }
+      }
+
+      result.add(psiVariable);
+    }
 
     return result.toArray(new PsiVariable[result.size()]);
   }
@@ -222,8 +220,7 @@ public class ControlFlowUtil {
   public static PsiVariable[] getInputVariables(ControlFlow flow, int start, int end) {
     PsiVariable[] usedVariables = ControlFlowUtil.getUsedVariables(flow, start, end);
     ArrayList<PsiVariable> array = new ArrayList<PsiVariable>();
-    for (int i = 0; i < usedVariables.length; i++) {
-      PsiVariable variable = usedVariables[i];
+    for (PsiVariable variable : usedVariables) {
       if (ControlFlowUtil.needVariableValueAt(variable, flow, start)) {
         array.add(variable);
       }
@@ -231,8 +228,7 @@ public class ControlFlowUtil {
     PsiVariable[] inputVariables = array.toArray(new PsiVariable[array.size()]);
     if (LOG.isDebugEnabled()) {
       LOG.debug("input variables:");
-      for (int i = 0; i < inputVariables.length; i++) {
-        PsiVariable variable = inputVariables[i];
+      for (PsiVariable variable : inputVariables) {
         LOG.debug("  " + variable.toString());
       }
     }
@@ -242,8 +238,7 @@ public class ControlFlowUtil {
   public static PsiVariable[] getOutputVariables(ControlFlow flow, int start, int end, int exitPoint) {
     PsiVariable[] writtenVariables = ControlFlowUtil.getWrittenVariables(flow, start, end);
     ArrayList<PsiVariable> array = new ArrayList<PsiVariable>();
-    for (int i = 0; i < writtenVariables.length; i++) {
-      PsiVariable variable = writtenVariables[i];
+    for (PsiVariable variable : writtenVariables) {
       if (ControlFlowUtil.needVariableValueAt(variable, flow, exitPoint)) {
         array.add(variable);
       }
@@ -251,8 +246,7 @@ public class ControlFlowUtil {
     PsiVariable[] outputVariables = array.toArray(new PsiVariable[array.size()]);
     if (LOG.isDebugEnabled()) {
       LOG.debug("output variables:");
-      for (int i = 0; i < outputVariables.length; i++) {
-        PsiVariable variable = outputVariables[i];
+      for (PsiVariable variable : outputVariables) {
         LOG.debug("  " + variable.toString());
       }
     }
@@ -331,8 +325,8 @@ public class ControlFlowUtil {
       if (classesFilter == null) {
         exitStatements.add(statement);
       } else {
-        for (int i = 0; i < classesFilter.length; i++) {
-          if (classesFilter[i].isAssignableFrom(statement.getClass())) {
+        for (Class aClassesFilter : classesFilter) {
+          if (aClassesFilter.isAssignableFrom(statement.getClass())) {
             exitStatements.add(statement);
             break;
           }
@@ -772,8 +766,7 @@ public class ControlFlowUtil {
       return (PsiReferenceExpression)element;
     }
     final PsiElement[] children = element.getChildren();
-    for (int i = 0; i < children.length; i++) {
-      PsiElement child = children[i];
+    for (PsiElement child : children) {
       final PsiReferenceExpression reference = findReferenceTo(child, variable);
       if (reference != null) return reference;
     }
@@ -915,8 +908,8 @@ public class ControlFlowUtil {
           final int size = exitPointSet == null ? 0 : exitPointSet.size();
           if (size > maxExitPoints) {
             // this offset should be reachable from all other references
-            for (int j = 0; j < references.size(); j++) {
-              PsiElement element = (PsiElement)references.get(j);
+            for (Object reference : references) {
+              PsiElement element = (PsiElement)reference;
               final PsiElement statement = PsiUtil.getEnclosingStatement(element);
               if (statement == null) continue;
               final int endOffset = flow.getEndOffset(statement);
@@ -1064,8 +1057,7 @@ public class ControlFlowUtil {
     public CopyOnWriteList add(VariableInfo value) {
       CopyOnWriteList newList = new CopyOnWriteList();
       List<VariableInfo> list = getList();
-      for (Iterator<VariableInfo> iterator = list.iterator(); iterator.hasNext();) {
-        final VariableInfo variableInfo = iterator.next();
+      for (final VariableInfo variableInfo : list) {
         if (!value.equals(variableInfo)) {
           newList.list.add(variableInfo);
         }
@@ -1076,8 +1068,7 @@ public class ControlFlowUtil {
     public CopyOnWriteList remove(VariableInfo value) {
       CopyOnWriteList newList = new CopyOnWriteList();
       List<VariableInfo> list = getList();
-      for (Iterator<VariableInfo> iterator = list.iterator(); iterator.hasNext();) {
-        final VariableInfo variableInfo = iterator.next();
+      for (final VariableInfo variableInfo : list) {
         if (!value.equals(variableInfo)) {
           newList.list.add(variableInfo);
         }
@@ -1098,13 +1089,11 @@ public class ControlFlowUtil {
     public CopyOnWriteList addAll(CopyOnWriteList addList) {
       CopyOnWriteList newList = new CopyOnWriteList();
       List<VariableInfo> list = getList();
-      for (Iterator<VariableInfo> iterator = list.iterator(); iterator.hasNext();) {
-        final VariableInfo variableInfo = iterator.next();
+      for (final VariableInfo variableInfo : list) {
         newList.list.add(variableInfo);
       }
       List<VariableInfo> toAdd = addList.getList();
-      for (Iterator<VariableInfo> iterator = toAdd.iterator(); iterator.hasNext();) {
-        final VariableInfo variableInfo = iterator.next();
+      for (final VariableInfo variableInfo : toAdd) {
         if (!newList.list.contains(variableInfo)) {
           // no copy
           newList.list.add(variableInfo);
@@ -1209,8 +1198,7 @@ public class ControlFlowUtil {
       CopyOnWriteList topReadVariables = readVariables[0];
       if (topReadVariables != null) {
         List<VariableInfo> list = topReadVariables.getList();
-        for (int i = 0; i < list.size(); i++) {
-          final VariableInfo variableInfo = list.get(i);
+        for (final VariableInfo variableInfo : list) {
           problemsFound.add((PsiReferenceExpression)variableInfo.expression);
         }
       }
@@ -1291,8 +1279,7 @@ public class ControlFlowUtil {
         PsiElement latestWriteVarExpression = null;
         if (writeVars != null) {
           List<VariableInfo> list = writeVars.getList();
-          for (Iterator<VariableInfo> iterator = list.iterator(); iterator.hasNext();) {
-            final VariableInfo variableInfo = iterator.next();
+          for (final VariableInfo variableInfo : list) {
             if (variableInfo.variable == variable) {
               latestWriteVarExpression = variableInfo.expression;
               break;

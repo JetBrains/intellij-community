@@ -285,8 +285,7 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
 
   private void generateThrow(PsiClassType unhandledException, PsiElement throwingElement) {
     final List<PsiElement> catchBlocks = findThrowToBlocks(unhandledException);
-    for (int j = 0; j < catchBlocks.size(); j++) {
-      PsiElement block = catchBlocks.get(j);
+    for (PsiElement block : catchBlocks) {
       ConditionalThrowToInstruction instruction = new ConditionalThrowToInstruction(0);
       myCurrentFlow.addInstruction(instruction);
       if (!patchCheckedThrowInstructionIfInsideFinally(instruction, throwingElement, block)) {
@@ -1480,8 +1479,7 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
     }
     List<PsiVariable> array = new ArrayList<PsiVariable>();
     addUsedVariables(array, aClass);
-    for (int i = 0; i < array.size(); i++) {
-      PsiVariable var = array.get(i);
+    for (PsiVariable var : array) {
       generateReadInstruction(var);
     }
     finishElement(aClass);

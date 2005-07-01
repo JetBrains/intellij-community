@@ -171,8 +171,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     //long time1 = System.currentTimeMillis();
 
     final Document[] documents = getUncommittedDocuments();
-    for(int i = 0; i < documents.length; i++){
-      Document document = documents[i];
+    for (Document document : documents) {
       commitDocument(document);
     }
 
@@ -294,16 +293,14 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
   protected void fireDocumentCreated(Document document, PsiFile file) {
     Listener[] listeners = getCachedListeners();
-    for (int i = 0; i < listeners.length; i++) {
-      Listener listener = listeners[i];
+    for (Listener listener : listeners) {
       listener.documentCreated(document, file);
     }
   }
 
   protected void fireFileCreated(Document document, PsiFile file) {
     Listener[] listeners = getCachedListeners();
-    for (int i = 0; i < listeners.length; i++) {
-      Listener listener = listeners[i];
+    for (Listener listener : listeners) {
       listener.fileCreated(file, document);
     }
   }

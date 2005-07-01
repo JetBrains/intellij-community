@@ -57,8 +57,8 @@ public class JDComment {
     generateSpecial(prefix, sb);
 
     if (!isNull(unknownList) && myFormatter.getSettings().JD_KEEP_INVALID_TAGS) {
-      for (int i = 0; i < unknownList.size(); i++) {
-        String s = (String) unknownList.get(i);
+      for (Object aUnknownList : unknownList) {
+        String s = (String)aUnknownList;
         sb.append(myFormatter.getParser().splitIntoCLines(s, prefix));
       }
     }
@@ -80,8 +80,8 @@ public class JDComment {
     }*/
 
     if (!isNull(seeAlsoList)) {
-      for (int i = 0; i < seeAlsoList.size(); i++) {
-        String s = (String) seeAlsoList.get(i);
+      for (Object aSeeAlsoList : seeAlsoList) {
+        String s = (String)aSeeAlsoList;
         sb.append(prefix);
         sb.append("@see ");
         sb.append(myFormatter.getParser().splitIntoCLines(s, prefix + "     ", false));

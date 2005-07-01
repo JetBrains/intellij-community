@@ -32,8 +32,8 @@ public class JDMethodComment extends JDComment {
                             ) {
     int max = 0;
     if (align_comments) {
-      for (int i = 0; i < list.size(); i++) {
-        NameDesc nd = (NameDesc) list.get(i);
+      for (Object aList : list) {
+        NameDesc nd = (NameDesc)aList;
         int l = nd.name.length();
         if (isNull(nd.desc) && !generate_empty_tags) continue;
         if (l > max && l <= max_name_length) max = l;
@@ -48,8 +48,8 @@ public class JDMethodComment extends JDComment {
     int k = max + 1 + tag.length();
     for (int i = 0; i < k; i++) fill.append(' ');
 
-    for (int i = 0; i < list.size(); i++) {
-      NameDesc nd = (NameDesc) list.get(i);
+    for (Object aList1 : list) {
+      NameDesc nd = (NameDesc)aList1;
       if (isNull(nd.desc) && !generate_empty_tags) continue;
       if (align_comments) {
         sb.append(prefix);
@@ -62,7 +62,9 @@ public class JDMethodComment extends JDComment {
         }
         else {
           int len = max - nd.name.length() + 1;
-          for (int j = 0; j < len; j++) sb.append(' ');
+          for (int j = 0; j < len; j++) {
+            sb.append(' ');
+          }
           sb.append(myFormatter.getParser().splitIntoCLines(nd.desc, fill, false));
         }
       }
@@ -137,8 +139,8 @@ public class JDMethodComment extends JDComment {
 
   private static NameDesc getNameDesc(String name, ArrayList list) {
     if (list == null) return null;
-    for (int i = 0; i < list.size(); i++) {
-      NameDesc parameter = (NameDesc) list.get(i);
+    for (Object aList : list) {
+      NameDesc parameter = (NameDesc)aList;
       if (parameter.name.equals(name)) return parameter;
     }
     return null;

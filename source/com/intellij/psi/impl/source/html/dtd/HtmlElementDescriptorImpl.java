@@ -69,9 +69,8 @@ public class HtmlElementDescriptorImpl implements XmlElementDescriptor {
       cachedDescriptors = new HashMap<String, XmlElementDescriptor>();
       XmlElementDescriptor[] elementDescriptors = myDelegate.getElementsDescriptors(null);
 
-      for (int i = 0; i < elementDescriptors.length; i++) {
-        XmlElementDescriptor elementDescriptor = elementDescriptors[i];
-        cachedDescriptors.put(elementDescriptor.getName(),new HtmlElementDescriptorImpl(elementDescriptor));
+      for (XmlElementDescriptor elementDescriptor : elementDescriptors) {
+        cachedDescriptors.put(elementDescriptor.getName(), new HtmlElementDescriptorImpl(elementDescriptor));
       }
     }
 
@@ -105,9 +104,7 @@ public class HtmlElementDescriptorImpl implements XmlElementDescriptor {
       cachedAttributeDescriptors = new HashMap<String, XmlAttributeDescriptor>();
       XmlAttributeDescriptor[] elementAttributeDescriptors = myDelegate.getAttributesDescriptors();
 
-      for (int i = 0; i < elementAttributeDescriptors.length; i++) {
-        final XmlAttributeDescriptor attributeDescriptor = elementAttributeDescriptors[i];
-
+      for (final XmlAttributeDescriptor attributeDescriptor : elementAttributeDescriptors) {
         cachedAttributeDescriptors.put(
           attributeDescriptor.getName(),
           new HtmlAttributeDescriptorImpl(attributeDescriptor)

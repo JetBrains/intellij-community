@@ -30,9 +30,8 @@ public class XmlTagValueImpl implements XmlTagValue{
   public XmlText[] getTextElements() {
     if(myTextElements != null) return myTextElements;
     final List<XmlText> textElements = new ArrayList<XmlText>();
-    for (int i = 0; i < myElements.length; i++) {
-      final XmlTagChild element = myElements[i];
-      if(element instanceof XmlText) textElements.add((XmlText)element);
+    for (final XmlTagChild element : myElements) {
+      if (element instanceof XmlText) textElements.add((XmlText)element);
     }
     return myTextElements = textElements.toArray(new XmlText[textElements.size()]);
   }
@@ -40,8 +39,7 @@ public class XmlTagValueImpl implements XmlTagValue{
   public String getText() {
     if(myText != null) return myText;
     final StringBuffer consolidatedText = new StringBuffer();
-    for (int i = 0; i < myElements.length; i++) {
-      final XmlTagChild element = myElements[i];
+    for (final XmlTagChild element : myElements) {
       consolidatedText.append(element.getText());
     }
     return consolidatedText.toString();
@@ -62,8 +60,7 @@ public class XmlTagValueImpl implements XmlTagValue{
 
     final StringBuffer consolidatedText = new StringBuffer();
     final XmlText[] textElements = getTextElements();
-    for (int i = 0; i < textElements.length; i++) {
-      final XmlText textElement = textElements[i];
+    for (final XmlText textElement : textElements) {
       consolidatedText.append(textElement.getValue());
     }
     return myTrimmedText = consolidatedText.toString().trim();

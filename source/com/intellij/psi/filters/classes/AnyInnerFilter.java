@@ -38,11 +38,10 @@ public class AnyInnerFilter extends ClassFilter{
   public boolean isAcceptable(Object classElement, PsiElement place){
     if(classElement instanceof PsiClass){
       final PsiClass[] inners = ((PsiClass)classElement).getInnerClasses();
-      for(int j = 0; j < inners.length; j++){
-        final PsiClass inner = inners[j];
-        if(inner.hasModifierProperty(PsiModifier.STATIC)
-          && PsiUtil.isAccessible(inner, place, null)
-          && myFilter.isAcceptable(inner, place)){
+      for (final PsiClass inner : inners) {
+        if (inner.hasModifierProperty(PsiModifier.STATIC)
+            && PsiUtil.isAccessible(inner, place, null)
+            && myFilter.isAcceptable(inner, place)) {
           return true;
         }
       }

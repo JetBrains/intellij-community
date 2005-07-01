@@ -29,8 +29,8 @@ public class TargetNamespaceFilter extends TextFilter{
     if(element instanceof XmlTag){
       final String attributeValue = ((XmlTag)element).getAttributeValue("targetNamespace");
       if(attributeValue != null){
-        for(int i = 0; i < myValue.length; i++){
-          if(myValue[i].equals(attributeValue)) return true;
+        for (String aMyValue : myValue) {
+          if (aMyValue.equals(attributeValue)) return true;
         }
       }
     }

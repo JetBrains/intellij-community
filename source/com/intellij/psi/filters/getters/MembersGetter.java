@@ -31,21 +31,20 @@ public class MembersGetter implements ContextGetter{
     final FilterScopeProcessor processor = new FilterScopeProcessor(TrueFilter.INSTANCE, context);
     final Object[] elements = myBaseGetter.get(context, completionContext);
 
-    for(int i = 0; i < elements.length; i++){
-      final Object element = elements[i];
+    for (final Object element : elements) {
       final PsiClass psiClass;
 
-      if(element instanceof PsiClass){
-        psiClass = (PsiClass) context;
+      if (element instanceof PsiClass) {
+        psiClass = (PsiClass)context;
         PsiScopesUtil.processScope(psiClass, processor, PsiSubstitutor.EMPTY, null, context);
       }
-      else if(element instanceof PsiType){
-        psiClass = PsiUtil.resolveClassInType((PsiType) element);
-        if(psiClass != null){
+      else if (element instanceof PsiType) {
+        psiClass = PsiUtil.resolveClassInType((PsiType)element);
+        if (psiClass != null) {
           PsiScopesUtil.processScope(psiClass, processor, PsiSubstitutor.EMPTY, null, context);
         }
       }
-      else{
+      else {
         PsiScopesUtil.processScope((PsiElement)element, processor, PsiSubstitutor.EMPTY, null, context);
       }
     }

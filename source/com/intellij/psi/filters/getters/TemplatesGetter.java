@@ -27,8 +27,7 @@ public class TemplatesGetter implements ContextGetter{
     final TemplateSettings templateSettings = TemplateSettings.getInstance();
     final TemplateImpl[] templates = templateSettings.getTemplates();
 
-    for (int i = 0; i < templates.length; i++) {
-      final TemplateImpl template = templates[i];
+    for (final TemplateImpl template : templates) {
       if (template.isDeactivated()) continue;
 
       final TemplateContext templateContext = template.getTemplateContext();

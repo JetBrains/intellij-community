@@ -24,11 +24,10 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider{
     final List<ReferenceSet.JavaReference> results = new ArrayList<ReferenceSet.JavaReference>();
     final Set<String> knownTopLevelPackages = new HashSet<String>();
     final List<PsiElement> defaultPackages = getDefaultPackages(position);
-    final Iterator<PsiElement> iterator = defaultPackages.iterator();
-    while (iterator.hasNext()) {
-      final PsiElement pack = iterator.next();
-      if(pack instanceof PsiPackage)
+    for (final PsiElement pack : defaultPackages) {
+      if (pack instanceof PsiPackage) {
         knownTopLevelPackages.add(((PsiPackage)pack).getName());
+      }
     }
 
     final Matcher matcher = PATTERN.matcher(str);

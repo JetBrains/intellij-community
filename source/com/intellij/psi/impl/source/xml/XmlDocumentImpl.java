@@ -190,8 +190,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     this.accept(psiRecursiveElementVisitor);
 
     final Object[] keys = map.keys();
-    for (int i = 0; i < keys.length; i++) {
-      final Object key = keys[i];
+    for (final Object key : keys) {
       System.out.println(key + ": " + map.get(key));
     }
   }

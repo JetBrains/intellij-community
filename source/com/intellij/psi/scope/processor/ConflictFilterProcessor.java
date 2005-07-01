@@ -63,8 +63,8 @@ public class ConflictFilterProcessor extends FilterScopeProcessor
     if(event == Event.CHANGE_LEVEL && myName != null){
       myCachedResult = getResult();
     }
-    for(int i = 0; i < myResolvers.length; i++){
-      myResolvers[i].handleProcessorEvent(event, associated);
+    for (PsiConflictResolver myResolver : myResolvers) {
+      myResolver.handleProcessorEvent(event, associated);
     }
   }
 
@@ -78,9 +78,10 @@ public class ConflictFilterProcessor extends FilterScopeProcessor
       CandidateInfo candidate;
 
       final List<CandidateInfo> conflicts = new ArrayList<CandidateInfo>((List<CandidateInfo>)super.getResults());
-      for(int i = 0; i < myResolvers.length; i++){
-        if((candidate = myResolvers[i].resolveConflict(conflicts)) != null){
-          conflicts.clear(); conflicts.add(candidate);
+      for (PsiConflictResolver myResolver : myResolvers) {
+        if ((candidate = myResolver.resolveConflict(conflicts)) != null) {
+          conflicts.clear();
+          conflicts.add(candidate);
           break;
         }
       }

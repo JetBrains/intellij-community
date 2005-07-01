@@ -87,8 +87,7 @@ class ParamDocTagInfo implements JavadocTagInfo {
   private PsiParameter getParameter(PsiDocTagValue value) {
     final PsiParameter[] parameters = getParameters(value);
 
-    for (int i = 0; i < parameters.length; i++) {
-      PsiParameter parameter = parameters[i];
+    for (PsiParameter parameter : parameters) {
       if (parameter.getName().equals(value.getText())) return parameter;
     }
 

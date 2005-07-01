@@ -145,8 +145,8 @@ public class ClsAnnotationsUtil {
     if (modifierList != null) {
       PsiAnnotation[] annotations = modifierList.getAnnotations();
       record.writeInt(annotations.length);
-      for (int i = 0; i < annotations.length; i++) {
-        record.writeUTF(annotations[i].getText());
+      for (PsiAnnotation annotation : annotations) {
+        record.writeUTF(annotation.getText());
       }
     }
     else {
@@ -159,8 +159,8 @@ public class ClsAnnotationsUtil {
     if (modifierList != null) {
       PsiAnnotation[] annotations = modifierList.getAnnotations();
       RecordUtil.writeINT(record, annotations.length);
-      for (int i = 0; i < annotations.length; i++) {
-        RecordUtil.writeSTR(record, annotations[i].getText());
+      for (PsiAnnotation annotation : annotations) {
+        RecordUtil.writeSTR(record, annotation.getText());
       }
     }
     else {

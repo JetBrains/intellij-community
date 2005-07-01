@@ -50,8 +50,8 @@ class ExceptionTagInfo implements JavadocTagInfo {
     PsiMethod method = PsiTreeUtil.getParentOfType(value, PsiMethod.class);
     final PsiClassType[] references = method.getThrowsList().getReferencedTypes();
 
-    for (int i = 0; i < references.length; i++) {
-      final PsiClass psiClass = references[i].resolve();
+    for (PsiClassType reference : references) {
+      final PsiClass psiClass = reference.resolve();
       if (psiClass == null) continue;
       if (exceptionClass.isInheritor(psiClass, true) || exceptionClass.equals(psiClass)) return null;
     }

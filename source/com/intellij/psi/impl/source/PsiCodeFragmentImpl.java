@@ -151,9 +151,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
         }
       }
       else {
-        Iterator<String> iter = myPseudoImports.values().iterator();
-        while (iter.hasNext()) {
-          String qNameImported = iter.next();
+        for (String qNameImported : myPseudoImports.values()) {
           PsiClass aClass = myManager.findClass(qNameImported, getResolveScope());
           if (aClass != null) {
             if (!processor.execute(aClass, substitutor)) return false;

@@ -484,8 +484,8 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
               }
 
               myThrowsList = new ClsReferenceListImpl(this, refs, PsiKeyword.THROWS);
-              for (int j = 0; j < refs.length; j++) {
-                refs[j].setParent(myThrowsList);
+              for (ClsJavaCodeReferenceElementImpl ref : refs) {
+                ref.setParent(myThrowsList);
               }
             }
           }
@@ -504,8 +504,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
           refs[i] = new ClsJavaCodeReferenceElementImpl(null, refTexts[i]);
         }
         myThrowsList = new ClsReferenceListImpl(this, refs, PsiKeyword.THROWS);
-        for (int i = 0; i < refs.length; i++) {
-          ClsJavaCodeReferenceElementImpl ref = refs[i];
+        for (ClsJavaCodeReferenceElementImpl ref : refs) {
           ref.setParent(myThrowsList);
         }
       }
@@ -741,8 +740,8 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
     if (!PsiScopesUtil.walkChildrenScopes(this, processor, substitutor, lastParent, place)) return false;
 
     final PsiParameter[] parameters = getParameterList().getParameters();
-    for (int i = 0; i < parameters.length; i++) {
-      if (!processor.execute(parameters[i], substitutor)) return false;
+    for (PsiParameter parameter : parameters) {
+      if (!processor.execute(parameter, substitutor)) return false;
     }
 
     return true;

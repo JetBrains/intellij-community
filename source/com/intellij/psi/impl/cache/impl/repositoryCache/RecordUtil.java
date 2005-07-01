@@ -178,8 +178,7 @@ public class RecordUtil {
       PsiModifierList modifierList = ((PsiModifierListOwner)element).getModifierList();
       if (modifierList != null) {
         PsiAnnotation[] annotations = modifierList.getAnnotations();
-        for (int i = 0; i < annotations.length; i++) {
-          PsiAnnotation annotation = annotations[i];
+        for (PsiAnnotation annotation : annotations) {
           PsiJavaCodeReferenceElement nameElement = annotation.getNameReferenceElement();
           if (nameElement != null && "Deprecated".equals(nameElement.getReferenceName())) return true;
         }

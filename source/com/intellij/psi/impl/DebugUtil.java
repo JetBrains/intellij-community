@@ -133,8 +133,7 @@ public class DebugUtil {
     if (root instanceof CompositeElement || ((LeafElement)root).isChameleon()) {
       PsiElement[] children = SourceTreeToPsiMap.treeElementToPsi(root).getChildren();
 
-      for (int i = 0; i < children.length; i++) {
-        PsiElement child = children[i];
+      for (PsiElement child : children) {
         treeToBufferWithUserData(buffer, (TreeElement)SourceTreeToPsiMap.psiElementToTree(child), indent + 2, skipWhiteSpaces);
       }
 
@@ -168,8 +167,7 @@ public class DebugUtil {
 
     PsiElement[] children = root.getChildren();
 
-    for (int i = 0; i < children.length; i++) {
-      PsiElement child = children[i];
+    for (PsiElement child : children) {
       treeToBufferWithUserData(buffer, child, indent + 2, skipWhiteSpaces);
     }
 

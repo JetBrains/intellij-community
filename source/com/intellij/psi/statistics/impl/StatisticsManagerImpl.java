@@ -148,8 +148,7 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
 
     ArrayList<String> list = new ArrayList<String>();
 
-    for(int i = 0; i < keys2.length; i++){
-      String key2 = keys2[i];
+    for (String key2 : keys2) {
       VariableKind variableKind1 = getVariableKindFromKey2(key2);
       if (variableKind1 != variableKind) continue;
       String name = getVariableNameFromKey2(key2);
@@ -161,8 +160,7 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
 
   public void save() {
     if (!ApplicationManager.getApplication().isUnitTestMode()){
-      for(Iterator<StatisticsUnit> iterator = myModifiedUnits.iterator(); iterator.hasNext();){
-        StatisticsUnit unit = iterator.next();
+      for (StatisticsUnit unit : myModifiedUnits) {
         saveUnit(unit.getNumber());
       }
     }
@@ -243,9 +241,9 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
       buffer.append("method#");
       buffer.append(method.getName());
       PsiParameter[] parms = method.getParameterList().getParameters();
-      for(int i = 0; i < parms.length; i++){
+      for (PsiParameter parm : parms) {
         buffer.append("#");
-        buffer.append(parms[i].getType().getPresentableText());
+        buffer.append(parm.getType().getPresentableText());
       }
       return buffer.toString();
     }

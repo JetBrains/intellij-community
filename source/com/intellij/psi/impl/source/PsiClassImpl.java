@@ -450,9 +450,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
           }
           list.add(method);
         }
-        final Iterator<String> iterator = cachedMethodsMap.keySet().iterator();
-        while (iterator.hasNext()) {
-          final String methodName = iterator.next();
+        for (final String methodName : cachedMethodsMap.keySet()) {
           map.put(methodName, cachedMethodsMap.get(methodName).toArray(PsiMethod.EMPTY_ARRAY));
         }
         myCachedMethodsMap = map;

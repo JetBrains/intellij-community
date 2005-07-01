@@ -41,9 +41,7 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor {
       myCachedDecls = new HashMap<String, XmlElementDescriptor>();
       XmlElementDescriptor[] elements = (myDelegate!=null)?myDelegate.getRootElementsDescriptors():XmlElementDescriptor.EMPTY_ARRAY;
 
-      for (int i = 0; i < elements.length; i++) {
-        XmlElementDescriptor element = elements[i];
-
+      for (XmlElementDescriptor element : elements) {
         myCachedDecls.put(
           element.getName(),
           new HtmlElementDescriptorImpl(element)

@@ -118,8 +118,7 @@ class ReferenceAdjuster implements Constants {
   public void processRange(TreeElement element, int startOffset, int endOffset) {
     ArrayList<ASTNode> array = new ArrayList<ASTNode>();
     addReferencesInRange(array, element, startOffset, endOffset);
-    for (int i = 0; i < array.size(); i++) {
-      ASTNode ref = array.get(i);
+    for (ASTNode ref : array) {
       if (SourceTreeToPsiMap.treeElementToPsi(ref).isValid()) {
         process((TreeElement)ref, true, true);
       }
