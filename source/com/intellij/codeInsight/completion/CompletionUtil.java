@@ -8,18 +8,15 @@ import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.lang.Language;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.lang.jsp.NewJspLanguage;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -32,6 +29,8 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlFile;
@@ -40,11 +39,12 @@ import org.apache.oro.text.regex.MalformedPatternException;
 import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.Perl5Compiler;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class CompletionUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionUtil");
-
   public static final Key TAIL_TYPE_ATTR = Key.create("tailType"); // one of constants defined in TailType interface
 
   private static final Key<SmartPsiElementPointer> QUALIFIER_TYPE_ATTR = Key.create("qualifierType"); // SmartPsiElementPointer to PsiType of "qualifier"
@@ -342,7 +342,11 @@ public class CompletionUtil {
   }
 
   public static PsiType eliminateWildcards (PsiType type) {
-    if (type instanceof PsiClassType) {
+    return eliminateWildcardsInner(type, true);
+  }
+
+  private static PsiType eliminateWildcardsInner(PsiType type, final boolean eliminateInTypeArguments) {
+    if (eliminateInTypeArguments && type instanceof PsiClassType) {
       PsiClassType classType = ((PsiClassType)type);
       JavaResolveResult resolveResult = classType.resolveGenerics();
       PsiClass aClass = (PsiClass)resolveResult.getElement();
@@ -364,7 +368,7 @@ public class CompletionUtil {
         type = factory.createType(aClass, substitutor);
       }
     } else if (type instanceof PsiArrayType) {
-      return eliminateWildcards(((PsiArrayType)type).getComponentType()).createArrayType();
+      return eliminateWildcardsInner(((PsiArrayType)type).getComponentType(), false).createArrayType();
     } else if (type instanceof PsiWildcardType) {
       return ((PsiWildcardType)type).getExtendsBound();
     }
