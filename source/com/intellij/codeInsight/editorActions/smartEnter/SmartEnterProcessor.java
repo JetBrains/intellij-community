@@ -116,7 +116,8 @@ public class SmartEnterProcessor {
     int caretOffset = myEditor.getCaretModel().getOffset();
     final CharSequence chars = myEditor.getDocument().getCharsSequence();
     caretOffset = CharArrayUtil.shiftBackward(chars, caretOffset - 1, " \t") + 1;
-    if (CharArrayUtil.regionMatches(chars, caretOffset - "{}".length(), "{}")) {
+    if (CharArrayUtil.regionMatches(chars, caretOffset - "{}".length(), "{}") ||
+        CharArrayUtil.regionMatches(chars, caretOffset - "{\n}".length(), "{\n}")) {
       commit();
       final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
       final boolean old = settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE;
