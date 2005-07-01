@@ -9,8 +9,11 @@ import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -61,8 +64,7 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
 
   public static boolean orderEntryContainsFile(OrderEntry orderEntry, VirtualFile file) {
     VirtualFile[] files = orderEntry.getFiles(OrderRootType.CLASSES);
-    for (int i = 0; i < files.length; i++) {
-      VirtualFile virtualFile = files[i];
+    for (VirtualFile virtualFile : files) {
       boolean ancestor = VfsUtil.isAncestor(virtualFile, file, false);
       if (ancestor) return true;
     }
@@ -73,9 +75,16 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
   public void update(PresentationData presentation) {
     presentation.setPresentableText(getValue().getName());
     final OrderEntry orderEntry = getValue().getOrderEntry();
-    presentation.setOpenIcon((orderEntry instanceof JdkOrderEntry)? getJdkIcon(((JdkOrderEntry)orderEntry), true) : LIB_ICON_OPEN);
-    presentation.setClosedIcon((orderEntry instanceof JdkOrderEntry)? getJdkIcon(((JdkOrderEntry)orderEntry), false) : LIB_ICON_CLOSED);
-
+    presentation.setOpenIcon(orderEntry instanceof JdkOrderEntry ? getJdkIcon((JdkOrderEntry)orderEntry, true) : LIB_ICON_OPEN);
+    presentation.setClosedIcon(orderEntry instanceof JdkOrderEntry ? getJdkIcon((JdkOrderEntry)orderEntry, false) : LIB_ICON_CLOSED);
+    if (orderEntry instanceof JdkOrderEntry) {
+      final JdkOrderEntry jdkOrderEntry = (JdkOrderEntry)orderEntry;
+      presentation.setLocationString(FileUtil.toSystemDependentName(jdkOrderEntry.getJdk().getHomePath()));
+    }
   }
 
+  protected String getToolTip() {
+    OrderEntry orderEntry = getValue().getOrderEntry();
+    return orderEntry instanceof JdkOrderEntry ? "JDK" : StringUtil.capitalize(((LibraryOrderEntry)orderEntry).getLibraryLevel() + " library");
+  }
 }
