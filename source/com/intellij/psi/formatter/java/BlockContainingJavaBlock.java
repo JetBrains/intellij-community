@@ -118,6 +118,9 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
         return getCodeBlockExternalIndent();
       }
     }
+    if (state == BEFORE_FIRST) {
+      return getCodeBlockExternalIndent(); 
+    }
     if (child.getElementType() == ElementType.ELSE_KEYWORD) 
       return getCodeBlockExternalIndent();
   
