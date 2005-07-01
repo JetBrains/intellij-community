@@ -1,6 +1,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,11 +15,12 @@ public class CollectionUtils{
      * @noinspection StaticCollection
      */
     private static final Set<String> s_collectionClassesRequiringCapacity =
-             new HashSet<String>(10);
+            new HashSet<String>(10);
     /**
      * @noinspection StaticCollection
      */
-    private static final Set<String> s_allCollectionClasses = new HashSet<String>(10);
+    private static final Set<String> s_allCollectionClasses = new HashSet<String>(
+            10);
     /**
      * @noinspection StaticCollection
      */
@@ -27,7 +29,8 @@ public class CollectionUtils{
     /**
      * @noinspection StaticCollection
      */
-    private static final Map<String,String> s_interfaceForCollection = new HashMap<String, String>(10);
+    private static final Map<String, String> s_interfaceForCollection = new HashMap<String, String>(
+            10);
 
     static {
         s_collectionClassesRequiringCapacity.add("java.util.BitSet");
@@ -39,12 +42,18 @@ public class CollectionUtils{
         s_collectionClassesRequiringCapacity.add("java.util.Hashtable");
         s_collectionClassesRequiringCapacity.add("java.util.HashSet");
         s_collectionClassesRequiringCapacity.add("java.util.LinkedHashSet");
-        s_collectionClassesRequiringCapacity.add("com.sun.java.util.collections.BitSet");
-        s_collectionClassesRequiringCapacity.add("com.sun.java.util.collections.Vector");
-        s_collectionClassesRequiringCapacity.add("com.sun.java.util.collections.ArrayList");
-        s_collectionClassesRequiringCapacity.add("com.sun.java.util.collections.HashMap");
-        s_collectionClassesRequiringCapacity.add("com.sun.java.util.collections.Hashtable");
-        s_collectionClassesRequiringCapacity.add("com.sun.java.util.collections.HashSet");
+        s_collectionClassesRequiringCapacity
+                .add("com.sun.java.util.collections.BitSet");
+        s_collectionClassesRequiringCapacity
+                .add("com.sun.java.util.collections.Vector");
+        s_collectionClassesRequiringCapacity
+                .add("com.sun.java.util.collections.ArrayList");
+        s_collectionClassesRequiringCapacity
+                .add("com.sun.java.util.collections.HashMap");
+        s_collectionClassesRequiringCapacity
+                .add("com.sun.java.util.collections.Hashtable");
+        s_collectionClassesRequiringCapacity
+                .add("com.sun.java.util.collections.HashSet");
 
         s_allCollectionClasses.add("java.util.Vector");
         s_allCollectionClasses.add("java.util.ArrayList");
@@ -87,20 +96,34 @@ public class CollectionUtils{
         s_allCollectionClassesAndInterfaces.add("java.util.List");
         s_allCollectionClassesAndInterfaces.add("java.util.SortedMap");
         s_allCollectionClassesAndInterfaces.add("java.util.SortedSet");
-        s_allCollectionClassesAndInterfaces.add("com.sun.java.util.collections.Collection");
-        s_allCollectionClassesAndInterfaces.add("com.sun.java.util.collections.Vector");
-        s_allCollectionClassesAndInterfaces.add("com.sun.java.util.collections.ArrayList");
-        s_allCollectionClassesAndInterfaces.add("com.sun.java.util.collections.LinkedList");
-        s_allCollectionClassesAndInterfaces.add("com.sun.java.util.collections.HashMap");
-        s_allCollectionClassesAndInterfaces.add("com.sun.java.util.collections.Hashtable");
-        s_allCollectionClassesAndInterfaces.add("com.sun.java.util.collections.HashSet");
-        s_allCollectionClassesAndInterfaces.add("com.sun.java.util.collections.TreeSet");
-        s_allCollectionClassesAndInterfaces.add("com.sun.java.util.collections.TreeMap");
-        s_allCollectionClassesAndInterfaces.add("com.sun.java.util.collections.Set");
-        s_allCollectionClassesAndInterfaces.add("com.sun.java.util.collections.Map");
-        s_allCollectionClassesAndInterfaces.add("com.sun.java.util.collections.List");
-        s_allCollectionClassesAndInterfaces.add("com.sun.java.util.collections.SortedMap");
-        s_allCollectionClassesAndInterfaces.add("com.sun.java.util.collections.SortedSet");
+        s_allCollectionClassesAndInterfaces
+                .add("com.sun.java.util.collections.Collection");
+        s_allCollectionClassesAndInterfaces
+                .add("com.sun.java.util.collections.Vector");
+        s_allCollectionClassesAndInterfaces
+                .add("com.sun.java.util.collections.ArrayList");
+        s_allCollectionClassesAndInterfaces
+                .add("com.sun.java.util.collections.LinkedList");
+        s_allCollectionClassesAndInterfaces
+                .add("com.sun.java.util.collections.HashMap");
+        s_allCollectionClassesAndInterfaces
+                .add("com.sun.java.util.collections.Hashtable");
+        s_allCollectionClassesAndInterfaces
+                .add("com.sun.java.util.collections.HashSet");
+        s_allCollectionClassesAndInterfaces
+                .add("com.sun.java.util.collections.TreeSet");
+        s_allCollectionClassesAndInterfaces
+                .add("com.sun.java.util.collections.TreeMap");
+        s_allCollectionClassesAndInterfaces
+                .add("com.sun.java.util.collections.Set");
+        s_allCollectionClassesAndInterfaces
+                .add("com.sun.java.util.collections.Map");
+        s_allCollectionClassesAndInterfaces
+                .add("com.sun.java.util.collections.List");
+        s_allCollectionClassesAndInterfaces
+                .add("com.sun.java.util.collections.SortedMap");
+        s_allCollectionClassesAndInterfaces
+                .add("com.sun.java.util.collections.SortedSet");
 
         s_interfaceForCollection.put("HashSet", "Set");
         s_interfaceForCollection.put("LinkedHashSet", "Set");
@@ -154,13 +177,14 @@ public class CollectionUtils{
         super();
     }
 
-    public static boolean isCollectionWithInitialCapacity(@Nullable PsiType type){
-        if(!(type instanceof PsiClassType)) {
+    public static boolean isCollectionWithInitialCapacity(
+            @Nullable PsiType type){
+        if(!(type instanceof PsiClassType)){
             return false;
         }
         final PsiClassType classType = (PsiClassType) type;
         final PsiClass resolved = classType.resolve();
-        if(resolved == null) {
+        if(resolved == null){
             return false;
         }
         final String className = resolved.getQualifiedName();
@@ -168,41 +192,41 @@ public class CollectionUtils{
     }
 
     public static boolean isCollectionClass(@Nullable PsiType type){
-        if(!(type instanceof PsiClassType)) {
+        if(!(type instanceof PsiClassType)){
             return false;
         }
         final PsiClassType classType = (PsiClassType) type;
         final PsiClass resolved = classType.resolve();
-        if(resolved == null) {
+        if(resolved == null){
             return false;
         }
         return isCollectionClass(resolved);
     }
 
-    public static boolean isCollectionClass(final PsiClass aClass){
+    public static boolean isCollectionClass(PsiClass aClass){
         final String className = aClass.getQualifiedName();
         return s_allCollectionClasses.contains(className);
     }
 
     public static boolean isCollectionClassOrInterface(@Nullable PsiType type){
-        if(!(type instanceof PsiClassType)) {
+        if(!(type instanceof PsiClassType)){
             return false;
         }
         final PsiClassType classType = (PsiClassType) type;
         final PsiClass resolved = classType.resolve();
-        if(resolved == null) {
+        if(resolved == null){
             return false;
         }
         final String className = resolved.getQualifiedName();
         return s_allCollectionClassesAndInterfaces.contains(className);
     }
+
     public static boolean isWeakCollectionClass(@Nullable PsiType type){
         if(!(type instanceof PsiClassType)){
             return false;
         }
         final String typeText = type.getCanonicalText();
-        if(typeText == null)
-        {
+        if(typeText == null){
             return false;
         }
         return "java.util.WeakHashMap".equals(typeText);
@@ -210,54 +234,60 @@ public class CollectionUtils{
 
     public static boolean isConstantArrayOfZeroSize(@NotNull PsiField field){
         if(!field.hasModifierProperty(PsiModifier.STATIC) ||
-                !field.hasModifierProperty(PsiModifier.FINAL)) {
+                !field.hasModifierProperty(PsiModifier.FINAL)){
             return false;
         }
         final PsiExpression initializer = field.getInitializer();
-        if(!(initializer instanceof PsiNewExpression)) {
+        if(!(initializer instanceof PsiNewExpression)){
             return false;
         }
         final PsiNewExpression expression = (PsiNewExpression) initializer;
         final PsiExpression[] dimensions = expression.getArrayDimensions();
-        if(dimensions != null) {
-            if(dimensions.length != 1) {
-                return false;
-            }
-            final PsiExpression dimension = dimensions[0];
-            final String dimensionText = dimension.getText();
-            if("0".equals(dimensionText)) {
-                return true;
-            }
+        if(dimensions.length != 1){
+            return false;
         }
-        return false;
+        final PsiExpression dimension = dimensions[0];
+        final String dimensionText = dimension.getText();
+        return "0".equals(dimensionText);
     }
 
-    public static boolean isArrayOrCollectionField(@Nullable PsiExpression value){
-        if(!(value instanceof PsiReferenceExpression)) {
+    public static boolean isArrayOrCollectionField(
+            @Nullable PsiExpression value){
+        if(!(value instanceof PsiReferenceExpression)){
             return false;
         }
         final PsiReferenceExpression fieldReference =
                 (PsiReferenceExpression) value;
-
-        final PsiElement element = fieldReference.resolve();
-        if(!(element instanceof PsiField)) {
-            return false;
-        }
         final PsiType type = fieldReference.getType();
-        if(type == null) {
+        if(type == null){
             return false;
         }
-        if(type.getArrayDimensions() > 0) {
-            return !isConstantArrayOfZeroSize((PsiField) element);
+        if(!isCollectionClassOrInterface(type)){
+            return false;
         }
-        return isCollectionClassOrInterface(type);
+        final PsiElement referent = fieldReference.resolve();
+        if(!(referent instanceof PsiField)){
+            return false;
+        }
+
+        final PsiField field = (PsiField) referent;
+        if(type.getArrayDimensions() > 0){
+            return !isConstantArrayOfZeroSize(field);
+        }
+        final PsiClass valueContainingClass = PsiTreeUtil
+                .getParentOfType(value, PsiClass.class);
+        if(valueContainingClass == null){
+            return false;
+        }
+        final PsiClass fieldContainingClass = field.getContainingClass();
+        return valueContainingClass.equals(fieldContainingClass);
     }
 
     public static String getInterfaceForClass(String name){
         final int paramStart = name.indexOf((int) '<');
         String baseName;
         final String arg;
-        if(paramStart >= 0) {
+        if(paramStart >= 0){
             baseName = name.substring(0, paramStart);
             baseName = baseName.trim();
             arg = name.substring(paramStart);
