@@ -20,9 +20,12 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspTokenType;
+import com.intellij.psi.jsp.el.ELExpressionHolder;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspText;
+import com.intellij.psi.impl.source.jsp.jspJava.JspExpression;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
@@ -33,6 +36,8 @@ import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 
@@ -323,15 +328,22 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   }
 
   private boolean filterJspErrors(final PsiErrorElement element) {
-    if (element.getNextSibling() == null) {
-      PsiElement nextSibling = element.getParent().getNextSibling();
-      while (nextSibling instanceof PsiWhiteSpace) {
-        nextSibling = nextSibling.getNextSibling();
-      }
+    PsiElement nextSibling = element.getNextSibling();
+    
+    if (nextSibling == null) {
+      nextSibling = element.getContainingFile().findElementAt(element.getTextOffset()+1);
+      if (nextSibling != null) nextSibling = nextSibling.getParent();
+    }
+    
+    while (nextSibling instanceof PsiWhiteSpace) {
+      nextSibling = nextSibling.getNextSibling();
+    }
 
-      if (nextSibling instanceof JspText) {
-        return true;
-      }
+    if (nextSibling instanceof JspText ||
+        nextSibling instanceof JspExpression ||
+        nextSibling instanceof ELExpressionHolder  
+       ) {
+      return true;
     }
     
     return false;
