@@ -86,10 +86,7 @@ public class PackageUtil {
                                        Module module,
                                        ViewSettings settings,
                                        final boolean inLibrary) {
-    final boolean shouldSkipPackage = settings.isHideEmptyMiddlePackages()
-                                      && isPackageEmpty(aPackage, module,
-                                                        true,
-                                                        inLibrary);
+    final boolean shouldSkipPackage = settings.isHideEmptyMiddlePackages() && isPackageEmpty(aPackage, module, !settings.isFlattenPackages(), inLibrary);
     final Project project = aPackage.getManager().getProject();
     if (!shouldSkipPackage) {
       children.add(new PackageElementNode(project,
