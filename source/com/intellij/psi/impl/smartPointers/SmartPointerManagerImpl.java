@@ -56,7 +56,8 @@ public class SmartPointerManagerImpl extends SmartPointerManager implements Proj
       if (pointers == null) return;
 
       int index = 0;
-      for (WeakReference<SmartPointerEx> reference : pointers) {
+      for (int i = 0; i < pointers.size(); i++) {
+        WeakReference<SmartPointerEx> reference = pointers.get(i);
         SmartPointerEx pointer = reference.get();
         if (pointer != null) {
           pointer.fastenBelt();
@@ -83,7 +84,8 @@ public class SmartPointerManagerImpl extends SmartPointerManager implements Proj
       if (pointers == null) return;
 
       int index = 0;
-      for (WeakReference<SmartPointerEx> reference : pointers) {
+      for (int i = 0; i < pointers.size(); i++) {
+        WeakReference<SmartPointerEx> reference = pointers.get(i);
         SmartPointerEx pointer = reference.get();
         if (pointer != null) {
           pointer.documentAndPsiInSync();
@@ -230,7 +232,9 @@ public class SmartPointerManagerImpl extends SmartPointerManager implements Proj
       if (!(classElement instanceof PsiClass)) return null;
       Map<PsiTypeParameter, PsiType> resurrected = new HashMap<PsiTypeParameter, PsiType>();
       final Set<Map.Entry<SmartPsiElementPointer, SmartTypePointer>> set = myMap.entrySet();
-      for (Map.Entry<SmartPsiElementPointer, SmartTypePointer> entry : set) {
+      for (Iterator<Map.Entry<SmartPsiElementPointer, SmartTypePointer>> iterator = set.iterator();
+           iterator.hasNext();) {
+        Map.Entry<SmartPsiElementPointer, SmartTypePointer> entry = iterator.next();
         PsiElement element = entry.getKey().getElement();
         if (element instanceof PsiTypeParameter) {
           resurrected.put(((PsiTypeParameter)element), entry.getValue().getType());
