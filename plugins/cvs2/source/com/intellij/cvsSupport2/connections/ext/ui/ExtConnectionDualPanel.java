@@ -63,7 +63,7 @@ public class ExtConnectionDualPanel {
   }
 
   public boolean equalsTo(ExtConfiguration extConfiguration, SshSettings sshSettings) {
-    if (!myExtSettingsPanel.equals(extConfiguration)) {
+    if (!myExtSettingsPanel.equalsTo(extConfiguration)) {
       return false;
     }
     if (mySshSettingsPanel.equalsTo(sshSettings)) {

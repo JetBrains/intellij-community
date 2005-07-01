@@ -3,6 +3,7 @@ package com.intellij.cvsSupport2.connections.ext.ui;
 import com.intellij.cvsSupport2.config.ExtConfiguration;
 import com.intellij.cvsSupport2.config.ui.CvsConfigurationPanel;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Comparing;
 
 import javax.swing.*;
 
@@ -39,6 +40,20 @@ public class ExtConnectionSettingsPanel {
     ext_configuration.CVS_RSH = myPathToRsh.getText();
     ext_configuration.PRIVATE_KEY_FILE = myPathToPrivateKeyFile.getText();
     ext_configuration.ADDITIONAL_PARAMETERS = myAdditionalParameters.getText();
+  }
+
+  public boolean equalsTo(ExtConfiguration ext_configuration) {
+    if (!Comparing.equal(ext_configuration.CVS_RSH, myPathToRsh.getText())) {
+      return false;
+    }
+    if (!Comparing.equal(ext_configuration.PRIVATE_KEY_FILE, myPathToPrivateKeyFile.getText())) {
+      return false;
+    }
+    if (!Comparing.equal(ext_configuration.ADDITIONAL_PARAMETERS, myAdditionalParameters.getText())) {
+      return false;
+    }
+
+    return true;
   }
 
   public JComponent getPanel() {

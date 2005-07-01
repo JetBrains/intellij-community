@@ -115,7 +115,7 @@ public class SshConnectionSettingsPanel {
 
   private void changePassword() {
     final SSHPasswordProvider sshPasswordProvider = SSHPasswordProvider.getInstance();
-    if (myUsePrivateKeyFile.isSelected()) {
+    if (!myUsePrivateKeyFile.isSelected()) {
       final String cvsRoot = myRootProvider.getCurrentRoot();
       SshPasswordDialog sshPasswordDialog = new SshPasswordDialog(cvsRoot, "Enter password for ");
       sshPasswordDialog.show();
