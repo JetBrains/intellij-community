@@ -33,6 +33,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider, P
       if (node.getValue() instanceof PsiFile) {
         PsiFile file = (PsiFile)node.getValue();
         if (file.getFileType() == StdFileTypes.GUI_DESIGNER_FORM) {
+          formsFound = false;
           break;
         }
       }
@@ -78,6 +79,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider, P
     HashSet<PsiFile> psiFiles = new HashSet<PsiFile>(Arrays.asList(forms));
     for (final AbstractTreeNode aChildren : children) {
       ProjectViewNode treeNode = (ProjectViewNode)aChildren;
+      //noinspection SuspiciousMethodCalls
       if (psiFiles.contains(treeNode.getValue())) result.add(treeNode);
     }
     return result;
