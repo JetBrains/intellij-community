@@ -6,6 +6,7 @@ import com.intellij.newCodeFormatting.Formatter;
 import com.intellij.newCodeFormatting.SpaceProperty;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
@@ -886,6 +887,12 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
   public void visitEnumConstant(PsiEnumConstant enumConstant) {
     if (myRole2 == ChildRole.ARGUMENT_LIST) {
       createSpaceInCode(mySettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES);
+    }
+  }
+
+  public void visitDocTag(PsiDocTag tag) {
+    if (myChild1.getElementType() == ElementType.DOC_TAG_NAME && myChild2.getElementType() == ElementType.DOC_TAG_VALUE_TOKEN) {
+      myResult = Formatter.getInstance().createSpaceProperty(1, 1, 0, false, 0);
     }
   }
 
