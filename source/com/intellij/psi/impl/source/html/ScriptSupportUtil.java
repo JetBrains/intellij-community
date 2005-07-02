@@ -10,6 +10,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.xml.util.HtmlUtil;
+import com.intellij.xml.XmlElementDescriptor;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -37,8 +38,11 @@ public class ScriptSupportUtil {
         HtmlUtil.getRealXmlDocument(element.getDocument()), 
         new PsiElementProcessor() {
         public boolean execute(final PsiElement element) {
-          if (element instanceof XmlTag && "script".equals(((XmlTag)element).getDescriptor().getName())) {
-            scriptTags.add((XmlTag)element);
+          if (element instanceof XmlTag) {
+            final XmlElementDescriptor descriptor = ((XmlTag)element).getDescriptor();
+            if (descriptor != null && "script".equals(descriptor.getName())) {
+              scriptTags.add((XmlTag)element);
+            }
           }
           return true;
         }
