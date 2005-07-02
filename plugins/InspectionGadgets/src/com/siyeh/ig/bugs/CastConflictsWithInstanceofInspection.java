@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class CastConflictsWithInstanceofInspection extends ExpressionInspection{
     public String getDisplayName(){
-        return "Class conflicts with 'instanceof'";
+        return "Cast conflicts with 'instanceof'";
     }
 
     public String getGroupDisplayName(){
