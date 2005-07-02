@@ -9,6 +9,7 @@ import com.intellij.internal.diGraph.impl.NodeImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -46,8 +47,8 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
   private final String mySuperClassName;
   private List<UsageInfo> myVariablesUsages = new ArrayList<UsageInfo>();
 
-  protected boolean preprocessUsages(UsageInfo[][] usagesRef) {
-    UsageInfo[] usages = usagesRef[0];
+  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+    UsageInfo[] usages = refUsages.get();
     List<UsageInfo> filtered = new ArrayList<UsageInfo>();
     for (UsageInfo usage : usages) {
       if (usage instanceof TurnToSuperReferenceUsageInfo) {

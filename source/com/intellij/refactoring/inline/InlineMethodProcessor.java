@@ -9,6 +9,7 @@ import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -92,7 +93,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     myMethod = (PsiMethod)elements[0];
   }
 
-  protected boolean preprocessUsages(UsageInfo[][] usages) {
+  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+    UsageInfo[] usagesIn = refUsages.get();
     ArrayList<String> conflicts = new ArrayList<String>();
 
     if (!myInlineThisOnly) {
@@ -107,15 +109,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     final ReferencedElementsCollector collector = new ReferencedElementsCollector();
     myMethod.accept(collector);
     final Map<PsiMember,Set<PsiMember>> containersToReferenced;
-    String fromForReference = null;
-    if (usages[0] != null) {
-      containersToReferenced = getInaccessible(collector.myReferencedMembers, usages[0]);
-    }
-    else {
-      containersToReferenced = getInaccessible(collector.myReferencedMembers,
-                                               new UsageInfo[]{new UsageInfo(myReference)});
-      fromForReference = ConflictsUtil.getDescription(ConflictsUtil.getContainer(myReference), true);
-    }
+    containersToReferenced = getInaccessible(collector.myReferencedMembers, usagesIn);
 
     final Set<PsiMember> containers = containersToReferenced.keySet();
     for (PsiMember container : containers) {
@@ -123,8 +117,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       for (PsiMember referenced : referencedInaccessible) {
         String message = ConflictsUtil.getDescription(referenced, true) + " that is used in inlined method, " +
                          " is not accessible from " +
-                         (fromForReference == null ?
-                          "call site(s) in " + ConflictsUtil.getDescription(container, true) : fromForReference);
+                         "call site(s) in " + ConflictsUtil.getDescription(container, true);
         conflicts.add(ConflictsUtil.capitalize(message));
       }
     }

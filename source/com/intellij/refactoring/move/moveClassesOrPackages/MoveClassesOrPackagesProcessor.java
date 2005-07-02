@@ -5,6 +5,7 @@ import com.intellij.j2ee.ejb.EjbUsagesUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -131,8 +132,8 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
 
 
 
-  protected boolean preprocessUsages(UsageInfo[][] u) {
-    final UsageInfo[] usages = u[0];
+  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+    final UsageInfo[] usages = refUsages.get();
     final ArrayList<String> conflicts = new ArrayList<String>();
     ArrayList<UsageInfo> filteredUsages = new ArrayList<UsageInfo>();
     for (UsageInfo usage : usages) {
@@ -144,8 +145,8 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    u[0] = filteredUsages.toArray(new UsageInfo[filteredUsages.size()]);
-    return showConflicts(conflicts, u);
+    refUsages.set(filteredUsages.toArray(new UsageInfo[filteredUsages.size()]));
+    return showConflicts(conflicts);
   }
 
   private boolean isInsideMoved(PsiElement place) {

@@ -7,6 +7,7 @@ package com.intellij.refactoring.move.moveMembers;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -37,7 +38,6 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveMembers.MoveMembersProcessor");
 
   private PsiClass myTargetClass;
-  private MoveMembersOptions myDialog;
   private LinkedHashSet<PsiMember> myMembersToMove = new LinkedHashSet<PsiMember>();
   private MoveCallback myMoveCallback;
   private String myNewVisibility; // "null" means "as is"
@@ -59,8 +59,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   }
 
   private void setOptions(MoveMembersOptions dialog) {
-    myDialog = dialog;
-    PsiMember[] members = myDialog.getSelectedMembers();
+    PsiMember[] members = dialog.getSelectedMembers();
     myMembersToMove.clear();
     for (PsiMember member : members) {
       myMembersToMove.add(member);
@@ -69,7 +68,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     setCommandName(members);
 
     final PsiManager manager = PsiManager.getInstance(myProject);
-    myTargetClass = manager.findClass(myDialog.getTargetClassName(), GlobalSearchScope.allScope(myProject));
+    myTargetClass = manager.findClass(dialog.getTargetClassName(), GlobalSearchScope.allScope(myProject));
     myNewVisibility = dialog.getMemberVisibility();
   }
 
@@ -271,16 +270,16 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     refExpr.getQualifierExpression().replace(qualifier);
   }
 
-  protected boolean preprocessUsages(UsageInfo[][] usages) {
+  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     final ArrayList<String> conflicts = new ArrayList<String>();
     try {
-      addInaccessiblleConflicts(conflicts, usages[0]);
+      addInaccessiblleConflicts(conflicts, refUsages.get());
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
     RefactoringUtil.analyzeModuleConflicts(myProject, myMembersToMove, myTargetClass, conflicts);
-    return showConflicts(conflicts, usages);
+    return showConflicts(conflicts);
   }
 
   private void addInaccessiblleConflicts(final ArrayList<String> conflicts, final UsageInfo[] usages) throws IncorrectOperationException {

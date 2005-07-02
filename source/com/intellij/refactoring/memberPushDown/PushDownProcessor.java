@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -55,21 +56,22 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
     return usages;
   }
 
-  protected boolean preprocessUsages(UsageInfo[][] usages) {
+  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+    UsageInfo[] usagesIn = refUsages.get();
     final PushDownConflicts pushDownConflicts = new PushDownConflicts(myClass, myMemberInfos);
     pushDownConflicts.checkSourceClassConflicts();
 
-    if (usages[0].length == 0) {
+    if (usagesIn.length == 0) {
       final String message = (myClass.isInterface() ? "Interface " : "Class ")
                              + myClass.getQualifiedName() + " does not have inheritors.\n" +
                              "Pushing members down will result in them being deleted. Continue?";
       final int answer = Messages.showYesNoDialog(message, "Push Down", Messages.getWarningIcon());
       if (answer != 0) return false;
     }
-    for (int i = 0; i < usages[0].length; i++) {
-      final PsiElement element = usages[0][i].getElement();
-      if(element instanceof PsiClass) {
-        pushDownConflicts.checkTargetClassConflicts((PsiClass) element);
+    for (UsageInfo usage : usagesIn) {
+      final PsiElement element = usage.getElement();
+      if (element instanceof PsiClass) {
+        pushDownConflicts.checkTargetClassConflicts((PsiClass)element);
       }
     }
     if(pushDownConflicts.isAnyConflicts()) {

@@ -38,10 +38,7 @@ public abstract class RefactoringImpl<T extends BaseRefactoringProcessor> implem
   }
 
   public boolean preprocessUsages(Ref<UsageInfo[]> usages) {
-    final UsageInfo[][] usagesArray = new UsageInfo[][]{usages.get()};
-    final boolean result = myProcessor.preprocessUsages(usagesArray);
-    usages.set(usagesArray[0]);
-    return result;
+    return myProcessor.preprocessUsages(usages);
   }
 
   public boolean shouldPreviewUsages(UsageInfo[] usages) {

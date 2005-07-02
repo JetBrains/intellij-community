@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -161,8 +162,9 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return HelpID.getRenameHelpID(myPrimaryElement);
   }
 
-  protected boolean preprocessUsages(UsageInfo[][] usages) {
-    String[] conflicts = RenameUtil.getConflictDescriptions(usages[0]);
+  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+    UsageInfo[] usagesIn = refUsages.get();
+    String[] conflicts = RenameUtil.getConflictDescriptions(usagesIn);
     if (conflicts.length > 0) {
       ConflictsDialog conflictsDialog = new ConflictsDialog(conflicts, myProject);
       conflictsDialog.show();
@@ -170,7 +172,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
         return false;
       }
     }
-    Set<UsageInfo> usagesSet = new HashSet<UsageInfo>(Arrays.asList(usages[0]));
+    Set<UsageInfo> usagesSet = new HashSet<UsageInfo>(Arrays.asList(usagesIn));
     RenameUtil.removeConflictUsages(usagesSet);
 
     final List<UsageInfo> variableUsages = new ArrayList<UsageInfo>();
@@ -180,7 +182,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
     if (!variableUsages.isEmpty()) {
       usagesSet.addAll(variableUsages);
-      usages[0] = usagesSet.toArray(new UsageInfo[usagesSet.size()]);
+      refUsages.set(usagesSet.toArray(new UsageInfo[usagesSet.size()]));
     }
 
     prepareSuccessful();

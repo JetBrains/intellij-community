@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
@@ -55,15 +56,15 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
     setClasses ((PsiClass) elements[0], (PsiClass) elements[1]);
   }
 
-  protected boolean preprocessUsages(UsageInfo[][] usages) {
-    if (!ApplicationManager.getApplication().isUnitTestMode() && usages[0].length == 0) {
+  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+    if (!ApplicationManager.getApplication().isUnitTestMode() && refUsages.get().length == 0) {
       String message = "No usages of " + myClass.getQualifiedName() + "\n" +
               "can be replaced with usages of " + mySuper.getQualifiedName();
       Messages.showInfoMessage(myProject, message, TurnRefsToSuperHandler.REFACTORING_NAME);
       return false;
     }
 
-    return super.preprocessUsages(usages);
+    return super.preprocessUsages(refUsages);
   }
 
   protected void performRefactoring(UsageInfo[] usages) {

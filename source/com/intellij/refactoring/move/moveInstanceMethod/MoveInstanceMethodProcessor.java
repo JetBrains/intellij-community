@@ -3,6 +3,7 @@ package com.intellij.refactoring.move.moveInstanceMethod;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -64,8 +65,8 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     return new MoveInstanceMethodViewDescriptor(usages, refreshCommand, myMethod, myTargetVariable, myTargetClass);
   }
 
-  protected boolean preprocessUsages(UsageInfo[][] refUsages) {
-    final UsageInfo[] usages = refUsages[0];
+  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+    final UsageInfo[] usages = refUsages.get();
     ArrayList<String> conflicts = new ArrayList<String>();
     final Set<PsiMember> members = new com.intellij.util.containers.HashSet<PsiMember>();
     members.add(myMethod);

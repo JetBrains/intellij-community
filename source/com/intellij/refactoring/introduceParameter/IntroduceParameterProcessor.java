@@ -11,6 +11,7 @@ package com.intellij.refactoring.introduceParameter;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -190,7 +191,8 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  protected boolean preprocessUsages(UsageInfo[][] usages) {
+  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+    UsageInfo[] usagesIn = refUsages.get();
     ArrayList<String> conflicts = new ArrayList<String> ();
 
     AnySameNameVariables anySameNameVariables = new AnySameNameVariables();
@@ -199,15 +201,13 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
       conflicts.add(anySameNameVariables.getConflict());
     }
 
-    final UsageInfo[] usageArray = usages[0];
-    detectAccessibilityConflicts(usageArray, conflicts);
+    detectAccessibilityConflicts(usagesIn, conflicts);
 
     if (myParameterInitializer != null && !myMethodToReplaceIn.hasModifierProperty(PsiModifier.PRIVATE)) {
       final AnySupers anySupers = new AnySupers();
       myParameterInitializer.accept(anySupers);
       if (anySupers.isResult()) {
-        final UsageInfo[] u = usages[0];
-        for (UsageInfo usageInfo : u) {
+        for (UsageInfo usageInfo : usagesIn) {
           if (!(usageInfo.getElement() instanceof PsiMethod) && !(usageInfo instanceof InternalUsageInfo)) {
             final PsiElement element = usageInfo.getElement();
             if (!PsiTreeUtil.isAncestor(myMethodToReplaceIn.getContainingClass(), element, false)) {

@@ -3,11 +3,12 @@ package com.intellij.refactoring.inline;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.ConflictsUtil;
@@ -19,7 +20,6 @@ import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 
 /**
  * @author ven
@@ -65,13 +65,14 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
 
     PsiConstantEvaluationHelper evalHelper = myField.getManager().getConstantEvaluationHelper();
     initializer = normalize ((PsiExpression)initializer.copy());
-    for (int i = 0; i < usages.length; i++) {
+    for (UsageInfo usage : usages) {
       PsiExpression initializer1 = initializer;
-      final PsiElement element = usages[i].getElement();
+      final PsiElement element = usage.getElement();
       try {
         if (element instanceof PsiExpression) {
           inlineExpressionUsage(((PsiExpression)element), evalHelper, initializer1);
-        } else {
+        }
+        else {
           PsiImportStaticStatement importStaticStatement = PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class);
           LOG.assertTrue(importStaticStatement != null);
           importStaticStatement.delete();
@@ -141,7 +142,8 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     return "Inline field " + UsageViewUtil.getDescriptiveName(myField);
   }
 
-  protected boolean preprocessUsages(UsageInfo[][] usages) {
+  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+    UsageInfo[] usagesIn = refUsages.get();
     ArrayList<String> conflicts = new ArrayList<String>();
 
     ReferencedElementsCollector collector = new ReferencedElementsCollector();
@@ -150,10 +152,8 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     initializer.accept(collector);
     HashSet<PsiMember> referencedWithVisibility = collector.myReferencedMembers;
 
-    UsageInfo[] plainUsages = usages[0];
     PsiResolveHelper resolveHelper = myField.getManager().getResolveHelper();
-    for (int i = 0; i < plainUsages.length; i++) {
-      UsageInfo info = plainUsages[i];
+    for (UsageInfo info : usagesIn) {
       PsiElement element = info.getElement();
       if (element instanceof PsiExpression && isAccessedForWriting((PsiExpression)element)) {
         String message = ConflictsUtil.getDescription(myField, true) + " is used for writing in " +
@@ -161,9 +161,8 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
         conflicts.add(message);
       }
 
-      for (Iterator<PsiMember> iterator = referencedWithVisibility.iterator(); iterator.hasNext();) {
-        PsiMember member = iterator.next();
-        if (!resolveHelper.isAccessible(member, element, null))  {
+      for (PsiMember member : referencedWithVisibility) {
+        if (!resolveHelper.isAccessible(member, element, null)) {
           String message = ConflictsUtil.getDescription(member, true) +
                            " will not be accessible from " +
                            ConflictsUtil.getDescription(ConflictsUtil.getContainer(element), true) +

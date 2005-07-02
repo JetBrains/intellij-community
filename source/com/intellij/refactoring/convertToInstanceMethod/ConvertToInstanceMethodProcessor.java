@@ -6,6 +6,7 @@ import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -14,8 +15,8 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodViewDescriptor;
+import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
@@ -25,6 +26,7 @@ import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashMap;
 
 import java.util.*;
 
@@ -83,11 +85,10 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
 
     final PsiReference[] methodReferences = searchHelper.findReferences(myMethod, GlobalSearchScope.projectScope(project), false);
     List<UsageInfo> result = new ArrayList<UsageInfo>();
-    for (int i = 0; i < methodReferences.length; i++) {
-      final PsiReference ref = methodReferences[i];
+    for (final PsiReference ref : methodReferences) {
       if (ref.getElement() instanceof PsiReferenceExpression) {
         if (ref.getElement().getParent() instanceof PsiMethodCallExpression) {
-          result.add(new MethodCallUsageInfo((PsiMethodCallExpression) ref.getElement().getParent()));
+          result.add(new MethodCallUsageInfo((PsiMethodCallExpression)ref.getElement().getParent()));
         }
       }
       else if (ref.getElement() instanceof PsiDocTagValue) {
@@ -96,17 +97,15 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     }
 
     PsiReference[] parameterReferences = searchHelper.findReferences(myTargetParameter, new LocalSearchScope(myMethod), false);
-    for (int i = 0; i < parameterReferences.length; i++) {
-      final PsiReference ref = parameterReferences[i];
+    for (final PsiReference ref : parameterReferences) {
       if (ref.getElement() instanceof PsiReferenceExpression) {
-        result.add(new ParameterUsageInfo((PsiReferenceExpression) ref));
+        result.add(new ParameterUsageInfo((PsiReferenceExpression)ref));
       }
     }
 
     if (myTargetClass.isInterface()) {
       PsiClass[] implementingClasses = RefactoringHierarchyUtil.findImplementingClasses(myTargetClass);
-      for (int i = 0; i < implementingClasses.length; i++) {
-        final PsiClass implementingClass = implementingClasses[i];
+      for (final PsiClass implementingClass : implementingClasses) {
         result.add(new ImplementingClassUsageInfo(implementingClass));
       }
     }
@@ -116,8 +115,8 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
   }
 
 
-  protected boolean preprocessUsages(UsageInfo[][] usages) {
-    final UsageInfo[] usageList = usages[0];
+  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+    UsageInfo[] usagesIn = refUsages.get();
     ArrayList<String> conflicts = new ArrayList<String>();
     final Set<PsiMember> methods = Collections.singleton(((PsiMember)myMethod));
     if (!myTargetClass.isInterface()) {
@@ -125,8 +124,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
       conflicts.addAll(Arrays.asList(MoveMembersProcessor.analyzeAccessibilityConflicts(methods, myTargetClass, new LinkedHashSet<String>(), original)));
     }
     else {
-      for (int i = 0; i < usageList.length; i++) {
-        final UsageInfo usage = usageList[i];
+      for (final UsageInfo usage : usagesIn) {
         if (usage instanceof ImplementingClassUsageInfo) {
           conflicts.addAll(Arrays.asList(MoveMembersProcessor.analyzeAccessibilityConflicts(
             methods, ((ImplementingClassUsageInfo)usage).getPsiClass(), new LinkedHashSet<String>(), PsiModifier.PUBLIC)));
@@ -134,8 +132,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    for (int i = 0; i < usageList.length; i++) {
-      final UsageInfo usageInfo = usageList[i];
+    for (final UsageInfo usageInfo : usagesIn) {
       if (usageInfo instanceof MethodCallUsageInfo) {
         final PsiMethodCallExpression methodCall = ((MethodCallUsageInfo)usageInfo).getMethodCall();
         final PsiExpression[] expressions = methodCall.getArgumentList().getExpressions();
@@ -145,7 +142,8 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
           instanceValue = RefactoringUtil.unparenthesizeExpression(instanceValue);
           if (instanceValue instanceof PsiLiteralExpression && ((PsiLiteralExpression)instanceValue).getValue() == null) {
             String message =
-              ConflictsUtil.getDescription(ConflictsUtil.getContainer(methodCall), true) + " contains call with null argument for parameter " +
+              ConflictsUtil.getDescription(ConflictsUtil.getContainer(methodCall), true) +
+              " contains call with null argument for parameter " +
               ConflictsUtil.htmlEmphasize(myTargetParameter.getName());
             conflicts.add(message);
           }
@@ -158,7 +156,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
       conflictsDialog.show();
       if (!conflictsDialog.isOK()) return false;
     }
-    return super.preprocessUsages(usages);
+    return super.preprocessUsages(refUsages);
   }
 
   protected void performRefactoring(UsageInfo[] usages) {
@@ -178,13 +176,12 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     myTypeParameterReplacements = buildTypeParameterReplacements();
     List<PsiClass> inheritors = new ArrayList<PsiClass>();
     // Process usages
-    for (int i = 0; i < usages.length; i++) {
-      final UsageInfo usage = usages[i];
+    for (final UsageInfo usage : usages) {
       if (usage instanceof MethodCallUsageInfo) {
-        processMethodCall((MethodCallUsageInfo) usage);
+        processMethodCall((MethodCallUsageInfo)usage);
       }
       else if (usage instanceof ParameterUsageInfo) {
-        processParameterUsage((ParameterUsageInfo) usage);
+        processParameterUsage((ParameterUsageInfo)usage);
       }
       else if (usage instanceof ImplementingClassUsageInfo) {
         inheritors.add(((ImplementingClassUsageInfo)usage).getPsiClass());
@@ -200,8 +197,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     else {
       final PsiMethod interfaceMethod = addMethodToClass(myTargetClass);
       RefactoringUtil.abstractizeMethod(myTargetClass, interfaceMethod);
-      for (Iterator<PsiClass> iterator = inheritors.iterator(); iterator.hasNext();) {
-        final PsiClass psiClass = iterator.next();
+      for (final PsiClass psiClass : inheritors) {
         final PsiMethod newMethod = addMethodToClass(psiClass);
         newMethod.getModifierList().setModifierProperty((myNewVisibility != null ? myNewVisibility : PsiModifier.PUBLIC), true);
       }
@@ -212,19 +208,17 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
   private void prepareTypeParameterReplacement() throws IncorrectOperationException {
     if (myTypeParameterReplacements == null) return;
     final Collection<PsiTypeParameter> typeParameters = myTypeParameterReplacements.keySet();
-    for (Iterator<PsiTypeParameter> iterator = typeParameters.iterator(); iterator.hasNext();) {
-      final PsiTypeParameter parameter = iterator.next();
-      final PsiReference[] references = myMethod.getManager().getSearchHelper().findReferences(parameter, new LocalSearchScope(myMethod), false);
-      for (int i = 0; i < references.length; i++) {
-        final PsiReference reference = references[i];
+    for (final PsiTypeParameter parameter : typeParameters) {
+      final PsiReference[] references = myMethod.getManager().getSearchHelper()
+        .findReferences(parameter, new LocalSearchScope(myMethod), false);
+      for (final PsiReference reference : references) {
         if (reference.getElement() instanceof PsiJavaCodeReferenceElement) {
           reference.getElement().putCopyableUserData(BIND_TO_TYPE_PARAMETER, myTypeParameterReplacements.get(parameter));
         }
       }
     }
     final Set<PsiTypeParameter> methodTypeParameters = myTypeParameterReplacements.keySet();
-    for (Iterator<PsiTypeParameter> iterator = methodTypeParameters.iterator(); iterator.hasNext();) {
-      final PsiTypeParameter methodTypeParameter = iterator.next();
+    for (final PsiTypeParameter methodTypeParameter : methodTypeParameters) {
       methodTypeParameter.delete();
     }
   }
@@ -243,10 +237,8 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
       final PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(myTargetClass, targetClass, PsiSubstitutor.EMPTY);
       final Map<PsiTypeParameter, PsiTypeParameter> map = calculateReplacementMap(superClassSubstitutor, myTargetClass, targetClass);
       if (map == null) return newMethod;
-      additionalReplacements = new com.intellij.util.containers.HashMap<PsiTypeParameter, PsiTypeParameter>();
-      final Set entries = map.entrySet();
-      for (Iterator<Map.Entry> iterator = entries.iterator(); iterator.hasNext();) {
-        final Map.Entry entry = iterator.next();
+      additionalReplacements = new HashMap<PsiTypeParameter, PsiTypeParameter>();
+      for (final Map.Entry<PsiTypeParameter, PsiTypeParameter> entry : map.entrySet()) {
         additionalReplacements.put((PsiTypeParameter)entry.getValue(), (PsiTypeParameter)entry.getKey());
       }
     }

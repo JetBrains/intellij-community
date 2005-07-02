@@ -10,6 +10,7 @@ package com.intellij.refactoring.makeStatic;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
@@ -46,9 +47,10 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
     return new MakeMethodOrClassStaticViewDescriptor(myMember, usages, refreshCommand);
   }
 
-  protected final boolean preprocessUsages(UsageInfo[][] usages) {
+  protected final boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+    UsageInfo[] usagesIn = refUsages.get();
     if (myPrepareSuccessfulSwingThreadCallback != null) {
-      List<String> conflicts = getConflictDescriptions(usages[0]);
+      List<String> conflicts = getConflictDescriptions(usagesIn);
       if (conflicts.size() > 0) {
         ConflictsDialog conflictsDialog = new ConflictsDialog(conflicts.toArray(new String[conflicts.size()]), myProject);
         conflictsDialog.show();
@@ -57,10 +59,10 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
         }
       }
       if(!mySettings.isChangeSignature()) {
-        usages[0] = filterInternalUsages(usages[0]);
+        refUsages.set(filterInternalUsages(usagesIn));
       }
     }
-    usages[0] = filterOverriding(usages[0]);
+    refUsages.set(filterOverriding(usagesIn));
 
     prepareSuccessful();
     return true;

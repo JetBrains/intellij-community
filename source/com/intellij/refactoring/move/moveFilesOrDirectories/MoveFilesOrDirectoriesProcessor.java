@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -67,7 +68,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     return result.toArray(new UsageInfo[result.size()]);
   }
 
-  protected boolean preprocessUsages(UsageInfo[][] u) {
+  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     prepareSuccessful();
     return true;
   }

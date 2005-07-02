@@ -4,6 +4,7 @@ import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -164,10 +165,11 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     return FieldAccessibility.INVISIBLE;
   }
 
-  protected boolean preprocessUsages(UsageInfo[][] usages) {
+  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+    UsageInfo[] usagesIn = refUsages.get();
     ArrayList<UsageInfo> oldUsages = new ArrayList<UsageInfo>();
-    addAll(oldUsages, usages[0]);
-    final ObjectUpcastedUsageInfo[] objectUpcastedUsageInfos = objectUpcastedUsages(usages[0]);
+    addAll(oldUsages, usagesIn);
+    final ObjectUpcastedUsageInfo[] objectUpcastedUsageInfos = objectUpcastedUsages(usagesIn);
     if (myPrepareSuccessfulSwingThreadCallback != null) {
       ArrayList<String> conflicts = new ArrayList<String>();
       if (objectUpcastedUsageInfos.length > 0) {
@@ -178,7 +180,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
         conflicts.add(message);
       }
 
-      analyzeConflicts(usages[0], conflicts);
+      analyzeConflicts(usagesIn, conflicts);
       if (!conflicts.isEmpty()) {
         ConflictsDialog conflictsDialog =
                 new ConflictsDialog(conflicts.toArray(new String[conflicts.size()]), myProject);
@@ -192,7 +194,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       }
     }
     ArrayList<UsageInfo> filteredUsages = filterUsages(oldUsages);
-    usages[0] = filteredUsages.toArray(new UsageInfo[filteredUsages.size()]);
+    refUsages.set(filteredUsages.toArray(new UsageInfo[filteredUsages.size()]));
     prepareSuccessful();
     return true;
   }
@@ -973,14 +975,13 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   private class OverridenMethodClassMemberReferencesVisitor extends ClassMemberReferencesVisitor {
     private final ArrayList<PsiAction> myPsiActions;
     private final PsiThisExpression myQualifiedThis;
-    private final PsiJavaCodeReferenceElement myClassReferenceElement;
 
     OverridenMethodClassMemberReferencesVisitor() throws IncorrectOperationException {
       super(myClass);
       myPsiActions = new ArrayList<PsiAction>();
-      myClassReferenceElement = myFactory.createClassReferenceElement(myClass);
+      final PsiJavaCodeReferenceElement classReferenceElement = myFactory.createClassReferenceElement(myClass);
       myQualifiedThis = (PsiThisExpression) myFactory.createExpressionFromText("A.this", null);
-      myQualifiedThis.getQualifier().replace(myClassReferenceElement);
+      myQualifiedThis.getQualifier().replace(classReferenceElement);
     }
 
     public List<PsiAction> getPsiActions() {

@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -130,8 +131,8 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     addNonCodeUsages(element, usages, myInsideDeletedElements);
   }
 
-  protected boolean preprocessUsages(UsageInfo[][] u) {
-    UsageInfo[] usages = u[0];
+  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+    UsageInfo[] usages = refUsages.get();
     ArrayList<String> conflicts = new ArrayList<String>();
 
     for (PsiElement element : myElements) {
@@ -185,7 +186,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     if(filteredUsages == null) {
       return false;
     }
-    u[0] = filteredUsages;
+    refUsages.set(filteredUsages);
     return true;
   }
 

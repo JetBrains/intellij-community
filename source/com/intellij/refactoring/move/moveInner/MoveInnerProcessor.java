@@ -11,6 +11,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -257,7 +258,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  protected boolean preprocessUsages(UsageInfo[][] u) {
+  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     final ArrayList<String> conflicts = new ArrayList<String>();
 
     class Visitor extends PsiRecursiveElementVisitor {
@@ -332,7 +333,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
 
     RefactoringUtil.analyzeModuleConflicts(myProject, Collections.<PsiElement>singletonList(myInnerClass), myTargetContainer, conflicts);
 
-    return showConflicts(conflicts, u);
+    return showConflicts(conflicts);
   }
 
   private static boolean isInPackage(final PsiFile containingFile, PsiPackage aPackage) {

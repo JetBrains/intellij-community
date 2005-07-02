@@ -2,6 +2,7 @@ package com.intellij.refactoring.replaceConstructorWithFactory;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -115,8 +116,8 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
     return usages.toArray(new UsageInfo[usages.size()]);
   }
 
-  protected boolean preprocessUsages(UsageInfo[][] u) {
-    UsageInfo[] usages = u[0];
+  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+    UsageInfo[] usages = refUsages.get();
 
     ArrayList<String> conflicts = new ArrayList<String>();
     if (!myManager.getResolveHelper().isAccessible(getConstructorContainingClass(), myTargetClass, null)) {

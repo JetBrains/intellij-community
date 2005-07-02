@@ -2,15 +2,14 @@ package com.intellij.refactoring;
 
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
@@ -20,20 +19,20 @@ import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl;
 import com.intellij.refactoring.listeners.impl.RefactoringTransaction;
 import com.intellij.refactoring.ui.ConflictsDialog;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.PsiElementUsage;
-import com.intellij.util.Processor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 
 import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+
+import org.jetbrains.annotations.NotNull;
 
 public abstract class BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.BaseRefactoringProcessor");
@@ -59,7 +58,7 @@ public abstract class BaseRefactoringProcessor {
   /**
    * Is called inside atomic action.
    */
-  protected abstract UsageInfo[] findUsages();
+  @NotNull protected abstract UsageInfo[] findUsages();
 
   /**
    * is called when usage search is re-run.
@@ -69,8 +68,9 @@ public abstract class BaseRefactoringProcessor {
 
   /**
    * Is called inside atomic action.
+   * @param refUsages
    */
-  protected boolean preprocessUsages(UsageInfo[][] usages) {
+  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     prepareSuccessful();
     return true;
   }
@@ -121,13 +121,13 @@ public abstract class BaseRefactoringProcessor {
 
   protected void doRun() {
 
-    final UsageInfo[][] usages = new UsageInfo[1][];
+    final Ref<UsageInfo[]> refUsages = new Ref<UsageInfo[]>();
 
     final Runnable findUsagesRunnable = new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
-            usages[0] = findUsages();
+            refUsages.set(findUsages());
           }
         });
       }
@@ -135,22 +135,23 @@ public abstract class BaseRefactoringProcessor {
 
     if (!ApplicationManager.getApplication().runProcessWithProgressSynchronously(findUsagesRunnable, "Looking For Usages...", true, myProject)) return;
 
-    LOG.assertTrue(usages[0] != null);
-    if (!preprocessUsages(usages)) return;
-    if (!myIsPreviewUsages) ensureFilesWritable(usages[0]);
-    boolean toPreview = isPreviewUsages(usages[0]);
+    LOG.assertTrue(!refUsages.isNull());
+    if (!preprocessUsages(refUsages)) return;
+    final UsageInfo[] usages = refUsages.get();
+    if (!myIsPreviewUsages) ensureFilesWritable(usages);
+    boolean toPreview = isPreviewUsages(usages);
     if (toPreview) {
       FindUsagesCommand findUsagesCommand = new FindUsagesCommand() {
         public UsageInfo[] execute(PsiElement[] elementsToSearch) {
           refreshElements(elementsToSearch);
           findUsagesRunnable.run();
-          return usages[0];
+          return refUsages.get();
         }
       };
-      UsageViewDescriptor descriptor = createUsageViewDescriptor(usages[0], findUsagesCommand);
+      UsageViewDescriptor descriptor = createUsageViewDescriptor(usages, findUsagesCommand);
       showUsageView(descriptor, isVariable(), isVariable());
     } else {
-      execute(usages[0]);
+      execute(usages);
     }
   }
 
@@ -234,8 +235,8 @@ public abstract class BaseRefactoringProcessor {
     };
 
     String canNotMakeString = "Cannot perform the refactoring operation.\n" +
-        "There were changes in code after the usages have been found.\n" +
-        "Please, perform the usage search again.";
+                              "There were changes in code after the usages have been found.\n" +
+                              "Please, perform the usage search again.";
 
     usageView.addPerformOperationAction(refactoringRunnable, getCommandName(), canNotMakeString, "Do Refactor", SystemInfo.isMac ? 0 : 'D');
   }
@@ -254,7 +255,7 @@ public abstract class BaseRefactoringProcessor {
 
   private static String getInfo() {
     return "Press the \"Do Refactor\" button at the bottom of the search results panel\n" +
-        "to complete the refactoring operation.";
+           "to complete the refactoring operation.";
   }
 
   private void doRefactoring(UsageInfo[] usages, Set<UsageInfo> excludedUsages) {
@@ -377,20 +378,20 @@ public abstract class BaseRefactoringProcessor {
   private final void  testRun() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     prepareTestRun();
-    UsageInfo[] usages = findUsages();
-    UsageInfo[][] u = new UsageInfo[][]{usages};
-    preprocessUsages(u);
+    Ref<UsageInfo[]> refUsages = new Ref<UsageInfo[]>(findUsages());
+    preprocessUsages(refUsages);
     RefactoringListenerManagerImpl listenerManager =
         (RefactoringListenerManagerImpl) RefactoringListenerManager.getInstance(myProject);
     myTransaction = listenerManager.startTransaction();
-    Set<PsiJavaFile> touchedJavaFiles = getTouchedJavaFiles(u[0]);
-    performRefactoring(u[0]);
+    final UsageInfo[] usages = refUsages.get();
+    Set<PsiJavaFile> touchedJavaFiles = getTouchedJavaFiles(usages);
+    performRefactoring(usages);
     removeRedundantImports(touchedJavaFiles);
     myTransaction.commit();
     performPsiSpoilingRefactoring();
   }
 
-  public boolean showConflicts(final ArrayList<String> conflicts, UsageInfo[][] usages) {
+  protected boolean showConflicts(final ArrayList<String> conflicts) {
     if (conflicts.size() > 0 && myPrepareSuccessfulSwingThreadCallback != null) {
       final ConflictsDialog conflictsDialog = new ConflictsDialog(conflicts.toArray(new String[conflicts.size()]), myProject);
       conflictsDialog.show();

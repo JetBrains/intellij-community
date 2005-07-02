@@ -55,8 +55,7 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
     List<UsageInfo> result = new ArrayList<UsageInfo>();
 
     boolean hadTypeParameters = myClass.getTypeParameters().length > 0;
-    for (int i = 0; i < references.length; i++) {
-      final PsiReference reference = references[i];
+    for (final PsiReference reference : references) {
       if (reference.getElement() instanceof PsiJavaCodeReferenceElement) {
         PsiJavaCodeReferenceElement referenceElement = ((PsiJavaCodeReferenceElement)reference.getElement());
         PsiElement parent = referenceElement.getParent();
@@ -68,7 +67,7 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
         }
       }
     }
-    return (UsageInfo[])result.toArray(new UsageInfo[result.size()]);
+    return result.toArray(new UsageInfo[result.size()]);
   }
 
   protected void performRefactoring(UsageInfo[] usages) {
@@ -88,8 +87,7 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
     final PsiTypeParameter[] typeParameters = myClass.getTypeParameters();
     boolean[] toRemoveParms = detectRemovedParameters(typeParameters);
 
-    for (int i = 0; i < usages.length; i++) {
-      final UsageInfo usage = usages[i];
+    for (final UsageInfo usage : usages) {
       LOG.assertTrue(usage.getElement() instanceof PsiJavaCodeReferenceElement);
       processUsage(usage, typeParameters, toRemoveParms);
     }
@@ -101,10 +99,9 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
     throws IncorrectOperationException {
     PsiElementFactory factory = myClass.getManager().getElementFactory();
     List<PsiTypeParameter> newTypeParameters = new ArrayList<PsiTypeParameter>();
-    for (int i = 0; i < myNewSignature.length; i++) {
-      final TypeParameterInfo info = myNewSignature[i];
+    for (final TypeParameterInfo info : myNewSignature) {
       int oldIndex = info.getOldParameterIndex();
-      if(oldIndex >= 0) {
+      if (oldIndex >= 0) {
         newTypeParameters.add(originalTypeParameters[oldIndex]);
       }
       else {
@@ -120,8 +117,7 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
   private boolean[] detectRemovedParameters(final PsiTypeParameter[] originaltypeParameters) {
     final boolean[] toRemoveParms = new boolean[originaltypeParameters.length];
     Arrays.fill(toRemoveParms, true);
-    for (int i = 0; i < myNewSignature.length; i++) {
-      final TypeParameterInfo info = myNewSignature[i];
+    for (final TypeParameterInfo info : myNewSignature) {
       int oldParameterIndex = info.getOldParameterIndex();
       if (oldParameterIndex >= 0) {
         toRemoveParms[oldParameterIndex] = false;
@@ -140,8 +136,7 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
     PsiTypeElement[] oldValues = referenceParameterList.getTypeParameterElements();
     if (oldValues.length != originalTypeParameters.length) return;
     List<PsiTypeElement> newValues = new ArrayList<PsiTypeElement>();
-    for (int j = 0; j < myNewSignature.length; j++) {
-      final TypeParameterInfo info = myNewSignature[j];
+    for (final TypeParameterInfo info : myNewSignature) {
       int oldIndex = info.getOldParameterIndex();
       if (oldIndex >= 0) {
         newValues.add(oldValues[oldIndex]);

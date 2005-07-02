@@ -15,6 +15,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -46,8 +47,6 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ChangeSignatureProcessor");
 
   private final String myNewVisibility;
-  private String myNewName;
-  private CanonicalTypes.Type myNewType;
   private ChangeInfo myChangeInfo;
   private PsiManager myManager;
   private PsiElementFactory myFactory;
@@ -106,9 +105,8 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     } else {
       myNewVisibility = newVisibility;
     }
-    myNewName = newName;
-    myNewType = newType;
-    myChangeInfo = new ChangeInfo(myNewVisibility, method, myNewName, myNewType, parameterInfo, thrownExceptions);
+
+    myChangeInfo = new ChangeInfo(myNewVisibility, method, newName, newType, parameterInfo, thrownExceptions);
     LOG.assertTrue(myChangeInfo.getMethod().isValid());
   }
 
@@ -301,10 +299,11 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     myChangeInfo.updateMethod((PsiMethod) elements[0]);
   }
 
-  protected boolean preprocessUsages(UsageInfo[][] usages) {
+  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     Set<String> conflictDescriptions = new HashSet<String>();
-    conflictDescriptions.addAll(Arrays.asList(RenameUtil.getConflictDescriptions(usages[0])));
-    Set<UsageInfo> usagesSet = new HashSet<UsageInfo>(Arrays.asList(usages[0]));
+    UsageInfo[] usagesIn = refUsages.get();
+    conflictDescriptions.addAll(Arrays.asList(RenameUtil.getConflictDescriptions(usagesIn)));
+    Set<UsageInfo> usagesSet = new HashSet<UsageInfo>(Arrays.asList(usagesIn));
     RenameUtil.removeConflictUsages(usagesSet);
     if (myChangeInfo.isVisibilityChanged) {
       try {
@@ -325,7 +324,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       askToRemoveCovariantOverriders (usagesSet);
     }
 
-    usages[0] = usagesSet.toArray(new UsageInfo[usagesSet.size()]);
+    refUsages.set(usagesSet.toArray(new UsageInfo[usagesSet.size()]));
     prepareSuccessful();
     return true;
   }
