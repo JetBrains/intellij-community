@@ -10,6 +10,8 @@ import java.awt.event.ActionEvent;
 import java.util.*;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 public final class TreeUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.tree.TreeUtil");
 
@@ -27,7 +29,7 @@ public final class TreeUtil {
     collectExpandedPathsImpl(tree, paths, new TreePath(root));
   }
 
-  public static List<TreePath> collectExpandedPaths(final JTree tree){
+  public static List<TreePath> collectExpandedPaths(@NotNull final JTree tree){
     final ArrayList<TreePath> result = new ArrayList<TreePath>();
     final Object root = tree.getModel().getRoot();
     final TreePath rootPath = new TreePath(root);
@@ -49,7 +51,7 @@ public final class TreeUtil {
           if (!pathWasAdded) {
             result.add(path);
             pathWasAdded= true;
-          }          
+          }
         }
         else if (tree.isExpanded(childPath)) {
           result.addAll(collectExpandedPaths(tree, childPath));

@@ -221,7 +221,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
   }
 
   private void processErrors(final List<VcsException> allExceptions, VcsConfiguration config) {
-    if (allExceptions.isEmpty()) return;
+    //if (allExceptions.isEmpty()) return;
     int errorsSize = collectErrors(allExceptions).size();
     int warningsSize = allExceptions.size() - errorsSize;
 
@@ -233,7 +233,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     else if (errorsSize > 0) {
       Messages.showErrorDialog("Commit failed with errors", "Commit");
     }
-    else {
+    else if (warningsSize > 0) {
       Messages.showErrorDialog("Commit finished with warnings", "Commit");
     }
 

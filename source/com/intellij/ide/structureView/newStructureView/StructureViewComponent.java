@@ -40,6 +40,8 @@ import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
 public class StructureViewComponent extends JPanel implements TreeActionsOwner, DataProvider, StructureView {
   private static Logger LOG = Logger.getInstance("#com.intellij.ide.structureView.newStructureView.StructureViewComponent");
 
@@ -217,6 +219,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   }
 
   public StructureViewState getState() {
+    LOG.assertTrue(getTree() != null);
     StructureViewState structureViewState = new StructureViewState();
     structureViewState.setExpandedElements(getExpandedElements());
     structureViewState.setSelectedElements(getSelectedElements());
@@ -224,7 +227,9 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   }
 
   private Object[] getExpandedElements() {
-    final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(getTree());
+    final JTree tree = getTree();
+    LOG.assertTrue(tree != null);
+    final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(tree);
     return convertPathsToValues(expandedPaths.toArray(new TreePath[expandedPaths.size()]));
   }
 
@@ -520,7 +525,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     return myAbstractTreeBuilder.getTreeStructure();
   }
 
-  public JTree getTree() {
+  public @Nullable JTree getTree() {
     return myAbstractTreeBuilder == null ? null : myAbstractTreeBuilder.getTree();
   }
 

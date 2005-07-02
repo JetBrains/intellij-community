@@ -239,20 +239,28 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
     return myCvsStandardOperationsProvider.getTransactionForOperation(operations, message);
   }
 
-  public void start() throws VcsException {
-    super.start();
+  protected void activate() {
+    super.activate();
     myStorageComponent.init(getProject(), false);
     CvsEntriesManager.getInstance().addCvsEntriesListener(this);
     FileStatusManager.getInstance(getProject()).fileStatusesChanged();
   }
 
-  public void shutdown() throws VcsException {
-    super.shutdown();
+  protected void deactivate() {
+    super.deactivate();
     myStorageComponent.dispose();
     CvsEntriesManager.getInstance().removeCvsEntriesListener(this);
     if (myProjectIsOpened) {
       FileStatusManager.getInstance(getProject()).fileStatusesChanged();
-    }
+    }    
+  }
+
+  public void start() throws VcsException {
+    super.start();
+  }
+
+  public void shutdown() throws VcsException {
+    super.shutdown();
   }
 
   public void entriesChanged(VirtualFile parent) {

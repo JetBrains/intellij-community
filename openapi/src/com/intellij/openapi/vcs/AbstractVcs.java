@@ -25,6 +25,8 @@ public abstract class AbstractVcs {
   private VcsShowSettingOption myUpdateOption;
   private VcsShowSettingOption myStatusOption;
 
+  private int myActiveModulesCount = 0;
+
 
   public AbstractVcs(Project project) {
     myProject = project;
@@ -81,8 +83,29 @@ public abstract class AbstractVcs {
   }
 
   public void doActivateActions(Module module) {
+  }
+
+  protected void activate() {
 
   }
+
+  public void attachModule(final Module module) {
+    myActiveModulesCount++;
+    if (myActiveModulesCount == 1) {
+      activate();
+    }
+  }
+
+  public void detachModule(final Module module) {
+    myActiveModulesCount--;
+    if (myActiveModulesCount == 0) {
+      deactivate();
+    }
+  }
+
+  protected void deactivate() {
+  }
+
 
   public boolean markExternalChangesAsUpToDate() {
     return false;
@@ -173,4 +196,5 @@ public abstract class AbstractVcs {
       myStatusOption = vcsManager.getStandardOption(VcsConfiguration.StandardOption.STATUS, this);
     }
   }
+
 }

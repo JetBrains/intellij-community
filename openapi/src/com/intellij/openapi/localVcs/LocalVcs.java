@@ -8,6 +8,7 @@ import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.module.Module;
 
 /**
  * @author Mike
@@ -52,6 +53,8 @@ public abstract class LocalVcs implements SettingsSavingComponent {
   public abstract LocalVcsPurgingProvider getLocalVcsPurgingProvider();
 
   public abstract void markSourcesAsCurrent(String label);
+
+  public abstract void markModuleSourcesAsCurrent(Module module, String label);
 
   public abstract LvcsLabel[] getAllLabels();
 
