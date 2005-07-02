@@ -19,7 +19,7 @@ public class ConditionSignalInspection extends ExpressionInspection{
     }
 
     public String getDisplayName(){
-        return "Call to 'signalAll()' instead of 'signalAll()'";
+        return "Call to 'signal()' instead of 'signalAll()'";
     }
 
     public String getGroupDisplayName(){
