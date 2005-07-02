@@ -291,7 +291,7 @@ public abstract class FindUsagesDialog extends DialogWrapper{
     boolean isEmpty = true;
 
     if(mySearchForTextOccurencesAvailable){
-      myCbToSearchForTextOccurences = addCheckboxToPanel("Search for text occurences", FindSettings.getInstance().isSearchForTextOccurences(), optionsPanel, false, 'j');
+      myCbToSearchForTextOccurences = addCheckboxToPanel("Search for text occurences", FindSettings.getInstance().isSearchForTextOccurences(), optionsPanel, false, 'o');
       isEmpty = false;
     }
 
