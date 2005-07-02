@@ -4,8 +4,6 @@ package com.siyeh.ig.bugs;
 import com.intellij.psi.PsiType;
 
 import java.util.ArrayList;
-import java.util.DuplicateFormatFlagsException;
-import java.util.UnknownFormatConversionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,10 +32,12 @@ class FormatDecode{
         public boolean valid(PsiType type){
             final String text = type.getCanonicalText();
 
-            if(type == PsiType.LONG || "java.lang.Long".equals(text))
-                return true;
-            if("java.util.Date".equals(text) || "java.util.Calendar".equals(text))
-                return true;
+          if (type == PsiType.LONG || "java.lang.Long".equals(text)) {
+            return true;
+          }
+          if ("java.util.Date".equals(text) || "java.util.Calendar".equals(text)) {
+            return true;
+          }
             return false;
         }
 
@@ -48,8 +48,9 @@ class FormatDecode{
     private static final Validator CHAR_VALIDATOR = new Validator(){
         public boolean valid(PsiType type){
             final String text = type.getCanonicalText();
-            if(type == PsiType.CHAR || "java.lang.Character".equals(text))
-                return true;
+          if (type == PsiType.CHAR || "java.lang.Character".equals(text)) {
+            return true;
+          }
             return false;
         }
 
@@ -60,16 +61,21 @@ class FormatDecode{
     private static final Validator INT_VALIDATOR = new Validator(){
         public boolean valid(PsiType type){
             final String text = type.getCanonicalText();
-            if(type == PsiType.INT || "java.lang.Integer".equals(text))
-                return true;
-            if(type == PsiType.LONG || "java.lang.Long".equals(text))
-                return true;
-            if(type == PsiType.SHORT || "java.lang.Short".equals(text))
-                return true;
-            if(type == PsiType.BYTE || "java.lang.Byte".equals(text))
-                return true;
-            if("java.math.BigInteger".equals(text))
-                return true;
+          if (type == PsiType.INT || "java.lang.Integer".equals(text)) {
+            return true;
+          }
+          if (type == PsiType.LONG || "java.lang.Long".equals(text)) {
+            return true;
+          }
+          if (type == PsiType.SHORT || "java.lang.Short".equals(text)) {
+            return true;
+          }
+          if (type == PsiType.BYTE || "java.lang.Byte".equals(text)) {
+            return true;
+          }
+          if ("java.math.BigInteger".equals(text)) {
+            return true;
+          }
             return false;
         }
 
@@ -80,12 +86,15 @@ class FormatDecode{
     private static final Validator FLOAT_VALIDATOR = new Validator(){
         public boolean valid(PsiType type){
             final String text = type.getCanonicalText();
-            if(type == PsiType.DOUBLE || "java.lang.Double".equals(text))
-                return true;
-            if(type == PsiType.FLOAT || "java.lang.Float".equals(text))
-                return true;
-            if("java.math.BigDecimal".equals(text))
-                return true;
+          if (type == PsiType.DOUBLE || "java.lang.Double".equals(text)) {
+            return true;
+          }
+          if (type == PsiType.FLOAT || "java.lang.Float".equals(text)) {
+            return true;
+          }
+          if ("java.math.BigDecimal".equals(text)) {
+            return true;
+          }
             return false;
         }
 
@@ -107,8 +116,9 @@ class FormatDecode{
             final String spec = m.group(6);
 
             // check this first because it should not affect "implicit"
-            if("n".equals(spec) || "%".equals(spec))
-                continue;
+          if ("n".equals(spec) || "%".equals(spec)) {
+            continue;
+          }
 
             if(posSpec != null){
                 final String num = posSpec.substring(0, posSpec.length() - 1);
@@ -145,7 +155,7 @@ class FormatDecode{
                         allowed = FLOAT_VALIDATOR;
                         break;
                     default:
-                        throw new UnknownFormatConversionException(m.group());
+                        throw new UnknownFormatException(m.group());
                 }
             }
             argAt(allowed, pos, args);
@@ -154,20 +164,34 @@ class FormatDecode{
         return args.toArray(new Validator[args.size()]);
     }
 
+    public static class UnknownFormatException extends RuntimeException {
+        public UnknownFormatException(String message) {
+          super(message);
+        }
+    }
+
     private static void argAt(Validator val, int pos, ArrayList<Validator> args)
     {
         if(pos < args.size()){
             final Validator old = args.get(pos);
             // it's OK to overwrite ALL with something more specific
             // it's OK to ignore overwrite of something else with ALL or itself
-            if(old == ALL_VALIDATOR)
-                args.set(pos, val);
-            else if(val != ALL_VALIDATOR && val != old)
-                throw new DuplicateFormatFlagsException(
-                        "requires both " + old.type() + " and " + val.type());
+          if (old == ALL_VALIDATOR) {
+            args.set(pos, val);
+          }
+          else if (val != ALL_VALIDATOR && val != old) {
+            throw new DuplicateFormatFlagsException(
+              "requires both " + old.type() + " and " + val.type());
+          }
         } else{
             while(pos < args.size())args.add(ALL_VALIDATOR);
             args.add(val);
+        }
+    }
+
+    public static class DuplicateFormatFlagsException extends RuntimeException {
+        public DuplicateFormatFlagsException(String message) {
+          super(message);
         }
     }
 }
