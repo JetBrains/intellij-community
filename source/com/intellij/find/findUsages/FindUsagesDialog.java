@@ -13,7 +13,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
@@ -33,14 +32,13 @@ public abstract class FindUsagesDialog extends DialogWrapper{
   private final boolean myIsShowInNewTabEnabled;
   private final boolean myIsShowInNewTabVisible;
 
-  private final boolean mySearchInNonJavaFilesAvailable;
+  private final boolean mySearchForTextOccurencesAvailable;
 
   private final boolean mySearchInLibrariesAvailable;
 
-  private JLabel myPromptLabel;
   private JCheckBox myCbToOpenInNewTab;
 
-  protected StateRestoringCheckBox myCbToSearchInNonJavaFiles;
+  protected StateRestoringCheckBox myCbToSearchForTextOccurences;
   protected JCheckBox myCbToSkipResultsWhenOneUsage;
 
   private ActionListener myUpdateAction;
@@ -61,17 +59,17 @@ public abstract class FindUsagesDialog extends DialogWrapper{
 
     if (!isSingleFile){
       if (myPsiElement instanceof PsiClass){
-        mySearchInNonJavaFilesAvailable = ((PsiClass)myPsiElement).getQualifiedName() != null;
+        mySearchForTextOccurencesAvailable = ((PsiClass)myPsiElement).getQualifiedName() != null;
       }
       else if (myPsiElement instanceof PsiPackage){
-        mySearchInNonJavaFilesAvailable = true;
+        mySearchForTextOccurencesAvailable = true;
       }
       else{
-        mySearchInNonJavaFilesAvailable = false;
+        mySearchForTextOccurencesAvailable = false;
       }
     }
     else{
-      mySearchInNonJavaFilesAvailable = false;
+      mySearchForTextOccurencesAvailable = false;
     }
 
     if (!isSingleFile){
@@ -119,8 +117,8 @@ public abstract class FindUsagesDialog extends DialogWrapper{
     gbConstraints.weightx = 1;
     gbConstraints.weighty = 1;
     gbConstraints.anchor = GridBagConstraints.EAST;
-    myPromptLabel = new JLabel(getLabelText());
-    panel.add(myPromptLabel, gbConstraints);
+    final JLabel promptLabel = new JLabel(getLabelText());
+    panel.add(promptLabel, gbConstraints);
 
     return panel;
   }
@@ -168,8 +166,8 @@ public abstract class FindUsagesDialog extends DialogWrapper{
       options.searchScope = GlobalSearchScope.allScope(myProject);
     }
 
-    if (isToChange(myCbToSearchInNonJavaFiles)) {
-      options.isSearchInNonJavaFiles = isSelected(myCbToSearchInNonJavaFiles);
+    if (isToChange(myCbToSearchForTextOccurences)) {
+      options.isSearchInNonJavaFiles = isSelected(myCbToSearchForTextOccurences);
     }
     else {
       options.isSearchInNonJavaFiles = false;
@@ -204,8 +202,8 @@ public abstract class FindUsagesDialog extends DialogWrapper{
     if (myScopeCombo != null) {
       settings.setDefaultScopeName(myScopeCombo.getSelectedScopeName());
     }
-    if (mySearchInNonJavaFilesAvailable && myCbToSearchInNonJavaFiles != null && myCbToSearchInNonJavaFiles.isEnabled()){
-      settings.setSearchInNonJavaFiles(myCbToSearchInNonJavaFiles.isSelected());
+    if (mySearchForTextOccurencesAvailable && myCbToSearchForTextOccurences != null && myCbToSearchForTextOccurences.isEnabled()){
+      settings.setSearchForTextOccurences(myCbToSearchForTextOccurences.isSelected());
     }
 
     if (myIncludeOverloadedMethodsAvailable) {
@@ -292,8 +290,8 @@ public abstract class FindUsagesDialog extends DialogWrapper{
 
     boolean isEmpty = true;
 
-    if(mySearchInNonJavaFilesAvailable){
-      myCbToSearchInNonJavaFiles = addCheckboxToPanel("Search in non-java files", FindSettings.getInstance().isSearchInNonJavaFiles(), optionsPanel, false, 'j');
+    if(mySearchForTextOccurencesAvailable){
+      myCbToSearchForTextOccurences = addCheckboxToPanel("Search for text occurences", FindSettings.getInstance().isSearchForTextOccurences(), optionsPanel, false, 'j');
       isEmpty = false;
     }
 

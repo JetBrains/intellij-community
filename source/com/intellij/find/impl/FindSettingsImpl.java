@@ -31,7 +31,7 @@ public class FindSettingsImpl extends FindSettings implements ApplicationCompone
 
   public boolean SEARCH_OVERLOADED_METHODS = false;
   public boolean SEARCH_IN_LIBRARIES = false;
-  public boolean SEARCH_IN_NON_JAVA_FILES = true;
+  public boolean SEARCH_FOR_TEXT_OCCURENCES = true;
   public boolean SKIP_RESULTS_WHEN_ONE_USAGE = false;
 
   public String FIND_DIRECTION = FIND_DIRECTION_FORWARD;
@@ -76,12 +76,12 @@ public class FindSettingsImpl extends FindSettings implements ApplicationCompone
     this.SKIP_RESULTS_WHEN_ONE_USAGE = skip;
   }
 
-  public boolean isSearchInNonJavaFiles(){
-    return SEARCH_IN_NON_JAVA_FILES;
+  public boolean isSearchForTextOccurences(){
+    return SEARCH_FOR_TEXT_OCCURENCES;
   }
 
-  public void setSearchInNonJavaFiles(boolean search){
-    this.SEARCH_IN_NON_JAVA_FILES = search;
+  public void setSearchForTextOccurences(boolean search){
+    this.SEARCH_FOR_TEXT_OCCURENCES = search;
   }
 
   public String getDefaultScopeName() {

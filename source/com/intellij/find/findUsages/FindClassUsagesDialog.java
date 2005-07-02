@@ -36,7 +36,7 @@ public class FindClassUsagesDialog extends FindUsagesDialog {
     options.isDerivedClasses = isToChange(myCbDerivedClasses);
     options.isImplementingClasses = isToChange(myCbImplementingClasses);
     options.isDerivedInterfaces = isToChange(myCbDerivedInterfaces);
-    options.isSearchInNonJavaFiles = isToChange(myCbToSearchInNonJavaFiles);
+    options.isSearchInNonJavaFiles = isToChange(myCbToSearchForTextOccurences);
     return options;
   }
 
@@ -91,12 +91,12 @@ public class FindClassUsagesDialog extends FindUsagesDialog {
   }
 
   protected void update() {
-    if(myCbToSearchInNonJavaFiles != null){
+    if(myCbToSearchForTextOccurences != null){
       if (isSelected(myCbUsages)){
-        myCbToSearchInNonJavaFiles.makeSelectable();
+        myCbToSearchForTextOccurences.makeSelectable();
       }
       else{
-        myCbToSearchInNonJavaFiles.makeUnselectable(false);
+        myCbToSearchForTextOccurences.makeUnselectable(false);
       }
     }
 

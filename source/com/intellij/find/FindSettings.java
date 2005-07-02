@@ -14,9 +14,9 @@ public abstract class FindSettings{
 
   public abstract void setSkipResultsWithOneUsage(boolean skip);
 
-  public abstract boolean isSearchInNonJavaFiles();
+  public abstract boolean isSearchForTextOccurences();
 
-  public abstract void setSearchInNonJavaFiles(boolean search);
+  public abstract void setSearchForTextOccurences(boolean search);
 
   public abstract String getDefaultScopeName();
 

@@ -31,7 +31,7 @@ public class FindPackageUsagesDialog extends FindUsagesDialog {
     options.clear();
     options.isUsages = true;
     options.isClassesUsages = isToChange(myCbClassesUsages);
-    options.isSearchInNonJavaFiles = isToChange(myCbToSearchInNonJavaFiles);
+    options.isSearchInNonJavaFiles = isToChange(myCbToSearchForTextOccurences);
     return options;
   }
 
@@ -58,12 +58,12 @@ public class FindPackageUsagesDialog extends FindUsagesDialog {
   }
 
   protected void update() {
-    if(myCbToSearchInNonJavaFiles != null){
+    if(myCbToSearchForTextOccurences != null){
       if (isSelected(myCbUsages)){
-        myCbToSearchInNonJavaFiles.makeSelectable();
+        myCbToSearchForTextOccurences.makeSelectable();
       }
       else{
-        myCbToSearchInNonJavaFiles.makeUnselectable(false);
+        myCbToSearchForTextOccurences.makeUnselectable(false);
       }
     }
 
