@@ -240,7 +240,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider{
 
       public Object[] getVariants() {
         final PsiElement context = getContext();
-        if (context == null) {
+        if (context != null) {
           PsiPackage aPackage = (PsiPackage)context;
           final PsiPackage[] subPackages = aPackage.getSubPackages();
           final PsiClass[] classes = aPackage.getClasses();
