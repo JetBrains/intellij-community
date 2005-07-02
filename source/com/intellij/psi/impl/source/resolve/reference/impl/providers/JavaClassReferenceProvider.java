@@ -12,6 +12,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
@@ -249,7 +250,11 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider{
           System.arraycopy(classes, 0, result, subPackages.length, classes.length);
           return result;
         } else {
-          return new Object[]{myElement.getManager().findPackage("")};
+          final PsiPackage defaultPackage = myElement.getManager().findPackage("");
+          if (defaultPackage != null) {
+            return defaultPackage.getSubPackages();
+          }
+          return ArrayUtil.EMPTY_OBJECT_ARRAY;
         }
       }
     }
