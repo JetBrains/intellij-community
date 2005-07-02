@@ -59,7 +59,7 @@ public class StringConcatenationInsideStringBufferAppendInspection
             assert argList != null;
             final PsiExpression[] args = argList.getExpressions();
             final PsiExpression arg = args[0];
-            final StringBuilder newExpressionBuffer = new StringBuilder();
+            final StringBuffer newExpressionBuffer = new StringBuffer();
             final List<PsiExpression> components = findConcatenationComponents(arg);
             final PsiExpression qualifier = methodExpression
                     .getQualifierExpression();
