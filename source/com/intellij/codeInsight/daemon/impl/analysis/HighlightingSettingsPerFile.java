@@ -50,16 +50,17 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
 
   public void setHighlightingSettingForRoot(PsiElement root, FileHighlighingSetting setting){
     final PsiFile containingFile = root.getContainingFile();
-
-    FileHighlighingSetting[] defaults = myHighlightSettings.get(containingFile.getVirtualFile());
+    final VirtualFile virtualFile = containingFile.getVirtualFile();
+    if (virtualFile == null) return;
+    FileHighlighingSetting[] defaults = myHighlightSettings.get(virtualFile);
     if(defaults == null) defaults = getDefaults(containingFile.getLanguage()).clone();
     defaults[PsiUtil.getRootIndex(root)] = setting;
     boolean toRemove = true;
     for (FileHighlighingSetting aDefault : defaults) {
       if (aDefault != FileHighlighingSetting.NONE) toRemove = false;
     }
-    if(!toRemove) myHighlightSettings.put(containingFile.getVirtualFile(), defaults);
-    else myHighlightSettings.remove(containingFile.getVirtualFile());
+    if(!toRemove) myHighlightSettings.put(virtualFile, defaults);
+    else myHighlightSettings.remove(virtualFile);
   }
 
   public void projectOpened() {}
@@ -104,10 +105,11 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
       }
     }
     for (Map.Entry<VirtualFile, String> entry : myProfileSettings.entrySet()) {
+      final String name = entry.getValue();
       final Element child = new Element("profiles");
       element.addContent(child);
       child.setAttribute("file", entry.getKey().getUrl());
-      child.setAttribute("profile_name", entry.getValue());
+      child.setAttribute("profile_name", name);
     }
   }
 
@@ -123,5 +125,10 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
        final PsiFile file = psiRoot.getContainingFile();
        myProfileSettings.put(file.getVirtualFile(), name);
      }
+  }
+
+  public void resetAllFilesToUseGlobalProfile(){
+    myProfileSettings.clear();
+    myHighlightSettings.clear();
   }
 }

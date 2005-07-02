@@ -7,7 +7,9 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInspection.ex.InspectionProfileManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.PsiElement;
@@ -38,6 +40,10 @@ public class EditorMarkupHintComponent extends JPanel {
   private JRadioButton myGoByBothRadioButton = new JRadioButton("Go to next error/warning");
 
   private JComboBox myProfilesCombo = new JComboBox(new DefaultComboBoxModel());
+  private JCheckBox myUsePerFileProfile = new JCheckBox("Use Per File Inspection Profile:");
+
+  private static final Icon GC_ICON = IconLoader.getIcon("/actions/gc.png");
+  private JButton myClearSettingsButton = new JButton(GC_ICON);
 
   private JSlider[] mySliders;
   private PsiFile myFile;
@@ -45,6 +51,7 @@ public class EditorMarkupHintComponent extends JPanel {
   private boolean myImportPopupOn;
   private boolean myGoByErrors;
   private String myProfile;
+  private boolean myUseProfile;
 
   public EditorMarkupHintComponent(PsiFile file) {
     super(new GridBagLayout());
@@ -86,6 +93,7 @@ public class EditorMarkupHintComponent extends JPanel {
     });
     myImportPopupCheckBox.setSelected(myImportPopupOn);
     myImportPopupCheckBox.setEnabled(analyzer.isAutohintsAvailable(myFile));
+    myImportPopupCheckBox.setMnemonic('I');
 
     ButtonGroup group = new ButtonGroup();
     group.add(myGoByErrorsRadioButton);
@@ -98,38 +106,44 @@ public class EditorMarkupHintComponent extends JPanel {
       }
     };
     myGoByErrorsRadioButton.addChangeListener(changeListener);
+    myGoByErrorsRadioButton.setMnemonic('F');
     myGoByBothRadioButton.addChangeListener(changeListener);
     myGoByErrorsRadioButton.setSelected(myGoByErrors);
     myGoByBothRadioButton.setSelected(!myGoByErrors);
+    myGoByBothRadioButton.setMnemonic('N');
 
     GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
                                                    GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
     add(myImportPopupCheckBox, gc);
+    myClearSettingsButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        final Project project = myFile.getProject();
+        HighlightingSettingsPerFile.getInstance(project).resetAllFilesToUseGlobalProfile();
+        DaemonCodeAnalyzer.getInstance(project).restart();
+        myProfilesCombo.setSelectedItem(DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().getName());
+        myProfilesCombo.setEnabled(false);
+        myUsePerFileProfile.setSelected(false);
+        for (int i = 0; i < mySliders.length; i++) {
+          final PsiFile psiRoot = myFile.getPsiRoots()[i];
+          mySliders[i].setValue(getValue(HighlightUtil.isRootHighlighted(psiRoot), HighlightUtil.isRootInspected(psiRoot)));
+        }
+      }
+    });
+    myClearSettingsButton.setToolTipText("Make all project files to use global highlighting settings");
+    myClearSettingsButton.setPreferredSize(new Dimension(GC_ICON.getIconWidth() + 4, GC_ICON.getIconHeight() + 4));
+    add(myClearSettingsButton, new GridBagConstraints(1,0,1,1,0,0,GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(2,2,0,2),0,0));
 
     JPanel navPanel = new JPanel(new BorderLayout());
     navPanel.add(myGoByErrorsRadioButton, BorderLayout.WEST);
     navPanel.add(myGoByBothRadioButton, BorderLayout.EAST);
     navPanel.setBorder(IdeBorderFactory.createTitledBorder("Errors Navigation"));
+    gc.gridwidth = 2;
     add(navPanel, gc);
 
     JPanel panel = new JPanel(new GridBagLayout());
     panel.setBorder(IdeBorderFactory.createTitledBorder("Highlighting Level"));
 
-    JPanel profilePanel = new JPanel(new GridBagLayout());
-    profilePanel.add(new JLabel("Use Inspection Profile:"), new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    InspectionProfileManager inspectionManager = InspectionProfileManager.getInstance();
-    final String[] avaliableProfileNames = inspectionManager.getAvaliableProfileNames();
-    for (String profile : avaliableProfileNames) {
-      myProfilesCombo.addItem(profile);
-    }
-    myProfilesCombo.setSelectedItem(DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(myFile).getName());
-    myProfilesCombo.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        myProfile = (String)myProfilesCombo.getSelectedItem();
-      }
-    });
-    profilePanel.add(myProfilesCombo, new GridBagConstraints(1, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-    panel.add(profilePanel, new GridBagConstraints(0,0,mySliders.length,1,1,0,GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0,0));
+    panel.add(createInspectionProfilePanel(), new GridBagConstraints(0,0,mySliders.length,1,1,0,GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0,0));
 
     final boolean addLabel = mySliders.length > 1;
     if (addLabel) {
@@ -145,6 +159,35 @@ public class EditorMarkupHintComponent extends JPanel {
     gc.weighty = 1.0;
     gc.fill = GridBagConstraints.BOTH;
     add(panel, gc);
+  }
+
+  private JPanel createInspectionProfilePanel() {
+    JPanel profilePanel = new JPanel(new GridBagLayout());
+    myUsePerFileProfile.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        final boolean selected = myUsePerFileProfile.isSelected();
+        myProfilesCombo.setEnabled(selected);
+        myUseProfile = selected;
+      }
+    });
+    myUsePerFileProfile.setMnemonic('U');
+    final boolean usePerFileProfile = HighlightingSettingsPerFile.getInstance(myFile.getProject()).getInspectionProfile(myFile) != null;
+    myUsePerFileProfile.setSelected(usePerFileProfile);
+    profilePanel.add(myUsePerFileProfile, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    InspectionProfileManager inspectionManager = InspectionProfileManager.getInstance();
+    final String[] avaliableProfileNames = inspectionManager.getAvaliableProfileNames();
+    for (String profile : avaliableProfileNames) {
+      myProfilesCombo.addItem(profile);
+    }
+    myProfilesCombo.setSelectedItem(DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(myFile).getName());
+    myProfilesCombo.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        myProfile = (String)myProfilesCombo.getSelectedItem();
+      }
+    });
+    myProfilesCombo.setEnabled(usePerFileProfile);
+    profilePanel.add(myProfilesCombo, new GridBagConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 20, 0, 0), 0, 0));
+    return profilePanel;
   }
 
   private void layoutHorizontal(final JPanel panel) {
@@ -202,7 +245,9 @@ public class EditorMarkupHintComponent extends JPanel {
         HighlightUtil.forceRootInspection(root, true);
       }
     }
-    HighlightingSettingsPerFile.getInstance(myFile.getProject()).setInspectionProfile((String)myProfilesCombo.getSelectedItem(), myFile);
+    if (myUseProfile){
+      HighlightingSettingsPerFile.getInstance(myFile.getProject()).setInspectionProfile((String)myProfilesCombo.getSelectedItem(), myFile);
+    }
     final DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(myFile.getProject());
     analyzer.setImportHintsEnabled(myFile, myImportPopupOn);
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
@@ -223,7 +268,11 @@ public class EditorMarkupHintComponent extends JPanel {
         return true;
       }
     }
-    return !Comparing.equal(myProfile, DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(myFile));
+    if (myUseProfile != myUsePerFileProfile.isSelected()) return true;
+    if (myUseProfile) {
+      return !Comparing.equal(myProfile, DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(myFile));
+    }
+    return false;
   }
 
   private int getValue(boolean isSyntaxHighlightingEnabled, boolean isInspectionsHighlightingEnabled){
