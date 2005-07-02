@@ -20,7 +20,10 @@ class FormatProcessor {
   private CodeStyleSettings mySettings;
 
   private final Collection<AlignmentImpl> myAlignedAlignments = new HashSet<AlignmentImpl>();
+
   LeafBlockWrapper myWrapCandidate = null;
+  LeafBlockWrapper myFirstWrappedBlockOnLine = null;
+
   private final LeafBlockWrapper myFirstTokenBlock;
 
   private Map<TextRange, Pair<AbstractBlockWrapper, Boolean>> myPreviousDependancies = new HashMap<TextRange, Pair<AbstractBlockWrapper, Boolean>>();
@@ -276,6 +279,12 @@ class FormatProcessor {
     final TextRange textRange = myCurrentBlock.getTextRange();
     final WrapImpl[] wraps = myCurrentBlock.getWraps();
 
+    boolean wrapWasPresent = whiteSpace.containsLineFeeds();
+
+    if (wrapWasPresent) {
+      myFirstWrappedBlockOnLine = null;
+    }
+
     if (whiteSpace.containsLineFeeds() && !whiteSpace.containsLineFeedsInitially()) {
       whiteSpace.removeLineFeeds(spaceProperty, this);
     }
@@ -309,7 +318,15 @@ class FormatProcessor {
 
       if (!whiteSpace.containsLineFeeds()) {
         whiteSpace.ensureLineFeed();
-//        releaseAlignments();
+        if (!wrapWasPresent && wrap != null) {
+          if (myFirstWrappedBlockOnLine != null && wrap.isChildOf(myFirstWrappedBlockOnLine.getWrap())) {
+            wrap.ignoreParentWrap(myFirstWrappedBlockOnLine.getWrap());
+            myCurrentBlock = myFirstWrappedBlockOnLine;
+            return true;
+          } else {
+            myFirstWrappedBlockOnLine = myCurrentBlock;
+          }
+        }
       }
 
       myWrapCandidate = null;
@@ -349,12 +366,6 @@ class FormatProcessor {
   }
 
   private void onCurrentLineChanged() {
-    /*
-    for (Iterator<AlignmentImpl> iterator = myAlignedAlignments.iterator(); iterator.hasNext();) {
-      AlignmentImpl alignment = iterator.next();
-      alignment.setOffsetRespBlock(-1);
-    }
-    */
     myAlignedAlignments.clear();
     myWrapCandidate = null;
   }
