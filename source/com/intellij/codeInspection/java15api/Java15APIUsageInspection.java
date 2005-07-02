@@ -101,7 +101,7 @@ public class Java15APIUsageInspection extends LocalInspectionTool {
 
   @Nullable
   private ProblemDescriptor[] checkReferencesIn(@Nullable PsiElement elt, InspectionManager manager) {
-    if (elt == null) return null;
+    if (elt == null || !isInProject(elt, manager)) return null;
     final MyVisitor visitor = new MyVisitor();
     elt.accept(visitor);
     final List<PsiElement> results = visitor.getResults();
@@ -115,8 +115,16 @@ public class Java15APIUsageInspection extends LocalInspectionTool {
     return descriptors;
   }
 
+  private boolean isInProject(final PsiElement elt, final InspectionManager manager) {
+    return PsiManager.getInstance(manager.getProject()).isInProject(elt);
+  }
+
   private static class MyVisitor extends PsiRecursiveElementVisitor {
     private List<PsiElement> results = null;
+
+    public void visitDocComment(PsiDocComment comment) {
+      // No references inside doc comment are of interest.
+    }
 
     public void visitReferenceExpression(PsiReferenceExpression expression) {
       visitReferenceElement(expression);
@@ -203,20 +211,26 @@ public class Java15APIUsageInspection extends LocalInspectionTool {
         }
       }
 
+      @SuppressWarnings({"UseOfSystemOutOrSystemErr"})
       private void generateMember(final PsiDocCommentOwner member) {
         if (member == null) return;
 
-        final PsiDocComment comm = member.getDocComment();
-        if (comm != null) {
-          final PsiDocTag tag = comm.findTagByName("since");
-          if (tag != null) {
-            final PsiDocTagValue value = tag.getValueElement();
-            if (value != null) {
-              if (value.getText().trim().equals("1.5")) {
-                System.out.println(getSignature(member));
+        if (member instanceof PsiClass && "java.lang.Enum".equals(((PsiClass)member).getQualifiedName())) {
+          return;
+        }
+
+        if (isMarked(member)) {
+          if (member instanceof PsiMethod) {
+            final PsiMethod method = (PsiMethod)member;
+            final PsiMethod[] supers = method.findSuperMethods();
+            for (PsiMethod spr : supers) {
+              if (spr != method) {
+                final PsiClass klass = spr.getContainingClass();
+                if (klass != null && !klass.isInterface() && !isMarked(spr) && !isMarked(klass)) return;
               }
             }
           }
+          System.out.println(getSignature(member));
         }
 
         if (member instanceof PsiClass) {
@@ -232,7 +246,23 @@ public class Java15APIUsageInspection extends LocalInspectionTool {
           }
         }
       }
-
     });
   }
+
+  private static boolean isMarked(PsiDocCommentOwner member) {
+    final PsiDocComment comm = member.getDocComment();
+    if (comm != null) {
+      final PsiDocTag tag = comm.findTagByName("since");
+      if (tag != null) {
+        final PsiDocTagValue value = tag.getValueElement();
+        if (value != null) {
+          if (value.getText().trim().equals("1.5")) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
 }
