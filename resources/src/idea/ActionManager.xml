@@ -227,6 +227,9 @@
         <action id="SaveAll" class="com.intellij.ide.actions.SaveAllAction" text="_Save All" icon="/actions/menu-saveall.png" description="Save all files and settings"/>
         <action id="ExportSettings" class="com.intellij.ide.actions.ExportSettingsAction" text="_Export Settings..." description="Export global settings"/>
         <action id="ImportSettings" class="com.intellij.ide.actions.ImportSettingsAction" text="_Import Settings..." description="Import global settings"/>
+        <separator/>
+        <action id="ImportFromJBuilder" class="com.intellij.openapi.project.impl.importProject.jbuilder.ImportFromJBuilderAction" text="Import From _JBuilder" description="Load Modules From JBuilder Project"/>
+        <separator/>
         <action id="Synchronize" class="com.intellij.ide.actions.SynchronizeAction" text="S_ynchronize" icon="/actions/sync.png" description="Detect all externally changed files and reload them from disk"/>
         <action id="ReloadFromDisk" class="com.intellij.ide.actions.ReloadFromDiskAction" text="Reload from Dis_k" description="Reload current file from disk and lose all changes"/>
         <separator/>

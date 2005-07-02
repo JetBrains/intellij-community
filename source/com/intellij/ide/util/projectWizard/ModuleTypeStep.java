@@ -93,7 +93,7 @@ public class ModuleTypeStep extends ModuleWizardStep {
     myRbImportModule.setMnemonic('I');
     myRbImportForeignModule = new JRadioButton("Import module from");
     myRbImportForeignModule.setMnemonic('m');
-    myCbForeignModuleType = new JComboBox(new String[]{"Eclipse project", "JBuilder project"});
+    myCbForeignModuleType = new JComboBox(new String[]{"Eclipse project"});
     myCbForeignModuleType.setEnabled(false);
     myButtonGroup = new ButtonGroup();
     myButtonGroup.add(myRbCreateNewModule);
@@ -205,10 +205,6 @@ public class ModuleTypeStep extends ModuleWizardStep {
   }
   public boolean isImportForeignModule() {
     return myRbImportForeignModule.isSelected();
-  }
-
-  public String getForeignType(){
-    return (String)myCbForeignModuleType.getSelectedItem();
   }
 
   public String getModuleFilePath() {
