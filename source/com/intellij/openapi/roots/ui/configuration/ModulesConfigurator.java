@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -18,6 +19,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleCircularDependencyException;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -330,7 +332,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           try {
-            projectRootManagerEx.setLanguageLevel((LanguageLevel)myLanguageLevelCombo.getSelectedItem());
+            final LanguageLevel newLevel = (LanguageLevel)myLanguageLevelCombo.getSelectedItem();
+            projectRootManagerEx.setLanguageLevel(newLevel);
             ((ProjectEx)myProject).setSavePathsRelative(myRbRelativePaths.isSelected());
             final ModifiableRootModel[] rootModels = models.toArray(new ModifiableRootModel[models.size()]);
             projectRootManagerEx.multiCommit(myModuleModel, rootModels);
@@ -671,6 +674,28 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       setText(((LanguageLevel)value).getPresentableText());
       return this;
+    }
+  }
+
+  private class ReloadProjectRequest implements Runnable {
+    private final LanguageLevel myOriginalLanguageLevel;
+
+    public ReloadProjectRequest(final LanguageLevel originalLanguageLevel) {
+      myOriginalLanguageLevel = originalLanguageLevel;
+    }
+
+    public void start() {
+      final ProjectRootManagerEx projectRootManagerEx = ProjectRootManagerEx.getInstanceEx(myProject);
+      if (!myOriginalLanguageLevel.equals(projectRootManagerEx.getLanguageLevel())) {
+        ApplicationManager.getApplication().invokeLater(this, ModalityState.current());
+      }
+    }
+
+    public void run() {
+      final String _message = "Language level has been changed.\nReload project \"" + myProject.getName() + "\"?";
+      if (Messages.showYesNoDialog(myModuleListPanel, _message, "Modules", Messages.getQuestionIcon()) == 0) {
+        ProjectManagerEx.getInstanceEx().reloadProject(myProject);
+      }
     }
   }
 }

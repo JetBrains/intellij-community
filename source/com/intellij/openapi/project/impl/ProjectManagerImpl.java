@@ -432,11 +432,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
   }
 
-  private void reloadProject(final Project project) {
+  public void reloadProject(final Project project) {
     ProjectReloadState.getInstance(project).onBeforeAutomaticProjectReload();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        LOG.info("Reloading project after external change.");
+        LOG.info("Reloading project.");
         final String path = project.getProjectFilePath();
         final List<VirtualFile> original = getAllProjectFiles(project);
 

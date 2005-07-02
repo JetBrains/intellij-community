@@ -24,6 +24,8 @@ public abstract class ProjectManagerEx extends ProjectManager {
 
   public abstract boolean closeProject(Project project);
 
+  public abstract void reloadProject(Project project);
+
   public abstract boolean isProjectOpened(Project project);
 
   public abstract boolean canClose(Project project);
