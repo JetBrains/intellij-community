@@ -42,6 +42,7 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
       treeStructure, null
     );
 
+
     myProject = project;
     myStructureModel = structureModel;
 
