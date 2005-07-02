@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
@@ -13,6 +14,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.ProjectRootType;
@@ -27,6 +29,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.HashMap;
@@ -59,9 +62,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   private boolean myProjectOpened = false;
   private LanguageLevel myLanguageLevel = LanguageLevel.JDK_1_3;
+  private LanguageLevel myOriginalLanguageLevel = myLanguageLevel;
   private FileTypeListener myFileTypeListener;
   private long myModificationCount = 0;
   private Set<LocalFileSystem.WatchRequest> myRootsToWatch = new HashSet<LocalFileSystem.WatchRequest>();
+  private Runnable myReloadProjectRequest = null;
 
   static ProjectRootManagerImpl getInstanceImpl(Project project) {
     return (ProjectRootManagerImpl)getInstance(project);
@@ -132,6 +137,24 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   public void setLanguageLevel(LanguageLevel languageLevel) {
     myLanguageLevel = languageLevel;
+    myReloadProjectRequest = new Runnable() {
+      public void run() {
+        if (myReloadProjectRequest != this) {
+          // obsolete, another request has already replaced this one
+          return;
+        }
+        if (myOriginalLanguageLevel.equals(getLanguageLevel())) {
+          // the question does not make sence now
+          return;
+        }
+        final String _message = "Language level changes will take effect on project reload.\nWould you like to reload project \"" + myProject.getName() + "\" now?";
+        if (Messages.showYesNoDialog(myProject, _message, "Language Level Changed", Messages.getQuestionIcon()) == 0) {
+          ProjectManagerEx.getInstanceEx().reloadProject(myProject);
+        }
+        myReloadProjectRequest = null;
+      }
+    };
+    ApplicationManager.getApplication().invokeLater(myReloadProjectRequest, ModalityState.NON_MMODAL);
   }
 
   private final static HashMap<ProjectRootType, OrderRootType> ourProjectRootTypeToOrderRootType = new HashMap<ProjectRootType, OrderRootType>();
@@ -305,6 +328,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     else {
       myLanguageLevel = LanguageLevel.JDK_1_3;
     }
+    myOriginalLanguageLevel = myLanguageLevel;
     myProjectJdkName = element.getAttributeValue(PROJECT_JDK_NAME_ATTR);
   }
 
@@ -678,4 +702,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   public long getModificationCount() {
     return myModificationCount;
   }
+
+
 }
