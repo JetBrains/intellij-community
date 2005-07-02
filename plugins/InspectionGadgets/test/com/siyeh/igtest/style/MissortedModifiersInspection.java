@@ -1,5 +1,7 @@
 package com.siyeh.igtest.style;
 
+import java.util.Hashtable;
+
 final public class MissortedModifiersInspection
 {
     private native static int foo2();
@@ -18,5 +20,14 @@ final public class MissortedModifiersInspection
 
     public @Deprecated void foo3(){};
 
+      private transient static Hashtable mAttributeMeta;
 
+    public class TestQuickFix
+    {
+       protected final static String A = "a";
+       protected final static String B = "b";
+       protected final static String C = "c";
+       protected final static String D = "d";
+    }
+    
 }
