@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.Arrays;
 
 public class AbstractMethodOverridesAbstractMethodInspection extends MethodInspection {
     private final AbstractMethodOverridesAbstractMethodFix fix = new AbstractMethodOverridesAbstractMethodFix();
@@ -69,14 +70,14 @@ public class AbstractMethodOverridesAbstractMethodInspection extends MethodInspe
                 return;
             }
             if (!method.hasModifierProperty(PsiModifier.ABSTRACT) &&
-                    !containingClass.isInterface()) {
+                !containingClass.isInterface()) {
                 return;
             }
             final PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods(method);
             for(final PsiMethod superMethod : superMethods){
                 if(isAbstract(superMethod)){
                     if(methodsHaveSameReturnTypes(method, superMethod) &&
-                            haveSameExceptionSignatures(method, superMethod))
+                       haveSameExceptionSignatures(method, superMethod))
                     {
                         registerMethodError(method);
                         return;
@@ -86,7 +87,7 @@ public class AbstractMethodOverridesAbstractMethodInspection extends MethodInspe
         }
 
         private static boolean haveSameExceptionSignatures(PsiMethod method1,
-                                                    PsiMethod method2){
+                                                           PsiMethod method2){
             final PsiReferenceList list1 = method1.getThrowsList();
             final PsiClassType[] exceptions1 = list1.getReferencedTypes();
             final PsiReferenceList list2 = method2.getThrowsList();
@@ -95,8 +96,7 @@ public class AbstractMethodOverridesAbstractMethodInspection extends MethodInspe
             {
                 return false;
             }
-            final Set<PsiClassType> set1 = new HashSet<PsiClassType>();
-            Collections.addAll(set1, exceptions1);
+            final Set<PsiClassType> set1 = new HashSet<PsiClassType>(Arrays.asList(exceptions1));
             for(PsiClassType anException : exceptions2){
                 if(!set1.contains(anException)){
                     return false;
@@ -106,7 +106,7 @@ public class AbstractMethodOverridesAbstractMethodInspection extends MethodInspe
         }
 
         private static boolean methodsHaveSameReturnTypes(PsiMethod method1,
-                                                   PsiMethod method2){
+                                                          PsiMethod method2){
             final PsiType type1 = method1.getReturnType();
             if(type1 == null)
             {
