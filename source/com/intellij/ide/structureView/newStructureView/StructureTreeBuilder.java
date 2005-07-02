@@ -31,6 +31,7 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
   private final Alarm myUpdateEditorAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private DocumentAdapter myDocumentsListener;
 
+
   public StructureTreeBuilder(Project project,
                               JTree tree,
                               DefaultTreeModel treeModel,
