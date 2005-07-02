@@ -5,6 +5,7 @@ import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectViewPsiTreeChangeListener;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.lang.properties.PropertiesFilesManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
@@ -14,13 +15,14 @@ import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
-import com.intellij.psi.*;
-import com.intellij.lang.properties.PropertiesFilesManager;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiManager;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import java.awt.datatransfer.Transferable;
 import java.util.Comparator;
 
 public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
@@ -28,7 +30,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
   private final ModuleRootListener myModuleRootListener;
   private final MyFileStatusListener myFileStatusListener;
 
-  private final MyCopyPasteListener myCopyPasteListener;
+  private final CopyPasteUtil.DefaultCopyPasteListener myCopyPasteListener;
   private final ProjectTreeBuilder.PropertiesFileListener myPropertiesFileListener;
 
   public ProjectTreeBuilder(final Project project, JTree tree, DefaultTreeModel treeModel, Comparator<NodeDescriptor> comparator, ProjectAbstractTreeStructureBase treeStructure) {
@@ -57,7 +59,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     ProjectRootManager.getInstance(myProject).addModuleRootListener(myModuleRootListener);
     myFileStatusListener = new MyFileStatusListener();
     FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener);
-    myCopyPasteListener = new MyCopyPasteListener();
+    myCopyPasteListener = new CopyPasteUtil.DefaultCopyPasteListener(myUpdater);
     CopyPasteManager.getInstance().addContentChangedListener(myCopyPasteListener);
 
     myPropertiesFileListener = new PropertiesFileListener();
@@ -91,20 +93,6 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
 
       if (!myUpdater.addSubtreeToUpdateByElement(element) && element instanceof PsiJavaFile) {
         myUpdater.addSubtreeToUpdateByElement(((PsiJavaFile)element).getContainingDirectory());
-      }
-    }
-  }
-
-  private final class MyCopyPasteListener implements CopyPasteManager.ContentChangedListener {
-    public void contentChanged(final Transferable oldTransferable, final Transferable newTransferable) {
-      updateByTransferable(oldTransferable);
-      updateByTransferable(newTransferable);
-    }
-
-    private void updateByTransferable(final Transferable t) {
-      final PsiElement[] psiElements = CopyPasteUtil.getElementsInTransferable(t);
-      for (PsiElement psiElement : psiElements) {
-        myUpdater.addSubtreeToUpdateByElement(psiElement);
       }
     }
   }

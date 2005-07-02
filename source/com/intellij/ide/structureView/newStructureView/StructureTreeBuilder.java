@@ -5,25 +5,24 @@ import com.intellij.ide.structureView.ModelListener;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.ide.util.treeView.smartTree.SmartTreeStructure;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.psi.*;
 import com.intellij.util.Alarm;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import java.awt.datatransfer.Transferable;
 
 final class StructureTreeBuilder extends AbstractTreeBuilder {
   private final Project myProject;
   private final StructureViewModel myStructureModel;
 
-  private final MyCopyPasteListener myCopyPasteListener;
+  private final CopyPasteUtil.DefaultCopyPasteListener myCopyPasteListener;
   private final PsiTreeChangeListener myPsiTreeChangeListener;
   private final ModelListener myModelListener;
 
@@ -53,7 +52,7 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
     };
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeListener);
 
-    myCopyPasteListener = new MyCopyPasteListener();
+    myCopyPasteListener = new CopyPasteUtil.DefaultCopyPasteListener(myUpdater);
     CopyPasteManager.getInstance().addContentChangedListener(myCopyPasteListener);
     initRootNode();
     myStructureModel.addModelListener(myModelListener);
@@ -155,18 +154,4 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
     myUpdater.addSubtreeToUpdate(myRootNode);
   }
 
-
-  private final class MyCopyPasteListener implements CopyPasteManager.ContentChangedListener {
-    public void contentChanged(final Transferable oldTransferable, final Transferable newTransferable) {
-      updateByTransferable(oldTransferable);
-      updateByTransferable(newTransferable);
-    }
-
-    private void updateByTransferable(final Transferable t) {
-      final PsiElement[] psiElements = CopyPasteUtil.getElementsInTransferable(t);
-      for (PsiElement psiElement : psiElements) {
-        myUpdater.addSubtreeToUpdateByElement(psiElement);
-      }
-    }
-  }
 }

@@ -4,6 +4,7 @@
  */
 package com.intellij.ide.favoritesTreeView;
 
+import com.intellij.ide.CopyPasteUtil;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectViewPsiTreeChangeListener;
 import com.intellij.ide.projectView.impl.ModuleGroup;
@@ -32,16 +33,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import java.awt.datatransfer.Transferable;
 import java.util.Comparator;
 import java.util.Set;
 
 public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
   private ProjectViewPsiTreeChangeListener myPsiTreeChangeListener;
-  private final PsiTreeChangeListener myPsiTreeChangeAdapter;
   private ModuleRootListener myModuleRootListener;
   private FileStatusListener myFileStatusListener;
-  private MyCopyPasteListener myCopyPasteListener;
+  private CopyPasteUtil.DefaultCopyPasteListener myCopyPasteListener;
 
   public FavoritesViewTreeBuilder(Project project, JTree tree, DefaultTreeModel treeModel, ProjectAbstractTreeStructureBase treeStructure) {
     super(project, tree, treeModel, treeStructure, null);
@@ -137,12 +136,10 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
       }
     };
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeListener);
-    myPsiTreeChangeAdapter = new MyPsiTreeChangeListener();
-    PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeAdapter);
     ProjectRootManager.getInstance(myProject).addModuleRootListener(myModuleRootListener);
     myFileStatusListener = new MyFileStatusListener();
     FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener);
-    myCopyPasteListener = new MyCopyPasteListener();
+    myCopyPasteListener = new CopyPasteUtil.DefaultCopyPasteListener(myUpdater);
     CopyPasteManager.getInstance().addContentChangedListener(myCopyPasteListener);
     initRootNode();
   }
@@ -202,7 +199,6 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
   public final void dispose() {
     super.dispose();
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeListener);
-    PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeAdapter);
     ProjectRootManager.getInstance(myProject).removeModuleRootListener(myModuleRootListener);
     FileStatusManager.getInstance(myProject).removeFileStatusListener(myFileStatusListener);
     CopyPasteManager.getInstance().removeContentChangedListener(myCopyPasteListener);
@@ -238,36 +234,5 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
     }
   }
 
-   private final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {
-    public final void childAdded(final PsiTreeChangeEvent event) {
-      myUpdater.addSubtreeToUpdate(myRootNode);
-    }
-
-    public final void childRemoved(final PsiTreeChangeEvent event) {
-      myUpdater.addSubtreeToUpdate(myRootNode);
-    }
-
-    public final void childReplaced(final PsiTreeChangeEvent event) {
-      myUpdater.addSubtreeToUpdate(myRootNode);
-    }
-
-    public final void childMoved(final PsiTreeChangeEvent event) {
-      myUpdater.addSubtreeToUpdate(myRootNode);
-    }
-
-    public final void childrenChanged(final PsiTreeChangeEvent event) {
-      myUpdater.addSubtreeToUpdate(myRootNode);
-    }
-
-    public final void propertyChanged(final PsiTreeChangeEvent event) {
-      myUpdater.addSubtreeToUpdate(myRootNode);
-    }
-  }
-
-  private final class MyCopyPasteListener implements CopyPasteManager.ContentChangedListener {
-    public void contentChanged(final Transferable oldTransferable, final Transferable newTransferable) {
-      myUpdater.addSubtreeToUpdate(myRootNode);
-    }
-  }
 }
 
