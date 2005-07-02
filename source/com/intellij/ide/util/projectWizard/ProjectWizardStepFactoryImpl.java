@@ -6,6 +6,7 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.util.Computable;
 
 import javax.swing.*;
 
@@ -27,6 +28,30 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory imple
     return new SourcePathsStep((NameLocationStep)nameAndLocationStep, builder, icon, helpId);
   }
 
+  public ModuleWizardStep createProjectJdkStep(WizardContext context,
+                                               final JavaModuleBuilder builder,
+                                               final Computable<Boolean> isVisible,
+                                               final Icon icon,
+                                               final String helpId) {
+    return new ProjectJdkStep(context){
+      public void updateDataModel() {
+        super.updateDataModel();
+        builder.setModuleJdk(getJdk());
+      }
+
+      public boolean isStepVisible() {
+        return isVisible.compute().booleanValue();
+      }
+
+      public Icon getIcon() {
+        return icon;
+      }
+
+      public String getHelpId() {
+        return helpId;
+      }
+    };
+  }
 
   public String getComponentName() {
     return "ProjectWizardStepFactory";

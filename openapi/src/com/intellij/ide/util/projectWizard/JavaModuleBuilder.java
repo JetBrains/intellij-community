@@ -3,6 +3,7 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
@@ -28,6 +29,7 @@ public class JavaModuleBuilder extends ModuleBuilder {
   private List<Pair<String,String>> mySourcePaths;
   // Pair<Library path, Source path>
   private List<Pair<String, String>> myModuleLibraries = new ArrayList<Pair<String, String>>();
+  private ProjectJdk myJdk;
 
   public final String getContentEntryPath() {
     return myContentEntryPath;
@@ -66,7 +68,11 @@ public class JavaModuleBuilder extends ModuleBuilder {
 
   public void setupRootModel(ModifiableRootModel rootModel) throws ConfigurationException {
     rootModel.setExcludeOutput(true);
-    rootModel.inheritJdk();
+    if (myJdk != null){
+      rootModel.setJdk(myJdk);
+    } else {
+      rootModel.inheritJdk();
+    }
 
     final String moduleRootPath = getContentEntryPath();
     if (moduleRootPath != null) {
@@ -119,5 +125,9 @@ public class JavaModuleBuilder extends ModuleBuilder {
 
   public void addModuleLibrary(String moduleLibraryPath, String sourcePath) {
     myModuleLibraries.add(Pair.create(moduleLibraryPath,sourcePath));
+  }
+
+  public void setModuleJdk(ProjectJdk jdk) {
+    myJdk = jdk;
   }
 }

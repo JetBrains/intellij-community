@@ -5,9 +5,11 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.roots.ProjectRootManager;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class WizardContext {
   /**
@@ -16,6 +18,7 @@ public class WizardContext {
   private final Project myProject;
   private String myProjectFileDirectory;
   private String myProjectName;
+  private ProjectJdk myProjectJdk;
   private List<Listener> myListeners = new ArrayList<Listener>();
 
   public static interface Listener {
@@ -24,6 +27,9 @@ public class WizardContext {
 
   public WizardContext(Project project) {
     myProject = project;
+    if (myProject != null){
+      myProjectJdk = ProjectRootManager.getInstance(myProject).getProjectJdk();
+    }
   }
 
   public Project getProject() {
@@ -65,4 +71,11 @@ public class WizardContext {
     myListeners.remove(listener);
   }
 
+  public void setProjectJdk(ProjectJdk jdk) {
+    myProjectJdk = jdk;
+  }
+
+  public ProjectJdk getProjectJdk() {
+    return myProjectJdk;
+  }
 }

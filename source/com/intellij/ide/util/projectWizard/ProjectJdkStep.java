@@ -21,8 +21,10 @@ public class ProjectJdkStep extends ModuleWizardStep {
   private static final Icon NEW_PROJECT_ICON = IconLoader.getIcon("/newprojectwizard.png");
   private JdkChooserPanel myJdkChooser;
   private JPanel myPanel;
+  private WizardContext myContext;
 
-  public ProjectJdkStep() {
+  public ProjectJdkStep(WizardContext context) {
+    myContext = context;
     myJdkChooser = new JdkChooserPanel();
 
     myPanel = new JPanel(new GridBagLayout());
@@ -66,6 +68,7 @@ public class ProjectJdkStep extends ModuleWizardStep {
   }
 
   public void updateDataModel() {
+    myContext.setProjectJdk(getJdk());
   }
 
   public ProjectJdk getJdk() {
