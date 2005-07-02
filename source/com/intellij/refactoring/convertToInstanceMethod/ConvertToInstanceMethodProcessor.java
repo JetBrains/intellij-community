@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
@@ -151,12 +152,48 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
       }
     }
 
+    try {
+      addInaccessibilityConflicts(usagesIn, conflicts);
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+
     if (conflicts.size() != 0) {
       final ConflictsDialog conflictsDialog = new ConflictsDialog(conflicts.toArray(new String[conflicts.size()]), myProject);
       conflictsDialog.show();
       if (!conflictsDialog.isOK()) return false;
     }
     return super.preprocessUsages(refUsages);
+  }
+
+  private void addInaccessibilityConflicts(final UsageInfo[] usages, final ArrayList<String> conflicts) throws IncorrectOperationException {
+    final PsiModifierList copy = (PsiModifierList)myMethod.getModifierList().copy();
+    if (myNewVisibility != null) {
+      RefactoringUtil.setVisibility(copy, myNewVisibility);
+    }
+
+    for (UsageInfo usage : usages) {
+      if (usage instanceof MethodCallUsageInfo) {
+        final PsiMethodCallExpression call = ((MethodCallUsageInfo)usage).getMethodCall();
+        PsiClass accessObjectClass = null;
+        final PsiExpression[] arguments = call.getArgumentList().getExpressions();
+        final int index = myMethod.getParameterList().getParameterIndex(myTargetParameter);
+        LOG.assertTrue(index >= 0);
+        if (index < arguments.length) {
+          final PsiExpression argument = arguments[index];
+          final PsiType argumentType = argument.getType();
+          if (argumentType instanceof PsiClassType) accessObjectClass = ((PsiClassType)argumentType).resolve();
+        }
+        if (!ResolveUtil.isAccessible(myMethod, myTargetClass, copy, call, accessObjectClass)) {
+          final String newVisibility = myNewVisibility == null ? VisibilityUtil.getVisiblityStringToDisplay(myMethod) : myNewVisibility;
+          String message =
+            ConflictsUtil.getDescription(myMethod, true) + " with " + newVisibility + " visibility is not accesible from " +
+            ConflictsUtil.getDescription(ConflictsUtil.getContainer(call), true);
+          conflicts.add(message);
+        }
+      }
+    }
   }
 
   protected void performRefactoring(UsageInfo[] usages) {

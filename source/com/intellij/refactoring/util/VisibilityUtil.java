@@ -69,4 +69,17 @@ public class VisibilityUtil  {
     }
     else return visibilityModifier;
   }
+
+  public static String getVisiblityStringToDisplay(PsiMember member) {
+    if (member.hasModifierProperty(PsiModifier.PUBLIC)) {
+      return "public";
+    }
+    if (member.hasModifierProperty(PsiModifier.PROTECTED)) {
+      return "protected";
+    }
+    if (member.hasModifierProperty(PsiModifier.PRIVATE)) {
+      return "private";
+    }
+    return "package local";
+  }
 }

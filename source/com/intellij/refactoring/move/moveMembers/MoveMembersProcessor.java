@@ -21,10 +21,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.ui.ConflictsDialog;
-import com.intellij.refactoring.util.ConflictsUtil;
-import com.intellij.refactoring.util.RefactoringHierarchyUtil;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.*;
 import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -306,7 +303,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
             }
 
             if (!ResolveUtil.isAccessible(member, myTargetClass, modifierListCopies.get(member), element, accessObjectClass)) {
-              final String newVisibility = myNewVisibility == null ? getVisiblityString(member) : myNewVisibility;
+              final String newVisibility = myNewVisibility == null ? VisibilityUtil.getVisiblityStringToDisplay(member) : myNewVisibility;
               String message =
                 ConflictsUtil.getDescription(member, true) + " with " + newVisibility + " visibility is not accesible from " +
                 ConflictsUtil.getDescription(ConflictsUtil.getContainer(element), true);
@@ -392,7 +389,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
           if (!RefactoringHierarchyUtil.willBeInTargetClass(ref, membersToMove, targetClass, false)) {
             if (!manager.getResolveHelper().isAccessible(member, modifierList, ref, null)) {
               String message = ConflictsUtil.getDescription(member, true)
-                               + " is " + getVisiblityString(member)
+                               + " is " + VisibilityUtil.getVisiblityStringToDisplay(member)
                                + " and will not be accessible from "
                                + ConflictsUtil.getDescription(ConflictsUtil.getContainer(ref), true)
                                + " when moved to the target class.";
@@ -451,7 +448,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
                                          LinkedHashSet<String> conflicts) {
     if (!PsiUtil.isAccessible(refMember, newContext, accessClass)) {
       String message = ConflictsUtil.getDescription(refMember, true)
-        + " is " + getVisiblityString(refMember)
+        + " is " + VisibilityUtil.getVisiblityStringToDisplay(refMember)
         + " and will not be accessible from "
         + ConflictsUtil.getDescription(member, false)
         + " in the target class.";
@@ -469,19 +466,6 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
       }
     }
     return false;
-  }
-
-  private static String getVisiblityString(PsiMember member) {
-    if (member.hasModifierProperty(PsiModifier.PUBLIC)) {
-      return "public";
-    }
-    if (member.hasModifierProperty(PsiModifier.PROTECTED)) {
-      return "protected";
-    }
-    if (member.hasModifierProperty(PsiModifier.PRIVATE)) {
-      return "private";
-    }
-    return "package local";
   }
 
   private static boolean hasField(PsiClass targetClass, PsiField field) {
