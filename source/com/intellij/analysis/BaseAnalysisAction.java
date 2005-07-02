@@ -146,7 +146,6 @@ public abstract class BaseAnalysisAction extends AnAction {
       myModuleName = moduleName;
       init();
       setTitle("Specify " + myTitle + " Scope");
-      setHorizontalStretch(2.0f);
       if (isProjectScope){
         myFileButton.setVisible(false);
         myProjectButton.setSelected(true);
