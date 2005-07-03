@@ -10,6 +10,9 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ArrayUtil;
 
+import java.util.Set;
+import java.util.Arrays;
+
 /**
  * User: anna
  * Date: Feb 24, 2005
@@ -30,7 +33,7 @@ public class AddNewFavoritesListAction extends AnAction {
 
   public static FavoritesTreeViewPanel doAddNewFavoritesList(final Project project) {
     final String s =
-      Messages.showInputDialog(project, "Input new favorites list name", "Add New Favorites List", Messages.getInformationIcon(), "new",
+      Messages.showInputDialog(project, "Input new favorites list name", "Add New Favorites List", Messages.getInformationIcon(), getUniqueName(project),
                                new InputValidator() {
                                  public boolean checkInput(String inputString) {
                                    return inputString != null && inputString.trim().length() > 0;
@@ -50,5 +53,12 @@ public class AddNewFavoritesListAction extends AnAction {
     return favoritesView.addNewFavoritesList(s);
   }
 
-
+  private static String getUniqueName(Project project) {
+      String[] names = FavoritesViewImpl.getInstance(project).getAvailableFavoritesLists();
+      for (int i = 0; ; i++) {
+        String newName = "Unnamed" + (i > 0 ? i : "");
+        if (ArrayUtil.find(names, newName) > -1) continue;
+        return newName;
+      }
+    }
 }
