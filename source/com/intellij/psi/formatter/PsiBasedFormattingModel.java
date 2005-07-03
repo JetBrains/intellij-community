@@ -138,7 +138,7 @@ public class PsiBasedFormattingModel implements FormattingModel {
       }
     }
     final ASTNode found = myASTNode.findLeafElementAt(offset);
-    if (found.getElementType() == ElementType.XML_COMMENT_START) {
+    if (found != null && found.getElementType() == ElementType.XML_COMMENT_START) {
       return found.getTreeParent();
     } else {
       return found;
