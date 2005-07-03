@@ -180,7 +180,10 @@ public class EditorModificationUtil {
     if (afterLineEnd > 0) {
       final Project project = editor.getProject();
       StringBuffer buf = new StringBuffer();
-      if (project != null) {
+      final Document doc = editor.getDocument();
+      final int caretOffset = editor.getCaretModel().getOffset();
+      boolean atLineStart = caretOffset >= doc.getTextLength() || doc.getLineStartOffset(doc.getLineNumber(caretOffset)) == caretOffset;
+      if (atLineStart && project != null) {
         String properIndent = CodeStyleManager.getInstance(project).getLineIndent(editor);
         if (properIndent != null) {
           int tabSize = editor.getSettings().getTabSize(project);
