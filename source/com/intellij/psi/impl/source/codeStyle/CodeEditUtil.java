@@ -31,7 +31,10 @@ import com.intellij.util.CharTable;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public class CodeEditUtil {
 
@@ -790,13 +793,13 @@ public class CodeEditUtil {
     ourModifierToOrderMap.put(PsiModifier.PUBLIC, new Integer(1));
     ourModifierToOrderMap.put(PsiModifier.PRIVATE, new Integer(1));
     ourModifierToOrderMap.put(PsiModifier.PROTECTED, new Integer(1));
-    ourModifierToOrderMap.put(PsiModifier.NATIVE, new Integer(2));
-    ourModifierToOrderMap.put(PsiModifier.STATIC, new Integer(3));
-    ourModifierToOrderMap.put(PsiModifier.ABSTRACT, new Integer(3));
-    ourModifierToOrderMap.put(PsiModifier.FINAL, new Integer(4));
-    ourModifierToOrderMap.put(PsiModifier.SYNCHRONIZED, new Integer(5));
-    ourModifierToOrderMap.put(PsiModifier.TRANSIENT, new Integer(5));
-    ourModifierToOrderMap.put(PsiModifier.VOLATILE, new Integer(5));
+    ourModifierToOrderMap.put(PsiModifier.STATIC, new Integer(2));
+    ourModifierToOrderMap.put(PsiModifier.ABSTRACT, new Integer(2));
+    ourModifierToOrderMap.put(PsiModifier.FINAL, new Integer(3));
+    ourModifierToOrderMap.put(PsiModifier.SYNCHRONIZED, new Integer(4));
+    ourModifierToOrderMap.put(PsiModifier.TRANSIENT, new Integer(4));
+    ourModifierToOrderMap.put(PsiModifier.VOLATILE, new Integer(4));
+    ourModifierToOrderMap.put(PsiModifier.NATIVE, new Integer(5));
     ourModifierToOrderMap.put(PsiModifier.STRICTFP, new Integer(6));
   }
 
