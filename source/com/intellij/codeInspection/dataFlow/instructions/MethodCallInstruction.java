@@ -15,6 +15,7 @@ import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,14 +72,18 @@ public class MethodCallInstruction extends Instruction {
       final int revIdx = myArgs.length - i - 1;
       if (myArgs.length <= myParametersNotNull.length && revIdx < myParametersNotNull.length && myParametersNotNull[revIdx] && !memState.applyNotNull(arg)) {
         runner.onPassingNullParameter(myArgs[revIdx]); // Parameters on stack are reverted.
-        return new DfaInstructionState[0];
+        if (arg instanceof DfaVariableValue) {
+          memState.setVarValue((DfaVariableValue)arg, myFactory.getNotNullFactory().create(((DfaVariableValue)arg).getPsiVariable().getType()));
+        }
       }
     }
 
     try {
       if (!memState.applyNotNull(qualifier)) {
         runner.onInstructionProducesNPE(this);
-        return new DfaInstructionState[0];
+        if (qualifier instanceof DfaVariableValue) {
+          memState.setVarValue((DfaVariableValue)qualifier, myFactory.getNotNullFactory().create(((DfaVariableValue)qualifier).getPsiVariable().getType()));
+        }
       }
 
       return new DfaInstructionState[]{new DfaInstructionState(runner.getInstruction(getIndex() + 1), memState)};

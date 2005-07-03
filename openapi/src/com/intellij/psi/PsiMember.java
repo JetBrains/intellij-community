@@ -5,11 +5,9 @@
 package com.intellij.psi;
 
 import com.intellij.navigation.NavigationItem;
-import org.jetbrains.annotations.Nullable;
 
 public interface PsiMember extends PsiModifierListOwner, NavigationItem {
   PsiMember[] EMPTY_ARRAY = new PsiMember[0];
 
-  @Nullable
   PsiClass getContainingClass();
 }

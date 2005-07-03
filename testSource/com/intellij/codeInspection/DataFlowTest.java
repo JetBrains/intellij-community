@@ -175,6 +175,10 @@ public class DataFlowTest extends InspectionTestCase {
     doTest15();
   }
 
+  public void testConditionFalseAndNPE() throws Exception {
+    doTest15();
+  }
+
   public void testIDEADEV1575() throws Exception {
     doTest15();
   }

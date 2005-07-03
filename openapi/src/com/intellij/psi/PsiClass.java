@@ -81,4 +81,7 @@ public interface PsiClass extends PsiElement, PsiNamedElement, PsiModifierListOw
 
   @Nullable
   PomMemberOwner getPom();
+
+  @Nullable
+  PsiClass getContainingClass();
 }
