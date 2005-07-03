@@ -36,12 +36,10 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.ui.OptionsDialog;
-import com.intellij.util.ui.OptionsDialog;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
@@ -61,8 +59,8 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
     }
     else {
       myMainPanel = new JTabbedPane();
-      for (Iterator<Configurable> iterator = confs.keySet().iterator(); iterator.hasNext();) {
-        addComponent(confs.get(iterator.next()), iterator.next(), iterator.next().getDisplayName());
+      for (final Configurable conf : confs.keySet()) {
+        addComponent(confs.get(conf), conf, conf.getDisplayName());
       }
     }
     init();
@@ -77,8 +75,7 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
   }
 
   protected void doOKAction() {
-    for (Iterator<Configurable> iterator = myEnvToConfMap.values().iterator(); iterator.hasNext();) {
-      Configurable configurable = iterator.next();
+    for (Configurable configurable : myEnvToConfMap.values()) {
       try {
         configurable.apply();
       }
