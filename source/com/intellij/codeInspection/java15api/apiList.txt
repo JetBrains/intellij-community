@@ -98,6 +98,9 @@ com.sun.jmx.snmp.SnmpEngineId#createEngineId(java.lang.String;java.lang.String;)
 com.sun.jmx.snmp.SnmpEngineId#createEngineId(int;java.net.InetAddress;)
 com.sun.jmx.snmp.SnmpEngineId#createEngineId(java.net.InetAddress;)
 com.sun.jmx.snmp.SnmpEngineParameters
+com.sun.jmx.snmp.SnmpMessage#getRequestId(byte[];)
+com.sun.jmx.snmp.SnmpMessage#encodeSnmpPdu(com.sun.jmx.snmp.SnmpPdu;int;)
+com.sun.jmx.snmp.SnmpMessage#decodeSnmpPdu()
 com.sun.jmx.snmp.SnmpMsg
 com.sun.jmx.snmp.SnmpParams
 com.sun.jmx.snmp.SnmpPdu
