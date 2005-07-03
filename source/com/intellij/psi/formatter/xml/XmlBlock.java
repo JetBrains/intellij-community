@@ -34,7 +34,7 @@ public class XmlBlock extends AbstractXmlBlock {
 
     final ArrayList<Block> result = new ArrayList<Block>();
 
-    if (myNode.getElementType() == ElementType.XML_ATTRIBUTE_VALUE) {
+    if (myNode.getElementType() == ElementType.XML_ATTRIBUTE_VALUE || myNode.getElementType() == ElementType.XML_COMMENT) {
       return result;
     }
 
@@ -140,9 +140,11 @@ public class XmlBlock extends AbstractXmlBlock {
         || SourceTreeToPsiMap.treeElementToPsi(myNode) instanceof XmlDocument) {
       return getFormatter().getNoneIndent();
     }
+    /*
     else if (myNode.getElementType() == ElementType.XML_COMMENT && myNode.textContains('\n')) {
       return getFormatter().createAbsoluteNoneIndent();
     }
+    */
 
     /*
     if (myNode.getElementType() == ElementType.JSP_SCRIPTLET || myNode.getElementType() == ElementType.JSP_DECLARATION) {

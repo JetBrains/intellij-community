@@ -54,26 +54,19 @@ public class PsiBasedFormattingModel implements FormattingModel {
       if (leafElement != null) {
         LOG.assertTrue(leafElement.getPsi().isValid());
         final int oldElementLength = leafElement.getTextRange().getLength();
-        if (false/*leafElement.getTextRange().getStartOffset() < textRange.getStartOffset()*/) {
-          final int newElementLength = new Helper(StdFileTypes.JAVA, myProject).shiftIndentInside(leafElement, getSpaceCount(whiteSpace))
-            .getTextRange().getLength();
-          blockLength = blockLength - oldElementLength + newElementLength;
-        }
-        else {
-          changeWhiteSpaceBeforeLeaf(whiteSpace, leafElement, textRange);
-          if (leafElement.textContains('\n')
-              && whiteSpace.indexOf('\n') >= 0) {
-            try {
-              Indent lastLineIndent = getLastLineIndent(leafElement.getText());
-              Indent whiteSpaceIndent = createIndentOn(getLastLine(whiteSpace));
-              final int shift = calcShift(lastLineIndent, whiteSpaceIndent);
-              final int newElementLength = new Helper(StdFileTypes.JAVA, myProject).shiftIndentInside(leafElement, shift).getTextRange()
-                .getLength();
-              blockLength = blockLength - oldElementLength + newElementLength;
-            }
-            catch (IOException e) {
-              throw new RuntimeException(e);
-            }
+        changeWhiteSpaceBeforeLeaf(whiteSpace, leafElement, textRange);
+        if (leafElement.textContains('\n')
+            && whiteSpace.indexOf('\n') >= 0) {
+          try {
+            Indent lastLineIndent = getLastLineIndent(leafElement.getText());
+            Indent whiteSpaceIndent = createIndentOn(getLastLine(whiteSpace));
+            final int shift = calcShift(lastLineIndent, whiteSpaceIndent);
+            final int newElementLength = new Helper(StdFileTypes.JAVA, myProject).shiftIndentInside(leafElement, shift).getTextRange()
+              .getLength();
+            blockLength = blockLength - oldElementLength + newElementLength;
+          }
+          catch (IOException e) {
+            throw new RuntimeException(e);
           }
         }
 
@@ -136,11 +129,20 @@ public class PsiBasedFormattingModel implements FormattingModel {
       final ASTNode found = psiRoot.getNode().findLeafElementAt(offset);
       if (found != null) {
         if (!(found.getPsi()instanceof JspText) && found.getTextRange().getStartOffset() == offset) {
-          return found;
+          if (found.getElementType() == ElementType.XML_COMMENT_START) {
+            return found.getTreeParent();
+          } else {
+            return found;
+          }
         }
       }
     }
-    return myASTNode.findLeafElementAt(offset);
+    final ASTNode found = myASTNode.findLeafElementAt(offset);
+    if (found.getElementType() == ElementType.XML_COMMENT_START) {
+      return found.getTreeParent();
+    } else {
+      return found;
+    }
   }
 
   private class Indent {
