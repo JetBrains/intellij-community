@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.ui.TabbedPaneWrapper;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -23,7 +24,8 @@ import java.awt.event.ActionListener;
 public class EditorOptionsPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.EditorOptionsPanel");
 
-  private JTabbedPane myTabbedPane;
+  private JPanel myBehaviourPanel;
+  private JPanel myAppearancePanel;
   private JCheckBox myCbModifiedTabsMarkedWithAsterisk;
   private JCheckBox myCbBlinkCaret;
   private JTextField myBlinkIntervalField;
@@ -94,9 +96,10 @@ public class EditorOptionsPanel {
   private JCheckBox myCbEnableWheelFontChange;
   private JCheckBox myCbHonorCamelHumpsWhenSelectingByClicking;
 
-
-  public JTabbedPane getTabbedPanel() {
-    return myTabbedPane;
+  private TabbedPaneWrapper myTabbedPaneWrapper;
+ 
+  public JComponent getTabbedPanel() {
+    return myTabbedPaneWrapper.getComponent();
   }
 
   public EditorOptionsPanel(){
@@ -145,6 +148,10 @@ public class EditorOptionsPanel {
       new Integer(UISettings.TABS_NONE),
     }));
     myEditorTabPlacement.setRenderer(new MyTabsPlacementComboBoxRenderer());
+    myTabbedPaneWrapper = new TabbedPaneWrapper();
+    myTabbedPaneWrapper.addTab("Behaviour", myBehaviourPanel);
+    myTabbedPaneWrapper.addTab("Appearance", myAppearancePanel);
+    myTabbedPaneWrapper.installKeyboardNavigation();
   }
 
 
