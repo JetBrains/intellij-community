@@ -7,6 +7,7 @@ package com.intellij.openapi.fileTypes;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -31,5 +32,6 @@ public interface FileType {
 
   FileTypeSupportCapabilities getSupportCapabilities();
 
+  @Nullable
   StructureViewBuilder getStructureViewBuilder(VirtualFile file, Project project);
 }

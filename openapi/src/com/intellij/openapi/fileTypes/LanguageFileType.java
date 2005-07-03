@@ -6,13 +6,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 24, 2005
- * Time: 11:34:06 AM
- * To change this template use File | Settings | File Templates.
+ * Kind of file types capable to provide {@link Language}.
  */
 public abstract class LanguageFileType implements FileType{
   private Language myLanguage;
@@ -29,6 +26,7 @@ public abstract class LanguageFileType implements FileType{
     return myLanguage.getSyntaxHighlighter(project);
   }
 
+  @Nullable
   public StructureViewBuilder getStructureViewBuilder(VirtualFile file, Project project) {
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     return psiFile == null ?  null : myLanguage.getStructureViewBuilder(psiFile);
