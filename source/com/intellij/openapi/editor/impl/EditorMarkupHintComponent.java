@@ -36,11 +36,8 @@ import java.util.Hashtable;
  */
 public class EditorMarkupHintComponent extends JPanel {
   private JCheckBox myImportPopupCheckBox = new JCheckBox("Import Popup");
-  private JRadioButton myGoByErrorsRadioButton = new JRadioButton("Go to errors first");
-  private JRadioButton myGoByBothRadioButton = new JRadioButton("Go to next error/warning");
-
   private JComboBox myProfilesCombo = new JComboBox(new DefaultComboBoxModel());
-  private JCheckBox myUsePerFileProfile = new JCheckBox("Use Per File Inspection Profile:");
+  private JCheckBox myUsePerFileProfile = new JCheckBox("Use Custom Profile for This File:");
 
   private static final Icon GC_ICON = IconLoader.getIcon("/actions/gc.png");
   private JButton myClearSettingsButton = new JButton(GC_ICON);
@@ -49,7 +46,6 @@ public class EditorMarkupHintComponent extends JPanel {
   private PsiFile myFile;
 
   private boolean myImportPopupOn;
-  private boolean myGoByErrors;
   private String myProfile;
   private boolean myUseProfile;
 
@@ -93,24 +89,8 @@ public class EditorMarkupHintComponent extends JPanel {
     });
     myImportPopupCheckBox.setSelected(myImportPopupOn);
     myImportPopupCheckBox.setEnabled(analyzer.isAutohintsAvailable(myFile));
-    myImportPopupCheckBox.setMnemonic('I');
+    myImportPopupCheckBox.setMnemonic('P');
 
-    ButtonGroup group = new ButtonGroup();
-    group.add(myGoByErrorsRadioButton);
-    group.add(myGoByBothRadioButton);
-
-    myGoByErrors = DaemonCodeAnalyzerSettings.getInstance().NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST;
-    final ChangeListener changeListener = new ChangeListener() {
-      public void stateChanged(ChangeEvent e) {
-        myGoByErrors = myGoByErrorsRadioButton.isSelected();
-      }
-    };
-    myGoByErrorsRadioButton.addChangeListener(changeListener);
-    myGoByErrorsRadioButton.setMnemonic('F');
-    myGoByBothRadioButton.addChangeListener(changeListener);
-    myGoByErrorsRadioButton.setSelected(myGoByErrors);
-    myGoByBothRadioButton.setSelected(!myGoByErrors);
-    myGoByBothRadioButton.setMnemonic('N');
 
     GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
                                                    GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
@@ -118,8 +98,10 @@ public class EditorMarkupHintComponent extends JPanel {
     myClearSettingsButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final Project project = myFile.getProject();
-        HighlightingSettingsPerFile.getInstance(project).resetAllFilesToUseGlobalProfile();
-        DaemonCodeAnalyzer.getInstance(project).restart();
+        HighlightingSettingsPerFile.getInstance(project).resetAllFilesToUseGlobalSettings();
+        final DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(project);
+        analyzer.resetImportHintsEnabledForProject();
+        analyzer.restart();
         myProfilesCombo.setSelectedItem(DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().getName());
         myProfilesCombo.setEnabled(false);
         myUsePerFileProfile.setSelected(false);
@@ -129,22 +111,20 @@ public class EditorMarkupHintComponent extends JPanel {
         }
       }
     });
-    myClearSettingsButton.setToolTipText("Make all project files to use global highlighting settings");
+    myClearSettingsButton.setToolTipText("Reset all per file customizations");
     myClearSettingsButton.setPreferredSize(new Dimension(GC_ICON.getIconWidth() + 4, GC_ICON.getIconHeight() + 4));
     add(myClearSettingsButton, new GridBagConstraints(1,0,1,1,0,0,GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(2,2,0,2),0,0));
 
-    JPanel navPanel = new JPanel(new BorderLayout());
-    navPanel.add(myGoByErrorsRadioButton, BorderLayout.WEST);
-    navPanel.add(myGoByBothRadioButton, BorderLayout.EAST);
-    navPanel.setBorder(IdeBorderFactory.createTitledBorder("Errors Navigation"));
     gc.gridwidth = 2;
-    add(navPanel, gc);
+    gc.weightx = 1.0;
+    gc.gridx = 0;
+    gc.gridy = 1;
+    gc.fill = GridBagConstraints.HORIZONTAL;
+    gc.anchor = GridBagConstraints.WEST;
+    add(createInspectionProfilePanel(), gc);
 
     JPanel panel = new JPanel(new GridBagLayout());
     panel.setBorder(IdeBorderFactory.createTitledBorder("Highlighting Level"));
-
-    panel.add(createInspectionProfilePanel(), new GridBagConstraints(0,0,mySliders.length,1,1,0,GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0,0));
-
     final boolean addLabel = mySliders.length > 1;
     if (addLabel) {
       layoutVertical(panel);
@@ -154,8 +134,6 @@ public class EditorMarkupHintComponent extends JPanel {
     }
     gc.gridx = 0;
     gc.gridy = 2;
-    gc.gridwidth = 2;
-    gc.weightx = 1.0;
     gc.weighty = 1.0;
     gc.fill = GridBagConstraints.BOTH;
     add(panel, gc);
@@ -170,7 +148,7 @@ public class EditorMarkupHintComponent extends JPanel {
         myUseProfile = selected;
       }
     });
-    myUsePerFileProfile.setMnemonic('U');
+    myUsePerFileProfile.setMnemonic('C');
     final boolean usePerFileProfile = HighlightingSettingsPerFile.getInstance(myFile.getProject()).getInspectionProfile(myFile) != null;
     myUsePerFileProfile.setSelected(usePerFileProfile);
     profilePanel.add(myUsePerFileProfile, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
@@ -186,7 +164,7 @@ public class EditorMarkupHintComponent extends JPanel {
       }
     });
     myProfilesCombo.setEnabled(usePerFileProfile);
-    profilePanel.add(myProfilesCombo, new GridBagConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 20, 0, 0), 0, 0));
+    profilePanel.add(myProfilesCombo, new GridBagConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 20, 0, 2), 0, 0));
     return profilePanel;
   }
 
@@ -250,16 +228,11 @@ public class EditorMarkupHintComponent extends JPanel {
     }
     final DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(myFile.getProject());
     analyzer.setImportHintsEnabled(myFile, myImportPopupOn);
-    DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
-    settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = myGoByErrors;
     analyzer.restart();
   }
 
   private boolean isModified(){
     if (myImportPopupOn != DaemonCodeAnalyzer.getInstance(myFile.getProject()).isImportHintsEnabled(myFile)){
-      return true;
-    }
-    if (myGoByErrors != DaemonCodeAnalyzerSettings.getInstance().NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST){
       return true;
     }
     for (int i = 0; i < mySliders.length; i++) {

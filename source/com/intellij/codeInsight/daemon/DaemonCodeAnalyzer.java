@@ -21,6 +21,7 @@ public abstract class DaemonCodeAnalyzer {
   public abstract boolean isHighlightingAvailable(PsiFile file);
 
   public abstract void setImportHintsEnabled(PsiFile file, boolean value);
+  public abstract void resetImportHintsEnabledForProject(); 
   public abstract void setHighlightingEnabled(PsiFile file, boolean value);
   public abstract boolean isImportHintsEnabled(PsiFile file);
   public abstract boolean isAutohintsAvailable(PsiFile file);

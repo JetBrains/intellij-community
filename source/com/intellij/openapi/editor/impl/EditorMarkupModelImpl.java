@@ -30,14 +30,13 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.PopupHandler;
 import com.intellij.util.SmartList;
 import gnu.trove.THashSet;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
@@ -64,6 +63,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     final int lineNumber = document.getLineNumber(offset);
     return myEditor.logicalToVisualPosition(new LogicalPosition(lineNumber, 0)).line;
   }
+
   private static class MarkSpot {
     private final int yStart;
     private int yEnd;
@@ -166,9 +166,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       }
 
       public String toString() {
-        return "PR["+yStart+"-"+yEnd+")";
+        return "PR[" + yStart + "-" + yEnd + ")";
       }
     }
+
     private PositionedRangeHighlighter getPositionedRangeHighlighter(RangeHighlighter mark) {
       int visStartLine = offsetToLine(mark.getStartOffset());
       int visEndLine = offsetToLine(mark.getEndOffset());
@@ -198,16 +199,20 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       final List<RangeHighlighter> sortedHighlighters = getSortedHighlighters();
       mySpots = new ArrayList<MarkSpot>();
       if (sortedHighlighters.size() == 0) return;
-      Queue<PositionedRangeHighlighter> startQueue = new PriorityQueue<PositionedRangeHighlighter>(5, new Comparator<PositionedRangeHighlighter>() {
-        public int compare(final PositionedRangeHighlighter o1, final PositionedRangeHighlighter o2) {
-          return o1.yStart - o2.yStart;
-        }
-      });
-      Queue<PositionedRangeHighlighter> endQueue = new PriorityQueue<PositionedRangeHighlighter>(5, new Comparator<PositionedRangeHighlighter>() {
-        public int compare(final PositionedRangeHighlighter o1, final PositionedRangeHighlighter o2) {
-          return o1.yEnd - o2.yEnd;
-        }
-      });
+      Queue<PositionedRangeHighlighter> startQueue = new PriorityQueue<PositionedRangeHighlighter>(5,
+                                                                                                   new Comparator<PositionedRangeHighlighter>() {
+                                                                                                     public int compare(final PositionedRangeHighlighter o1,
+                                                                                                                        final PositionedRangeHighlighter o2) {
+                                                                                                       return o1.yStart - o2.yStart;
+                                                                                                     }
+                                                                                                   });
+      Queue<PositionedRangeHighlighter> endQueue = new PriorityQueue<PositionedRangeHighlighter>(5,
+                                                                                                 new Comparator<PositionedRangeHighlighter>() {
+                                                                                                   public int compare(final PositionedRangeHighlighter o1,
+                                                                                                                      final PositionedRangeHighlighter o2) {
+                                                                                                     return o1.yEnd - o2.yEnd;
+                                                                                                   }
+                                                                                                 });
       int index = 0;
       MarkSpot currentSpot = null;
       while (!startQueue.isEmpty() || !endQueue.isEmpty() || index != sortedHighlighters.size()) {
@@ -254,7 +259,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
             currentSpot = new MarkSpot(positionedMark.yStart, -1);
           }
           while (index != sortedHighlighters.size()) {
-             //&& sortedHighlighters.get(index).getStartOffset() == mark.getStartOffset()) {
+            //&& sortedHighlighters.get(index).getStartOffset() == mark.getStartOffset()) {
             PositionedRangeHighlighter positioned = getPositionedRangeHighlighter(sortedHighlighters.get(index));
             if (positioned.yStart != positionedMark.yStart) break;
             startQueue.add(positioned);
@@ -277,7 +282,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
             }
             //startQueue.remove(highlighter);
           }
-          if (startQueue.size() == 0)  {
+          if (startQueue.size() == 0) {
             currentSpot = null;
           }
         }
@@ -303,7 +308,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         MarkSpot markSpot = mySpots.get(i);
 
         int yStart = markSpot.yStart;
-        RangeHighlighter mark = markSpot.highlighters.get(markSpot.highlighters.size()-1);
+        RangeHighlighter mark = markSpot.highlighters.get(markSpot.highlighters.size() - 1);
 
         int yEnd = markSpot.yEnd;
 
@@ -317,22 +322,22 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         }
 
         g.setColor(color);
-        g.fillRect(x+1, yStart, paintWidth - 2, yEnd-yStart);
+        g.fillRect(x + 1, yStart, paintWidth - 2, yEnd - yStart);
 
         Color brighter = color.brighter();
         Color darker = color.darker();
 
         g.setColor(brighter);
         //left
-        g.drawLine(x, yStart, x, yEnd-1);
+        g.drawLine(x, yStart, x, yEnd - 1);
         if (i == 0 || !isAdjacent(mySpots.get(i - 1), markSpot) || wider(markSpot, mySpots.get(i - 1))) {
           //top decoration
           g.drawLine(x + 1, yStart, x + paintWidth - 2, yStart);
         }
         g.setColor(darker);
-        if (i == mySpots.size()-1 || !isAdjacent(markSpot, mySpots.get(i + 1)) || wider(markSpot, mySpots.get(i + 1))) {
+        if (i == mySpots.size() - 1 || !isAdjacent(markSpot, mySpots.get(i + 1)) || wider(markSpot, mySpots.get(i + 1))) {
           // bottom decoration
-          g.drawLine(x + 1, yEnd-1, x + paintWidth-2, yEnd-1);
+          g.drawLine(x + 1, yEnd - 1, x + paintWidth - 2, yEnd - 1);
         }
         //right
         g.drawLine(x + paintWidth - 2, yStart, x + paintWidth - 2, yEnd - 1);
@@ -343,6 +348,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     private boolean isAdjacent(MarkSpot markTop, MarkSpot markBottom) {
       return markTop.yEnd >= markBottom.yStart;
     }
+
     private boolean wider(MarkSpot markTop, MarkSpot markBottom) {
       final RangeHighlighter highlighterTop = markTop.highlighters.get(markTop.highlighters.size() - 1);
       final RangeHighlighter highlighterBottom = markBottom.highlighters.get(markBottom.highlighters.size() - 1);
@@ -483,6 +489,52 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     private MyErrorPanel() {
       addMouseListener(this);
       addMouseMotionListener(this);
+
+      PopupHandler popupHandler = new PopupHandler() {
+        public void invokePopup(final Component comp, final int x, final int y) {
+          if (ApplicationManager.getApplication() == null) return;
+          final JPopupMenu popupMenu = new JPopupMenu();
+          final JRadioButtonMenuItem errorsFirst = new JRadioButtonMenuItem("Go to errors first");
+          errorsFirst.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+              DaemonCodeAnalyzerSettings.getInstance().NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = errorsFirst.isSelected();
+            }
+          });
+          popupMenu.add(errorsFirst);
+
+          final JRadioButtonMenuItem next = new JRadioButtonMenuItem("Go to next error/warning");
+          next.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+              DaemonCodeAnalyzerSettings.getInstance().NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = !next.isSelected();
+            }
+          });
+          popupMenu.add(next);
+
+          ButtonGroup group = new ButtonGroup();
+          group.add(errorsFirst);
+          group.add(next);
+
+          popupMenu.addSeparator();
+          final JMenuItem hLevel = new JMenuItem("Customize Highlighting Level");
+          popupMenu.add(hLevel);
+
+          final boolean isErrorsFirst = DaemonCodeAnalyzerSettings.getInstance().NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST;
+          errorsFirst.setSelected(isErrorsFirst);
+          next.setSelected(!isErrorsFirst);
+          hLevel.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+              final EditorMarkupHintComponent component = new EditorMarkupHintComponent(
+                (PsiFile)myEditor.getDataContext().getData(DataConstants.PSI_FILE));
+              final Dimension dimension = component.getPreferredSize();
+              Point point = new Point(x, y);
+              point = SwingUtilities.convertPoint(comp, point, myEditor.getComponent().getRootPane().getLayeredPane());
+              component.showComponent(myEditor, new Point(point.x - dimension.width, point.y));
+            }
+          });
+          popupMenu.show(comp, x, y);
+        }
+      };
+      addMouseListener(popupHandler);
     }
 
     public Dimension getPreferredSize() {
@@ -527,6 +579,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       );
     }
 
+    public void mousePressed(MouseEvent e) {
+    }
+
+    public void mouseReleased(MouseEvent e) {
+    }
 
     private void doMouseClicked(MouseEvent e) {
       myEditor.getContentComponent().requestFocus();
@@ -578,26 +635,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       cancelMyToolTips();
     }
 
-    public void mousePressed(MouseEvent e) {
-      showEditorMurkupHint(e);
-    }
-
-    public void mouseReleased(MouseEvent e) {
-      showEditorMurkupHint(e);
-    }
-
-    private void showEditorMurkupHint(final MouseEvent e) {
-      if (e.isPopupTrigger()) {
-        Point point = new Point(e.getX(), e.getY());
-        point = SwingUtilities.convertPoint(this, point, myEditor.getComponent().getRootPane().getLayeredPane());
-
-        final EditorMarkupHintComponent component = new EditorMarkupHintComponent(
-          (PsiFile)myEditor.getDataContext().getData(DataConstants.PSI_FILE));
-        final Dimension dimension = component.getPreferredSize();
-        point = new Point(point.x - dimension.width, point.y);
-        component.showComponent(myEditor, point);
-      }
-    }
   }
 
   private void showTooltip(MouseEvent e, final TooltipRenderer tooltipObject) {

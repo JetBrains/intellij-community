@@ -127,7 +127,7 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
      }
   }
 
-  public void resetAllFilesToUseGlobalProfile(){
+  public void resetAllFilesToUseGlobalSettings(){
     myProfileSettings.clear();
     myHighlightSettings.clear();
   }

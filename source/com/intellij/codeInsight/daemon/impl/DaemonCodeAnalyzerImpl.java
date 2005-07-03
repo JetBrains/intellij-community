@@ -310,6 +310,10 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     }
   }
 
+  public void resetImportHintsEnabledForProject() {
+    myDisabledHintsFiles.clear();
+  }
+
   public void setHighlightingEnabled(PsiFile file, boolean value) {
     if (value) {
       myDisabledHighlightingFiles.remove(file);
