@@ -1098,6 +1098,13 @@
     <action id="CallHierarchy">
       <keyboard-shortcut first-keystroke="control alt H"/>
     </action>
+
+    <action id="ReplaceInPath">
+      <keyboard-shortcut first-keystroke="control shift R"/>
+    </action>
+    <action id="FindInPath">
+      <keyboard-shortcut first-keystroke="control shift F"/>
+    </action>
   </keymap>
 
   <!-- ############################################################################## -->
