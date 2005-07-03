@@ -250,6 +250,7 @@ public class Java15APIUsageInspection extends LocalInspectionTool {
   }
 
   private static boolean isMarked(PsiDocCommentOwner member) {
+    member = (PsiDocCommentOwner)member.getNavigationElement();
     final PsiDocComment comm = member.getDocComment();
     if (comm != null) {
       final PsiDocTag tag = comm.findTagByName("since");
