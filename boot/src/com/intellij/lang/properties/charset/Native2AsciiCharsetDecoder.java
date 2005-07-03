@@ -4,10 +4,12 @@ package com.intellij.lang.properties.charset;
  * @author Alexey
  */
 
-import java.nio.*;
+import java.nio.BufferUnderflowException;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
-import java.nio.charset.Charset;
 
 class Native2AsciiCharsetDecoder extends CharsetDecoder {
   private static final char INVALID_CHAR = (char)-1;
@@ -105,7 +107,7 @@ class Native2AsciiCharsetDecoder extends CharsetDecoder {
     int b3 = (d3 << 4) & 0x00F0;
     int b4 = (d4 << 0) & 0x000F;
     int code = b1 | b2 | b3 | b4;
-    if (Character.isWhitespace(code)) return INVALID_CHAR;
+    if (Character.isWhitespace((char)code)) return INVALID_CHAR;
     return (char)code;
   }
 }
