@@ -136,7 +136,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   @NotNull
   public Map<String, String> getNamesMap() {
     THashMap<String, String> result = new THashMap<String, String>();
-    for (Property property : myProperties) {
+    for (Property property : getProperties()) {
       result.put(property.getName(), property.getValue());
     }
     return result;
