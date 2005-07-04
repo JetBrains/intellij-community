@@ -30,8 +30,8 @@ import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  * Created by IntelliJ IDEA.
@@ -45,8 +45,8 @@ public class WelcomeScreen {
   private JPanel myMainPanel;
   private JPanel myPluginsPanel;
 
-  private static final Insets ICON_INSETS = new Insets(15, 0, 15, 0);
-  private static final Insets ACTION_GROUP_CAPTION_INSETS = new Insets(20, 0, 5, 0);
+  private static final Insets ICON_INSETS = new Insets(15, 30, 15, 0);
+  private static final Insets ACTION_GROUP_CAPTION_INSETS = new Insets(20, 30, 5, 0);
 
   // The below 3 array lists are reserved for future use
   private static ArrayList<MyActionButton> ourMainButtons = new ArrayList<MyActionButton>(5);
@@ -114,7 +114,11 @@ public class WelcomeScreen {
     private final int myColumnIdx;
 
     public ActionGroupDescriptor(final String caption, final int columnIndex) {
-      JPanel panel = new JPanel(new GridBagLayout());
+      JPanel panel = new JPanel(new GridBagLayout()) {
+        public Dimension getPreferredSize() {
+          return getMinimumSize();
+        }
+      };
       panel.setBackground(MAIN_PANEL_COLOR);
 
       JLabel actionGroupCaption = new JLabel(caption);
@@ -142,8 +146,8 @@ public class WelcomeScreen {
         public void mouseClicked(MouseEvent e) {
           button.onPress(e);
         }
-
       });
+      
       name.setForeground(CAPTION_COLOR);
       name.setFont(LINK_FONT);
       name.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -205,7 +209,7 @@ public class WelcomeScreen {
     JPanel topPanel = createCaptionPane();
 
     // Create Main Panel for Quick Start and Documentation
-    myMainPanel = new WelcomeScrollablePanel(new GridBagLayout());
+    myMainPanel = new WelcomeScrollablePanel(new GridLayout(1, 2));
     myMainPanel.setBackground(MAIN_PANEL_COLOR);
     // Create QuickStarts group of actions
     ActionGroupDescriptor quickStarts = new ActionGroupDescriptor("Quick Start", 0);
@@ -229,25 +233,11 @@ public class WelcomeScreen {
     emptyPanel_3.setBackground(MAIN_PANEL_COLOR);
     docsPanel.add(emptyPanel_3, new GridBagConstraints(0, docsGroup.getIdx() + 2, 2, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 
-    // Set preferred size for Main panel
-    final int width = (int)(Toolkit.getDefaultToolkit().getScreenSize().getWidth() * 0.63);
-    final int captionHeight = GROUP_CAPTION_FONT.getSize() * 2 + ACTION_GROUP_CAPTION_INSETS.top + ACTION_GROUP_CAPTION_INSETS.bottom;
-    final int buttonHeight = (int)(ACTION_BUTTON_SIZE.getHeight() + ACTION_BUTTON_PADDING + ICON_INSETS.top + ICON_INSETS.bottom);
-    final int height;
-    if (quickStarts.getIdx() > docsGroup.getIdx()) {
-      height = (quickStarts.getIdx() + 1)/2 * buttonHeight + captionHeight;
-    }
-    else {
-      height = (docsGroup.getIdx() + 1)/2 * buttonHeight + captionHeight;
-    }
-    myMainPanel.setPreferredSize(new Dimension(width, height));
-
     // Add QuickStarts and Docs to main panel
-    gBC = new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 30, 0, 0), 0, 0);
-    myMainPanel.add(quickStartPanel, gBC);
-    gBC = new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.NORTHEAST, GridBagConstraints.BOTH, new Insets(0, 30, 0, 0), 0, 0);
-    myMainPanel.add(docsPanel, gBC);
-    JScrollPane myMainScrollPane = ScrollPaneFactory.createScrollPane(myMainPanel);
+    myMainPanel.add(quickStartPanel);
+    myMainPanel.add(docsPanel);
+
+    JScrollPane myMainScrollPane = new JScrollPane(myMainPanel);
     myMainScrollPane.setBorder(null);
     myMainScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     myMainScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
@@ -256,11 +246,11 @@ public class WelcomeScreen {
     JScrollPane myPluginsScrollPane = createPluginsPanel();
 
     // Create Welcome panel
-    gBC = new GridBagConstraints(0, 0, 3, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(10, 5, 0, 5), 0, 0);
+    gBC = new GridBagConstraints(0, 0, 2, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(10, 5, 0, 5), 0, 0);
     myWelcomePanel.add(topPanel, gBC);
-    gBC = new GridBagConstraints(0, 1, 2, 1, 1.4, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(15, 15, 15, 0), 0, 0);
+    gBC = new GridBagConstraints(0, 1, 1, 1, 1.4, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(15, 15, 15, 0), 0, 0);
     myWelcomePanel.add(myMainScrollPane, gBC);
-    gBC = new GridBagConstraints(2, 1, 1, 1, 0.6, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(15, 15, 15, 15), 0, 0);
+    gBC = new GridBagConstraints(1, 1, 1, 1, 0.6, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(15, 15, 15, 15), 0, 0);
     myWelcomePanel.add(myPluginsScrollPane, gBC);
   }
 

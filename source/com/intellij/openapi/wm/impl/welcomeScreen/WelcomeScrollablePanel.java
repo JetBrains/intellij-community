@@ -20,10 +20,16 @@ public class WelcomeScrollablePanel extends JPanel implements Scrollable{
   }
 
   public boolean getScrollableTracksViewportHeight() {
+    if (getParent() instanceof JViewport) {
+      return getParent().getHeight() > getPreferredSize().height;
+    }
     return false;
   }
 
   public boolean getScrollableTracksViewportWidth() {
+    if (getParent() instanceof JViewport) {
+      return getParent().getWidth() > getPreferredSize().width;
+    }
     return false;
   }
 
