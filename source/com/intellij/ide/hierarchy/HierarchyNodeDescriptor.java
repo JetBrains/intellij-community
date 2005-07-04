@@ -75,4 +75,8 @@ public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
   protected static TextAttributes getPackageNameAttributes() {
     return getUsageCountPrefixAttributes();
   }
+
+  public boolean expandOnDoubleClick() {
+    return false;
+  }
 }
