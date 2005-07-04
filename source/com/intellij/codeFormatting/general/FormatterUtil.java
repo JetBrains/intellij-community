@@ -41,9 +41,11 @@ import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 
@@ -173,7 +175,7 @@ public class FormatterUtil {
   private static void addWhiteSpace(final ASTNode treePrev, final LeafElement whiteSpaceElement,
                                     ASTNode leafAfter, final CharTable charTable) {
     final ASTNode treeParent = treePrev.getTreeParent();
-    if(isTag(treeParent)){
+    if(isInsideTagBody(treePrev)){
       final String text;
       final XmlText xmlText;
       if(treePrev.getElementType() == XmlElementType.XML_TEXT) {
@@ -197,9 +199,15 @@ public class FormatterUtil {
     else treeParent.addChild(whiteSpaceElement, treePrev);
   }
 
-  private static boolean isTag(final ASTNode treeParent) {
-    return treeParent.getElementType() == ElementType.XML_TAG
-           || treeParent.getElementType() == ElementType.HTML_TAG;
+  private static boolean isInsideTagBody(ASTNode place) {
+    final ASTNode treeParent = place.getTreeParent();
+    if(treeParent.getElementType() != ElementType.XML_TAG
+       && treeParent.getElementType() != ElementType.HTML_TAG) return false;
+    while(place != null){
+      if(place.getElementType() == XmlTokenType.XML_TAG_END) return true;
+      place = place.getTreePrev();
+    }
+    return false;
   }
 
   private static ASTNode findPreviousWhiteSpace(final ASTNode leafElement) {
