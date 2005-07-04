@@ -104,6 +104,9 @@ public class UsageTypeGroupingRule implements UsageGroupingRule {
   private class UsageTypeGroup implements UsageGroup {
     private UsageType myUsageType;
 
+    public void update() {
+    }
+
     public UsageTypeGroup(UsageType usageType) {
       myUsageType = usageType;
     }

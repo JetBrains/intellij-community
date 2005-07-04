@@ -17,4 +17,5 @@ public interface UsageGroup extends Comparable<UsageGroup>, Navigatable {
   String getText(UsageView view);
   FileStatus getFileStatus();
   boolean isValid();
+  void update();
 }

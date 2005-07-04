@@ -44,11 +44,23 @@ public class FileGroupingRule implements UsageGroupingRule {
     private final Project myProject;
     private final VirtualFile myFile;
     private String myPresentableName;
+    private Icon myIcon;
 
     public FileUsageGroup(Project project, VirtualFile file) {
       myProject = project;
       myFile = file;
       myPresentableName = myFile.getPresentableName();
+      update();
+    }
+
+    private Icon getIconImpl() {
+      return IconUtil.getIcon(myFile, Iconable.ICON_FLAG_READ_STATUS, myProject);
+    }
+
+    public void update() {
+      if (isValid()) {
+        myIcon = getIconImpl();
+      }
     }
 
     public boolean equals(Object o) {
@@ -67,7 +79,7 @@ public class FileGroupingRule implements UsageGroupingRule {
     }
 
     public Icon getIcon(boolean isOpen) {
-      return IconUtil.getIcon(myFile, Iconable.ICON_FLAG_READ_STATUS, myProject);
+      return myIcon;
     }
 
     public String getText(UsageView view) {

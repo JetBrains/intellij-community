@@ -41,8 +41,7 @@ public class ClassGroupingRule implements UsageGroupingRule {
           if (importList != null) {
             final String fileName = getFileNameWithoutExtension(containingFile);
             final PsiClass[] classes = ((PsiJavaFile)containingFile).getClasses();
-            for (int idx = 0; idx < classes.length; idx++) {
-              final PsiClass aClass = classes[idx];
+            for (final PsiClass aClass : classes) {
               if (fileName.equals(aClass.getName())) {
                 containingClass = aClass;
                 break;
@@ -79,12 +78,14 @@ public class ClassGroupingRule implements UsageGroupingRule {
     public ClassUsageGroup(PsiClass aClass) {
       myQName = aClass.getQualifiedName();
       myText = createText(aClass);
-      myIcon = getIconImpl(aClass);
       myClassPointer = SmartPointerManager.getInstance(aClass.getProject()).createLazyPointer(aClass);
+      update();
     }
 
-    private Icon getIconImpl(PsiClass aClass) {
-      return aClass.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
+    public void update() {
+      if (isValid()) {
+        myIcon = getPsiClass().getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
+      }
     }
 
     private String createText(PsiClass aClass) {
@@ -98,7 +99,7 @@ public class ClassGroupingRule implements UsageGroupingRule {
     }
 
     public Icon getIcon(boolean isOpen) {
-      return isValid() ? getIconImpl(getPsiClass()) : myIcon;
+      return myIcon;
     }
 
     public String getText(UsageView view) {

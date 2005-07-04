@@ -56,7 +56,14 @@ abstract class Node extends DefaultMutableTreeNode {
       myIsValid = isDataValid;
       myExcluded = isExcluded;
       myIsReadOnly = Boolean.valueOf(isReadOnly);
+      updateNotify();
       myTreeModel.nodeChanged(this);
     }
+  }
+
+  /**
+   * Override to perform node-specific updates 
+   */
+  protected void updateNotify() {
   }
 }

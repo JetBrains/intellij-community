@@ -87,8 +87,8 @@ public class UsageModelTracker {
 
   private void fireModelChanged(final boolean isPropertyChange) {
     final UsageModelTrackerListener[] listeners = myListeners.toArray(new UsageModelTrackerListener[myListeners.size()]);
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].modelChanged(isPropertyChange);
+    for (UsageModelTrackerListener listener : listeners) {
+      listener.modelChanged(isPropertyChange);
     }
   }
 }

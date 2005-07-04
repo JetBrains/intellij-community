@@ -9,6 +9,8 @@ import com.intellij.usages.rules.MergeableUsage;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
+import javax.swing.event.TreeModelListener;
+import javax.swing.event.TreeModelEvent;
 import java.util.*;
 
 /**
@@ -31,6 +33,10 @@ class GroupNode extends Node implements Navigatable {
     setUserObject(group);
     myGroup = group;
     myRuleIndex = ruleIndex;
+  }
+
+  protected void updateNotify() {
+    myGroup.update();
   }
 
   public String toString() {
@@ -234,4 +240,5 @@ class GroupNode extends Node implements Navigatable {
     }
     return true;
   }
+
 }

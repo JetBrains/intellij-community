@@ -44,6 +44,9 @@ public class ModuleGroupingRule implements UsageGroupingRule {
 
     OrderEntry myEntry;
 
+    public void update() {
+    }
+
     public LibraryUsageGroup(OrderEntry entry) {
       myEntry = entry;
     }
@@ -101,6 +104,9 @@ public class ModuleGroupingRule implements UsageGroupingRule {
 
     public ModuleUsageGroup(Module module) {
       myModule = module;
+    }
+
+    public void update() {
     }
 
     public boolean equals(Object o) {

@@ -25,6 +25,9 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
       return view == null ? "Code usages" : view.getPresentation().getCodeUsagesString();
     }
 
+    public void update() {
+    }
+
     public String toString() { return "CodeUsages"; }
     public Icon getIcon(boolean isOpen) { return null; }
     public FileStatus getFileStatus() { return null; }
@@ -44,6 +47,9 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
 
     public String getText(UsageView view) {
       return view == null ? "Code usages" : view.getPresentation().getNonCodeUsagesString();
+    }
+
+    public void update() {
     }
 
     public String toString() { return "NonCodeUsages"; }

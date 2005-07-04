@@ -50,13 +50,23 @@ public class PackageGroupingRule implements UsageGroupingRule {
 
   private class PackageGroup implements UsageGroup, DataProvider {
     private PsiPackage myPackage;
+    private Icon myOpenIcon;
+    private Icon myClosedIcon;
 
     public PackageGroup(PsiPackage aPackage) {
       myPackage = aPackage;
+      update();
+    }
+
+    public void update() {
+      if (isValid()) {
+        myOpenIcon = myPackage.getIcon(Iconable.ICON_FLAG_OPEN);
+        myClosedIcon = myPackage.getIcon(Iconable.ICON_FLAG_CLOSED);
+      }
     }
 
     public Icon getIcon(boolean isOpen) {
-      return myPackage.getIcon(isOpen ? Iconable.ICON_FLAG_OPEN : Iconable.ICON_FLAG_CLOSED);
+      return isOpen? myOpenIcon: myClosedIcon;
     }
 
     public String getText(UsageView view) {
@@ -110,6 +120,9 @@ public class PackageGroupingRule implements UsageGroupingRule {
 
   private class DirectoryGroup implements UsageGroup, DataProvider {
     private VirtualFile myDir;
+
+    public void update() {
+    }
 
     public DirectoryGroup(VirtualFile dir) {
       myDir = dir;

@@ -57,9 +57,14 @@ public class MethodGroupingRule implements UsageGroupingRule {
           PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
           PsiFormatUtil.SHOW_TYPE
         );
-
-      myIcon = getIconImpl(psiMethod);
       myMethodPointer = SmartPointerManager.getInstance(psiMethod.getProject()).createLazyPointer(psiMethod);
+      update();
+    }
+
+    public void update() {
+      if (isValid()) {
+        myIcon = getIconImpl(getMethod());
+      }
     }
 
     private Icon getIconImpl(PsiMethod psiMethod) {
@@ -75,7 +80,7 @@ public class MethodGroupingRule implements UsageGroupingRule {
     }
 
     public Icon getIcon(boolean isOpen) {
-      return isValid() ? getIconImpl(getMethod()) : myIcon;
+      return myIcon;
     }
 
     private PsiMethod getMethod() {
