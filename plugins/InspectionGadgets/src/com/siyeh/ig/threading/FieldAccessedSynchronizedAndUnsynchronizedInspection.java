@@ -11,35 +11,35 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public class FieldAccessedSynchronizedAndUnsynchronizedInspection extends ClassInspection {
-    public String getDisplayName() {
+public class FieldAccessedSynchronizedAndUnsynchronizedInspection
+        extends ClassInspection{
+    public String getDisplayName(){
         return "Field accessed in both synchronized and unsynchronized contexts";
     }
 
-    public String getGroupDisplayName() {
+    public String getGroupDisplayName(){
         return GroupNames.THREADING_GROUP_NAME;
     }
 
-    public boolean isEnabledByDefault(){
-        return true;
-    }
-
-    protected String buildErrorString(PsiElement location) {
+    protected String buildErrorString(PsiElement location){
         return "Field #ref is accessed in both synchronized and unsynchronized contexts #loc";
     }
 
-    public BaseInspectionVisitor buildVisitor() {
+    public BaseInspectionVisitor buildVisitor(){
         return new FieldAccessedSynchronizedAndUnsynchronizedVisitor();
     }
 
-    private static class FieldAccessedSynchronizedAndUnsynchronizedVisitor extends BaseInspectionVisitor {
-
-        public void visitClass(@NotNull PsiClass aClass) {
-            final VariableAccessVisitor visitor = new VariableAccessVisitor();
+    private static class FieldAccessedSynchronizedAndUnsynchronizedVisitor
+            extends BaseInspectionVisitor{
+        public void visitClass(@NotNull PsiClass aClass){
+            if(!containsSynchronization(aClass)){
+                return;
+            }
+            final VariableAccessVisitor visitor = new VariableAccessVisitor(aClass);
             aClass.accept(visitor);
-            final Set<PsiElement> fields = visitor.getInappropriatelyAccessedFields();
-            for(Object field1 : fields){
-                final PsiField field = (PsiField) field1;
+            final Set<PsiField> fields =
+                    visitor.getInappropriatelyAccessedFields();
+            for(final PsiField field  : fields){
                 if(!field.hasModifierProperty(PsiModifier.FINAL)){
                     final PsiClass containingClass = field.getContainingClass();
                     if(aClass.equals(containingClass)){
@@ -48,7 +48,11 @@ public class FieldAccessedSynchronizedAndUnsynchronizedInspection extends ClassI
                 }
             }
         }
-
     }
 
+    private static boolean containsSynchronization(PsiClass aClass){
+        final ContainsSynchronizationVisitor visitor = new ContainsSynchronizationVisitor();
+        aClass.accept(visitor);
+        return visitor.containsSynchronization();
+    }
 }
