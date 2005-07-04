@@ -4,7 +4,9 @@ import com.intellij.codeFormatting.general.FormatterUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.*;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -14,19 +16,32 @@ public abstract class AbstractBlock implements Block {
   protected Wrap myWrap;
   protected Alignment myAlignment;
 
+  private boolean myIsInsideBuilding = false;
+
   protected AbstractBlock(final ASTNode node, final Wrap wrap, final Alignment alignment) {
     myNode = node;
     myWrap = wrap;
     myAlignment = alignment;
   }
 
+  @NotNull
   public TextRange getTextRange() {
     return myNode.getTextRange();
   }
 
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.common.AbstractBlock");
+
+  @NotNull
   public List<Block> getSubBlocks() {
     if (mySubBlocks == null) {
-      mySubBlocks = buildChildren();
+      LOG.assertTrue(!myIsInsideBuilding);
+      myIsInsideBuilding = true;
+      try {
+        mySubBlocks = buildChildren();
+      }
+      finally {
+        myIsInsideBuilding = false;
+      }
     }
     return mySubBlocks;
   }
@@ -53,6 +68,7 @@ public abstract class AbstractBlock implements Block {
     return myNode;
   }
 
+  @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
     return new ChildAttributes(getChildIndent(), null);
   }

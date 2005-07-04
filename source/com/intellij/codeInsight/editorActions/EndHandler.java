@@ -5,21 +5,16 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 
 public class EndHandler extends EditorActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.EndHandler");
-
   private EditorActionHandler myOriginalHandler;
 
   public EndHandler(EditorActionHandler originalHandler) {
@@ -65,15 +60,10 @@ public class EndHandler extends EditorActionHandler {
           PsiDocumentManager.getInstance(project).commitAllDocuments();
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
-              try {
-                final PsiFile fileCopy = (PsiFile)file.copy();
-                CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
-                int newOffset = styleManager.adjustLineIndent(fileCopy, caretOffset);
-
-                String newChars = fileCopy.getText();
-                int lineStart = offset1 + 1;
-                int tabSize = editor.getSettings().getTabSize(project);
-                int col = EditorUtil.calcColumnNumber(editor, newChars, lineStart, newOffset, tabSize);
+              CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
+              final String lineIndent = styleManager.getLineIndent(file, caretOffset);
+              if (lineIndent != null) {
+                int col = calcColumnNumber(lineIndent, editor.getSettings().getTabSize(project));
                 int line = caretModel.getLogicalPosition().line;
                 caretModel.moveToLogicalPosition(new LogicalPosition(line, col));
 
@@ -81,17 +71,22 @@ public class EndHandler extends EditorActionHandler {
                   if (!document.isWritable() && !FileDocumentManager.fileForDocumentCheckedOutSuccessfully(document, project)) {
                     return;
                   }
-                  final String indentString = newChars.substring(lineStart, newOffset);
                   editor.getSelectionModel().removeSelection();
-                  EditorModificationUtil.insertStringAtCaret(editor, indentString);
+                  EditorModificationUtil.insertStringAtCaret(editor, lineIndent);
                 }
+              }
 
-                editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-                editor.getSelectionModel().removeSelection();
+              editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+              editor.getSelectionModel().removeSelection();
+            }
+
+            private int calcColumnNumber(final String lineIndent, final int tabSize) {
+              int result = 0;
+              for (char c : lineIndent.toCharArray()) {
+                if (c == ' ') result++;
+                if (c == '\t') result += tabSize;
               }
-              catch (IncorrectOperationException e) {
-                LOG.error(e);
-              }
+              return result;
             }
           });
           return;
