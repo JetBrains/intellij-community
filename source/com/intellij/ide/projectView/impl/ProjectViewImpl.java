@@ -81,7 +81,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   private Map<String, Boolean> myShowModules = new HashMap<String, Boolean>();
   private static final boolean ourShowModulesDefaults = true;
   private Map<String, Boolean> myShowLibraryContents = new HashMap<String, Boolean>();
-  private static final boolean ourShowLibraryContentsDefaults = false;
+  private static final boolean ourShowLibraryContentsDefaults = true;
   private Map<String, Boolean> myHideEmptyPackages = new HashMap<String, Boolean>();
   private static final boolean ourHideEmptyPackagesDefaults = true;
   private Map<String, Boolean> myAbbreviatePackageNames = new HashMap<String, Boolean>();
