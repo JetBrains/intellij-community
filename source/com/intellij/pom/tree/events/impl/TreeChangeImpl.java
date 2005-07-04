@@ -118,11 +118,11 @@ public class TreeChangeImpl implements TreeChange {
     myOffsets.add(new Pair<ASTNode, Integer>(child, new Integer(nodeOffset)));
   }
 
-  private boolean isAfter(final ASTNode operand, final ASTNode base) {
-    ASTNode current = base.getTreeNext();
+  private boolean isAfter(final ASTNode what, final ASTNode afterWhat) {
+    ASTNode current = afterWhat.getTreeNext();
 
     while(current != null){
-      if(current == operand) return true;
+      if(current == what) return true;
       current = current.getTreeNext();
       if(current != null && current.getTextLength() != 0) break;
     }
@@ -284,8 +284,8 @@ public class TreeChangeImpl implements TreeChange {
     int currentOldOffset = 0;
     do{
       boolean counted = false;
-      while(currentChange != null && currentOldOffset == currentChange.getSecond().intValue()
-            && child.getTreeNext() != currentChange.getFirst()){
+      while(currentChange != null &&
+            (currentOldOffset == currentChange.getSecond().intValue() && isAfter(currentChange.getFirst(), child))){
         if(current == currentChange.getFirst()){
           counted = true;
           current = current.getTreeNext();
