@@ -8,14 +8,14 @@ import com.intellij.newCodeFormatting.Block;
 import com.intellij.newCodeFormatting.FormattingModelBuilder;
 import com.intellij.util.containers.HashMap;
 import com.intellij.lang.Language;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
 
 import java.util.Map;
 
 public abstract class XmlFormattingPolicy {
 
-  private final Map<Pair<PsiElement, Language>, Block> myRootToBlockMap = new HashMap<Pair<PsiElement, Language>, Block>();
-  private boolean myCanProcessJsp = true;
+  private Map<Pair<PsiElement, Language>, Block> myRootToBlockMap = new HashMap<Pair<PsiElement, Language>, Block>();
 
   public Block getOrCreateBlockFor(Pair<PsiElement, Language> root){
     if (!myRootToBlockMap.containsKey(root)) {
@@ -29,13 +29,17 @@ public abstract class XmlFormattingPolicy {
     if (builder != null) {
       final Block result = builder.createModel(root.getFirst(), getSettings()).getRootBlock();
       if (result instanceof XmlBlock) {
-        ((XmlBlock)result).getPolicy().setCanProcessJsp(false);
+        ((XmlBlock)result).getPolicy().setRootModels(myRootToBlockMap);
       }
       return result;
     } else {
       return null;
     }
 
+  }
+
+  private void setRootModels(final Map<Pair<PsiElement, Language>, Block> rootToBlockMap) {
+    myRootToBlockMap = rootToBlockMap;
   }
 
   public abstract int getWrappingTypeForTagEnd(XmlTag xmlTag);
@@ -75,12 +79,12 @@ public abstract class XmlFormattingPolicy {
   public abstract CodeStyleSettings getSettings();
 
   public boolean processJsp() {
-    return myCanProcessJsp;
-  }
-
-  public void setCanProcessJsp(final boolean canProcessJsp) {
-    myCanProcessJsp = canProcessJsp;
+    return true;
   }
 
   public abstract boolean addSpaceIntoEmptyTag();
+
+  public void setRootBlock(final ASTNode node, final Block rootBlock) {
+    myRootToBlockMap.put(new Pair<PsiElement, Language>(node.getPsi(), node.getPsi().getLanguage()), rootBlock);
+  }
 }

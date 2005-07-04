@@ -1,15 +1,14 @@
 package com.intellij.psi.formatter.xml;
 
+import com.intellij.codeFormatting.general.FormatterUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.*;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.codeFormatting.general.FormatterUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
 
 public class XmlTagBlock extends AbstractXmlBlock{
   private final Indent myIndent;
@@ -43,7 +42,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
         Wrap wrap = chooseWrap(child, tagBeginWrap, attrWrap, textWrap);
         Alignment alignment = chooseAlignment(child, attrAlignment, textAlignment);
         if (child.getElementType() == ElementType.XML_TAG_END) {
-          localResult.add(createChildBlock(child, wrap, alignment, null));
+          child = processChild(localResult,child, wrap, alignment, null);
           result.add(createTagDescriptionNode(localResult));
           localResult = new ArrayList<Block>();
           insideTag = true;
@@ -53,20 +52,17 @@ public class XmlTagBlock extends AbstractXmlBlock{
             result.add(createTagContentNode(localResult));
             localResult = new ArrayList<Block>();
           }
-          localResult.add(createChildBlock(child, wrap, alignment, null));
+          child = processChild(localResult,child, wrap, alignment, null);
         } else if (child.getElementType() == ElementType.XML_EMPTY_ELEMENT_END) {
-          localResult.add(createChildBlock(child, wrap, alignment, null));
+          child = processChild(localResult,child, wrap, alignment, null);
           result.add(createTagDescriptionNode(localResult));
           localResult = new ArrayList<Block>();
         }
-        else if (myXmlFormattingPolicy.processJsp() && isJspxJavaContainingNode(child)) {
-          localResult.add(new JspTextBlock(child,
-                                           myXmlFormattingPolicy,
-                                           JspTextBlock.findPsiRootAt(child),
-                                           getChildIndent()));
+        else if (isJspxJavaContainingNode(child)) {
+          child = createJspTextNode(localResult, child, getChildIndent());
         }
         else if (child.getElementType() == ElementType.XML_TEXT) {
-          createXmlTextBlocks(localResult, child, wrap, alignment);
+          child  = createXmlTextBlocks(localResult, child, wrap, alignment);
         }
         else {
           final Indent indent;
@@ -74,21 +70,23 @@ public class XmlTagBlock extends AbstractXmlBlock{
           if (localResult.size() == 1 && localResult.get(0) instanceof JspTextBlock) {
             //indent = Formatter.getInstance().getNoneIndent();
             indent = myXmlFormattingPolicy.indentChildrenOf(getTag())
-                                ? getFormatter().createNormalIndent()
-                                : getFormatter().getNoneIndent();
+                     ? getFormatter().createNormalIndent()
+                     : getFormatter().getNoneIndent();
           } else if (!insideTag) {
             indent = null;
           }
           else {
             indent = myXmlFormattingPolicy.indentChildrenOf(getTag())
-                                ? getFormatter().createNormalIndent()
-                                : getFormatter().getNoneIndent();
+                     ? getFormatter().createNormalIndent()
+                     : getFormatter().getNoneIndent();
           }
 
-          localResult.add(createChildBlock(child, wrap, alignment, indent));
+          child = processChild(localResult,child, wrap, alignment, indent);
         }
       }
-      child = child.getTreeNext();
+      if (child != null) {
+        child = child.getTreeNext();
+      }
     }
 
     if (!localResult.isEmpty()) {
@@ -103,7 +101,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
     return myIndent;
   }
 
-  private void createXmlTextBlocks(final ArrayList<Block> list, final ASTNode textNode, final Wrap wrap, final Alignment alignment) {
+  private ASTNode createXmlTextBlocks(final ArrayList<Block> list, final ASTNode textNode, final Wrap wrap, final Alignment alignment) {
     ChameleonTransforming.transformChildren(myNode);
     ASTNode child = textNode.getFirstChildNode();
     while (child != null) {
@@ -111,10 +109,13 @@ public class XmlTagBlock extends AbstractXmlBlock{
         final Indent indent = myXmlFormattingPolicy.indentChildrenOf(getTag())
                               ? getFormatter().createNormalIndent()
                               : getFormatter().getNoneIndent();
-        list.add(createChildBlock(child,  wrap, alignment, indent));
+        child = processChild(list,child,  wrap, alignment, indent);
+        if (child == null) return child;
+        if (child.getTreeParent() != textNode) return child;
       }
       child = child.getTreeNext();
     }
+    return textNode;
   }
 
   private Block createTagContentNode(final ArrayList<Block> localResult) {

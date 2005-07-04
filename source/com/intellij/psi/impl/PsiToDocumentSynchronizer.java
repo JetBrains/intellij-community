@@ -285,6 +285,11 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     return pair.getFirst();
   }
 
+  public boolean isDocumentAffectedByTransactions(Document document) {
+    return myTransactionsMap.containsKey(document);
+  }
+
+
   public static class DocumentChangeTransaction{
     private final Set<Pair<MutableTextRange,StringBuffer>> myAffectedFragments = new TreeSet<Pair<MutableTextRange, StringBuffer>>(new Comparator<Pair<MutableTextRange, StringBuffer>>() {
       public int compare(final Pair<MutableTextRange, StringBuffer> o1,

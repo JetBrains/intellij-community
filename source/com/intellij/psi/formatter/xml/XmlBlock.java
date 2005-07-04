@@ -57,9 +57,11 @@ public class XmlBlock extends AbstractXmlBlock {
       ASTNode child = myNode.getFirstChildNode();
       while (child != null) {
         if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {
-          result.add(createChildBlock(child, null, null, getChildDefaultIndent()));
+          child = processChild(result,child, null, null, getChildDefaultIndent());
         }
-        child = child.getTreeNext();
+        if (child != null) {
+          child = child.getTreeNext();
+        }
       }
     }
     return result;

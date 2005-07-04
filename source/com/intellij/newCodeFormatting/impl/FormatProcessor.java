@@ -87,8 +87,7 @@ class FormatProcessor {
 
     final List<Block> subBlocks = root.getSubBlocks();
     Block prev = null;
-    for (Iterator<Block> iterator = subBlocks.iterator(); iterator.hasNext();) {
-      Block block = iterator.next();
+    for (Block block : subBlocks) {
       if (prev != null) {
         final SpaceProperty spaceProperty = root.getSpaceProperty(prev, block);
         if (spaceProperty != null) {
@@ -152,31 +151,43 @@ class FormatProcessor {
     myAlignedAlignments.clear();
     myPreviousDependancies.clear();
     myWrapCandidate = null;
-    for (Iterator<AbstractBlockWrapper> iterator = myInfos.values().iterator(); iterator.hasNext();) {
-      AbstractBlockWrapper blockWrapper = iterator.next();
+    for (AbstractBlockWrapper blockWrapper : myInfos.values()) {
       blockWrapper.reset();
     }
   }
 
   public void performModifications(FormattingModel model){
+
+    List<LeafBlockWrapper> blocksToModify = collectBlocksToModify();
+
     int shift = 0;
-    WhiteSpace prev = null;
+
+    for (LeafBlockWrapper block : blocksToModify) {
+      final WhiteSpace whiteSpace = block.getWhiteSpace();
+      final int oldTextRangeLength = block.getTextRange().getLength();
+      final String newWhiteSpace = whiteSpace.generateWhiteSpace(myIndentOption);
+      final TextRange textRange = whiteSpace.getTextRange();
+      final TextRange wsRange = shiftRange(textRange, shift);
+      final int newBlockLength = model.replaceWhiteSpace(wsRange,
+                                                         newWhiteSpace,
+                                                         block.getTextRange().getLength());
+      shift += (newWhiteSpace.length() - (textRange.getLength())) + (newBlockLength - oldTextRangeLength);
+    }
+  }
+
+  private List<LeafBlockWrapper> collectBlocksToModify() {
+    List<LeafBlockWrapper> blocksToModify = new ArrayList<LeafBlockWrapper>();
+
     for (LeafBlockWrapper block = myFirstTokenBlock; block != null; block = block.getNextBlock()) {
       final WhiteSpace whiteSpace = block.getWhiteSpace();
       if (!whiteSpace.isReadOnly()) {
-        final int oldTextRangeLength = block.getTextRange().getLength();
         final String newWhiteSpace = whiteSpace.generateWhiteSpace(myIndentOption);
-        if (prev == whiteSpace || whiteSpace.isReadOnly()) continue;
-        if (whiteSpace.equals(newWhiteSpace)) continue;
-        final TextRange textRange = whiteSpace.getTextRange();
-        final TextRange wsRange = shiftRange(textRange, shift);
-        final int newBlockLength = model.replaceWhiteSpace(wsRange, 
-                                                             newWhiteSpace, 
-                                                             block.getTextRange().getLength());
-        shift += (newWhiteSpace.length() - (textRange.getLength())) + (newBlockLength - oldTextRangeLength);
+        if (!whiteSpace.equals(newWhiteSpace)) {
+          blocksToModify.add(block);
+        }
       }
-      prev = whiteSpace;
     }
+    return blocksToModify;
   }
 
   private TextRange shiftRange(final TextRange textRange, final int shift) {
@@ -237,10 +248,9 @@ class FormatProcessor {
   }
 
   private boolean shouldReformatBecauseOfBackwardDependance(TextRange changed) {
-    for (Iterator<TextRange> iterator = myPreviousDependancies.keySet().iterator(); iterator.hasNext();) {
-      TextRange textRange = iterator.next();
+    for (TextRange textRange : myPreviousDependancies.keySet()) {
       final Pair<AbstractBlockWrapper, Boolean> pair = myPreviousDependancies.get(textRange);
-      final boolean containedLineFeeds = pair.getSecond().booleanValue();
+      final boolean containedLineFeeds = pair.getSecond();
       if (textRange.getStartOffset() <= changed.getStartOffset() && textRange.getEndOffset() >= changed.getEndOffset()) {
         boolean containsLineFeeds = containsLineFeeds(textRange);
         if (containedLineFeeds != containsLineFeeds) {
@@ -263,7 +273,7 @@ class FormatProcessor {
         dependantSpaceProperty.setLFWasUsed(true);
       }
       myPreviousDependancies.put(dependancy,
-                                 new Pair<AbstractBlockWrapper, Boolean>(myCurrentBlock, new Boolean(value)));
+                                 new Pair<AbstractBlockWrapper, Boolean>(myCurrentBlock, value));
     }
   }
 
@@ -291,8 +301,7 @@ class FormatProcessor {
 
     boolean wrapIsPresent = whiteSpace.containsLineFeeds();
 
-    for (int i = 0; i < wraps.length; i++) {
-      WrapImpl wrap = wraps[i];
+    for (WrapImpl wrap : wraps) {
       wrap.processNextEntry(textRange.getStartOffset());
     }
 
@@ -332,8 +341,7 @@ class FormatProcessor {
       myWrapCandidate = null;
     }
     else {
-      for (int i = 0; i < wraps.length; i++) {
-        WrapImpl wrap1 = wraps[i];
+      for (WrapImpl wrap1 : wraps) {
         if (isCandidateToBeWrapped(wrap1) && canReplaceWrapCandidate(wrap1)) {
           myWrapCandidate = myCurrentBlock;
         }
@@ -454,8 +462,7 @@ class FormatProcessor {
   private WrapImpl getWrapToBeUsed(final WrapImpl[] wraps) {
     if (wraps.length == 0) return null;
     if (myWrapCandidate == myCurrentBlock) return wraps[0];
-    for (int i = 0; i < wraps.length; i++) {
-      WrapImpl wrap = wraps[i];
+    for (WrapImpl wrap : wraps) {
       if (!isSuitableInTheCurrentPosition(wrap)) continue;
       if (wrap.isIsActive()) return wrap;
       final WrapImpl.Type type = wrap.getType();
@@ -557,9 +564,7 @@ class FormatProcessor {
     if (parent == null) return new IndentInfo(0, 0, 0);
     final int index = getNewChildPosition(parent, offset);
     ChildAttributes childAttributes = parent.getBlock().getChildAttributes(index);
-    final IndentInfo result = adjustLineIndent(parent, childAttributes, index);
-    //processToken();
-    return result;
+    return adjustLineIndent(parent, childAttributes, index);
   }
 
   private IndentInfo adjustLineIndent(final AbstractBlockWrapper parent, final ChildAttributes childAttributes, final int index) {

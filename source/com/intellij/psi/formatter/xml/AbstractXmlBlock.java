@@ -8,6 +8,7 @@ import com.intellij.newCodeFormatting.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.common.AbstractBlock;
@@ -18,6 +19,10 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTag;
 
 import java.util.ArrayList;
+import java.util.List;
+
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 
 public abstract class AbstractXmlBlock extends AbstractBlock {
@@ -31,6 +36,9 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
                           final XmlFormattingPolicy policy) {
     super(node, wrap, alignment);
     myXmlFormattingPolicy = policy;
+    if (node.getTreeParent() == null) {
+      myXmlFormattingPolicy.setRootBlock(node, this);
+    }
   }
 
 
@@ -99,33 +107,40 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     return getFormatter().createWrap(myXmlFormattingPolicy.getWrappingTypeForTagBegin(tag), true);
   }
 
-  protected Block createChildBlock(final ASTNode child, final Wrap wrap, final Alignment alignment, final Indent indent) {
+  protected @Nullable ASTNode processChild(List<Block> result, final ASTNode child, final Wrap wrap, final Alignment alignment, final Indent indent) {
     final Language myLanguage = myNode.getPsi().getLanguage();
     final Language childLanguage = child.getPsi().getLanguage();
     if (useMyFormatter(myLanguage, childLanguage)) {
       Block jspScriptletNode = buildBlockForScriptletNode(child,indent);
       if (jspScriptletNode != null) {
-        return jspScriptletNode;
+        result.add(jspScriptletNode);
+        return child;
       }
       if (myXmlFormattingPolicy.processJsp() && (child.getElementType() == ElementType.JSP_XML_TEXT || child.getPsi() instanceof JspText)) {
         final Pair<PsiElement,Language> root = JspTextBlock.findPsiRootAt(child);
         if (root != null) {
-          return new JspTextBlock(child, myXmlFormattingPolicy, root, indent);
+          return createJspTextNode(result, child, indent);
         }
       }
       if (child.getElementType() == getTagType() || child.getElementType() == ElementType.XML_TAG) {
-        return new XmlTagBlock(child, wrap, alignment, myXmlFormattingPolicy, indent != null ? indent : getFormatter().getNoneIndent());
+        result.add(new XmlTagBlock(child, wrap, alignment, myXmlFormattingPolicy, indent != null ? indent : getFormatter().getNoneIndent()));
+        return child;
       }
       else if (child.getElementType() == ElementType.JSP_SCRIPTLET_END) {
-        return new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, getFormatter().getNoneIndent());
+        result.add(new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, getFormatter().getNoneIndent()));
+        return child;
       }
       else {
-        return new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, indent);
+        result.add(new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, indent));
+        return child;
       }
     } else {
-      final FormattingModel childModel = childLanguage.getFormattingModelBuilder().createModel(child.getPsi(),
-                                                                                               myXmlFormattingPolicy.getSettings());
-      return new AnotherLanguageBlockWrapper(child, myXmlFormattingPolicy, childModel.getRootBlock());
+      final FormattingModelBuilder builder = childLanguage.getFormattingModelBuilder();
+      LOG.assertTrue(builder != null);
+      final FormattingModel childModel = builder.createModel(child.getPsi(),
+                                                             myXmlFormattingPolicy.getSettings());
+      result.add(new AnotherLanguageBlockWrapper(child, myXmlFormattingPolicy, childModel.getRootBlock()));
+      return child;
     }
   }
 
@@ -134,18 +149,18 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     ASTNode element = child.getPsi().getContainingFile()
       .getPsiRoots()[0].getNode().findLeafElementAt(child.getTextRange().getStartOffset());
     if (element != null && (element.getElementType() == ElementType.JSP_SCRIPTLET_START
-        || element.getElementType() == ElementType.JSP_DECLARATION_START
-        || element.getElementType() == ElementType.JSP_EXPRESSION_START)) {
+                            || element.getElementType() == ElementType.JSP_DECLARATION_START
+                            || element.getElementType() == ElementType.JSP_EXPRESSION_START)) {
       final ArrayList<Block> subBlocks = new ArrayList<Block>();
       while (element != null && element.getTextRange().getEndOffset() <=child.getTextRange().getEndOffset()) {
         if (!FormatterUtil.containsWhiteSpacesOnly(element)) {
-          subBlocks.add(createChildBlock(element, null, null, Formatter.getInstance().getNoneIndent()));
+          processChild(subBlocks, element, null, null, Formatter.getInstance().getNoneIndent());
         }
         int nextOffset = element.getTextRange().getEndOffset();
         element = element.getTreeNext();
         if (element == null) {
           element = child.getPsi().getContainingFile()
-            .getPsiRoots()[0].getNode().findLeafElementAt(nextOffset);          
+            .getPsiRoots()[0].getNode().findLeafElementAt(nextOffset);
         }
       }
       return new SyntheticBlock(subBlocks, this, indent, myXmlFormattingPolicy, getFormatter().createNormalIndent());
@@ -208,4 +223,56 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     return new XmlBlock(rootNode, null, null, new HtmlPolicy(settings, ElementType.XML_TAG), null);
   }
 
+  @Nullable
+  protected ASTNode createJspTextNode(final List<Block> localResult, final ASTNode child, final Indent indent) {
+    final Pair<PsiElement, Language> psiRoot = JspTextBlock.findPsiRootAt(child);
+
+    final ASTNode correspondingNode = psiRoot.getFirst().getNode().findLeafElementAt(child.getStartOffset());
+    ASTNode topParentWithTheSameOffset = findParentWithTheSameOffset(correspondingNode);
+
+    final TextRange elementRange = topParentWithTheSameOffset.getTextRange();
+    if (canInsertWholeBlock(psiRoot, elementRange) && child.getTextRange().getEndOffset() < elementRange.getEndOffset()) {
+      localResult.add(new JspTextBlock(topParentWithTheSameOffset,
+                                       myXmlFormattingPolicy,
+                                       psiRoot, indent));
+      return findChildAfter(child, elementRange.getEndOffset());
+    }
+
+    localResult.add(new JspTextBlock(child,
+                                     myXmlFormattingPolicy,
+                                     psiRoot,
+                                     indent));
+    return child;
+  }
+
+  private ASTNode findChildAfter(@NotNull final ASTNode child, final int endOffset) {
+    ASTNode result = child;
+    while (result != null && result.getStartOffset() < endOffset) {
+      result = result.getTreeNext();
+    }
+    if (result != null) {
+      return result.getTreePrev();
+    }
+    final ASTNode parent = child.getTreeParent();
+    if (parent != myNode) {
+      return findChildAfter(parent, endOffset);
+    } else {
+      return null;
+    }
+  }
+
+  private ASTNode findParentWithTheSameOffset(final ASTNode correspondingNode) {
+    int offset =correspondingNode.getTextRange().getStartOffset();
+    ASTNode result = correspondingNode;
+    while (result.getTreeParent() != null && result.getTreeParent().getTextRange().getStartOffset() == offset) {
+      result = result.getTreeParent();
+    }
+    return result;
+  }
+
+  private boolean canInsertWholeBlock(final Pair<PsiElement, Language> psiRoot, final TextRange elementRange) {
+    if (psiRoot.getFirst().getLanguage() != StdLanguages.JSP) return false;
+    if (elementRange.equals(psiRoot.getFirst().getTextRange())) return false;
+    return  elementRange.getEndOffset() <= myNode.getTextRange().getEndOffset();
+  }
 }
