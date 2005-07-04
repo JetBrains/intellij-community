@@ -13,6 +13,7 @@ import com.intellij.j2ee.ejb.role.EjbMethodRole;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -331,6 +332,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
     else if (refElement instanceof PsiField && originalScope instanceof GlobalSearchScope) {
       if (!UIFormUtil.processReferencesInUIForms(processor, (PsiField)refElement, (GlobalSearchScope)originalScope)) return false;
+    }
+    else if (refElement instanceof Property && originalScope instanceof GlobalSearchScope) {
+      if (!UIFormUtil.processReferencesInUIForms(processor, (Property)refElement, (GlobalSearchScope)originalScope)) return false;
     }
 
     return true;
