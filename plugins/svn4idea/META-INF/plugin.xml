@@ -57,7 +57,9 @@
       <reference id="Compare.LastVersion" text="Comparet with revision at HEAD"/>
       <reference id="Compare.Selected"/>
       <reference id="Annotate"/>
-      
+      <separator/>
+      <action id="Subversion.Lock" class="com.qintsoft.svn4idea.actions.LockAction" text="Lock" description="Lock files"/>
+      <action id="Subversion.Unlock" class="com.qintsoft.svn4idea.actions.UnlockAction" text="Unlock" description="Unlock files"/>
       <separator/>
       <action id="SvnChangesBrowser" class="com.qintsoft.svn4idea.actions.BrowseChangesAction" text="Browse Changes..."/>
       <add-to-group group-id="SubversionFilePopupGroup" anchor="last"/>
