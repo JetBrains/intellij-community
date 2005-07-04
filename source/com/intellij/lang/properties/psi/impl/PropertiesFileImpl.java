@@ -12,15 +12,16 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.tree.ChangeUtil;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -130,6 +131,15 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     }
     getPropertiesList().addChild(property.getNode());
     return property;
+  }
+
+  @NotNull
+  public Map<String, String> getNamesMap() {
+    THashMap<String, String> result = new THashMap<String, String>();
+    for (Property property : myProperties) {
+      result.put(property.getName(), property.getValue());
+    }
+    return result;
   }
 
   public void subtreeChanged() {
