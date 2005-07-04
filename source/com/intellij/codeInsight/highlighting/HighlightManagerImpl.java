@@ -22,10 +22,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.util.containers.HashMap;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class HighlightManagerImpl extends HighlightManager implements ProjectComponent {
 
@@ -69,15 +66,22 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
         Document document = event.getDocument();
         Editor[] editors = EditorFactory.getInstance().getEditors(document);
         for (Editor editor : editors) {
+          ArrayList<RangeHighlighter> highlightersToRemove = new ArrayList<RangeHighlighter>();
           Map<RangeHighlighter, HighlightInfo> map = getHighlightInfoMap(editor, false);
           if (map == null) return;
 
-          for (RangeHighlighter highlighter : map.keySet()) {
+          for (Iterator<RangeHighlighter> iterator = map.keySet().iterator(); iterator.hasNext();) {
+            RangeHighlighter highlighter = iterator.next();
             HighlightInfo info = map.get(highlighter);
             if (!info.editor.getDocument().equals(document)) continue;
             if ((info.flags & HIDE_BY_TEXT_CHANGE) != 0) {
-              removeSegmentHighlighter(editor, highlighter);
+              highlightersToRemove.add(highlighter);
             }
+          }
+
+          for (int j = 0; j < highlightersToRemove.size(); j++) {
+            RangeHighlighter highlighter = highlightersToRemove.get(j);
+            removeSegmentHighlighter(editor, highlighter);
           }
         }
       }
@@ -159,8 +163,8 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
   }
 
   public void addElementsOccurrenceHighlights(Editor editor, PsiElement[] elements,
-                                      TextAttributes attributes, boolean hideByTextChange,
-                                      ArrayList<RangeHighlighter> highlightersVector) {
+                                              TextAttributes attributes, boolean hideByTextChange,
+                                              ArrayList<RangeHighlighter> highlightersVector) {
     if (elements.length == 0) return;
     int flags = HighlightManagerImpl.HIDE_BY_ESCAPE;
     if (hideByTextChange) {
@@ -175,12 +179,12 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
   }
 
   protected void addOccurrenceHighlight(Editor editor,
-                                      int start,
-                                      int end,
-                                      TextAttributes attributes,
-                                      int flags,
-                                      ArrayList<RangeHighlighter> highlightersVector,
-                                      Color scrollmarkColor) {
+                                        int start,
+                                        int end,
+                                        TextAttributes attributes,
+                                        int flags,
+                                        ArrayList<RangeHighlighter> highlightersVector,
+                                        Color scrollmarkColor) {
     RangeHighlighter highlighter = addSegmentHighlighter(editor, start, end, attributes, flags);
     if (highlightersVector != null) {
       highlightersVector.add(highlighter);
