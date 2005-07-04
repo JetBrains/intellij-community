@@ -163,6 +163,7 @@ public class CodeInsightUtil {
       }
     };
     commonParent.acceptTree(visitor);
+    list.add(commonParent.getPsi());
     return list.toArray(new PsiElement[list.size()]);
   }
 
