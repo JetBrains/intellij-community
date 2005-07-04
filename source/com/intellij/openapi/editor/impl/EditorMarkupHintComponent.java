@@ -35,9 +35,9 @@ import java.util.Hashtable;
  * Date: Jun 27, 2005
  */
 public class EditorMarkupHintComponent extends JPanel {
-  private JCheckBox myImportPopupCheckBox = new JCheckBox("Import Popup");
+  private JCheckBox myImportPopupCheckBox = new JCheckBox("Import popup");
   private JComboBox myProfilesCombo = new JComboBox(new DefaultComboBoxModel());
-  private JCheckBox myUsePerFileProfile = new JCheckBox("Use Custom Profile for This File:");
+  private JCheckBox myUsePerFileProfile = new JCheckBox("Use custom profile for this file:");
 
   private static final Icon GC_ICON = IconLoader.getIcon("/actions/gc.png");
   private JButton myClearSettingsButton = new JButton(GC_ICON);
