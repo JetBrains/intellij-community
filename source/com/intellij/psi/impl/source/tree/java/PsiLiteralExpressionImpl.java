@@ -159,7 +159,6 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
       return null;
     }
     else {
-      LOG.assertTrue(false);
       return null;
     }
   }
