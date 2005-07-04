@@ -600,7 +600,10 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   }
 
   public void visitXmlAttributeValue(XmlAttributeValue value) {
-    if (!(value.getParent() instanceof XmlAttribute)) return;
+    if (!(value.getParent() instanceof XmlAttribute)) {
+      checkReferences(value, QuickFixProvider.NULL);
+      return;
+    }
 
     XmlAttribute attribute = (XmlAttribute)value.getParent();
     if (value.getUserData(DO_NOT_VALIDATE_KEY) != null) {

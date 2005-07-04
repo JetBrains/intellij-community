@@ -15,10 +15,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.PlainFil
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlAttributeValueManipulator;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlTokenManipulator;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlToken;
-import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.xml.*;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.lang.properties.PropertiesReferenceProvider;
@@ -349,6 +346,13 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
 
     registerReferenceProvider(new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS), XmlToken.class,
                               classListProvider);
+    final DtdReferencesProvider dtdReferencesProvider = new DtdReferencesProvider();
+    registerReferenceProvider(null, XmlEntityRef.class,dtdReferencesProvider);
+    registerXmlAttributeValueReferenceProvider(
+      null,
+      dtdReferencesProvider.getSystemReferenceFilter(),
+      getProviderByType(PATH_REFERENCES_PROVIDER)
+    );
 
     //registerReferenceProvider(PsiPlainTextFile.class, new JavaClassListReferenceProvider());
 

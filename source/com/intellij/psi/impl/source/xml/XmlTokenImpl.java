@@ -14,11 +14,13 @@ import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.pom.Navigatable;
+import com.intellij.ide.util.EditSourceUtil;
 
 /**
  * @author ik
  */
-public class XmlTokenImpl extends LeafPsiElement implements XmlToken {
+public class XmlTokenImpl extends LeafPsiElement implements XmlToken, Navigatable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlTokenImpl");
 
   public XmlTokenImpl(IElementType type, char[] buffer, int startOffset, int endOffset, int lexerState, CharTable table) {
@@ -52,5 +54,17 @@ public class XmlTokenImpl extends LeafPsiElement implements XmlToken {
     } else {
       return super.getReferences();
     }
+  }
+
+  public void navigate(boolean requestFocus) {
+    EditSourceUtil.getDescriptor(this).navigate(requestFocus);
+  }
+
+  public boolean canNavigate() {
+    return getTokenType() == XmlTokenType.XML_NAME && EditSourceUtil.canNavigate(this);
+  }
+
+  public boolean canNavigateToSource() {
+    return canNavigate();
   }
 }

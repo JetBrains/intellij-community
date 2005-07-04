@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.jsp.tagLibrary.TldUtil;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.xml.XmlAttributeDescriptor;
 
 /**
@@ -25,9 +26,14 @@ public class XmlAttributeValueGetter implements ContextGetter {
     return getApplicableAttributeVariants(context, completionContext);
   }
 
-  public static Object[] getApplicableAttributeVariants(PsiElement context, CompletionContext completionContext) {
-    if(context != null)
+  public static Object[] getApplicableAttributeVariants(PsiElement _context, CompletionContext completionContext) {
+    PsiElement context = _context;
+    if(context != null) {
       context = PsiTreeUtil.getParentOfType(context, XmlAttribute.class);
+      if (context == null) {
+        context = PsiTreeUtil.getParentOfType(_context, XmlAttributeValue.class);  
+      }
+    }
 
     if(context instanceof XmlAttribute) {
       final XmlAttributeDescriptor descriptor = ((XmlAttribute)context).getDescriptor();
@@ -43,7 +49,12 @@ public class XmlAttributeValueGetter implements ContextGetter {
         return values;
       }
     }
-    return getAllWordsFromDocument(context, completionContext);
+    
+    if (context.getReferences().length == 0) {
+      return getAllWordsFromDocument(context, completionContext);
+    } else {
+      return new Object[0];
+    }
   }
 
   private static Object[] getAllWordsFromDocument(PsiElement context, CompletionContext completionContext) {

@@ -30,16 +30,21 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl {
     super(XML_ENTITY_DECL);
   }
 
-  public String getName() {
+  public PsiElement getNameElement() {
     for (ASTNode e = getFirstChildNode(); e != null; e = e.getTreeNext()) {
       if (e instanceof XmlTokenImpl) {
         XmlTokenImpl xmlToken = (XmlTokenImpl)e;
 
-        if (xmlToken.getTokenType() == XmlTokenType.XML_NAME) return xmlToken.getText();
+        if (xmlToken.getTokenType() == XmlTokenType.XML_NAME) return xmlToken;
       }
     }
 
-    return "";
+    return null;
+  }
+  
+  public String getName() {
+    PsiElement nameElement = getNameElement();
+    return nameElement != null ? nameElement.getText() : "";
   }
 
   public PsiElement parse(PsiFile baseFile, int context, final XmlEntityRef originalElement) {
@@ -212,5 +217,9 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl {
     }
 
     return true;
+  }
+
+  public PsiElement getNavigationElement() {
+    return getNameElement();
   }
 }

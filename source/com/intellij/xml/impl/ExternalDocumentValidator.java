@@ -193,6 +193,7 @@ public class ExternalDocumentValidator {
     XmlProcessingInstruction.class,
     XmlElementDecl.class,
     XmlMarkupDecl.class,
+    XmlEntityRef.class,
     XmlDoctype.class
   };
 

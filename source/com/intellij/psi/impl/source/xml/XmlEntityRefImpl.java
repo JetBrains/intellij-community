@@ -3,6 +3,8 @@ package com.intellij.psi.impl.source.xml;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -73,8 +75,9 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
             }
           }
           final XmlMarkupDecl markupDecl = xmlDoctype.getMarkupDecl();
-          if(markupDecl != null)
-            if(!PsiTreeUtil.processElements(markupDecl, this)) return false;
+          if (markupDecl != null) {
+            if (!PsiTreeUtil.processElements(markupDecl, this)) return false;
+          }
         }
         else if (element instanceof XmlEntityDecl) {
           XmlEntityDecl entityDecl = (XmlEntityDecl)element;
@@ -111,5 +114,9 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
     final PsiElement prevSibling = getPrevSibling();
     if(prevSibling instanceof XmlTagChild) return (XmlTagChild)prevSibling;
     return null;
+  }
+
+  public PsiReference[] getReferences() {
+    return ResolveUtil.getReferencesFromProviders(this);
   }
 }
