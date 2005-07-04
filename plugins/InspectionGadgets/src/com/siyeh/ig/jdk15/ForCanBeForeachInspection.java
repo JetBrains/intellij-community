@@ -997,7 +997,6 @@ public class ForCanBeForeachInspection extends StatementInspection{
         private final String arrayName;
 
         VariableAssignmentVisitor(String arrayName){
-            super();
             this.arrayName = arrayName;
         }
 
@@ -1029,7 +1028,6 @@ public class ForCanBeForeachInspection extends StatementInspection{
         private final String iteratorName;
 
         NumCallsToIteratorNextVisitor(String iteratorName){
-            super();
             this.iteratorName = iteratorName;
         }
 
@@ -1068,7 +1066,6 @@ public class ForCanBeForeachInspection extends StatementInspection{
         private final String iteratorName;
 
         IteratorAssignmentVisitor(String iteratorName){
-            super();
             this.iteratorName = iteratorName;
         }
 
@@ -1101,7 +1098,6 @@ public class ForCanBeForeachInspection extends StatementInspection{
         private final String iteratorName;
 
         IteratorRemoveVisitor(String iteratorName){
-            super();
             this.iteratorName = iteratorName;
         }
 
@@ -1143,7 +1139,6 @@ public class ForCanBeForeachInspection extends StatementInspection{
         private final String iteratorName;
 
         IteratorHasNextVisitor(String iteratorName){
-            super();
             this.iteratorName = iteratorName;
         }
 
@@ -1187,7 +1182,6 @@ public class ForCanBeForeachInspection extends StatementInspection{
 
         IndexOnlyUsedAsIndexVisitor(String arrayName,
                                     PsiLocalVariable indexVariable){
-            super();
             this.arrayName = arrayName;
             this.indexVariable = indexVariable;
         }
@@ -1260,14 +1254,13 @@ public class ForCanBeForeachInspection extends StatementInspection{
             super.visitReferenceExpression(ref);
 
           final PsiElement element = ref.resolve();
-          if(!indexVariable.equals(element)){
-              return;
+          if(indexVariable.equals(element) && !isListIndexExpression(ref, collection)) {
+            indexVariableUsedOnlyAsIndex = false;
           }
-            if(!isListIndexExpression(ref, collection)){
-                    indexVariableUsedOnlyAsIndex = false;
-            }
+          if(collection.equals(element) && !isListReferenceInIndexExpression(ref, collection)){
+            indexVariableUsedOnlyAsIndex = false;
+          }
         }
-
 
       public boolean isIndexVariableUsedOnlyAsIndex(){
           return indexVariableUsedOnlyAsIndex;
@@ -1280,6 +1273,17 @@ public class ForCanBeForeachInspection extends StatementInspection{
     final PsiExpressionList expressionList = (PsiExpressionList)parent;
     if (!(expressionList.getParent() instanceof PsiMethodCallExpression)) return false;
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expressionList.getParent();
+    return isListGetExpression(methodCallExpression, collection);
+  }
+  private static boolean isListReferenceInIndexExpression(final PsiReferenceExpression ref, PsiVariable collection) {
+    final PsiElement parent = ref.getParent();
+    if (!(parent instanceof PsiReferenceExpression)) return false;
+    if (!(parent.getParent() instanceof PsiMethodCallExpression)) return false;
+    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)parent.getParent();
+    return isListGetExpression(methodCallExpression, collection);
+  }
+
+  private static boolean isListGetExpression(final PsiMethodCallExpression methodCallExpression, final PsiVariable collection) {
     if (methodCallExpression == null) return false;
     PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
     if (methodExpression == null) return false;
