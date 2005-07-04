@@ -392,6 +392,7 @@ public class EditorActionUtil {
   }
 
   public static void moveCaretPageUp(Editor editor, boolean isWithSelection) {
+    ((EditorEx)editor).stopOptimizedScrolling();
     int lineHeight = editor.getLineHeight();
     Rectangle viewRect = editor.getScrollingModel().getVisibleArea();
     int linesIncrement = viewRect.height / lineHeight;
@@ -401,6 +402,7 @@ public class EditorActionUtil {
   }
 
   public static void moveCaretPageDown(Editor editor, boolean isWithSelection) {
+    ((EditorEx)editor).stopOptimizedScrolling();
     int lineHeight = editor.getLineHeight();
     Rectangle viewRect = editor.getScrollingModel().getVisibleArea();
     int linesIncrement = viewRect.height / lineHeight;

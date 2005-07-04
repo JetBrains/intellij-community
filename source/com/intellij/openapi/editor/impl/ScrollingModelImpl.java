@@ -203,6 +203,11 @@ public class ScrollingModelImpl implements ScrollingModel {
 
     myEditor.validateSize();
     JScrollBar scrollbar = myEditor.getScrollPane().getVerticalScrollBar();
+
+    if (scrollbar.getVisibleAmount() < Math.abs(scrollOffset - scrollbar.getValue()) + 50) {
+      myEditor.stopOptimizedScrolling();
+    }
+
     scrollbar.setValue(scrollOffset);
 
     //System.out.println("scrolled vertically to: " + scrollOffset);
