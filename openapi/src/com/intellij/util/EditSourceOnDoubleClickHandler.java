@@ -27,7 +27,9 @@ public class EditSourceOnDoubleClickHandler {
         if (project == null) return;
 
         final TreePath selectionPath = tree.getSelectionPath();
-        if (((TreeNode)selectionPath.getLastPathComponent()).isLeaf() || !expandOnDoubleClick(((TreeNode)selectionPath.getLastPathComponent()))) {
+        if (selectionPath == null) return;
+        final Object lastPathComponent = selectionPath.getLastPathComponent();
+        if (((TreeNode)lastPathComponent).isLeaf() || !expandOnDoubleClick(((TreeNode)lastPathComponent))) {
           //Node expansion for non-leafs has a higher priority
           OpenSourceUtil.openSourcesFrom(dataContext, true);
         }
