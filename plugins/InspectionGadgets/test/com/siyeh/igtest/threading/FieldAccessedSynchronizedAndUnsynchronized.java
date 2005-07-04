@@ -9,6 +9,7 @@ public class FieldAccessedSynchronizedAndUnsynchronized
     {
         synchronized(m_lock)
         {
+            System.out.println(m_lock);
             m_contents = new Object();
             getContents();
         }
@@ -16,8 +17,12 @@ public class FieldAccessedSynchronizedAndUnsynchronized
 
     private Object getContents()
     {
-        getContents();
+        getContents2();
         return m_contents;
+    }
+
+    private void getContents2() {
+        getContents();
     }
 
 }
