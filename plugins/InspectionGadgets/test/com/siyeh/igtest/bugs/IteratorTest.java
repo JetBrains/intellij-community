@@ -9,6 +9,8 @@ public class IteratorTest implements Iterator{
     }
 
     public boolean hasNext() {
+        Iterator foo = new ArrayList().iterator();
+        this.next();
         return false;
     }
 

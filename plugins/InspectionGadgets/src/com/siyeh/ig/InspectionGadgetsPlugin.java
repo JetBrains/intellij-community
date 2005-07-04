@@ -380,6 +380,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(IfStatementWithIdenticalBranchesInspection.class);
         m_inspectionClasses.add(DuplicateConditionInspection.class);
         m_inspectionClasses.add(IteratorNextDoesNotThrowNoSuchElementExceptionInspection.class);
+        m_inspectionClasses.add(IteratorHasNextCallsIteratorNextInspection.class);
         m_inspectionClasses.add(ReturnNullInspection.class);
         m_inspectionClasses.add(ShiftOutOfRangeInspection.class);
         m_inspectionClasses.add(AssignmentToStaticFieldFromInstanceMethodInspection.class);
