@@ -65,8 +65,6 @@ public class MethodCallInstruction extends Instruction {
   }
 
   public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
-    final @NotNull DfaValue qualifier = memState.pop();
-
     for (int i = 0; i < myArgs.length; i++) {
       final DfaValue arg = memState.pop();
       final int revIdx = myArgs.length - i - 1;
@@ -78,6 +76,7 @@ public class MethodCallInstruction extends Instruction {
       }
     }
 
+    final @NotNull DfaValue qualifier = memState.pop();
     try {
       if (!memState.applyNotNull(qualifier)) {
         runner.onInstructionProducesNPE(this);

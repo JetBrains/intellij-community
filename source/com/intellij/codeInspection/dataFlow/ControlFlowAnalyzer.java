@@ -947,16 +947,16 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
       PsiReferenceExpression methodExpression = expression.getMethodExpression();
       PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
 
-      PsiExpression[] params = expression.getArgumentList().getExpressions();
-      for (PsiExpression param : params) {
-        param.accept(this);
-      }
-
       if (qualifierExpression != null) {
         qualifierExpression.accept(this);
       }
       else {
         pushUnknown();
+      }
+      
+      PsiExpression[] params = expression.getArgumentList().getExpressions();
+      for (PsiExpression param : params) {
+        param.accept(this);
       }
 
       addInstruction(new MethodCallInstruction(expression, myFactory));
