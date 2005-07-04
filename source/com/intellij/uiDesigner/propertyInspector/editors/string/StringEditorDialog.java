@@ -16,6 +16,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.ResourceBundleLoader;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 
@@ -200,8 +201,14 @@ final class StringEditorDialog extends DialogWrapper{
               initialVirtualFile = VfsUtil.findFileByURL(resource);
             }
             PsiFile initialPropertiesFile = initialVirtualFile == null ? null : PsiManager.getInstance(project).findFile(initialVirtualFile);
+            final GlobalSearchScope moduleScope = GlobalSearchScope.moduleScope(myModule);
             TreeFileChooser fileChooser = TreeClassChooserFactory.getInstance(project).createFileChooser("Choose Poperties File", initialPropertiesFile,
-                                                                                                         StdFileTypes.PROPERTIES, null);
+                                                                                                         StdFileTypes.PROPERTIES, new TreeFileChooser.PsiFileFilter() {
+              public boolean accept(PsiFile file) {
+                final VirtualFile virtualFile = file.getVirtualFile();
+                return virtualFile != null && moduleScope.contains(virtualFile);
+              }
+            });
             fileChooser.showDialog();
             PropertiesFile propertiesFile = (PropertiesFile)fileChooser.getSelectedFile();
             if (propertiesFile == null) return;
