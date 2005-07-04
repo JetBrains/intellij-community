@@ -284,8 +284,8 @@ public class TreeChangeImpl implements TreeChange {
     int currentOldOffset = 0;
     do{
       boolean counted = false;
-      while(currentChange != null &&
-            (currentOldOffset == currentChange.getSecond().intValue() && isAfter(currentChange.getFirst(), child))){
+      // child.getTreeNext() != currentChange.getFirst()
+      while(currentChange != null && (currentOldOffset == currentChange.getSecond().intValue() && !isAfter(currentChange.getFirst(), child))){
         if(current == currentChange.getFirst()){
           counted = true;
           current = current.getTreeNext();
