@@ -66,7 +66,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     private static final String DESCRIPTION_DIRECTORY_NAME =
             "C:/My Open Source Projects/InspectionGadgetsSVN/src/inspectionDescriptions/";
     private final InspectionGadgetsTelemetry telemetry = new InspectionGadgetsTelemetry();
-    private static final boolean TELEMETRY_ENABLED = true;
+    private static final boolean TELEMETRY_ENABLED = false;
 
     public static void main(String[] args) {
         final InspectionGadgetsPlugin plugin = new InspectionGadgetsPlugin();
