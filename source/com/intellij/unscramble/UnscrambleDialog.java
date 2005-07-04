@@ -129,8 +129,7 @@ public class UnscrambleDialog extends DialogWrapper{
     final List<UnscrambleSupport> registeredUnscramblers = getRegisteredUnscramblers();
     final String savedUnscramblerName = PropertiesComponent.getInstance().getValue(PROPERTY_UNSCRAMBLER_NAME_USED);
     UnscrambleSupport selectedUnscrambler = null;
-    for (int i = 0; i < registeredUnscramblers.size(); i++) {
-      final UnscrambleSupport unscrambleSupport = registeredUnscramblers.get(i);
+    for (final UnscrambleSupport unscrambleSupport : registeredUnscramblers) {
       if (Comparing.strEqual(unscrambleSupport.getPresentableName(), savedUnscramblerName)) {
         selectedUnscrambler = unscrambleSupport;
       }
@@ -201,7 +200,7 @@ public class UnscrambleDialog extends DialogWrapper{
   }
 
   protected Action[] createActions(){
-    return new Action[]{new SplitAction(), getOKAction(), getCancelAction()};
+    return new Action[]{new NormalizeTextAction(), getOKAction(), getCancelAction()};
   }
 
   private void createLogFileChooser() {
@@ -223,8 +222,7 @@ public class UnscrambleDialog extends DialogWrapper{
     List<UnscrambleSupport> unscrambleComponents = getRegisteredUnscramblers();
 
     //myUnscrambleChooser.addItem(null);
-    for (int i = 0; i < unscrambleComponents.size(); i++) {
-      final UnscrambleSupport unscrambleSupport = unscrambleComponents.get(i);
+    for (final UnscrambleSupport unscrambleSupport : unscrambleComponents) {
       myUnscrambleChooser.addItem(unscrambleSupport);
     }
     myUnscrambleChooser.setRenderer(new DefaultListCellRenderer() {
@@ -260,8 +258,8 @@ public class UnscrambleDialog extends DialogWrapper{
     if (isOK()){
       final List list = myLogFile.getHistory();
       String res = null;
-      for (int i = 0; i < list.size(); i++) {
-        final String s = (String)list.get(i);
+      for (Object aList : list) {
+        final String s = (String)aList;
         if (res == null) {
           res = s;
         }
@@ -278,8 +276,8 @@ public class UnscrambleDialog extends DialogWrapper{
     super.dispose();
   }
 
-  private final class SplitAction extends AbstractAction {
-    public SplitAction(){
+  private final class NormalizeTextAction extends AbstractAction {
+    public NormalizeTextAction(){
       putValue(Action.NAME, "&Normalize");
       putValue(DEFAULT_ACTION, Boolean.FALSE);
     }
@@ -306,6 +304,7 @@ public class UnscrambleDialog extends DialogWrapper{
 
     private String normalizeText(String text) {
       // move 'at' to the line start
+      text = text.replaceAll("\\nat\\n", "\nat ");
       text = text.replaceAll("(\\S)[\\s&&[^\\n]]*at ", "$1\n at ");
       text = text.replaceAll("(\\S)\\nat ", "$1\n at ");
       // merge (inadvertently) splitted lines (unless next line begins with 'at')
