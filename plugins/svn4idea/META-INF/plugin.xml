@@ -49,6 +49,8 @@
       <reference id="UpdateFiles"/>
       <reference id="CheckStatusForFiles"/>
       <reference id="Vcs.ShowTabbedFileHistory"/>
+      <separator/>
+      <action id="Subversion.SetProperty" class="com.qintsoft.svn4idea.actions.SetPropertyAction" text="Set Property..." description="Set versioned property on file or directory"/>
       <action id="Subversion.Revert" class="com.qintsoft.svn4idea.actions.RevertAction" text="Revert file" description="Revert file to pristine state"/>
       <action id="Subversion.Resolve" class="com.qintsoft.svn4idea.actions.ResolveAction" text="Mark Resolved" description="Tell Subversion that the conflict has been resolved"/>
       <action id="Subversion.Clenaup" class="com.qintsoft.svn4idea.actions.CleanupAction" text="Cleanup" description="Unlock locked directories and run all remaining incompleted operations"/>
@@ -58,7 +60,7 @@
       <reference id="Compare.Selected"/>
       <reference id="Annotate"/>
       <separator/>
-      <action id="Subversion.Lock" class="com.qintsoft.svn4idea.actions.LockAction" text="Lock" description="Lock files"/>
+      <action id="Subversion.Lock" class="com.qintsoft.svn4idea.actions.LockAction" text="Lock..." description="Lock files"/>
       <action id="Subversion.Unlock" class="com.qintsoft.svn4idea.actions.UnlockAction" text="Unlock" description="Unlock files"/>
       <separator/>
       <action id="SvnChangesBrowser" class="com.qintsoft.svn4idea.actions.BrowseChangesAction" text="Browse Changes..."/>
