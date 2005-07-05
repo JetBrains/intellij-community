@@ -245,7 +245,7 @@
       </xs:documentation>
     </xs:annotation>
     <xs:restriction base="xs:string">
-      <xs:pattern value="[-+]?(\d+|\d+(\.\d+)?%)"/>
+      <xs:pattern value="[\-+]?(\d+|\d+(\.\d+)?%)"/>
     </xs:restriction>
   </xs:simpleType>
 
@@ -256,7 +256,7 @@
       </xs:documentation>
     </xs:annotation>
     <xs:restriction base="xs:string">
-      <xs:pattern value="[-+]?(\d+|\d+(\.\d+)?%)|[1-9]?(\d+)?\*"/>
+      <xs:pattern value="[\-+]?(\d+|\d+(\.\d+)?%)|[1-9]?(\d+)?\*"/>
     </xs:restriction>
   </xs:simpleType>
 
@@ -292,7 +292,7 @@
     </xs:annotation>
     <xs:restriction base="xs:string">
       <xs:pattern
-          value="[-+]?(\d+|\d+(\.\d+)?%)(,\s*[-+]?(\d+|\d+(\.\d+)?%))*"/>
+          value="[\-+]?(\d+|\d+(\.\d+)?%)(,\s*[-+]?(\d+|\d+(\.\d+)?%))*"/>
     </xs:restriction>
   </xs:simpleType>
 
