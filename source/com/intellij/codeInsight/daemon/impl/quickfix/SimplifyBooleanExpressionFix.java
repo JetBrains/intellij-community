@@ -51,6 +51,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     else {
       PsiExpression constExpression = PsiManager.getInstance(project).getElementFactory()
           .createExpressionFromText(mySubExpressionValue.toString(), mySubExpression);
+      LOG.assertTrue(constExpression.isValid());
       expression = (PsiExpression)mySubExpression.replace(constExpression);
     }
     while (expression.getParent() instanceof PsiExpression) {
