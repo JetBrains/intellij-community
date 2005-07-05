@@ -22,7 +22,7 @@ public abstract class AbstractListBuilder {
   protected final Project myProject;
   protected final JList myList;
   private final DefaultListModel myModel;
-  private final AbstractTreeStructure myTreeStructure;
+  protected final AbstractTreeStructure myTreeStructure;
   private final Comparator myComparator;
 
   protected JLabel myParentTitle = null;
@@ -288,7 +288,9 @@ public abstract class AbstractListBuilder {
     if (myIsDisposed || myCurrentParent == null) {
       return;
     }
-    myTreeStructure.commit();
+    if (myTreeStructure.hasSomethingToCommit()) {
+      myTreeStructure.commit();
+    }
 
     final AbstractTreeNode initialParentDescriptor = myCurrentParent;
     AbstractTreeNode parentDescriptor = initialParentDescriptor;

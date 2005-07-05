@@ -90,6 +90,12 @@ public class ProjectListBuilder extends AbstractListBuilder {
     final Runnable request = new Runnable() {
       public void run() {
         if (!myProject.isDisposed()) {
+          // Rely on project view to commit PSI and wait until it's updated.
+          if (myTreeStructure.hasSomethingToCommit() ) {
+            myUpdateAlarm.cancelAllRequests();
+            myUpdateAlarm.addRequest(this, 300);
+            return;
+          }
           updateList();
         }
       }
