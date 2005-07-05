@@ -285,7 +285,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
           if (dependencyFile != null && dependencyFile.isPhysical() && dependencyFile.getVirtualFile() != null) {
             DependencyRule[] rules = validationManager.getViolatorDependencyRules(myFile, dependencyFile);
             if (rules.length > 0) {
-              if (InspectionManagerEx.inspectionResultSuppressed(place, HighlightDisplayKey.ILLEGAL_DEPENDENCY.toString())) return;
+              if (InspectionManagerEx.inspectionResultSuppressed(place, HighlightDisplayKey.ILLEGAL_DEPENDENCY.getID())) return;
               HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ILLEGAL_DEPENDENCY, place,
                                                                      "Illegal dependency. Violated rules: \"" + rules[0].getDisplayText() +
                                                                      "\"");

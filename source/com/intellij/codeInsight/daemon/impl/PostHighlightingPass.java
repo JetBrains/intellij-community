@@ -209,7 +209,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   private HighlightInfo processIdentifier(PsiIdentifier identifier) {
     InspectionProfileImpl profile = mySettings.getInspectionProfile(identifier);
     if (!profile.isToolEnabled(HighlightDisplayKey.UNUSED_SYMBOL)) return null;
-    if (InspectionManagerEx.inspectionResultSuppressed(identifier, HighlightDisplayKey.UNUSED_SYMBOL.toString())) return null;
+    if (InspectionManagerEx.inspectionResultSuppressed(identifier, HighlightDisplayKey.UNUSED_SYMBOL.getID())) return null;
     HighlightInfo info;
     PsiElement parent = identifier.getParent();
     if (PsiUtil.hasErrorElementChild(parent)) return null;

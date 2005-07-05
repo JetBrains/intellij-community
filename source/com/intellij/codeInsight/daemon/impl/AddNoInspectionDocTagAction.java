@@ -38,7 +38,7 @@ public class AddNoInspectionDocTagAction implements IntentionAction {
 
   public AddNoInspectionDocTagAction(HighlightDisplayKey key, PsiElement context) {
     myDisplayName = HighlightDisplayKey.getDisplayNameByKey(key);
-    myID = key.toString();
+    myID = key.getID();
     myContext = context;
   }
 

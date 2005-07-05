@@ -21,10 +21,6 @@ public class AddNoInspectionForClassAction extends AddNoInspectionDocTagAction{
     super(key, context);
   }
 
-  public AddNoInspectionForClassAction(final String displayName, final String ID, final PsiElement context) {
-    super(displayName, ID, context);
-  }
-
   @Nullable protected PsiDocCommentOwner getContainer() {
     PsiDocCommentOwner container = super.getContainer();
     if (container == null || container instanceof PsiClass){

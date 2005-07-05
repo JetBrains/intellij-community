@@ -29,7 +29,7 @@ public class AddNoInspectionCommentAction implements IntentionAction {
   }
 
   public AddNoInspectionCommentAction(HighlightDisplayKey key, PsiElement context) {
-    myID = key.toString();
+    myID = key.getID();
     myDisplayName = HighlightDisplayKey.getDisplayNameByKey(key);
     myContext = context;
   }

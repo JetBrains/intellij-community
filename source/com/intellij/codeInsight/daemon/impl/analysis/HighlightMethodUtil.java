@@ -300,7 +300,7 @@ public class HighlightMethodUtil {
     if (!(referenceList.getParent() instanceof PsiMethod)) return null;
     PsiMethod method = (PsiMethod)referenceList.getParent();
     if (referenceList != method.getThrowsList()) return null;
-    if (!InspectionManagerEx.isToCheckMember(method, HighlightDisplayKey.UNUSED_THROWS_DECL.toString())) return null;
+    if (!InspectionManagerEx.isToCheckMember(method, HighlightDisplayKey.UNUSED_THROWS_DECL.getID())) return null;
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return null;
 
@@ -1131,7 +1131,7 @@ public class HighlightMethodUtil {
                                                       DaemonCodeAnalyzerSettings settings) {
     PsiMethod method = methodSignature.getMethod();
     if (!settings.getInspectionProfile(method).isToolEnabled(HighlightDisplayKey.DEPRECATED_SYMBOL)) return null;
-    if (!InspectionManagerEx.isToCheckMember(method, HighlightDisplayKey.DEPRECATED_SYMBOL.toString())) return null;
+    if (!InspectionManagerEx.isToCheckMember(method, HighlightDisplayKey.DEPRECATED_SYMBOL.getID())) return null;
     PsiElement methodName = method.getNameIdentifier();
     for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
       PsiMethod superMethod = superMethodSignature.getMethod();

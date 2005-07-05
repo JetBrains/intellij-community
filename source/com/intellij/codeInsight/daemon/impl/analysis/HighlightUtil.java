@@ -21,6 +21,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -29,6 +30,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.scope.processor.VariablesNotProcessor;
@@ -40,11 +42,10 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
 import java.util.*;
-
-import org.jetbrains.annotations.Nullable;
 
 public class HighlightUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil");
@@ -1584,7 +1585,7 @@ public class HighlightUtil {
     if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(assignment).isToolEnabled(HighlightDisplayKey.SILLY_ASSIGNMENT)) {
       return null;
     }
-    if (InspectionManagerEx.inspectionResultSuppressed(assignment, HighlightDisplayKey.SILLY_ASSIGNMENT.toString())) return null;
+    if (InspectionManagerEx.inspectionResultSuppressed(assignment, HighlightDisplayKey.SILLY_ASSIGNMENT.getID())) return null;
 
     if (assignment.getOperationSign().getTokenType() != JavaTokenType.EQ) return null;
     PsiExpression lExpression = assignment.getLExpression();
@@ -1817,7 +1818,7 @@ public class HighlightUtil {
     if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(expr).isToolEnabled(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE)) {
       return null;
     }
-    if (InspectionManagerEx.inspectionResultSuppressed(expr, HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE.toString())) return null;
+    if (InspectionManagerEx.inspectionResultSuppressed(expr, HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE.getID())) return null;
 
     if (!(resolved instanceof PsiMember)) return null;
     PsiExpression qualifierExpression = expr.getQualifierExpression();
@@ -2105,7 +2106,7 @@ public class HighlightUtil {
     if (!(refElement instanceof PsiDocCommentOwner)) return null;
     if (!((PsiDocCommentOwner)refElement).isDeprecated()) return null;
 
-    if (InspectionManagerEx.inspectionResultSuppressed(elementToHighlight, HighlightDisplayKey.DEPRECATED_SYMBOL.toString())) return null;
+    if (InspectionManagerEx.inspectionResultSuppressed(elementToHighlight, HighlightDisplayKey.DEPRECATED_SYMBOL.getID())) return null;
 
     String description = MessageFormat.format("''{0}'' is deprecated", new Object[]{
       HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY)});
@@ -2136,7 +2137,18 @@ public class HighlightUtil {
   public static void forceRootHighlighting(final PsiElement root, final boolean highlightFlag) {
     final HighlightingSettingsPerFile component = HighlightingSettingsPerFile.getInstance(root.getProject());
     if(component == null) return;
-    component.setHighlightingSettingForRoot(root, highlightFlag ? FileHighlighingSetting.FORCE_HIGHLIGHTING: FileHighlighingSetting.SKIP_HIGHLIGHTING);
+    final PsiFile file = root.getContainingFile();
+    final FileHighlighingSetting highlightingLevel = highlightFlag
+                                                     ? FileHighlighingSetting.FORCE_HIGHLIGHTING
+                                                     : FileHighlighingSetting.SKIP_HIGHLIGHTING;
+    if (file != null && file instanceof JspFile && root.getLanguage() instanceof JavaLanguage){
+      //highlight both java roots
+      final JspClass jspClass = ((JspClass)((JspFile)file).getJavaRoot());
+      component.setHighlightingSettingForRoot(jspClass.getClassDummyHolder(), highlightingLevel);
+      component.setHighlightingSettingForRoot(jspClass.getMethodDummyHolder(), highlightingLevel);
+    } else {
+      component.setHighlightingSettingForRoot(root, highlightingLevel);
+    }
   }
 
   public static boolean isRootInspected(final PsiElement psiRoot) {
@@ -2151,7 +2163,18 @@ public class HighlightUtil {
   public static void forceRootInspection(final PsiElement root, final boolean inspectionFlag) {
     final HighlightingSettingsPerFile component = HighlightingSettingsPerFile.getInstance(root.getProject());
     if(component == null) return;
-    component.setHighlightingSettingForRoot(root, inspectionFlag ? FileHighlighingSetting.FORCE_HIGHLIGHTING: FileHighlighingSetting.SKIP_INSPECTION);
+    final PsiFile file = root.getContainingFile();
+    final FileHighlighingSetting inspectionLevel = inspectionFlag
+                                                   ? FileHighlighingSetting.FORCE_HIGHLIGHTING
+                                                   : FileHighlighingSetting.SKIP_INSPECTION;
+    if (file != null && file instanceof JspFile && root.getLanguage() instanceof JavaLanguage){
+      //highlight both java roots
+      final JspClass jspClass = ((JspClass)((JspFile)file).getJavaRoot());
+      component.setHighlightingSettingForRoot(jspClass.getClassDummyHolder(), inspectionLevel);
+      component.setHighlightingSettingForRoot(jspClass.getMethodDummyHolder(), inspectionLevel);
+    } else {
+      component.setHighlightingSettingForRoot(root, inspectionLevel);
+    }
   }
 
   public static HighlightInfo convertToHighlightInfo(Annotation annotation) {
