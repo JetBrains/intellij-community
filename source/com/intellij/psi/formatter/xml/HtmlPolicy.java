@@ -6,38 +6,42 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTag;
 
 public class HtmlPolicy extends XmlFormattingPolicy{
-  private final IElementType myHtmlTagType;
   private CodeStyleSettings mySettings;
 
-  public HtmlPolicy(final CodeStyleSettings settings,
-                   final IElementType htmlType) {
-    myHtmlTagType = htmlType;
+  public HtmlPolicy(final CodeStyleSettings settings) {
     mySettings = settings;
   }
 
-  public IElementType getTagType() {
-    return myHtmlTagType;
-  }
-
   public boolean indentChildrenOf(final XmlTag parentTag) {
-    if (parentTag instanceof JspXmlRootTag) return false;
     if (parentTag == null) {
       return true;
     }
-    else if (getLines(parentTag) > mySettings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES) {
+    final PsiElement firstChild = findFirstNonEmptyChild(parentTag);
+
+    if (firstChild == null) return false;
+
+    if (firstChild.getNode().getElementType() != ElementType.XML_START_TAG_START) return false;
+
+    if (getLines(parentTag) > mySettings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES) {
       return false;
     }
     else {
       return !checkName(parentTag, mySettings.HTML_DO_NOT_INDENT_CHILDREN_OF);
     }
+  }
+
+  private PsiElement findFirstNonEmptyChild(final XmlTag parentTag) {
+    PsiElement result = parentTag.getFirstChild();
+    while (result != null && result.getTextLength() == 0) {
+      result = result.getNextSibling();
+    }
+    return result;
   }
 
   private int getLines(final XmlTag parentTag) {

@@ -89,9 +89,10 @@ public class XmlBlock extends AbstractXmlBlock {
 
     final IElementType elementType = myNode.getElementType();
     final IElementType type1 = ((AbstractBlock)child1).getNode().getElementType();
-    final IElementType type2 = ((AbstractBlock)child2).getNode().getElementType();
+    final ASTNode node2 = ((AbstractBlock)child2).getNode();
+    final IElementType type2 = node2.getElementType();
 
-    if ((type2 == getTagType() || type2 == ElementType.XML_END_TAG_START || type2 == ElementType.XML_TEXT) && myXmlFormattingPolicy
+    if ((isXmlTag(node2) || type2 == ElementType.XML_END_TAG_START || type2 == ElementType.XML_TEXT) && myXmlFormattingPolicy
       .getShouldKeepWhiteSpaces()) {
       return getFormatter().getReadOnlySpace();
     }

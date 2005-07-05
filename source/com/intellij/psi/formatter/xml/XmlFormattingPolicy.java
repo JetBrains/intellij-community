@@ -1,21 +1,21 @@
 package com.intellij.psi.formatter.xml;
 
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.PsiElement;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.newCodeFormatting.Block;
 import com.intellij.newCodeFormatting.FormattingModelBuilder;
-import com.intellij.util.containers.HashMap;
-import com.intellij.lang.Language;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.containers.HashMap;
 
 import java.util.Map;
 
 public abstract class XmlFormattingPolicy {
 
   private Map<Pair<PsiElement, Language>, Block> myRootToBlockMap = new HashMap<Pair<PsiElement, Language>, Block>();
+  private boolean myProcessJsp = true;
 
   public Block getOrCreateBlockFor(Pair<PsiElement, Language> root){
     if (!myRootToBlockMap.containsKey(root)) {
@@ -29,13 +29,19 @@ public abstract class XmlFormattingPolicy {
     if (builder != null) {
       final Block result = builder.createModel(root.getFirst(), getSettings()).getRootBlock();
       if (result instanceof XmlBlock) {
-        ((XmlBlock)result).getPolicy().setRootModels(myRootToBlockMap);
+        final XmlFormattingPolicy policy = ((XmlBlock)result).getPolicy();
+        policy.setRootModels(myRootToBlockMap);
+        policy.doNotProcessJsp();
       }
       return result;
     } else {
       return null;
     }
 
+  }
+
+  private void doNotProcessJsp() {
+    myProcessJsp = false;
   }
 
   private void setRootModels(final Map<Pair<PsiElement, Language>, Block> rootToBlockMap) {
@@ -53,8 +59,6 @@ public abstract class XmlFormattingPolicy {
   public abstract boolean keepWhiteSpacesInsideTag(XmlTag tag);
 
   public abstract boolean indentChildrenOf(XmlTag parentTag);
-
-  public abstract IElementType getTagType();
 
   public abstract boolean isTextElement(XmlTag tag);
 
@@ -79,7 +83,7 @@ public abstract class XmlFormattingPolicy {
   public abstract CodeStyleSettings getSettings();
 
   public boolean processJsp() {
-    return true;
+    return myProcessJsp;
   }
 
   public abstract boolean addSpaceIntoEmptyTag();

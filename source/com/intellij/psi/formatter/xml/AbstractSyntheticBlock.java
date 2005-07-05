@@ -66,10 +66,6 @@ public abstract class AbstractSyntheticBlock implements Block{
     return null;
   }
 
-  protected IElementType getTagType() {
-    return myXmlFormattingPolicy.getTagType();
-  }
-
   protected Formatter getFormatter() {
     return Formatter.getInstance();
   }
@@ -117,7 +113,11 @@ public abstract class AbstractSyntheticBlock implements Block{
   }
 
   private boolean isTextTag(final ASTNode treeNode) {
-    return treeNode.getElementType() == myXmlFormattingPolicy.getTagType() && myXmlFormattingPolicy.isTextElement((XmlTag)SourceTreeToPsiMap.treeElementToPsi(treeNode));
+    return isXmlTag(treeNode) && myXmlFormattingPolicy.isTextElement((XmlTag)SourceTreeToPsiMap.treeElementToPsi(treeNode));
+  }
+
+  private boolean isXmlTag(final ASTNode treeNode) {
+    return (treeNode.getPsi() instanceof XmlTag);
   }
 
   private boolean isStartOfTag() {
@@ -141,11 +141,11 @@ public abstract class AbstractSyntheticBlock implements Block{
   }
 
   public boolean startsWithTag() {
-    return myStartTreeNode.getElementType() == getTagType();
+    return isXmlTag(myStartTreeNode);
   }
 
   public boolean endsWithTag() {
-    return myEndTreeNode.getElementType() == getTagType();
+    return isXmlTag(myEndTreeNode);
   }
   
   public boolean isJspTextBlock() {

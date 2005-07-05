@@ -1,24 +1,15 @@
 package com.intellij.psi.formatter.xml;
 
 import com.intellij.newCodeFormatting.Wrap;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
+import com.intellij.psi.xml.XmlTag;
 
 public class XmlPolicy extends XmlFormattingPolicy{
   private final CodeStyleSettings mySettings;
-  private final IElementType myXmlTag;
 
   public XmlPolicy(final CodeStyleSettings settings) {
     mySettings = settings;
-    myXmlTag = ElementType.XML_TAG;
-  }
-
-  public XmlPolicy(final CodeStyleSettings settings, final IElementType xmlTag) {
-    mySettings = settings;
-    myXmlTag = xmlTag;
   }
 
   public boolean indentChildrenOf(final XmlTag parentTag) {
@@ -93,7 +84,4 @@ public class XmlPolicy extends XmlFormattingPolicy{
     return mySettings.XML_SPACE_INSIDE_EMPTY_TAG;
   }
 
-  public IElementType getTagType() {
-    return myXmlTag;
-  }
 }

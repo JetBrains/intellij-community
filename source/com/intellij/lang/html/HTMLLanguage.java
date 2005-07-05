@@ -13,7 +13,6 @@ import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.formatter.xml.HtmlPolicy;
 import com.intellij.psi.formatter.xml.XmlBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
 
 /**
@@ -31,7 +30,7 @@ public class HTMLLanguage extends XMLLanguage {
       public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
         return new PsiBasedFormattingModel(element.getContainingFile(), settings,
                                            new XmlBlock(SourceTreeToPsiMap.psiElementToTree(element),
-                                                        null, null, new HtmlPolicy(settings, ElementType.HTML_TAG), null));
+                                                        null, null, new HtmlPolicy(settings), null));
       }
     };
 

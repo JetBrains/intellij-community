@@ -8,6 +8,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,8 +50,8 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block{
     boolean firstIsText = isTextFragment(node1);
     boolean secondIsText = isTextFragment(node2);
 
-    boolean firstIsTag = type1 == getTagType();
-    boolean secondIsTag = type2 == getTagType();
+    boolean firstIsTag = node1.getPsi() instanceof XmlTag;
+    boolean secondIsTag = node2.getPsi() instanceof XmlTag;
 
     if (isSpaceInText(firstIsTag, secondIsTag, firstIsText, secondIsText) && keepWhiteSpaces()) {
         return getFormatter().getReadOnlySpace();
@@ -63,7 +64,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block{
     }
 
     if (isXmlTagName(type1, type2)){
-      final int spaces = myXmlFormattingPolicy.getShouldAddSpaceAroundTagName() ? 1 : 0;
+      final int spaces = shouldAddSpaceAroundTagName(node1, node2) ? 1 : 0;
       return getFormatter().createSpaceProperty(spaces, spaces, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
     }
 
@@ -109,6 +110,12 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block{
     }
 
     return getFormatter().createSpaceProperty(0, Integer.MAX_VALUE, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
+  }
+
+  private boolean shouldAddSpaceAroundTagName(final ASTNode node1, final ASTNode node2) {
+    if (node1.getElementType() == ElementType.XML_START_TAG_START && node1.textContains('%')) return true;
+    if (node2.getElementType() == ElementType.XML_EMPTY_ELEMENT_END && node2.textContains('%')) return true;
+    return myXmlFormattingPolicy.getShouldAddSpaceAroundTagName();
   }
 
   private boolean isSpaceInText(final boolean firstIsTag,
