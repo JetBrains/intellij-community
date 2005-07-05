@@ -1,14 +1,13 @@
 package com.intellij.ide.commander;
 
 import com.intellij.ide.CopyPasteUtil;
-import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -16,6 +15,7 @@ import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.util.Alarm;
 
 import java.awt.datatransfer.Transferable;
 import java.util.ArrayList;
@@ -23,17 +23,20 @@ import java.util.Comparator;
 import java.util.List;
 
 public class ProjectListBuilder extends AbstractListBuilder {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.commander.ProjectListBuilder");
+
   private final MyPsiTreeChangeListener myPsiTreeChangeListener;
   private final MyFileStatusListener myFileStatusListener;
-  private int myUpdateCount = 0;
   private final CopyPasteManager.ContentChangedListener myCopyPasteListener;
+  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   public ProjectListBuilder(final Project project,
-                          final CommanderPanel panel,
-                          final AbstractTreeStructure treeStructure,
-                          final Comparator comparator,
-                          final boolean showRoot) {
+                            final CommanderPanel panel,
+                            final AbstractTreeStructure treeStructure,
+                            final Comparator comparator,
+                            final boolean showRoot) {
     super(project, panel.getList(), panel.getModel(), treeStructure, comparator, showRoot);
+
     myList.setCellRenderer(new ColoredCommanderRenderer(panel));
 
     myPsiTreeChangeListener = new MyPsiTreeChangeListener();
@@ -84,20 +87,20 @@ public class ProjectListBuilder extends AbstractListBuilder {
   }
 
   public void addUpdateRequest() {
-    myUpdateCount++;
-    final int count = myUpdateCount;
-    final Runnable updater = new Runnable() {
+    final Runnable request = new Runnable() {
       public void run() {
-        if (myUpdateCount != count || myProject.isDisposed()) return;
-        updateList();
+        if (!myProject.isDisposed()) {
+          updateList();
+        }
       }
     };
-    final Application app = ApplicationManager.getApplication();
-    if (app.isUnitTestMode()) {
-      updater.run();
+
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      myUpdateAlarm.cancelAllRequests();
+      myUpdateAlarm.addRequest(request, 300);
     }
     else {
-      app.invokeLater(updater, ModalityState.current());
+      request.run();
     }
   }
 
