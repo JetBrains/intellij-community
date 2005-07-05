@@ -80,6 +80,7 @@ public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
                 return;
             }
             final String methodName = methodExpression.getReferenceName();
+            assert methodName != null;
             if(!methodName.startsWith("set")){
                 return;
             }

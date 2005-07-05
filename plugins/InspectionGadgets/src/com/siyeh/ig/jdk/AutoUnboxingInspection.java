@@ -82,7 +82,7 @@ public class AutoUnboxingInspection extends ExpressionInspection{
 
             final PsiType expectedType =
                     ExpectedTypeUtils.findExpectedType(expression, false);
-
+            assert expectedType != null;
             final String expectedTypeText = expectedType.getCanonicalText();
             final String typeText = type.getCanonicalText();
             final String expressionText = expression.getText();

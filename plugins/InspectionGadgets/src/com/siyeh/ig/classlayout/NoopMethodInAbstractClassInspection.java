@@ -50,9 +50,6 @@ public class NoopMethodInAbstractClassInspection extends MethodInspection {
                 return;
             }
             final PsiStatement[] statements = body.getStatements();
-            if (statements == null) {
-                return;
-            }
             if (statements.length > 0) {
                 return;
             }

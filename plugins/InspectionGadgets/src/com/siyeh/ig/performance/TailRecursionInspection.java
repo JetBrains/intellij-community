@@ -116,6 +116,7 @@ public class TailRecursionInspection extends ExpressionInspection{
                         (PsiMethodCallExpression) returnStatement
                                 .getReturnValue();
                 final PsiExpressionList argumentList = call.getArgumentList();
+                assert argumentList != null;
                 final PsiExpression[] args =
                         argumentList.getExpressions();
 

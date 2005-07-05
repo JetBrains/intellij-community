@@ -4,17 +4,16 @@
     Configure Log4J in a file
     Prohibitted Log4J levels
     Class name with forbidden name component
-    getClass().getResource()
-    Inefficient use of keySet iterator rather than entrySet iterator
-    Constant month outside range of 0..11
     JDBC close order
     JDBC connection createStatement()
     Look for ArrayIndexOutOfBounds errors statically
     Static initializer which creates an instance before all static variables are initialized
-    Read or write on non-buffered stream
+    Read or write on non-buffered stream 
+    getClass().getResource()
+    Inefficient use of keySet iterator rather than entrySet iterator
+    Constant month outside range of 0..11
 
     Duplicate switch branches
-    hasNext() invokes next()
     Constant Math calls
 
     Move and restructure categories

@@ -27,9 +27,6 @@ public class VariableUsedInArrayInitializerVisitor extends PsiRecursiveElementVi
         super.visitArrayInitializerExpression(expression);
 
         final PsiExpression[] args = expression.getInitializers();
-        if(args == null){
-            return;
-        }
         for(final PsiExpression arg : args){
 
             if(VariableAccessUtils.mayEvaluateToVariable(arg, variable)){

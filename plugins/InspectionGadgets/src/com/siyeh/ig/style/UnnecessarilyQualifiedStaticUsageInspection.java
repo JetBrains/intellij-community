@@ -196,6 +196,10 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends ExpressionInspe
                 return false;
             }
             final String referenceName = expression.getReferenceName();
+            if(referenceName == null)
+            {
+                return false;
+            }
             PsiClass parentClass = ClassUtils.getContainingClass(expression);
             PsiClass containingClass = parentClass;
             while (parentClass != null) {

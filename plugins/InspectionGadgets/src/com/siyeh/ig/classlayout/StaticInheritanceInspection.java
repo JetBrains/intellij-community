@@ -65,8 +65,8 @@ public class StaticInheritanceInspection extends ClassInspection{
                                 reference.getReferenceName();
                         if(qualifier instanceof PsiReferenceExpression){
                             final PsiElement referent =
-                                    ((PsiReference) qualifier).resolve();
-                            if(!referent.equals(iface)){
+                                    ((PsiReferenceExpression) qualifier).resolve();
+                            if(referent!=null && !referent.equals(iface)){
                                 replaceExpression(reference,
                                                   referencedClassName + '.' +
                                                           referenceName);

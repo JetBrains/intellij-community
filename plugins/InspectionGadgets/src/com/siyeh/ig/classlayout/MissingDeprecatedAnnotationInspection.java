@@ -130,12 +130,14 @@ public class MissingDeprecatedAnnotationInspection extends ClassInspection{
             return false;
         }
         final PsiAnnotation[] annotations = modifierList.getAnnotations();
-        if(annotations == null){
-            return false;
-        }
+
         for(final PsiAnnotation annotation : annotations){
             final PsiJavaCodeReferenceElement reference = annotation
                     .getNameReferenceElement();
+            if(reference == null)
+            {
+                return false;
+            }
             final PsiClass annotationClass =
                     (PsiClass) reference.resolve();
             if(annotationClass == null){

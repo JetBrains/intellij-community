@@ -82,7 +82,7 @@ public class ParameterHidingMemberVariableInspection extends MethodInspection{
                 final String methodName = method.getName();
                 final PsiType returnType = method.getReturnType();
                 if(methodName.startsWith("set") &&
-                           returnType.equals(PsiType.VOID)){
+                        PsiType.VOID.equals(returnType)){
                     return;
                 }
             }

@@ -59,6 +59,7 @@ public class AutoBoxingInspection extends ExpressionInspection {
                                                                          throws IncorrectOperationException{
             final PsiExpression expression = (PsiExpression) descriptor.getPsiElement();
             final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false);
+            assert expectedType != null;
             final String newExpression;
             if (expectedType.equals(PsiType.BOOLEAN)) {
                 newExpression = "Boolean.valueOf(" + expression.getText() + ')';

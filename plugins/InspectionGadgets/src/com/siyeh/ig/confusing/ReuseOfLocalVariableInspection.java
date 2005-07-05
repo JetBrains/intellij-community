@@ -95,10 +95,12 @@ public class ReuseOfLocalVariableInspection
                                       newVariableName);
                 }
             }
+            final PsiExpression rhs = assignment.getRExpression();
+            assert rhs != null;
             final String newStatement =
                     type.getPresentableText() + ' '
                             + newVariableName +
-                            " =  " + assignment.getRExpression().getText()
+                            " =  " + rhs.getText()
                             + ';';
             replaceStatement(assignmentStatement, newStatement);
         }

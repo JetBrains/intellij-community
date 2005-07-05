@@ -39,7 +39,7 @@ public class MapReplaceableByEnumMapInspection extends ExpressionInspection{
                 return;
             }
             final PsiType[] typeArguments = classType.getParameters();
-            if(typeArguments == null || typeArguments.length != 2){
+            if(typeArguments.length != 2){
                 return;
             }
             final PsiType argumentType = typeArguments[0];

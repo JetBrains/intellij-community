@@ -17,8 +17,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class BadExceptionDeclaredInspection extends MethodInspection {
-    /** @noinspection PublicField*/
+public class BadExceptionDeclaredInspection extends MethodInspection{
+    /**
+     * @noinspection PublicField
+     */
     public String exceptionCheckString = "java.lang.Throwable," +
             "java.lang.Exception," +
             "java.lang.Error," +
@@ -33,12 +35,12 @@ public class BadExceptionDeclaredInspection extends MethodInspection {
         parseCallCheckString();
     }
 
-    public void readSettings(Element element) throws InvalidDataException {
+    public void readSettings(Element element) throws InvalidDataException{
         super.readSettings(element);
         parseCallCheckString();
     }
 
-    private void parseCallCheckString() {
+    private void parseCallCheckString(){
         exceptionsList.clear();
         final String[] strings = exceptionCheckString.split(",");
         for(String string : strings){
@@ -46,12 +48,12 @@ public class BadExceptionDeclaredInspection extends MethodInspection {
         }
     }
 
-    public void writeSettings(Element element) throws WriteExternalException {
+    public void writeSettings(Element element) throws WriteExternalException{
         formatCallCheckString();
         super.writeSettings(element);
     }
 
-    private void formatCallCheckString() {
+    private void formatCallCheckString(){
         final StringBuffer buffer = new StringBuffer();
         boolean first = true;
         for(Object aExceptionsList : exceptionsList){
@@ -69,50 +71,50 @@ public class BadExceptionDeclaredInspection extends MethodInspection {
     public String getID(){
         return "ProhibitedExceptionDeclared";
     }
-    public String getDisplayName() {
+
+    public String getDisplayName(){
         return "Prohibited exception declared";
     }
 
-    public String getGroupDisplayName() {
+    public String getGroupDisplayName(){
         return GroupNames.ERRORHANDLING_GROUP_NAME;
     }
 
-    public JComponent createOptionsPanel() {
+    public JComponent createOptionsPanel(){
         final Form form = new Form();
         return form.getContentPanel();
     }
 
-    public String buildErrorString(PsiElement location) {
+    public String buildErrorString(PsiElement location){
         return "Prohibited exception '#ref' declared. #loc ";
     }
 
-    public BaseInspectionVisitor buildVisitor() {
+    public BaseInspectionVisitor buildVisitor(){
         return new BadExceptionDeclaredVisitor();
     }
 
-    private class BadExceptionDeclaredVisitor extends BaseInspectionVisitor {
-
-        public void visitMethod(@NotNull PsiMethod method) {
+    private class BadExceptionDeclaredVisitor extends BaseInspectionVisitor{
+        public void visitMethod(@NotNull PsiMethod method){
             super.visitMethod(method);
             final PsiReferenceList throwsList = method.getThrowsList();
-            if(throwsList ==null)
-            {
+            if(throwsList == null){
                 return;
             }
             final PsiJavaCodeReferenceElement[] references =
                     throwsList.getReferenceElements();
-            if(references == null)
-            {
+            if(references == null){
                 return;
             }
             for(PsiJavaCodeReferenceElement reference : references){
                 final PsiClass thrownClass = (PsiClass) reference.resolve();
                 if(thrownClass != null){
                     final String text = thrownClass.getQualifiedName();
-                    for(Object aExceptionsList : exceptionsList){
-                        final String exceptionClass = (String) aExceptionsList;
-                        if(text.equals(exceptionClass)){
-                            registerError(reference);
+                    if(text != null){
+                        for(Object aExceptionsList : exceptionsList){
+                            final String exceptionClass = (String) aExceptionsList;
+                            if(text.equals(exceptionClass)){
+                                registerError(reference);
+                            }
                         }
                     }
                 }
@@ -120,35 +122,38 @@ public class BadExceptionDeclaredInspection extends MethodInspection {
         }
     }
 
-    /** @noinspection PublicInnerClass*/
-    public class Form {
+    /**
+     * @noinspection PublicInnerClass
+     */
+    public class Form{
         private JPanel contentPanel;
         private JButton addButton;
         private JButton deleteButton;
         private JTable table;
 
-        public Form() {
+        public Form(){
             super();
             table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
             table.setRowSelectionAllowed(true);
-            table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+            table.setSelectionMode(
+                    ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
             table.setEnabled(true);
             final ReturnCheckSpecificationTableModel model =
                     new ReturnCheckSpecificationTableModel();
             table.setModel(model);
             addButton.setEnabled(true);
-            addButton.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
+            addButton.addActionListener(new ActionListener(){
+                public void actionPerformed(ActionEvent e){
                     exceptionsList.add("");
                     model.fireTableStructureChanged();
                 }
             });
             deleteButton.setEnabled(true);
-            deleteButton.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
+            deleteButton.addActionListener(new ActionListener(){
+                public void actionPerformed(ActionEvent e){
                     final int[] selectedRows = table.getSelectedRows();
                     Arrays.sort(selectedRows);
-                    for (int i = selectedRows.length - 1; i >= 0; i--) {
+                    for(int i = selectedRows.length - 1; i >= 0; i--){
                         exceptionsList.remove(selectedRows[i]);
                     }
                     model.fireTableStructureChanged();
@@ -161,35 +166,33 @@ public class BadExceptionDeclaredInspection extends MethodInspection {
         }
     }
 
-    private class ReturnCheckSpecificationTableModel extends AbstractTableModel {
-
-        public int getRowCount() {
+    private class ReturnCheckSpecificationTableModel extends AbstractTableModel{
+        public int getRowCount(){
             return exceptionsList.size();
         }
 
-        public int getColumnCount() {
+        public int getColumnCount(){
             return 1;
         }
 
-        public String getColumnName(int columnIndex) {
+        public String getColumnName(int columnIndex){
             return "Exception class";
         }
 
-        public Class getColumnClass(int columnIndex) {
+        public Class getColumnClass(int columnIndex){
             return String.class;
         }
 
-        public boolean isCellEditable(int rowIndex, int columnIndex) {
+        public boolean isCellEditable(int rowIndex, int columnIndex){
             return true;
         }
 
-        public Object getValueAt(int rowIndex, int columnIndex) {
+        public Object getValueAt(int rowIndex, int columnIndex){
             return exceptionsList.get(rowIndex);
         }
 
-        public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+        public void setValueAt(Object aValue, int rowIndex, int columnIndex){
             exceptionsList.set(rowIndex, aValue);
         }
     }
-
 }

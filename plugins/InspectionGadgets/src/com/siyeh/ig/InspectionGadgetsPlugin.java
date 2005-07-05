@@ -279,7 +279,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(CustomClassloaderInspection.class);
         m_inspectionClasses.add(CustomSecurityManagerInspection.class);
         m_inspectionClasses.add(SystemSetSecurityManagerInspection.class);
-        m_inspectionClasses.add(ClassLoaderInstantiationInspection.class);
+        m_inspectionClasses.add(ClassLoader2InstantiationInspection.class);
         m_inspectionClasses.add(UnsecureRandomNumberGenerationInspection.class);
         m_inspectionClasses.add(SystemPropertiesInspection.class);
         m_inspectionClasses.add(PublicStaticArrayFieldInspection.class);
@@ -345,6 +345,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(BigDecimalEqualsInspection.class);
         m_inspectionClasses.add(DivideByZeroInspection.class);
         m_inspectionClasses.add(NonReproducibleMathCallInspection.class);
+        m_inspectionClasses.add(ConstantMathCallInspection.class);
         m_inspectionClasses.add(CovariantCompareToInspection.class);
         m_inspectionClasses.add(CovariantEqualsInspection.class);
         m_inspectionClasses.add(FloatingPointEqualityInspection.class);

@@ -40,7 +40,7 @@ public class SetReplaceableByEnumSetInspection extends ExpressionInspection{
                 return;
             }
             final PsiType[] typeArguments = classType.getParameters();
-            if(typeArguments == null || typeArguments.length!=1)
+            if(typeArguments.length!=1)
             {
                 return;
             }

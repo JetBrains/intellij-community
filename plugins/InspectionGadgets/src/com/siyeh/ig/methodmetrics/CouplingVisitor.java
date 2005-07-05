@@ -17,7 +17,7 @@ class CouplingVisitor extends PsiRecursiveElementVisitor {
     private final boolean m_includeLibraryClasses;
     private final Set<String> m_dependencies = new HashSet<String>(10);
 
-    CouplingVisitor(PsiMethod method, boolean includeJavaClasses,
+    CouplingVisitor(@NotNull PsiMethod method, boolean includeJavaClasses,
                     boolean includeLibraryClasses) {
         super();
         m_method = method;

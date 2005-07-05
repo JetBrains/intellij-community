@@ -8,7 +8,7 @@ class StringVariableIsAppendedToVisitor extends PsiRecursiveElementVisitor {
     private boolean appendedTo = false;
     private final PsiVariable variable;
 
-    public StringVariableIsAppendedToVisitor(PsiVariable variable) {
+    StringVariableIsAppendedToVisitor(PsiVariable variable) {
         super();
         this.variable = variable;
     }

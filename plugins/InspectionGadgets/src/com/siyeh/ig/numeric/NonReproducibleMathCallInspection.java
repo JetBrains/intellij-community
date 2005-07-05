@@ -14,8 +14,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class NonReproducibleMathCallInspection extends ExpressionInspection {
-    @SuppressWarnings("StaticNonFinalField")
-    private static Set<String> nonReproducibleMethods = new HashSet<String>(20);
+    @SuppressWarnings("StaticCollection")
+    private static final Set<String> nonReproducibleMethods = new HashSet<String>(20);
 
     static
     {

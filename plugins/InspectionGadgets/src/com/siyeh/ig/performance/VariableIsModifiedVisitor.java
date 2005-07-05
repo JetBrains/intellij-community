@@ -7,7 +7,7 @@ class VariableIsModifiedVisitor extends PsiRecursiveElementVisitor{
     private boolean modified = false;
     private final PsiVariable variable;
 
-    public VariableIsModifiedVisitor(PsiVariable variable){
+    VariableIsModifiedVisitor(PsiVariable variable){
         super();
         this.variable = variable;
     }

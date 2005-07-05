@@ -77,7 +77,8 @@ public class InitializationReadUtils{
             return false;
         } else if(statement instanceof PsiExpressionStatement){
             final PsiExpressionStatement expressionStatement = (PsiExpressionStatement) statement;
-            final PsiExpression expression = expressionStatement.getExpression();
+            final PsiExpression expression = expressionStatement
+                    .getExpression();
             return expressionMustAssignVariable(field, expression,
                                                 checkedMethods);
         } else if(statement instanceof PsiDeclarationStatement){
@@ -100,15 +101,18 @@ public class InitializationReadUtils{
                                              (PsiDoWhileStatement) statement,
                                              checkedMethods);
         } else if(statement instanceof PsiSynchronizedStatement){
-            final PsiCodeBlock body = ((PsiSynchronizedStatement) statement).getBody();
+            final PsiCodeBlock body = ((PsiSynchronizedStatement) statement)
+                    .getBody();
             return cachingBlockMustAssignVariable(field, body, checkedMethods);
         } else if(statement instanceof PsiBlockStatement){
-            final PsiCodeBlock codeBlock = ((PsiBlockStatement) statement).getCodeBlock();
+            final PsiCodeBlock codeBlock = ((PsiBlockStatement) statement)
+                    .getCodeBlock();
             return cachingBlockMustAssignVariable(field, codeBlock,
                                                   checkedMethods);
         } else if(statement instanceof PsiLabeledStatement){
             final PsiLabeledStatement labeledStatement = (PsiLabeledStatement) statement;
-            final PsiStatement statementLabeled = labeledStatement.getStatement();
+            final PsiStatement statementLabeled = labeledStatement
+                    .getStatement();
             return statementMustAssignVariable(field, statementLabeled,
                                                checkedMethods);
         } else if(statement instanceof PsiIfStatement){
@@ -130,7 +134,8 @@ public class InitializationReadUtils{
     private boolean declarationStatementMustAssignVariable(PsiVariable field,
                                                            PsiDeclarationStatement declarationStatement,
                                                            Set<MethodSignature> checkedMethods){
-        final PsiElement[] elements = declarationStatement.getDeclaredElements();
+        final PsiElement[] elements = declarationStatement
+                .getDeclaredElements();
         for(PsiElement element : elements){
             if(element instanceof PsiVariable){
                 final PsiVariable variable = (PsiVariable) element;
@@ -243,9 +248,11 @@ public class InitializationReadUtils{
             if(field.equals(refExp.resolve())){
 
                 if(refExp.getParent() instanceof PsiAssignmentExpression){
-                    final PsiAssignmentExpression pae = (PsiAssignmentExpression) refExp.getParent();
-                    if(pae.getRExpression() != null){
-                        if(pae.getRExpression().equals(refExp)){
+                    final PsiAssignmentExpression pae = (PsiAssignmentExpression) refExp
+                            .getParent();
+                    final PsiExpression rhs = pae.getRExpression();
+                    if(rhs != null){
+                        if(rhs.equals(refExp)){
                             if(!refExp.isQualified() ||
                                     refExp.getQualifierExpression() instanceof PsiThisExpression){
                                 uninitializedReads.add(expression);
@@ -271,9 +278,11 @@ public class InitializationReadUtils{
                     PsiTreeUtil.getParentOfType(expression,
                                                 PsiMethod.class);
             if(method != null){
-                final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression) expression).getMethodExpression();
+                final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression) expression)
+                        .getMethodExpression();
                 if(methodExpression != null){
-                    final PsiMethod calledMethod = (PsiMethod) methodExpression.resolve();
+                    final PsiMethod calledMethod = (PsiMethod) methodExpression
+                            .resolve();
                     if(method.equals(calledMethod)){
                         // Skip recursive call to self that causes StackOverflowError.
                         return false;
@@ -302,8 +311,10 @@ public class InitializationReadUtils{
             return expressionMustAssignVariable(field, operand, checkedMethods);
         } else if(expression instanceof PsiArrayAccessExpression){
             final PsiArrayAccessExpression accessExpression = (PsiArrayAccessExpression) expression;
-            final PsiExpression arrayExpression = accessExpression.getArrayExpression();
-            final PsiExpression indexExpression = accessExpression.getIndexExpression();
+            final PsiExpression arrayExpression = accessExpression
+                    .getArrayExpression();
+            final PsiExpression indexExpression = accessExpression
+                    .getIndexExpression();
             return expressionMustAssignVariable(field, arrayExpression,
                                                 checkedMethods) ||
                     expressionMustAssignVariable(field, indexExpression,
@@ -328,8 +339,10 @@ public class InitializationReadUtils{
             if(expressionMustAssignVariable(field, condition, checkedMethods)){
                 return true;
             }
-            final PsiExpression thenExpression = conditional.getThenExpression();
-            final PsiExpression elseExpression = conditional.getElseExpression();
+            final PsiExpression thenExpression = conditional
+                    .getThenExpression();
+            final PsiExpression elseExpression = conditional
+                    .getElseExpression();
             return expressionMustAssignVariable(field, thenExpression,
                                                 checkedMethods) &&
                     expressionMustAssignVariable(field, elseExpression,
@@ -372,17 +385,17 @@ public class InitializationReadUtils{
                 }
             }
         }
-        final PsiArrayInitializerExpression arrayInitializer = callExpression.getArrayInitializer();
+        final PsiArrayInitializerExpression arrayInitializer = callExpression
+                .getArrayInitializer();
         if(expressionMustAssignVariable(field, arrayInitializer,
                                         checkedMethods)){
             return true;
         }
-        final PsiExpression[] arrayDimensions = callExpression.getArrayDimensions();
-        if(arrayDimensions != null){
-            for(final PsiExpression dim : arrayDimensions){
-                if(expressionMustAssignVariable(field, dim, checkedMethods)){
-                    return true;
-                }
+        final PsiExpression[] arrayDimensions = callExpression
+                .getArrayDimensions();
+        for(final PsiExpression dim : arrayDimensions){
+            if(expressionMustAssignVariable(field, dim, checkedMethods)){
+                return true;
             }
         }
         return false;
@@ -402,7 +415,8 @@ public class InitializationReadUtils{
                 }
             }
         }
-        final PsiReferenceExpression methodExpression = callExpression.getMethodExpression();
+        final PsiReferenceExpression methodExpression = callExpression
+                .getMethodExpression();
         if(expressionMustAssignVariable(field, methodExpression,
                                         checkedMethods)){
             return true;
@@ -411,8 +425,9 @@ public class InitializationReadUtils{
         if(method == null){
             return false;
         }
-        final MethodSignature methodSignature = method.getSignature(PsiSubstitutor.EMPTY);
-        if (!checkedMethods.add(methodSignature)){
+        final MethodSignature methodSignature = method
+                .getSignature(PsiSubstitutor.EMPTY);
+        if(!checkedMethods.add(methodSignature)){
             return false;
         }
 

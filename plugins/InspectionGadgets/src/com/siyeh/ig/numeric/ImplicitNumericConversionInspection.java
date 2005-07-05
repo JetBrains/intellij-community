@@ -102,7 +102,8 @@ public class ImplicitNumericConversionInspection extends ExpressionInspection {
             }
         }
 
-        private static @Nullable String convertExpression(PsiExpression expression, PsiType expectedType) {
+        @Nullable
+        private static String convertExpression(PsiExpression expression, PsiType expectedType) {
             final PsiType expressionType = expression.getType();
 
             if (expressionType.equals(PsiType.INT) && expectedType.equals(PsiType.LONG)) {
@@ -251,6 +252,10 @@ public class ImplicitNumericConversionInspection extends ExpressionInspection {
                 return;
             }
             final PsiType expressionType = expression.getType();
+            if(expressionType == null)
+            {
+                return;
+            }
             if(!ClassUtils.isPrimitiveNumericType(expressionType)){
                 return;
             }
@@ -258,7 +263,7 @@ public class ImplicitNumericConversionInspection extends ExpressionInspection {
             if(!ClassUtils.isPrimitiveNumericType(expectedType)){
                 return;
             }
-            if(expectedType.equals(expressionType)){
+            if(expressionType.equals(expectedType)){
                 return;
             }
             if(m_ignoreWideningConversions && hasLowerPrecision(expressionType,
