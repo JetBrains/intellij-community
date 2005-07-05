@@ -26,10 +26,6 @@ public class HtmlAttributeDescriptorImpl implements XmlAttributeDescriptor {
     delegate = _delegate;
   }
 
-  public String getDefaultName() {
-    return delegate.getDefaultName();
-  }
-
   public boolean isRequired() {
     return delegate.isRequired();
   }

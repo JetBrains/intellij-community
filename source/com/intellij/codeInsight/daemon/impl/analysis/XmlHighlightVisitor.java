@@ -332,7 +332,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         if (requiredAttributes == null) {
           requiredAttributes = new HashSet<String>();
         }
-        requiredAttributes.add(attribute.getDefaultName());
+        requiredAttributes.add(attribute.getName(tag));
       }
     }
 

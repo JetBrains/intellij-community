@@ -124,12 +124,20 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
     return getEnumeratedValuesImpl(((ComplexTypeDescriptor)elementDescriptor.getType()).getDeclaration());
   }
 
-  public String getDefaultName() {
+  public String getName(PsiElement context){
     final XmlTag rootTag = (((XmlFile) myTag.getContainingFile())).getDocument().getRootTag();
-    if ("qualified".equals(rootTag.getAttributeValue("attributeFormDefault"))) {
-      // TODO:
-      return getName();
+    String attributeValue = rootTag.getAttributeValue("targetNamespace");
+    XmlTag tag = (XmlTag)context;
+    
+    String name = getName();
+    if ((attributeValue != null && !attributeValue.equals(tag.getNamespace())) &&
+        "qualified".equals(rootTag.getAttributeValue("attributeFormDefault"))) {
+      final String prefixByNamespace = tag.getPrefixByNamespace(attributeValue);
+      if (prefixByNamespace!= null && prefixByNamespace.length() > 0) {
+        name = prefixByNamespace + ":" + name;
+      }
     }
-    return getName();
+    
+    return name;
   }
 }

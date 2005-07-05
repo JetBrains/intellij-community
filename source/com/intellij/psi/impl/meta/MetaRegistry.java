@@ -35,7 +35,7 @@ public class MetaRegistry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.meta.MetaRegistry");
   private static final List<MyBinding> ourBindings = new ArrayList<MyBinding>();
   private static final String[] TAGLIB_URIS = new String[]{XmlUtil.TAGLIB_1_1_URI, XmlUtil.TAGLIB_1_2_a_URI, XmlUtil.TAGLIB_1_2_URI, XmlUtil.TAGLIB_2_0_URI, XmlUtil.TAGLIB_1_2_b_URI,};
-  private static final String[] SCHEMA_URIS = { XmlUtil.XML_SCHEMA_URI, XmlUtil.XML_SCHEMA_URI2, XmlUtil.XML_SCHEMA_URI3 };
+  public static final String[] SCHEMA_URIS = { XmlUtil.XML_SCHEMA_URI, XmlUtil.XML_SCHEMA_URI2, XmlUtil.XML_SCHEMA_URI3 };
   private static final String[] JSP_URIS = {
     XmlUtil.JSP_URI,
     "http://java.sun.com/products/jsp/dtd/jsp_1_0.dtd",

@@ -15,6 +15,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.PlainFil
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlAttributeValueManipulator;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlTokenManipulator;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
+import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
@@ -348,10 +349,12 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
                               classListProvider);
     final DtdReferencesProvider dtdReferencesProvider = new DtdReferencesProvider();
     registerReferenceProvider(null, XmlEntityRef.class,dtdReferencesProvider);
+    URIReferenceProvider uriProvider = new URIReferenceProvider();
+    
     registerXmlAttributeValueReferenceProvider(
       null,
       dtdReferencesProvider.getSystemReferenceFilter(),
-      getProviderByType(PATH_REFERENCES_PROVIDER)
+      uriProvider
     );
 
     //registerReferenceProvider(PsiPlainTextFile.class, new JavaClassListReferenceProvider());
@@ -365,6 +368,38 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
 
     final PsiReferenceProvider filePathReferenceProvider = new FilePathReferenceProvider();
     registerReferenceProvider(PsiLiteralExpression.class, filePathReferenceProvider);
+    
+    registerXmlAttributeValueReferenceProvider(
+      new String[] {"ref","type","base"},
+      new ScopeFilter(
+        new ParentElementFilter(
+          new NamespaceFilter(MetaRegistry.SCHEMA_URIS), 2
+        )
+      ),
+      new SchemaReferencesProvider()
+    );
+    
+    registerXmlAttributeValueReferenceProvider(
+      new String[] {"schemaLocation"},
+      new ScopeFilter(
+        new ParentElementFilter(
+          new AndFilter(
+            new NamespaceFilter(MetaRegistry.SCHEMA_URIS),
+            new AndFilter(
+              new ClassFilter(XmlTag.class),
+              new TextFilter("import","include")
+            )
+          ), 2
+        )
+      ),
+      uriProvider
+    );
+    
+    registerXmlAttributeValueReferenceProvider(
+      null,
+      uriProvider.getNamespaceAttributeFilter(),
+      uriProvider
+    );
   }
 
   public void registerReferenceProvider(ElementFilter elementFilter, Class scope, PsiReferenceProvider provider) {

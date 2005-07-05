@@ -53,10 +53,10 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     addInternalResource(J2EE_1_2 +  "web-jsptaglibrary_1_1.dtd","web-jsptaglibrary_1_1.dtd");
     addInternalResource(IBM_NS + "j2ee_web_services_client_1_1.xsd","j2ee_web_services_client_1_1.xsd");
 
-
     addInternalResource("http://www.w3.org/2001/XMLSchema", "XMLSchema.xsd");
     addInternalResource("http://www.w3.org/2001/XMLSchema-instance", "XMLSchema-instance.xsd");
     addInternalResource("http://www.w3.org/2001/xml.xsd","xml.xsd");
+    addInternalResource("http://www.w3.org/XML/1998/namespace","xml.xsd");
     addInternalResource(XmlUtil.XHTML_URI,"xhtml1-transitional.xsd");
 
     addInternalResource("http://www.w3.org/TR/html4/strict.dtd","xhtml1-strict.dtd");
@@ -120,12 +120,22 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     return result;
   }
 
-  public String[] getResourceUrls(FileType fileType) {
+  public String[] getResourceUrls(FileType fileType, final boolean includeStandard) {
     final List<String> result = new LinkedList<String>();
-    final Set<String> keySet = myResources.keySet();
+    addResourcesFromMap(fileType, result,myResources);
+
+    if (includeStandard) {
+      addResourcesFromMap(fileType, result,myStdResources);
+    }
+
+    return result.toArray(new String[result.size()]);
+  }
+
+  private void addResourcesFromMap(final FileType fileType, final List<String> result, Map<String, String> resources) {
+    final Set<String> keySet = resources.keySet();
 
     for (String key : keySet) {
-      String resource = myResources.get(key);
+      String resource = resources.get(key);
 
       if (fileType != null) {
         String defaultExtension = fileType.getDefaultExtension();
@@ -141,8 +151,6 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
         result.add(key);
       }
     }
-
-    return result.toArray(new String[result.size()]);
   }
 
   public void addResource(String url, String location) {

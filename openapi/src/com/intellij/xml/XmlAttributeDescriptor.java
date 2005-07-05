@@ -14,12 +14,6 @@ import com.intellij.psi.xml.XmlTag;
 public interface XmlAttributeDescriptor extends PsiMetaData{
   XmlAttributeDescriptor[] EMPTY = new XmlAttributeDescriptor[0];
 
-  /**
-   * Should return either simple or qualified name depending on the schema/DTD properties.
-   * This name should be used in XML documents
-   */
-  String getDefaultName();
-
   boolean isRequired();
   boolean isFixed();
   boolean hasIdType();

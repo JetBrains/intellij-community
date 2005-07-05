@@ -34,9 +34,7 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider{
 
     while(matcher.find()){
       final String identifier = matcher.group().trim();
-      final int dotPosition = identifier.indexOf('.');
-      if(identifier.lastIndexOf('.') != dotPosition
-      || knownTopLevelPackages.contains(identifier.substring(0, identifier.indexOf('.')))){
+      if(knownTopLevelPackages.contains(identifier.substring(0, identifier.indexOf('.')))){
         results.addAll(Arrays.asList(new ReferenceSet(identifier, position, offsetInPosition + matcher.start(), type){
           protected boolean isSoft(){
             return true;

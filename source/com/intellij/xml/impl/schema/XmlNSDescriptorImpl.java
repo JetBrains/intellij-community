@@ -166,7 +166,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     return findTypeDescriptor(descriptorTag, null);
   }
 
-  protected TypeDescriptor getTypeDescriptor(final String name, XmlTag context) {
+  public TypeDescriptor getTypeDescriptor(final String name, XmlTag context) {
     if(checkSchemaNamespace(name, context) && STD_TYPES.contains(name)){
       return new StdTypeDescriptor(name);
     }
@@ -353,7 +353,13 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
             || name.indexOf(":") >= 0 && name.substring(name.indexOf(":") + 1).equals(attribute)) {
           return tag;
         }
-      } else if (equalsToSchemaName(tag,"include")) {
+      } else if (equalsToSchemaName(tag,"include") ||
+           ( equalsToSchemaName(tag, "import") &&
+             rootTag.getNamespaceByPrefix(
+               XmlUtil.findPrefixByQualifiedName(name)
+             ).equals(tag.getAttributeValue("namespace"))
+           )
+         ) {
         final String schemaLocation = tag.getAttributeValue("schemaLocation");
 
         if (schemaLocation != null) {

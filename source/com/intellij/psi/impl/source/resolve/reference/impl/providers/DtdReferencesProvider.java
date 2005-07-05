@@ -6,10 +6,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.xml.XmlEntityRef;
-import com.intellij.psi.xml.XmlEntityDecl;
-import com.intellij.psi.xml.XmlToken;
-import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.xml.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
@@ -90,14 +87,18 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
     return new ElementFilter() {
       public boolean isAcceptable(Object element, PsiElement context) {
         final PsiElement parent = context.getParent();
-        if(parent instanceof XmlEntityDecl) {
+        if(parent instanceof XmlEntityDecl &&
+           !((XmlEntityDecl)parent).isInternalReference()
+          ) {
           PsiElement prevSibling = context.getPrevSibling();
           if (prevSibling instanceof PsiWhiteSpace) {
             prevSibling = prevSibling.getPrevSibling();
           }
           
           if (prevSibling instanceof XmlToken && 
-              ((XmlToken)prevSibling).getTokenType() == XmlTokenType.XML_DOCTYPE_SYSTEM ) {
+              ((XmlToken)prevSibling).getTokenType() == XmlTokenType.XML_DOCTYPE_SYSTEM ||
+              prevSibling instanceof XmlAttributeValue
+            ) {
             return true;
           }
         } 

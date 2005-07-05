@@ -270,7 +270,7 @@ public class XmlCompletionData extends CompletionData {
       XmlAttributeDescriptor[] attributes = descriptor.getAttributesDescriptors();
 
       for (XmlAttributeDescriptor attributeDecl : attributes) {
-        String attributeName = attributeDecl.getDefaultName();
+        String attributeName = attributeDecl.getName(tag);
 
         if (attributeDecl.isRequired()) {
           template.addTextSegment(" " + attributeName + "=\"");

@@ -1,12 +1,9 @@
 package com.intellij.xml.impl.dtd;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttributeDecl;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
 
 import java.util.ArrayList;
@@ -93,10 +90,6 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
   }
 
   public String getQualifiedName() {
-    return getName();
-  }
-
-  public String getDefaultName() {
     return getName();
   }
 }
