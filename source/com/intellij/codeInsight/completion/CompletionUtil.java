@@ -377,16 +377,18 @@ public class CompletionUtil {
 
   public static String[] getUnserolvedReferences(final PsiElement parentOfType, final boolean referenceOnMethod) {
     final List<String> unresolvedRefs = new ArrayList<String>();
-    parentOfType.accept(new PsiRecursiveElementVisitor() {
-      public void visitReferenceExpression(PsiReferenceExpression reference) {
-        final PsiElement parent = reference.getParent();
-        if(parent instanceof PsiReference) return;
-        if(referenceOnMethod && parent instanceof PsiMethodCallExpression && reference == ((PsiMethodCallExpression)parent).getMethodExpression()) {
-          if (reference.resolve() == null) unresolvedRefs.add(reference.getReferenceName());
+    if (parentOfType != null) {
+      parentOfType.accept(new PsiRecursiveElementVisitor() {
+        public void visitReferenceExpression(PsiReferenceExpression reference) {
+          final PsiElement parent = reference.getParent();
+          if(parent instanceof PsiReference) return;
+          if(referenceOnMethod && parent instanceof PsiMethodCallExpression && reference == ((PsiMethodCallExpression)parent).getMethodExpression()) {
+            if (reference.resolve() == null) unresolvedRefs.add(reference.getReferenceName());
+          }
+          else if(!referenceOnMethod && reference.resolve() == null) unresolvedRefs.add(reference.getReferenceName());
         }
-        else if(!referenceOnMethod && reference.resolve() == null) unresolvedRefs.add(reference.getReferenceName());
-      }
-    });
+      });
+    }
     return unresolvedRefs.toArray(new String[unresolvedRefs.size()]);
   }
 
