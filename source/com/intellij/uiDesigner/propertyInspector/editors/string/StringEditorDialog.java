@@ -12,12 +12,11 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.ResourceBundleLoader;
+import com.intellij.uiDesigner.ReferenceUtil;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 
 import javax.swing.*;
@@ -211,25 +210,13 @@ final class StringEditorDialog extends DialogWrapper{
             });
             fileChooser.showDialog();
             PropertiesFile propertiesFile = (PropertiesFile)fileChooser.getSelectedFile();
-            if (propertiesFile == null) return;
-            final PsiDirectory directory = propertiesFile.getContainingDirectory();
-
-            final String packageName;
-            final PsiPackage aPackage = directory.getPackage();
-            if (aPackage == null) {
-              packageName = "";
+            if (propertiesFile == null) {
+              return;
             }
-            else {
-              packageName = directory.getPackage().getQualifiedName();
+            final String bundleName = ReferenceUtil.getBundleName(propertiesFile);
+            if (bundleName == null) {
+              return;
             }
-
-            String bundleName = propertiesFile.getResourceBundle().getBaseName();
-
-            if (packageName.length() > 0) {
-              bundleName = packageName + '.' + bundleName;
-            }
-            bundleName = bundleName.replace('.', '/');
-
             myTfBundleName.setText(bundleName);
           }
         }
@@ -300,4 +287,5 @@ final class StringEditorDialog extends DialogWrapper{
       myTfValue.setText(ResourceBundleLoader.resolve(myModule, descriptor));
     }
   }
+
 }
