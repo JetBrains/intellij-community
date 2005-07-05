@@ -94,7 +94,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
             if (includedDocument != null) {
               final PsiMetaData data = includedDocument.getMetaData();
               if(data instanceof XmlNSDescriptorImpl){
-                final XmlElementDescriptor elementDescriptor = ((XmlNSDescriptorImpl)data).getElementDescriptor(localName, namespace);
+                final XmlElementDescriptor elementDescriptor = ((XmlNSDescriptorImpl)data).getElementDescriptor(localName, namespace,visited, reference);
                 if(elementDescriptor != null){
                   final CachedValue<XmlElementDescriptor> value = includedDocument.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlElementDescriptor>(){
                     public Result<XmlElementDescriptor> compute() {
