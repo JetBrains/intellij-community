@@ -13,6 +13,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.PsiFile;
 import com.intellij.codeFormatting.general.FormatterUtil;
+import com.intellij.openapi.util.TextRange;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,13 +22,24 @@ import org.jetbrains.annotations.NotNull;
 
 public class XmlBlock extends AbstractXmlBlock {
   private final Indent myIndent;
+  private TextRange myTextRange;
 
   public XmlBlock(final ASTNode node,
                   final Wrap wrap,
                   final Alignment alignment,
-                  final XmlFormattingPolicy policy, final Indent indent) {
+                  final XmlFormattingPolicy policy, final Indent indent, final TextRange textRange) {
     super(node, wrap, alignment, policy);
     myIndent = indent;
+    myTextRange = textRange;
+  }
+
+  @NotNull
+  public TextRange getTextRange() {
+    if (myTextRange != null) {
+      return myTextRange;
+    } else {
+      return super.getTextRange();
+    }
   }
 
   protected List<Block> buildChildren() {

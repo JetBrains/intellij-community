@@ -30,7 +30,7 @@ public class HTMLLanguage extends XMLLanguage {
       public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
         return new PsiBasedFormattingModel(element.getContainingFile(), settings,
                                            new XmlBlock(SourceTreeToPsiMap.psiElementToTree(element),
-                                                        null, null, new HtmlPolicy(settings), null));
+                                                        null, null, new HtmlPolicy(settings), null, null));
       }
     };
 

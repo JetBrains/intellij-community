@@ -110,6 +110,13 @@ public class XmlTagBlock extends AbstractXmlBlock{
   private ASTNode createXmlTextBlocks(final ArrayList<Block> list, final ASTNode textNode, final Wrap wrap, final Alignment alignment) {
     ChameleonTransforming.transformChildren(myNode);
     ASTNode child = textNode.getFirstChildNode();
+    return createXmlTextBlocks(list, textNode, child, wrap, alignment);
+  }
+
+  private ASTNode createXmlTextBlocks(final ArrayList<Block> list, final ASTNode textNode, ASTNode child,
+                                      final Wrap wrap,
+                                      final Alignment alignment
+  ) {
     while (child != null) {
       if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
         final Indent indent = myXmlFormattingPolicy.indentChildrenOf(getTag())
@@ -117,7 +124,13 @@ public class XmlTagBlock extends AbstractXmlBlock{
                               : getFormatter().getNoneIndent();
         child = processChild(list,child,  wrap, alignment, indent);
         if (child == null) return child;
-        if (child.getTreeParent() != textNode) return child;
+        if (child.getTreeParent() != textNode) {
+          if (child.getTreeParent() != myNode) {
+            return createXmlTextBlocks(list, child.getTreeParent(), child.getTreeNext(), wrap, alignment);
+          } else {
+            return child;
+          }
+        }
       }
       child = child.getTreeNext();
     }

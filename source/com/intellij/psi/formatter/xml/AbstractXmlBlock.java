@@ -8,6 +8,7 @@ import com.intellij.newCodeFormatting.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -15,6 +16,7 @@ import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.JspText;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
@@ -102,7 +104,11 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     return getFormatter().createWrap(myXmlFormattingPolicy.getWrappingTypeForTagBegin(tag), true);
   }
 
-  protected @Nullable ASTNode processChild(List<Block> result, final ASTNode child, final Wrap wrap, final Alignment alignment, final Indent indent) {
+  protected @Nullable ASTNode processChild(List<Block> result,
+                                           final ASTNode child,
+                                           final Wrap wrap,
+                                           final Alignment alignment,
+                                           final Indent indent) {
     final Language myLanguage = myNode.getPsi().getLanguage();
     final Language childLanguage = child.getPsi().getLanguage();
     if (useMyFormatter(myLanguage, childLanguage)) {
@@ -118,9 +124,9 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
           (child.getElementType() == ElementType.XML_DATA_CHARACTERS
            || child.getElementType() == ElementType.JSP_XML_TEXT
            || child.getPsi() instanceof JspText)) {
-        XmlTag tag = JspTextBlock.findXmlTagAt(child);
+        PsiElement tag = JspTextBlock.findXmlElementAt(child, child.getStartOffset());
         Indent childIndent = indent;
-        if (tag != null && tag.getTextRange().getEndOffset() <= myNode.getTextRange().getEndOffset()) {
+        if (tag instanceof XmlTag && tag.getTextRange().getEndOffset() <= myNode.getTextRange().getEndOffset()) {
           if (myNode.getElementType() == ElementType.HTML_DOCUMENT
               && tag.getParent() instanceof XmlTag
               && myXmlFormattingPolicy.indentChildrenOf((XmlTag)tag.getParent())
@@ -128,7 +134,26 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
             childIndent = getFormatter().createNormalIndent();
           }
           result.add(new XmlTagBlock(tag.getNode(), null, null, myXmlFormattingPolicy, childIndent));
-          return findChildAfter(child, tag.getTextRange().getEndOffset());
+          ASTNode currentChild = findChildAfter(child, tag.getTextRange().getEndOffset());
+
+          while (currentChild != null && currentChild.getTextRange().getEndOffset() > tag.getTextRange().getEndOffset()) {
+            PsiElement psiElement = JspTextBlock.findXmlElementAt(currentChild, tag.getTextRange().getEndOffset());
+            if (psiElement != null) {
+              if (psiElement instanceof XmlTag &&
+                       psiElement.getTextRange().getStartOffset() >= currentChild.getTextRange().getStartOffset() &&
+                       psiElement.getTextRange().getEndOffset() <= myNode.getTextRange().getEndOffset()) {
+                result.add(new XmlTagBlock(psiElement.getNode(), null, null, myXmlFormattingPolicy, childIndent));
+                currentChild = findChildAfter(currentChild, psiElement.getTextRange().getEndOffset());
+                tag = psiElement;
+              } else {
+                result.add(new XmlBlock(currentChild, wrap, alignment, myXmlFormattingPolicy, indent, new TextRange(tag.getTextRange().getEndOffset(),
+                                                                                                                    currentChild.getTextRange().getEndOffset())));
+                return currentChild;
+              }
+            }
+          }
+
+          return currentChild;
         }
       }
 
@@ -146,11 +171,11 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
         return child;
       }
       else if (child.getElementType() == ElementType.JSP_SCRIPTLET_END) {
-        result.add(new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, getFormatter().getNoneIndent()));
+        result.add(new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, getFormatter().getNoneIndent(), null));
         return child;
       }
       else {
-        result.add(new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, indent));
+        result.add(new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, indent, null));
         return child;
       }
     } else {
@@ -238,12 +263,12 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     final PsiElement[] psiRoots = (element.getContainingFile()).getPsiRoots();
     LOG.assertTrue(psiRoots.length == 4);
     final ASTNode rootNode = SourceTreeToPsiMap.psiElementToTree(psiRoots[1]);
-    return new XmlBlock(rootNode, null, null, new HtmlPolicy(settings), null);
+    return new XmlBlock(rootNode, null, null, new HtmlPolicy(settings), null, null);
   }
 
   public static Block creareJspxRoot(final PsiElement element, final CodeStyleSettings settings) {
     final ASTNode rootNode = SourceTreeToPsiMap.psiElementToTree(element);
-    return new XmlBlock(rootNode, null, null, new HtmlPolicy(settings), null);
+    return new XmlBlock(rootNode, null, null, new HtmlPolicy(settings), null, null);
   }
 
   @Nullable
@@ -259,18 +284,10 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   private ASTNode findChildAfter(@NotNull final ASTNode child, final int endOffset) {
     ASTNode result = child;
-    while (result != null && result.getStartOffset() < endOffset) {
-      result = result.getTreeNext();
+    while (result != null && result.getTextRange().getEndOffset() < endOffset) {
+      result = TreeUtil.nextLeaf(result);
     }
-    if (result != null) {
-      return result.getTreePrev();
-    }
-    final ASTNode parent = child.getTreeParent();
-    if (parent != myNode) {
-      return findChildAfter(parent, endOffset);
-    } else {
-      return null;
-    }
+    return result;
   }
 
 }

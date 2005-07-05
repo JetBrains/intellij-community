@@ -32,7 +32,7 @@ public class XHTMLLanguage extends XMLLanguage {
         return new PsiBasedFormattingModel(element.getContainingFile(), settings,
                                            new XmlBlock(SourceTreeToPsiMap.psiElementToTree(element),
                                                         null, null,
-                                                        new HtmlPolicy(settings), null));
+                                                        new HtmlPolicy(settings), null, null));
       }
     };
 
