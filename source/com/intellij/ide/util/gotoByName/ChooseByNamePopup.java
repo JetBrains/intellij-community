@@ -49,6 +49,10 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       bounds.x = layeredPane.getX() + Math.max(1, layeredPane.getWidth() - preferredScrollPaneSize.width);
       if (preferredScrollPaneSize.width > layeredPane.getWidth() - bounds.x) {
         preferredScrollPaneSize.width = layeredPane.getWidth() - bounds.x;
+        final JScrollBar horizontalScrollBar = myListScrollPane.getHorizontalScrollBar();
+        if (horizontalScrollBar != null){
+          preferredScrollPaneSize.height += horizontalScrollBar.getPreferredSize().getHeight();
+        }
       }
     }
 
