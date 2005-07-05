@@ -2,7 +2,6 @@ package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -18,17 +17,12 @@ import com.intellij.util.SmartList;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 /**
  * @author cdr
  */
 public class PropertiesUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.PropertiesUtil");
-
   @NotNull
   private static final GlobalSearchScope PROP_FILES_SCOPE = new GlobalSearchScope() {
     public boolean contains(VirtualFile file) {
@@ -101,18 +95,23 @@ public class PropertiesUtil {
   @NotNull
   public static Locale getLocale(VirtualFile propertiesFile) {
     String name = propertiesFile.getNameWithoutExtension();
+    String[] parts = name.split("_");
     String language = "";
     String country = "";
     String variant = "";
-    int pos = name.indexOf('_');
-    if (pos != -1) {
-      int next = name.indexOf('_', pos + 1);
-      language = name.substring(pos+1, next==-1 ? name.length() : next);
-
-      if (next != -1) {
-        int last = name.indexOf('_', next + 1);
-        country = name.substring(next+1, last == -1 ? name.length() : last);
-        variant = last == -1 ? "" : name.substring(last+1);
+    for (int i = 1; i < parts.length; i++) {
+      String part = parts[i];
+      if (part.length() == 2) {
+        language = part;
+        if (i < parts.length - 1 && parts[i + 1].length() == 2) {
+          country = parts[i + 1];
+          i += 2;
+          while (i < parts.length) {
+            if (variant.length() != 0) variant += "_";
+            variant += parts[i++];
+          }
+        }
+        break;
       }
     }
 
