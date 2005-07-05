@@ -521,7 +521,7 @@
         <action id="GenerateJavadoc" class="com.intellij.javadoc.actions.GenerateJavadocAction" text="Generate Java_Doc..." description="Run the JavaDoc tool"/>
         <separator/>
         <group id="Macros" text="_Macros" description="View, Change, Record, Play Macros" popup="true">
-          <group id="StanardMacroActions">
+          <group id="StanardMacroActions" text="Standard Macro Actions">
             <action id="PlaybackLastMacro" class="com.intellij.ide.actionMacro.actions.PlaybackLastMacroAction" text="Playback _Last Macro" description="Playback last used macro"/>
             <action id="StartStopMacroRecording" class="com.intellij.ide.actionMacro.actions.StartStopMacroRecordingAction" text="Start/Stop Macro _Recording" description="Start/Stop recording of a new macro"/>
             <action id="EditMacros" class="com.intellij.ide.actionMacro.actions.EditMacrosAction" text="_Edit Macros..." description="Configure existing macros"/>
