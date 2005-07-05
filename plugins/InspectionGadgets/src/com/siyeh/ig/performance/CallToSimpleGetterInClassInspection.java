@@ -1,16 +1,14 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.pom.java.LanguageLevel;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class CallToSimpleGetterInClassInspection extends ExpressionInspection{
@@ -23,6 +21,7 @@ public class CallToSimpleGetterInClassInspection extends ExpressionInspection{
     public String getDisplayName(){
         return "Call to simple getter from within class";
     }
+
     public String getGroupDisplayName(){
         return GroupNames.PERFORMANCE_GROUP_NAME;
     }
@@ -41,7 +40,7 @@ public class CallToSimpleGetterInClassInspection extends ExpressionInspection{
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
+                throws IncorrectOperationException{
             final PsiElement methodIdentifier = descriptor.getPsiElement();
             final PsiReferenceExpression methodExpression =
                     (PsiReferenceExpression) methodIdentifier.getParent();
@@ -56,31 +55,46 @@ public class CallToSimpleGetterInClassInspection extends ExpressionInspection{
             final PsiReturnStatement returnStatement = (PsiReturnStatement) statements[0];
             final PsiExpression returnValue = returnStatement.getReturnValue();
             final String returnValueText = returnValue.getText();
-            replaceExpression(call, returnValueText);
+            final PsiExpression qualifier = methodExpression
+                    .getQualifierExpression();
+            if(qualifier == null){
+                if(returnValueText.startsWith("this.")){
+                    replaceExpression(call, returnValueText);
+                } else{
+                    replaceExpression(call, "this." + returnValueText);
+                }
+            } else{
+                if(returnValueText.startsWith("this.")){
+                    replaceExpression(call,
+                                      qualifier.getText() + '.' + returnValueText.substring(5));
+                }
+               else{
+                    replaceExpression(call,
+                                      qualifier.getText() + '.' + returnValueText);
+                }
+            }
         }
     }
+
     public BaseInspectionVisitor buildVisitor(){
         return new CallToSimpleGetterInClassVisitor();
     }
 
     private class CallToSimpleGetterInClassVisitor
             extends BaseInspectionVisitor{
-
-
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression call){
             super.visitMethodCallExpression(call);
-            final PsiReferenceExpression methodExpression = call.getMethodExpression();
-            if(methodExpression == null)
-            {
+            final PsiReferenceExpression methodExpression = call
+                    .getMethodExpression();
+            if(methodExpression == null){
                 return;
             }
             final String methodName = methodExpression.getReferenceName();
-            if(methodName == null)
-            {
+            if(methodName == null){
                 return;
             }
-            if(!methodName.startsWith("get")&& !methodName.startsWith("is"))
-            {
+            if(!methodName.startsWith("get") && !methodName.startsWith("is")){
                 return;
             }
             final PsiExpressionList argList = call.getArgumentList();
@@ -112,8 +126,7 @@ public class CallToSimpleGetterInClassInspection extends ExpressionInspection{
     }
 
     private boolean isSimpleGetter(PsiMethod method){
-        if(method.hasModifierProperty(PsiModifier.SYNCHRONIZED))
-        {
+        if(method.hasModifierProperty(PsiModifier.SYNCHRONIZED)){
             return false;
         }
         final PsiCodeBlock body = method.getBody();
@@ -134,35 +147,29 @@ public class CallToSimpleGetterInClassInspection extends ExpressionInspection{
         if(value == null){
             return false;
         }
-        if(!(value instanceof PsiReferenceExpression))
-        {
-           return false;
+        if(!(value instanceof PsiReferenceExpression)){
+            return false;
         }
 
         final PsiReferenceExpression reference = (PsiReferenceExpression) value;
         final PsiExpression qualifier = reference.getQualifierExpression();
-        if(qualifier!=null && !"this".equals(qualifier.getText()))
-        {
+        if(qualifier != null && !"this".equals(qualifier.getText())){
             return false;
         }
         final PsiElement referent = reference.resolve();
-        if(referent == null)
-        {
+        if(referent == null){
             return false;
         }
-        if(!(referent instanceof PsiField))
-        {
+        if(!(referent instanceof PsiField)){
             return false;
         }
         final PsiField field = (PsiField) referent;
         final PsiType fieldType = field.getType();
         final PsiType returnType = method.getReturnType();
-        if(fieldType == null ||returnType == null)
-        {
+        if(fieldType == null || returnType == null){
             return false;
         }
-        if(!fieldType.getCanonicalText().equals(returnType.getCanonicalText()))
-        {
+        if(!fieldType.getCanonicalText().equals(returnType.getCanonicalText())){
             return false;
         }
         return field.getContainingClass().equals(method.getContainingClass());

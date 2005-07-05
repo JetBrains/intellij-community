@@ -13,7 +13,9 @@ public class CallToSimpleSetterInClassInspection {
 
     public void doSetIntVal(int x)
     {
+        final CallToSimpleSetterInClassInspection foo = new CallToSimpleSetterInClassInspection();
         setIntVal(x);
+        foo.setIntVal(x);
     }
 
     public void setListVal(ArrayList listVal) {

@@ -8,12 +8,15 @@ public class CallToSimpleGetterInClassInspection {
     private ArrayList listVal;
 
     public int getIntVal() {
-        return intVal;
+        return this.intVal;
     }
 
     public int returnIntVal()
     {
-        return getIntVal();
+        final int val = getIntVal();
+        final CallToSimpleGetterInClassInspection foo = new CallToSimpleGetterInClassInspection();
+        final int val2 = foo.getIntVal();
+        return val;
     }
 
     public List getListVal() {

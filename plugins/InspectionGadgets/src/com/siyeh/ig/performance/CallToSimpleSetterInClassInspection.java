@@ -40,7 +40,7 @@ public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
+                throws IncorrectOperationException{
             final PsiElement methodIdentifier = descriptor.getPsiElement();
             final PsiReferenceExpression methodExpression =
                     (PsiReferenceExpression) methodIdentifier.getParent();
@@ -57,10 +57,33 @@ public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
             final PsiCodeBlock body = method.getBody();
             final PsiStatement[] statements = body.getStatements();
             final PsiExpressionStatement assignmentStatemnt = (PsiExpressionStatement) statements[0];
-            final PsiAssignmentExpression assignment = (PsiAssignmentExpression) assignmentStatemnt.getExpression();
-            final String newExpression = assignment.getLExpression().getText() +
-                    " = " + arg.getText();
-            replaceExpression(call, newExpression);
+            final PsiAssignmentExpression assignment = (PsiAssignmentExpression) assignmentStatemnt
+                    .getExpression();
+
+            final PsiExpression qualifier = methodExpression
+                    .getQualifierExpression();
+            final PsiExpression lhs = assignment.getLExpression();
+            final String lhsText = lhs.getText();
+            if(qualifier == null){
+                final String newExpression;
+                if(lhsText.startsWith("this.")){
+                    newExpression = lhsText + " = " + arg.getText();
+                } else{
+                    newExpression = "this." + lhsText + " = " + arg.getText();
+                }
+                replaceExpression(call, newExpression);
+            } else{
+                final String newExpression;
+                if(lhsText.startsWith("this.")){
+                    newExpression = qualifier.getText() + '.' + lhsText.substring(5) +
+                            " = " + arg.getText();
+                } else{
+                     newExpression = qualifier.getText() + '.' + lhsText +
+                            " = " + arg.getText();
+                }
+                replaceExpression(call,
+                                  newExpression);
+            }
         }
     }
 
