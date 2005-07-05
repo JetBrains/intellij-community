@@ -9,7 +9,7 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ClassLoaderInstantiationInspection extends ExpressionInspection {
+public class ClassLoader2InstantiationInspection extends ExpressionInspection {
 
     public String getDisplayName() {
         return "ClassLoader instantiation";
