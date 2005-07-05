@@ -59,6 +59,7 @@
       <reference id="Compare.LastVersion" text="Comparet with revision at HEAD"/>
       <reference id="Compare.Selected"/>
       <reference id="Annotate"/>
+      <action id="Subversion.Copy" class="com.qintsoft.svn4idea.actions.CopyAction" text="Branch or Tag..." description="Copy selected file or directory to the new repository location"/>
       <separator/>
       <action id="Subversion.Lock" class="com.qintsoft.svn4idea.actions.LockAction" text="Lock..." description="Lock files"/>
       <action id="Subversion.Unlock" class="com.qintsoft.svn4idea.actions.UnlockAction" text="Unlock" description="Unlock files"/>
