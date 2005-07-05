@@ -206,6 +206,11 @@ public class ExternalDocumentValidator {
         parentClasses,
         false
     );
+    
+    if (parentOfType == null) {
+      if (currentElement instanceof XmlToken) parentOfType = (XmlElement)currentElement.getParent();
+      else parentOfType = (XmlElement)currentElement;
+    }
     return parentOfType;
   }
 
