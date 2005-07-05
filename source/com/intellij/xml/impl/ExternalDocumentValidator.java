@@ -23,6 +23,8 @@ import java.lang.ref.WeakReference;
 import java.lang.ref.SoftReference;
 import java.io.FileNotFoundException;
 import java.net.MalformedURLException;
+import java.net.NoRouteToHostException;
+import java.net.ConnectException;
 
 import org.xml.sax.SAXParseException;
 
@@ -85,7 +87,9 @@ public class ExternalDocumentValidator {
       public boolean filterValidationException(Exception ex) {
         super.filterValidationException(ex);
         if (ex instanceof FileNotFoundException ||
-            ex instanceof MalformedURLException
+            ex instanceof MalformedURLException || 
+            ex instanceof NoRouteToHostException || 
+            ex instanceof ConnectException
             ) {
           // do not log problems caused by malformed and/or ignored external resources
           return true;
