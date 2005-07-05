@@ -4,9 +4,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -28,6 +30,21 @@ public class IOExceptionDialog extends JDialog {
     super (JOptionPane.getRootFrame(), title, true);
 
     getContentPane().add(mainPanel);
+    
+    mainPanel.getActionMap().put(
+      "close",
+      new AbstractAction() {
+        public void actionPerformed(ActionEvent e) {
+          cancelPressed = true;
+          dispose();
+        }
+      }
+    );
+    
+    mainPanel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(
+      KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE,0),
+      "close"
+    );
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     PrintWriter writer = new PrintWriter (baos);
@@ -73,9 +90,23 @@ public class IOExceptionDialog extends JDialog {
    */
   public static boolean showErrorDialog (IOException e, String title, String text) {
     e.printStackTrace(System.err);
-    
-    IOExceptionDialog dlg = new IOExceptionDialog(e, title, text);
-    dlg.show();
+
+    final IOExceptionDialog dlg = new IOExceptionDialog(e, title, text);
+    try {
+      SwingUtilities.invokeAndWait(
+        new Runnable() {
+          public void run() {
+            dlg.setVisible(true);
+          }
+        });
+    }
+    catch (InterruptedException e1) {
+      e1.printStackTrace();
+    }
+    catch (InvocationTargetException e1) {
+      e1.printStackTrace();
+    }
+
     return ! dlg.cancelPressed;
   }
 
