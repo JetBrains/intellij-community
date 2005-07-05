@@ -186,12 +186,8 @@ public abstract class DescriptorProviderInspection extends InspectionTool {
         final RefElementNode elemNode = new RefElementNode(refElement, false);
         pNode.add(elemNode);
         final ProblemDescriptor[] problems = myProblemElements.get(refElement);
-        if (problems.length > 1) {
-          for (ProblemDescriptor problem : problems) {
-            elemNode.add(new ProblemDescriptionNode(refElement, problem));
-          }
-        } else if (problems.length == 1) {
-          elemNode.setProblem(problems[0]);
+        for (ProblemDescriptor problem : problems) {
+          elemNode.add(new ProblemDescriptionNode(refElement, problem));
         }
       }
       content.add(pNode);

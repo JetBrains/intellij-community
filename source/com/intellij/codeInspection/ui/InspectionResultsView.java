@@ -379,15 +379,13 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
         final InspectionTreeNode node = (InspectionTreeNode)pathSelected.getLastPathComponent();
         if (node instanceof RefElementNode) {
           final RefElementNode refElementNode = (RefElementNode)node;
-          if (!refElementNode.hasDescriptorsUnder()) {
-            final ProblemDescriptor problem = refElementNode.getProblem();
-            RefElement refSelected = refElementNode.getElement();
-            if (problem != null) {
-              showInBrowser(refSelected, problem);
-            }
-            else {
-              showInBrowser(refSelected);
-            }
+          final ProblemDescriptor problem = refElementNode.getProblem();
+          RefElement refSelected = refElementNode.getElement();
+          if (problem != null) {
+            showInBrowser(refSelected, problem);
+          }
+          else {
+            showInBrowser(refSelected);
           }
         }
         else if (node instanceof ProblemDescriptionNode) {

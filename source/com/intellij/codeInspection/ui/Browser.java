@@ -81,22 +81,26 @@ public class Browser extends JPanel {
       String html = generateHTML(newEntity);
       myHTMLViewer.read(new StringReader(html), null);
       myHTMLViewer.setCaretPosition(0);
-      myCurrentEntity = newEntity;
     }
     catch (Exception e) {
       showEmpty();
+    }
+    finally {
+      myCurrentEntity = newEntity;
     }
   }
 
   public void showPageFor(RefElement refElement, ProblemDescriptor descriptor) {
     try {
-      myCurrentEntity = refElement;
       String html = generateHTML(refElement, descriptor);
       myHTMLViewer.read(new StringReader(html), null);
       myHTMLViewer.setCaretPosition(0);
     }
     catch (Exception e) {
       showEmpty();
+    }
+    finally {
+      myCurrentEntity = refElement;
     }
   }
 
@@ -105,9 +109,8 @@ public class Browser extends JPanel {
       newEntity = ((RefImplicitConstructor)newEntity).getOwnerClass();
     }
 
-    if (newEntity != myCurrentEntity) {
-      showPageFromHistory(newEntity);
-    }
+    //multiple problems for one entity -> refresh browser
+    showPageFromHistory(newEntity);
   }
 
   public Browser(InspectionResultsView view) {
@@ -271,6 +274,8 @@ public class Browser extends JPanel {
       catch (IOException e1) {
         //Can't be
       }
+    } finally {
+      myCurrentEntity = null;
     }
   }
 
