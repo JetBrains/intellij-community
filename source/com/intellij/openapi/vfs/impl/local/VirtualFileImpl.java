@@ -409,8 +409,10 @@ public class VirtualFileImpl extends VirtualFile {
 
     newParent.getChildren(); // Init children.
 
+    PhysicalFile physicalFile = getPhysicalFile();
+    boolean isDirectory = isDirectory();
+
     if (!auxCommand) {
-      PhysicalFile physicalFile = getPhysicalFile();
       PhysicalFile newPhysicalParent = ((VirtualFileImpl)newParent).getPhysicalFile();
       PhysicalFile newPhysicalFile = newPhysicalParent.createChild(name);
       if (!physicalFile.renameTo(newPhysicalFile)) {
@@ -425,6 +427,14 @@ public class VirtualFileImpl extends VirtualFile {
     //myModificationStamp = LocalTimeCounter.currentTime();
     //myTimeStamp = -1;
     myFileSystem.fireFileMoved(requestor, this, oldParent);
+
+    if (auxCommand && isDirectory && physicalFile.exists()) {
+      // Some auxHandlers refuse to delete directories actually as per version controls like CVS or SVN.
+      // So if the direcotry haven't been deleted actually we must recreate VFS structure for this.
+      VirtualFileImpl newMe = new VirtualFileImpl(myFileSystem, oldParent, physicalFile, true);
+      oldParent.addChild(newMe);
+      myFileSystem.fireFileCreated(requestor, newMe);
+    }
   }
 
   public InputStream getInputStream() throws IOException {
