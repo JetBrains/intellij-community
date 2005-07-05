@@ -176,8 +176,7 @@ public class FileUtil {
   }
   public static void asyncDelete(List<File> files) {
     List<File> tempFiles = new ArrayList<File>();
-    for (int i = 0; i < files.size(); i++) {
-      File file = files.get(i);
+    for (File file : files) {
       final File tempFile = renameToTempFile(file);
       if (tempFile != null) {
         tempFiles.add(tempFile);
@@ -229,8 +228,8 @@ public class FileUtil {
     if (file.isDirectory()){
       File[] files = file.listFiles();
       if (files != null) {
-        for(int i = 0; i < files.length; i++){
-          delete(files[i]);
+        for (File file1 : files) {
+          delete(file1);
         }
       }
     }
@@ -312,8 +311,7 @@ public class FileUtil {
     }
     File[] files = fromDir.listFiles();
     if(files == null) throw new IOException("Directory is invalid " + fromDir.getPath());
-    for (int i = 0; i < files.length; i++) {
-      File file = files[i];
+    for (File file : files) {
       if (file.isDirectory()) {
         copyDir(file, new File(toDir, file.getName()));
       }
@@ -383,8 +381,7 @@ public class FileUtil {
   public static int visitFilesRecursively(File rootDir, FileVisitor fileVisitor) {
     final File[] files = rootDir.listFiles();
     if (files != null) {
-      for (int i = 0; i < files.length; i++) {
-        File file = files[i];
+      for (File file : files) {
         int res = fileVisitor.accept(file);
         if (res == FileVisitor.PROCEED && file.isDirectory()) {
           res = visitFilesRecursively(file, fileVisitor);
