@@ -127,6 +127,8 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return null;
     PsiField field = aClass.findFieldByName(fieldName, false);
+    if (field == null) return null;
+    if (!field.hasModifierProperty(PsiModifier.STATIC) && isMethodStatic) return null;
 
     return field;
   }
