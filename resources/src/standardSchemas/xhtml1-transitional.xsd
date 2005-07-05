@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE schema [
+<!DOCTYPE xs:schema [
 <!ENTITY % HTMLlat1 PUBLIC
        "-//W3C//ENTITIES Latin 1 for XHTML//EN"
        "xhtml-lat1.ent">
