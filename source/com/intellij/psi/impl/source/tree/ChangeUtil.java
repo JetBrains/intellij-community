@@ -221,8 +221,7 @@ public class ChangeUtil implements Constants {
     if (fileElement != null) {
       prepareAndRunChangeAction(new ChangeAction() {
         public void makeChange(TreeChangeEvent destinationTreeChange) {
-          destinationTreeChange.addElementaryChange(first.getTreeParent(), ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, first.getTreeParent()));
-          TreeUtil.removeRange(first, last);
+          remove(destinationTreeChange, first, last);
           repairRemovedElement(fileElement, oldCharTab, first);
 
           final FileElement treeElement = new DummyHolder(fileElement.getManager(), oldCharTab, false).getTreeElement();
