@@ -29,6 +29,23 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
   private static final Key<XmlElementDescriptor> DESCRIPTOR_KEY = Key.create("Original element");
 
   public String getUrlFor(PsiElement element, PsiElement originalElement) {
+    if (element instanceof XmlTag) {
+      XmlTag tag = (XmlTag)element;
+  
+      MyPsiElementProcessor processor = new MyPsiElementProcessor();
+      XmlUtil.processXmlElements(tag,processor, true);
+      
+      if (processor.url == null) {
+        XmlTag declaration = getComplexTypeDefinition(element, originalElement);
+        
+        if (declaration != null) {
+          XmlUtil.processXmlElements(declaration,processor, true);
+        }
+      }
+      
+      return processor.url;
+    }
+    
     return null;
   }
 
@@ -58,19 +75,11 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
       String typeName = null;
 
       if (processor.result == null) {
-        XmlElementDescriptor descriptor = element.getUserData(DESCRIPTOR_KEY);
-        if (descriptor == null && originalElement.getParent() instanceof XmlTag) {
-          descriptor = ((XmlTag)originalElement.getParent()).getDescriptor();
-        }
-
-        if (descriptor instanceof XmlElementDescriptorImpl) {
-          TypeDescriptor type = ((XmlElementDescriptorImpl)descriptor).getType();
-
-          if (type instanceof ComplexTypeDescriptor) {
-            XmlTag declaration = ((ComplexTypeDescriptor)type).getDeclaration();
-            XmlUtil.processXmlElements(declaration,processor, true);
-            typeName = declaration.getName();
-          }
+        XmlTag declaration = getComplexTypeDefinition(element, originalElement);
+        
+        if (declaration != null) {
+          XmlUtil.processXmlElements(declaration,processor, true);
+          typeName = declaration.getName();
         }
       }
 
@@ -80,6 +89,23 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
     return null;
   }
 
+  private XmlTag getComplexTypeDefinition(PsiElement element, PsiElement originalElement) {
+    XmlElementDescriptor descriptor = element.getUserData(DESCRIPTOR_KEY);
+    if (descriptor == null && originalElement.getParent() instanceof XmlTag) {
+      descriptor = ((XmlTag)originalElement.getParent()).getDescriptor();
+    }
+
+    if (descriptor instanceof XmlElementDescriptorImpl) {
+      TypeDescriptor type = ((XmlElementDescriptorImpl)descriptor).getType();
+
+      if (type instanceof ComplexTypeDescriptor) {
+        return ((ComplexTypeDescriptor)type).getDeclaration();
+      }
+    }
+    
+    return null;
+  }
+  
   private String generateDoc(String str, String name, String typeName) {
     if (str == null) return null;
     StringBuffer buf = new StringBuffer(str.length() + 20);
@@ -151,12 +177,15 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
 
   private static class MyPsiElementProcessor implements PsiElementProcessor {
     String result;
+    String url;
 
     public boolean execute(PsiElement element) {
       if (element instanceof XmlTag &&
           ((XmlTag)element).getLocalName().equals("documentation")
       ) {
-        result = ((XmlTag)element).getValue().getText().trim();
+        final XmlTag tag = ((XmlTag)element);
+        result = tag.getValue().getText().trim();
+        url = tag.getAttributeValue("source");
         return false;
       }
       return true;
