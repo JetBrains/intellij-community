@@ -359,9 +359,6 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
   private Object[] filterFiles(final Object[] list) {
     final List<Object> result = new ArrayList<Object>(list.length);
     for (Object o : list) {
-      if (o instanceof ProjectViewNode && ((ProjectViewNode)o).getChildren().size() == 0) {
-        continue;
-      }
       final PsiFile psiFile;
       if (o instanceof PsiFile) {
         psiFile = (PsiFile)o;
@@ -377,6 +374,11 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
           continue;
         }
         if (myFileType != null && psiFile.getFileType() != myFileType) {
+          continue;
+        }
+      }
+      else {
+        if (o instanceof ProjectViewNode && ((ProjectViewNode)o).getChildren().size() == 0) {
           continue;
         }
       }
