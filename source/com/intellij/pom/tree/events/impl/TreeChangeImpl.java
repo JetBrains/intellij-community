@@ -105,15 +105,15 @@ public class TreeChangeImpl implements TreeChange {
   }
 
   private void addChangeAtOffset(final ASTNode child, final int nodeOffset) {
-    final int n = myOffsets.size();
-    for(int i = 0; i < n; i++){
-      final Pair<ASTNode, Integer> pair = myOffsets.get(i);
+    int index = 0;
+    for (Pair<ASTNode, Integer> pair : myOffsets) {
       if(child == pair.getFirst()) return;
       if(nodeOffset < pair.getSecond().intValue() ||
          (nodeOffset == pair.getSecond().intValue() && isAfter(pair.getFirst(), child))){
-        myOffsets.add(i, new Pair<ASTNode, Integer>(child, new Integer(nodeOffset)));
+        myOffsets.add(index, new Pair<ASTNode, Integer>(child, new Integer(nodeOffset)));
         return;
       }
+      index++;
     }
     myOffsets.add(new Pair<ASTNode, Integer>(child, new Integer(nodeOffset)));
   }
