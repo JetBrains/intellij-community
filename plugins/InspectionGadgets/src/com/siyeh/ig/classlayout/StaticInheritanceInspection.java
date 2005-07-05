@@ -56,6 +56,10 @@ public class StaticInheritanceInspection extends ClassInspection{
                         searchHelper.findReferences(field, searchScope, false);
 
                 for(PsiReference reference1 : references){
+                    if(!(reference1 instanceof PsiReferenceExpression))
+                    {
+                        continue;
+                    }
                     final PsiReferenceExpression reference =
                             (PsiReferenceExpression) reference1;
                     if(reference.isQualified()){
