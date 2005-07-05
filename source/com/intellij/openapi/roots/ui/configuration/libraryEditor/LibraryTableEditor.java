@@ -72,6 +72,8 @@ public class LibraryTableEditor {
   private LibraryTable.ModifiableModel myTableModifiableModel;
   private static final Icon INVALID_ITEM_ICON = IconLoader.getIcon("/nodes/ppInvalid.png");
 
+  private final Collection<Runnable> myListeners = new ArrayList<Runnable>();
+
   private LibraryTableEditor(final LibraryTable libraryTable) {
     this(new LibraryTableModifiableModelProvider() {
       public LibraryTable.ModifiableModel getModifiableModel() {
@@ -426,6 +428,7 @@ public class LibraryTableEditor {
         myDescriptor.setTitle(getDescription());
         attachFiles(library, FileChooser.chooseFiles(myPanel, myDescriptor), getRootType());
       }
+      fireLibrariesChanged();
       myTree.requestFocus();
     }
   }
@@ -572,6 +575,22 @@ public class LibraryTableEditor {
     if (putFocusIntoTree) {
       myTree.requestFocus();
     }
+    fireLibrariesChanged();
+  }
+
+  private void fireLibrariesChanged() {
+    Runnable[] runnables = myListeners.toArray(new Runnable[myListeners.size()]);
+    for (Runnable listener : runnables) {
+      listener.run();
+    }
+  }
+
+  public void addListener(Runnable listener) {
+    myListeners.add(listener);
+  }
+
+  public void removeListener(Runnable listener) {
+    myListeners.remove(listener);
   }
 
   private class RenameLibraryAction implements ActionListener {
