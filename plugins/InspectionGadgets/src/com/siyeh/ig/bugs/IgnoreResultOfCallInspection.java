@@ -51,7 +51,7 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
     private void parseCallCheckString(){
         callsToCheck.clear();
         final String[] strings = callCheckString.split(",");
-        for(int i = 0; i < strings.length; i += 2){
+        for(int i = 0; i < strings.length-1; i += 2){
             final String className = strings[i];
             final String methodName = strings[i + 1];
             callsToCheck.add(
