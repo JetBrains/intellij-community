@@ -292,7 +292,7 @@
     </xs:annotation>
     <xs:restriction base="xs:string">
       <xs:pattern
-          value="[\-+]?(\d+|\d+(\.\d+)?%)(,\s*[-+]?(\d+|\d+(\.\d+)?%))*"/>
+          value="[\-+]?(\d+|\d+(\.\d+)?%)(,\s*[\-+]?(\d+|\d+(\.\d+)?%))*"/>
     </xs:restriction>
   </xs:simpleType>
 
