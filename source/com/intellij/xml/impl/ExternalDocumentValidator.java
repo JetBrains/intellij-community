@@ -1,7 +1,6 @@
 package com.intellij.xml.impl;
 
 import com.intellij.xml.actions.ValidateXmlActionHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,6 +20,7 @@ import java.util.List;
 import java.util.LinkedList;
 import java.util.Iterator;
 import java.lang.ref.WeakReference;
+import java.lang.ref.SoftReference;
 import java.io.FileNotFoundException;
 import java.net.MalformedURLException;
 
@@ -35,12 +35,12 @@ import org.xml.sax.SAXParseException;
  */
 public class ExternalDocumentValidator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.impl.ExternalDocumentValidator");
-  private static final Key<ExternalDocumentValidator> validatorInstanceKey = Key.create("validatorInstance");
+  private static final Key<SoftReference<ExternalDocumentValidator>> validatorInstanceKey = Key.create("validatorInstance");
   private ValidateXmlActionHandler myHandler;
   private Validator.ValidationHost myHost;
 
-  private long myTimeStamp;
-  private VirtualFile myFile;
+  private long myModificationStamp;
+  private PsiFile myFile;
 
   class ValidationInfo {
     PsiElement element;
@@ -51,11 +51,11 @@ public class ExternalDocumentValidator {
   private WeakReference<List<ValidationInfo>> myInfos; // last jaxp validation result
 
   private void runJaxpValidation(final XmlElement element, Validator.ValidationHost host) {
-    VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
+    PsiFile file = element.getContainingFile();
 
-    if (myFile == virtualFile &&
-        virtualFile != null &&
-        myTimeStamp == virtualFile.getTimeStamp() &&
+    if (myFile == file &&
+        file != null &&
+        myModificationStamp == file.getModificationStamp() &&
         myInfos!=null &&
         myInfos.get()!=null // we have validated before
         ) {
@@ -63,11 +63,10 @@ public class ExternalDocumentValidator {
       return;
     }
 
-    PsiFile containingFile = element.getContainingFile();
     if (myHandler==null)  myHandler = new ValidateXmlActionHandler(false);
     final Project project = element.getProject();
 
-    final Document document = PsiDocumentManager.getInstance(project).getDocument(containingFile);
+    final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document==null) return;
     final List<ValidationInfo> results = new LinkedList<ValidationInfo>();
 
@@ -181,8 +180,8 @@ public class ExternalDocumentValidator {
 
     myHandler.doValidate(project, element.getContainingFile());
 
-    myFile = containingFile.getVirtualFile();
-    myTimeStamp = myFile == null ? 0 : myFile.getTimeStamp();
+    myFile = file;
+    myModificationStamp = myFile == null ? 0 : myFile.getModificationStamp();
     myInfos = new WeakReference<List<ValidationInfo>>(results);
 
     addAllInfos(host,results);
@@ -246,13 +245,14 @@ public class ExternalDocumentValidator {
 
   public static void doValidation(final PsiElement context, final Validator.ValidationHost host) {
     final PsiFile containingFile = context.getContainingFile();
-    if (containingFile==null || containingFile.getFileType()!=StdFileTypes.XML) return;
+    if (containingFile==null || containingFile.getFileType() != StdFileTypes.XML) return;
     final Project project = context.getProject();
-    ExternalDocumentValidator validator = project.getUserData(validatorInstanceKey);
+    SoftReference<ExternalDocumentValidator> validatorReference = project.getUserData(validatorInstanceKey);
+    ExternalDocumentValidator validator = validatorReference != null? validatorReference.get() : null;
 
-    if(validator==null) {
+    if(validator == null) {
       validator = new ExternalDocumentValidator();
-      project.putUserData(validatorInstanceKey,validator);
+      project.putUserData(validatorInstanceKey,new SoftReference<ExternalDocumentValidator>(validator));
     }
 
     validator.runJaxpValidation((XmlElement)context,host);
