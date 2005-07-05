@@ -413,7 +413,6 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerAbstractionInspections(){
-        m_inspectionClasses.add(DuplicateStringLiteralInspection.class);
         m_inspectionClasses.add(FeatureEnvyInspection.class);
         m_inspectionClasses.add(InstanceofChainInspection.class);
         m_inspectionClasses.add(LocalVariableOfConcreteClassInspection.class);
