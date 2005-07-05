@@ -4,13 +4,19 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.ExternalAnnotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
 
+import javax.swing.*;
 import java.util.List;
 import java.util.ArrayList;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * @author ven
@@ -22,7 +28,7 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
   private Project myProject;
 
   public ExternalToolPass(PsiFile file,
-                             Editor editor) {
+                          Editor editor) {
     super(editor.getDocument());
     myFile = file;
     myProject = file.getProject();
@@ -30,6 +36,32 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
+    final HighlightInfo[][] errors = new HighlightInfo[1][];
+
+    final Runnable runnable = new Runnable() {
+      public void run() {
+        errors[0] = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.ERROR, myProject);
+      }
+    };
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      runnable.run();
+    } else {
+      try {
+        SwingUtilities.invokeAndWait(runnable);
+      }
+      catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+      catch (InvocationTargetException e) {
+        e.printStackTrace();
+      }
+    }
+
+    if ( errors[0].length > 0) {
+      return;
+    }
+
     final ExternalAnnotator externalAnnotator = myFile.getLanguage().getExternalAnnotator();
     if (externalAnnotator != null) {
       externalAnnotator.annotate(myFile, myAnnotationHolder);

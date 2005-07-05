@@ -83,6 +83,10 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
     public void startProcessing() {
       doParse();
     }
+
+    public boolean isStopOnUndeclaredResource() {
+      return false;
+    }
   }
 
   private String buildMessageString(SAXParseException ex) {
@@ -266,6 +270,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
     myFile = (XmlFile)file;
 
     myXmlResourceResolver = new XmlResourceResolver(myFile, myProject);
+    myXmlResourceResolver.setStopOnUnDeclaredResource( myErrorReporter.isStopOnUndeclaredResource() );
 
     try {
       myParser = createParser();

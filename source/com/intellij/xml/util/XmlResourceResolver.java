@@ -9,6 +9,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,6 +37,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
   private XmlFile myFile;
   private Project myProject;
   private Map<String,String> myExternalResourcesMap = new HashMap<String, String>(1);
+  private boolean myStopOnUnDeclaredResource;
 
   public XmlResourceResolver(XmlFile _xmlFile, Project _project) {
     myFile = _xmlFile;
@@ -50,7 +53,10 @@ public class XmlResourceResolver implements XMLEntityResolver {
       LOG.debug("enter: resolveEntity(baseSystemId='" + baseSystemId + "' systemId='" + systemId + "')");
     }
     if (systemId == null) return null;
-
+    if (myStopOnUnDeclaredResource && 
+        ExternalResourceManagerEx.getInstanceEx().isIgnoredResource(systemId)) {
+      throw new ProcessCanceledException();
+    }
     final PsiFile[] result = new PsiFile[] { null };
     final Runnable action = new Runnable() {
       public void run() {
@@ -154,5 +160,9 @@ public class XmlResourceResolver implements XMLEntityResolver {
     source.setCharacterStream(new StringReader(psiFile.getText()));
 
     return source;
+  }
+
+  public void setStopOnUnDeclaredResource(final boolean stopOnUnDeclaredResource) {
+    myStopOnUnDeclaredResource = stopOnUnDeclaredResource;
   }
 }

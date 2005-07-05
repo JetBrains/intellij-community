@@ -157,8 +157,6 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
         }
 
       case Pass.EXTERNAL_TOOLS:
-        if (DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.ERROR, myProject).length > 0) return null;
-
         return new ExternalToolPass(myFile, myEditor);
 
       default:

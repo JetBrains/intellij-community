@@ -84,7 +84,17 @@ public class ExternalDocumentValidator {
     };
 
     myHandler.setErrorReporter(myHandler.new ErrorReporter() {
+      public boolean isStopOnUndeclaredResource() {
+        return true;
+      }
+
       public boolean filterValidationException(Exception ex) {
+        if (ex instanceof ProcessCanceledException &&
+            ApplicationManager.getApplication().isUnitTestMode()
+           ) {
+          return true;
+        }
+        
         super.filterValidationException(ex);
         if (ex instanceof FileNotFoundException ||
             ex instanceof MalformedURLException || 
@@ -208,8 +218,12 @@ public class ExternalDocumentValidator {
     );
     
     if (parentOfType == null) {
-      if (currentElement instanceof XmlToken) parentOfType = (XmlElement)currentElement.getParent();
-      else parentOfType = (XmlElement)currentElement;
+      if (currentElement instanceof XmlToken) {
+        parentOfType = (XmlElement)currentElement.getParent();
+      }
+      else {
+        parentOfType = (XmlElement)currentElement;
+      }
     }
     return parentOfType;
   }
