@@ -126,6 +126,10 @@ public class Java15APIUsageInspection extends LocalInspectionTool {
       // No references inside doc comment are of interest.
     }
 
+    public void visitClass(PsiClass aClass) {
+      // Don't go into classes (anonymous, locals).
+    }
+
     public void visitReferenceExpression(PsiReferenceExpression expression) {
       visitReferenceElement(expression);
     }
