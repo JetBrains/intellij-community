@@ -65,9 +65,10 @@ public final class ModuleCompilerUtil {
   private static boolean dependsOn(Module dependant, Module dependee) {
     if (dependant.equals(dependee)) return true;
     final Module[] dependencies = ModuleRootManager.getInstance(dependant).getDependencies();
-    for (int i = 0; i < dependencies.length; i++) {
-      final Module dependency = dependencies[i];
-      if (dependsOn(dependency, dependee)) return true;
+    for (final Module dependency : dependencies) {
+      if (dependsOn(dependency, dependee)) {
+        return true;
+      }
     }
     return false;
   }
@@ -81,8 +82,8 @@ public final class ModuleCompilerUtil {
   public static List<Chunk<Module>> getSortedModuleChunks(Module[] modules, Graph<Module> moduleGraph) {
     final Graph<Chunk<Module>> graph = toChunkGraph(moduleGraph);
     final List<Chunk<Module>> chunks = new ArrayList<Chunk<Module>>(moduleGraph.getNodes().size());
-    for (Iterator<Chunk<Module>> it = graph.getNodes().iterator(); it.hasNext();) {
-      chunks.add(it.next());
+    for (final Chunk<Module> chunk : graph.getNodes()) {
+      chunks.add(chunk);
     }
     DFSTBuilder<Chunk<Module>> builder = new DFSTBuilder<Chunk<Module>>(graph);
     if (!builder.isAcyclic()) {
@@ -113,16 +114,15 @@ public final class ModuleCompilerUtil {
   }
 
   private static void logChunks(final List<Chunk<Module>> chunks) {
-    for (Iterator it = chunks.iterator(); it.hasNext();) {
-      final Chunk<Module> chunk = (Chunk<Module>)it.next();
+    for (final Chunk<Module> chunk : chunks) {
       System.out.println(chunk);
     }
     System.out.println("---");
   }
 
   private static boolean intersects(Set set1, Set set2) {
-    for (Iterator it = set1.iterator(); it.hasNext();) {
-      if (set2.contains(it.next())) {
+    for (final Object item : set1) {
+      if (set2.contains(item)) {
         return true;
       }
     }
@@ -133,11 +133,11 @@ public final class ModuleCompilerUtil {
     final Set<Chunk<Node>> chunks = new HashSet<Chunk<Node>>();
 
     final Map<Node, Chunk<Node>> nodeToChunkMap = new HashMap<Node, Chunk<Node>>();
-    for (Iterator<Node> it = graph.getNodes().iterator(); it.hasNext();) {
-      final Chunk<Node> chunk = buildChunk(graph, it.next());
+    for (final Node node : graph.getNodes()) {
+      final Chunk<Node> chunk = buildChunk(graph, node);
       chunks.add(chunk);
-      for (Iterator<Node> nodeIterator = chunk.getNodes().iterator(); nodeIterator.hasNext();) {
-        nodeToChunkMap.put(nodeIterator.next(), chunk);
+      for (final Node node1 : chunk.getNodes()) {
+        nodeToChunkMap.put(node1, chunk);
       }
     }
 
@@ -187,11 +187,9 @@ public final class ModuleCompilerUtil {
       alreadyProcessed.addAll(toProcess);
       final List<Node> nodes = new ArrayList<Node>(toProcess);
       toProcess.clear();
-      for (Iterator<Node> nodesToProcessIterator = nodes.iterator(); nodesToProcessIterator.hasNext();) {
-        final Node n = nodesToProcessIterator.next();
-        for (Iterator<Node> it = graph.getNodes().iterator(); it.hasNext();) {
-          final Node n1 = it.next();
-          if (fromTheNode? hasArc(graph, n, n1) : hasArc(graph, n1, n)) {
+      for (final Node n : nodes) {
+        for (final Node n1 : graph.getNodes()) {
+          if (fromTheNode ? hasArc(graph, n, n1) : hasArc(graph, n1, n)) {
             reachableSet.add(n1);
             if (!alreadyProcessed.contains(n1)) {
               toProcess.add(n1);
