@@ -386,14 +386,14 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   public static HighlightInfo[] getHighlights(Document document, Project project) {
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
     MarkupModel markup = document.getMarkupModel(project);
     if (markup == null) return null;
     return markup.getUserData(HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY);
   }
 
   @NotNull public static HighlightInfo[] getHighlights(Document document, HighlightSeverity minSeverity, Project project) {
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
     HighlightInfo[] highlights = getHighlights(document, project);
     if (highlights == null) return HighlightInfo.EMPTY_ARRAY;
     ArrayList<HighlightInfo> array = new ArrayList<HighlightInfo>();
