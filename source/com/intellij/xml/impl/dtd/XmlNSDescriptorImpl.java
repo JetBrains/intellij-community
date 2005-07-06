@@ -1,7 +1,6 @@
 package com.intellij.xml.impl.dtd;
 
 import com.intellij.j2ee.openapi.impl.ExternalResourceManagerImpl;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.filters.ClassFilter;
@@ -11,10 +10,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlElementDecl;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.ExternalDocumentValidator;
@@ -85,7 +81,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     return getElementDescriptor(name);
   }
 
-  public XmlElementDescriptor[] getRootElementsDescriptors() {
+  public XmlElementDescriptor[] getRootElementsDescriptors(final XmlDocument document) {
     return getElements();
   }
 

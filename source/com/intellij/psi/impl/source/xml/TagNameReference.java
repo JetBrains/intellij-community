@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlDocument;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -124,7 +125,7 @@ class TagNameReference implements PsiReference {
 
         if(NSDescriptor != null && !visited.contains(NSDescriptor)){
           visited.add(NSDescriptor);
-          variants.addAll(Arrays.asList(NSDescriptor.getRootElementsDescriptors()));
+          variants.addAll(Arrays.asList(NSDescriptor.getRootElementsDescriptors(PsiTreeUtil.getParentOfType(element, XmlDocument.class))));
         }
       }
     }
@@ -134,7 +135,7 @@ class TagNameReference implements PsiReference {
     int index = 0;
     while(iterator.hasNext()){
       final XmlElementDescriptor descriptor = iterator.next();
-      ret[index++] = descriptor.getName(element.getParent());
+      ret[index++] = descriptor.getName(element);
     }
     return ret;
   }

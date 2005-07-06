@@ -6,6 +6,7 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlDocument;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.jsp.impl.RelaxedNsXmlNSDescriptor;
@@ -39,7 +40,7 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor {
   private Map<String,XmlElementDescriptor> buildDeclarationMap() {
     if (myCachedDecls == null) {
       myCachedDecls = new HashMap<String, XmlElementDescriptor>();
-      XmlElementDescriptor[] elements = (myDelegate!=null)?myDelegate.getRootElementsDescriptors():XmlElementDescriptor.EMPTY_ARRAY;
+      XmlElementDescriptor[] elements = (myDelegate!=null)?myDelegate.getRootElementsDescriptors(null):XmlElementDescriptor.EMPTY_ARRAY;
 
       for (XmlElementDescriptor element : elements) {
         myCachedDecls.put(
@@ -62,8 +63,8 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor {
     return xmlElementDescriptor;
   }
 
-  public XmlElementDescriptor[] getRootElementsDescriptors() {
-    return (myDelegate!=null)?myDelegate.getRootElementsDescriptors():XmlElementDescriptor.EMPTY_ARRAY;
+  public XmlElementDescriptor[] getRootElementsDescriptors(final XmlDocument document) {
+    return (myDelegate!=null)?myDelegate.getRootElementsDescriptors(document):XmlElementDescriptor.EMPTY_ARRAY;
   }
 
   public XmlFile getDescriptorFile() {

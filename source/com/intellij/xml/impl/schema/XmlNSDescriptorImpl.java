@@ -312,7 +312,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     }
   }
 
-  public XmlElementDescriptor[] getRootElementsDescriptors() {
+  public XmlElementDescriptor[] getRootElementsDescriptors(final XmlDocument doc) {
     final List<XmlElementDescriptor> result = new ArrayList<XmlElementDescriptor>();
     XmlDocument document = myFile.getDocument();
     XmlTag rootTag = document.getRootTag();

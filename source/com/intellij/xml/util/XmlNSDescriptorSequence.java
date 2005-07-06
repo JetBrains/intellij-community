@@ -5,6 +5,7 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlDocument;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 
@@ -47,12 +48,12 @@ public class XmlNSDescriptorSequence implements XmlNSDescriptor{
     return null;
   }
 
-  public XmlElementDescriptor[] getRootElementsDescriptors() {
+  public XmlElementDescriptor[] getRootElementsDescriptors(final XmlDocument document) {
     final List<XmlElementDescriptor> descriptors = new ArrayList<XmlElementDescriptor>();
     final Iterator iterator = sequence.iterator();
     while(iterator.hasNext()){
       final XmlNSDescriptor descriptor = (XmlNSDescriptor) iterator.next();
-      descriptors.addAll(Arrays.asList(descriptor.getRootElementsDescriptors()));
+      descriptors.addAll(Arrays.asList(descriptor.getRootElementsDescriptors(document)));
     }
 
     return descriptors.toArray(new XmlElementDescriptor[descriptors.size()]);
