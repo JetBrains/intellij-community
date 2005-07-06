@@ -23,40 +23,38 @@ public abstract class ModuleManager {
     return project.getComponent(ModuleManager.class);
   }
 
-  @NotNull public abstract Module newModule(String filePath) throws LoadCancelledException;
+  @NotNull public abstract Module newModule(@NotNull String filePath) throws LoadCancelledException;
 
-  @NotNull public abstract Module newModule(String filePath, ModuleType moduleType) throws LoadCancelledException;
+  @NotNull public abstract Module newModule(@NotNull String filePath, ModuleType moduleType) throws LoadCancelledException;
 
-  @NotNull public abstract Module loadModule(String filePath) throws InvalidDataException, IOException, JDOMException, ModuleWithNameAlreadyExists, ModuleCircularDependencyException, LoadCancelledException;
+  @NotNull public abstract Module loadModule(@NotNull String filePath) throws InvalidDataException, IOException, JDOMException, ModuleWithNameAlreadyExists, ModuleCircularDependencyException, LoadCancelledException;
 
-  public abstract void disposeModule(Module module);
+  public abstract void disposeModule(@NotNull Module module);
 
   @NotNull public abstract Module[] getModules();
 
-  @Nullable public abstract Module findModuleByName(String name);
+  @Nullable public abstract Module findModuleByName(@NotNull String name);
 
   @NotNull public abstract Module[] getSortedModules();
 
   @NotNull public abstract Comparator<Module> moduleDependencyComparator();
 
   /**
-   * Returns list of <i>modules that depend on</i> given module.
-   * @param module
-   * @return
+   * @return list of <i>modules that depend on</i> given module.
    */
-  @NotNull public abstract List<Module> getModuleDependentModules(Module module);
+  @NotNull public abstract List<Module> getModuleDependentModules(@NotNull Module module);
 
-  public abstract boolean isModuleDependent(Module module, Module onModule);
+  public abstract boolean isModuleDependent(@NotNull Module module, @NotNull Module onModule);
 
-  public abstract void addModuleListener(ModuleListener listener);
+  public abstract void addModuleListener(@NotNull ModuleListener listener);
 
-  public abstract void removeModuleListener(ModuleListener listener);
+  public abstract void removeModuleListener(@NotNull ModuleListener listener);
 
   @NotNull public abstract Graph<Module> moduleGraph();
 
   @NotNull public abstract ModifiableModuleModel getModifiableModel();
 
-  public abstract void dispatchPendingEvent(ModuleListener listener);
+  public abstract void dispatchPendingEvent(@NotNull ModuleListener listener);
 
-  @Nullable public abstract String[] getModuleGroupPath(Module module);
+  @Nullable public abstract String[] getModuleGroupPath(@NotNull Module module);
 }
