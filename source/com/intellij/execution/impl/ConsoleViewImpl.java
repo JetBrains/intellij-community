@@ -94,7 +94,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
 
   private Editor myEditor;
 
-  private Object LOCK = new Object();
+  private final Object LOCK = new Object();
 
   private int myContentSize;
   private StringBuffer myDeferredOutput = new StringBuffer();
