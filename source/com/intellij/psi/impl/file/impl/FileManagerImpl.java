@@ -2,6 +2,7 @@ package com.intellij.psi.impl.file.impl;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.lang.Language;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -15,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.impl.local.VirtualFileImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerConfiguration;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -39,6 +41,8 @@ import java.util.*;
 
 public class FileManagerImpl implements FileManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.impl.FileManagerImpl");
+
+  private static int MAX_INTELLISENSE_FILESIZE = maxIntellisenseFileSize();
 
   private final PsiManagerImpl myManager;
 
@@ -90,6 +94,12 @@ public class FileManagerImpl implements FileManager {
       }
     }
     myDisposed = true;
+  }
+
+  private static int maxIntellisenseFileSize() {
+    final String maxSizeS = System.getProperty("idea.max.intellisense.filesize");
+    final int maxSize = maxSizeS != null ? Integer.parseInt(maxSizeS) * 1024 : -1;
+    return maxSize;
   }
 
   public void cleanupForNextTest() {
@@ -354,7 +364,12 @@ public class FileManagerImpl implements FileManager {
       final Project project = myManager.getProject();
       if (fileType instanceof LanguageFileType) {
         final Language language = ((LanguageFileType)fileType).getLanguage();
-        return language.getParserDefinition().createFile(project, vFile);
+        if (!isTooLarge(vFile)) {
+          final ParserDefinition parserDefinition = language.getParserDefinition();
+          if (parserDefinition != null) {
+            return parserDefinition.createFile(project, vFile);
+          }
+        }
       }
 
       if (fileType instanceof JavaClassFileType) {
@@ -380,6 +395,18 @@ public class FileManagerImpl implements FileManager {
       LOG.error(e);
       return null;
     }
+  }
+
+  private boolean isTooLarge(final VirtualFile vFile) {
+    if (MAX_INTELLISENSE_FILESIZE == -1) return false;
+    return getFileLength(vFile) > MAX_INTELLISENSE_FILESIZE;
+  }
+
+  private long getFileLength(final VirtualFile vFile) {
+    if (vFile instanceof VirtualFileImpl) {
+      return ((VirtualFileImpl)vFile).getPhysicalFileLength();
+    }
+    return vFile.getLength();
   }
 
   public PsiDirectory findDirectory(VirtualFile vFile) {

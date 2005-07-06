@@ -26,6 +26,8 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.text.StringUtil;
@@ -53,6 +55,8 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 public class FindInProjectUtil {
+  private static final int USAGES_LIMIT = 1000;
+  private static final int FILES_SIZE_LIMIT = 10 * 1024 * 1024; // megabytes.
 
   public static void setDirectoryName(FindModel model, DataContext dataContext) {
     PsiElement psiElement = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
@@ -168,11 +172,26 @@ public class FindInProjectUtil {
     final FileDocumentManager manager = FileDocumentManager.getInstance();
     try {
       int i =0;
+      final Set<VirtualFile> processedFiles = new HashSet<VirtualFile>();
+      long totalFilesSize = 0;
+      final int[] count = new int[]{0};
+      boolean warningShown = false;
+
       for (final PsiFile psiFile : psiFiles) {
         ProgressManager.getInstance().checkCanceled();
         final VirtualFile virtualFile = psiFile.getVirtualFile();
         final int index = i++;
         if (virtualFile == null) continue;
+
+        if (!processedFiles.contains(virtualFile)) {
+          processedFiles.add(virtualFile);
+          totalFilesSize += virtualFile.getLength();
+          if (totalFilesSize > FILES_SIZE_LIMIT && !warningShown) {
+            showTooManyUsagesWaring(project, "Usages in files of total size " + totalFilesSize + " (bytes) found. IDEA may become " +
+                                             "unresponsive or even fail with OutOfMemoryError if you continue. Continue?");
+            warningShown = true;
+          }
+        }
 
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
@@ -180,7 +199,7 @@ public class FindInProjectUtil {
               if (FileTypeManager.getInstance().getFileTypeByFile(virtualFile).isBinary()) return; // do not decompile .class files
               final Document document = manager.getDocument(virtualFile);
               if (document != null) {
-                addToUsages(project, document, consumer, findModel, psiFile);
+                addToUsages(project, document, consumer, findModel, psiFile, count);
 
                 if (progress != null) {
                   progress.setFraction((double)index / psiFiles.size());
@@ -189,14 +208,21 @@ public class FindInProjectUtil {
                   int size = consumer.getCount();
                   progress.setText2((size == 0 ? "No" : Integer.toString(size)) + " occurrence" +
                                     (size != 1 ? "s" : "") + " found so far");
+
                 }
               }
             }
           }
         });
+
+        if (count[0] > USAGES_LIMIT && !warningShown) {
+          showTooManyUsagesWaring(project, Integer.toString(count[0]) + " usages found so far. Are you sure wish to continue?");
+          warningShown = true;
+        }
       }
     }
     catch (ProcessCanceledException e) {
+      // fine
     }
 
     if (progress != null) {
@@ -204,6 +230,24 @@ public class FindInProjectUtil {
     }
 
     consumer.findUsagesCompleted();
+  }
+
+  private static void showTooManyUsagesWaring(final Project project, final String message) {
+    final int[] answer = new int[1];
+    try {
+      SwingUtilities.invokeAndWait(new Runnable() {
+        public void run() {
+          answer[0] = Messages.showYesNoDialog(project, message, "Too Many Usages", Messages.getWarningIcon());
+        }
+      });
+    }
+    catch (Exception e) {
+      return; //OK?
+    }
+
+    if (answer[0] != DialogWrapper.OK_EXIT_CODE) {
+      throw new ProcessCanceledException();
+    }
   }
 
   private static Collection<PsiFile> getFilesToSearchIn(final FindModel findModel, final Project project, final PsiDirectory psiDirectory) {
@@ -229,7 +273,7 @@ public class FindInProjectUtil {
                                   module == null ?
                                   GlobalSearchScope.projectScope(project) :
                                   moduleContentScope(module) :
-                                  GlobalSearchScope.directoryScope(psiDirectory, true);
+                                                             GlobalSearchScope.directoryScope(psiDirectory, true);
 
         List<String> words = StringUtil.getWordsIn(findModel.getStringToFind());
         // if no words specified in search box, fallback to brute force search
@@ -338,7 +382,8 @@ public class FindInProjectUtil {
                                   Document document,
                                   AsyncFindUsagesProcessListener consumer,
                                   FindModel findModel,
-                                  final PsiFile psiFile) {
+                                  final PsiFile psiFile,
+                                  final int[] count) {
 
     if (psiFile == null) {
       return;
@@ -354,6 +399,7 @@ public class FindInProjectUtil {
 
         UsageInfo info = new UsageInfo(psiFile, result.getStartOffset(), result.getEndOffset());
         consumer.foundUsage(info);
+        count[0]++;
 
         final int prevOffset = offset;
         offset = result.getEndOffset();
