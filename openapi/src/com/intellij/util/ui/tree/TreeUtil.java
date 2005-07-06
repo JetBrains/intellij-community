@@ -39,6 +39,7 @@ public final class TreeUtil {
 
   public static List<TreePath> collectExpandedPaths(final JTree tree, TreePath path){
     final ArrayList<TreePath> result = new ArrayList<TreePath>();
+    if (!tree.isExpanded(path)) return result;
     final Object lastPathComponent = path.getLastPathComponent();
     final TreeModel model = tree.getModel();
     if (model.isLeaf(lastPathComponent)) {
