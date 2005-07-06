@@ -212,9 +212,7 @@ public class Descriptor {
           catch (BadLocationException e1) {
             LOG.error(e1);
           }
-          catch (InspectionProfile.UnableToEditDefaultProfileException e1) {
-            LOG.error(e1);
-          }
+
         }
       }
     });
@@ -238,9 +236,6 @@ public class Descriptor {
             }
           }
           catch (BadLocationException e1) {
-            LOG.error(e1);
-          }
-          catch (InspectionProfile.UnableToEditDefaultProfileException e1) {
             LOG.error(e1);
           }
         }
@@ -269,9 +264,6 @@ public class Descriptor {
           catch (BadLocationException e1) {
             LOG.error(e1);
           }
-          catch (InspectionProfile.UnableToEditDefaultProfileException e1) {
-            LOG.error(e1);
-          }
         }
       }
     });
@@ -296,9 +288,6 @@ public class Descriptor {
             }
           }
           catch (BadLocationException e1) {
-            LOG.error(e1);
-          }
-          catch (InspectionProfile.UnableToEditDefaultProfileException e1) {
             LOG.error(e1);
           }
         }

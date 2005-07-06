@@ -859,10 +859,6 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
         new SwitchOffToolAction(HighlightDisplayKey.find(tool.getShortName())).editToolSettings(myProject, myInspectionProfile);
         InspectionResultsView.this.update();
       }
-
-      public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(!myInspectionProfile.isDefault());
-      }
     });
     actions.add(ActionManager.getInstance().getAction(IdeActions.GROUP_VERSION_CONTROLS));
 

@@ -42,8 +42,6 @@ public interface InspectionProfile {
 
   boolean isToolEnabled(HighlightDisplayKey key);
 
-  boolean isDefault();
-
   interface ModifiableModel {
 
     InspectionProfile getParentProfile();
@@ -52,17 +50,13 @@ public interface InspectionProfile {
 
     void setBaseProfile(InspectionProfileImpl profile);
 
-    void removeInheritance(boolean inheritFromBaseBase);
-
     String getName();
-
-    boolean isDefault();
 
     void setName(String name);
 
-    void enableTool(String inspectionTool) throws UnableToEditDefaultProfileException;
+    void enableTool(String inspectionTool);
 
-    void disableTool(String inspectionTool) throws UnableToEditDefaultProfileException;
+    void disableTool(String inspectionTool);
 
     void setErrorLevel(HighlightDisplayKey key, HighlightDisplayLevel level);
 
@@ -80,13 +74,13 @@ public interface InspectionProfile {
 
     boolean isProperSetting(HighlightDisplayKey key);
 
-    void setAdditionalJavadocTags(String tags) throws UnableToEditDefaultProfileException;
+    void setAdditionalJavadocTags(String tags);
     
-    void setAdditionalHtmlTags(String tags) throws UnableToEditDefaultProfileException;
+    void setAdditionalHtmlTags(String tags);
     
-    void setAdditionalHtmlAttributes(String attributes) throws UnableToEditDefaultProfileException;
+    void setAdditionalHtmlAttributes(String attributes);
     
-    void setAdditionalNotRequiredHtmlAttributes(String attributes) throws UnableToEditDefaultProfileException;
+    void setAdditionalNotRequiredHtmlAttributes(String attributes);
 
     void resetToBase();
 
@@ -111,12 +105,6 @@ public interface InspectionProfile {
     void setUnusedSymbolSettings(UnusedSymbolSettings settings);
   }
 
-  static class UnableToEditDefaultProfileException extends Exception {
-    public UnableToEditDefaultProfileException() {
-      super("Unable to edit Default profile");
-    }
-  }
-  
   static class UnusedSymbolSettings implements JDOMExternalizable{
     public boolean LOCAL_VARIABLE = true;
     public boolean FIELD = true;

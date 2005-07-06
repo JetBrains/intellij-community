@@ -77,18 +77,15 @@ public class InspectionProfileConvertor {
                                                                             inspectionProfileManager);
 
       final InspectionProfile.ModifiableModel editorProfileModel = editorProfile.getModifiableModel();
-      try {
-        editorProfileModel.setAdditionalJavadocTags(myAdditionalJavadocTags);
-        fillErrorLevels(editorProfileModel);
-      }
-      catch (InspectionProfile.UnableToEditDefaultProfileException e) {
-        LOG.error(e);
-      }       
+      editorProfileModel.setAdditionalJavadocTags(myAdditionalJavadocTags);
+      fillErrorLevels(editorProfileModel);
       editorProfileModel.commit();
     }
   }
 
-  public static void convertToNewFormat(File profileFile, InspectionProfile profile) throws IOException, JDOMException {
+  public static Element convertToNewFormat(File profileFile, InspectionProfile profile) throws IOException, JDOMException {
+    Element rootElement = new Element("inspections");
+    rootElement.setAttribute("name", profile.getName());
     final InspectionTool[] tools = profile.getInspectionTools();
     final Document document = JDOMUtil.loadDocument(profileFile);
     for (final Object o : document.getRootElement().getChildren("inspection_tool")) {
@@ -99,8 +96,9 @@ public class InspectionProfileConvertor {
         continue;
       }
       toolElement.setAttribute("class", shortName);
+      rootElement.addContent(toolElement);
     }
-    JDOMUtil.writeDocument(document, profileFile, System.getProperty("line.separator"));
+    return rootElement;
   }
 
   private static void renameOldDefaultsProfile() {
@@ -120,9 +118,11 @@ public class InspectionProfileConvertor {
     try {
       Document doc = JDOMUtil.loadDocument(files[0]);
       Element root = doc.getRootElement();
-      root.setAttribute("profile_name", OLD_DEFAUL_PROFILE);
-      JDOMUtil.writeDocument(doc, dest, System.getProperty("line.separator"));
-      files[0].delete();
+      if (root.getAttributeValue("version") == null){
+        root.setAttribute("profile_name", OLD_DEFAUL_PROFILE);
+        JDOMUtil.writeDocument(doc, dest, System.getProperty("line.separator"));
+        files[0].delete();
+      }
     }
     catch (IOException e) {
       LOG.error(e);
@@ -132,7 +132,7 @@ public class InspectionProfileConvertor {
     }
   }
 
-  private void fillErrorLevels(final InspectionProfile.ModifiableModel profile) throws InspectionProfile.UnableToEditDefaultProfileException {
+  private void fillErrorLevels(final InspectionProfile.ModifiableModel profile) {
     InspectionTool[] tools = profile.getInspectionTools();
     LOG.assertTrue(tools != null, "Profile was not correctly init");
     //fill error levels
