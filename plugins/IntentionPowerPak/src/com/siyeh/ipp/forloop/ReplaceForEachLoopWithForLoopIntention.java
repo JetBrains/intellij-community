@@ -76,9 +76,7 @@ public class ReplaceForEachLoopWithForLoopIntention extends Intention{
             final String typeText = statement.getIterationParameter()
                     .getType()
                     .getPresentableText();
-            newStatement.append("for(java.util.Iterator<");
-            newStatement.append(typeText);
-            newStatement.append("> ");
+            newStatement.append("for(java.util.Iterator ");
             newStatement.append(iterator);
             newStatement.append(" = ");
             newStatement.append(iteratedValue.getText());
@@ -90,6 +88,9 @@ public class ReplaceForEachLoopWithForLoopIntention extends Intention{
             newStatement.append(' ');
             newStatement.append(statement.getIterationParameter().getName());
             newStatement.append(" = ");
+            newStatement.append('(');
+            newStatement.append(typeText);
+            newStatement.append(')');
             newStatement.append(iterator);
             newStatement.append(".next();");
 
@@ -102,6 +103,7 @@ public class ReplaceForEachLoopWithForLoopIntention extends Intention{
                     //skip the braces
                     newStatement.append(children[i].getText());
                 }
+
             } else{
                 newStatement.append(body.getText());
             }
