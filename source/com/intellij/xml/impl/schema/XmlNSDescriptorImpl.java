@@ -257,14 +257,26 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
         final String schemaLocation = tag.getAttributeValue("schemaLocation");
         if (schemaLocation != null) {
           final XmlFile xmlFile = XmlUtil.findXmlFile(rootTag.getContainingFile(), schemaLocation);
+          
           if (xmlFile != null) {
             final XmlDocument document = xmlFile.getDocument();
+            
             if (document != null) {
               final XmlTag rTag = document.getRootTag();
-
+              final XmlNSDescriptorImpl nsDescriptor;
+              
+              if("import".equals(tag.getLocalName())) {
+                final XmlNSDescriptor importedDescriptor = (XmlNSDescriptor)document.getMetaData();
+                nsDescriptor = (importedDescriptor instanceof XmlNSDescriptorImpl) ? 
+                               (XmlNSDescriptorImpl)importedDescriptor:
+                               this;
+              } else {
+                nsDescriptor = this;
+              }
+                
               final CachedValue<TypeDescriptor> value = tag.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<TypeDescriptor>() {
                 public Result<TypeDescriptor> compute() {
-                  final TypeDescriptor complexTypeDescriptor = findTypeDescriptor(rTag, name);
+                  final TypeDescriptor complexTypeDescriptor = nsDescriptor.findTypeDescriptor(rTag, name);
                   return new Result<TypeDescriptor>(complexTypeDescriptor, new Object[]{rTag});
                 }
               }, false);
