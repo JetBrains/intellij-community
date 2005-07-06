@@ -65,11 +65,12 @@ class ParameterInfoController {
   }
 
   public static boolean isAlreadyShown(Editor editor, int lbraceOffset) {
-    ArrayList allControllers = getAllControllers(editor);
-    for(int i = 0; i < allControllers.size(); i++){
-      ParameterInfoController controller = (ParameterInfoController)allControllers.get(i);
+    ArrayList<ParameterInfoController> allControllers = getAllControllers(editor);
+    for(int i = 0; i < allControllers.size(); i++) {
+      ParameterInfoController controller = allControllers.get(i);
       if (!controller.myHint.isVisible()){
         controller.dispose();
+        i--;
         continue;
       }
       if (controller.myLbraceMarker.getStartOffset() == lbraceOffset) return true;
@@ -85,8 +86,8 @@ class ParameterInfoController {
       int type) {
     this (project, editor, lbraceOffset, hint, type, DEFAULT_PARAMETER_CLOSE_CHARS);
   }
-  
-  
+
+
   public ParameterInfoController(
       Project project,
       Editor editor,
@@ -98,7 +99,7 @@ class ParameterInfoController {
     myEditor = editor;
     myType = type;
     myParameterCloseChars = parameterCloseChars;
-    myLbraceMarker = (editor.getDocument()).createRangeMarker(lbraceOffset, lbraceOffset);
+    myLbraceMarker = editor.getDocument().createRangeMarker(lbraceOffset, lbraceOffset);
     myHint = hint;
     myComponent = (ParameterInfoComponent)myHint.getComponent();
 
@@ -177,7 +178,7 @@ class ParameterInfoController {
     if (myDisposed) return;
     myDisposed = true;
 
-    ArrayList allControllers = getAllControllers(myEditor);
+    ArrayList<ParameterInfoController> allControllers = getAllControllers(myEditor);
     allControllers.remove(this);
     myEditor.getCaretModel().removeCaretListener(myEditorCaretListener);
     myEditor.getDocument().removeDocumentListener(myEditorDocumentListener);
@@ -231,23 +232,21 @@ class ParameterInfoController {
         myComponent.setCurrentItem(tag);
       }
       else{
-        {
-          if (findParentOfType(file, offset, PsiAnnotation.class) != null) {
-            int offset1 = CharArrayUtil.shiftForward(chars, myEditor.getCaretModel().getOffset(), " \t");
-            if (chars.charAt(offset1) == ',') {
-              offset1 = CharArrayUtil.shiftBackward(chars, offset1 - 1, " \t");
-            }
-            myComponent.setHighlightedMethod(findAnnotationMethod(file, offset1));
+        if (findParentOfType(file, offset, PsiAnnotation.class) != null) {
+          int offset1 = CharArrayUtil.shiftForward(chars, myEditor.getCaretModel().getOffset(), " \t");
+          if (chars.charAt(offset1) == ',') {
+            offset1 = CharArrayUtil.shiftBackward(chars, offset1 - 1, " \t");
+          }
+          myComponent.setHighlightedMethod(findAnnotationMethod(file, offset1));
+        }
+        else {
+          final PsiReferenceParameterList refParamList = findParentOfType(file, offset, PsiReferenceParameterList.class);
+          if (refParamList != null) {
+            updateTypeParameterInfo(refParamList, offset);
           }
           else {
-            final PsiReferenceParameterList refParamList = findParentOfType(file, offset, PsiReferenceParameterList.class);
-            if (refParamList != null) {
-              updateTypeParameterInfo(refParamList, offset);
-            }
-            else {
-              myHint.hide();
-              dispose();
-            }
+            myHint.hide();
+            dispose();
           }
         }
       }
@@ -318,7 +317,7 @@ class ParameterInfoController {
     }
   }
 
-  private int getCurrentParameterIndex(PsiElement argList, int offset) {
+  private static int getCurrentParameterIndex(PsiElement argList, int offset) {
     int curOffset = argList.getTextRange().getStartOffset();
     PsiElement[] children = argList.getChildren();
     int index = 0;
@@ -459,9 +458,9 @@ class ParameterInfoController {
     PsiExpressionList list = (PsiExpressionList)parent;
     PsiElement listParent = list.getParent();
     if (listParent instanceof PsiMethodCallExpression
-      || listParent instanceof PsiNewExpression
-      || listParent instanceof PsiAnonymousClass
-      || listParent instanceof PsiEnumConstant){
+        || listParent instanceof PsiNewExpression
+        || listParent instanceof PsiAnonymousClass
+        || listParent instanceof PsiEnumConstant){
       return list;
     }
     else{
@@ -525,7 +524,7 @@ class ParameterInfoController {
     PsiNameValuePair pair = findParentOfType(file, offset, PsiNameValuePair.class);
     if (pair == null) return null;
     final PsiElement resolved = pair.getReference().resolve();
-    return resolved instanceof PsiAnnotationMethod ? ((PsiAnnotationMethod)resolved) : null;
+    return resolved instanceof PsiAnnotationMethod ? (PsiAnnotationMethod)resolved : null;
   }
   public static <T extends PsiElement> T findParentOfType (PsiFile file, int offset, Class<T> parentClass) {
     if (!(file instanceof PsiJavaFile)) return null;
