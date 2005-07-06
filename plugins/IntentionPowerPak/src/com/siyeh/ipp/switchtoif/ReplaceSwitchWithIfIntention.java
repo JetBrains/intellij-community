@@ -35,10 +35,7 @@ public class ReplaceSwitchWithIfIntention extends Intention{
         final PsiSwitchStatement switchStatement =
                 (PsiSwitchStatement) switchToken.getParent();
         assert switchStatement != null;
-        final List<SwitchStatementBranch> allBranches = new ArrayList<SwitchStatementBranch>(10);
-        final List<SwitchStatementBranch> openBranches = new ArrayList<SwitchStatementBranch>(10);
 
-        final StringBuffer ifStatementBuffer = new StringBuffer(1024);
         final PsiManager mgr = switchStatement.getManager();
         final PsiExpression switchExpression = switchStatement.getExpression();
         final CodeStyleManager codeStyleMgr = mgr.getCodeStyleManager();
@@ -74,13 +71,16 @@ public class ReplaceSwitchWithIfIntention extends Intention{
                 break;
             }
         }
+        final StringBuffer ifStatementBuffer=new StringBuffer(1024);
 
-        final Set<PsiLocalVariable> declaredVars = new HashSet<PsiLocalVariable>(5);
         String breakLabel = null;
         if(renameBreaks){
             breakLabel = CaseUtil.findUniqueLabel(switchStatement, "Label");
             ifStatementBuffer.append(breakLabel + ':');
         }
+        final List<SwitchStatementBranch> openBranches=new ArrayList<SwitchStatementBranch>(10);
+        final Set<PsiLocalVariable> declaredVars=new HashSet<PsiLocalVariable>(5);
+        final List<SwitchStatementBranch> allBranches=new ArrayList<SwitchStatementBranch>(10);
         SwitchStatementBranch currentBranch=null;
         final PsiElement[] children = body.getChildren();
         for(int i = 1; i < children.length - 1; i++){

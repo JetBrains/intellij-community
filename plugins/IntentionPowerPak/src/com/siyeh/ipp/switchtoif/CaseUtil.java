@@ -5,11 +5,10 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ipp.psiutils.EquivalenceChecker;
 import com.siyeh.ipp.psiutils.SideEffectChecker;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.Nullable;
 
 class CaseUtil{
     private CaseUtil(){
@@ -156,11 +155,11 @@ class CaseUtil{
     }
 
     private static List<PsiExpression> determinePossibleCaseExpressions(PsiExpression exp){
-        final List<PsiExpression> out = new ArrayList<PsiExpression>(10);
         PsiExpression expToCheck = exp;
         while(expToCheck instanceof PsiParenthesizedExpression){
             expToCheck = ((PsiParenthesizedExpression) exp).getExpression();
         }
+        final List<PsiExpression> out=new ArrayList<PsiExpression>(10);
         if(!(expToCheck instanceof PsiBinaryExpression)){
             return out;
         }
