@@ -6,6 +6,7 @@ import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlDocument;
@@ -14,6 +15,7 @@ import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.PsiFile;
 import com.intellij.codeFormatting.general.FormatterUtil;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.diagnostic.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +25,8 @@ import org.jetbrains.annotations.NotNull;
 public class XmlBlock extends AbstractXmlBlock {
   private final Indent myIndent;
   private TextRange myTextRange;
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.xml.XmlBlock");
 
   public XmlBlock(final ASTNode node,
                   final Wrap wrap,
@@ -72,6 +76,7 @@ public class XmlBlock extends AbstractXmlBlock {
           child = processChild(result,child, null, null, getChildDefaultIndent());
         }
         if (child != null) {
+          LOG.assertTrue(child.getTreeParent() == myNode);
           child = child.getTreeNext();
         }
       }
