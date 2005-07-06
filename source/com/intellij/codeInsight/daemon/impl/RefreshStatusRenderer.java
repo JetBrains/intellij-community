@@ -54,7 +54,7 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
     }
     status.noInspectionRoots = noInspectionRoots.isEmpty() ? null : noInspectionRoots.toArray(new String[noInspectionRoots.size()]);
     status.noHighlightingRoots = noHighlightingRoots.isEmpty() ? null : noHighlightingRoots.toArray(new String[noHighlightingRoots.size()]);
-    status.rootsNumber = roots.length == 1 ? 1 : roots.length - 1;
+    status.rootsNumber = roots.length;
 
     if (myHighlighter.isErrorAnalyzingFinished(myFile)) {
       status.errorAnalyzingFinished = true;
