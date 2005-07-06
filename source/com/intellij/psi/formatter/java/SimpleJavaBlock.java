@@ -28,8 +28,8 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
     Indent indent = null;
     while (child != null) {
       if (ElementType.COMMENT_BIT_SET.isInSet(child.getElementType()) || child.getElementType() == JavaDocElementType.DOC_COMMENT) {
-        result.add(createJavaBlock(child, mySettings, Formatter.getInstance().getNoneIndent(), null, null));
-        indent = Formatter.getInstance().getNoneIndent();
+        result.add(createJavaBlock(child, mySettings, Indent.getNoneIndent(), null, null));
+        indent = Indent.getNoneIndent();
       }
       else if (!FormatterUtil.containsWhiteSpacesOnly(child)) {
         break;
@@ -43,9 +43,9 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
       if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
         child = processChild(result, child, childAlignment, childWrap, indent);
         if (indent != null && !(myNode.getPsi() instanceof PsiFile)) {
-          indent = Formatter.getInstance().createContinuationIndent();
+          indent = Indent.createContinuationIndent();
         }
-        //indent = Formatter.getInstance().createContinuationIndent();
+        //indent = FormatterEx.getInstance().createContinuationIndent();
       }
       if (child != null) {
         child = child.getTreeNext();

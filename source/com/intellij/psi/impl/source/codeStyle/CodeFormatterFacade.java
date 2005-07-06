@@ -1,7 +1,7 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.newCodeFormatting.Formatter;
+import com.intellij.newCodeFormatting.FormatterEx;
 import com.intellij.newCodeFormatting.FormattingModel;
 import com.intellij.newCodeFormatting.FormattingModelBuilder;
 import com.intellij.openapi.diagnostic.Logger;
@@ -87,7 +87,7 @@ public class CodeFormatterFacade implements Constants {
       final FormattingModel model = builder.createModel(containingFile, mySettings);
       if (containingFile.getTextLength() > 0) {
         try {
-          Formatter.getInstance().format(model, mySettings, 
+          FormatterEx.getInstanceEx().format(model, mySettings,
                                          mySettings.getIndentOptions(fileType), range);
         }
         catch (IncorrectOperationException e) {

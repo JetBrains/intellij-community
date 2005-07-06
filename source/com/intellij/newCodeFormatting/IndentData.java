@@ -1,4 +1,4 @@
-package com.intellij.newCodeFormatting.impl;
+package com.intellij.newCodeFormatting;
 
 import com.intellij.newCodeFormatting.IndentInfo;
 

@@ -1,8 +1,8 @@
-package com.intellij.newCodeFormatting.impl;
+package com.intellij.newCodeFormatting;
 
 import com.intellij.newCodeFormatting.Indent;
 
-class IndentImpl implements Indent {
+class IndentImpl extends Indent {
   private final boolean myIsAbsolute;
   private int myCount = 1;
 

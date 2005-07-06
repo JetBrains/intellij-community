@@ -81,13 +81,13 @@ public class XmlBlock extends AbstractXmlBlock {
 
   private Indent getChildDefaultIndent() {
     if (myNode.getElementType() == ElementType.HTML_DOCUMENT) {
-      return Formatter.getInstance().getNoneIndent();
+      return Indent.getNoneIndent();
     }
     if (myNode.getElementType() == ElementType.DUMMY_HOLDER) {
-      return Formatter.getInstance().getNoneIndent();
+      return Indent.getNoneIndent();
     }
     if (myNode.getElementType() == ElementType.XML_PROLOG) {
-      return Formatter.getInstance().getNoneIndent();
+      return Indent.getNoneIndent();
     }
     else {
       return null;
@@ -106,7 +106,7 @@ public class XmlBlock extends AbstractXmlBlock {
 
     if ((isXmlTag(node2) || type2 == ElementType.XML_END_TAG_START || type2 == ElementType.XML_TEXT) && myXmlFormattingPolicy
       .getShouldKeepWhiteSpaces()) {
-      return getFormatter().getReadOnlySpace();
+      return SpaceProperty.getReadOnlySpace();
     }
 
     if (elementType == ElementType.XML_TEXT) {
@@ -131,7 +131,7 @@ public class XmlBlock extends AbstractXmlBlock {
   private SpaceProperty getSpacesInsideAttribute(final IElementType type1, final IElementType type2) {
     if (type1 == ElementType.XML_EQ || type2 == ElementType.XML_EQ) {
       int spaces = myXmlFormattingPolicy.getShouldAddSpaceAroundEqualityInAttribute() ? 1 : 0;
-      return getFormatter().createSpaceProperty(spaces, spaces, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(),
+      return SpaceProperty.createSpaceProperty(spaces, spaces, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(),
                                                 myXmlFormattingPolicy.getKeepBlankLines());
     }
     else {
@@ -141,7 +141,7 @@ public class XmlBlock extends AbstractXmlBlock {
 
   private SpaceProperty getSpacesInsideText(final IElementType type1, final IElementType type2) {
     if (type1 == ElementType.XML_DATA_CHARACTERS && type2 == ElementType.XML_DATA_CHARACTERS) {
-      return getFormatter().createSpaceProperty(1, 1, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(),
+      return SpaceProperty.createSpaceProperty(1, 1, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(),
                                                 myXmlFormattingPolicy.getKeepBlankLines());
     }
     else {
@@ -153,7 +153,7 @@ public class XmlBlock extends AbstractXmlBlock {
     if (myNode.getElementType() == ElementType.XML_PROLOG
         || myNode.getElementType() == ElementType.XML_DOCTYPE
         || SourceTreeToPsiMap.treeElementToPsi(myNode) instanceof XmlDocument) {
-      return getFormatter().getNoneIndent();
+      return Indent.getNoneIndent();
     }
     /*
     else if (myNode.getElementType() == ElementType.XML_COMMENT && myNode.textContains('\n')) {
@@ -213,10 +213,10 @@ public class XmlBlock extends AbstractXmlBlock {
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
     if (myNode.getElementType() == ElementType.JSP_DECLARATION || myNode.getElementType() == JspElementType.JSP_SCRIPTLET) {
-      return new ChildAttributes(Formatter.getInstance().createNormalIndent(), null);
+      return new ChildAttributes(Indent.createNormalIndent(), null);
     }
     else if (myNode.getPsi() instanceof PsiFile) {
-      return new ChildAttributes(Formatter.getInstance().getNoneIndent(), null);
+      return new ChildAttributes(Indent.getNoneIndent(), null);
     }
     else {
       return super.getChildAttributes(newChildIndex);

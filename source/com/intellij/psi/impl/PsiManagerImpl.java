@@ -6,8 +6,8 @@ import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.j2ee.extResources.ExternalResourceListener;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
-import com.intellij.newCodeFormatting.Formatter;
-import com.intellij.newCodeFormatting.impl.FormatterImpl;
+import com.intellij.newCodeFormatting.FormatterEx;
+import com.intellij.newCodeFormatting.FormatterImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -264,12 +264,12 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   }
 
   public void performActionWithFormatterDisabled(Runnable r) {
-    ((FormatterImpl)Formatter.getInstance()).disableFormatting();
+    ((FormatterImpl)FormatterEx.getInstance()).disableFormatting();
     try {
       r.run();
     }
     finally {
-      ((FormatterImpl)Formatter.getInstance()).enableFormatting();
+      ((FormatterImpl)FormatterEx.getInstance()).enableFormatting();
     }
   }
 

@@ -1,6 +1,5 @@
-package com.intellij.newCodeFormatting.impl;
+package com.intellij.newCodeFormatting;
 
-import com.intellij.newCodeFormatting.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 
@@ -165,7 +164,7 @@ public class AbstractBlockWrapper {
                                          int index) {
     IndentImpl childIndent = (IndentImpl)childAttributes.getChildIndent();
 
-    if (childIndent == null) childIndent = (IndentImpl)Formatter.getInstance().createContinuationWithoutFirstIndent();
+    if (childIndent == null) childIndent = (IndentImpl)Indent.createContinuationWithoutFirstIndent();
 
     IndentData indent = getIndent(indentOption, index, childIndent);
     if (myParent == null) {

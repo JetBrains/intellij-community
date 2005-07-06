@@ -59,7 +59,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   private Wrap getTagEndWrapping(final XmlTag parent) {
-    return getFormatter().createWrap(myXmlFormattingPolicy.getWrappingTypeForTagEnd(parent), true);
+    return Wrap.createWrap(myXmlFormattingPolicy.getWrappingTypeForTagEnd(parent), true);
   }
 
   protected Wrap chooseWrap(final ASTNode child, final Wrap tagBeginWrap, final Wrap attrWrap, final Wrap textWrap) {
@@ -83,10 +83,6 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     return tag.getSubTags().length > 0 || tag.getName().toLowerCase().startsWith("jsp:");
   }
 
-  protected Formatter getFormatter() {
-    return Formatter.getInstance();
-  }
-
   protected XmlTag getTag() {
     return getTag(myNode);
   }
@@ -101,7 +97,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   protected Wrap createTagBeginWrapping(final XmlTag tag) {
-    return getFormatter().createWrap(myXmlFormattingPolicy.getWrappingTypeForTagBegin(tag), true);
+    return Wrap.createWrap(myXmlFormattingPolicy.getWrappingTypeForTagBegin(tag), true);
   }
 
   protected @Nullable ASTNode processChild(List<Block> result,
@@ -131,7 +127,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
               && tag.getParent() instanceof XmlTag
               && myXmlFormattingPolicy.indentChildrenOf((XmlTag)tag.getParent())
             ) {
-            childIndent = getFormatter().createNormalIndent();
+            childIndent = Indent.createNormalIndent();
           }
           result.add(new XmlTagBlock(tag.getNode(), null, null, myXmlFormattingPolicy, childIndent));
           ASTNode currentChild = findChildAfter(child, tag.getTextRange().getEndOffset());
@@ -167,11 +163,11 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
 
       if (isXmlTag(child) || child.getElementType() == ElementType.XML_TAG) {
-        result.add(new XmlTagBlock(child, wrap, alignment, myXmlFormattingPolicy, indent != null ? indent : getFormatter().getNoneIndent()));
+        result.add(new XmlTagBlock(child, wrap, alignment, myXmlFormattingPolicy, indent != null ? indent : Indent.getNoneIndent()));
         return child;
       }
       else if (child.getElementType() == ElementType.JSP_SCRIPTLET_END) {
-        result.add(new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, getFormatter().getNoneIndent(), null));
+        result.add(new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, Indent.getNoneIndent(), null));
         return child;
       }
       else {
@@ -202,7 +198,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
       final ArrayList<Block> subBlocks = new ArrayList<Block>();
       while (element != null && element.getTextRange().getEndOffset() <=child.getTextRange().getEndOffset()) {
         if (!FormatterUtil.containsWhiteSpacesOnly(element)) {
-          processChild(subBlocks, element, null, null, Formatter.getInstance().getNoneIndent());
+          processChild(subBlocks, element, null, null, Indent.getNoneIndent());
         }
         int nextOffset = element.getTextRange().getEndOffset();
         element = element.getTreeNext();
@@ -211,7 +207,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
             .getPsiRoots()[0].getNode().findLeafElementAt(nextOffset);
         }
       }
-      return new SyntheticBlock(subBlocks, this, indent, myXmlFormattingPolicy, getFormatter().createNormalIndent());
+      return new SyntheticBlock(subBlocks, this, indent, myXmlFormattingPolicy, Indent.createNormalIndent());
     } else {
       return null;
     }
@@ -252,7 +248,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   protected SpaceProperty createDefaultSpace(boolean forceKeepLineBreaks) {
     boolean shouldKeepLineBreaks = myXmlFormattingPolicy.getShouldKeepLineBreaks() || forceKeepLineBreaks;
-    return getFormatter().createSpaceProperty(0, Integer.MAX_VALUE, 0, shouldKeepLineBreaks, myXmlFormattingPolicy.getKeepBlankLines());
+    return SpaceProperty.createSpaceProperty(0, Integer.MAX_VALUE, 0, shouldKeepLineBreaks, myXmlFormattingPolicy.getKeepBlankLines());
   }
 
   public abstract boolean isTextElement();

@@ -1,6 +1,5 @@
-package com.intellij.newCodeFormatting.impl;
+package com.intellij.newCodeFormatting;
 
-import com.intellij.newCodeFormatting.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;

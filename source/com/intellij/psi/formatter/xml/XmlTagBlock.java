@@ -25,12 +25,11 @@ public class XmlTagBlock extends AbstractXmlBlock{
   protected List<Block> buildChildren() {
     ChameleonTransforming.transformChildren(myNode);
     ASTNode child = myNode.getFirstChildNode();
-    final Formatter formatter = getFormatter();
-    final Wrap attrWrap = formatter.createWrap(getWrapType(myXmlFormattingPolicy.getAttributesWrap()), false);
-    final Wrap textWrap = formatter.createWrap(getWrapType(myXmlFormattingPolicy.getTextWrap()), true);
+    final Wrap attrWrap = Wrap.createWrap(getWrapType(myXmlFormattingPolicy.getAttributesWrap()), false);
+    final Wrap textWrap = Wrap.createWrap(getWrapType(myXmlFormattingPolicy.getTextWrap()), true);
     final Wrap tagBeginWrap = createTagBeginWrapping(getTag());
-    final Alignment attrAlignment = formatter.createAlignment();
-    final Alignment textAlignment = formatter.createAlignment();
+    final Alignment attrAlignment = Alignment.createAlignment();
+    final Alignment textAlignment = Alignment.createAlignment();
     final ArrayList<Block> result = new ArrayList<Block>();
     ArrayList<Block> localResult = new ArrayList<Block>();
 
@@ -74,17 +73,17 @@ public class XmlTagBlock extends AbstractXmlBlock{
           final Indent indent;
 
           if (localResult.size() == 1 && localResult.get(0) instanceof JspTextBlock) {
-            //indent = Formatter.getInstance().getNoneIndent();
+            //indent = FormatterEx.getInstance().getNoneIndent();
             indent = myXmlFormattingPolicy.indentChildrenOf(getTag())
-                     ? getFormatter().createNormalIndent()
-                     : getFormatter().getNoneIndent();
+                     ? Indent.createNormalIndent()
+                     : Indent.getNoneIndent();
           } else if (!insideTag) {
             indent = null;
           }
           else {
             indent = myXmlFormattingPolicy.indentChildrenOf(getTag())
-                     ? getFormatter().createNormalIndent()
-                     : getFormatter().getNoneIndent();
+                     ? Indent.createNormalIndent()
+                     : Indent.getNoneIndent();
           }
 
           child = processChild(localResult,child, wrap, alignment, indent);
@@ -120,8 +119,8 @@ public class XmlTagBlock extends AbstractXmlBlock{
     while (child != null) {
       if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
         final Indent indent = myXmlFormattingPolicy.indentChildrenOf(getTag())
-                              ? getFormatter().createNormalIndent()
-                              : getFormatter().getNoneIndent();
+                              ? Indent.createNormalIndent()
+                              : Indent.getNoneIndent();
         child = processChild(list,child,  wrap, alignment, indent);
         if (child == null) return child;
         if (child.getTreeParent() != textNode) {
@@ -139,14 +138,14 @@ public class XmlTagBlock extends AbstractXmlBlock{
 
   private Block createTagContentNode(final ArrayList<Block> localResult) {
     return AbstractSyntheticBlock.createSynteticBlock(
-      localResult, this, getFormatter().getNoneIndent(),
+      localResult, this, Indent.getNoneIndent(),
       myXmlFormattingPolicy,
-      getFormatter().createNormalIndent());
+      Indent.createNormalIndent());
   }
 
   private Block createTagDescriptionNode(final ArrayList<Block> localResult) {
     return AbstractSyntheticBlock.createSynteticBlock(
-      localResult, this, getFormatter().getNoneIndent(),
+      localResult, this, Indent.getNoneIndent(),
       myXmlFormattingPolicy,
       null);
   }
@@ -156,29 +155,29 @@ public class XmlTagBlock extends AbstractXmlBlock{
     final AbstractSyntheticBlock syntheticBlock2 = ((AbstractSyntheticBlock)child2);
 
     if (syntheticBlock2.isJspTextBlock()) {
-      return getFormatter().createSpaceProperty(0, 0, 1, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
+      return SpaceProperty.createSpaceProperty(0, 0, 1, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
     }
 
-    if (myXmlFormattingPolicy.keepWhiteSpacesInsideTag(getTag())) return getFormatter().getReadOnlySpace();
+    if (myXmlFormattingPolicy.keepWhiteSpacesInsideTag(getTag())) return SpaceProperty.getReadOnlySpace();
 
     if (myXmlFormattingPolicy.getShouldKeepWhiteSpaces()) {
-      return getFormatter().getReadOnlySpace();
+      return SpaceProperty.getReadOnlySpace();
     }
 
     if (syntheticBlock1.endsWithTextElement() && syntheticBlock2.startsWithTextElement()) {
-      return getFormatter().createSafeSpace(myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
+      return SpaceProperty.createSafeSpace(myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
     }
 
     if (syntheticBlock1.endsWithText()) { //text</tag
-      return getFormatter().createSpaceProperty(0, 0, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
+      return SpaceProperty.createSpaceProperty(0, 0, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
     } else if (syntheticBlock1.isTagDescription() && syntheticBlock2.isTagDescription()) { //></
-      return getFormatter().createSpaceProperty(0, 0, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
+      return SpaceProperty.createSpaceProperty(0, 0, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
     } else if (syntheticBlock2.startsWithText()) { //>text
-      return getFormatter().createSpaceProperty(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
+      return SpaceProperty.createSpaceProperty(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
     } else if (syntheticBlock1.isTagDescription() && syntheticBlock2.startsWithTag()) {
-      return getFormatter().createSpaceProperty(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
+      return SpaceProperty.createSpaceProperty(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
     } else if (syntheticBlock1.endsWithTag() && syntheticBlock2.isTagDescription()) {
-      return getFormatter().createSpaceProperty(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
+      return SpaceProperty.createSpaceProperty(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
     }
     else {
       return createDefaultSpace(true);
@@ -202,9 +201,9 @@ public class XmlTagBlock extends AbstractXmlBlock{
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
     if (myXmlFormattingPolicy.indentChildrenOf(getTag())) {
-      return new ChildAttributes(Formatter.getInstance().createNormalIndent(), null);
+      return new ChildAttributes(Indent.createNormalIndent(), null);
     } else {
-      return new ChildAttributes(Formatter.getInstance().getNoneIndent(), null);
+      return new ChildAttributes(Indent.getNoneIndent(), null);
     }
   }
 }

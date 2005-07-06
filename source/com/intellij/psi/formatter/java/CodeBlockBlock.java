@@ -80,12 +80,12 @@ public class CodeBlockBlock extends AbstractJavaBlock {
 
   private ASTNode composeCodeBlock(final ArrayList<Block> result, ASTNode child, final Indent indent) {
     final ArrayList<Block> localResult = new ArrayList<Block>();
-    processChild(localResult, child, null, null, Formatter.getInstance().getNoneIndent());
+    processChild(localResult, child, null, null, Indent.getNoneIndent());
     child = child.getTreeNext();
     while (child != null) {
       if (!FormatterUtil.containsWhiteSpacesOnly(child)) {
         final boolean rBrace = isRBrace(child);
-        final Indent childIndent = rBrace ? Formatter.getInstance().getNoneIndent() : getCodeBlockInternalIndent(myChildrenIndent);
+        final Indent childIndent = rBrace ? Indent.getNoneIndent() : getCodeBlockInternalIndent(myChildrenIndent);
         child = processChild(localResult, child, null, null, childIndent);
         if (rBrace) {
           result.add(createCodeBlockBlock(localResult, indent));
@@ -109,7 +109,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
                                                final Alignment childAlignment,
                                                final Wrap childWrap, final Indent indent) {
     final ArrayList<Block> localResult = new ArrayList<Block>();
-    processChild(localResult, child, null, null, Formatter.getInstance().getNoneIndent());
+    processChild(localResult, child, null, null, Indent.getNoneIndent());
     child = child.getTreeNext();
     while (child != null) {
       if (child.getElementType() == ElementType.SWITCH_LABEL_STATEMENT || isRBrace(child)) {
@@ -120,9 +120,9 @@ public class CodeBlockBlock extends AbstractJavaBlock {
       if (!FormatterUtil.containsWhiteSpacesOnly(child)) {
         Indent childIndent;
         if (child.getElementType() == ElementType.BLOCK_STATEMENT) {
-          childIndent = Formatter.getInstance().getNoneIndent();
+          childIndent = Indent.getNoneIndent();
         } else {
-          childIndent = Formatter.getInstance().createNormalIndent();
+          childIndent = Indent.createNormalIndent();
         }
         processChild(localResult, child, null, null, childIndent);
       }
@@ -135,7 +135,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
   private SynteticCodeBlock createCaseSectionBlock(final ArrayList<Block> localResult, final Alignment childAlignment, final Indent indent,
                                                    final Wrap childWrap) {
     final SynteticCodeBlock result = new SynteticCodeBlock(localResult, childAlignment, getSettings(), indent, childWrap);
-    result.setChildAttributes(new ChildAttributes(Formatter.getInstance().createNormalIndent(), null));
+    result.setChildAttributes(new ChildAttributes(Indent.createNormalIndent(), null));
     return result;
   }
 
@@ -172,25 +172,25 @@ public class CodeBlockBlock extends AbstractJavaBlock {
 
   private Indent calcCurrentIndent(final ASTNode child, final int state) {
     if (isRBrace(child)) {
-      return Formatter.getInstance().getNoneIndent();
+      return Indent.getNoneIndent();
     }
 
-    if (state == BEFORE_FIRST) return Formatter.getInstance().getNoneIndent();
+    if (state == BEFORE_FIRST) return Indent.getNoneIndent();
 
     if (child.getElementType() == ElementType.SWITCH_LABEL_STATEMENT) {
       return getCodeBlockInternalIndent(myChildrenIndent);
     }
     if (state == BEFORE_LBRACE) {
       if (isLBrace(child)) {
-        return Formatter.getInstance().getNoneIndent();
+        return Indent.getNoneIndent();
       }
       else {
-        return Formatter.getInstance().createContinuationIndent();
+        return Indent.createContinuationIndent();
       }
     }
     else {
       if (isRBrace(child)) {
-        return Formatter.getInstance().getNoneIndent();
+        return Indent.getNoneIndent();
       }
       else {
         return getCodeBlockInternalIndent(myChildrenIndent);
@@ -206,7 +206,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
     if (isAfterJavaDoc(newChildIndex)) {
-      return new ChildAttributes(Formatter.getInstance().getNoneIndent(), null);
+      return new ChildAttributes(Indent.getNoneIndent(), null);
     } else {
       return new ChildAttributes(getCodeBlockInternalIndent(myChildrenIndent), null);
     }

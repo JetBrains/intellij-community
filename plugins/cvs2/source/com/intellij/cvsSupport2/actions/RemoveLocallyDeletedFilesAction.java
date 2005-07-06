@@ -1,6 +1,7 @@
 package com.intellij.cvsSupport2.actions;
 
 import com.intellij.cvsSupport2.CvsUtil;
+import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.actions.actionVisibility.CvsActionVisibility;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
@@ -73,6 +74,10 @@ public class RemoveLocallyDeletedFilesAction extends RemoveLocallyFileOrDirector
   }
 
   public void update(AnActionEvent e) {
+    if (!CvsEntriesManager.getInstance().isActive()) {
+      e.getPresentation().setVisible(false);
+      return;
+    }
     if (e.getDataContext().getData(Refreshable.PANEL) == null) {
       Presentation presentation = e.getPresentation();
       presentation.setEnabled(false);

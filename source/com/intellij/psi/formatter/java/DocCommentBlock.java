@@ -10,6 +10,8 @@ import com.intellij.codeFormatting.general.FormatterUtil;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 public class DocCommentBlock extends AbstractJavaBlock{
   public DocCommentBlock(final ASTNode node, final Wrap wrap, final Alignment alignment, final Indent indent, CodeStyleSettings settings) {
     super(node, wrap, alignment, indent, settings);
@@ -23,10 +25,10 @@ public class DocCommentBlock extends AbstractJavaBlock{
     ASTNode child = myNode.getFirstChildNode();
     while (child != null) {
       if (child.getElementType() == ElementType.DOC_COMMENT_START) {
-        result.add(createJavaBlock(child, mySettings, Formatter.getInstance().getNoneIndent(),
+        result.add(createJavaBlock(child, mySettings, Indent.getNoneIndent(),
                                    null, null));
       } else if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
-        result.add(createJavaBlock(child, mySettings, Formatter.getInstance().createSpaceIndent(1), null, null));
+        result.add(createJavaBlock(child, mySettings, Indent.createSpaceIndent(1), null, null));
       }
       child = child.getTreeNext();
     }
@@ -41,7 +43,8 @@ public class DocCommentBlock extends AbstractJavaBlock{
   protected void setReservedWrap(final Wrap reservedWrap) {
   }
 
+  @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
-    return new ChildAttributes(Formatter.getInstance().createSpaceIndent(1), null);
+    return new ChildAttributes(Indent.createSpaceIndent(1), null);
   }
 }

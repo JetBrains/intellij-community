@@ -66,10 +66,6 @@ public abstract class AbstractSyntheticBlock implements Block{
     return null;
   }
 
-  protected Formatter getFormatter() {
-    return Formatter.getInstance();
-  }
-
   protected boolean isXmlTagName(final IElementType type1, final IElementType type2) {
     if (type1 == ElementType.XML_START_TAG_START && type2 == ElementType.XML_NAME) return true;
     if (type1 == ElementType.XML_END_TAG_START && type2 == ElementType.XML_NAME) return true;

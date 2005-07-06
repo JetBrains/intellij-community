@@ -12,7 +12,7 @@ import java.util.ArrayList;
 
 public class ExtendsListBlock extends AbstractJavaBlock{
   public ExtendsListBlock(final ASTNode node, final Wrap wrap, final Alignment alignment, CodeStyleSettings settings) {
-    super(node, wrap, alignment, Formatter.getInstance().getNoneIndent(), settings);
+    super(node, wrap, alignment, Indent.getNoneIndent(), settings);
   }
 
   protected List<Block> buildChildren() {
@@ -23,25 +23,25 @@ public class ExtendsListBlock extends AbstractJavaBlock{
     Wrap childWrap = createChildWrap();
     ASTNode child = myNode.getFirstChildNode();
 
-    Alignment alignment = alignList() ? Formatter.getInstance().createAlignment() : null;
+    Alignment alignment = alignList() ? Alignment.createAlignment() : null;
 
     while (child != null) {
       if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
         if (ElementType.KEYWORD_BIT_SET.isInSet(child.getElementType())) {
           if (!elementsExceptKeyword.isEmpty()) {
-            result.add(new SynteticCodeBlock(elementsExceptKeyword, null,  mySettings, Formatter.getInstance().getNoneIndent(), null));
+            result.add(new SynteticCodeBlock(elementsExceptKeyword, null,  mySettings, Indent.getNoneIndent(), null));
             elementsExceptKeyword = new ArrayList<Block>();
           }
-          result.add(createJavaBlock(child, mySettings, Formatter.getInstance().createContinuationIndent(), arrangeChildWrap(child, childWrap), alignment));
+          result.add(createJavaBlock(child, mySettings, Indent.createContinuationIndent(), arrangeChildWrap(child, childWrap), alignment));
         } else {
-          processChild(elementsExceptKeyword, child, childAlignment, childWrap, Formatter.getInstance().createContinuationIndent());
+          processChild(elementsExceptKeyword, child, childAlignment, childWrap, Indent.createContinuationIndent());
           
         }
       }
       child = child.getTreeNext();
     }
     if (!elementsExceptKeyword.isEmpty()) {
-      result.add(new SynteticCodeBlock(elementsExceptKeyword, alignment,  mySettings, Formatter.getInstance().getNoneIndent(), null));
+      result.add(new SynteticCodeBlock(elementsExceptKeyword, alignment,  mySettings, Indent.getNoneIndent(), null));
     }
     
     return result;

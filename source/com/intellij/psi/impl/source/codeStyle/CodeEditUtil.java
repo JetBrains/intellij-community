@@ -6,7 +6,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
-import com.intellij.newCodeFormatting.Formatter;
+import com.intellij.newCodeFormatting.FormatterEx;
 import com.intellij.newCodeFormatting.FormattingModel;
 import com.intellij.newCodeFormatting.FormattingModelBuilder;
 import com.intellij.newCodeFormatting.IndentInfo;
@@ -50,7 +50,7 @@ public class CodeEditUtil {
 
     ASTNode lastChild = last != null ? last.getTreeNext() : null;
 
-    if (Formatter.getInstance().isDisabled()) {
+    if (FormatterEx.getInstanceEx().isDisabled()) {
       parent.addChildren(first, lastChild, anchorBefore);
       return (TreeElement)first;
     } else {
@@ -232,7 +232,7 @@ public class CodeEditUtil {
   }
 
   public static void removeChildren(CompositeElement parent, ASTNode first, ASTNode last) {
-    if (Formatter.getInstance().isDisabled()) {
+    if (FormatterEx.getInstanceEx().isDisabled()) {
       parent.removeRange(first, findLastChild(last));
     } else {
       checkAllWhiteSpaces(parent);
@@ -468,7 +468,7 @@ public class CodeEditUtil {
             && elementType != ElementType.DOC_COMMENT_LEADING_ASTERISKS
             && elementType != ElementType.DOC_TAG
             && current.getTextLength() > 0) {
-          Formatter.getInstance().saveIndents(model, current.getTextRange(),
+          FormatterEx.getInstanceEx().saveIndents(model, current.getTextRange(),
                                               new MyIndentInfoStorage(file, dirtyElements),
                                               settings,
                                               settings.getIndentOptions(file.getFileType()));
@@ -567,7 +567,7 @@ public class CodeEditUtil {
           final int startOffset = firstNonSpaceLeaf.getStartOffset();
           final int endOffset = first.getTextRange().getEndOffset();
           if (startOffset < endOffset) {
-            Formatter.getInstance().adjustTextRange(builder.createModel(file, settings), settings,
+            FormatterEx.getInstanceEx().adjustTextRange(builder.createModel(file, settings), settings,
                                                     settings.getIndentOptions(file.getFileType()),
                                                     new TextRange(startOffset, endOffset),
                                                     keepBlankLines,
@@ -648,7 +648,7 @@ public class CodeEditUtil {
   }
 
   public static ASTNode replaceChild(CompositeElement parent, ASTNode oldChild, ASTNode newChild) {
-    if (Formatter.getInstance().isDisabled()) {
+    if (FormatterEx.getInstanceEx().isDisabled()) {
       parent.replaceChild(oldChild, newChild);
       return newChild;
     } else {
@@ -931,7 +931,7 @@ public class CodeEditUtil {
 
         final TextRange textRange = element.getTextRange();
         final FormattingModel model = builder.createModel(file, settings);
-        return Formatter.getInstance().getWhiteSpaceBefore(model.getDocumentModel(),
+        return FormatterEx.getInstanceEx().getWhiteSpaceBefore(model.getDocumentModel(),
                                                            model.getRootBlock(),
                                                            settings, settings.getIndentOptions(file.getFileType()), textRange,
                                                            mayChangeLineFeeds);
@@ -946,7 +946,7 @@ public class CodeEditUtil {
     }
   }
 
-  private static class MyIndentInfoStorage implements Formatter.IndentInfoStorage {
+  private static class MyIndentInfoStorage implements FormatterEx.IndentInfoStorage {
     private final PsiFile myFile;
     private final Collection<PsiElement> myDirtyElements;
 

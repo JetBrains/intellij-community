@@ -2,7 +2,7 @@ package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.newCodeFormatting.Formatter;
+import com.intellij.newCodeFormatting.FormatterEx;
 import com.intellij.newCodeFormatting.FormattingModel;
 import com.intellij.newCodeFormatting.FormattingModelBuilder;
 import com.intellij.openapi.components.ProjectComponent;
@@ -237,7 +237,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       final TextRange significantRange = getSignificantRange(file, offset);
       final FormattingModel model = builder.createModel(file, settings);
       
-      int result = Formatter.getInstance().adjustLineIndent(model,
+      int result = FormatterEx.getInstanceEx().adjustLineIndent(model,
                                                             settings,
                                                             indentOptions,
                                                             offset,
@@ -257,7 +257,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       final CodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(file.getFileType());
       final FormattingModel model = builder.createModel(file, settings);
 
-      Formatter.getInstance().adjustLineIndentsForRange(model,
+      FormatterEx.getInstanceEx().adjustLineIndentsForRange(model,
                                                         settings,
                                                         indentOptions,
                                                         rangeToAdjust);
@@ -281,7 +281,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       final TextRange significantRange = getSignificantRange(file, offset);
       final FormattingModel model = builder.createModel(file, settings);
 
-      return Formatter.getInstance().getLineIndent(model,
+      return FormatterEx.getInstanceEx().getLineIndent(model,
                                                    settings,
                                                    indentOptions,
                                                    offset,

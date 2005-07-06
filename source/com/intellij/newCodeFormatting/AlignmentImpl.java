@@ -1,4 +1,4 @@
-package com.intellij.newCodeFormatting.impl;
+package com.intellij.newCodeFormatting;
 
 import com.intellij.newCodeFormatting.Alignment;
 
@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.ListIterator;
 
-class AlignmentImpl implements Alignment {
+class AlignmentImpl extends Alignment {
   private List<LeafBlockWrapper> myOffsetRespBlocks = new ArrayList<LeafBlockWrapper>();
   private final long myId;
   private static long ourId = 0;

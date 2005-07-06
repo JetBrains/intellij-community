@@ -29,8 +29,8 @@ public class LabeledJavaBlock extends AbstractJavaBlock{
       if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
         result.add(createJavaBlock(child, mySettings, currentIndent, currentWrap, null));
         if (child.getElementType() == ElementType.COLON) {
-          currentIndent = Formatter.getInstance().getNoneIndent();
-          currentWrap =Formatter.getInstance().createWrap(Wrap.ALWAYS, true);
+          currentIndent = Indent.getNoneIndent();
+          currentWrap =Wrap.createWrap(Wrap.ALWAYS, true);
         } 
       }
       child = child.getTreeNext();
@@ -40,9 +40,9 @@ public class LabeledJavaBlock extends AbstractJavaBlock{
 
   private Indent getLabelIndent() {
     if (mySettings.JAVA_INDENT_OPTIONS.LABEL_INDENT_ABSOLUTE) {
-      return Formatter.getInstance().createAbsoluteLabelIndent();
+      return Indent.createAbsoluteLabelIndent();
     } else {
-      return Formatter.getInstance().createLabelIndent();
+      return Indent.createLabelIndent();
     }
   }
 

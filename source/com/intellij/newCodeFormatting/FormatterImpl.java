@@ -1,6 +1,5 @@
-package com.intellij.newCodeFormatting.impl;
+package com.intellij.newCodeFormatting;
 
-import com.intellij.newCodeFormatting.*;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
@@ -10,11 +9,26 @@ import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 
-public class FormatterImpl extends Formatter implements ApplicationComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.newCodeFormatting.impl.FormatterImpl");
+public class FormatterImpl extends FormatterEx
+  implements ApplicationComponent,
+             IndentFactory,
+             WrapFactory,
+             AlignmentFactory,
+             SpacePropertyFactory,
+             FormattingModelFactory
+{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.newCodeFormatting.FormatterImpl");
 
   private int myIsDisabledCount = 0;
   private static final IndentImpl NONE_INDENT = new IndentImpl(IndentImpl.Type.NONE, false);
+
+  public FormatterImpl() {
+    Indent.setFactory(this);
+    Wrap.setFactory(this);
+    Alignment.setFactory(this);
+    SpaceProperty.setFactory(this);
+    FormattingModelProvider.setFactory(this);
+  }
 
   public Alignment createAlignment() {
     return new AlignmentImpl(AlignmentImpl.Type.NORMAL);
@@ -358,7 +372,7 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
   }
 
   public String getComponentName() {
-    return "Formatter";
+    return "FormatterEx";
   }
 
   public void initComponent() {
