@@ -347,6 +347,22 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
 
     registerReferenceProvider(new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS), XmlToken.class,
                               classListProvider);
+    
+    registerReferenceProvider(
+      new ScopeFilter(
+        new AndFilter(
+          new TextFilter(
+            new String[] {
+              "function-class", "tag-class", "tei-class", "variable-class", "type", "function-signature"
+            }
+          ),
+          new NamespaceFilter(MetaRegistry.TAGLIB_URIS)
+        )
+      ), 
+      XmlTag.class,
+      new TaglibReferenceProvider( getProviderByType(CLASS_REFERENCE_PROVIDER) )
+    );
+    
     final DtdReferencesProvider dtdReferencesProvider = new DtdReferencesProvider();
     registerReferenceProvider(null, XmlEntityRef.class,dtdReferencesProvider);
     URIReferenceProvider uriProvider = new URIReferenceProvider();
