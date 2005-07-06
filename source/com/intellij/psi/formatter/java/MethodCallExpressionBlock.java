@@ -1,10 +1,10 @@
 package com.intellij.psi.formatter.java;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.newCodeFormatting.Wrap;
-import com.intellij.newCodeFormatting.Alignment;
-import com.intellij.newCodeFormatting.Indent;
-import com.intellij.newCodeFormatting.Block;
+import com.intellij.formatting.Wrap;
+import com.intellij.formatting.Alignment;
+import com.intellij.formatting.Indent;
+import com.intellij.formatting.Block;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 
 import java.util.List;

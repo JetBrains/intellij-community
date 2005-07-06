@@ -2,8 +2,8 @@ package com.intellij.psi.formatter.xml;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.newCodeFormatting.Block;
-import com.intellij.newCodeFormatting.FormattingModelBuilder;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;

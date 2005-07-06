@@ -1,6 +1,6 @@
-package com.intellij.newCodeFormatting;
+package com.intellij.formatting;
 
-import com.intellij.newCodeFormatting.Indent;
+import com.intellij.formatting.Indent;
 
 class IndentImpl extends Indent {
   private final boolean myIsAbsolute;

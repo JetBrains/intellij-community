@@ -1,7 +1,7 @@
 package com.intellij.psi.formatter.java;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.newCodeFormatting.*;
+import com.intellij.formatting.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;

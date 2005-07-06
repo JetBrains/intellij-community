@@ -1,6 +1,5 @@
-package com.intellij.newCodeFormatting;
+package com.intellij.formatting;
 
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;

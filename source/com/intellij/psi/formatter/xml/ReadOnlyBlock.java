@@ -1,8 +1,8 @@
 package com.intellij.psi.formatter.xml;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.newCodeFormatting.Block;
-import com.intellij.newCodeFormatting.SpaceProperty;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.SpaceProperty;
 import com.intellij.psi.formatter.common.AbstractBlock;
 
 import java.util.ArrayList;

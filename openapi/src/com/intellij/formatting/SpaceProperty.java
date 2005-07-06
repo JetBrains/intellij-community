@@ -1,4 +1,4 @@
-package com.intellij.newCodeFormatting;
+package com.intellij.formatting;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
@@ -6,7 +6,7 @@ import com.intellij.openapi.util.TextRange;
 public abstract class SpaceProperty {
   private static SpacePropertyFactory myFactory;
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.newCodeFormatting.SpaceProperty");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.SpaceProperty");
 
   static void setFactory(SpacePropertyFactory factory) {
     LOG.assertTrue(myFactory == null);

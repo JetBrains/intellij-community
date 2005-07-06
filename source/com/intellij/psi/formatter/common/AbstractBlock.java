@@ -2,7 +2,7 @@ package com.intellij.psi.formatter.common;
 
 import com.intellij.codeFormatting.general.FormatterUtil;
 import com.intellij.lang.ASTNode;
-import com.intellij.newCodeFormatting.*;
+import com.intellij.formatting.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.Nullable;

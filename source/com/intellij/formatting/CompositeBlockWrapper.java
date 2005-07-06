@@ -1,7 +1,7 @@
-package com.intellij.newCodeFormatting;
+package com.intellij.formatting;
 
-import com.intellij.newCodeFormatting.Block;
-import com.intellij.newCodeFormatting.AbstractBlockWrapper;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.AbstractBlockWrapper;
 import com.intellij.openapi.util.TextRange;
 
 public class CompositeBlockWrapper extends AbstractBlockWrapper{

@@ -1,4 +1,4 @@
-package com.intellij.newCodeFormatting;
+package com.intellij.formatting;
 
 import com.intellij.openapi.diagnostic.Logger;
 
@@ -10,7 +10,7 @@ public abstract class Wrap {
 
   public abstract void ignoreParentWraps();
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.newCodeFormatting.Wrap");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.Wrap");
 
   private static WrapFactory myFactory;
 

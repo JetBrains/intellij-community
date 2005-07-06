@@ -1,4 +1,4 @@
-package com.intellij.newCodeFormatting;
+package com.intellij.formatting;
 
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,7 +17,7 @@ public class FormatterImpl extends FormatterEx
              SpacePropertyFactory,
              FormattingModelFactory
 {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.newCodeFormatting.FormatterImpl");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.FormatterImpl");
 
   private int myIsDisabledCount = 0;
   private static final IndentImpl NONE_INDENT = new IndentImpl(IndentImpl.Type.NONE, false);

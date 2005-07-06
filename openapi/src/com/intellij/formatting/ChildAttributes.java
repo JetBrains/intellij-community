@@ -1,4 +1,4 @@
-package com.intellij.newCodeFormatting;
+package com.intellij.formatting;
 
 public class ChildAttributes {
   private final Indent myChildIndent;

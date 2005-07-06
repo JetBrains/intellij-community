@@ -1,9 +1,9 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.newCodeFormatting.FormatterEx;
-import com.intellij.newCodeFormatting.FormattingModel;
-import com.intellij.newCodeFormatting.FormattingModelBuilder;
+import com.intellij.formatting.FormatterEx;
+import com.intellij.formatting.FormattingModel;
+import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;

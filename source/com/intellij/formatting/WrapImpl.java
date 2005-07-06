@@ -1,7 +1,7 @@
-package com.intellij.newCodeFormatting;
+package com.intellij.formatting;
 
-import com.intellij.newCodeFormatting.Wrap;
-import com.intellij.newCodeFormatting.LeafBlockWrapper;
+import com.intellij.formatting.Wrap;
+import com.intellij.formatting.LeafBlockWrapper;
 
 import java.util.HashSet;
 import java.util.Set;

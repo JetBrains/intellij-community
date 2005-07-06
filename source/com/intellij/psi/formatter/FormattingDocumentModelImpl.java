@@ -1,6 +1,6 @@
 package com.intellij.psi.formatter;
 
-import com.intellij.newCodeFormatting.FormattingDocumentModel;
+import com.intellij.formatting.FormattingDocumentModel;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;

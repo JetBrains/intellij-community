@@ -1,4 +1,4 @@
-package com.intellij.newCodeFormatting;
+package com.intellij.formatting;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
@@ -7,7 +7,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import java.util.*;
 
 class InitialInfoBuilder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.newCodeFormatting.InitialInfoBuilder");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.InitialInfoBuilder");
 
   private WhiteSpace myCurrentWhiteSpace;
   private final FormattingDocumentModel myModel;

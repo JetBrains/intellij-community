@@ -1,11 +1,11 @@
-package com.intellij.newCodeFormatting;
+package com.intellij.formatting;
 
 import com.intellij.openapi.diagnostic.Logger;
 
 public abstract class Indent {
   private static IndentFactory myFactory;
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.newCodeFormatting.Indent");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.Indent");
 
   static void setFactory(IndentFactory factory) {
     LOG.assertTrue(myFactory == null);

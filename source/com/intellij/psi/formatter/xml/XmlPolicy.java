@@ -1,6 +1,6 @@
 package com.intellij.psi.formatter.xml;
 
-import com.intellij.newCodeFormatting.Wrap;
+import com.intellij.formatting.Wrap;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.psi.xml.XmlTag;

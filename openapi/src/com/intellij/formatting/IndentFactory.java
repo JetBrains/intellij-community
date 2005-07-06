@@ -1,4 +1,4 @@
-package com.intellij.newCodeFormatting;
+package com.intellij.formatting;
 
 interface IndentFactory {
   public abstract Indent createNormalIndent();

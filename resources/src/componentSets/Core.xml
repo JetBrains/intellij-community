@@ -128,8 +128,8 @@
       <implementation-class>com.intellij.openapi.roots.impl.libraries.LibraryTablesRegistrarImpl</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.newCodeFormatting.FormatterEx</interface-class>
-      <implementation-class>com.intellij.newCodeFormatting.FormatterImpl</implementation-class>
+      <interface-class>com.intellij.formatting.FormatterEx</interface-class>
+      <implementation-class>com.intellij.formatting.FormatterImpl</implementation-class>
     </component>    
   </application-components>
 

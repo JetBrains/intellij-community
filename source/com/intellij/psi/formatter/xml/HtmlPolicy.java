@@ -1,7 +1,7 @@
 package com.intellij.psi.formatter.xml;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.newCodeFormatting.Wrap;
+import com.intellij.formatting.Wrap;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;

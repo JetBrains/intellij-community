@@ -1,11 +1,11 @@
-package com.intellij.newCodeFormatting;
+package com.intellij.formatting;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 
 public class FormattingModelProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.newCodeFormatting.FormattingModelProvider");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.FormattingModelProvider");
   private static FormattingModelFactory myFactory;
 
   static void setFactory(FormattingModelFactory factory) {

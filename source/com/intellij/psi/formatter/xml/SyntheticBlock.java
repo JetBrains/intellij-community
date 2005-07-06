@@ -1,9 +1,9 @@
 package com.intellij.psi.formatter.xml;
 
-import com.intellij.newCodeFormatting.Block;
-import com.intellij.newCodeFormatting.ChildAttributes;
-import com.intellij.newCodeFormatting.Indent;
-import com.intellij.newCodeFormatting.SpaceProperty;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.ChildAttributes;
+import com.intellij.formatting.Indent;
+import com.intellij.formatting.SpaceProperty;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.tree.ElementType;

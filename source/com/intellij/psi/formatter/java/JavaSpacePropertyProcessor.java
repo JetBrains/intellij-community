@@ -2,7 +2,7 @@ package com.intellij.psi.formatter.java;
 
 import com.intellij.codeFormatting.general.FormatterUtil;
 import com.intellij.lang.ASTNode;
-import com.intellij.newCodeFormatting.SpaceProperty;
+import com.intellij.formatting.SpaceProperty;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;

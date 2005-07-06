@@ -1,6 +1,6 @@
 package com.intellij.psi.formatter.java;
 
-import com.intellij.newCodeFormatting.*;
+import com.intellij.formatting.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.lang.ASTNode;
 

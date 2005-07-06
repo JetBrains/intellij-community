@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.actions;
 
-import com.intellij.newCodeFormatting.FormattingModelBuilder;
+import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.editor.Editor;

@@ -1,7 +1,7 @@
-package com.intellij.newCodeFormatting;
+package com.intellij.formatting;
 
-import com.intellij.newCodeFormatting.SpaceProperty;
-import com.intellij.newCodeFormatting.FormatProcessor;
+import com.intellij.formatting.SpaceProperty;
+import com.intellij.formatting.FormatProcessor;
 
 class SpacePropertyImpl extends SpaceProperty {
   private final int myMinSpaces;

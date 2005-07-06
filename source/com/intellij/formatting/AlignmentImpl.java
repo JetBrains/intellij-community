@@ -1,6 +1,6 @@
-package com.intellij.newCodeFormatting;
+package com.intellij.formatting;
 
-import com.intellij.newCodeFormatting.Alignment;
+import com.intellij.formatting.Alignment;
 
 import java.util.List;
 import java.util.ArrayList;

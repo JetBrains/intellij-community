@@ -1,7 +1,7 @@
 package com.intellij.psi.formatter.java;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.newCodeFormatting.*;
+import com.intellij.formatting.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.CodeStyleSettings;

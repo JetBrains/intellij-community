@@ -2,9 +2,9 @@ package com.intellij.psi.formatter;
 
 import com.intellij.codeFormatting.general.FormatterUtil;
 import com.intellij.lang.ASTNode;
-import com.intellij.newCodeFormatting.Block;
-import com.intellij.newCodeFormatting.FormattingDocumentModel;
-import com.intellij.newCodeFormatting.FormattingModel;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.FormattingDocumentModel;
+import com.intellij.formatting.FormattingModel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;

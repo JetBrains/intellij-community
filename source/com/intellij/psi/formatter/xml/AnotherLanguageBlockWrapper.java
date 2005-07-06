@@ -1,6 +1,6 @@
 package com.intellij.psi.formatter.xml;
 
-import com.intellij.newCodeFormatting.*;
+import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 
 import java.util.List;

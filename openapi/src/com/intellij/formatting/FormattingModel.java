@@ -1,4 +1,4 @@
-package com.intellij.newCodeFormatting;
+package com.intellij.formatting;
 
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;

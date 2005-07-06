@@ -1,8 +1,8 @@
-package com.intellij.newCodeFormatting;
+package com.intellij.formatting;
 
-import com.intellij.newCodeFormatting.FormattingDocumentModel;
-import com.intellij.newCodeFormatting.IndentInfo;
-import com.intellij.newCodeFormatting.SpaceProperty;
+import com.intellij.formatting.FormattingDocumentModel;
+import com.intellij.formatting.IndentInfo;
+import com.intellij.formatting.SpaceProperty;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -13,7 +13,7 @@ import java.util.ArrayList;
 class WhiteSpace {
 
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.newCodeFormatting.WhiteSpace");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.WhiteSpace");
   
   private TextRange myTextRange;
 
