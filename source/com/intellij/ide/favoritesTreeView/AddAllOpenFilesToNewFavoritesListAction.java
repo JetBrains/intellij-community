@@ -21,4 +21,15 @@ class AddAllOpenFilesToNewFavoritesListAction extends AnAction {
      new AddAllOpenFilesToFavorites(favoritesTreeViewPanel.getName()).actionPerformed(e);
    }
  }
+
+  public void update(AnActionEvent e) {
+    final DataContext dataContext = e.getDataContext();
+    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    if (project == null) {
+      e.getPresentation().setEnabled(false);
+    }
+    else {
+      e.getPresentation().setEnabled(!AddAllOpenFilesToFavorites.getFilesToAdd(project).isEmpty());
+    }
+  }
 }

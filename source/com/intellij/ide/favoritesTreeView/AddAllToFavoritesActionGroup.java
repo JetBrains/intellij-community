@@ -22,6 +22,8 @@ public class AddAllToFavoritesActionGroup extends DefaultActionGroup{
       add(new AddAllOpenFilesToFavorites(favoritesList));
     }
     addSeparator();
-    add(new AddAllOpenFilesToNewFavoritesListAction());
+    final AddAllOpenFilesToNewFavoritesListAction action = new AddAllOpenFilesToNewFavoritesListAction();
+    add(action);
+    action.update(e);
   }
 }

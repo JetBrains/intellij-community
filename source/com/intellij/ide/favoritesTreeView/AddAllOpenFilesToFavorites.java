@@ -48,7 +48,7 @@ public class AddAllOpenFilesToFavorites extends AnAction{
     addToFavoritesAction.addNodes(project, nodesToAdd.toArray(new AbstractTreeNode[nodesToAdd.size()]));
   }
 
-  private ArrayList<PsiFile> getFilesToAdd (Project project) {
+  static ArrayList<PsiFile> getFilesToAdd (Project project) {
     ArrayList<PsiFile> result = new ArrayList<PsiFile>();
     final FileEditorManager editorManager = FileEditorManager.getInstance(project);
     final PsiManager psiManager = PsiManager.getInstance(project);
@@ -58,5 +58,14 @@ public class AddAllOpenFilesToFavorites extends AnAction{
       result.add(psiManager.findFile(openFile));
     }
     return result;
+  }
+
+  public void update(AnActionEvent e) {
+    final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    if (project == null){
+      e.getPresentation().setEnabled(false);
+      return;
+    }
+    e.getPresentation().setEnabled(!getFilesToAdd(project).isEmpty());
   }
 }
