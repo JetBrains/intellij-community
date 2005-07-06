@@ -1027,6 +1027,7 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
 
   public void visitDocTag(PsiDocTag tag) {
     if (myChild1.getElementType() == ElementType.DOC_TAG_NAME && myChild2.getElementType() == ElementType.DOC_TAG_VALUE_TOKEN) {
+      myResult = SpaceProperty.createSpaceProperty(1, 1, 0, false, 0);
     }
   }
 
