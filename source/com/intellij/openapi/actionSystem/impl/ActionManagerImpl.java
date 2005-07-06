@@ -37,6 +37,8 @@ import java.util.Map;
 
 public final class ActionManagerImpl extends ActionManagerEx implements JDOMExternalizable, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.impl.ActionManagerImpl");
+  private static final int UPDATE_DELAY_AFTER_TYPING = 500;
+
   private final Object myLock = new Object();
   private THashMap<String,Object> myId2Action;
   private THashMap<PluginId, THashSet<String>> myPlugin2Id;
@@ -51,6 +53,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   private KeymapManager myKeymapManager;
   private DataManager myDataManager;
   private String myPrevPerformedActionId;
+  private long myLastTimeEditorWasTypedIn = 0;
 
   ActionManagerImpl(KeymapManager keymapManager, DataManager dataManager) {
     myId2Action = new THashMap<String, Object>();
@@ -72,6 +75,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     Timer timer = new Timer(delay,
                             new ActionListener() {
                               public void actionPerformed(ActionEvent e) {
+                                if (myLastTimeEditorWasTypedIn + UPDATE_DELAY_AFTER_TYPING > System.currentTimeMillis()) return;
+                                
                                 ModalityState modalityState = listener.getModalityState();
                                 if (modalityState == null) return;
                                 if (!ModalityState.current().dominates(modalityState)) {
@@ -737,6 +742,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   }
 
   public void fireBeforeEditorTyping(char c, DataContext dataContext) {
+    myLastTimeEditorWasTypedIn = System.currentTimeMillis();
     AnActionListener[] listeners = getActionListeners();
     for (AnActionListener listener : listeners) {
       listener.beforeEditorTyping(c, dataContext);

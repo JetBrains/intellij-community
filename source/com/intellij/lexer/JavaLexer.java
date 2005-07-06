@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.text.CharArrayCharSequence;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -16,7 +17,7 @@ public class JavaLexer extends LexerBase {
     myTable = isAssertKeywordEnabled ?
               (isJDK15 ? ourTableWithAssertAndJDK15 : ourTableWithAssert) :
               (isJDK15 ? ourTableWithJDK15 : ourTableWithoutAssert);
-    myJLexlexer = new FlexAdapter(new _JavaLexer(isAssertKeywordEnabled, isJDK15));
+    myFlexlexer = new _JavaLexer(isAssertKeywordEnabled, isJDK15);
   }
 
   public JavaLexer(LanguageLevel level) {
@@ -26,8 +27,9 @@ public class JavaLexer extends LexerBase {
   private char[] myBuffer;
   private int myBufferIndex;
   private int myBufferEndOffset;
+  private int myBufferStart;
   IElementType myTokenType;
-  private Lexer myJLexlexer;
+  private _JavaLexer myFlexlexer;
 
   //Positioned after the last symbol of the current token
   private int myTokenEndOffset;
@@ -139,10 +141,11 @@ public class JavaLexer extends LexerBase {
 
   public final void start(char[] buffer, int startOffset, int endOffset) {
     myBuffer = buffer;
-    myBufferIndex = startOffset;
+    myBufferIndex = myBufferStart = startOffset;
     myBufferEndOffset = endOffset;
     myTokenType = null;
     myTokenEndOffset = startOffset;
+    myFlexlexer.reset(new CharArrayCharSequence(myBuffer, startOffset, endOffset), 0);
   }
 
   public final void start(char[] buffer, int startOffset, int endOffset, int initialState) {
@@ -192,7 +195,7 @@ public class JavaLexer extends LexerBase {
     char c = myBuffer[myBufferIndex];
     switch (c) {
       default:
-        jlexLocateToken();
+        flexLocateToken();
         break;
 
       case ' ':
@@ -227,7 +230,7 @@ public class JavaLexer extends LexerBase {
           myTokenEndOffset = getIdentifier(myBufferIndex + 1);
         }
         else {
-          jlexLocateToken();
+          flexLocateToken();
         }
         break;
       }
@@ -256,10 +259,15 @@ public class JavaLexer extends LexerBase {
     return pos;
   }
 
-  private void jlexLocateToken() {
-    myJLexlexer.start(myBuffer, myBufferIndex, myBufferEndOffset);
-    myTokenEndOffset = myJLexlexer.getTokenEnd();
-    myTokenType = myJLexlexer.getTokenType();
+  private void flexLocateToken() {
+    try {
+      myFlexlexer.goTo(myBufferIndex - myBufferStart);
+      myTokenType = myFlexlexer.advance();
+      myTokenEndOffset = myFlexlexer.getTokenEnd() + myBufferStart;
+    }
+    catch (IOException e) {
+      // Can't be
+    }
   }
 
 
