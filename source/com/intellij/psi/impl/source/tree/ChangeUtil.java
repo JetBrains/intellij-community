@@ -101,7 +101,13 @@ public class ChangeUtil implements Constants {
     final CharTable oldCharTab = SharedImplUtil.findCharTableByTree(newChildrenParent);
 
     final ASTNode firstChild = newChildrenParent.getFirstChildNode();
-    removeChildrenInner((TreeElement)newChildrenParent.getFirstChildNode(), null, oldCharTab);
+    prepareAndRunChangeAction(new ChangeAction(){
+      public void makeChange(TreeChangeEvent destinationTreeChange) {
+        destinationTreeChange.addElementaryChange(newChildrenParent, ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, newChildrenParent));
+        TreeUtil.removeRange((TreeElement)newChildrenParent.getFirstChildNode(), null);
+      }
+    }, (CompositeElement)newChildrenParent);
+
     if (firstChild != null) {
       registerLeafsInCharTab(newCharTab, firstChild, oldCharTab);
       prepareAndRunChangeAction(new ChangeAction(){
