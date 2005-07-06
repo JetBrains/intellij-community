@@ -86,32 +86,34 @@ public class PropertiesUtil {
   public static String getBaseName(VirtualFile virtualFile) {
     String name = virtualFile.getNameWithoutExtension();
 
-    String suffix = getLocale(virtualFile).toString();
-    String baseName = StringUtil.trimEnd(name, suffix);
-    baseName = StringUtil.trimEnd(baseName, "_");
+    String[] parts = name.split("_");
+    String baseName = "";
+    for (String part : parts) {
+      if (part.length() == 2) {
+        break;
+      }
+      if (baseName.length() != 0) baseName += "_";
+      baseName += part;
+    }
+
     return baseName;
   }
 
   @NotNull
   public static Locale getLocale(VirtualFile propertiesFile) {
     String name = propertiesFile.getNameWithoutExtension();
-    String[] parts = name.split("_");
-    String language = "";
+    String tail = StringUtil.trimStart(name, getBaseName(propertiesFile));
+    tail = StringUtil.trimStart(tail, "_");
+    String[] parts = tail.split("_");
+    String language = parts.length == 0 ? "" : parts[0];
     String country = "";
     String variant = "";
-    for (int i = 1; i < parts.length; i++) {
-      String part = parts[i];
-      if (part.length() == 2) {
-        language = part;
-        if (i < parts.length - 1 && parts[i + 1].length() == 2) {
-          country = parts[i + 1];
-          i += 2;
-          while (i < parts.length) {
-            if (variant.length() != 0) variant += "_";
-            variant += parts[i++];
-          }
-        }
-        break;
+    if (parts.length >= 2 && parts[1].length() == 2) {
+      country = parts[1];
+      for (int i = 2; i < parts.length; i++) {
+        String part = parts[i];
+        if (variant.length() != 0) variant += "_";
+        variant += part;
       }
     }
 

@@ -27,7 +27,7 @@
               <splitpane position="left"/>
             </constraints>
             <properties/>
-            <border type="none" title="Check Active Intentions"/>
+            <border type="none" title="Intention List"/>
             <children/>
           </xy>
           <grid id="5528c" binding="myDescriptionPanel" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
