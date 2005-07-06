@@ -94,7 +94,21 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
         TextWithImports text = comboBox.getText();
         WatchDebuggerTree.setWatchNodeText(node, text);
         comboBox.addRecent(text);
-        super.doOKAction();
+        try {
+          super.doOKAction();
+        }
+        finally {
+          comboBox.dispose();
+        }
+      }
+
+      public void cancelEditing() {
+        try {
+          super.cancelEditing();
+        }
+        finally {
+          comboBox.dispose();
+        }
       }
     };
     editor.show();

@@ -13,13 +13,15 @@ import com.intellij.psi.PsiClass;
 import javax.swing.*;
 import java.awt.*;
 
+import org.picocontainer.Disposable;
+
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
  * Use is subject to license terms.
  */
 
 public class ClassChildrenExpressionConfigurable implements UnnamedConfigurable{
-  private final Project                         myProject;
+  private final Project myProject;
   private final ExpressionChildrenRenderer myRenderer;
 
   private JPanel myPanel;
@@ -64,5 +66,7 @@ public class ClassChildrenExpressionConfigurable implements UnnamedConfigurable{
   }
 
   public void disposeUIResources() {
+    myChildrenEditor.dispose();
+    myExpandableEditor.dispose();
   }
 }

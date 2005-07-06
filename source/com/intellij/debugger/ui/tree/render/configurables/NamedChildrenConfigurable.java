@@ -2,9 +2,9 @@ package com.intellij.debugger.ui.tree.render.configurables;
 
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.CompletionEditor;
 import com.intellij.debugger.ui.tree.render.EnumerationChildrenRenderer;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
@@ -22,7 +22,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -39,6 +38,7 @@ public class NamedChildrenConfigurable implements UnnamedConfigurable{
   private JButton myButtonRemove;
   private JButton myButtonUp;
   private JButton myButtonDown;
+  private CompletionEditor myCompletionEditor;
 
   public NamedChildrenConfigurable(Project project, EnumerationChildrenRenderer renderer) {
     myProject = project;
@@ -50,20 +50,19 @@ public class NamedChildrenConfigurable implements UnnamedConfigurable{
     getModel().addColumn("Expression", (Object[])null);
 
     PsiClass psiClass = DebuggerUtils.findClass(myRenderer.getClassName(), myProject);
-    final CompletionEditor editor =
-      ((DebuggerUtilsEx)DebuggerUtils.getInstance()).createEditor(myProject, psiClass, "NamedChildrenConfigurable");
+    myCompletionEditor = ((DebuggerUtilsEx)DebuggerUtils.getInstance()).createEditor(myProject, psiClass, "NamedChildrenConfigurable");
 
     myTable.setDragEnabled(false);
     myTable.setIntercellSpacing(new Dimension(0, 0));
 
     myTable.getColumn("Expression").setCellEditor(new AbstractTableCellEditor() {
       public Object getCellEditorValue() {
-        return editor.getText();
+        return myCompletionEditor.getText();
       }
 
       public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-        editor.setText((TextWithImports)value);
-        return editor;
+        myCompletionEditor.setText((TextWithImports)value);
+        return myCompletionEditor;
       }
     });
 
@@ -138,13 +137,16 @@ public class NamedChildrenConfigurable implements UnnamedConfigurable{
       getModel().removeRow(0);
     }
 
-    for (Iterator<Pair<String, TextWithImports>> iterator = myRenderer.getChildren().iterator(); iterator.hasNext();) {
-      Pair<String, TextWithImports> pair = iterator.next();
-      getModel().addRow(new Object[] { pair.getFirst(), pair.getSecond()});
+    for (Pair<String, TextWithImports> pair : myRenderer.getChildren()) {
+      getModel().addRow(new Object[]{pair.getFirst(), pair.getSecond()});
     }
   }
 
   public void disposeUIResources() {
+    if (myCompletionEditor != null) {
+      myCompletionEditor.dispose();
+      myCompletionEditor = null;
+    }
   }
 
 

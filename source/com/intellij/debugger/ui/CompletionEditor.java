@@ -12,4 +12,6 @@ import javax.swing.*;
 public abstract class CompletionEditor extends JComponent{
   public abstract void setText  (TextWithImports text);
   public abstract TextWithImports getText  ();
+
+  public abstract void dispose();
 }

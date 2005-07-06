@@ -367,7 +367,7 @@ public class SetValueAction extends DebuggerAction {
                 DebuggerInvocationUtil.invokeLater(debuggerContext.getProject(), new Runnable() {
                   public void run() {
                     comboBox.addRecent(text);
-                    superCancelEditing();
+                    cancelEditing();
                   }
                 });
               }
@@ -412,7 +412,7 @@ public class SetValueAction extends DebuggerAction {
             if(!progressWindow.isCanceled()) {
               IJSwingUtilities.invoke(new Runnable() {
                 public void run() {
-                  superCancelEditing();
+                  cancelEditing();
                 }
               });
             }
@@ -425,12 +425,22 @@ public class SetValueAction extends DebuggerAction {
         debuggerContext.getDebugProcess().getManagerThread().startProgress(evaluationCommand, progressWindow);
       }
 
-      private void superCancelEditing() {
-        super.cancelEditing();
+      public void cancelEditing() {
+        try {
+          super.cancelEditing();
+        }
+        finally {
+          comboBox.dispose();
+        }
       }
 
       public void doOKAction() {
-        flushValue();
+        try {
+          flushValue();
+        }
+        finally {
+          comboBox.dispose();
+        }
       }
 
     };

@@ -64,4 +64,9 @@ public class CompletedInputDialog extends DialogWrapper {
   public void setExpressionLabel(String text) {
     myLabel.setText(text);
   }
+
+  protected void dispose() {
+    myCombo.dispose();
+    super.dispose();
+  }
 }

@@ -350,6 +350,10 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
   }
 
   public void disposeUIResources() {
+    myLabelEditor.dispose();
+    myChildrenEditor.dispose();
+    myChildrenExpandedEditor.dispose();
+    myListChildrenEditor.dispose();
   }
 
   private MyTableModel getTableModel() {

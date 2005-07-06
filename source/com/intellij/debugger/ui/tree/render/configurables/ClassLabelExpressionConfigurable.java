@@ -9,6 +9,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.Disposable;
 import com.intellij.psi.PsiClass;
 
 import javax.swing.*;
@@ -58,6 +59,9 @@ public class ClassLabelExpressionConfigurable implements UnnamedConfigurable{
   }
 
   public void disposeUIResources() {
-    myCompletitionEditor = null;
+    if (myCompletitionEditor != null) {
+      myCompletitionEditor.getComponent().dispose();
+      myCompletitionEditor = null;
+    }
   }
 }

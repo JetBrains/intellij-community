@@ -79,6 +79,12 @@ public abstract class BreakpointPropertiesPanel {
       myBreakpointComboboxHandler.dispose();
       myBreakpointComboboxHandler = null;
     }
+    if (myConditionCombo != null) {
+      myConditionCombo.dispose();
+    }
+    if (myLogExpressionCombo != null) {
+      myLogExpressionCombo.dispose();
+    }
   }
 
   private class MyTextField extends JTextField {
