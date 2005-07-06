@@ -328,8 +328,8 @@ public class WelcomeScreen {
       }
     };
 
-    quickStarts.addButton(openProject, "Open Project...", "You can open any arbitrary IntelliJ IDEA project. " +
-                                                          "Click the icon or link to select the .IPR file from the File Chooser.");
+    quickStarts.addButton(openProject, "Open Project", "You can open any arbitrary IntelliJ IDEA project. " +
+                                                       "Click the icon or link to select the .IPR file from the File Chooser.");
 
     MyActionButton openRecentProject = new ButtonWithExtension(REOPEN_RECENT_ICON, null) {
       protected void onPress(InputEvent e, final MyActionButton button) {
@@ -344,9 +344,9 @@ public class WelcomeScreen {
         }, ActionPlaces.UNKNOWN, new PresentationFactory().getPresentation(action), actionManager, 0));
       }
     };
-    quickStarts.addButton(openRecentProject, "Reopen Recent Project...", "You can open one of the most recent " +
-                                                                         "projects you were working with. Click the icon " +
-                                                                         "or link to select a project from the list.");
+    quickStarts.addButton(openRecentProject, "Reopen Recent Project", "You can open one of the most recent " +
+                                                                      "projects you were working with. Click the icon " +
+                                                                      "or link to select a project from the list.");
 
     MyActionButton getFromVCS = new ButtonWithExtension(FROM_VCS_ICON, null) {
       protected void onPress(InputEvent e, final MyActionButton button) {
@@ -355,10 +355,11 @@ public class WelcomeScreen {
       }
     };
 
-    quickStarts.addButton(getFromVCS, "Get Project From Version Control...", "You can check out an entire project from " +
-                                                                             "a Version Control System. Click the icon or link to " +
-                                                                             "select your VCS.");
+    quickStarts.addButton(getFromVCS, "Check out from Version Control", "You can check out an entire project from " +
+                                                                        "a Version Control System. Click the icon or link to " +
+                                                                        "select your VCS.");
 
+    /*
     MyActionButton checkForUpdate = new MyActionButton (CHECK_FOR_UPDATE_ICON, null) {
       protected void onPress(InputEvent e) {
         CheckForUpdateAction.actionPerformed(true);
@@ -367,6 +368,7 @@ public class WelcomeScreen {
 
     quickStarts.addButton(checkForUpdate, "Check for Update", "IntelliJ IDEA will check for a new available update of itself, " +
                                                               "using your internet connection.");
+    */
   }
 
   private JScrollPane createPluginsPanel() {
