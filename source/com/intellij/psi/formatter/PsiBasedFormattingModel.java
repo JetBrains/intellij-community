@@ -1,38 +1,39 @@
 package com.intellij.psi.formatter;
 
 import com.intellij.codeFormatting.general.FormatterUtil;
-import com.intellij.lang.ASTNode;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.FormattingDocumentModel;
 import com.intellij.formatting.FormattingModel;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.Helper;
 import com.intellij.psi.impl.source.jsp.jspJava.JspText;
 import com.intellij.psi.impl.source.tree.ElementType;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.StringReader;
 
 public class PsiBasedFormattingModel implements FormattingModel {
-  
+
   private final ASTNode myASTNode;
   private final Project myProject;
   private final CodeStyleSettings mySettings;
   private final FormattingDocumentModelImpl myDocumentModel;
   private final Block myRootBlock;
-  
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.PsiBasedFormattingModel");
 
   public PsiBasedFormattingModel(final PsiFile file,
-                                 CodeStyleSettings settings, 
+                                 CodeStyleSettings settings,
                                  final Block rootBlock) {
     mySettings = settings;
     myASTNode = SourceTreeToPsiMap.psiElementToTree(file);
@@ -56,6 +57,7 @@ public class PsiBasedFormattingModel implements FormattingModel {
         final int oldElementLength = leafElement.getTextRange().getLength();
         changeWhiteSpaceBeforeLeaf(whiteSpace, leafElement, textRange);
         if (leafElement.textContains('\n')
+            && Helper.mayShiftIndentInside(leafElement)
             && whiteSpace.indexOf('\n') >= 0) {
           try {
             Indent lastLineIndent = getLastLineIndent(leafElement.getText());
@@ -103,22 +105,6 @@ public class PsiBasedFormattingModel implements FormattingModel {
       else {
         return whiteSpaceIndent.whiteSpaces - lastLineIndent.whiteSpaces;
       }
-    }
-  }
-
-  private int getSpaceCount(final String whiteSpace) {
-    try {
-      final String lastLine = getLastLine(whiteSpace);
-      if (lastLine != null) {
-        return lastLine.length();
-      }
-      else {
-        return 0;
-      }
-    }
-    catch (IOException e) {
-      LOG.error(e);
-      return 0;
     }
   }
 
@@ -202,10 +188,12 @@ public class PsiBasedFormattingModel implements FormattingModel {
     return result;
   }
 
+  @NotNull
   public FormattingDocumentModel getDocumentModel() {
     return myDocumentModel;
   }
 
+  @NotNull
   public Block getRootBlock() {
     return myRootBlock;
   }

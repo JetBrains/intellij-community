@@ -574,11 +574,7 @@ public class Helper {
         String newSpace = fillIndent(newIndent);
 
         ASTNode leaf = element.findLeafElementAt(offset);
-        if (!isComment(leaf)
-            && leaf.getElementType() != ElementType.WHITE_SPACE
-            && leaf.getElementType() != ElementType.JSP_TEMPLATE_DATA
-            && leaf.getElementType() != ElementType.XML_DATA_CHARACTERS
-            && leaf.getElementType() != ElementType.XML_ATTRIBUTE_VALUE_TOKEN) {
+        if (!mayShiftIndentInside(leaf)) {
           LOG.error("Error",
                     new String[]{
                       leaf.getElementType().toString(),
@@ -650,14 +646,22 @@ public class Helper {
     return element;
   }
 
-  private boolean isComment(final ASTNode node) {
+  public static boolean mayShiftIndentInside(final ASTNode leaf) {
+    return isComment(leaf)
+           || leaf.getElementType() == ElementType.WHITE_SPACE
+           || leaf.getElementType() == ElementType.JSP_TEMPLATE_DATA
+           || leaf.getElementType() == ElementType.XML_DATA_CHARACTERS
+           || leaf.getElementType() == ElementType.XML_ATTRIBUTE_VALUE_TOKEN;
+  }
+
+  private static  boolean isComment(final ASTNode node) {
     final PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(node);
     if (psiElement instanceof PsiComment) return true;
     final ParserDefinition parserDefinition = psiElement.getLanguage().getParserDefinition();
     if (parserDefinition == null) return false;
     final TokenSet commentTokens = parserDefinition.getCommentTokens();
     if (commentTokens == null) return false;
-    return commentTokens.isInSet(node.getElementType());   
+    return commentTokens.isInSet(node.getElementType());
   }
 
   public boolean isSpaceAtStartOfLine(ASTNode parent, ASTNode child1, ASTNode child2) {
