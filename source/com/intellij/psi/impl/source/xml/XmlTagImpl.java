@@ -591,13 +591,17 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
       transaction = new InsertAttributeTransaction(child, anchor, before, model);
     }
     else if (anchor == null){
-      transaction = new BodyInsertTransaction(child);
+      transaction = getBodyInsertTransaction(child);
     }
     else{
       transaction = new GenericInsertTransaction(child, anchor, before);
     }
     model.runTransaction(transaction);
     return transaction.getFirstInserted();
+  }
+
+  protected InsertTransaction getBodyInsertTransaction(final TreeElement child) {
+    return new BodyInsertTransaction(child);
   }
 
   public void deleteChildInternal(final ASTNode child) {
@@ -654,7 +658,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     return null;
   }
 
-  private class BodyInsertTransaction extends InsertTransaction{
+  protected class BodyInsertTransaction extends InsertTransaction{
     private TreeElement myChild;
     private ASTNode myNewElement;
 
@@ -748,7 +752,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     return transaction.getResult();
   }
 
-  private class InsertAttributeTransaction extends InsertTransaction{
+  protected class InsertAttributeTransaction extends InsertTransaction{
     private final TreeElement myChild;
     private final ASTNode myAnchor;
     private final boolean myBefore;
@@ -788,7 +792,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     }
   }
 
-  private class GenericInsertTransaction extends InsertTransaction{
+  protected class GenericInsertTransaction extends InsertTransaction{
     private final TreeElement myChild;
     private final ASTNode myAnchor;
     private final boolean myBefore;
@@ -812,7 +816,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     }
   }
 
-  private abstract class InsertTransaction extends PomTransactionBase{
+  protected abstract class InsertTransaction extends PomTransactionBase{
     public InsertTransaction(final PsiElement scope) {
       super(scope, getProject().getModel().getModelAspect(XmlAspect.class));
     }
