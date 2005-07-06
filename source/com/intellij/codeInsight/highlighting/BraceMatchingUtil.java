@@ -185,7 +185,7 @@ public class BraceMatchingUtil {
         return true;
       }
       else if (tokenType == XmlTokenType.XML_TAG_END) {
-        boolean result = findTokenBack(iterator, XmlTokenType.XML_END_TAG_START, XmlTokenType.XML_START_TAG_START);
+        boolean result = findEndTagStart(iterator);
         if (!result && (fileType == StdFileTypes.HTML || fileType == StdFileTypes.JSP)) {
           result = isEndOfSingleHtmlTag(fileText, iterator);
         }
@@ -552,7 +552,7 @@ public class BraceMatchingUtil {
   }
 
   private static String getTagName(CharSequence fileText, HighlighterIterator iterator) {
-    IElementType tokenType = getToken(iterator);
+    final IElementType tokenType = getToken(iterator);
     String name = null;
     if (tokenType == XmlTokenType.XML_START_TAG_START) {
       {
@@ -578,34 +578,21 @@ public class BraceMatchingUtil {
     }
     else if (tokenType == XmlTokenType.XML_TAG_END || tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END) {
       {
+        int balance = 0;
         int count = 0;
-        while (true) {
+        IElementType tokenType1 = getToken(iterator);
+        while (balance >=0) {
           iterator.retreat();
           count++;
           if (iterator.atEnd()) break;
-          IElementType tokenType1 = getToken(iterator);
-          if (tokenType1 == XmlTokenType.XML_NAME) {
-            iterator.retreat();
-            tokenType1 = getToken(iterator);
-            
-            if (tokenType1 == JavaTokenType.WHITE_SPACE || tokenType1 == JspTokenType.JSP_WHITE_SPACE) {
-              iterator.retreat();
-              tokenType1 = getToken(iterator);
-              iterator.advance();
-            }
-            iterator.advance();
-            if (tokenType1 == XmlTokenType.XML_START_TAG_START || tokenType1== XmlTokenType.XML_END_TAG_START) {
-              name = fileText.subSequence(iterator.getStart(), iterator.getEnd()).toString();
-              break;
-            }
-          } else if (tokenType1 == XmlTokenType.XML_TAG_NAME) {
-            name = fileText.subSequence(iterator.getStart(), iterator.getEnd()).toString();
-            break;
-          }
+          tokenType1 = getToken(iterator);
+
+          if(tokenType1 == XmlTokenType.XML_TAG_END || tokenType1 == XmlTokenType.XML_EMPTY_ELEMENT_END) balance++;
+          else if(tokenType1 == XmlTokenType.XML_TAG_NAME)
+            balance--;
         }
-        for (int i = 0; i < count; i++) {
-          iterator.advance();
-        }
+        if(tokenType1 == XmlTokenType.XML_TAG_NAME) name = fileText.subSequence(iterator.getStart(), iterator.getEnd()).toString();
+        while (count-- > 0) iterator.advance();
       }
     }
 
@@ -616,26 +603,24 @@ public class BraceMatchingUtil {
       return iterator.getTokenType();
   }
 
-  private static boolean findTokenBack(HighlighterIterator iterator, IElementType tokenType, IElementType stopTokenType) {
+  private static boolean findEndTagStart(HighlighterIterator iterator) {
+    IElementType tokenType = getToken(iterator);
+    int balance = 0;
     int count = 0;
-    boolean found = false;
-    while(true){
+    while(balance >= 0){
       iterator.retreat();
       count++;
       if (iterator.atEnd()) break;
-      IElementType tokenType1 = getToken(iterator);
-      if (tokenType1 == tokenType){
-        found = true;
-        break;
+      tokenType = getToken(iterator);
+      if (tokenType == XmlTokenType.XML_TAG_END || tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END){
+        balance++;
       }
-      if (tokenType1 == stopTokenType){
-        break;
+      else if (tokenType == XmlTokenType.XML_END_TAG_START || tokenType == XmlTokenType.XML_START_TAG_START){
+        balance--;
       }
     }
-    for(int i = 0; i < count; i++){
-      iterator.advance();
-    }
-    return found;
+    while(count-- > 0) iterator.advance();
+    return tokenType == XmlTokenType.XML_END_TAG_START;
   }
 
   // TODO: better name for this method
