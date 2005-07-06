@@ -39,4 +39,7 @@ public interface GroupNames {
   String CONTROL_FLOW_GROUP_NAME = "Control flow issues";
   String NUMERIC_GROUP_NAME = "Numeric issues";
   String JDK15_SPECIFIC_GROUP_NAME = "J2SDK5.0 specific issues and migration aids";
+  String JAVABEANS_GROUP_NAME ="JavaBeans issues";
+  String INHERITANCE_GROUP_NAME = "Inheritance issues";
+  String DATA_FLOW_ISSUES = "Data flow issues";
 }
