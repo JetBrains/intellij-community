@@ -14,10 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -33,7 +29,6 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.lang.properties.psi.Property;
 
 import javax.swing.*;
 import java.awt.*;
@@ -44,7 +39,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.io.File;
 
 public class RenameDialog extends RefactoringDialog {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameDialog");
@@ -490,27 +484,7 @@ public class RenameDialog extends RefactoringDialog {
 
   protected boolean areButtonsValid() {
     final String newName = getNewName();
-    if (newName == null) {
-      return false;
-    }
-    if (myPsiElement instanceof PsiAntElement) {
-      return newName.trim().matches("[\\d\\w\\_\\.\\-]*");
-    }
-    if (myPsiElement instanceof PsiFile || myPsiElement instanceof PsiDirectory) {
-      return newName.indexOf(File.separatorChar) < 0 && newName.indexOf('/') < 0;
-    }
-    if (myPsiElement instanceof WebDirectoryElement) {
-      return newName.indexOf('/') < 0;
-    }
-    if (myPsiElement instanceof XmlTag || myPsiElement instanceof XmlAttribute) {
-      return newName.trim().matches("([\\d\\w\\_\\.\\-]+:)?[\\d\\w\\_\\.\\-]+");
-    }
-    if (myPsiElement instanceof XmlAttributeValue) {
-      return true; // ask meta data
-    }
-    if (myPsiElement instanceof Property) {
-      return true;
-    }
-    return PsiManager.getInstance(myProject).getNameHelper().isIdentifier(newName.trim());
+    return RefactoringUtil.isValidName(myProject, myPsiElement, newName);
   }
+
 }

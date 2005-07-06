@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -35,6 +36,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.ui.InfoDialog;
@@ -44,9 +47,12 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.properties.psi.Property;
+import com.intellij.ant.PsiAntElement;
 import gnu.trove.THashMap;
 
 import java.util.*;
+import java.io.File;
 
 public class RefactoringUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.RefactoringUtil");
@@ -160,6 +166,34 @@ public class RefactoringUtil {
     }
   }
 
+  public static boolean isValidName(final Project project, final PsiElement psiElement, final String newName) {
+    if (newName == null) {
+      return false;
+    }
+    if (psiElement instanceof PsiAntElement) {
+      return newName.trim().matches("[\\d\\w\\_\\.\\-]*");
+    }
+    if (psiElement instanceof PsiFile || psiElement instanceof PsiDirectory) {
+      return newName.indexOf(File.separatorChar) < 0 && newName.indexOf('/') < 0;
+    }
+    if (psiElement instanceof WebDirectoryElement) {
+      return newName.indexOf('/') < 0;
+    }
+    if (psiElement instanceof XmlTag || 
+        psiElement instanceof XmlAttribute ||
+        psiElement instanceof XmlElementDecl
+       ) {
+      return newName.trim().matches("([\\d\\w\\_\\.\\-]+:)?[\\d\\w\\_\\.\\-]+");
+    }
+    if (psiElement instanceof XmlAttributeValue) {
+      return true; // ask meta data
+    }
+    if (psiElement instanceof Property) {
+      return true;
+    }
+    return PsiManager.getInstance(project).getNameHelper().isIdentifier(newName.trim());
+  }
+
   public static interface UsageInfoFactory {
     UsageInfo createUsageInfo(PsiElement usage, int startOffset, int endOffset);
   }
@@ -186,7 +220,7 @@ public class RefactoringUtil {
 
   public static boolean isSearchTextOccurencesEnabled(PsiElement element) {
     return element instanceof PsiPackage || (element instanceof PsiClass && ((PsiClass)element).getQualifiedName() != null) ||
-      (element instanceof PsiFile && !StdLanguages.JAVA.equals(element.getLanguage()));
+           (element instanceof PsiFile && !StdLanguages.JAVA.equals(element.getLanguage()));
   }
 
   public static PsiElement getVariableScope(PsiLocalVariable localVar) {
@@ -206,10 +240,10 @@ public class RefactoringUtil {
         return true;
       }
     }, factory);
-  }  
+  }
 
   public static void processUsagesInNonJavaFiles(PsiElement element, String stringToSearch, GlobalSearchScope searchScope,
-                                             final Processor<UsageInfo> processor, final UsageInfoFactory factory) {
+                                                 final Processor<UsageInfo> processor, final UsageInfoFactory factory) {
     PsiSearchHelper helper = element.getManager().getSearchHelper();
 
     helper.processUsagesInNonJavaFiles(element, stringToSearch,

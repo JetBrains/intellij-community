@@ -370,7 +370,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     registerReferenceProvider(PsiLiteralExpression.class, filePathReferenceProvider);
     
     registerXmlAttributeValueReferenceProvider(
-      new String[] {"ref","type","base"},
+      new String[] {"ref","type","base","name"},
       new ScopeFilter(
         new ParentElementFilter(
           new NamespaceFilter(MetaRegistry.SCHEMA_URIS), 2
