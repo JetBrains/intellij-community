@@ -7,12 +7,13 @@ import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PatchedSoftReference;
 import com.intellij.lang.ASTNode;
 
 public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiTypeElementImpl");
   private PsiType myCachedType = null;
-  private PsiType myCachedDetachedType = null;
+  private PatchedSoftReference<PsiType> myCachedDetachedType = null;
 
   public PsiTypeElementImpl() {
     super(TYPE);
@@ -54,14 +55,16 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   }
 
   public PsiType getDetachedType(PsiElement context) {
-    if (myCachedDetachedType != null) return myCachedDetachedType;
+    PsiType type;
+    if (myCachedDetachedType != null && (type = myCachedDetachedType.get()) != null) return type;
     try {
-      myCachedDetachedType = getManager().getElementFactory().createTypeFromText(getText(), context);
+      type = getManager().getElementFactory().createTypeFromText(getText(), context);
+      myCachedDetachedType = new PatchedSoftReference<PsiType>(type);
     }
     catch (IncorrectOperationException e) {
       return getType();
     }
-    return myCachedDetachedType;
+    return type;
   }
 
   private PsiType createWildcardType() {
