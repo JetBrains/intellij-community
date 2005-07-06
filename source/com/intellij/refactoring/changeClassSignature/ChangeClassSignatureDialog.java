@@ -5,7 +5,6 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.*;
@@ -132,7 +131,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
         return "Wrong default value: '" + codeFragment.getText() + "' for parameter " + info.getNewName();
       }
       catch (PsiTypeCodeFragment.NoTypeException e) {
-        return "Specify a type for parameter" + info.getNewName();
+        return "Specify a type for parameter " + info.getNewName();
       }
       info.setDefaultValue(type);
     }

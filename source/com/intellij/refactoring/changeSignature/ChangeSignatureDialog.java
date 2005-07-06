@@ -586,7 +586,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
         return "Wrong type: '" + psiCodeFragment.getText() + "' for parameter " + info.getName();
       }
       catch (PsiTypeCodeFragment.NoTypeException e) {
-        return "Specify a type for parameter" + info.getName();
+        return "Specify a type for parameter " + info.getName();
       }
 
       info.setType(type);
