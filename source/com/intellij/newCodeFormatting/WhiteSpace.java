@@ -11,7 +11,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import java.util.ArrayList;
 
 class WhiteSpace {
-  
+
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.newCodeFormatting.WhiteSpace");
   
   private TextRange myTextRange;
