@@ -154,10 +154,16 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
 
   public InspectionProfile getCurrentProfile() {
     if (myExternalProfile != null) return myExternalProfile;
-    InspectionProfile profile = InspectionProfileManager.getInstance().getProfile(myCurrentProfileName);
+    final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
+    InspectionProfile profile = inspectionProfileManager.getProfile(myCurrentProfileName);
     if (profile == null) {
-      myCurrentProfileName = "Default";
-      profile = InspectionProfileManager.getInstance().getProfile(myCurrentProfileName);
+      final String[] avaliableProfileNames = inspectionProfileManager.getAvaliableProfileNames();
+      if (avaliableProfileNames == null || avaliableProfileNames.length == 0){
+        //can't be
+        return null;
+      }
+      myCurrentProfileName = avaliableProfileNames[0];
+      profile = inspectionProfileManager.getProfile(myCurrentProfileName);
     }
     return profile;
   }
