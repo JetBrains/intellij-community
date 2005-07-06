@@ -45,8 +45,8 @@ public class JavaLanguage extends Language {
     super("JAVA", "text/java");
     myFormattingModelBuilder = new FormattingModelBuilder() {
       public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
-        return new PsiBasedFormattingModel(element.getContainingFile(), settings, AbstractJavaBlock.createJavaBlock(SourceTreeToPsiMap.psiElementToTree(element),
-                                                                                                                    settings));
+        return new PsiBasedFormattingModel(element.getContainingFile(), AbstractJavaBlock.createJavaBlock(SourceTreeToPsiMap.psiElementToTree(element),
+                                                                                                          settings));
       }
     };
   }

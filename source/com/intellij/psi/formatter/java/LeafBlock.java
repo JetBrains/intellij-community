@@ -61,4 +61,9 @@ public class LeafBlock implements Block{
   public boolean isIncomplete() {
     return false;
   }
+
+  public boolean isLeaf() {
+    return true;
+  }
+
 }

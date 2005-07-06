@@ -10,24 +10,26 @@ import com.intellij.psi.formatter.common.AbstractBlock;
 import java.util.List;
 import java.util.ArrayList;
 
-public class SynteticCodeBlock implements Block, JavaBlock{
+import org.jetbrains.annotations.NotNull;
+
+public class SyntheticCodeBlock implements Block, JavaBlock{
   private final List<Block> mySubBlocks;
   private final Alignment myAlignment;
   private final Indent myIndentContent;
   private final CodeStyleSettings mySettings;
   private final Wrap myWrap;
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.newXmlFormatter.java.SynteticCodeBlock");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.newXmlFormatter.java.SyntheticCodeBlock");
 
   private final TextRange myTextRange;
 
   private ChildAttributes myChildAttributes;
 
-  public SynteticCodeBlock(final List<Block> subBlocks,
-                           final Alignment alignment,
-                           CodeStyleSettings settings,
-                           Indent indent,
-                           Wrap wrap) {
+  public SyntheticCodeBlock(final List<Block> subBlocks,
+                            final Alignment alignment,
+                            CodeStyleSettings settings,
+                            Indent indent,
+                            Wrap wrap) {
     myIndentContent = indent;
     if (subBlocks.isEmpty()) {
       LOG.assertTrue(false);
@@ -37,7 +39,7 @@ public class SynteticCodeBlock implements Block, JavaBlock{
     mySettings = settings;
     myWrap = wrap;
     myTextRange = new TextRange(mySubBlocks.get(0).getTextRange().getStartOffset(),
-                         mySubBlocks.get(mySubBlocks.size() - 1).getTextRange().getEndOffset());
+                                mySubBlocks.get(mySubBlocks.size() - 1).getTextRange().getEndOffset());
   }
 
   public TextRange getTextRange() {
@@ -78,6 +80,7 @@ public class SynteticCodeBlock implements Block, JavaBlock{
     myChildAttributes = childAttributes;
   }
 
+  @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
     if (myChildAttributes != null) {
       return myChildAttributes;
@@ -88,5 +91,9 @@ public class SynteticCodeBlock implements Block, JavaBlock{
 
   public boolean isIncomplete() {
     return getSubBlocks().get(getSubBlocks().size() - 1).isIncomplete();
+  }
+
+  public boolean isLeaf() {
+    return false;
   }
 }

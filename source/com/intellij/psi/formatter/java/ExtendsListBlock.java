@@ -29,7 +29,7 @@ public class ExtendsListBlock extends AbstractJavaBlock{
       if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
         if (ElementType.KEYWORD_BIT_SET.isInSet(child.getElementType())) {
           if (!elementsExceptKeyword.isEmpty()) {
-            result.add(new SynteticCodeBlock(elementsExceptKeyword, null,  mySettings, Indent.getNoneIndent(), null));
+            result.add(new SyntheticCodeBlock(elementsExceptKeyword, null,  mySettings, Indent.getNoneIndent(), null));
             elementsExceptKeyword = new ArrayList<Block>();
           }
           result.add(createJavaBlock(child, mySettings, Indent.createContinuationIndent(), arrangeChildWrap(child, childWrap), alignment));
@@ -41,7 +41,7 @@ public class ExtendsListBlock extends AbstractJavaBlock{
       child = child.getTreeNext();
     }
     if (!elementsExceptKeyword.isEmpty()) {
-      result.add(new SynteticCodeBlock(elementsExceptKeyword, alignment,  mySettings, Indent.getNoneIndent(), null));
+      result.add(new SyntheticCodeBlock(elementsExceptKeyword, alignment,  mySettings, Indent.getNoneIndent(), null));
     }
     
     return result;

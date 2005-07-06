@@ -1,12 +1,13 @@
 package com.intellij.psi.formatter.common;
 
 import com.intellij.codeFormatting.general.FormatterUtil;
-import com.intellij.lang.ASTNode;
 import com.intellij.formatting.*;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.impl.source.codeStyle.Helper;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -80,5 +81,9 @@ public abstract class AbstractBlock implements Block {
 
   public boolean isIncomplete() {
     return FormatterUtil.isIncompleted(getTreeNode());
+  }
+
+  public boolean isLeaf() {
+    return Helper.mayShiftIndentInside(myNode);
   }
 }

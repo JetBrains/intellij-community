@@ -16,19 +16,28 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
   private LeafBlockWrapper myNextBlock;
   private final boolean myIsReadOnly;
   private SpacePropertyImpl mySpaceProperty;
+  private final boolean myIsLeaf;
+  private final IndentInside myLastLineIndent;
+
   public LeafBlockWrapper(final Block block,
-                      AbstractBlockWrapper parent,
-                      WhiteSpace whiteSpaceBefore,
-                      FormattingDocumentModel model,
-                      LeafBlockWrapper previousTokenBlock,
-                      boolean isReadOnly,
-                      final TextRange textRange) {
+                          AbstractBlockWrapper parent,
+                          WhiteSpace whiteSpaceBefore,
+                          FormattingDocumentModel model,
+                          LeafBlockWrapper previousTokenBlock,
+                          boolean isReadOnly,
+                          final TextRange textRange) {
     super(block, whiteSpaceBefore, parent, textRange);
     myPreviousBlock = previousTokenBlock;
     final int lastLineNumber = model.getLineNumber(textRange.getEndOffset());
     myContainsLineFeeds = model.getLineNumber(textRange.getStartOffset()) != lastLineNumber;
     mySymbolsAtTheLastLine = myContainsLineFeeds ? textRange.getEndOffset() - model.getLineStartOffset(lastLineNumber) : textRange.getLength();
     myIsReadOnly = isReadOnly;
+    myIsLeaf = block.isLeaf();
+    if (myIsLeaf && myContainsLineFeeds) {
+      myLastLineIndent = IndentInside.getLastLineIndent(model.getText(textRange).toString());
+    } else {
+      myLastLineIndent = null;
+    }
   }
 
   public boolean containsLineFeeds() {
@@ -107,5 +116,13 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
 
   public IndentInfo getIndentFromParent() {
     return myIndentFromParent;
+  }
+
+  public boolean isLeaf() {
+    return myIsLeaf;
+  }
+
+  public IndentInside getLastLineIndent() {
+    return myLastLineIndent;
   }
 }

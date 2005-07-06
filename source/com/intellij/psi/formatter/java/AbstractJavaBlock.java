@@ -376,8 +376,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       subBlocks.add(createSynthBlock(subNodes, wrap));
     }
 
-    return new SynteticCodeBlock(subBlocks, alignment, mySettings, Indent.createContinuationWithoutFirstIndent(),
-                                 blockWrap);
+    return new SyntheticCodeBlock(subBlocks, alignment, mySettings, Indent.createContinuationWithoutFirstIndent(),
+                                  blockWrap);
   }
 
   private Block createSynthBlock(final ArrayList<ASTNode> subNodes, final Wrap wrap) {
@@ -391,11 +391,11 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       if (!subNodes.isEmpty()) {
         subBlocks.add(createSynthBlock(subNodes, wrap));
       }
-      return new SynteticCodeBlock(subBlocks, null, mySettings, Indent.createContinuationIndent(), wrap);
+      return new SyntheticCodeBlock(subBlocks, null, mySettings, Indent.createContinuationIndent(), wrap);
     }
     else {
-      return new SynteticCodeBlock(createJavaBlocks(subNodes), null, mySettings,
-                                   Indent.createContinuationWithoutFirstIndent(), null);
+      return new SyntheticCodeBlock(createJavaBlocks(subNodes), null, mySettings,
+                                    Indent.createContinuationWithoutFirstIndent(), null);
     }
   }
 

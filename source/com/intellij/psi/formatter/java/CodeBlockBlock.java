@@ -98,8 +98,8 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     return null;
   }
 
-  private SynteticCodeBlock createCodeBlockBlock(final ArrayList<Block> localResult, final Indent indent) {
-    final SynteticCodeBlock result = new SynteticCodeBlock(localResult, null, getSettings(), indent, null);
+  private SyntheticCodeBlock createCodeBlockBlock(final ArrayList<Block> localResult, final Indent indent) {
+    final SyntheticCodeBlock result = new SyntheticCodeBlock(localResult, null, getSettings(), indent, null);
     result.setChildAttributes(new ChildAttributes(getCodeBlockInternalIndent(myChildrenIndent), null));
     return result;
   }
@@ -132,9 +132,9 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     return null;
   }
 
-  private SynteticCodeBlock createCaseSectionBlock(final ArrayList<Block> localResult, final Alignment childAlignment, final Indent indent,
+  private SyntheticCodeBlock createCaseSectionBlock(final ArrayList<Block> localResult, final Alignment childAlignment, final Indent indent,
                                                    final Wrap childWrap) {
-    final SynteticCodeBlock result = new SynteticCodeBlock(localResult, childAlignment, getSettings(), indent, childWrap);
+    final SyntheticCodeBlock result = new SyntheticCodeBlock(localResult, childAlignment, getSettings(), indent, childWrap);
     result.setChildAttributes(new ChildAttributes(Indent.createNormalIndent(), null));
     return result;
   }

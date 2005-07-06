@@ -55,8 +55,8 @@ public class XMLLanguage extends Language {
     myFormattingModelBuilder = new FormattingModelBuilder() {
       public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
         final ASTNode root = SourceTreeToPsiMap.psiElementToTree(element);
-        return new PsiBasedFormattingModel(element.getContainingFile(), settings, new XmlBlock(root, null, null, new XmlPolicy(settings), null,
-                                                                                               null));
+        return new PsiBasedFormattingModel(element.getContainingFile(), new XmlBlock(root, null, null, new XmlPolicy(settings), null,
+                                                                                     null));
       }
     };
   }

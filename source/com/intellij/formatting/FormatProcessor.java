@@ -163,14 +163,24 @@ class FormatProcessor {
 
     for (LeafBlockWrapper block : blocksToModify) {
       final WhiteSpace whiteSpace = block.getWhiteSpace();
-      final int oldTextRangeLength = block.getTextRange().getLength();
       final String newWhiteSpace = whiteSpace.generateWhiteSpace(myIndentOption);
       final TextRange textRange = whiteSpace.getTextRange();
       final TextRange wsRange = shiftRange(textRange, shift);
-      final int newBlockLength = model.replaceWhiteSpace(wsRange,
-                                                         newWhiteSpace,
-                                                         block.getTextRange().getLength());
-      shift += (newWhiteSpace.length() - (textRange.getLength())) + (newBlockLength - oldTextRangeLength);
+      model.replaceWhiteSpace(wsRange, newWhiteSpace);
+
+      shift += (newWhiteSpace.length() - (textRange.getLength()));
+
+      if (block.isLeaf() && whiteSpace.containsLineFeeds() && block.containsLineFeeds()) {
+        final TextRange currentBlockRange = shiftRange(block.getTextRange(), shift);
+
+        IndentInside lastLineIndent = block.getLastLineIndent();
+        IndentInside whiteSpaceIndent = IndentInside.createIndentOn(IndentInside.getLastLine(newWhiteSpace));
+        final int shiftInside = calcShift(lastLineIndent, whiteSpaceIndent);
+
+        final TextRange newBlockRange = model.shiftIndentInsideRange(currentBlockRange, shiftInside);
+        shift +=  newBlockRange.getLength() - block.getTextRange().getLength();
+      }
+
     }
   }
 
@@ -676,4 +686,27 @@ class FormatProcessor {
   public WhiteSpace getLastWhiteSpace() {
     return myLastWhiteSpace;
   }
+
+  private int calcShift(final IndentInside lastLineIndent, final IndentInside whiteSpaceIndent) {
+    final CodeStyleSettings.IndentOptions options = mySettings.JAVA_INDENT_OPTIONS;
+    if (lastLineIndent.equals(whiteSpaceIndent)) return 0;
+    if (options.USE_TAB_CHARACTER) {
+      if (lastLineIndent.whiteSpaces > 0) {
+        return whiteSpaceIndent.getSpacesCount(options);
+      }
+      else {
+        return whiteSpaceIndent.tabs - lastLineIndent.tabs;
+      }
+    }
+    else {
+      if (lastLineIndent.tabs > 0) {
+        return whiteSpaceIndent.getTabsCount(options);
+      }
+      else {
+        return whiteSpaceIndent.whiteSpaces - lastLineIndent.whiteSpaces;
+      }
+    }
+  }
+
+
 }

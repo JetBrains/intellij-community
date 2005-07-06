@@ -11,7 +11,8 @@ public interface FormattingModel {
    * @return new text range length for block after the white space
    * @param textRange
    * @param whiteSpace
-   * @param blockLength - length of the block after white space 
    */     
-  int replaceWhiteSpace(TextRange textRange, String whiteSpace, final int blockLength);
+  void replaceWhiteSpace(TextRange textRange, String whiteSpace);
+
+  TextRange shiftIndentInsideRange(TextRange range, int indent);
 }

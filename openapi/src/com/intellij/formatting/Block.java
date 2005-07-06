@@ -23,4 +23,6 @@ public interface Block {
   @NotNull ChildAttributes getChildAttributes(final int newChildIndex);
 
   boolean isIncomplete();
+
+  boolean isLeaf();
 }

@@ -29,7 +29,7 @@ public class XHTMLLanguage extends XMLLanguage {
     super("XHTML", "text/xhtml");
     myFormattingModelBuilder = new FormattingModelBuilder() {
       public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
-        return new PsiBasedFormattingModel(element.getContainingFile(), settings,
+        return new PsiBasedFormattingModel(element.getContainingFile(),
                                            new XmlBlock(SourceTreeToPsiMap.psiElementToTree(element),
                                                         null, null,
                                                         new HtmlPolicy(settings), null, null));

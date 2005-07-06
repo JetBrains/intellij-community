@@ -11,71 +11,48 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.Helper;
 import com.intellij.psi.impl.source.jsp.jspJava.JspText;
 import com.intellij.psi.impl.source.tree.ElementType;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-import java.io.LineNumberReader;
-import java.io.StringReader;
-
 public class PsiBasedFormattingModel implements FormattingModel {
 
   private final ASTNode myASTNode;
   private final Project myProject;
-  private final CodeStyleSettings mySettings;
   private final FormattingDocumentModelImpl myDocumentModel;
   private final Block myRootBlock;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.PsiBasedFormattingModel");
 
   public PsiBasedFormattingModel(final PsiFile file,
-                                 CodeStyleSettings settings,
                                  final Block rootBlock) {
-    mySettings = settings;
     myASTNode = SourceTreeToPsiMap.psiElementToTree(file);
     myProject = file.getProject();
     myDocumentModel = FormattingDocumentModelImpl.createOn(file);
     myRootBlock = rootBlock;
   }
 
-  public int replaceWhiteSpace(TextRange textRange,
-                               String whiteSpace,
-                               final int blockLength){
-    return replaceWithPSI(textRange, blockLength, whiteSpace);
+  public void replaceWhiteSpace(TextRange textRange,
+                                String whiteSpace) {
+    replaceWithPSI(textRange, whiteSpace);
   }
 
-  private int replaceWithPSI(final TextRange textRange, int blockLength, final String whiteSpace) {
+  public TextRange shiftIndentInsideRange(TextRange textRange, int shift) {
+    final int offset = textRange.getStartOffset();
+    final ASTNode leafElement = findElementAt(offset);
+    return new Helper(StdFileTypes.JAVA, myProject).shiftIndentInside(leafElement, shift).getTextRange();
+  }
+
+  private void replaceWithPSI(final TextRange textRange, final String whiteSpace) {
     final int offset = textRange.getEndOffset();
     final ASTNode leafElement = findElementAt(offset);
-
       if (leafElement != null) {
         LOG.assertTrue(leafElement.getPsi().isValid());
-        final int oldElementLength = leafElement.getTextRange().getLength();
         changeWhiteSpaceBeforeLeaf(whiteSpace, leafElement, textRange);
-        if (leafElement.textContains('\n')
-            && Helper.mayShiftIndentInside(leafElement)
-            && whiteSpace.indexOf('\n') >= 0) {
-          try {
-            Indent lastLineIndent = getLastLineIndent(leafElement.getText());
-            Indent whiteSpaceIndent = createIndentOn(getLastLine(whiteSpace));
-            final int shift = calcShift(lastLineIndent, whiteSpaceIndent);
-            final int newElementLength = new Helper(StdFileTypes.JAVA, myProject).shiftIndentInside(leafElement, shift).getTextRange()
-              .getLength();
-            blockLength = blockLength - oldElementLength + newElementLength;
-          }
-          catch (IOException e) {
-            throw new RuntimeException(e);
-          }
-        }
-
-        return blockLength;
       } else {
         changeLastWhiteSpace(whiteSpace);
-        return 0;
       }
     }
 
@@ -87,26 +64,7 @@ public class PsiBasedFormattingModel implements FormattingModel {
     FormatterUtil.replaceWhiteSpace(whiteSpace, leafElement, ElementType.WHITE_SPACE, textRange);
   }
 
-  private int calcShift(final Indent lastLineIndent, final Indent whiteSpaceIndent) {
-    final CodeStyleSettings.IndentOptions options = mySettings.JAVA_INDENT_OPTIONS;
-    if (lastLineIndent.equals(whiteSpaceIndent)) return 0;
-    if (options.USE_TAB_CHARACTER) {
-      if (lastLineIndent.whiteSpaces > 0) {
-        return whiteSpaceIndent.getSpacesCount(options);
-      }
-      else {
-        return whiteSpaceIndent.tabs - lastLineIndent.tabs;
-      }
-    }
-    else {
-      if (lastLineIndent.tabs > 0) {
-        return whiteSpaceIndent.getTabsCount(options);
-      }
-      else {
-        return whiteSpaceIndent.whiteSpaces - lastLineIndent.whiteSpaces;
-      }
-    }
-  }
+
 
   private ASTNode findElementAt(final int offset) {
     final PsiElement[] psiRoots = myASTNode.getPsi().getContainingFile().getPsiRoots();
@@ -129,63 +87,6 @@ public class PsiBasedFormattingModel implements FormattingModel {
     } else {
       return found;
     }
-  }
-
-  private class Indent {
-    public int whiteSpaces = 0;
-    public int tabs = 0;
-
-    public boolean equals(final Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      final Indent indent = (Indent)o;
-
-      if (tabs != indent.tabs) return false;
-      return whiteSpaces == indent.whiteSpaces;
-    }
-
-    public int hashCode() {
-      int result;
-      result = whiteSpaces;
-      result = 29 * result + tabs;
-      return result;
-    }
-
-    public int getTabsCount(final CodeStyleSettings.IndentOptions options) {
-      final int tabsFromSpaces = whiteSpaces / options.TAB_SIZE;
-      return tabs + tabsFromSpaces;
-    }
-
-    public int getSpacesCount(final CodeStyleSettings.IndentOptions options) {
-      return whiteSpaces + tabs * options.TAB_SIZE;
-    }
-  }
-
-  private Indent getLastLineIndent(final String text) throws IOException {
-    String lastLine = getLastLine(text);
-    if (lastLine == null) return new Indent();
-    return createIndentOn(lastLine);
-  }
-
-  private Indent createIndentOn(final String lastLine) {
-    final Indent result = new Indent();
-    for (int i = 0; i < lastLine.length(); i++) {
-      if (lastLine.charAt(i) == ' ') result.whiteSpaces += 1;
-      if (lastLine.charAt(i) == '\t') result.tabs += 1;
-    }
-    return result;
-  }
-
-  private String getLastLine(final String text) throws IOException {
-    if (text.endsWith("\n")) return "";
-    final LineNumberReader lineNumberReader = new LineNumberReader(new StringReader(text));
-    String line;
-    String result = null;
-    while ((line = lineNumberReader.readLine()) != null) {
-      result = line;
-    }
-    return result;
   }
 
   @NotNull
