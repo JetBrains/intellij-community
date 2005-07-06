@@ -660,7 +660,9 @@ public class HighlightUtil {
       if (fixRange == null) {
         fixRange = element.getTextRange();
       }
-      errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.UNHANDLED_EXCEPTION,
+      HighlightInfoType highlightType = getUnhandledExceptionHighlightType(element.getContainingFile());
+      if (highlightType == null) return null;
+      errorResult = HighlightInfo.createHighlightInfo(highlightType,
                                                       fixRange,
                                                       getUnhandledExceptionsDescriptor(unhandledExceptions));
       QuickFixAction.registerQuickFixAction(errorResult, new AddExceptionToCatchFix(), null);
@@ -671,6 +673,21 @@ public class HighlightUtil {
       }
     }
     return errorResult;
+  }
+
+  private static HighlightInfoType getUnhandledExceptionHighlightType(final PsiFile containingFile) {
+    if (!(containingFile instanceof JspFile)) {
+      return HighlightInfoType.UNHANDLED_EXCEPTION;
+    }
+    JspFile jspFile = (JspFile)containingFile;
+    PsiFile errorPage = jspFile.getErrorPage();
+    // highlight unhandled exception as warning if there is no errorPage directive
+    if (errorPage == null) {
+      return HighlightInfoType.WARNING;
+    }
+    else {
+      return null;
+    }
   }
 
   //@top

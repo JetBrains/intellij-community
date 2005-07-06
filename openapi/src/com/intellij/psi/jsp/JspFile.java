@@ -34,4 +34,10 @@ public interface JspFile extends XmlFile {
   Language getBaseLanguage();
 
   Set<String> getKnownTaglibPrefixes();
+
+  /**
+   * @return file which the errorPage directive references,
+   * or null, if there is no errorPage directive or directive references invalid file
+   */
+  PsiFile getErrorPage();
 }
