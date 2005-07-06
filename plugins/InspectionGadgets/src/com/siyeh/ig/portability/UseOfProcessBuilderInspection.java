@@ -6,10 +6,10 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.VariableInspection;
 import org.jetbrains.annotations.NotNull;
 
-public class UseOfSunClassesInspection extends VariableInspection {
+public class UseOfProcessBuilderInspection extends VariableInspection {
 
     public String getDisplayName() {
-        return "Use of sun.* classes";
+        return "Use of java.lang.ProcessBuilder class";
     }
 
     public String getGroupDisplayName() {
@@ -17,14 +17,15 @@ public class UseOfSunClassesInspection extends VariableInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Use of Sun-supplied class #ref is non-portable #loc";
+        return "Use of #ref is non-portable #loc";
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new ObsoleteCollectionVisitor();
+        return new ProcessBuilderVisitor();
     }
 
-    private static class ObsoleteCollectionVisitor extends BaseInspectionVisitor {
+    private static class ProcessBuilderVisitor extends BaseInspectionVisitor {
+        private static final String PROCESS_BUILDER_CLASS_NAME = "java.lang.ProcessBuilder";
 
         public void visitVariable(@NotNull PsiVariable variable) {
             super.visitVariable(variable);
@@ -32,17 +33,10 @@ public class UseOfSunClassesInspection extends VariableInspection {
             if (type == null) {
                 return;
             }
-            final PsiType deepComponentType = type.getDeepComponentType();
-            if (deepComponentType == null) {
-                return;
-            }
-            if(!(deepComponentType instanceof PsiClassType)) {
-                return;
-            }
-            final PsiClassType classType = (PsiClassType) deepComponentType;
-            final String className = classType.getCanonicalText();
-            if(className == null || !className.startsWith("sun.")) {
-                return;
+            final String typeString = type.getCanonicalText();
+            if(!PROCESS_BUILDER_CLASS_NAME.equals(typeString))
+            {
+               return;
             }
             final PsiTypeElement typeElement = variable.getTypeElement();
             registerError(typeElement);
@@ -54,14 +48,10 @@ public class UseOfSunClassesInspection extends VariableInspection {
             if (type == null) {
                 return;
             }
-            if(!(type instanceof PsiClassType))
+            final String typeString = type.getCanonicalText();
+            if(!PROCESS_BUILDER_CLASS_NAME.equals(typeString))
             {
-                return;
-            }
-            final PsiClassType classType = (PsiClassType) type;
-            final String className = classType.getCanonicalText();
-            if (className==null || !className.startsWith("sun.")) {
-                return;
+               return;
             }
             final PsiJavaCodeReferenceElement classNameElement = newExpression.getClassReference();
             registerError(classNameElement);

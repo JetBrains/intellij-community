@@ -14,6 +14,8 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class StaticInheritanceInspection extends ClassInspection{
+    private final StaticInheritanceFix fix = new StaticInheritanceFix();
+
     public String getDisplayName(){
         return "Static inheritance";
     }
@@ -27,10 +29,10 @@ public class StaticInheritanceInspection extends ClassInspection{
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
-        return new StaticInheritanceFix();
+        return fix;
     }
 
-    private static class StaticInheritanceFix extends InspectionGadgetsFix{
+    public static class StaticInheritanceFix extends InspectionGadgetsFix{
         public String getName(){
             return "Replace inheritance with qualified references";
         }

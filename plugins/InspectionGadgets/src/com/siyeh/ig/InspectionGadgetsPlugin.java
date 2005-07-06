@@ -678,6 +678,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(NakedNotifyInspection.class);
         m_inspectionClasses.add(UnconditionalWaitInspection.class);
         m_inspectionClasses.add(SystemRunFinalizersOnExitInspection.class);
+        m_inspectionClasses.add(ThreadPriorityInspection.class);
         m_inspectionClasses.add(ThreadYieldInspection.class);
         m_inspectionClasses.add(ThreadStopSuspendResumeInspection.class);
         m_inspectionClasses.add(WhileLoopSpinsOnFieldInspection.class);
@@ -748,6 +749,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(UseOfSunClassesInspection.class);
         m_inspectionClasses.add(UseOfAWTPeerClassInspection.class);
         m_inspectionClasses.add(UseOfJDBCDriverClassInspection.class);
+        m_inspectionClasses.add(UseOfProcessBuilderInspection.class);
     }
 
     private void registerInternationalInspections(){

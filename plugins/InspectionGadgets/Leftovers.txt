@@ -7,15 +7,12 @@
     JDBC close order
     JDBC connection createStatement()
     Look for ArrayIndexOutOfBounds errors statically
+    Read or write on non-buffered stream
     Static initializer which creates an instance before all static variables are initialized
-    Read or write on non-buffered stream 
     getClass().getResource()
     Inefficient use of keySet iterator rather than entrySet iterator
     Constant month outside range of 0..11
-
     Duplicate switch branches
-    Constant Math calls
 
     Move and restructure categories
     Static import quickfix
-    Fix the list boxes
