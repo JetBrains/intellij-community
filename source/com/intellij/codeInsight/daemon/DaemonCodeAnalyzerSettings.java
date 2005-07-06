@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -44,8 +45,13 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
 
   public InspectionProfileImpl getInspectionProfile() {
     if (myInspectionProfile == null) {
-      myInspectionProfile = InspectionProfileManager.getInstance().getProfile("Default");
-      myInspectionProfile.resetToBase();
+      final String[] avaliableProfileNames = InspectionProfileManager.getInstance().getAvaliableProfileNames();
+      if (avaliableProfileNames == null || avaliableProfileNames.length == 0){
+        //can't be
+        return null;
+      } else {
+        myInspectionProfile = InspectionProfileManager.getInstance().getProfile(avaliableProfileNames[0]);
+      }
     }
     if (!myInspectionProfile.wasInitialized()) {
       myInspectionProfile.load();
@@ -118,9 +124,6 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
     String profileName = element.getAttributeValue("profile");
     if (profileName != null) {
       myInspectionProfile = InspectionProfileManager.getInstance().getProfile(profileName);
-      if (profileName.equals("Default")) {
-        myInspectionProfile.resetToBase();
-      }
     }
     else {
       myInspectionProfile =
