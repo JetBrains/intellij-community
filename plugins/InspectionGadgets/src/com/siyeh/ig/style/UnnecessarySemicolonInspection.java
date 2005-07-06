@@ -54,8 +54,10 @@ public class UnnecessarySemicolonInspection extends ClassInspection{
     private static class UnnecessarySemicolonVisitor
                                                      extends BaseInspectionVisitor{
 
-
+        private boolean classAlreadyVisited;
         public void visitClass(@NotNull PsiClass aClass){
+            if (classAlreadyVisited) return;
+            classAlreadyVisited = true;
             PsiElement sibling = skipForwardWhiteSpacesAndComments(aClass);
             while(sibling != null){
                 if(sibling instanceof PsiJavaToken &&
@@ -87,6 +89,7 @@ public class UnnecessarySemicolonInspection extends ClassInspection{
                     }
                 }
             }
+          super.visitClass(aClass);
         }
 
         private static @Nullable  PsiElement skipForwardWhiteSpacesAndComments(PsiElement element){
