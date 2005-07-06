@@ -4,6 +4,7 @@ import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
@@ -19,6 +20,7 @@ import java.util.Collections;
  */
 
 public class CompoundPositionManager implements PositionManager{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.CompoundPositionManager");
   private final ArrayList<PositionManager> myPositionManagers = new ArrayList<PositionManager>();
 
   public CompoundPositionManager() {
@@ -34,24 +36,24 @@ public class CompoundPositionManager implements PositionManager{
   }
 
   public SourcePosition getSourcePosition(Location location) {
-    for (Iterator<PositionManager> iterator = myPositionManagers.iterator(); iterator.hasNext();) {
-      PositionManager positionManager = iterator.next();
+    for (PositionManager positionManager : myPositionManagers) {
       try {
         return positionManager.getSourcePosition(location);
       }
       catch (NoDataException e) {
+        LOG.info(e);
       }
     }
     return null;
   }
 
   public List<ReferenceType> getAllClasses(SourcePosition classPosition) {
-    for (Iterator<PositionManager> iterator = myPositionManagers.iterator(); iterator.hasNext();) {
-      PositionManager positionManager = iterator.next();
+    for (PositionManager positionManager : myPositionManagers) {
       try {
         return positionManager.getAllClasses(classPosition);
       }
       catch (NoDataException e) {
+        LOG.info(e);
       }
     }
     return Collections.EMPTY_LIST;

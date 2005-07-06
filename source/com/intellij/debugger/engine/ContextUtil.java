@@ -116,6 +116,9 @@ public class ContextUtil {
     }
 
     final Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
+    if (lineNumber >= document.getLineCount()) {
+      return psiFile;
+    }
     int startOffset = document.getLineStartOffset(lineNumber);
     if(startOffset == -1) {
       return null;

@@ -105,7 +105,9 @@ public class BreakpointManager implements JDOMExternalizable {
       breakpoint.reload();
 
       if(breakpoint.isValid()) {
-        if(breakpoint.getSourcePosition().getLine() != sourcePosition.getLine()) {
+        final int oldLine = sourcePosition.getLine();
+        final int line = breakpoint.getSourcePosition().getLine();
+        if(line != oldLine) {
           fireBreakpointChanged(breakpoint);
         }
 

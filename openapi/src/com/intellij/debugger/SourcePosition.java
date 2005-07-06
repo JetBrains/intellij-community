@@ -24,7 +24,6 @@ import com.intellij.psi.PsiFile;
  * Time: 8:23:06 PM
  */
 public abstract class SourcePosition implements Navigatable{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.SourcePosition");
 
   public abstract PsiFile getFile();
 
@@ -38,16 +37,17 @@ public abstract class SourcePosition implements Navigatable{
   public abstract Editor openEditor(boolean requestFocus);
 
   private abstract static class SourcePositionCache extends SourcePosition {
+    private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.SourcePosition.SourcePositionCache");
     private final PsiFile myFile;
-    private long myModificationStamp;
+    private long myModificationStamp = -1L;
 
-    protected int myLine;
-    protected int myOffset;
+    private int myLine;
+    private int myOffset;
 
     public SourcePositionCache(PsiFile file) {
       LOG.assertTrue(file != null);
       myFile = file;
-      myModificationStamp = myFile.getModificationStamp();
+      updateData();
     }
 
     public PsiFile getFile() {
@@ -86,26 +86,21 @@ public abstract class SourcePosition implements Navigatable{
       return FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile, getOffset()), requestFocus);
     }
 
-    private boolean checkRecalculate() {
+    private void updateData() {
       if(myModificationStamp != myFile.getModificationStamp()) {
         myModificationStamp = myFile.getModificationStamp();
-        return false;
-      } else {
-        return true;
+        myLine = calcLine();
+        myOffset = calcOffset();
       }
     }
 
     public int getLine() {
-      if(checkRecalculate()) {
-        myLine = calcLine();
-      }
+      updateData();
       return myLine;
     }
 
     public int getOffset() {
-      if(checkRecalculate()) {
-        myOffset = calcOffset();
-      }
+      updateData();
       return myOffset;
     }
 
@@ -121,7 +116,13 @@ public abstract class SourcePosition implements Navigatable{
 
       protected int calcOffset() {
         final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
-        return document.getLineStartOffset(line);
+        try {
+          return document.getLineStartOffset(line);
+        }
+        catch (IndexOutOfBoundsException e) {
+          // may happen if document has been changed since the this SourcePosition was created
+          return -1;
+        }
       }
     };
   }
@@ -130,7 +131,13 @@ public abstract class SourcePosition implements Navigatable{
     return new SourcePositionCache(file) {
       protected int calcLine() {
         final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
-        return document.getLineNumber(offset);
+        try {
+          return document.getLineNumber(offset);
+        }
+        catch (IndexOutOfBoundsException e) {
+          // may happen if document has been changed since the this SourcePosition was created
+          return -1;
+        }
       }
 
       protected int calcOffset() {
