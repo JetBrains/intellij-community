@@ -208,8 +208,32 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     return context.getName().startsWith("xsd:");
   }
 
-
+  private static XmlNSDescriptorImpl getNSDescriptorToSearchIn(XmlTag rootTag, final String name, XmlNSDescriptorImpl defaultNSDescriptor) {
+    if (name == null) return defaultNSDescriptor;
+    final String namespacePrefix = XmlUtil.findPrefixByQualifiedName(name);
+    
+    if (namespacePrefix != null && namespacePrefix.length() > 0) {
+      final String namespace = rootTag.getNamespaceByPrefix(namespacePrefix);
+      final XmlNSDescriptor nsDescriptor = rootTag.getNSDescriptor(namespace, true);
+      
+      if (nsDescriptor instanceof XmlNSDescriptorImpl) {
+        return (XmlNSDescriptorImpl)nsDescriptor;
+      }
+    }
+    
+    return defaultNSDescriptor;
+  }
+  
   protected TypeDescriptor findTypeDescriptor(XmlTag rootTag, final String name) {
+    XmlNSDescriptorImpl nsDescriptor = getNSDescriptorToSearchIn(rootTag, name, this);
+    
+    if (nsDescriptor != this) {
+      return nsDescriptor.findTypeDescriptor(
+        nsDescriptor.getDescriptorFile().getDocument().getRootTag(),
+        XmlUtil.findLocalNameByQualifiedName(name)
+      );
+    }
+    
     final Pair<String, XmlTag> pair = new Pair<String, XmlTag>(name, rootTag);
     final CachedValue<TypeDescriptor> descriptor = myTypesMap.get(pair);
     if(descriptor != null) return descriptor.getValue();
@@ -229,22 +253,28 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
         String nameAttribute = tag.getAttributeValue("name");
 
         if (nameAttribute != null) {
-          if (nameAttribute.equals(name) || (name.indexOf(":") >= 0 && nameAttribute.equals(name.substring(name.indexOf(":") + 1)))) {
+          if (nameAttribute.equals(name)
+              || (name.indexOf(":") >= 0 && nameAttribute.equals(name.substring(name.indexOf(":") + 1)))
+             ) {
             CachedValue<TypeDescriptor> cachedValue = createAndPutTypesCachedValue(tag, pair);
             return cachedValue.getValue();
           }
         }
       }
       else if (equalsToSchemaName(tag, "simpleType")) {
+        
         if (name == null) {
-          return new SimpleTypeDescriptor(tag);
+          CachedValue<TypeDescriptor> value = createAndPutTypesCachedValueSimpleType(tag, pair);
+          return value.getValue();
         }
 
         String nameAttribute = tag.getAttributeValue("name");
 
         if (name.equals(nameAttribute)
-            || name.indexOf(":") >= 0 && name.substring(name.indexOf(":") + 1).equals(nameAttribute)) {
-          return new ComplexTypeDescriptor(this, tag);
+            || name.indexOf(":") >= 0 && name.substring(name.indexOf(":") + 1).equals(nameAttribute)
+          ) {
+          CachedValue<TypeDescriptor> cachedValue = createAndPutTypesCachedValue(tag, pair);
+          return cachedValue.getValue();
         }
       }
       else if (equalsToSchemaName(tag, "include") ||
@@ -263,7 +293,6 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
             
             if (document != null) {
               final XmlTag rTag = document.getRootTag();
-              final XmlNSDescriptorImpl nsDescriptor;
               
               if("import".equals(tag.getLocalName())) {
                 final XmlNSDescriptor importedDescriptor = (XmlNSDescriptor)document.getMetaData();
@@ -273,10 +302,11 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
               } else {
                 nsDescriptor = this;
               }
-                
+
+              final XmlNSDescriptorImpl nsDescriptor1 = nsDescriptor;
               final CachedValue<TypeDescriptor> value = tag.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<TypeDescriptor>() {
                 public Result<TypeDescriptor> compute() {
-                  final TypeDescriptor complexTypeDescriptor = nsDescriptor.findTypeDescriptor(rTag, name);
+                  final TypeDescriptor complexTypeDescriptor = nsDescriptor1.findTypeDescriptor(rTag, name);
                   return new Result<TypeDescriptor>(complexTypeDescriptor, new Object[]{rTag});
                 }
               }, false);
@@ -292,6 +322,17 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     return null;
   }
 
+  private CachedValue<TypeDescriptor> createAndPutTypesCachedValueSimpleType(final XmlTag tag, final Pair<String, XmlTag> pair) {
+    final CachedValue<TypeDescriptor> value = tag.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<TypeDescriptor>() {
+      public CachedValueProvider.Result<TypeDescriptor> compute() {
+        final SimpleTypeDescriptor simpleTypeDescriptor = new SimpleTypeDescriptor(tag);
+        return new Result<TypeDescriptor>(simpleTypeDescriptor, new Object[]{tag});
+      }
+    }, false);
+    myTypesMap.put(pair, value);
+    return value;
+  }
+  
   private CachedValue<TypeDescriptor> createAndPutTypesCachedValue(final XmlTag tag, final Pair<String, XmlTag> pair) {
     final CachedValue<TypeDescriptor> value = tag.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<TypeDescriptor>() {
       public CachedValueProvider.Result<TypeDescriptor> compute() {
@@ -352,7 +393,18 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     return schemaName.equals(tag.getLocalName()) && checkSchemaNamespace(tag);
   }
 
-  private static XmlTag findSpecialTag(String name, String specialName, XmlTag rootTag) {
+  private static XmlTag findSpecialTag(String name, String specialName, XmlTag rootTag, XmlNSDescriptorImpl descriptor) {
+    XmlNSDescriptorImpl nsDescriptor = getNSDescriptorToSearchIn(rootTag, name, descriptor);
+    
+    if (nsDescriptor != descriptor) {  
+      return findSpecialTag(
+        XmlUtil.findLocalNameByQualifiedName(name),
+        specialName,
+        nsDescriptor.getDescriptorFile().getDocument().getRootTag(),
+        nsDescriptor
+      );
+    }
+    
     XmlTag[] tags = rootTag.getSubTags();
 
     for (int i = 0; i < tags.length; i++) {
@@ -380,7 +432,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
           if (xmlFile != null) {
             final XmlDocument document = xmlFile.getDocument();
             if (document != null) {
-              final XmlTag rTag = findSpecialTag(name,specialName,document.getRootTag());
+              final XmlTag rTag = findSpecialTag(name,specialName,document.getRootTag(), descriptor);
 
               if (rTag != null) return rTag;
             }
@@ -393,11 +445,11 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
   }
 
   public XmlTag findGroup(String name) {
-    return findSpecialTag(name,"group",myFile.getDocument().getRootTag());
+    return findSpecialTag(name,"group",myFile.getDocument().getRootTag(), this);
   }
 
   public XmlTag findAttributeGroup(String name) {
-    return findSpecialTag(name,"attributeGroup",myFile.getDocument().getRootTag());
+    return findSpecialTag(name,"attributeGroup",myFile.getDocument().getRootTag(),this);
   }
 
   private Map<String,List<XmlTag>> substituions;

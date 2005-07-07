@@ -98,12 +98,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
       XmlDocument document = ((XmlFile)tag.getContainingFile()).getDocument();
       
       String canonicalText = getCanonicalText();
-      final String namespaceByPrefix = tag.getNamespaceByPrefix(XmlUtil.findPrefixByQualifiedName(canonicalText));
       XmlNSDescriptor nsDescriptor = (XmlNSDescriptor)document.getMetaData();
-      if (namespaceByPrefix != null) {
-        XmlNSDescriptor namespaceDescriptor = tag.getNSDescriptor(namespaceByPrefix, true);
-        if (namespaceDescriptor != null) nsDescriptor = namespaceDescriptor;
-      }
       
       if (nsDescriptor instanceof XmlNSDescriptorImpl) {
         XmlNSDescriptorImpl xmlNSDescriptor = ((XmlNSDescriptorImpl)nsDescriptor);
@@ -112,13 +107,13 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
         
         if ("ref".equals(attribute.getLocalName())) {
           if (localName.equals("group")) {
-            return ((XmlNSDescriptorImpl)nsDescriptor).findGroup(canonicalText);
+            return xmlNSDescriptor.findGroup(canonicalText);
           } else if (localName.equals("attributeGroup")) {
-            return ((XmlNSDescriptorImpl)nsDescriptor).findAttributeGroup(canonicalText);
+            return xmlNSDescriptor.findAttributeGroup(canonicalText);
           } else {
             XmlElementDescriptor descriptor = xmlNSDescriptor.getElementDescriptor(
               XmlUtil.findLocalNameByQualifiedName(canonicalText),
-              namespaceByPrefix,
+              tag.getNamespaceByPrefix(XmlUtil.findPrefixByQualifiedName(canonicalText)),
               new HashSet<XmlNSDescriptorImpl>(),
               true
             );
