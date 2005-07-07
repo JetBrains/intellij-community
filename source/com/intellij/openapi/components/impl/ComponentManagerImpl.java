@@ -537,6 +537,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
           if (loader == null) {
             loader = getClass().getClassLoader();
           }
+
+          interfaceClass = interfaceClass.trim();
+          implClass = implClass.trim();
+          
           registerComponent(Class.forName(interfaceClass, true, loader), Class.forName(implClass, true, loader), options, true,
                             isTrue(options, "lazy"));
         }
