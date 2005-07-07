@@ -4,10 +4,10 @@ import com.intellij.aspects.lexer.AspectjLexer;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.Language;
-import com.intellij.lang.properties.parsing.PropertiesLexer;
 import com.intellij.lang.cacheBuilder.WordOccurence;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
+import com.intellij.lang.properties.parsing.PropertiesLexer;
 import com.intellij.lexer.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -177,6 +177,17 @@ public class IdTableBuilding {
     }
   }
 
+  static class EmptyBuilder implements IdCacheBuilder {
+    public void build(char[] chars,
+                      int length,
+                      TIntIntHashMap wordsTable,
+                      TodoPattern[] todoPatterns,
+                      int[] todoCounts,
+                      final PsiManager manager) {
+      // Do nothing. This class is used to skip certain files from building caches for them.
+    }
+  }
+
   static class FormFileIdCacheBuilder extends TextIdCacheBuilder {
     public void build(char[] chars,
                       int length,
@@ -226,6 +237,10 @@ public class IdTableBuilding {
     registerCacheBuilder(StdFileTypes.PLAIN_TEXT,new TextIdCacheBuilder());
     registerCacheBuilder(StdFileTypes.GUI_DESIGNER_FORM,new FormFileIdCacheBuilder());
     registerCacheBuilder(StdFileTypes.PROPERTIES, new PropertiesIdCacheBuilder());
+
+    registerCacheBuilder(StdFileTypes.IDEA_MODULE, new EmptyBuilder());
+    registerCacheBuilder(StdFileTypes.IDEA_WORKSPACE, new EmptyBuilder());
+    registerCacheBuilder(StdFileTypes.IDEA_PROJECT, new EmptyBuilder());
   }
 
   public static IdCacheBuilder getCacheBuilder(FileType fileType) {

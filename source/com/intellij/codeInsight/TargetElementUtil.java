@@ -15,13 +15,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
-import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElementDecl;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.xml.util.XmlUtil;
 
 public class TargetElementUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.TargetElementUtil");
@@ -256,6 +251,7 @@ public class TargetElementUtil {
         PsiFile file = element.getContainingFile();
         if (file == null) return null;
         if (file.getOriginalFile() != null) file = file.getOriginalFile();
+        if (file == null) return null;
         if (file.getVirtualFile() == null) return null;
       }
       return element;
