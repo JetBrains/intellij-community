@@ -343,7 +343,7 @@ public class FormatterImpl extends FormatterEx
   public FormattingModel createFormattingModelForPsiFile(final PsiFile file,
                                                          final Block rootBlock,
                                                          final CodeStyleSettings settings) {
-    return new PsiBasedFormattingModel(file, rootBlock);
+    return new PsiBasedFormattingModel(file, rootBlock, settings);
   }
 
   public boolean isDisabled() {

@@ -13,7 +13,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.Helper;
 import com.intellij.psi.impl.source.jsp.jspJava.JspText;
@@ -28,13 +27,16 @@ public class PsiBasedFormattingModel implements FormattingModel {
   private final Block myRootBlock;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.PsiBasedFormattingModel");
+  private final CodeStyleSettings mySettings;
 
   public PsiBasedFormattingModel(final PsiFile file,
-                                 final Block rootBlock) {
+                                 final Block rootBlock, final CodeStyleSettings settings) {
+    mySettings = settings;
     myASTNode = SourceTreeToPsiMap.psiElementToTree(file);
     myProject = file.getProject();
     myDocumentModel = FormattingDocumentModelImpl.createOn(file);
     myRootBlock = rootBlock;
+
   }
 
   public void replaceWhiteSpace(TextRange textRange,
@@ -129,7 +131,7 @@ public class PsiBasedFormattingModel implements FormattingModel {
   }
 
   private CodeStyleSettings.IndentOptions getIndentOptions() {
-    return CodeStyleSettingsManager.getSettings(myProject).JAVA_INDENT_OPTIONS;
+    return mySettings.getIndentOptions(myASTNode.getPsi().getContainingFile().getFileType());
   }
 
   private TextRange shiftIndentInsideWithPsi(final TextRange textRange, final int shift) {
