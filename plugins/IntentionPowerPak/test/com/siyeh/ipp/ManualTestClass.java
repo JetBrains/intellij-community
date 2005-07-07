@@ -2,6 +2,8 @@ package com.siyeh.ipp;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.util.List;
+import java.util.ArrayList;
 
 // Note: this class never gets compiled.  It's simply here to hold a
 //bunch of manual test cases
@@ -1344,6 +1346,13 @@ public class ManualTestClass
             System.out.println("3");
     }
 
+    public void testConvertToOldForLoop()
+    {
+        List<String> locations = new ArrayList<String>();
+        for (final String location1 : locations) {
+            System.out.println(location1);
+        }
+    }
     public void testMergeParallelIfsWitDecls()
     {
         boolean b = bar();
