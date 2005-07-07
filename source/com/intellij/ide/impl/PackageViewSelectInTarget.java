@@ -30,7 +30,7 @@ public class PackageViewSelectInTarget extends ProjectViewSelectInTarget {
     return fileIndex.isInSourceContent(vFile) || isInLibraryContentOnly(vFile);
   }
 
-  public void select(PsiElement element, boolean requestFocus) {
+ /* public void select(PsiElement element, boolean requestFocus) {
     final ProjectView projectView = ProjectView.getInstance(myProject);
     if (!projectView.isShowLibraryContents(getMinorViewId())) {
       if (isInLibraryContentOnly(getCorrespondingVirtualFile(element))) {
@@ -38,7 +38,7 @@ public class PackageViewSelectInTarget extends ProjectViewSelectInTarget {
       }
     }
     super.select(element, requestFocus);
-  }
+  }*/
 
   private boolean isInLibraryContentOnly(final VirtualFile vFile) {
     if (vFile == null) {
