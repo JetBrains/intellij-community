@@ -45,7 +45,7 @@
       <action id="EditorCopy" class="com.intellij.openapi.editor.actions.CopyAction" text="Copy"/>
       <action id="EditorCut" class="com.intellij.openapi.editor.actions.CutAction" text="Cut"/>
       <action id="EditorPaste" class="com.intellij.openapi.editor.actions.PasteAction" text="Paste"/>
-      <action id="EditorPasteSimple" class="com.intellij.openapi.editor.actions.SimplePasteAction" text="Paste Simple" description="Paste without formatting, autoimport, literal escaping etc."/>
+      <action id="EditorPasteSimple" class="com.intellij.openapi.editor.actions.SimplePasteAction" text="Paste _Simple" description="Paste without formatting, autoimport, literal escaping etc."/>
       <action id="EditorPasteFromX11" class="com.intellij.openapi.editor.actions.PasteFromX11Action" text="Paste from X clipboard"/>
       <action id="EditorDelete" class="com.intellij.openapi.editor.actions.DeleteAction" text="Delete"/>
       <action id="EditorBackSpace" class="com.intellij.openapi.editor.actions.BackspaceAction" text="Backspace"/>
@@ -97,7 +97,7 @@
       <action id="EditorSelectWord" class="com.intellij.openapi.editor.actions.SelectWordAtCaretAction" text="Select Word at Caret"/>
       <action id="EditorUnSelectWord" class="com.intellij.openapi.editor.actions.UnselectWordAtCaretAction" text="Unselect Word at Caret"/>
       <action id="EditorToggleInsertState" class="com.intellij.openapi.editor.actions.ToggleInsertStateAction" text="Toggle Insert/Overwrite"/>
-      <action id="EditorToggleColumnMode" class="com.intellij.openapi.editor.actions.ToggleColumnModeAction" text="Column Mode" description="Toggle editor column mode"/>
+      <action id="EditorToggleColumnMode" class="com.intellij.openapi.editor.actions.ToggleColumnModeAction" text="Column _Mode" description="Toggle editor column mode"/>
       <action id="EditorToggleShowWhitespaces" class="com.intellij.openapi.editor.actions.ToggleShowWhitespacesAction" text="Sh_ow Whitespaces" description="Toggle display whitespaces in current editor"/>
       <action id="EditorToggleShowLineNumbers" class="com.intellij.openapi.editor.actions.ToggleShowLineNumbersAction" text="Show Line _Numbers" description="Toggle display line numbers in current editor"/>
       <action id="EditorScrollToCenter" class="com.intellij.openapi.editor.actions.ScrollToCenterAction" text="Scroll to Center"/>

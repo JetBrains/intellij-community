@@ -34,7 +34,7 @@ public class CopyPathsAction extends AnAction {
     final VirtualFile[] files = getFiles(event);
     final Presentation presentation = event.getPresentation();
     presentation.setEnabled(files != null && files.length > 0);
-    presentation.setText((files != null && files.length == 1)? "Copy Path" : "Copy Paths");
+    presentation.setText((files != null && files.length == 1)? "C_opy Path" : "C_opy Paths");
   }
 
   private VirtualFile[] getFiles(AnActionEvent e) {
