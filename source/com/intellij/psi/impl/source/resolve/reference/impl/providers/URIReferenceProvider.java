@@ -3,7 +3,10 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.j2ee.ExternalResourceManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
@@ -13,6 +16,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.XmlNSDescriptor;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -57,8 +61,17 @@ public class URIReferenceProvider implements PsiReferenceProvider {
 
     @Nullable
     public PsiElement resolve() {
-      VirtualFile relativeFile = VfsUtil.findRelativeFile(getCanonicalText(), myElement.getContainingFile().getVirtualFile());
+      final String canonicalText = getCanonicalText();
+      VirtualFile relativeFile = VfsUtil.findRelativeFile(canonicalText, myElement.getContainingFile().getVirtualFile());
       if (relativeFile != null) return myElement.getManager().findFile(relativeFile);
+
+      final PsiFile containingFile = myElement.getContainingFile();
+      if (containingFile instanceof XmlFile) {
+        final XmlTag rootTag = ((XmlFile)containingFile).getDocument().getRootTag();
+        final XmlNSDescriptor nsDescriptor = rootTag.getNSDescriptor(canonicalText, true);
+        if (nsDescriptor != null) return nsDescriptor.getDescriptorFile();
+        if (canonicalText.equals(rootTag.getAttributeValue("targetNamespace"))) return containingFile;
+      }
       return null;
     }
 
