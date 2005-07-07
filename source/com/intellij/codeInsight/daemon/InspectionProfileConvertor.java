@@ -89,7 +89,7 @@ public class InspectionProfileConvertor {
     final InspectionTool[] tools = profile.getInspectionTools();
     final Document document = JDOMUtil.loadDocument(profileFile);
     for (final Object o : document.getRootElement().getChildren("inspection_tool")) {
-      Element toolElement = (Element)o;
+      Element toolElement = (Element)((Element)o).clone();
       String toolClassName = toolElement.getAttributeValue("class");
       final String shortName = convertToShortName(toolClassName, tools);
       if (shortName == null) {
