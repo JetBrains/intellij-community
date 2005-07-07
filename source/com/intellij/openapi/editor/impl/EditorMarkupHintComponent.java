@@ -8,8 +8,11 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInspection.ex.InspectionProfileManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.PsiElement;
@@ -54,14 +57,21 @@ public class EditorMarkupHintComponent extends JPanel {
     setBorder(BorderFactory.createEtchedBorder());
     myFile = file;
     mySliders = new JSlider[file instanceof JspFile ? file.getPsiRoots().length - 1 : 1];
+
+    final Project project = myFile.getProject();
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    final VirtualFile virtualFile = myFile.getContainingFile().getVirtualFile();
+    final boolean notInLibrary = !fileIndex.isInLibrarySource(virtualFile) && !fileIndex.isInLibraryClasses(virtualFile);
     for (int i = 0; i < mySliders.length; i++) {
 
       final Hashtable<Integer, JLabel> sliderLabels = new Hashtable<Integer, JLabel>();
       sliderLabels.put(new Integer(1), new JLabel("None"));
       sliderLabels.put(new Integer(2), new JLabel("Syntax"));
-      sliderLabels.put(new Integer(3), new JLabel("Inspections"));
+      if (notInLibrary){
+        sliderLabels.put(new Integer(3), new JLabel("Inspections"));
+      }
 
-      final JSlider slider = new JSlider(JSlider.VERTICAL, 1, 3, 3);
+      final JSlider slider = new JSlider(JSlider.VERTICAL, 1, notInLibrary ? 3 : 2, 1);
       slider.setLabelTable(sliderLabels);
       slider.putClientProperty("JSlider.isFilled", Boolean.TRUE);
       slider.setPaintLabels(true);
@@ -90,7 +100,7 @@ public class EditorMarkupHintComponent extends JPanel {
     myImportPopupCheckBox.setSelected(myImportPopupOn);
     myImportPopupCheckBox.setEnabled(analyzer.isAutohintsAvailable(myFile));
     myImportPopupCheckBox.setMnemonic('P');
-
+    myImportPopupCheckBox.setVisible(notInLibrary);
 
     GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
                                                    GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
@@ -121,7 +131,9 @@ public class EditorMarkupHintComponent extends JPanel {
     gc.gridy = 1;
     gc.fill = GridBagConstraints.HORIZONTAL;
     gc.anchor = GridBagConstraints.WEST;
-    add(createInspectionProfilePanel(), gc);
+    final JPanel inspectionProfilePanel = createInspectionProfilePanel();
+    add(inspectionProfilePanel, gc);
+    inspectionProfilePanel.setVisible(notInLibrary);
 
     JPanel panel = new JPanel(new GridBagLayout());
     panel.setBorder(IdeBorderFactory.createTitledBorder("Highlighting Level"));

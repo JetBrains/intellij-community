@@ -25,10 +25,14 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -2170,7 +2174,11 @@ public class HighlightUtil {
 
   public static boolean isRootInspected(final PsiElement psiRoot) {
     if(!isRootHighlighted(psiRoot)) return false;
-    final HighlightingSettingsPerFile component = HighlightingSettingsPerFile.getInstance(psiRoot.getProject());
+    final Project project = psiRoot.getProject();
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    final VirtualFile virtualFile = psiRoot.getContainingFile().getVirtualFile();
+    if (fileIndex.isInLibrarySource(virtualFile) || fileIndex.isInLibraryClasses(virtualFile)) return false;
+    final HighlightingSettingsPerFile component = HighlightingSettingsPerFile.getInstance(project);
     if(component == null) return true;
 
     final FileHighlighingSetting settingForRoot = component.getHighlightingSettingForRoot(psiRoot);
