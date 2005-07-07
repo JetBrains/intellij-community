@@ -10,6 +10,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -105,10 +106,7 @@ public class InspectionProfileConvertor {
     final File profileDirectory = InspectionProfileManager.getProfileDirectory();
     final File[] files = profileDirectory.listFiles(new FileFilter() {
       public boolean accept(File pathname) {
-        if (pathname.getPath().endsWith(File.separator + "Default.xml")) {
-          return true;
-        }
-        return false;
+        return pathname.getPath().endsWith(File.separator + "Default.xml");
       }
     });
     if (files == null || files.length != 1) {
@@ -158,7 +156,9 @@ public class InspectionProfileConvertor {
   }
 
 
+  @Nullable
   private static String convertToShortName(String displayName, InspectionTool[] tools) {
+    if (displayName == null) return null;
     for (InspectionTool tool : tools) {
       if (displayName.equals(tool.getDisplayName())) {
         return tool.getShortName();
