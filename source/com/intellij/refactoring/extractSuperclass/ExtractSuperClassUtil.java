@@ -27,6 +27,7 @@ public class ExtractSuperClassUtil {
     PsiClass superclass;
     PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
     superclass = targetDirectory.createClass(superclassName);
+    superclass.getModifierList().setModifierProperty(PsiModifier.FINAL, false);
     copyPsiReferenceList(subclass.getExtendsList(), superclass.getExtendsList());
 
     // create constructors if neccesary
