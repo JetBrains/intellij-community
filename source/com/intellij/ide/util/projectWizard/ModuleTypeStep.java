@@ -124,7 +124,7 @@ public class ModuleTypeStep extends ModuleWizardStep {
 
     if (!createNewProject) {
       myPanel.add(myRbImportModule, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(16, 10, 0, 10), 0, 0));
-      myPanel.add(myModulePathFieldPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 30, 0, 10), 0, 0));
+      myPanel.add(myModulePathFieldPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 30, 0, 10), 0, 0));
 
     }
   }
