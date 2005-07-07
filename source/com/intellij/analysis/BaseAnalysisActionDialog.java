@@ -57,7 +57,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,0), 0, 0);
     panel.setBorder(IdeBorderFactory.createTitledBorder(myAnalysisNoon));
     myFileButton = new JRadioButton(myFileName);
-    myFileButton.setMnemonic(myFileName.indexOf("F") > -1 ? KeyEvent.VK_F : KeyEvent.VK_M);
+    myFileButton.setMnemonic(myFileName.charAt(0));
     myProjectButton = new JRadioButton("Whole project");
     myProjectButton.setMnemonic(KeyEvent.VK_W);
     ButtonGroup group = new ButtonGroup();
