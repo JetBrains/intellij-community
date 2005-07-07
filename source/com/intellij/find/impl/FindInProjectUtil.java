@@ -183,15 +183,19 @@ public class FindInProjectUtil {
         final int index = i++;
         if (virtualFile == null) continue;
 
+        long fileLength = 0;
         if (!processedFiles.contains(virtualFile)) {
           processedFiles.add(virtualFile);
-          totalFilesSize += getFileLength(virtualFile);
+          fileLength = getFileLength(virtualFile);
+          totalFilesSize += fileLength;
           if (totalFilesSize > FILES_SIZE_LIMIT && !warningShown) {
             showTooManyUsagesWaring(project, "Usages in files of total size " + totalFilesSize + " (bytes) found. IDEA may become " +
                                              "unresponsive or even fail with OutOfMemoryError if you continue. Continue?");
             warningShown = true;
           }
         }
+
+        int countBefore = count[0];
 
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
@@ -214,6 +218,11 @@ public class FindInProjectUtil {
             }
           }
         });
+
+        if (countBefore == count[0]) {
+          totalFilesSize -= fileLength;
+          processedFiles.remove(virtualFile);
+        }
 
         if (count[0] > USAGES_LIMIT && !warningShown) {
           showTooManyUsagesWaring(project, Integer.toString(count[0]) + " usages found so far. Are you sure wish to continue?");
