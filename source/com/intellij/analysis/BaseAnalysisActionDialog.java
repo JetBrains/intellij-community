@@ -75,7 +75,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     }
     panel.add(myFileButton, gc);
     myInspectTestSource = new JCheckBox("Include Test Sources", uiOptions.ANALYZE_TEST_SOURCES);
-    gc.anchor = GridBagConstraints.EAST;
+    gc.insets.left = 15;
     panel.add(myInspectTestSource, gc);
     wholePanel.add(panel, BorderLayout.NORTH);
     final JComponent additionalPanel = getAdditionalActionSettings(myProject);
