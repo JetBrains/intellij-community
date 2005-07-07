@@ -157,7 +157,7 @@ public class TreeModelBuilder {
       public boolean processFile(VirtualFile fileOrDir) {
         if (!fileOrDir.isDirectory()) {
           if (myFileIndex.isContentJavaSourceFile(fileOrDir)) {
-            myTotalFileCount++;
+            counting(fileOrDir);
           }
         }
         return true;
@@ -171,10 +171,10 @@ public class TreeModelBuilder {
   }
 
   private TreeModel build(final Project project, boolean showProgress) {
-    countFiles(project);
-
+    
     Runnable buildingRunnable = new Runnable() {
       public void run() {
+        countFiles(project);
         final PsiManager psiManager = PsiManager.getInstance(project);
         myFileIndex.iterateContent(new ContentIterator() {
           public boolean processFile(VirtualFile fileOrDir) {
@@ -225,7 +225,17 @@ public class TreeModelBuilder {
       }
     }
     else if (myFileIndex.isInLibrarySource(file) && myFileIndex.isJavaSourceFile(file)) {
-      myTotalFileCount++;
+      counting(file);
+    }
+  }
+
+  private void counting(final VirtualFile file) {
+    myTotalFileCount++;
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator != null) {
+      indicator.setText("Scanning packages");
+      indicator.setIndeterminate(true);
+      indicator.setText2(file.getPresentableUrl());
     }
   }
 
@@ -257,6 +267,7 @@ public class TreeModelBuilder {
     //if (!(file instanceof PsiJavaFile)) return;
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
+      indicator.setIndeterminate(false);
       indicator.setText("Scanning packages");
       indicator.setText2(file.getVirtualFile().getPresentableUrl());
       indicator.setFraction(((double)myScannedFileCount++) / myTotalFileCount);
