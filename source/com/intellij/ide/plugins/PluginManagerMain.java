@@ -906,9 +906,13 @@ public class PluginManagerMain {
             try {
               result[0] = PluginInstaller.prepareToInstall(pluginNode);
             } catch (ZipException e) {
-              JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                            "Plugin \"" + pluginNode.getName() + "\" has problems in ZIP archive and will be not installed.",
-                                            "Installing Plugin", JOptionPane.ERROR_MESSAGE, Messages.getErrorIcon());
+              ApplicationManager.getApplication().invokeLater(new Runnable() {
+                public void run() {
+                  Messages.showErrorDialog("Plugin \"" + pluginNode.getName() + "\" has problems in ZIP archive and will be not installed.",
+                                           "Installing Plugin");
+
+                }
+              });
             } catch (IOException e) {
               throw new RuntimeException (e);
             }
