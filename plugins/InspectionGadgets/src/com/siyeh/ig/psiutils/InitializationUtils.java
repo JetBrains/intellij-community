@@ -149,13 +149,20 @@ public class InitializationUtils{
     private static boolean tryStatementMustAssignVariableOrFail(
             PsiVariable field, PsiTryStatement tryStatement,
             Set<MethodSignature> checkedMethods){
+        final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
+        boolean initializedInTryOrCatch =
+                cachingblockMustAssignVariableOrFail(field, tryBlock,
+                                                     checkedMethods);
         final PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
-        if(catchBlocks == null || catchBlocks.length == 0){
-            final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-            if(cachingblockMustAssignVariableOrFail(field, tryBlock,
-                                                    checkedMethods)){
-                return true;
+        if (catchBlocks != null){
+            for (final PsiCodeBlock catchBlock : catchBlocks){
+                initializedInTryOrCatch &=
+                cachingblockMustAssignVariableOrFail(field, catchBlock,
+                                                     checkedMethods);
             }
+        }
+        if (initializedInTryOrCatch){
+            return true;
         }
         final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
         return cachingblockMustAssignVariableOrFail(field, finallyBlock,
