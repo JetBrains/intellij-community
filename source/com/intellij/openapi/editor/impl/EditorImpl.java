@@ -1439,7 +1439,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
       this.color[myCount] = color;
 
       myCount++;
-      if (myCount >= CACHED_CHARS_BUFFER_SIZE || SystemInfo.isMac) {
+      if (myCount >= CACHED_CHARS_BUFFER_SIZE) {
         flushContent(g);
       }
     }
@@ -2599,12 +2599,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
   }
 
   public void stopOptimizedScrolling() {
-    if (SystemInfo.isMac) return;
     myEditorComponent.setOpaque(false);
   }
 
   private void startOptimizedScrolling() {
-    if (SystemInfo.isMac) return;
     myEditorComponent.setOpaque(true);
   }
 
