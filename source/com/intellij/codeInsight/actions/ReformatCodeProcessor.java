@@ -8,6 +8,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 
@@ -43,16 +44,22 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     return new Runnable() {
       public void run() {
         try {
-          PsiFile copy = (PsiFile)file.copy();
           Document doc = PsiDocumentManager.getInstance(myProject).getDocument(file);
-          if (myRange == null) {
-            CodeStyleManager.getInstance(myProject).reformat(copy);
+
+          doc.putUserData(CodeStyleManagerEx.USE_DOCUMENT_TO_REFORMAT, Boolean.TRUE);
+
+          try {
+            if (myRange == null) {
+              CodeStyleManager.getInstance(myProject).reformat(file);
+            }
+            else {
+              CodeStyleManager.getInstance(myProject).reformatRange(file, myRange.getStartOffset(),
+                                                                    myRange.getEndOffset());
+            }
           }
-          else {
-            CodeStyleManager.getInstance(myProject).reformatRange(copy, myRange.getStartOffset(),
-                                                                  myRange.getEndOffset());
+          finally {
+            doc.putUserData(CodeStyleManagerEx.USE_DOCUMENT_TO_REFORMAT, null);
           }
-          doc.replaceString(0, doc.getTextLength(), copy.getText());
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);

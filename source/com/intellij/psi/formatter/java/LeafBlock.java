@@ -1,11 +1,12 @@
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.*;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.impl.source.codeStyle.Helper;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class LeafBlock implements Block{
 
@@ -63,7 +64,7 @@ public class LeafBlock implements Block{
   }
 
   public boolean isLeaf() {
-    return true;
+    return Helper.mayShiftIndentInside(myNode);
   }
 
 }

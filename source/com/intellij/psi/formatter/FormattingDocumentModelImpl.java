@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 
 public class FormattingDocumentModelImpl implements FormattingDocumentModel{
 
@@ -41,7 +42,7 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel{
     if (PsiDocumentManager.getInstance(project).isUncommited(document)) return null;
     PsiToDocumentSynchronizer synchronizer = ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(file.getProject())).getSynchronizer();
     if (synchronizer.isDocumentAffectedByTransactions(document)) return null;
-    
+
     return document;
   }
 
@@ -62,5 +63,13 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel{
 
   public int getTextLength() {
     return myDocument.getTextLength();
+  }
+
+  public boolean useDocument() {
+    return myDocument.getUserData(CodeStyleManagerEx.USE_DOCUMENT_TO_REFORMAT) == Boolean.TRUE;
+  }
+
+  public Document getDocument() {
+    return myDocument;
   }
 }
