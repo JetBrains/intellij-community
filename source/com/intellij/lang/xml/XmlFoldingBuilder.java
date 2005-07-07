@@ -51,17 +51,31 @@ public class XmlFoldingBuilder implements FoldingBuilder {
     return foldings != null ? foldings.toArray(new FoldingDescriptor[foldings.size()]):FoldingDescriptor.EMPTY;
   }
 
-  protected void addElementsToFold(List<FoldingDescriptor> foldings, XmlTag tag, Document document) {
+  protected void addElementsToFold(List<FoldingDescriptor> foldings, XmlElement tag, Document document) {
     if (addToFold(foldings, tag, document) ||
         tag instanceof JspXmlRootTag // has no name but has content
       ) {
-      PsiElement[] children = tag.getChildren();
+      final PsiElement[] children = tag.getChildren();
+      
       for (PsiElement child : children) {
+        ProgressManager.getInstance().checkCanceled();
+        
         if (child instanceof XmlTag) {
-          ProgressManager.getInstance().checkCanceled();
-          addElementsToFold(foldings, (XmlTag)child, document);
+          addElementsToFold(foldings, (XmlElement)child, document);
         }
-        else {
+        else if(child instanceof XmlComment) {
+          addToFold(foldings, (PsiElement)child, document);
+        } else if (child instanceof XmlText) {
+          final PsiElement[] grandChildren = child.getChildren();
+          
+          for(PsiElement grandChild:grandChildren) {
+            ProgressManager.getInstance().checkCanceled();
+            
+            if (grandChild instanceof XmlComment) {
+              addToFold(foldings, grandChild, document);
+            }
+          }
+        } else {
           final Language language = child.getLanguage();
           if (!(language instanceof XMLLanguage) && language != Language.ANY) {
             final FoldingBuilder foldingBuilder = language.getFoldingBuilder();
@@ -110,9 +124,28 @@ public class XmlFoldingBuilder implements FoldingBuilder {
       }
 
       return new TextRange(nameEnd, end);
+    } else if (element instanceof XmlComment) {
+      final XmlComment xmlComment = (XmlComment)element;
+      final TextRange textRange = element.getTextRange();
+      int commentStartOffset = getCommentStartOffset(xmlComment);
+      int commentEndOffset = getCommentStartEnd(xmlComment);
+      
+      if (textRange.getEndOffset() - textRange.getStartOffset() > commentStartOffset + commentEndOffset) {
+        return new TextRange(textRange.getStartOffset() + commentStartOffset, textRange.getEndOffset() - commentEndOffset);
+      } else {
+        return null;
+      }
     } else {
       return null;
     }
+  }
+
+  protected int getCommentStartOffset(final XmlComment element) {
+    return 4;
+  }
+  
+  protected int getCommentStartEnd(final XmlComment element) {
+    return 3;
   }
 
   protected boolean addToFold(List<FoldingDescriptor> foldings, PsiElement elementToFold, Document document) {
@@ -132,12 +165,14 @@ public class XmlFoldingBuilder implements FoldingBuilder {
   }
 
   public String getPlaceholderText(ASTNode node) {
-    if (node.getPsi() instanceof XmlTag) return "...";
+    final PsiElement psi = node.getPsi();
+    if (psi instanceof XmlTag || psi instanceof XmlComment) return "...";
     return null;
   }
 
   public boolean isCollapsedByDefault(ASTNode node) {
-    if (node.getPsi() instanceof XmlTag) {
+    final PsiElement psi = node.getPsi();
+    if (psi instanceof XmlTag) {
       return CodeFoldingSettings.getInstance().COLLAPSE_XML_TAGS;
     }
     return false;
