@@ -42,6 +42,8 @@ public interface InspectionProfile {
 
   boolean isToolEnabled(HighlightDisplayKey key);
 
+  boolean isExecutable();
+
   interface ModifiableModel {
 
     InspectionProfile getParentProfile();

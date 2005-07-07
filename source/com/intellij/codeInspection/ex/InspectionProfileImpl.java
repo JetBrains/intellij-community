@@ -723,6 +723,19 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     return false;
   }
 
+  public boolean isExecutable() {
+    if (myTools.isEmpty()){
+      //initialize
+      getInspectionTools();
+    }
+    for (String name : myTools.keySet()) {
+      if (isToolEnabled(HighlightDisplayKey.find(name))){
+        return true;
+      }
+    }
+    return false;
+  }
+
   //invoke when isChanged() == true
   public void commit() {
     LOG.assertTrue(mySource != null);

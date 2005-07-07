@@ -967,7 +967,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     if (myScope.isValid()) {
       final InspectionManagerEx inspectionManagerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(myProject));
       inspectionManagerEx.setExternalProfile(myInspectionProfile);
-      inspectionManagerEx.doInspections(myScope, false);
+      inspectionManagerEx.doInspections(myScope);
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           inspectionManagerEx.setExternalProfile(null);

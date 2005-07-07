@@ -382,7 +382,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     myCurrentScope = currentScope;
   }
 
-  public void doInspections(final AnalysisScope scope, boolean showDialog) {
+  public void doInspections(final AnalysisScope scope) {
     while (PsiManager.getInstance(getProject()).findClass("java.lang.Object") == null) {
       Messages.showMessageDialog(getProject(),
                                  "The JDK is not configured properly for this project. Inspection cannot proceed.",
@@ -392,7 +392,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
       if (projectJdk == null) return;
     }
 
-    if (showDialog || myCurrentScope == null) {
+    if (myCurrentScope == null) {
       final InspectCodePanel itc = new InspectCodePanel(this, scope);
 
       itc.show();

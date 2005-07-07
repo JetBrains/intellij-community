@@ -7,14 +7,11 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.IdeBorderFactory;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.KeyEvent;
 
 public abstract class BaseAnalysisAction extends AnAction {
   protected final String myTitle;
@@ -46,13 +43,23 @@ public abstract class BaseAnalysisAction extends AnAction {
       else {
         scope = getInspectionScope(dataContext);
       }
+      final boolean rememberScope = e.getPlace().equals(ActionPlaces.MAIN_MENU);
       final InspectionManagerEx.UIOptions uiOptions = ((InspectionManagerEx)InspectionManagerEx.getInstance(project)).getUIOptions();
-      FileProjectOrModuleDialog dlg = new FileProjectOrModuleDialog(project,
-                                                                    scope.getDisplayName(),
-                                                                    module != null && scope.getScopeType() != AnalysisScope.MODULE ? ModuleUtil.getModuleNameInReadAction(module) : null,
-                                                                    scope.getScopeType() == AnalysisScope.PROJECT);
+      BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog("Specify " + myTitle + " Scope",
+                                                                  myAnalysisNoon + " scope",
+                                                                  project,
+                                                                  scope.getDisplayName(),
+                                                                  module != null && scope.getScopeType() != AnalysisScope.MODULE ? ModuleUtil.getModuleNameInReadAction(module) : null,
+                                                                  scope.getScopeType() == AnalysisScope.PROJECT,
+                                                                  rememberScope){
+        @Nullable
+        protected JComponent getAdditionalActionSettings(final Project project) {
+          return BaseAnalysisAction.this.getAdditionalActionSettings(project, this);
+        }
+      };
       dlg.show();
       if (!dlg.isOK()) return;
+      final int oldScopeType = uiOptions.SCOPE_TYPE;
       if (dlg.isProjectScopeSelected()) {
         scope = getProjectScope(dataContext);
         uiOptions.SCOPE_TYPE = AnalysisScope.PROJECT;
@@ -64,6 +71,9 @@ public abstract class BaseAnalysisAction extends AnAction {
         } else {
           uiOptions.SCOPE_TYPE = AnalysisScope.FILE;//just not project scope
         }
+      }
+      if (!rememberScope){
+        uiOptions.SCOPE_TYPE = oldScopeType;
       }
       uiOptions.ANALYZE_TEST_SOURCES = dlg.isInspectTestSources();
       scope.setIncludeTestSource(dlg.isInspectTestSources());
@@ -131,69 +141,9 @@ public abstract class BaseAnalysisAction extends AnAction {
     return new AnalysisScope((Module)dataContext.getData(DataConstants.MODULE));
   }
 
-  private class FileProjectOrModuleDialog extends DialogWrapper {
-    private String myFileName;
-    private String myModuleName;
-    private JRadioButton myFileButton;
-    private JRadioButton myProjectButton;
-    private JRadioButton myModuleButton;
-    private JCheckBox myInspectTestSource;
-    private Project myProject;
-    public FileProjectOrModuleDialog(Project project, String fileName, String moduleName, boolean isProjectScope) {
-      super(true);
-      myProject = project;
-      myFileName = fileName;
-      myModuleName = moduleName;
-      init();
-      setTitle("Specify " + myTitle + " Scope");
-      if (isProjectScope){
-        myFileButton.setVisible(false);
-        myProjectButton.setSelected(true);
-      }
-    }
-
-    protected JComponent createCenterPanel() {
-      final InspectionManagerEx.UIOptions uiOptions = ((InspectionManagerEx)InspectionManagerEx.getInstance(myProject)).getUIOptions();
-      JPanel wholePanel = new JPanel(new BorderLayout());
-      JPanel panel = new JPanel();
-      panel.setBorder(IdeBorderFactory.createTitledBorder(myAnalysisNoon + " scope"));
-      panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-      myFileButton = new JRadioButton(myFileName);
-      myFileButton.setMnemonic(myFileName.indexOf("F") > -1 ? KeyEvent.VK_F : KeyEvent.VK_M);
-      myProjectButton = new JRadioButton("Whole project");
-      myProjectButton.setMnemonic(KeyEvent.VK_W);
-      ButtonGroup group = new ButtonGroup();
-      group.add(myProjectButton);
-      group.add(myFileButton);
-      panel.add(myProjectButton);
-      boolean useModuleScope = false;
-      if (myModuleName != null) {
-        myModuleButton = new JRadioButton("Module \'" + myModuleName + "\'");
-        myModuleButton.setMnemonic(KeyEvent.VK_M);
-        group.add(myModuleButton);
-        useModuleScope = uiOptions.SCOPE_TYPE == AnalysisScope.MODULE;
-        myModuleButton.setSelected(useModuleScope);
-        panel.add(myModuleButton);
-      }
-      panel.add(myFileButton);
-      wholePanel.add(panel, BorderLayout.CENTER);
-      myInspectTestSource = new JCheckBox("Include Test Sources", uiOptions.ANALYZE_TEST_SOURCES);
-      wholePanel.add(myInspectTestSource, BorderLayout.SOUTH);
-      myProjectButton.setSelected(uiOptions.SCOPE_TYPE == AnalysisScope.PROJECT);
-      myFileButton.setSelected(uiOptions.SCOPE_TYPE != AnalysisScope.PROJECT && !useModuleScope);
-      return wholePanel;
-    }
-
-    public boolean isProjectScopeSelected() {
-      return myProjectButton.isSelected();
-    }
-
-    public boolean isModuleScopeSelected() {
-      return myModuleButton != null ? myModuleButton.isSelected() : false;
-    }
-
-    public boolean isInspectTestSources(){
-      return myInspectTestSource.isSelected();
-    }
+  @Nullable
+  protected JComponent getAdditionalActionSettings(Project project, BaseAnalysisActionDialog dialog){
+    return null;
   }
+
 }

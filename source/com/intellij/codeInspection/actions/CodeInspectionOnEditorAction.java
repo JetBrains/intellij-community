@@ -34,7 +34,7 @@ public class CodeInspectionOnEditorAction extends AnAction {
     inspectionManagerEx.setCurrentScope(scope);
     final InspectionProfileImpl inspectionProfile = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(psiFile);
     inspectionManagerEx.setExternalProfile(inspectionProfile);
-    inspectionManagerEx.doInspections(scope, false);
+    inspectionManagerEx.doInspections(scope);
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         inspectionManagerEx.setExternalProfile(null);
