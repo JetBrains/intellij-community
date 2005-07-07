@@ -85,7 +85,7 @@ public class WelcomeScreen {
   private static final Icon KEYMAP_ICON = IconLoader.getIcon("/general/defaultKeymap.png");
   private static final Icon DEFAULT_ICON = IconLoader.getIcon("/general/configurableDefault.png");
 
-  private static final String KEYMAP_URL = PathManager.getHomePath() + "/help/4.5_ReferenceCard.pdf";
+  private static final String KEYMAP_URL = PathManager.getHomePath() + "/help/ReferenceCard.pdf";
 
   private static final Font TEXT_FONT = new Font("Tahoma", Font.PLAIN, 11);
   private static final Font LINK_FONT = new Font("Tahoma", Font.BOLD, 12);
