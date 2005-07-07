@@ -411,6 +411,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
           }, "Save settings", null);
 
           if (exception[0] != null) {
+            LOG.info(exception[0]);
             MessagesEx.error(this, "Could not save project:\n" + exception[0].getMessage()).showLater();
           }
         }
