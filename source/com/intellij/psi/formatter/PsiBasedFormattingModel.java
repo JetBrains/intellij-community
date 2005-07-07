@@ -64,7 +64,7 @@ public class PsiBasedFormattingModel implements FormattingModel {
 
   private TextRange shiftIndentInsideWithDocument(final TextRange textRange, final int shift) {
     final int newLength = shiftIndentInside(textRange, shift);
-    return new TextRange(textRange.getStartOffset(), newLength);
+    return new TextRange(textRange.getStartOffset(), textRange.getStartOffset() + newLength);
   }
 
   private int shiftIndentInside(final TextRange elementRange, final int shift) {
@@ -114,7 +114,7 @@ public class PsiBasedFormattingModel implements FormattingModel {
     }
     buffer.append(afterWhiteSpace.toString());
     myDocumentModel.getDocument().replaceString(elementRange.getStartOffset(), elementRange.getEndOffset(), buffer.toString());
-    return buffer.length() - elementRange.getLength();
+    return buffer.length();
   }
 
   private void createWhiteSpace(final int whiteSpaceLength, StringBuffer buffer) {
