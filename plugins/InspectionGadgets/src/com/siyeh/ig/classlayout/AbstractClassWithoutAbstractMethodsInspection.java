@@ -20,7 +20,7 @@ public class AbstractClassWithoutAbstractMethodsInspection extends ClassInspecti
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.CLASSLAYOUT_GROUP_NAME;
+        return GroupNames.INHERITANCE_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location) {

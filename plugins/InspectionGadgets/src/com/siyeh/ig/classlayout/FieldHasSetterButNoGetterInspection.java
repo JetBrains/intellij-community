@@ -15,7 +15,7 @@ public class FieldHasSetterButNoGetterInspection extends FieldInspection {
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.CLASSLAYOUT_GROUP_NAME;
+        return GroupNames.JAVABEANS_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location) {

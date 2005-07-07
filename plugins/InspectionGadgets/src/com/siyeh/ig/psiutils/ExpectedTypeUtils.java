@@ -32,7 +32,8 @@ public class ExpectedTypeUtils{
     }
 
     @Nullable
-    public static PsiType findExpectedType(PsiExpression exp, final boolean calculateTypeForComplexReferences){
+    public static PsiType findExpectedType(PsiExpression exp,
+                                           boolean calculateTypeForComplexReferences){
         PsiElement context = exp.getParent();
         PsiExpression wrappedExp = exp;
         while(context != null && context instanceof PsiParenthesizedExpression){
@@ -42,7 +43,8 @@ public class ExpectedTypeUtils{
         if(context == null){
             return null;
         }
-        final ExpectedTypeVisitor visitor = new ExpectedTypeVisitor(wrappedExp, calculateTypeForComplexReferences);
+        final ExpectedTypeVisitor visitor = new ExpectedTypeVisitor(wrappedExp,
+                                                                    calculateTypeForComplexReferences);
         context.accept(visitor);
         return visitor.getExpectedType();
     }
@@ -71,8 +73,8 @@ public class ExpectedTypeUtils{
     private static PsiType getTypeOfParameter(JavaResolveResult result,
                                               int parameterPosition){
 
-        final PsiMethod psiMethod = (PsiMethod)result.getElement();
-        PsiSubstitutor substitutor = result.getSubstitutor();
+        final PsiMethod psiMethod = (PsiMethod) result.getElement();
+        final PsiSubstitutor substitutor = result.getSubstitutor();
         final PsiParameterList paramList = psiMethod.getParameterList();
         final PsiParameter[] parameters = paramList.getParameters();
         if(parameterPosition < 0){
@@ -85,21 +87,24 @@ public class ExpectedTypeUtils{
             }
             final PsiParameter lastParameter = parameters[lastParamPosition];
             if(lastParameter.isVarArgs()){
-                return substitutor.substitute(((PsiArrayType) lastParameter.getType())
-                        .getComponentType());
+                return substitutor
+                        .substitute(((PsiArrayType) lastParameter.getType())
+                                .getComponentType());
             }
             return null;
         }
 
         final PsiParameter param = parameters[parameterPosition];
         if(param.isVarArgs()){
-            return substitutor.substitute(((PsiArrayType) param.getType()).getComponentType());
+            return substitutor.substitute(
+                    ((PsiArrayType) param.getType()).getComponentType());
         }
         return substitutor.substitute(param.getType());
     }
 
     @NotNull
-    private static JavaResolveResult findCalledMethod(PsiExpressionList expList){
+    private static JavaResolveResult findCalledMethod(
+            PsiExpressionList expList){
         final PsiElement parent = expList.getParent();
         if(parent instanceof PsiCallExpression){
             final PsiCallExpression call = (PsiCallExpression) parent;
@@ -113,10 +118,11 @@ public class ExpectedTypeUtils{
         private final boolean calculateTypeForComplexReferences;
         private PsiType expectedType = null;
 
-        ExpectedTypeVisitor(PsiExpression wrappedExp, final boolean calculateTypeForComplexReferences){
+        ExpectedTypeVisitor(PsiExpression wrappedExp,
+                            boolean calculateTypeForComplexReferences){
             super();
             this.wrappedExp = wrappedExp;
-          this.calculateTypeForComplexReferences = calculateTypeForComplexReferences;
+            this.calculateTypeForComplexReferences = calculateTypeForComplexReferences;
         }
 
         public PsiType getExpectedType(){
@@ -284,45 +290,54 @@ public class ExpectedTypeUtils{
 
         public void visitExpressionList(PsiExpressionList expList){
             final JavaResolveResult result = findCalledMethod(expList);
-            final PsiMethod method = (PsiMethod)result.getElement();
+            final PsiMethod method = (PsiMethod) result.getElement();
             if(method == null){
                 expectedType = null;
             } else{
                 final int parameterPosition =
-                        ExpectedTypeUtils.getParameterPosition(expList, wrappedExp);
+                        ExpectedTypeUtils
+                                .getParameterPosition(expList, wrappedExp);
                 expectedType = getTypeOfParameter(result, parameterPosition);
             }
         }
 
-      public void visitReferenceExpression(
+        public void visitReferenceExpression(
                 @NotNull PsiReferenceExpression ref){
-          //Dave, do we need this at all?
-          if (calculateTypeForComplexReferences) {
-            final PsiManager manager = ref.getManager();
-            final JavaResolveResult resolveResult = ref.advancedResolve(false);
-            final PsiElement element = resolveResult.getElement();
-            PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-            if(element instanceof PsiField){
-                final PsiField field = (PsiField) element;
-                final PsiClass aClass = field.getContainingClass();
-                final PsiElementFactory factory = manager.getElementFactory();
-                expectedType = factory.createType(aClass, substitutor);
-            } else if(element instanceof PsiMethod){
-                final PsiMethod method = (PsiMethod) element;
-                final PsiMethod superMethod = method.findDeepestSuperMethod();
-                final PsiClass aClass;
-                if(superMethod != null){
-                    aClass = superMethod.getContainingClass();
-                    substitutor = TypeConversionUtil.getSuperClassSubstitutor(superMethod.getContainingClass(), method.getContainingClass(), substitutor);
-                } else {
-                    aClass = method.getContainingClass();
+            //Dave, do we need this at all?
+            if(calculateTypeForComplexReferences){
+                final PsiManager manager = ref.getManager();
+                final JavaResolveResult resolveResult = ref
+                        .advancedResolve(false);
+                final PsiElement element = resolveResult.getElement();
+                PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+                if(element instanceof PsiField){
+                    final PsiField field = (PsiField) element;
+                    final PsiClass aClass = field.getContainingClass();
+                    final PsiElementFactory factory = manager
+                            .getElementFactory();
+                    expectedType = factory.createType(aClass, substitutor);
+                } else if(element instanceof PsiMethod){
+                    final PsiMethod method = (PsiMethod) element;
+                    final PsiMethod superMethod = method
+                            .findDeepestSuperMethod();
+                    final PsiClass aClass;
+                    if(superMethod != null){
+                        aClass = superMethod.getContainingClass();
+                        substitutor =
+                                TypeConversionUtil.getSuperClassSubstitutor(
+                                        superMethod.getContainingClass(),
+                                        method.getContainingClass(),
+                                        substitutor);
+                    } else{
+                        aClass = method.getContainingClass();
+                    }
+                    final PsiElementFactory factory = manager
+                            .getElementFactory();
+                    expectedType = factory.createType(aClass, substitutor);
+                } else{
+                    expectedType = null;
                 }
-                final PsiElementFactory factory = manager.getElementFactory();
-                expectedType = factory.createType(aClass, substitutor);
-            } else{
-                expectedType = null;
             }
-          }
         }
     }
 }

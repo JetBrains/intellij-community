@@ -22,11 +22,13 @@ public class ExtendsConcreteCollectionInspection extends ClassInspection{
     }
 
     public String getGroupDisplayName(){
-        return GroupNames.CLASSLAYOUT_GROUP_NAME;
+        return GroupNames.INHERITANCE_GROUP_NAME;
     }
+
     public String buildErrorString(PsiElement location){
         final PsiClass aClass = (PsiClass) location.getParent();
         final PsiClass superClass = aClass.getSuperClass();
+        assert superClass != null;
         return "Class '#ref' explicitly extends " + superClass.getQualifiedName() +" #loc";
     }
 

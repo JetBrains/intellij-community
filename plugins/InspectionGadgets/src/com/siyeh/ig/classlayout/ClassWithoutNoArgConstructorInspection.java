@@ -19,7 +19,7 @@ public class ClassWithoutNoArgConstructorInspection extends ClassInspection{
     }
 
     public String getGroupDisplayName(){
-        return GroupNames.CLASSLAYOUT_GROUP_NAME;
+        return GroupNames.JAVABEANS_GROUP_NAME;
     }
 
     public JComponent createOptionsPanel(){

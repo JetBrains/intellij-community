@@ -19,7 +19,7 @@ public class ExtendsAnnotationInspection extends ClassInspection{
     }
 
     public String getGroupDisplayName(){
-        return GroupNames.CLASSLAYOUT_GROUP_NAME;
+        return GroupNames.INHERITANCE_GROUP_NAME;
     }
 
     public boolean isEnabledByDefault(){

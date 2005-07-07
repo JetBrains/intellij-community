@@ -13,6 +13,12 @@
     Inefficient use of keySet iterator rather than entrySet iterator
     Constant month outside range of 0..11
     Duplicate switch branches
+    Command-Query separation
+    Long Mesage chain
+    Constants with equal value
+    Inaccessible matching methods
+    Complex assignments
+    Mixed logical operators without parentheses
 
     Move and restructure categories
     Static import quickfix

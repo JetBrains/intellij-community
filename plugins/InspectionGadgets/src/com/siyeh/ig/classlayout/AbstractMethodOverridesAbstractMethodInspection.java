@@ -11,10 +11,9 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.Set;
-import java.util.HashSet;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 public class AbstractMethodOverridesAbstractMethodInspection extends MethodInspection {
     private final AbstractMethodOverridesAbstractMethodFix fix = new AbstractMethodOverridesAbstractMethodFix();
@@ -24,7 +23,7 @@ public class AbstractMethodOverridesAbstractMethodInspection extends MethodInspe
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.CLASSLAYOUT_GROUP_NAME;
+        return GroupNames.INHERITANCE_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location) {

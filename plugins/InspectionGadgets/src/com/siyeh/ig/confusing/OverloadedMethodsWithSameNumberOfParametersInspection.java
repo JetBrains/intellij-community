@@ -13,7 +13,7 @@ public class OverloadedMethodsWithSameNumberOfParametersInspection extends Metho
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.CONFUSING_GROUP_NAME;
+        return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location) {
