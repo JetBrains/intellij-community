@@ -1,9 +1,8 @@
 package com.siyeh.ipp.concatenation;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,7 +62,7 @@ class StringConcatPredicate implements PsiElementPredicate{
         }
         try{
             lhs.replace(leftSide);
-        } catch(IncorrectOperationException e){
+        } catch(Throwable e){
             return null;
         }
         return binaryExpression;

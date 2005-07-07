@@ -2,7 +2,6 @@ package com.siyeh.ipp.constant;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,7 +78,7 @@ class ConstantSubexpressionPredicate implements PsiElementPredicate{
         }
         try{
             lhs.replace(leftSide);
-        } catch(IncorrectOperationException ignore){
+        } catch(Throwable ignore){
             return null;
         }
         return binaryExpression;
