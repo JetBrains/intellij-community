@@ -93,14 +93,16 @@ class TagNameReference implements PsiReference {
         PsiElement current = jspFile.getDocument().findElementAt(startOffset);
         if(current != element && (current = PsiTreeUtil.getParentOfType(current, XmlText.class)) != null) {
           fromJspTree = ((XmlText)current).getParentTag();
-          if (fromJspTree.isEmpty() || XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(fromJspTree.getNode()) != null
-            || fromJspTree instanceof JspXmlRootTag)
+          if (XmlChildRole.EMPTY_TAG_END_FINDER.findChild(fromJspTree.getNode()) != null
+              || XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(fromJspTree.getNode()) != null
+              || fromJspTree instanceof JspXmlRootTag)
             fromJspTree = null;
           while ((current = current.getPrevSibling()) != null) {
             if (current instanceof XmlTag) {
               final XmlTag xmlTag = (XmlTag)current;
 
-              if (!xmlTag.isEmpty() && XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(xmlTag.getNode()) == null) {
+              if (XmlChildRole.EMPTY_TAG_END_FINDER.findChild(xmlTag.getNode()) == null
+                  && XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(xmlTag.getNode()) == null) {
                 fromJspTree = xmlTag;
                 break;
               }
