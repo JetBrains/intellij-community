@@ -133,7 +133,7 @@ public class TldTagDescriptor extends CustomTagDescriptorBase implements Validat
     if (myTeiClass != null) {
       final VirtualFile virtualFile = myTag.getContainingFile().getVirtualFile();
 
-      List<URL> urls = TldUtil.buildUrls(virtualFile, moduleProperties);
+      List<URL> urls = TldUtil.buildUrls(virtualFile, moduleProperties.getModule());
       TeiClassLoader classLoader = new TeiClassLoader(urls, getClass().getClassLoader());
 
       try {
