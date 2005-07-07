@@ -31,8 +31,6 @@ public class ModuleTypeStep extends ModuleWizardStep {
   private JPanel myPanel;
   private JRadioButton myRbCreateNewModule;
   private JRadioButton myRbImportModule;
-  private JRadioButton myRbImportForeignModule;
-  private JComboBox myCbForeignModuleType;
   private FieldPanel myModulePathFieldPanel;
   private JList myTypesList;
   private JEditorPane myModuleDescriptionPane;
@@ -91,17 +89,11 @@ public class ModuleTypeStep extends ModuleWizardStep {
     myRbCreateNewModule.setMnemonic('C');
     myRbImportModule = new JRadioButton("Import existing module");
     myRbImportModule.setMnemonic('I');
-    myRbImportForeignModule = new JRadioButton("Import module from");
-    myRbImportForeignModule.setMnemonic('m');
-    myCbForeignModuleType = new JComboBox(new String[]{"Eclipse project"});
-    myCbForeignModuleType.setEnabled(false);
     myButtonGroup = new ButtonGroup();
     myButtonGroup.add(myRbCreateNewModule);
     myButtonGroup.add(myRbImportModule);
-    myButtonGroup.add(myRbImportForeignModule);
     ModulesRbListener listener = new ModulesRbListener();
     myRbCreateNewModule.addItemListener(listener);
-    myRbImportForeignModule.addItemListener(listener);
     myRbImportModule.addItemListener(listener);
 
     JTextField tfModuleFilePath = new JTextField();
@@ -134,8 +126,6 @@ public class ModuleTypeStep extends ModuleWizardStep {
       myPanel.add(myRbImportModule, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(16, 10, 0, 10), 0, 0));
       myPanel.add(myModulePathFieldPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 30, 0, 10), 0, 0));
 
-      myPanel.add(myRbImportForeignModule, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(16, 10, 0, 10), 0, 0));
-      myPanel.add(myCbForeignModuleType, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(8, 30, 8, 10), 0, 0));
     }
   }
 
@@ -203,9 +193,6 @@ public class ModuleTypeStep extends ModuleWizardStep {
   public boolean isImportExistingModule() {
     return myRbImportModule.isSelected();
   }
-  public boolean isImportForeignModule() {
-    return myRbImportForeignModule.isSelected();
-  }
 
   public String getModuleFilePath() {
     return myModulePathFieldPanel.getText().trim().replace(File.separatorChar, '/');
@@ -243,10 +230,6 @@ public class ModuleTypeStep extends ModuleWizardStep {
         toFocus = myModulePathFieldPanel.getTextField();
         myEventDispatcher.getMulticaster().importModuleOptionSelected(true);
       }
-      else if (selection == myRbImportForeignModule.getModel()) {
-        myEventDispatcher.getMulticaster().importModuleOptionSelected(false);
-        toFocus = myCbForeignModuleType;
-      }
       else {
         toFocus = null;
       }
@@ -268,9 +251,6 @@ public class ModuleTypeStep extends ModuleWizardStep {
 
     boolean importModuleEnabled = selection == myRbImportModule.getModel();
     myModulePathFieldPanel.setEnabled(importModuleEnabled);
-
-    boolean importForeignModuleEnabled = selection == myRbImportForeignModule.getModel();
-    myCbForeignModuleType.setEnabled(importForeignModuleEnabled);
   }
 
   private static class ModuleFileChooserDescriptor extends FileChooserDescriptor {
