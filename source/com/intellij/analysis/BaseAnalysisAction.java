@@ -48,7 +48,7 @@ public abstract class BaseAnalysisAction extends AnAction {
       BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog("Specify " + myTitle + " Scope",
                                                                   myAnalysisNoon + " scope",
                                                                   project,
-                                                                  scope.getDisplayName(),
+                                                                  scope.getShortenName(),
                                                                   module != null && scope.getScopeType() != AnalysisScope.MODULE ? ModuleUtil.getModuleNameInReadAction(module) : null,
                                                                   scope.getScopeType() == AnalysisScope.PROJECT,
                                                                   rememberScope){

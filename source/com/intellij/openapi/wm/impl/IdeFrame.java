@@ -13,7 +13,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -121,28 +120,8 @@ public class IdeFrame extends JFrame implements DataProvider {
   }
 
   public void setFileTitle(final VirtualFile file) {
-    myFileTitle = file != null ? calcFileTitle(file) : null;
+    myFileTitle = file != null ? VfsUtil.calcRelativeToProjectPath(file, myProject) : null;
     updateTitle();
-  }
-
-  private String calcFileTitle(final VirtualFile file) {
-    String url = file.getPresentableUrl();
-    if (myProject == null) {
-      return url;
-    }
-    else {
-      final VirtualFile projectFile = myProject.getProjectFile();
-      if (projectFile != null) {
-        //noinspection ConstantConditions
-        final String projectHomeUrl = projectFile.getParent().getPresentableUrl();
-        if (url.startsWith(projectHomeUrl)) {
-          url = "..." + url.substring(projectHomeUrl.length());
-        }
-      }
-      final Module module = VfsUtil.getModuleForFile(myProject, file);
-      if (module == null) return url;
-      return new StringBuffer().append("[").append(module.getName()).append("] - ").append(url).toString();
-    }
   }
 
   private void updateTitle() {

@@ -13,8 +13,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -342,6 +343,32 @@ public class AnalysisScope {
 
       case DIRECTORY:
         return "Directory " + ((PsiDirectory)myElement).getVirtualFile().getPresentableUrl();
+
+      case PACKAGE:
+        return "Package " + ((PsiPackage)myElement).getQualifiedName();
+    }
+
+    return "";
+  }
+
+  public String getShortenName(){
+    switch (myType) {
+      case MODULE:
+        return "Module \'" + myModule.getName() + "\'";
+      case MODULES:
+        String displayName = "Module" + (myModules.size() > 1 ? "s " : " ");
+        for (Iterator<Module> iterator = myModules.iterator(); iterator.hasNext();) {
+          Module module = iterator.next();
+          displayName += "\'" + module.getName() + "\', ";
+        }
+        displayName = displayName.substring(0, displayName.length() - 2);
+        return displayName;
+      case PROJECT:
+        return "Project \'" + myProject.getName() + "\'";
+      case FILE:
+        return "File " + VfsUtil.calcRelativeToProjectPath(((PsiFile)myElement).getVirtualFile(), myElement.getProject());
+      case DIRECTORY:
+        return "Directory " + VfsUtil.calcRelativeToProjectPath(((PsiDirectory)myElement).getVirtualFile(), myElement.getProject());
 
       case PACKAGE:
         return "Package " + ((PsiPackage)myElement).getQualifiedName();

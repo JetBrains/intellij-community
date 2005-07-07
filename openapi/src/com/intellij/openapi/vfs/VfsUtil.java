@@ -475,4 +475,24 @@ public class VfsUtil {
   public static Module getModuleForFile(Project project, VirtualFile file){
     return ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(file);
   }
+
+  public static String calcRelativeToProjectPath(final VirtualFile file, final Project project) {
+    String url = file.getPresentableUrl();
+    if (project == null) {
+      return url;
+    }
+    else {
+      final VirtualFile projectFile = project.getProjectFile();
+      if (projectFile != null) {
+        //noinspection ConstantConditions
+        final String projectHomeUrl = projectFile.getParent().getPresentableUrl();
+        if (url.startsWith(projectHomeUrl)) {
+          url = "..." + url.substring(projectHomeUrl.length());
+        }
+      }
+      final Module module = getModuleForFile(project, file);
+      if (module == null) return url;
+      return new StringBuffer().append("[").append(module.getName()).append("] - ").append(url).toString();
+    }
+  }
 }
