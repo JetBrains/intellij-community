@@ -176,25 +176,32 @@ public class FormatterUtil {
                                     ASTNode leafAfter, final CharTable charTable) {
     final ASTNode treeParent = treePrev.getTreeParent();
     if(isInsideTagBody(treePrev)){
-      final String text;
+      final boolean before;
       final XmlText xmlText;
       if(treePrev.getElementType() == XmlElementType.XML_TEXT) {
         xmlText = (XmlText)treePrev.getPsi();
-        text = whiteSpaceElement.getText() + xmlText.getValue();
+        before = true;
       }
       else if(treePrev.getTreePrev().getElementType() == XmlElementType.XML_TEXT){
         xmlText = (XmlText)treePrev.getTreePrev().getPsi();
-        text = xmlText.getValue() + whiteSpaceElement.getText();
+        before = false;
       }
       else{
         xmlText = (XmlText)Factory.createCompositeElement(XmlElementType.XML_TEXT, charTable, treeParent.getPsi().getManager());
         treeParent.addChild(xmlText.getNode(), treePrev);
-        text = whiteSpaceElement.getText();
+        before = true;
       }
-      try {
-        xmlText.setValue(text);
+      final ASTNode node = xmlText.getNode();
+      final TreeElement anchorInText = before ? TreeUtil.findFirstLeaf(node) : TreeUtil.findLastLeaf(node);
+      if (anchorInText == null) node.addChild(whiteSpaceElement);
+      else if (anchorInText.getElementType() != XmlTokenType.XML_WHITE_SPACE) node.addChild(whiteSpaceElement, before ? anchorInText : null);
+      else {
+        final String text = before ? whiteSpaceElement.getText() + anchorInText.getText() : anchorInText.getText() +
+                                                                                            whiteSpaceElement.getText();
+        final LeafElement singleLeafElement = Factory.createSingleLeafElement(XmlTokenType.XML_WHITE_SPACE, text.toCharArray(), 0,
+                                                                              text.length(), charTable, xmlText.getManager());
+        node.replaceChild(anchorInText, singleLeafElement);
       }
-      catch (IncorrectOperationException e) {LOG.error(e);}
     }
     else treeParent.addChild(whiteSpaceElement, treePrev);
   }

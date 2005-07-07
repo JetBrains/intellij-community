@@ -42,6 +42,7 @@ import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.PomProject;
 import com.intellij.pom.PomTransaction;
+import com.intellij.pom.tree.TreeAspect;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.event.PomModelListener;
 import com.intellij.psi.PsiDocumentManager;
@@ -222,7 +223,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     if (containingFileByTree != null) {
       document = manager.getCachedDocument(containingFileByTree);
     }
-    if(document != null) synchronizer.commitTransaction(document);
+    if(document != null && transaction.getAccumulatedEvent().getChangeSet(getModelAspect(TreeAspect.class)) != null) synchronizer.commitTransaction(document);
     if(progressIndicator != null) progressIndicator.finishNonCancelableSection();
   }
 
