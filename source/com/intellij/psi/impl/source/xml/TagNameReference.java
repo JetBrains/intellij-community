@@ -9,6 +9,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
@@ -92,7 +93,9 @@ class TagNameReference implements PsiReference {
         PsiElement current = jspFile.getDocument().findElementAt(startOffset);
         if(current != element && (current = PsiTreeUtil.getParentOfType(current, XmlText.class)) != null) {
           fromJspTree = ((XmlText)current).getParentTag();
-
+          if (fromJspTree.isEmpty() || XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(fromJspTree.getNode()) != null
+            || fromJspTree instanceof JspXmlRootTag)
+            fromJspTree = null;
           while ((current = current.getPrevSibling()) != null) {
             if (current instanceof XmlTag) {
               final XmlTag xmlTag = (XmlTag)current;
@@ -106,8 +109,8 @@ class TagNameReference implements PsiReference {
         }
       }
       final String name = element.getName();
-      if(name == null && fromJspTree == null) return new Object[0];
-      if(fromJspTree == null) return new Object[]{name};
+      if(name == null && (fromJspTree == null || fromJspTree.getName() == null)) return new Object[0];
+      if(fromJspTree == null || fromJspTree.getName() == null) return new Object[]{name};
       if(name != null) return new Object[]{name, fromJspTree.getName()};
       if(name != null) return new Object[]{fromJspTree.getName()};
     }
