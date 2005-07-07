@@ -38,6 +38,7 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
         "java.net.InetAddress,.*";
 
     private final List<ReturnCheckSpecification> callsToCheck = new ArrayList<ReturnCheckSpecification>(32);
+    private final Object lock = new Object();
 
     {
         parseCallCheckString();
@@ -49,13 +50,15 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
     }
 
     private void parseCallCheckString(){
-        callsToCheck.clear();
-        final String[] strings = callCheckString.split(",");
-        for(int i = 0; i < strings.length-1; i += 2){
-            final String className = strings[i];
-            final String methodName = strings[i + 1];
-            callsToCheck.add(
-                    new ReturnCheckSpecification(className, methodName));
+        synchronized(lock){
+            callsToCheck.clear();
+            final String[] strings = callCheckString.split(",");
+            for(int i = 0; i < strings.length-1; i += 2){
+                final String className = strings[i];
+                final String methodName = strings[i + 1];
+                callsToCheck.add(
+                        new ReturnCheckSpecification(className, methodName));
+            }
         }
     }
 
@@ -66,20 +69,21 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
 
     private void formatCallCheckString(){
         final StringBuffer buffer = new StringBuffer();
-        boolean first = true;
-        for(Object aCallsToCheck : callsToCheck){
-            if(first){
-                first = false;
-            } else{
+        synchronized(lock){
+
+            boolean first=true;
+            for(ReturnCheckSpecification returnCheckSpecification : callsToCheck){
+                if(first){
+                    first = false;
+                } else{
+                    buffer.append(',');
+                }
+                final String methodName = returnCheckSpecification.getMethodName();
+                final String className = returnCheckSpecification.getClassName();
+                buffer.append(className);
                 buffer.append(',');
+                buffer.append(methodName);
             }
-            final ReturnCheckSpecification returnCheckSpecification =
-                    (ReturnCheckSpecification) aCallsToCheck;
-            final String methodName = returnCheckSpecification.getMethodName();
-            final String className = returnCheckSpecification.getClassName();
-            buffer.append(className);
-            buffer.append(',');
-            buffer.append(methodName);
         }
         callCheckString = buffer.toString();
     }
@@ -158,9 +162,11 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
             if(methodName == null){
                 return;
             }
-            for(Object aCallsToCheck : callsToCheck){
-                final ReturnCheckSpecification spec =
-                        (ReturnCheckSpecification) aCallsToCheck;
+            final List<ReturnCheckSpecification> callsToCheckCopy;
+            synchronized(lock){
+                callsToCheckCopy = new ArrayList<ReturnCheckSpecification>(callsToCheck);
+            }
+            for(ReturnCheckSpecification spec : callsToCheckCopy){
                 final Pattern methodNamePattern = spec.getMethodNamePattern();
                 if(methodNamePattern != null &&
                         methodNamesMatch(methodName, methodNamePattern)){
@@ -201,7 +207,9 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
             addButton.setEnabled(true);
             addButton.addActionListener(new ActionListener(){
                 public void actionPerformed(ActionEvent e){
-                    callsToCheck.add(new ReturnCheckSpecification());
+                    synchronized(lock){
+                        callsToCheck.add(new ReturnCheckSpecification());
+                    }
                     model.fireTableStructureChanged();
                 }
             });
@@ -210,8 +218,10 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
                 public void actionPerformed(ActionEvent e){
                     final int[] selectedRows = table.getSelectedRows();
                     Arrays.sort(selectedRows);
-                    for(int i = selectedRows.length - 1; i >= 0; i--){
-                        callsToCheck.remove(selectedRows[i]);
+                    synchronized(lock){
+                        for(int i = selectedRows.length - 1; i >= 0; i--){
+                            callsToCheck.remove(selectedRows[i]);
+                        }
                     }
                     model.fireTableStructureChanged();
                 }
@@ -234,7 +244,9 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
     private class ReturnCheckSpecificationTableModel
             extends AbstractTableModel{
         public int getRowCount(){
-            return callsToCheck.size();
+            synchronized(lock){
+                return callsToCheck.size();
+            }
         }
 
         public int getColumnCount(){
@@ -257,9 +269,10 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
         }
 
         public Object getValueAt(int rowIndex, int columnIndex){
-            final ReturnCheckSpecification spec =
-                    callsToCheck.get(
-                            rowIndex);
+            final ReturnCheckSpecification spec;
+            synchronized(lock){
+                spec = callsToCheck.get(rowIndex);
+            }
             if(columnIndex == 0){
                 return spec.getClassName();
             } else{
@@ -268,9 +281,10 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
         }
 
         public void setValueAt(Object aValue, int rowIndex, int columnIndex){
-            final ReturnCheckSpecification spec =
-                    callsToCheck.get(
-                            rowIndex);
+            final ReturnCheckSpecification spec;
+            synchronized(lock){
+                spec = callsToCheck.get(rowIndex);
+            }
             if(columnIndex == 0){
                 spec.setClassName((String) aValue);
             } else{

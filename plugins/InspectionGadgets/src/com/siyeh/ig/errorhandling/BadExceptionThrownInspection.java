@@ -19,8 +19,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class BadExceptionThrownInspection extends ExpressionInspection {
-    /** @noinspection PublicField*/
+public class BadExceptionThrownInspection extends ExpressionInspection{
+    /**
+     * @noinspection PublicField
+     */
     public String exceptionCheckString = "java.lang.Throwable," +
             "java.lang.Exception," +
             "java.lang.Error," +
@@ -29,41 +31,45 @@ public class BadExceptionThrownInspection extends ExpressionInspection {
             "java.lang.ClassCastException," +
             "java.lang.ArrayOutOfBoundsException";
 
-    private final List<Object> exceptionsList = new ArrayList<Object>(32);
+    private final List<String> exceptionsList = new ArrayList<String>(32);
+    private final Object lock = new Object();
 
     {
         parseCallCheckString();
     }
 
-    public void readSettings(Element element) throws InvalidDataException {
+    public void readSettings(Element element) throws InvalidDataException{
         super.readSettings(element);
         parseCallCheckString();
     }
 
-    private void parseCallCheckString() {
-        exceptionsList.clear();
-        final String[] strings = exceptionCheckString.split(",");
-        for(String string : strings){
-            exceptionsList.add(string);
+    private void parseCallCheckString(){
+        synchronized(lock){
+            exceptionsList.clear();
+            final String[] strings = exceptionCheckString.split(",");
+            for(String string : strings){
+                exceptionsList.add(string);
+            }
         }
     }
 
-    public void writeSettings(Element element) throws WriteExternalException {
+    public void writeSettings(Element element) throws WriteExternalException{
         formatCallCheckString();
         super.writeSettings(element);
     }
 
-    private void formatCallCheckString() {
+    private void formatCallCheckString(){
         final StringBuffer buffer = new StringBuffer();
         boolean first = true;
-        for(Object aExceptionsList : exceptionsList){
-            if(first){
-                first = false;
-            } else{
-                buffer.append(',');
+        synchronized(lock){
+            for(String exceptionName : exceptionsList){
+                if(first){
+                    first = false;
+                } else{
+                    buffer.append(',');
+                }
+                buffer.append(exceptionName);
             }
-            final String exceptionName = (String) aExceptionsList;
-            buffer.append(exceptionName);
         }
         exceptionCheckString = buffer.toString();
     }
@@ -72,21 +78,22 @@ public class BadExceptionThrownInspection extends ExpressionInspection {
         return "ProhibitedExceptionThrown";
     }
 
-    public String getDisplayName() {
+    public String getDisplayName(){
         return "Prohibited exception thrown";
     }
 
-    public String getGroupDisplayName() {
+    public String getGroupDisplayName(){
         return GroupNames.ERRORHANDLING_GROUP_NAME;
     }
 
-    public JComponent createOptionsPanel() {
+    public JComponent createOptionsPanel(){
         final Form form = new Form();
         return form.getContentPanel();
     }
 
-    public String buildErrorString(PsiElement location) {
-        final PsiThrowStatement throwStatement = (PsiThrowStatement) location.getParent();
+    public String buildErrorString(PsiElement location){
+        final PsiThrowStatement throwStatement = (PsiThrowStatement) location
+                .getParent();
         assert throwStatement != null;
         final PsiExpression exception = throwStatement.getException();
         final PsiType type = exception.getType();
@@ -94,106 +101,117 @@ public class BadExceptionThrownInspection extends ExpressionInspection {
         return "Prohibited exception '" + exceptionName + "' thrown. #loc ";
     }
 
-    public BaseInspectionVisitor buildVisitor() {
+    public BaseInspectionVisitor buildVisitor(){
         return new BadExceptionThrownVisitor();
     }
 
-    private class BadExceptionThrownVisitor extends BaseInspectionVisitor {
-
-        public void visitThrowStatement(PsiThrowStatement statement) {
+    private class BadExceptionThrownVisitor extends BaseInspectionVisitor{
+        public void visitThrowStatement(PsiThrowStatement statement){
             super.visitThrowStatement(statement);
             final PsiExpression exception = statement.getException();
-            if(exception == null)
-            {
+            if(exception == null){
                 return;
             }
             final PsiType type = exception.getType();
-            if(type == null)
-            {
+            if(type == null){
                 return;
             }
             final String text = type.getCanonicalText();
-            for(Object aExceptionsList : exceptionsList){
-                final String exceptionClass = (String) aExceptionsList;
+
+            final List<String> exceptionListCopy;
+            synchronized(lock){
+                exceptionListCopy = new ArrayList<String>(exceptionsList);
+            }
+            for(String exceptionClass : exceptionListCopy){
                 if(text.equals(exceptionClass)){
                     registerStatementError(statement);
                     return;
                 }
             }
         }
-
     }
 
-    /** @noinspection PublicInnerClass*/
-    public class Form {
+    /**
+     * @noinspection PublicInnerClass
+     */
+    public class Form{
         private JPanel contentPanel;
         private JButton addButton;
         private JButton deleteButton;
         private JTable table;
 
-        public Form() {
+        public Form(){
             super();
             table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
             table.setRowSelectionAllowed(true);
-            table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+            table.setSelectionMode(
+                    ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
             table.setEnabled(true);
             final ReturnCheckSpecificationTableModel model =
                     new ReturnCheckSpecificationTableModel();
             table.setModel(model);
             addButton.setEnabled(true);
-            addButton.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    exceptionsList.add("");
+            addButton.addActionListener(new ActionListener(){
+                public void actionPerformed(ActionEvent e){
+                    synchronized(lock){
+                        exceptionsList.add("");
+                    }
                     model.fireTableStructureChanged();
                 }
             });
             deleteButton.setEnabled(true);
-            deleteButton.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
+            deleteButton.addActionListener(new ActionListener(){
+                public void actionPerformed(ActionEvent e){
                     final int[] selectedRows = table.getSelectedRows();
                     Arrays.sort(selectedRows);
-                    for (int i = selectedRows.length - 1; i >= 0; i--) {
-                        exceptionsList.remove(selectedRows[i]);
+                    synchronized(lock){
+                        for(int i = selectedRows.length - 1; i >= 0; i--){
+                            exceptionsList.remove(selectedRows[i]);
+                        }
                     }
                     model.fireTableStructureChanged();
                 }
             });
         }
 
-        public JComponent getContentPanel() {
+        public JComponent getContentPanel(){
             return contentPanel;
         }
     }
 
-    private class ReturnCheckSpecificationTableModel extends AbstractTableModel {
-
-        public int getRowCount() {
-            return exceptionsList.size();
+    private class ReturnCheckSpecificationTableModel extends AbstractTableModel{
+        public int getRowCount(){
+            synchronized(lock){
+                return exceptionsList.size();
+            }
         }
 
-        public int getColumnCount() {
+        public int getColumnCount(){
             return 1;
         }
 
-        public String getColumnName(int columnIndex) {
+        public String getColumnName(int columnIndex){
             return "Exception class";
         }
 
-        public Class getColumnClass(int columnIndex) {
+        public Class getColumnClass(int columnIndex){
             return String.class;
         }
 
-        public boolean isCellEditable(int rowIndex, int columnIndex) {
+        public boolean isCellEditable(int rowIndex, int columnIndex){
             return true;
         }
 
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            return exceptionsList.get(rowIndex);
+        public Object getValueAt(int rowIndex, int columnIndex){
+            synchronized(lock){
+                return exceptionsList.get(rowIndex);
+            }
         }
 
-        public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-            exceptionsList.set(rowIndex, aValue);
+        public void setValueAt(Object aValue, int rowIndex, int columnIndex){
+            synchronized(lock){
+                exceptionsList.set(rowIndex, (String) aValue);
+            }
         }
     }
-
 }

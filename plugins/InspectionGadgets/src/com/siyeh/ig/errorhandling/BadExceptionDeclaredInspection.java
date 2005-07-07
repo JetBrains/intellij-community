@@ -29,7 +29,8 @@ public class BadExceptionDeclaredInspection extends MethodInspection{
             "java.lang.ClassCastException," +
             "java.lang.ArrayOutOfBoundsException";
 
-    private final List<Object> exceptionsList = new ArrayList<Object>(32);
+    private final List<String> exceptionsList = new ArrayList<String>(32);
+    private final Object lock = new Object();
 
     {
         parseCallCheckString();
@@ -41,10 +42,12 @@ public class BadExceptionDeclaredInspection extends MethodInspection{
     }
 
     private void parseCallCheckString(){
-        exceptionsList.clear();
-        final String[] strings = exceptionCheckString.split(",");
-        for(String string : strings){
-            exceptionsList.add(string);
+        synchronized(lock){
+            exceptionsList.clear();
+            final String[] strings = exceptionCheckString.split(",");
+            for(String string : strings){
+                exceptionsList.add(string);
+            }
         }
     }
 
@@ -55,15 +58,16 @@ public class BadExceptionDeclaredInspection extends MethodInspection{
 
     private void formatCallCheckString(){
         final StringBuffer buffer = new StringBuffer();
-        boolean first = true;
-        for(Object aExceptionsList : exceptionsList){
-            if(first){
-                first = false;
-            } else{
-                buffer.append(',');
+        synchronized(lock){
+            boolean first = true;
+            for(String exceptionName : exceptionsList){
+                if(first){
+                    first = false;
+                } else{
+                    buffer.append(',');
+                }
+                buffer.append(exceptionName);
             }
-            final String exceptionName = (String) aExceptionsList;
-            buffer.append(exceptionName);
         }
         exceptionCheckString = buffer.toString();
     }
@@ -110,7 +114,13 @@ public class BadExceptionDeclaredInspection extends MethodInspection{
                 if(thrownClass != null){
                     final String text = thrownClass.getQualifiedName();
                     if(text != null){
-                        for(Object aExceptionsList : exceptionsList){
+
+                        final List<String> exceptionListCopy;
+                        synchronized(lock){
+                            exceptionListCopy = new ArrayList<String>(
+                                    exceptionsList);
+                        }
+                        for(Object aExceptionsList : exceptionListCopy){
                             final String exceptionClass = (String) aExceptionsList;
                             if(text.equals(exceptionClass)){
                                 registerError(reference);
@@ -144,7 +154,9 @@ public class BadExceptionDeclaredInspection extends MethodInspection{
             addButton.setEnabled(true);
             addButton.addActionListener(new ActionListener(){
                 public void actionPerformed(ActionEvent e){
-                    exceptionsList.add("");
+                    synchronized(lock){
+                        exceptionsList.add("");
+                    }
                     model.fireTableStructureChanged();
                 }
             });
@@ -153,8 +165,10 @@ public class BadExceptionDeclaredInspection extends MethodInspection{
                 public void actionPerformed(ActionEvent e){
                     final int[] selectedRows = table.getSelectedRows();
                     Arrays.sort(selectedRows);
-                    for(int i = selectedRows.length - 1; i >= 0; i--){
-                        exceptionsList.remove(selectedRows[i]);
+                    synchronized(lock){
+                        for(int i = selectedRows.length - 1; i >= 0; i--){
+                            exceptionsList.remove(selectedRows[i]);
+                        }
                     }
                     model.fireTableStructureChanged();
                 }
@@ -168,7 +182,9 @@ public class BadExceptionDeclaredInspection extends MethodInspection{
 
     private class ReturnCheckSpecificationTableModel extends AbstractTableModel{
         public int getRowCount(){
-            return exceptionsList.size();
+            synchronized(lock){
+                return exceptionsList.size();
+            }
         }
 
         public int getColumnCount(){
@@ -188,11 +204,15 @@ public class BadExceptionDeclaredInspection extends MethodInspection{
         }
 
         public Object getValueAt(int rowIndex, int columnIndex){
-            return exceptionsList.get(rowIndex);
+            synchronized(lock){
+                return exceptionsList.get(rowIndex);
+            }
         }
 
         public void setValueAt(Object aValue, int rowIndex, int columnIndex){
-            exceptionsList.set(rowIndex, aValue);
+            synchronized(lock){
+                exceptionsList.set(rowIndex, (String) aValue);
+            }
         }
     }
 }
