@@ -1,15 +1,20 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.psi.xml.XmlText;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -79,9 +84,32 @@ class TagNameReference implements PsiReference {
     final List<XmlElementDescriptor> variants = new ArrayList<XmlElementDescriptor>();
     final XmlTag element = getElement();
     if(!myStartTagFlag){
+      XmlTag fromJspTree = null;
+      final PsiFile containingFile = element.getContainingFile();
+      if(containingFile.getLanguage() == StdLanguages.JSP){
+        final JspFile jspFile = (JspFile)containingFile;
+        final int startOffset = element.getTextRange().getStartOffset() + getRangeInElement().getStartOffset();
+        PsiElement current = jspFile.getDocument().findElementAt(startOffset);
+        if(current != element && (current = PsiTreeUtil.getParentOfType(current, XmlText.class)) != null) {
+          fromJspTree = ((XmlText)current).getParentTag();
+
+          while ((current = current.getPrevSibling()) != null) {
+            if (current instanceof XmlTag) {
+              final XmlTag xmlTag = (XmlTag)current;
+
+              if (!xmlTag.isEmpty() && XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(xmlTag.getNode()) == null) {
+                fromJspTree = xmlTag;
+                break;
+              }
+            }
+          }
+        }
+      }
       final String name = element.getName();
-      if(name == null) return new Object[0];
-      return new Object[]{name};
+      if(name == null && fromJspTree == null) return new Object[0];
+      if(fromJspTree == null) return new Object[]{name};
+      if(name != null) return new Object[]{name, fromJspTree.getName()};
+      if(name != null) return new Object[]{fromJspTree.getName()};
     }
     final Map<String, XmlElementDescriptor> descriptorsMap = new HashMap<String, XmlElementDescriptor>();
 
