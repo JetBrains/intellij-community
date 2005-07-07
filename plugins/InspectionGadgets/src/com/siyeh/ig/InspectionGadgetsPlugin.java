@@ -69,7 +69,6 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     private static final boolean TELEMETRY_ENABLED = false;
 
     public static void main(String[] args) {
-        final InspectionGadgetsPlugin plugin = new InspectionGadgetsPlugin();
         final PrintStream out;
         if (args.length == 0) {
             out = System.out;
@@ -82,6 +81,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
             }
             out = new PrintStream(stream);
         }
+        final InspectionGadgetsPlugin plugin=new InspectionGadgetsPlugin();
         plugin.createDocumentation(out);
     }
 

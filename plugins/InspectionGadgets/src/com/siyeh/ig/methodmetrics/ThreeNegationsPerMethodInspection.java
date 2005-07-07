@@ -34,8 +34,8 @@ public class ThreeNegationsPerMethodInspection extends MethodInspection {
 
     public String buildErrorString(PsiElement location) {
         final PsiMethod method = (PsiMethod) location.getParent();
-        final NegationCountVisitor visitor = new NegationCountVisitor();
         assert method != null;
+        final NegationCountVisitor visitor=new NegationCountVisitor();
         method.accept(visitor);
         final int negationCount = visitor.getCount();
         return "#ref contains " + negationCount + " negations #loc";

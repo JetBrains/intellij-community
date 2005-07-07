@@ -29,8 +29,8 @@ public class CyclomaticComplexityInspection
 
     public String buildErrorString(PsiElement location) {
         final PsiMethod method = (PsiMethod) location.getParent();
-        final CyclomaticComplexityVisitor visitor = new CyclomaticComplexityVisitor();
         assert method != null;
+        final CyclomaticComplexityVisitor visitor=new CyclomaticComplexityVisitor();
         method.accept(visitor);
         final int coupling = visitor.getComplexity();
         return "#ref is overly complex (cyclomatic complexity = " + coupling + ") #loc";

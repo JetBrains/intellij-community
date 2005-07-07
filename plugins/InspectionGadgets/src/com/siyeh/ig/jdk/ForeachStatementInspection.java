@@ -42,10 +42,10 @@ public class ForeachStatementInspection extends StatementInspection{
                     (PsiForeachStatement) descriptor.getPsiElement()
                             .getParent();
 
-            final StringBuffer newStatement = new StringBuffer();
             final CodeStyleManager codeStyleManager =
                     CodeStyleManager.getInstance(project);
             assert statement != null;
+            final StringBuffer newStatement=new StringBuffer();
             final PsiExpression iteratedValue = statement.getIteratedValue();
             if(iteratedValue.getType() instanceof PsiArrayType){
                 final String index = codeStyleManager.suggestUniqueVariableName("i",

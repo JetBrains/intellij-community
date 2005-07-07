@@ -19,8 +19,8 @@ public class MethodWithMultipleLoopsInspection extends MethodInspection {
 
     public String buildErrorString(PsiElement location) {
         final PsiMethod method = (PsiMethod) location.getParent();
-        final LoopCountVisitor visitor = new LoopCountVisitor();
         assert method != null;
+        final LoopCountVisitor visitor=new LoopCountVisitor();
         method.accept(visitor);
         final int negationCount = visitor.getCount();
         return "#ref contains " + negationCount + " loops #loc";

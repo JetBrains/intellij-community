@@ -117,8 +117,8 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor{
                 new HashSet<PsiMethod>(usedMethods);
         boolean stabilized = false;
         while(!stabilized){
-            final Set<PsiMethod> methodsDeterminedThisPass = new HashSet<PsiMethod>();
             stabilized = true;
+            final Set<PsiMethod> methodsDeterminedThisPass=new HashSet<PsiMethod>();
             for(PsiMethod method : remainingMethods){
                 final PsiReference[] references = referenceMap.get(method);
                 boolean areAllReferencesSynchronized = true;
@@ -154,8 +154,8 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor{
                 privateMethods);
         boolean stabilized = false;
         while(!stabilized){
-            final Set<PsiMethod> methodsDeterminedThisPass = new HashSet<PsiMethod>();
             stabilized = true;
+            final Set<PsiMethod> methodsDeterminedThisPass=new HashSet<PsiMethod>();
             for(PsiMethod method : remainingMethods){
                 final PsiReference[] references = referenceMap.get(method);
                 for(PsiReference reference : references){

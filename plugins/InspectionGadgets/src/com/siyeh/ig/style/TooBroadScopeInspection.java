@@ -18,11 +18,16 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.JComponent;
+
 public class TooBroadScopeInspection extends StatementInspection
 {
+	/** @noinspection PublicField for externalization*/
+	public boolean m_allowConstructorAsInitializer = false;
 
     public String getID()
     {
@@ -36,10 +41,20 @@ public class TooBroadScopeInspection extends StatementInspection
 
     public String getGroupDisplayName()
     {
-        return GroupNames.STYLE_GROUP_NAME;
+        return GroupNames.DATA_FLOW_ISSUES;
     }
 
     @Nullable
+	public JComponent createOptionsPanel() {
+		// html allows text to wrap
+		return new SingleCheckboxOptionsPanel(
+				"<html>Allow initializer of variables to construct objects. Potentially " +
+				"unsafe: quick fix may modify semantics if the constructor has " +
+				"non-local side-effects.</html>",
+				this, "m_allowConstructorAsInitializer");
+	}
+
+	@Nullable
     protected String buildErrorString(PsiElement location)
     {
         return "Scope of variable '#ref' is too broad #loc";
@@ -255,7 +270,7 @@ public class TooBroadScopeInspection extends StatementInspection
         return new TooBroadScopeVisitor();
     }
 
-    private static class TooBroadScopeVisitor extends StatementInspectionVisitor
+	private class TooBroadScopeVisitor extends StatementInspectionVisitor
     {
 
         public void visitVariable(@NotNull PsiVariable variable)
@@ -266,8 +281,8 @@ public class TooBroadScopeInspection extends StatementInspection
                 return;
             }
             final PsiExpression initializer = variable.getInitializer();
-            if (initializer != null && !PsiUtil.isConstantExpression(initializer))
-            {
+			if (!isMoveable(initializer))
+			{
                 return;
             }
             final PsiElement variableScope =
@@ -346,5 +361,52 @@ public class TooBroadScopeInspection extends StatementInspection
             }
             registerVariableError(variable);
         }
+
+		private boolean isMoveable(PsiExpression expression)
+		{
+			if (expression == null)
+			{
+				return true;
     }
+			if (PsiUtil.isConstantExpression(expression))
+			{
+				return true;
+}			if (expression instanceof PsiNewExpression)
+			{
+				final PsiNewExpression newExpression = (PsiNewExpression)expression;
+				if (newExpression.getArrayDimensions().length > 0)
+				{
+					return true;
+				}
+				final PsiArrayInitializerExpression arrayInitializer =
+						newExpression.getArrayInitializer();
+				boolean result = true;
+				if (arrayInitializer != null)
+				{
+					final PsiExpression[] initializers = arrayInitializer.getInitializers();
+					for (final PsiExpression initializerExpression : initializers)
+					{
+						result &= isMoveable(initializerExpression);
+					}
+				}
+				else if (!m_allowConstructorAsInitializer)
+				{
+					return false;
+				}
+
+				final PsiExpressionList argumentList = newExpression.getArgumentList();
+				if (argumentList == null)
+				{
+					return result;
+				}
+				final PsiExpression[] expressions = argumentList.getExpressions();
+				for (final PsiExpression argumentExpression : expressions)
+				{
+					result &= isMoveable(argumentExpression);
+				}
+				return result;
+			}
+			return false;
+		}
+	}
 }

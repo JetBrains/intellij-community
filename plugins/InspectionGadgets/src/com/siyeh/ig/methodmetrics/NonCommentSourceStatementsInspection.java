@@ -30,8 +30,8 @@ public class NonCommentSourceStatementsInspection extends MethodMetricInspection
 
     public String buildErrorString(PsiElement location) {
         final PsiMethod method = (PsiMethod) location.getParent();
-        final NCSSVisitor visitor = new NCSSVisitor();
         assert method != null;
+        final NCSSVisitor visitor=new NCSSVisitor();
         method.accept(visitor);
         final int statementCount = visitor.getStatementCount();
         return "#ref is too long (# Non-comment source statements = " + statementCount + ") #loc";

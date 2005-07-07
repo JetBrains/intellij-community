@@ -46,7 +46,6 @@ public class ClassCouplingInspection
 
 
     public JComponent createOptionsPanel() {
-        final JPanel panel = new JPanel(new GridBagLayout());
         final String configurationLabel = getConfigurationLabel();
         final JLabel label = new JLabel(configurationLabel);
         final NumberFormat formatter = NumberFormat.getIntegerInstance();
@@ -80,6 +79,7 @@ public class ClassCouplingInspection
         constraints.weightx = 1.0;
         constraints.anchor = GridBagConstraints.WEST;
         constraints.fill = GridBagConstraints.NONE;
+        final JPanel panel=new JPanel(new GridBagLayout());
         panel.add(label, constraints);
         constraints.gridx = 1;
         constraints.gridy = 0;

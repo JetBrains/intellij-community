@@ -78,9 +78,9 @@ public class TailRecursionInspection extends ExpressionInspection{
                     psiManager.getCodeStyleManager();
 
             final PsiElement[] children = body.getChildren();
-            final StringBuffer buffer = new StringBuffer();
             final boolean[] containedTailCallInLoop = new boolean[1];
             containedTailCallInLoop[0] = false;
+            final StringBuffer buffer=new StringBuffer();
             for(int i = 1; i < children.length; i++){
                 replaceTailCalls(children[i], method, buffer,
                                  containedTailCallInLoop);

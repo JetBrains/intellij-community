@@ -37,12 +37,12 @@ public class SwitchStatementWithConfusingDeclarationInspection
 
 
         public void visitSwitchStatement(@NotNull PsiSwitchStatement statement){
-            final Set<PsiLocalVariable> variablesInCurrentBranch = new HashSet<PsiLocalVariable>(10);
-            final Set<PsiLocalVariable> variablesInPreviousBranches = new HashSet<PsiLocalVariable>(10);
             final PsiCodeBlock body = statement.getBody();
             if(body == null){
                 return;
             }
+            final Set<PsiLocalVariable> variablesInPreviousBranches=new HashSet<PsiLocalVariable>(10);
+            final Set<PsiLocalVariable> variablesInCurrentBranch=new HashSet<PsiLocalVariable>(10);
             final PsiStatement[] statements = body.getStatements();
             for(final PsiStatement child : statements){
                 if(child instanceof PsiDeclarationStatement){

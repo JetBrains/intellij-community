@@ -24,11 +24,11 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.VERBOSE_GROUP_NAME;
+        return GroupNames.DATA_FLOW_ISSUES;
     }
 
     public JComponent createOptionsPanel(){
-        return new SingleCheckboxOptionsPanel("Ignore immediately returned variables",
+        return new SingleCheckboxOptionsPanel("Ignore immediately returned or thrown variables",
                                               this, "m_ignoreImmediatelyReturnedVariables");
     }
     public boolean isEnabledByDefault(){
@@ -60,7 +60,8 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
             } else if (!m_ignoreImmediatelyReturnedVariables &&
                                isImmediatelyReturned(variable)) {
                 registerVariableError(variable);
-            } else if (isImmediatelyThrown(variable)) {
+            } else if (!m_ignoreImmediatelyReturnedVariables &&
+                    isImmediatelyThrown(variable)) {
                 registerVariableError(variable);
             } else if (isImmediatelyAssigned(variable)) {
                 registerVariableError(variable);

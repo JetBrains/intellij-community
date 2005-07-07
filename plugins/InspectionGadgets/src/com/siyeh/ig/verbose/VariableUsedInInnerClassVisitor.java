@@ -3,13 +3,13 @@ package com.siyeh.ig.verbose;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class VariableUsedInInnerClassVisitor extends PsiRecursiveElementVisitor
+ class VariableUsedInInnerClassVisitor extends PsiRecursiveElementVisitor
 {
     private final PsiVariable variable;
     private boolean usedInInnerClass = false;
     private boolean inInnerClass = false;
 
-    public VariableUsedInInnerClassVisitor(PsiVariable variable)
+    VariableUsedInInnerClassVisitor(PsiVariable variable)
     {
         super();
         this.variable = variable;

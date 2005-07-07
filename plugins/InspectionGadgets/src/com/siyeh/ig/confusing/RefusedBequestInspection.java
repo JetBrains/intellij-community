@@ -13,7 +13,7 @@ public class RefusedBequestInspection extends MethodInspection{
     }
 
     public String getGroupDisplayName(){
-        return GroupNames.CONFUSING_GROUP_NAME;
+        return GroupNames.INHERITANCE_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location){

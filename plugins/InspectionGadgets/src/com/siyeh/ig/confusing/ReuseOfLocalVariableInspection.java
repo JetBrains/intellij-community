@@ -29,7 +29,7 @@ public class ReuseOfLocalVariableInspection
     }
 
     public String getGroupDisplayName(){
-        return GroupNames.ASSIGNMENT_GROUP_NAME;
+        return GroupNames.DATA_FLOW_ISSUES;
     }
 
     public String buildErrorString(PsiElement location){
