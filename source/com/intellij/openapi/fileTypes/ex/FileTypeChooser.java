@@ -16,6 +16,8 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
+import java.util.Comparator;
 
 public class FileTypeChooser extends DialogWrapper{
   private DefaultListModel myModel = new DefaultListModel();
@@ -27,6 +29,17 @@ public class FileTypeChooser extends DialogWrapper{
     myExtension=extension;
 
     FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
+    Arrays.sort(fileTypes, new Comparator<FileType>() {
+      public int compare(final FileType fileType1, final FileType fileType2) {
+        if (fileType1 == null){
+          return 1;
+        }
+        if (fileType2 == null){
+          return -1;
+        }
+        return fileType1.getDescription().compareToIgnoreCase(fileType2.getDescription());  
+      }
+    });
     for(int i = 0; i < fileTypes.length; i++){
       FileType type = fileTypes[i];
       if (!type.isBinary() && !type.isReadOnly()) {
