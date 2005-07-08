@@ -276,10 +276,9 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
         if (name == null || name.length() ==0){
           name = location;
         }
-        return Pair.create(location, name);
       }
     }
-    return null;
+    return Pair.create(location, name);
   }
 
   private static class LogFileCellEditor extends AbstractTableCellEditor {
