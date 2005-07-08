@@ -35,9 +35,12 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.PsiElement;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.ArrayList;
 
 public class XmlFileTreeElement extends PsiTreeElementBase<XmlFile> {
   public XmlFileTreeElement(XmlFile file) {
@@ -47,7 +50,15 @@ public class XmlFileTreeElement extends PsiTreeElementBase<XmlFile> {
   public Collection<StructureViewTreeElement> getChildrenBase() {
     XmlDocument document = getElement().getDocument();
     if (document != null && document.getRootTag() != null) {
-      return Collections.<StructureViewTreeElement>singletonList(new XmlTagTreeElement(document.getRootTag()));
+      Collection<StructureViewTreeElement> rootTags = new ArrayList<StructureViewTreeElement>();
+      PsiElement[] children = document.getChildren();
+      for (PsiElement element : children) {
+       if (element instanceof XmlTag) {
+         XmlTag tag = (XmlTag)element;
+         rootTags.add(new XmlTagTreeElement(tag));
+       }
+      }
+      return rootTags;
     }
     return Collections.EMPTY_LIST;
   }
