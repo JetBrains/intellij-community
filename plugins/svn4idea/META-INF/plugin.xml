@@ -37,6 +37,14 @@
 
   <actions>
 
+      <group id="SubversionFileGroup" text="CVS">
+        <separator/>
+        <add-to-group group-id="FileMenu" anchor="before" relative-to-action="ExportToHTML"/>
+        <action id="Subversion.BrowseSVNRepository" class="com.qintsoft.svn4idea.actions.BrowseRepositoryAction" text="Browse S_VN Repository..."
+          description="Browse a Subversion repository"/>
+        <separator/>
+      </group>
+
     <group id="SubversionFilePopupGroup" popup="true" text="_Subversion" class="com.qintsoft.svn4idea.actions.SubversionGroup">
       <add-to-group group-id="VcsGroup" anchor="last"/>
       <add-to-group group-id="VcsGroups" anchor="last"/>      
