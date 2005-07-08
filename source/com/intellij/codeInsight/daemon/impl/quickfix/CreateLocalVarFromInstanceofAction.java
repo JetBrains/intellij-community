@@ -194,8 +194,9 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
           anchorAfter = ifStatement;
         }
         else if (!(elseBranch instanceof PsiBlockStatement)) {
-          emptyBlockStatement.add(elseBranch);
+          emptyBlockStatement.getCodeBlock().add(elseBranch);
           PsiBlockStatement newBranch = (PsiBlockStatement)elseBranch.replace(emptyBlockStatement);
+          reformatNewCodeBlockBraces(ifStatement.getElseElement(), newBranch);
           anchorAfter = newBranch.getCodeBlock().getLBrace();
         }
         else {
@@ -206,11 +207,14 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
         PsiStatement thenBranch = ifStatement.getThenBranch();
         if (thenBranch == null) {
           ifStatement.setThenBranch(emptyBlockStatement);
-          anchorAfter = ((PsiBlockStatement)ifStatement.getThenBranch()).getCodeBlock().getLBrace();
+          PsiBlockStatement then = (PsiBlockStatement)ifStatement.getThenBranch();
+          reformatNewCodeBlockBraces(ifStatement.getCondition(), then);
+          anchorAfter = then.getCodeBlock().getLBrace();
         }
         else if (!(thenBranch instanceof PsiBlockStatement)) {
-          emptyBlockStatement.add(thenBranch);
+          emptyBlockStatement.getCodeBlock().add(thenBranch);
           PsiBlockStatement newBranch = (PsiBlockStatement)thenBranch.replace(emptyBlockStatement);
+          reformatNewCodeBlockBraces(ifStatement.getCondition(), newBranch);
           anchorAfter = newBranch.getCodeBlock().getLBrace();
         }
         else {
@@ -235,7 +239,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
           whileStatement.add(emptyBlockStatement);
         }
         else if (!(body instanceof PsiBlockStatement)) {
-          emptyBlockStatement.add(body);
+          emptyBlockStatement.getCodeBlock().add(body);
           whileStatement.getBody().replace(emptyBlockStatement);
         }
         anchorAfter = ((PsiBlockStatement)whileStatement.getBody()).getCodeBlock().getLBrace();
@@ -245,6 +249,13 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
       return null;
     }
     return (PsiDeclarationStatement)anchorAfter.getParent().addAfter(toInsert, anchorAfter);
+  }
+
+  private static void reformatNewCodeBlockBraces(final PsiElement start, final PsiBlockStatement end)
+    throws IncorrectOperationException {
+    CodeStyleManager.getInstance(end.getProject()).reformatRange(end.getContainingFile(),
+                                                                 start.getTextRange().getEndOffset(),
+                                                                 end.getTextRange().getStartOffset());
   }
 
   private static boolean isNegated(final PsiInstanceOfExpression instanceOfExpression) {
