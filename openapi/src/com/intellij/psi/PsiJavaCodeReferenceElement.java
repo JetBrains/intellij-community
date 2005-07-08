@@ -13,7 +13,7 @@ public interface PsiJavaCodeReferenceElement extends PsiElement, PsiJavaReferenc
   @Nullable
   PsiElement getReferenceNameElement();
 
-  @NotNull
+  @Nullable
   PsiReferenceParameterList getParameterList();
 
   @NotNull
