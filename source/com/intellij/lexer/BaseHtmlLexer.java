@@ -112,6 +112,7 @@ abstract class BaseHtmlLexer extends LexerBase {
     public void handleElement(Lexer lexer) {
       seenStyle=false;
       seenScript=false;
+      seenAttribute=false;
     }
   }
 
@@ -126,6 +127,7 @@ abstract class BaseHtmlLexer extends LexerBase {
     tokenHandlers.put(XmlTokenType.XML_TAG_NAME,value);
     tokenHandlers.put(XmlTokenType.XML_TAG_END,new XmlTagClosedHandler());
     tokenHandlers.put(XmlTokenType.XML_END_TAG_START,new XmlTagEndHandler());
+    tokenHandlers.put(XmlTokenType.XML_EMPTY_ELEMENT_END,new XmlTagEndHandler());
     tokenHandlers.put(XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER,new XmlAttributeValueEndHandler());
   }
 
