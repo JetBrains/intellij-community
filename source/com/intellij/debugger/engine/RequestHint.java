@@ -106,16 +106,18 @@ class RequestHint {
           return true;
         }
 
-        int frameCount = -1;
-        if (context.getFrameProxy() != null) {
-          try {
-            frameCount = context.getFrameProxy().threadProxy().frameCount();
+        if (myDepth == StepRequest.STEP_OVER || myDepth == StepRequest.STEP_INTO) {
+          int frameCount = -1;
+          if (context.getFrameProxy() != null) {
+            try {
+              frameCount = context.getFrameProxy().threadProxy().frameCount();
+            }
+            catch (EvaluateException e) {
+            }
           }
-          catch (EvaluateException e) {
+          if (myPosition.getFile().equals(locationPosition.getFile()) && myPosition.getLine() == locationPosition.getLine() && myFrameCount == frameCount) {
+            return true;
           }
-        }
-        if (myPosition.getFile().equals(locationPosition.getFile()) && myPosition.getLine() == locationPosition.getLine() && myFrameCount == frameCount) {
-          return true;
         }
       }
       // the rest of the code makes sence for depth == STEP_INTO only

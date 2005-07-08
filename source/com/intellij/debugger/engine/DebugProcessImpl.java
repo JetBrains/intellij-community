@@ -1308,7 +1308,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
     public void contextAction() {
       showStatusText("Stepping out");
       final SuspendContextImpl suspendContext = getSuspendContext();
-      doStep(suspendContext.getThread(), StepRequest.STEP_OUT, null);
+      final ThreadReferenceProxyImpl thread = suspendContext.getThread();
+      RequestHint hint = new RequestHint(thread, suspendContext, StepRequest.STEP_OUT);
+      doStep(thread, StepRequest.STEP_OUT, hint);
       super.contextAction();
     }
   }
@@ -1345,7 +1347,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       final SuspendContextImpl suspendContext = getSuspendContext();
       final ThreadReferenceProxyImpl steppingThread = suspendContext.getThread();
       // need this hint whil stepping over for JSR45 support:
-      // several lines of generated java code may sorrespond to a single line in the source file, 
+      // several lines of generated java code may correspond to a single line in the source file,
       // from which the java code was generated
       RequestHint hint = new RequestHint(steppingThread, suspendContext, StepRequest.STEP_OVER);
       hint.setRestoreBreakpoints(myIsIgnoreBreakpoints);
