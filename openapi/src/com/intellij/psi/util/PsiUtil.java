@@ -226,7 +226,7 @@ public final class PsiUtil {
   }
 
   public static void updatePackageStatement(PsiFile file) throws IncorrectOperationException {
-    if (!(file instanceof PsiJavaFile)) return;
+    if (!(file instanceof PsiJavaFile) || file instanceof JspFile) return;
 
     PsiManager manager = file.getManager();
     PsiElementFactory factory = manager.getElementFactory();
