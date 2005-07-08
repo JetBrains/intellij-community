@@ -77,7 +77,7 @@ public class LvcsConfigurable extends BaseConfigurable implements ApplicationCom
 
     myFieldHistoryLength = new JTextField();
 
-    myHistoryLengthLabel = new JLabel("Keep local history for (days) ");
+    myHistoryLengthLabel = new JLabel("Keep local history for (active working days) ");
     myHistoryLengthLabel.setDisplayedMnemonic('H');
     myHistoryLengthLabel.setLabelFor(myFieldHistoryLength);
     historyPanel.add(myHistoryLengthLabel);
