@@ -158,7 +158,7 @@ public class JavaSdkImpl extends JavaSdk {
     final File jdkHome = new File(sdk.getHomePath());
     VirtualFile[] classes = findClasses(jdkHome, false, JarFileSystem.getInstance());
     VirtualFile sources = findSources(jdkHome);
-    VirtualFile docs = findDocs(jdkHome);
+    VirtualFile docs = findDocs(jdkHome, "docs/api");
 
     final SdkModificator sdkModificator = sdk.getSdkModificator();
     for (VirtualFile aClass : classes) {
@@ -171,11 +171,20 @@ public class JavaSdkImpl extends JavaSdk {
       sdkModificator.addRoot(docs, ProjectRootType.JAVADOC);
     }
     else if (SystemInfo.isMac) {
-      VirtualFile commonDocs = findInJar(new File(jdkHome, "docs.jar"), "doc/api");
+      VirtualFile commonDocs;
+      commonDocs = findDocs(jdkHome, "docs");
+      if (commonDocs == null) {
+        commonDocs = findInJar(new File(jdkHome, "docs.jar"), "doc/api");
+      }
       if (commonDocs != null) {
         sdkModificator.addRoot(commonDocs, ProjectRootType.JAVADOC);
       }
-      VirtualFile appleDocs = findInJar(new File(jdkHome, "appledocs.jar"), "appledoc/api");
+
+      VirtualFile appleDocs;
+      appleDocs = findDocs(jdkHome, "appledocs");
+      if (appleDocs == null) {
+        appleDocs = findInJar(new File(jdkHome, "appledocs.jar"), "appledoc/api");
+      }
       if (appleDocs != null) {
         sdkModificator.addRoot(appleDocs, ProjectRootType.JAVADOC);
       }
@@ -379,7 +388,7 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   private static void addDocs(File file, SdkModificator rootContainer) {
-    VirtualFile vFile = findDocs(file);
+    VirtualFile vFile = findDocs(file, "docs/api");
     if (vFile != null) {
       rootContainer.addRoot(vFile, ProjectRootType.JAVADOC);
     }
@@ -393,8 +402,8 @@ public class JavaSdkImpl extends JavaSdk {
     return jarFileSystem.findFileByPath(path);
   }
 
-  public static VirtualFile findDocs(File file) {
-    file = new File(file.getAbsolutePath() + File.separator + "docs" + File.separator + "api");
+  public static VirtualFile findDocs(File file, final String relativePath) {
+    file = new File(file.getAbsolutePath() + File.separator + relativePath.replace('/', File.separatorChar));
     if (!file.exists() || !file.isDirectory()) return null;
     String path = file.getAbsolutePath().replace(File.separatorChar, '/');
     VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(path);
