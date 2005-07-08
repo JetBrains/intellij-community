@@ -166,8 +166,8 @@ public class XmlCompletionData extends CompletionData {
       final CharSequence chars = document.getCharsSequence();
       if (!CharArrayUtil.regionMatches(chars, caretOffset, "=\"") &&
           !CharArrayUtil.regionMatches(chars, caretOffset, "='")) {
-
-        document.insertString(caretOffset, "=\"\"");
+        if(document.getCharsSequence().charAt(caretOffset) != '>') document.insertString(caretOffset, "=\"\" ");
+        else document.insertString(caretOffset, "=\"\"");
       }
 
       editor.getCaretModel().moveToOffset(caretOffset + 2);
