@@ -556,18 +556,25 @@ public class StructuralSearchTest extends IdeaTestCase {
                 "int b[] = { 2,3,4,5 };\n" +
                 "Object[] c = new Object[] { \"\", null};";
     String s10 = "new '_ []{ '_* }";
+    String s10_2 = "new int []{ '_* }";
     
-    //assertEquals(
-    //  "Find array instatiation",
-    //  2,
-    //  findMatchesCount(s9,s10)
-    //);
+    assertEquals(
+      "Find array instatiation",
+      3,
+      findMatchesCount(s9,s10)
+    );
     
-    String s11 = "class A {\n" +
-                 "  void main(String[] argv);" +
-                 "}";
-    String s12 = "'t:[regex( *Object\\[\\] ) ] 't2";
+    assertEquals(
+      "Find array instatiation, 2",
+      2,
+      findMatchesCount(s9,s10_2)
+    );
     
+    //String s11 = "class A {\n" +
+    //             "  void main(String[] argv);" +
+    //             "}";
+    //String s12 = "'t:[regex( *Object\\[\\] ) ] 't2";
+    //
     //assertEquals(
     //  "Find array covariant types",
     //  1,
@@ -760,6 +767,14 @@ public class StructuralSearchTest extends IdeaTestCase {
     //  2,
     //  findMatchesCount(s10031,s10032)
     //);
+    
+    String s10033 = "return x;\n" +
+                    "return !x;\n" +
+                    "return (x);\n" +
+                    "return (x);\n" +
+                    "return !(x);";
+    String s10034 = "return ('a);";
+    assertEquals("Find statement with parethesized expr",2,findMatchesCount(s10033,s10034));
   }
 
   public void testSearchClass() {

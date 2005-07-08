@@ -1,6 +1,7 @@
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.psi.javadoc.*;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
@@ -775,7 +776,11 @@ public class MatchingVisitor extends PsiElementVisitor {
   }
 
   public void visitParenthesizedExpression(PsiParenthesizedExpression expr) {
-    result = matchSons(expr,element);
+    if (element instanceof PsiParenthesizedExpression) { 
+      result = matchSons(expr,element);
+    } else {
+      result = false;
+    }
   }
 
   public void visitTryStatement(final PsiTryStatement try1) {
@@ -1223,37 +1228,77 @@ public class MatchingVisitor extends PsiElementVisitor {
   }
 
   public void visitNewExpression(final PsiNewExpression new1) {
+    if (element instanceof PsiArrayInitializerExpression &&
+        element.getParent() instanceof PsiVariable &&
+        new1.getArrayDimensions().length == 0 &&
+        new1.getArrayInitializer() != null
+       ) {
+      result = match(new1.getClassReference(),((PsiVariable)element.getParent()).getTypeElement()); 
+        matchSons(new1.getArrayInitializer(),element);
+      return;
+    }
+    
     final PsiNewExpression new2 = (PsiNewExpression) element;
 
-    if (new1.getClassReference() != null && new2.getClassReference() != null) {
-      result = match(new1.getClassReference(),new2.getClassReference()) &&
-        matchSons(new1.getArrayInitializer(),new2.getArrayInitializer());
-
-      if (result) {
-        // matching dims
-        final PsiExpression[] arrayDims = new1.getArrayDimensions();
-        final PsiExpression[] arrayDims2 = new2.getArrayDimensions();
-
-        if (arrayDims!=null && arrayDims2!=null && arrayDims.length == arrayDims2.length && arrayDims.length != 0) {
-          for(int i = 0; i < arrayDims.length; ++i) {
-            result = match(arrayDims[i],arrayDims2[i]);
-            if (!result) return;
+    if (new1.getClassReference() != null) {
+      if (new2.getClassReference() != null) {
+        result = match(new1.getClassReference(),new2.getClassReference()) &&
+          matchSons(new1.getArrayInitializer(),new2.getArrayInitializer());
+  
+        if (result) {
+          // matching dims
+          matchArrayDims(new1, new2);
+        }
+        return;
+      } else {
+        // match array of primitive by new 'T();
+        final PsiKeyword newKeyword = PsiTreeUtil.getChildOfType(new2, PsiKeyword.class);
+        final PsiElement element = PsiTreeUtil.getNextSiblingOfType(newKeyword, PsiWhiteSpace.class);
+        
+        if (element != null && element.getNextSibling() instanceof PsiKeyword) {
+          ((LexicalNodesFilter)LexicalNodesFilter.getInstance()).setCareKeyWords(true);
+          
+          result = match(new1.getClassReference(),element.getNextSibling()) &&
+            matchSons(new1.getArrayInitializer(),new2.getArrayInitializer());
+          
+          ((LexicalNodesFilter)LexicalNodesFilter.getInstance()).setCareKeyWords(false);
+          if (result) {
+            // matching dims
+            matchArrayDims(new1, new2);
           }
-        } else {
-          result = (arrayDims == arrayDims2) && matchSons(new1.getArgumentList(),new2.getArgumentList());
+         
+          return;
         }
       }
-    } else if (new1.getClassReference() == new2.getClassReference()) {
+    } 
+    
+    if (new1.getClassReference() == new2.getClassReference()) {
       // probably anonymous class or array of primitive type
       ((LexicalNodesFilter)LexicalNodesFilter.getInstance()).setCareKeyWords(true);
       result = matchSons(new1,new2);
       ((LexicalNodesFilter)LexicalNodesFilter.getInstance()).setCareKeyWords(false);
-    } else if (new1.getAnonymousClass()==null && new1.getClassReference()!=null && new2.getAnonymousClass()!=null) {
+    } else if (new1.getAnonymousClass()==null && 
+               new1.getClassReference()!=null && 
+               new2.getAnonymousClass()!=null) {
       // allow matching anonymous class without pattern
       result = match(new1.getClassReference(),new2.getAnonymousClass().getBaseClassReference()) &&
                matchSons(new1.getArgumentList(),new2.getArgumentList());
     } else {
       result = false;
+    }
+  }
+
+  private void matchArrayDims(final PsiNewExpression new1, final PsiNewExpression new2) {
+    final PsiExpression[] arrayDims = new1.getArrayDimensions();
+    final PsiExpression[] arrayDims2 = new2.getArrayDimensions();
+
+    if (arrayDims!=null && arrayDims2!=null && arrayDims.length == arrayDims2.length && arrayDims.length != 0) {
+      for(int i = 0; i < arrayDims.length; ++i) {
+        result = match(arrayDims[i],arrayDims2[i]);
+        if (!result) return;
+      }
+    } else {
+      result = (arrayDims == arrayDims2) && matchSons(new1.getArgumentList(),new2.getArgumentList());
     }
   }
 
