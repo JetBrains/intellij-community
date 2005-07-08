@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
@@ -147,7 +148,25 @@ public class TreeModelBuilder {
     Set<VirtualFile> roots = new HashSet<VirtualFile>();
     final Module[] modules = ModuleManager.getInstance(project).getModules();
     for (Module module : modules) {
-      roots.addAll(Arrays.asList(ModuleRootManager.getInstance(module).getFiles(OrderRootType.SOURCES)));
+      final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+      roots.addAll(Arrays.asList(moduleRootManager.getFiles(OrderRootType.SOURCES)));
+      final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
+      for (OrderEntry entry : orderEntries) {
+        if (entry instanceof LibraryOrderEntry){
+          final Library library = ((LibraryOrderEntry)entry).getLibrary();
+          VirtualFile[] files = library.getFiles(OrderRootType.SOURCES);
+          if (files == null || files.length == 0){
+            files = library.getFiles(OrderRootType.CLASSES);
+          }
+          roots.addAll(Arrays.asList(files));
+        } else if (entry instanceof JdkOrderEntry){
+          VirtualFile[] files = entry.getFiles(OrderRootType.SOURCES);
+          if (files == null || files.length == 0){
+            files = entry.getFiles(OrderRootType.CLASSES);
+          }
+          roots.addAll(Arrays.asList(files));
+        }
+      }
     }
     return roots.toArray(new VirtualFile[roots.size()]);
   }
@@ -212,8 +231,11 @@ public class TreeModelBuilder {
         processFilesRecursively(aChildren, psiManager);
       }
     }
-    else if (myFileIndex.isInLibrarySource(file) && myFileIndex.isJavaSourceFile(file)) {
-      buildFileNode(psiManager.findFile(file));
+    else if (myFileIndex.isInLibrarySource(file) && myFileIndex.isJavaSourceFile(file) || myFileIndex.isLibraryClassFile(file)) {
+      final PsiFile psiFile = psiManager.findFile(file);
+      if (psiFile != null) { // skip inners & anonymous
+        buildFileNode(psiFile);
+      }
     }
   }
 
@@ -224,7 +246,7 @@ public class TreeModelBuilder {
         countFilesRecursively(aChildren);
       }
     }
-    else if (myFileIndex.isInLibrarySource(file) && myFileIndex.isJavaSourceFile(file)) {
+    else if (myFileIndex.isInLibrarySource(file) && myFileIndex.isJavaSourceFile(file) || myFileIndex.isLibraryClassFile(file)) {
       counting(file);
     }
   }
