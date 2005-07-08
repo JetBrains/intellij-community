@@ -94,7 +94,7 @@ public class ClassUtils {
         return immutableTypes.contains(className);
     }
 
-    private static boolean inSamePackage(@Nullable PsiClass class1,
+    public static boolean inSamePackage(@Nullable PsiClass class1,
                                          @Nullable PsiClass class2) {
         if(class1 == null || class2==null){
             return false;

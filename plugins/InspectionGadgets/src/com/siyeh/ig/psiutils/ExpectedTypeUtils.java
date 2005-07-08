@@ -6,6 +6,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -318,8 +319,8 @@ public class ExpectedTypeUtils{
                     expectedType = factory.createType(aClass, substitutor);
                 } else if(element instanceof PsiMethod){
                     final PsiMethod method = (PsiMethod) element;
-                    final PsiMethod superMethod = method
-                            .findDeepestSuperMethod();
+                    final PsiMethod superMethod =
+                            findDeepestVisibleSuperMethod(method, ref);
                     final PsiClass aClass;
                     if(superMethod != null){
                         aClass = superMethod.getContainingClass();
@@ -339,6 +340,95 @@ public class ExpectedTypeUtils{
                 }
             }
         }
+
+        @Nullable
+        private PsiMethod findDeepestVisibleSuperMethod(PsiMethod method, PsiElement element){
+            if(method.isConstructor()){
+                return null;
+            }
+            if(method.hasModifierProperty(PsiModifier.STATIC)){
+                return null;
+            }
+            if(method.hasModifierProperty(PsiModifier.PRIVATE)){
+                return null;
+            }
+
+            final PsiClass aClass = method.getContainingClass();
+            if(aClass == null){
+                return null;
+            }
+
+            final PsiClass referencingClass =
+                    PsiTreeUtil.getParentOfType(element, PsiClass.class);
+            if(referencingClass == null)
+            {
+                return null;
+            }
+            final PsiMethod[] allMethods = aClass.getAllMethods();
+            PsiMethod topSuper = null;
+            for(PsiMethod superMethod : allMethods){
+                final PsiClass superClass=superMethod.getContainingClass();
+                if(!isVisibleFrom(superMethod, referencingClass))
+                {
+                    continue;
+                }
+                if(superClass.equals(aClass)){
+                    continue;
+                }
+                PsiSubstitutor superClassSubstitutor = TypeConversionUtil
+                        .getClassSubstitutor(superClass, aClass,
+                                             PsiSubstitutor.EMPTY);
+                if(superClassSubstitutor
+                        == null){
+                    superClassSubstitutor = PsiSubstitutor.EMPTY;
+                }
+                final boolean looksLikeSuperMethod =
+                        method.getName().equals(superMethod.getName()) &&
+                                !superMethod
+                                        .hasModifierProperty(PsiModifier.STATIC)
+                                &&
+                                PsiUtil.isAccessible(superMethod, aClass,
+                                                     aClass) &&
+                                method.getSignature(PsiSubstitutor.EMPTY)
+                                        .equals(superMethod.getSignature(
+                                                superClassSubstitutor));
+                if(looksLikeSuperMethod){
+                    if(topSuper != null &&
+                            superClass.isInheritor(topSuper.getContainingClass(), true)){
+                        continue;
+                    }
+                    topSuper = superMethod;
+                }
+            }
+            return topSuper;
+        }
+
+        private boolean isVisibleFrom(PsiMethod method, PsiClass referencingClass){
+            final PsiClass containingClass = method.getContainingClass();
+            if(referencingClass.equals(containingClass))
+            {
+                return true;
+            }
+            if(containingClass == null)
+            {
+                return false;
+            }
+            if(method.hasModifierProperty(PsiModifier.PUBLIC))
+            {
+                return true;
+            }
+            if(method.hasModifierProperty(PsiModifier.PRIVATE))
+            {
+                return false;
+            }
+            if(method.hasModifierProperty(PsiModifier.PROTECTED))
+            {
+                return referencingClass.isInheritor(containingClass, true) ||
+                        ClassUtils.inSamePackage(containingClass, referencingClass);
+            }
+            return ClassUtils.inSamePackage(containingClass, referencingClass);
+        }
+
     }
 }
 

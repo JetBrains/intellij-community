@@ -10,10 +10,6 @@ import com.siyeh.ig.fixes.RenameFix;
 public class TypeParameterHidesVisibleTypeInspection extends ClassInspection{
     private final RenameFix fix = new RenameFix();
 
-    public String getID(){
-        return "FieldNameHidesFieldInSuperclass";
-    }
-
     public String getDisplayName(){
         return "Type parameter hides visible type";
     }
