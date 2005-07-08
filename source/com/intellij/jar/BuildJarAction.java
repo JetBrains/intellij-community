@@ -64,7 +64,7 @@ public class BuildJarAction extends AnAction {
           WindowManager.getInstance().getStatusBar(project).setInfo("Jar creation has been canceled");
         }
         catch (IOException e) {
-          LOG.error(e);
+          Messages.showErrorDialog(project, e.toString(), "Error Creating Jar");
         }
       }
     },"Building Jar", true, project);
@@ -131,9 +131,9 @@ public class BuildJarAction extends AnAction {
         FileUtil.rename(tempFile, jarFile);
       }
       catch (IOException e) {
-        //context.addMessage(CompilerMessageCategory.ERROR, "Cannot overwrite file '"+FileUtil.toSystemDependentName(jarFile.getPath())+"'." +
-        //                   " Copy have been saved to '" + FileUtil.toSystemDependentName(tempFile.getPath())+"'.",null,-1,-1);
-        LOG.error(e);
+        String message = "Cannot overwrite file '" + FileUtil.toSystemDependentName(jarFile.getPath()) + "'." +
+                         " Copy have been saved to '" + FileUtil.toSystemDependentName(tempFile.getPath()) + "'.";
+        Messages.showErrorDialog(module.getProject(), message, "Error Creating Jar");
       }
     }
   }
