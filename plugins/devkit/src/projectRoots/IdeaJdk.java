@@ -229,13 +229,25 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   }
 
   private void addSources(SdkModificator sdkModificator) {
-    if (!addOrderEntries(OrderRootType.SOURCES, ProjectRootType.SOURCE, getInternalJavaSdk(sdkModificator.getHomePath()), sdkModificator) &&
-        SystemInfo.isMac){
-      ProjectJdk [] jdks = ProjectJdkTable.getInstance().getAllJdks();
-      for(int i = 0; i < jdks.length; i++){
-        if (jdks[i].getSdkType() instanceof JavaSdk){
-          addOrderEntries(OrderRootType.SOURCES, ProjectRootType.SOURCE, jdks[i], sdkModificator);
-          break;
+    final Sdk internalJavaSdk = getInternalJavaSdk(sdkModificator.getHomePath());
+    if (!addOrderEntries(OrderRootType.SOURCES, ProjectRootType.SOURCE, internalJavaSdk, sdkModificator)){
+      if (SystemInfo.isMac) {
+        ProjectJdk [] jdks = ProjectJdkTable.getInstance().getAllJdks();
+        for (ProjectJdk jdk : jdks) {
+          if (jdk.getSdkType() instanceof JavaSdk) {
+            addOrderEntries(OrderRootType.SOURCES, ProjectRootType.SOURCE, jdk, sdkModificator);
+            break;
+          }
+        }
+      }
+      else {
+        final File jdkHome = new File(internalJavaSdk.getHomePath()).getParentFile();
+        final File jarFile = new File(jdkHome, "src.zip");
+        if (jarFile.exists()){
+          JarFileSystem jarFileSystem = JarFileSystem.getInstance();
+          String path = jarFile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
+          jarFileSystem.setNoCopyJarForPath(path);
+          sdkModificator.addRoot(jarFileSystem.findFileByPath(path), ProjectRootType.SOURCE);
         }
       }
     }
