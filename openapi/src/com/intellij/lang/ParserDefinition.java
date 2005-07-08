@@ -62,14 +62,54 @@ public interface ParserDefinition {
   @NotNull
   PsiParser createParser(Project project);
 
+  /**
+   * Returns the element type of the node describing a file in the specified language.
+   * @return the file node element type.
+   */
   IFileElementType getFileNodeType();
 
+  /**
+   * Returns the set of token types which are treated as whitespace by the PSI builder.
+   * Tokens of those types are automatically skipped by PsiBuilder. Whitespace elements
+   * on the bounds of nodes built by PsiBuilder are automatically excluded from the text
+   * range of the nodes.
+   * @return the set of whitespace token types.
+   */
   @NotNull
   TokenSet getWhitespaceTokens();
+
+  /**
+   * Returns the set of token types which are treated as comments by the PSI builder.
+   * Tokens of those types are automatically skipped by PsiBuilder.
+   * @return the set of comment token types.
+   */
   @NotNull
   TokenSet getCommentTokens();
 
+  /**
+   * Creates a PSI element for the specified AST node. The AST tree is a simple, semantic-free
+   * tree of AST nodes which is built during the PsiBuilder parsing pass. The PSI tree is built
+   * over the AST tree and includes elements of different types for different language constructs.
+   * @param node the node for which the PSI element should be returned.
+   * @return the PSI element matching the element type of the AST node.
+   */
+  @NotNull
   PsiElement createElement(ASTNode node);
+
+  /**
+   * Creates a PSI element for the specified virtual file.
+   * @param project the project to which the file belongs.
+   * @param file the file for which the PSI element is created.
+   * @return the PSI file element.
+   */
   PsiFile createFile(Project project, VirtualFile file);
+
+  /**
+   * Creates a PSI element for the file with the specified name and contents.
+   * @param project the project to which the file belongs.
+   * @param name The name of the file.
+   * @param text The contents of the file.
+   * @return the PSI file element.
+   */
   PsiFile createFile(Project project, String name, CharSequence text);
 }
