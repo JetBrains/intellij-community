@@ -69,7 +69,11 @@ class PluginManagerColumnInfo extends ColumnInfo {
         case COLUMN_STATUS:
           return PluginNode.STATUS_NAMES[getRealNodeState(plugin)];
         case COLUMN_SIZE:
-          return plugin.getSize();
+          final String size = plugin.getSize();
+          if (size.equals("-1")) {
+            return "unknown";
+          }
+          return size;
         case COLUMN_DOWNLOADS:
           return plugin.getDownloads();
         case COLUMN_DATE:
