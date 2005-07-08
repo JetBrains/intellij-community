@@ -68,9 +68,6 @@
       <interface-class>com.intellij.openapi.vcs.ModuleLevelVcsManager</interface-class>
       <implementation-class>com.intellij.openapi.vcs.impl.ModuleLevelVcsManagerImpl</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.openapi.vcs.configurable.VersionControlPerModuleConfigurable</implementation-class>
-    </component>
   </module-components>
 
 </components>
