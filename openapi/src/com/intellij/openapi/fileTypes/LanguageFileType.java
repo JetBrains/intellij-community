@@ -59,16 +59,31 @@ public abstract class LanguageFileType implements FileType{
    * @return The language instance.
    */
 
-  public final @NotNull Language getLanguage() {
+  @NotNull
+  public final Language getLanguage() {
     return myLanguage;
   }
 
-  public final SyntaxHighlighter getHighlighter(Project project) {
+  /**
+   * Returns the syntax highlighter for the files of the type.
+   * @param project The project in which the highligher will work, or null if the highlighter is not tied to any project.
+   * @return The highlighter implementation.
+   */
+
+  @NotNull
+  public final SyntaxHighlighter getHighlighter(@Nullable Project project) {
     return myLanguage.getSyntaxHighlighter(project);
   }
 
+  /**
+   * Returns the structure view builder for the specified file.
+   * @param file The file for which the structure view builder is requested.
+   * @param project The project to which the file belongs.
+   * @return The structure view builder, or null if no structure view is available for the file.
+   */
+  
   @Nullable
-  public StructureViewBuilder getStructureViewBuilder(VirtualFile file, Project project) {
+  public StructureViewBuilder getStructureViewBuilder(@NotNull VirtualFile file, @NotNull Project project) {
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     return psiFile == null ?  null : myLanguage.getStructureViewBuilder(psiFile);
   }
