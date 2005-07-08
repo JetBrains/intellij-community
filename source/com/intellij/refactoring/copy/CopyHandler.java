@@ -19,6 +19,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
+import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -42,6 +44,9 @@ public class CopyHandler {
     if (elements.length == 0) {
       return NOT_SUPPORTED;
     }
+    for (PsiElement element : elements) {
+      if (element instanceof JspClass || element instanceof JspHolderMethod) return NOT_SUPPORTED;
+    }
 
     if (elements.length == 1) {
       if (elements[0] instanceof PsiClass && elements[0].getParent() instanceof PsiFile) {
@@ -61,17 +66,16 @@ public class CopyHandler {
   }
 
   private static boolean canCopyFiles(PsiElement[] elements) {
-    for (int i = 0; i < elements.length; i++) {
-      PsiElement element = elements[i];
-      if (!(element instanceof PsiFile) || (element instanceof PsiJavaFile &&!(element instanceof JspFile))) {
+    for (PsiElement element : elements) {
+      if (!(element instanceof PsiFile) || (element instanceof PsiJavaFile && !(element instanceof JspFile))) {
         return false;
       }
     }
 
     // the second 'for' statement is for effectivity - to prevent creation of the 'names' array
-    HashSet names = new HashSet();
-    for (int i = 0; i < elements.length; i++) {
-      PsiFile file = (PsiFile)elements[i];
+    HashSet<String> names = new HashSet<String>();
+    for (PsiElement element1 : elements) {
+      PsiFile file = (PsiFile)element1;
       String name = file.getName();
       if (names.contains(name)) {
         return false;
@@ -84,15 +88,14 @@ public class CopyHandler {
   }
 
   private static boolean canCopyDirectories(PsiElement[] elements) {
-    for (int i = 0; i < elements.length; i++) {
-      PsiElement element = elements[i];
+    for (PsiElement element : elements) {
       if (!(element instanceof PsiDirectory)) {
         return false;
       }
     }
 
-    for (int i = 0; i < elements.length; i++) {
-      PsiDirectory directory = (PsiDirectory)elements[i];
+    for (PsiElement element1 : elements) {
+      PsiDirectory directory = (PsiDirectory)element1;
 
       if (hasPackages(directory)) {
         return false;
@@ -100,12 +103,8 @@ public class CopyHandler {
     }
 
     PsiElement[] filteredElements = DeleteUtil.filterElements(elements);
-    if (filteredElements.length != elements.length) {
-      // there are nested dirs
-      return false;
-    }
+    return filteredElements.length == elements.length;
 
-    return true;
   }
 
   private static boolean hasPackages(PsiDirectory directory) {
@@ -113,8 +112,7 @@ public class CopyHandler {
       return true;
     }
     PsiDirectory[] subdirectories = directory.getSubdirectories();
-    for (int i = 0; i < subdirectories.length; i++) {
-      PsiDirectory subdirectory = subdirectories[i];
+    for (PsiDirectory subdirectory : subdirectories) {
       if (hasPackages(subdirectory)) {
         return true;
       }
@@ -169,8 +167,7 @@ public class CopyHandler {
   private static PsiDirectory getCommonParentDirectory(PsiElement[] elements){
     PsiDirectory result = null;
 
-    for (int i = 0; i < elements.length; i++) {
-      PsiElement element = elements[i];
+    for (PsiElement element : elements) {
       PsiDirectory directory;
 
       if (element instanceof PsiDirectory) {
@@ -262,8 +259,7 @@ public class CopyHandler {
               final PsiManager psiManager = PsiManager.getInstance(project);
               PsiReference[] refs = psiManager.getSearchHelper().findReferences(psiElement, new LocalSearchScope(newClass), true);
 
-              for (int i = 0; i < refs.length; i++) {
-                final PsiReference ref = refs[i];
+              for (final PsiReference ref : refs) {
                 if (!ref.getElement().isValid()) continue;
                 ref.bindToElement(newClass);
               }
@@ -335,8 +331,7 @@ public class CopyHandler {
       PsiDirectory subdirectory = targetDirectory.createSubdirectory(newName == null ? directory.getName() : newName);
       PsiFile firstFile = null;
       PsiElement[] children = directory.getChildren();
-      for (int i = 0; i < children.length; i++) {
-        PsiElement child = children[i];
+      for (PsiElement child : children) {
         PsiFile f = copyToDirectory(child, null, subdirectory);
         if (firstFile == null) {
           firstFile = f;
@@ -373,9 +368,7 @@ public class CopyHandler {
             try {
               PsiFile firstFile = null;
 
-              for (int i = 0; i < elements.length; i++) {
-                PsiElement element = elements[i];
-
+              for (PsiElement element : elements) {
                 PsiFile f = copyToDirectory(element, newName, targetDirectory);
                 if (firstFile == null) {
                   firstFile = f;

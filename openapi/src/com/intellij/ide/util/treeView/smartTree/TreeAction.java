@@ -1,6 +1,8 @@
 package com.intellij.ide.util.treeView.smartTree;
 
+import org.jetbrains.annotations.NotNull;
+
 public interface TreeAction {
-  ActionPresentation getPresentation();
-  String getName();
+  @NotNull ActionPresentation getPresentation();
+  @NotNull String getName();
 }

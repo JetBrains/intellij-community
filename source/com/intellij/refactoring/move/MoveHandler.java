@@ -13,6 +13,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
+import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.anonymousToInner.AnonymousToInnerHandler;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesImpl;
@@ -166,7 +168,7 @@ public class MoveHandler implements RefactoringActionHandler {
       MoveClassesOrPackagesImpl.doMove(project, elements, targetContainer, callback);
     }
     else if (moveType == FILES || moveType == DIRECTORIES) {
-      if (!LOG.assertTrue(targetContainer == null || (targetContainer instanceof PsiDirectory))) {
+      if (!LOG.assertTrue(targetContainer == null || targetContainer instanceof PsiDirectory)) {
         return;
       }
       MoveFilesOrDirectoriesUtil.doMove(project, elements, (PsiDirectory)targetContainer, callback);
@@ -233,7 +235,7 @@ public class MoveHandler implements RefactoringActionHandler {
       return targetContainer.equals(MoveInnerImpl.getTargetContainer((PsiClass)elements[0]));
     }
     else if (moveType == MEMBERS) {
-      return (targetContainer instanceof PsiClass) && !(targetContainer instanceof PsiAnonymousClass);
+      return targetContainer instanceof PsiClass && !(targetContainer instanceof PsiAnonymousClass);
     }
     else if (moveType == CLASSES || moveType == PACKAGES) {
       if (targetContainer instanceof PsiPackage) {
@@ -245,10 +247,7 @@ public class MoveHandler implements RefactoringActionHandler {
       return false;
     }
     else if (moveType == FILES || moveType == DIRECTORIES) {
-      if (targetContainer instanceof PsiDirectory) {
-        return true;
-      }
-      return false;
+      return targetContainer instanceof PsiDirectory;
     }
     else {
       return false;
@@ -258,9 +257,12 @@ public class MoveHandler implements RefactoringActionHandler {
   /**
    * Must be invoked in AtomicAction
    */
-  public static int getMoveType(PsiElement[] elements) {
+  private static int getMoveType(PsiElement[] elements) {
     if (elements == null) {
       throw new IllegalArgumentException("elements cannot be null");
+    }
+    for (PsiElement element : elements) {
+      if (element instanceof JspClass || element instanceof JspHolderMethod) return NOT_SUPPORTED;
     }
     if (MoveFilesOrDirectoriesUtil.canMoveFiles(elements)) {
       return FILES;

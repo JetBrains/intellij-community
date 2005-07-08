@@ -388,7 +388,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     if (height > 10) height = 10;
     mySignatureArea = new JTextArea(height, 50);
     mySignatureArea.setEditable(false);
-    mySignatureArea.setBackground(this.getContentPane().getBackground());
+    mySignatureArea.setBackground(getContentPane().getBackground());
     //mySignatureArea.setFont(myTableFont);
     JScrollPane scrollPane = new JScrollPane(mySignatureArea);
     scrollPane.setBorder(IdeBorderFactory.createEmptyBorder(new Insets(0,0,0,0)));
@@ -503,8 +503,8 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     if (thrownExceptionsFragments.length > 0) {
       buffer.append("\n");
       buffer.append("throws\n");
-      for (int i = 0; i < thrownExceptionsFragments.length; i++) {
-        String text = thrownExceptionsFragments[i].getText();
+      for (PsiTypeCodeFragment thrownExceptionsFragment : thrownExceptionsFragments) {
+        String text = thrownExceptionsFragment.getText();
         buffer.append(indent);
         buffer.append(text);
         buffer.append("\n");
@@ -659,15 +659,14 @@ public class ChangeSignatureDialog extends RefactoringDialog {
       }
       ParameterInfo[] parameters = getParameters();
 
-      for (int idx = 0; idx < parameters.length; idx++) {
-        ParameterInfo info = parameters[idx];
+      for (ParameterInfo info : parameters) {
         final PsiType parameterType = info.createType(myMethod, manager);
 
         if (!RefactoringUtil.isResolvableType(parameterType)) {
           final int ret = Messages.showOkCancelDialog(myProject,
-                                                "Type " + info.getTypeText() + " cannot be resolved.\nContinue?",
-                                                "Change Method Signature", Messages.getErrorIcon()
-                                                );
+                                                      "Type " + info.getTypeText() + " cannot be resolved.\nContinue?",
+                                                      "Change Method Signature", Messages.getErrorIcon()
+          );
           if (ret != 0) return false;
         }
         if (prototype != null) {
