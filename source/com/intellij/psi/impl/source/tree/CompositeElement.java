@@ -2,6 +2,7 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
@@ -359,8 +360,9 @@ public class CompositeElement extends TreeElement implements Cloneable {
     synchronized (PsiLock.LOCK) {
       if (myWrapper != null) return myWrapper;
       final Language lang = getElementType().getLanguage();
-      if (lang != null) {
-        myWrapper = lang.getParserDefinition().createElement(this);
+      final ParserDefinition parserDefinition = lang.getParserDefinition();
+      if (parserDefinition != null) {
+        myWrapper = parserDefinition.createElement(this);
       }
       return myWrapper;
     }
