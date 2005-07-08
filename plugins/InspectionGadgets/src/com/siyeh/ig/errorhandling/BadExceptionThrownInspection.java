@@ -60,8 +60,8 @@ public class BadExceptionThrownInspection extends ExpressionInspection{
 
     private void formatCallCheckString(){
         final StringBuffer buffer = new StringBuffer();
-        boolean first = true;
         synchronized(lock){
+            boolean first=true;
             for(String exceptionName : exceptionsList){
                 if(first){
                     first = false;

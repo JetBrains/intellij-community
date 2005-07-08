@@ -43,7 +43,7 @@ public class ConstantIfStatementInspection
         return fix;
     }
 
-    private class ConstantIfStatementFix extends InspectionGadgetsFix{
+    private static class ConstantIfStatementFix extends InspectionGadgetsFix{
         public String getName(){
             return "Simplify";
         }
@@ -81,7 +81,7 @@ public class ConstantIfStatementInspection
                 }
                 final PsiCodeBlock block = ((PsiBlockStatement) branch)
                         .getCodeBlock();
-                boolean hasConflicts = containsConflictingDeclarations(block,
+                final boolean hasConflicts = containsConflictingDeclarations(block,
                                                                        parentBlock);
                 if(hasConflicts){
                     final String elseText = branch.getText();

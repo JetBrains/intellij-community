@@ -173,11 +173,10 @@ public class MissortedModifiersInspection extends ClassInspection {
                 if(modifierIndex == null){
                     return false;
                 }
-                final int nextModifierIndex = modifierIndex;
-                if(currentModifierIndex >= nextModifierIndex){
+                if(currentModifierIndex >= modifierIndex){
                     return true;
                 }
-                currentModifierIndex = nextModifierIndex;
+                currentModifierIndex = modifierIndex;
             }
             return false;
         }

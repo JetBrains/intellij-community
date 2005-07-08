@@ -53,6 +53,7 @@ public class ImplicitNumericConversionInspection extends ExpressionInspection {
         final PsiExpression expression = (PsiExpression) location;
         final PsiType type = expression.getType();
         final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, true);
+        assert expectedType != null;
         return "Implicit numeric conversion of #ref from " + type.getPresentableText() + " to " +
                 expectedType.getPresentableText() +
                 " #loc";
@@ -73,6 +74,7 @@ public class ImplicitNumericConversionInspection extends ExpressionInspection {
             super();
             final PsiExpression expression = (PsiExpression) field;
             final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, true);
+            assert expectedType != null;
             if (isConvertible(expression, expectedType)) {
                 m_name = "Convert to " + expectedType.getCanonicalText() + " literal";
             } else {
@@ -88,6 +90,7 @@ public class ImplicitNumericConversionInspection extends ExpressionInspection {
                                                                          throws IncorrectOperationException{
             final PsiExpression expression = (PsiExpression) descriptor.getPsiElement();
             final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, true);
+            assert expectedType != null;
             if (isConvertible(expression, expectedType)) {
                 final String newExpression = convertExpression(expression, expectedType);
                 replaceExpression(expression, newExpression);
