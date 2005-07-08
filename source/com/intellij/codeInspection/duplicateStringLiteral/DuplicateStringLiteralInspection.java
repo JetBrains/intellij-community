@@ -1,8 +1,8 @@
 package com.intellij.codeInspection.duplicateStringLiteral;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.i18n.I18nInspection;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.i18n.I18nInspection;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -47,6 +47,13 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     element.acceptChildren(new PsiRecursiveElementVisitor() {
       public void visitClass(PsiClass aClass) {
         // prevent double class checking
+      }
+
+      public void visitAnnotation(PsiAnnotation annotation) {
+        //prevent from @SuppressWarnings
+        if (!"java.lang.SuppressWarnings".equals(annotation.getQualifiedName())){
+          super.visitAnnotation(annotation);
+        }
       }
 
       public void visitLiteralExpression(PsiLiteralExpression expression) {
