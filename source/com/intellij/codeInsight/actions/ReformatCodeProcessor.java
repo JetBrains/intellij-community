@@ -58,6 +58,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
             }
           }
           finally {
+            PsiDocumentManager.getInstance(myProject).commitDocument(doc);
             doc.putUserData(CodeStyleManagerEx.USE_DOCUMENT_TO_REFORMAT, null);
           }
         }
