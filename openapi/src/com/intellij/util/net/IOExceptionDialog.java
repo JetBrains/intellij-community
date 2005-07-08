@@ -1,5 +1,7 @@
 package com.intellij.util.net;
 
+import com.intellij.openapi.application.ApplicationManager;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -93,12 +95,17 @@ public class IOExceptionDialog extends JDialog {
 
     final IOExceptionDialog dlg = new IOExceptionDialog(e, title, text);
     try {
-      SwingUtilities.invokeAndWait(
-        new Runnable() {
-          public void run() {
-            dlg.setVisible(true);
-          }
-        });
+      final Runnable doRun = new Runnable() {
+        public void run() {
+          dlg.setVisible(true);
+        }
+      };
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        doRun.run();
+      }
+      else {
+        SwingUtilities.invokeAndWait(doRun);
+      }
     }
     catch (InterruptedException e1) {
       e1.printStackTrace();
