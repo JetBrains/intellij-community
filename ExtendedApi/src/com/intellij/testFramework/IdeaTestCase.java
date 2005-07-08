@@ -41,6 +41,8 @@ import java.awt.event.InvocationEvent;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -215,6 +217,24 @@ public abstract class IdeaTestCase extends TestCase implements DataProvider {
 
   }
 
+  private void resetAllFields() {
+    final Field[] fields = getClass().getDeclaredFields();
+    for (Field field : fields) {
+      final int modifiers = field.getModifiers();
+      if ((modifiers & Modifier.FINAL) == 0
+          &&  (modifiers & Modifier.STATIC) == 0
+          && !field.getType().isPrimitive()) {
+        field.setAccessible(true);
+        try {
+          field.set(this, null);
+        }
+        catch (IllegalAccessException e) {
+          e.printStackTrace();
+        }
+      }
+    }
+  }
+
   private String getFullName() {
     return getClass().getName() + "." + getName();
   }
@@ -262,6 +282,8 @@ public abstract class IdeaTestCase extends TestCase implements DataProvider {
         }
         catch (Throwable th) {
           throwable[0] = th;
+        } finally {
+          resetAllFields();
         }
       }
     });
