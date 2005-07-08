@@ -705,6 +705,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
     setIsDetached();
     myDebugProcessDispatcher.getMulticaster().processDetached(DebugProcessImpl.this, closedByUser);
+    setBreakpointsMuted(false);
     myWaitFor.up();
   }
 
