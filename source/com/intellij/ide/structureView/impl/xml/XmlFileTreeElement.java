@@ -52,12 +52,8 @@ public class XmlFileTreeElement extends PsiTreeElementBase<XmlFile> {
     if (document != null && document.getRootTag() != null) {
       Collection<StructureViewTreeElement> rootTags = new ArrayList<StructureViewTreeElement>();
       PsiElement[] children = document.getChildren();
-      for (PsiElement element : children) {
-       if (element instanceof XmlTag) {
-         XmlTag tag = (XmlTag)element;
-         rootTags.add(new XmlTagTreeElement(tag));
-       }
-      }
+      for (PsiElement element : children)
+        if (element instanceof XmlTag) rootTags.add(new XmlTagTreeElement((XmlTag)element));
       return rootTags;
     }
     return Collections.EMPTY_LIST;
