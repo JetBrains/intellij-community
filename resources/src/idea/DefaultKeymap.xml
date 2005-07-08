@@ -206,9 +206,6 @@
     <action id="GotoSymbol">
       <keyboard-shortcut first-keystroke="control shift alt N"/>
     </action>
-    <action id="EditorMoveToPageBottomWithSelection">
-      <keyboard-shortcut first-keystroke="control shift PAGE_DOWN"/>
-    </action>
     <action id="FileStructurePopup">
       <keyboard-shortcut first-keystroke="control F12"/>
     </action>
@@ -404,9 +401,6 @@
     <action id="EditorCodeBlockStart">
       <keyboard-shortcut first-keystroke="control OPEN_BRACKET"/>
     </action>
-    <action id="EditorMoveToPageTopWithSelection">
-      <keyboard-shortcut first-keystroke="control shift PAGE_UP"/>
-    </action>
     <action id="Run">
       <keyboard-shortcut first-keystroke="shift F10"/>
     </action>
@@ -506,8 +500,17 @@
       <keyboard-shortcut first-keystroke="control shift Z"/>
       <keyboard-shortcut first-keystroke="alt shift BACK_SPACE"/>
     </action>
+    <action id="EditorMoveToPageTop">
+      <keyboard-shortcut first-keystroke="control PAGE_UP" />
+    </action>
     <action id="EditorMoveToPageBottom">
       <keyboard-shortcut first-keystroke="control PAGE_DOWN"/>
+    </action>
+    <action id="EditorMoveToPageTopWithSelection">
+      <keyboard-shortcut first-keystroke="control shift PAGE_UP"/>
+    </action>
+    <action id="EditorMoveToPageBottomWithSelection">
+      <keyboard-shortcut first-keystroke="control shift PAGE_DOWN"/>
     </action>
     <action id="EditorDown">
       <keyboard-shortcut first-keystroke="DOWN"/>
@@ -1634,9 +1637,6 @@
     <action id="EditorCompleteStatement" />
     <action id="EditorCutLineEnd">
       <keyboard-shortcut first-keystroke="shift control Y" />
-    </action>
-    <action id="EditorMoveToPageTop">
-      <keyboard-shortcut first-keystroke="control PAGE_UP" />
     </action>
     <action id="EditorScrollToCenter" />
     <action id="EditorSelectLine">
