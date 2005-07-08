@@ -30,8 +30,6 @@ public interface FileType {
 
   SyntaxHighlighter getHighlighter(Project project);
 
-  FileTypeSupportCapabilities getSupportCapabilities();
-
   @Nullable
   StructureViewBuilder getStructureViewBuilder(VirtualFile file, Project project);
 }

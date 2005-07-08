@@ -1,16 +1,13 @@
 package com.intellij.find.actions;
 
+import com.intellij.lang.EmptyFindUsagesProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
 
@@ -55,11 +52,8 @@ public class FindUsagesInFileAction extends AnAction {
     Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
     if (editor != null) {
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      boolean enabled = file instanceof PsiJavaFile || file instanceof JspFile || file instanceof XmlFile;
-      if (!enabled && file!=null) {
-        FileTypeSupportCapabilities capabilities = file.getFileType().getSupportCapabilities();
-        enabled = capabilities!=null && capabilities.hasFindUsages();
-      }
+
+      boolean enabled = file != null && !(file.getLanguage().getFindUsagesProvider() instanceof EmptyFindUsagesProvider);
       presentation.setVisible(enabled);
       presentation.setEnabled(enabled);
     }

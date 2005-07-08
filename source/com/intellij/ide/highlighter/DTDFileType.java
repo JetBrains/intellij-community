@@ -33,7 +33,6 @@ package com.intellij.ide.highlighter;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.lang.dtd.DTDLanguage;
-import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -62,29 +61,6 @@ public class DTDFileType extends LanguageFileType {
 
   public Icon getIcon() {
     return ICON;
-  }
-
-  private FileTypeSupportCapabilities mySupportCapabilities = new FileTypeSupportCapabilities() {
-    public boolean hasCompletion() {
-      return false;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    public boolean hasValidation() {
-      return false;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    public boolean hasFindUsages() {
-      return true;
-    }
-
-    public boolean hasNavigation() {
-      return false;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-  };
-
-  public FileTypeSupportCapabilities getSupportCapabilities() {
-    return mySupportCapabilities;
   }
 
   public StructureViewBuilder getStructureViewBuilder(VirtualFile file, Project project) {

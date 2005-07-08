@@ -32,7 +32,6 @@
 package com.intellij.ide.highlighter;
 
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.IconLoader;
 
@@ -59,9 +58,5 @@ public class XmlFileType extends LanguageFileType {
 
   public Icon getIcon() {
     return ICON;
-  }
-
-  public FileTypeSupportCapabilities getSupportCapabilities() {
-    return null;
   }
 }

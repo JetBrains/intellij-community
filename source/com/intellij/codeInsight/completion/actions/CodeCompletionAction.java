@@ -6,9 +6,7 @@ import com.intellij.codeInsight.completion.CodeCompletionHandler;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.xml.XmlFile;
 
 
 /**

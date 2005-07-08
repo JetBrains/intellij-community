@@ -32,19 +32,18 @@
 package com.intellij.ide.highlighter;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.impl.java.JavaFileTreeModel;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiManager;
 
 import javax.swing.*;
 
@@ -81,10 +80,6 @@ public class JavaClassFileType implements FileType {
 
   public SyntaxHighlighter getHighlighter(Project project) {
     return new JavaFileHighlighter(LanguageLevel.HIGHEST);
-  }
-
-  public FileTypeSupportCapabilities getSupportCapabilities() {
-    return null;
   }
 
   public StructureViewBuilder getStructureViewBuilder(final VirtualFile file, final Project project) {

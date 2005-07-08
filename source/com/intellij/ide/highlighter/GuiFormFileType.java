@@ -33,7 +33,6 @@ package com.intellij.ide.highlighter;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -73,10 +72,6 @@ public class GuiFormFileType implements FileType {
 
   public SyntaxHighlighter getHighlighter(Project project) {
     return new XmlFileHighlighter();
-  }
-
-  public FileTypeSupportCapabilities getSupportCapabilities() {
-    return null;
   }
 
   public StructureViewBuilder getStructureViewBuilder(VirtualFile file, Project project) {

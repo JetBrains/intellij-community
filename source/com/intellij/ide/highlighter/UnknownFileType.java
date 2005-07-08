@@ -33,7 +33,6 @@ package com.intellij.ide.highlighter;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -73,10 +72,6 @@ public class UnknownFileType implements FileType {
   }
 
   public SyntaxHighlighter getHighlighter(Project project) {
-    return null;
-  }
-
-  public FileTypeSupportCapabilities getSupportCapabilities() {
     return null;
   }
 

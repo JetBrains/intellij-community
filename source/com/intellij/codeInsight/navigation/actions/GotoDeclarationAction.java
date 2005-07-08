@@ -9,14 +9,12 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.ListPopup;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,12 +30,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   }
 
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
-    boolean canNavigate = file.canContainJavaCode() || file instanceof XmlFile;
-    if (!canNavigate) {
-      FileTypeSupportCapabilities supportCapabilities = file.getFileType().getSupportCapabilities();
-      canNavigate = supportCapabilities == null ? false : supportCapabilities.hasNavigation();
-    }
-    return canNavigate;
+    return true;
   }
 
   protected boolean isValidForLookup() {

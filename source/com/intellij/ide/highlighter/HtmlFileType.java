@@ -32,7 +32,6 @@
 package com.intellij.ide.highlighter;
 
 import com.intellij.lang.html.HTMLLanguage;
-import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.IconLoader;
 
@@ -59,28 +58,5 @@ public class HtmlFileType extends LanguageFileType {
 
   public Icon getIcon() {
     return ICON;
-  }
-
-  private static FileTypeSupportCapabilities capabilities = new FileTypeSupportCapabilities() {
-    public boolean hasCompletion() {
-      return true;
-    }
-
-    public boolean hasValidation() {
-      return true;
-    }
-
-    public boolean hasFindUsages() {
-      return true;
-    }
-
-    public boolean hasNavigation() {
-      return true;
-    }
-
-  };
-
-  public FileTypeSupportCapabilities getSupportCapabilities() {
-    return capabilities;
   }
 }

@@ -42,7 +42,6 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
-import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
@@ -52,11 +51,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.PsiCompiledElement;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
@@ -326,16 +321,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   public boolean isHighlightingAvailable(PsiFile file) {
     if (myDisabledHighlightingFiles.contains(file)) return false;
 
-    boolean isHighlightingAvailable = file.canContainJavaCode() || file instanceof XmlFile;
+    if (!file.isPhysical()) return false;
 
-    if (!isHighlightingAvailable) {
-      FileTypeSupportCapabilities supportCapabilities = file.getFileType().getSupportCapabilities();
-      if (supportCapabilities!=null) isHighlightingAvailable = supportCapabilities.hasValidation();
-    }
-
-    isHighlightingAvailable &= !(file instanceof PsiCompiledElement);
-    isHighlightingAvailable &= file.isPhysical();
-    return isHighlightingAvailable;
+    return !(file instanceof PsiPlainTextFile || file instanceof PsiCompiledElement);
   }
 
   public boolean isImportHintsEnabled(PsiFile file) {

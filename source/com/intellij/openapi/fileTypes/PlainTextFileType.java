@@ -74,10 +74,6 @@ public class PlainTextFileType implements FileType {
     return new PlainSyntaxHighlighter();
   }
 
-  public FileTypeSupportCapabilities getSupportCapabilities() {
-    return null;
-  }
-
   public StructureViewBuilder getStructureViewBuilder(VirtualFile file, Project project) {
     return null;
   }

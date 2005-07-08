@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author max
  */
-class EmptyFindUsagesProvider implements FindUsagesProvider {
+public class EmptyFindUsagesProvider implements FindUsagesProvider {
   public boolean mayHaveReferences(IElementType token, final short searchContext) {
     return false;
   }

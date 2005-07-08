@@ -2,7 +2,6 @@ package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,27 +37,6 @@ public class PropertiesFileType extends LanguageFileType {
 
   public Icon getIcon() {
     return FILE_ICON;
-  }
-
-  public FileTypeSupportCapabilities getSupportCapabilities() {
-    return new FileTypeSupportCapabilities() {
-      public boolean hasCompletion() {
-        return true;
-      }
-
-      public boolean hasValidation() {
-        return true;
-      }
-
-      public boolean hasFindUsages() {
-        return true;
-      }
-
-      public boolean hasNavigation() {
-        return true;
-      }
-
-    };
   }
 
   public String getCharset(VirtualFile file) {
