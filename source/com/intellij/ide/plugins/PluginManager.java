@@ -62,9 +62,6 @@ public class PluginManager {
 
   private static PluginDescriptor[] ourPlugins;
   private static Map<String, PluginId> ourPluginClasses;
-  private static final String TOOLS_JAR = "tools.jar";
-  private static final String EXTENSIONS_DIR = "ext";
-
 
   public PluginManager() {
   }
@@ -560,32 +557,6 @@ public class PluginManager {
   private void addIDEALibraries(List<URL> classpathElements) {
     final String ideaHomePath = PathManager.getHomePath();
     addAllFromLibFolder(ideaHomePath, classpathElements);
-  }
-
-  private static void addJreLibraries(final String aIdeaHomePath, List<URL> classPath) {
-    try {
-      final String libPath = aIdeaHomePath + File.separator + "jre" + File.separator + "lib" + File.separator;
-      File toolsFile = new File(libPath + TOOLS_JAR);
-      if (!toolsFile.exists()) {
-        toolsFile = null;
-      }
-      if (toolsFile != null) {
-        classPath.add(toolsFile.toURL());
-      }
-      final File[] extFiles = new File(libPath + EXTENSIONS_DIR).listFiles();
-      if (extFiles != null) {
-        for (int idx = 0; idx < extFiles.length; idx++) {
-          File extFile = extFiles[idx];
-          if (isJarOrZip(extFile)) {
-            classPath.add(extFile.toURL());
-          }
-        }
-      }
-    }
-    catch (MalformedURLException e) {
-      getLogger().error(e);
-
-    }
   }
 
   public static void addAllFromLibFolder(final String aFolderPath, List<URL> classPath) {
