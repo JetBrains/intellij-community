@@ -94,12 +94,10 @@ public class ControlFlowUtils{
             final PsiCodeBlock body = switchStatement.getBody();
             final PsiStatement[] statements = body.getStatements();
             int lastNonLabelOffset = -1;
-            if(statements != null){
-                for(int i = statements.length - 1; i >= 0; i--){
-                    if(!(statements[i] instanceof PsiSwitchLabelStatement)){
-                        lastNonLabelOffset = i;
-                        break;
-                    }
+            for(int i = statements.length - 1; i >= 0; i--){
+                if(!(statements[i] instanceof PsiSwitchLabelStatement)){
+                    lastNonLabelOffset = i;
+                    break;
                 }
             }
             if(lastNonLabelOffset == -1){

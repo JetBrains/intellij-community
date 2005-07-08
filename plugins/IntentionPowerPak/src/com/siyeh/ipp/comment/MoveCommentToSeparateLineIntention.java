@@ -26,7 +26,6 @@ public class MoveCommentToSeparateLineIntention extends Intention{
             throws IncorrectOperationException{
         final PsiComment selectedComment = (PsiComment) element;
         PsiElement elementToCheck = selectedComment;
-        PsiElement level = selectedComment;
         final PsiWhiteSpace whiteSpace;
         while(true){
             elementToCheck = TreeUtil.getPrevLeaf(elementToCheck);

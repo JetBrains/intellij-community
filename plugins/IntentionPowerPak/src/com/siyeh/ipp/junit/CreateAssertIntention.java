@@ -6,6 +6,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.BoolUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class CreateAssertIntention extends Intention{
     public String getText(){
@@ -16,6 +17,7 @@ public class CreateAssertIntention extends Intention{
         return "Create JUnit assertion";
     }
 
+    @NotNull
     public PsiElementPredicate getElementPredicate(){
         return new CreateAssertPredicate();
     }

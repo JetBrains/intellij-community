@@ -6,6 +6,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NotNull;
 
 public class ReplaceForEachLoopWithForLoopIntention extends Intention{
     public String getText(){
@@ -16,6 +17,7 @@ public class ReplaceForEachLoopWithForLoopIntention extends Intention{
         return "Replace For Each Loop";
     }
 
+    @NotNull
     public PsiElementPredicate getElementPredicate(){
         return new ForEachLoopPredicate();
     }

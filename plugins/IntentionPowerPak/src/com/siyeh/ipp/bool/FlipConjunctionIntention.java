@@ -5,6 +5,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NotNull;
 
 public class FlipConjunctionIntention extends MutablyNamedIntention{
     protected String getTextForElement(PsiElement element){
@@ -18,6 +19,7 @@ public class FlipConjunctionIntention extends MutablyNamedIntention{
         return "Flip Conjunction Operands";
     }
 
+    @NotNull
     public PsiElementPredicate getElementPredicate(){
         return new ConjunctionPredicate();
     }

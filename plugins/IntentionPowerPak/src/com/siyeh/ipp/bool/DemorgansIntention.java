@@ -8,6 +8,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.BoolUtils;
 import com.siyeh.ipp.psiutils.ComparisonUtils;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class DemorgansIntention extends MutablyNamedIntention{
     protected String getTextForElement(PsiElement element){
@@ -26,6 +27,7 @@ public class DemorgansIntention extends MutablyNamedIntention{
         return "DeMorgan Law";
     }
 
+    @NotNull
     public PsiElementPredicate getElementPredicate(){
         return new ConjunctionPredicate();
     }

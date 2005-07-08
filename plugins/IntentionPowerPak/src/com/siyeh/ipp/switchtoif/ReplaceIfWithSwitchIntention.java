@@ -57,9 +57,10 @@ public class ReplaceIfWithSwitchIntention extends Intention{
             }
         }
         final PsiIfStatement statementToReplace = ifStatement;
-        final StringBuffer switchStatementBuffer = new StringBuffer(1024);
         final PsiExpression caseExpression =
                 CaseUtil.getCaseExpression(ifStatement);
+        assert caseExpression != null;
+        final StringBuffer switchStatementBuffer=new StringBuffer(1024);
         switchStatementBuffer.append("switch(" + caseExpression.getText() +
                 ')');
         switchStatementBuffer.append('{');

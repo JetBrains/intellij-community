@@ -6,6 +6,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ReplaceConcatenationWithStringBufferIntention extends Intention{
     public String getText(){
@@ -16,6 +17,7 @@ public class ReplaceConcatenationWithStringBufferIntention extends Intention{
         return "Replace + with StringBuffer.append()";
     }
 
+    @NotNull
     public PsiElementPredicate getElementPredicate(){
         return new ReplaceConcatenationWithStringBufferPredicate();
     }

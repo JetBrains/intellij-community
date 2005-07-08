@@ -5,6 +5,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NotNull;
 
 public class ReplaceConditionalWithIfIntention extends Intention{
     public String getText(){
@@ -15,6 +16,7 @@ public class ReplaceConditionalWithIfIntention extends Intention{
         return "Replace Conditional With If Else";
     }
 
+    @NotNull
     public PsiElementPredicate getElementPredicate(){
         return new ReplaceConditionalWithIfPredicate();
     }

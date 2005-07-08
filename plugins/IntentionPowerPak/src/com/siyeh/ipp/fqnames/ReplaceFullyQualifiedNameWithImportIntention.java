@@ -18,6 +18,7 @@ public class ReplaceFullyQualifiedNameWithImportIntention extends Intention{
         return "Replace Qualified Name With Import";
     }
 
+    @NotNull
     public PsiElementPredicate getElementPredicate(){
         return new FullyQualifiedNamePredicate();
     }

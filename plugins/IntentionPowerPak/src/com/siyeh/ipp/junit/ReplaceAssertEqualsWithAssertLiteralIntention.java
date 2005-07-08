@@ -4,6 +4,7 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NotNull;
 
 public class ReplaceAssertEqualsWithAssertLiteralIntention
         extends MutablyNamedIntention{
@@ -28,6 +29,7 @@ public class ReplaceAssertEqualsWithAssertLiteralIntention
         return "Replace assertEquals with assertTrue, assertFalse, or assertNull";
     }
 
+    @NotNull
     public PsiElementPredicate getElementPredicate(){
         return new AssertEqualsWithLiteralPredicate();
     }

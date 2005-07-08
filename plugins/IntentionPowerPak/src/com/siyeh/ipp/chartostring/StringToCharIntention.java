@@ -5,8 +5,10 @@ import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NotNull;
 
 public class StringToCharIntention extends Intention{
+    @NotNull
     protected PsiElementPredicate getElementPredicate(){
         return new StringToCharPredicate();
     }

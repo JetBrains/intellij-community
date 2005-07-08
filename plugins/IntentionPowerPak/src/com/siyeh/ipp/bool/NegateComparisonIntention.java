@@ -8,6 +8,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ComparisonUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class NegateComparisonIntention extends MutablyNamedIntention{
     public String getTextForElement(PsiElement element){
@@ -30,6 +31,7 @@ public class NegateComparisonIntention extends MutablyNamedIntention{
         return "Negate Comparison";
     }
 
+    @NotNull
     public PsiElementPredicate getElementPredicate(){
         return new ComparisonPredicate();
     }
