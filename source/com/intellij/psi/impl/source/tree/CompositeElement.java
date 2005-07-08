@@ -37,28 +37,69 @@ public class CompositeElement extends TreeElement implements Cloneable {
   }
 
   public int getStartOffset() {
-    CompositeElement parent = this;
-    int sum = 0;
-    while (parent != null) {
-      sum += parent.getModificationCount();
-      parent = parent.getTreeParent();
-    }
-    if (sum != myParentModifications) {
-      myParentModifications = sum;
-      LOG.assertTrue(prev != this, "Loop in tree");
-      if (prev != null) {
-        myStartOffset = prev.getStartOffset() + prev.getTextLength();
+    LOG.assertTrue(prev != this, "Loop in tree");
+    if(parent == null) return 0;
+    synchronized(PsiLock.LOCK){
+      CompositeElement parent = this.parent;
+      int sum = 0;
+      while (parent != null) {
+        sum += parent.getModificationCount();
+        parent = parent.getTreeParent();
       }
-      else {
-        if (this.parent != null) {
-          myStartOffset = this.parent.getStartOffset();
+      recalcStartOffset(sum);
+      return myStartOffset;
+    }
+  }
+
+  private void recalcStartOffset(final int parentModificationsCount) {
+    if(parentModificationsCount == myParentModifications || parent == null) return;
+
+    { // recalc on parent if needed
+      final int parentParentModificationsCount = parentModificationsCount - parent.getModificationCount();
+      parent.recalcStartOffset(parentParentModificationsCount);
+    }
+
+    CompositeElement lastKnownStart = null;
+
+    TreeElement treePrev = prev;
+    TreeElement last = this;
+    TreeElement current = null;
+    { // Step 1: trying to find known startOffset in previous composites (getTreePrev for composite is cheap)
+      while(treePrev instanceof CompositeElement){
+        final CompositeElement compositeElement = (CompositeElement)treePrev;
+        if(compositeElement.myParentModifications == parentModificationsCount) {
+          lastKnownStart = compositeElement;
+          break;
         }
-        else {
-          myStartOffset = 0;
-        }
+        last = treePrev;
+        treePrev = treePrev.getTreePrev();
       }
     }
-    return myStartOffset;
+
+    if(lastKnownStart == null){
+      // Step 2: if leaf found cheaper to start from begining to find known startOffset composite
+      lastKnownStart = parent;
+      current = (TreeElement)parent.getFirstChildNode();
+
+      while(current != last){
+        LOG.assertTrue(current != null, "Invalid tree");
+        if(current instanceof CompositeElement) {
+          final CompositeElement compositeElement = (CompositeElement)current;
+          if(compositeElement.myParentModifications == parentModificationsCount)
+            lastKnownStart = compositeElement;
+        }
+        current = current.getTreeNext();
+      }
+    }
+    current = lastKnownStart != parent ? lastKnownStart : (TreeElement)parent.getFirstChildNode();
+    int start = lastKnownStart.myStartOffset;
+    while(current != this) {
+      start += current.getTextLength();
+      current = current.getTreeNext();
+    }
+
+    myStartOffset = start;
+    myParentModifications = parentModificationsCount;
   }
 
   public Object clone() {
