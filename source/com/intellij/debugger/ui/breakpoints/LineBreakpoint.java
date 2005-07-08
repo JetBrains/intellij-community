@@ -266,8 +266,11 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
         PsiElement child = element;
         while(element != null) {
 
-          if (document.getLineNumber(element.getTextOffset()) != lineIndex) {
-            break;
+          final int offset = element.getTextOffset();
+          if (offset >= 0) {
+            if (document.getLineNumber(offset) != lineIndex) {
+              break;
+            }
           }
           child = element;
           element = element.getParent();

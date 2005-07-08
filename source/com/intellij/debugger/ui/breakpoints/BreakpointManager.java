@@ -99,19 +99,16 @@ public class BreakpointManager implements JDOMExternalizable {
   private void update(List<BreakpointWithHighlighter> breakpoints) {
     final TIntHashSet intHash = new TIntHashSet();
 
-    for (Iterator<BreakpointWithHighlighter> iterator = breakpoints.iterator(); iterator.hasNext();) {
-      BreakpointWithHighlighter breakpoint = iterator.next();
+    for (BreakpointWithHighlighter breakpoint : breakpoints) {
       SourcePosition sourcePosition = breakpoint.getSourcePosition();
       breakpoint.reload();
 
-      if(breakpoint.isValid()) {
-        final int oldLine = sourcePosition.getLine();
-        final int line = breakpoint.getSourcePosition().getLine();
-        if(line != oldLine) {
+      if (breakpoint.isValid()) {
+        if (breakpoint.getSourcePosition().getLine() != sourcePosition.getLine()) {
           fireBreakpointChanged(breakpoint);
         }
 
-        if(intHash.contains(breakpoint.getLineIndex())) {
+        if (intHash.contains(breakpoint.getLineIndex())) {
           remove(breakpoint);
         }
         else {
