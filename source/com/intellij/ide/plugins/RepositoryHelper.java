@@ -33,7 +33,7 @@ public class RepositoryHelper {
   public static final String DOWNLOAD_URL = REPOSITORY_HOST + "/pluginManager?action=download&id=";
   public static final String REPOSITORY_LIST_SYSTEM_ID = REPOSITORY_HOST + "/plugin-repository.dtd";
 
-  private static final String FILENAME = "filename=\"";
+  private static final String FILENAME = "filename=";
 
   private static class InputStreamGetter implements Runnable {
     private InputStream is;
@@ -158,80 +158,99 @@ public class RepositoryHelper {
                  URLEncoder.encode(pluginNode.getName(), "UTF8") +
                  "&build=" + buildNumber;
     HttpURLConnection connection = (HttpURLConnection)new URL (url).openConnection();
-    final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
+    try
+    {
+      final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
 
-    InputStream is = getConnectionInputStream(connection);
+      InputStream is = getConnectionInputStream(connection);
 
-    if (is == null)
-      return null;
+      if (is == null)
+        return null;
 
-    pi.setText("Downloading plugin '" + pluginNode.getName() + "'");
-    File file = File.createTempFile("plugin", "download",
-                                    new File (PathManagerEx.getPluginTempPath()));
-    OutputStream fos = new BufferedOutputStream(new FileOutputStream(file, false));
+      pi.setText("Downloading plugin '" + pluginNode.getName() + "'");
+      File file = File.createTempFile("plugin", "download",
+                                      new File (PathManagerEx.getPluginTempPath()));
+      OutputStream fos = new BufferedOutputStream(new FileOutputStream(file, false));
 
-    int responseCode = connection.getResponseCode();
-    switch (responseCode) {
-      case HttpURLConnection.HTTP_OK:
-        break;
-      default:
-        // some problems
-        throw new IOException("Connection failed with HTTP code " + responseCode);
-    }
-
-    if (pluginNode.getSize().equals("-1")) {
-      if (connection.getContentLength() == -1)
-        pi.setIndeterminate(true);
-      else
-        pluginNode.setSize(Integer.toString(connection.getContentLength()));
-    }
-
-    boolean cleanFile = true;
-
-    try {
-      is = new ProgressStream(packet ? count : 0, packet ? available : Integer.valueOf(pluginNode.getSize()).intValue(),
-                                              is, pi);
-      int c;
-      while ((c = is.read()) != -1) {
-        if (pi.isCanceled())
-          throw new RuntimeException(new InterruptedException());
-
-        fos.write(c);
+      int responseCode = connection.getResponseCode();
+      switch (responseCode) {
+        case HttpURLConnection.HTTP_OK:
+          break;
+        default:
+          // some problems
+          throw new IOException("Connection failed with HTTP code " + responseCode);
       }
 
-      cleanFile = false;
-    } catch (RuntimeException e) {
-      if (e.getCause() != null && e.getCause() instanceof InterruptedException)
-        return null;
-      else
-        throw e;
-    } finally {
-      fos.close();
-      if (cleanFile)
-        file.delete();
+      if (pluginNode.getSize().equals("-1")) {
+        if (connection.getContentLength() == -1)
+          pi.setIndeterminate(true);
+        else
+          pluginNode.setSize(Integer.toString(connection.getContentLength()));
+      }
+
+      boolean cleanFile = true;
+
+      try {
+        is = new ProgressStream(packet ? count : 0, packet ? available : Integer.valueOf(pluginNode.getSize()).intValue(),
+                                                is, pi);
+        int c;
+        while ((c = is.read()) != -1) {
+          if (pi.isCanceled())
+            throw new RuntimeException(new InterruptedException());
+
+          fos.write(c);
+        }
+
+        cleanFile = false;
+      } catch (RuntimeException e) {
+        if (e.getCause() != null && e.getCause() instanceof InterruptedException)
+          return null;
+        else
+          throw e;
+      } finally {
+        fos.close();
+        if (cleanFile)
+          file.delete();
+      }
+
+      String fileName = null;
+      String contentDisposition = connection.getHeaderField("Content-Disposition");
+      if (contentDisposition == null) {
+        // try to find filename in URL
+        String usedURL = connection.getURL().toString();
+        int startPos = usedURL.lastIndexOf("/");
+
+        fileName = usedURL.substring(startPos + 1);
+
+      } else {
+        int startIdx = contentDisposition.indexOf(FILENAME);
+        if (startIdx != -1) {
+          fileName = contentDisposition.substring(startIdx + FILENAME.length(), contentDisposition.length());
+          // according to the HTTP spec, the filename is a quoted string, but some servers don't quote it
+          // for example: http://www.jspformat.com/Download.do?formAction=d&id=8
+          if (fileName.startsWith("\"") && fileName.endsWith("\"")) {
+            fileName = fileName.substring(1, fileName.length()-1);
+          }
+          if (fileName.indexOf('\\') >= 0 || fileName.indexOf('/') >= 0 || fileName.indexOf(File.separatorChar) >= 0 ||
+            fileName.indexOf('\"') >= 0) {
+            // invalid path name passed by the server - fail to download
+            FileUtil.delete(file);
+            return null;
+          }
+        }
+        else {
+          // invalid Content-Disposition header passed by the server - fail to download
+          FileUtil.delete(file);
+          return null;
+        }
+      }
+
+      File newFile = new File (file.getParentFile(), fileName);
+      FileUtil.rename(file, newFile);
+      return newFile;
     }
-
-    String fileName = null;
-    String contentDisposition = connection.getHeaderField("Content-Disposition");
-    if (contentDisposition == null) {
-      // try to find filename in URL
-      String usedURL = connection.getURL().toString();
-      int startPos = usedURL.lastIndexOf("/");
-
-      fileName = usedURL.substring(startPos + 1);
-
-    } else {
-      int startIdx = contentDisposition.indexOf(FILENAME);
-      if (startIdx != -1)
-        fileName = contentDisposition.substring(startIdx + FILENAME.length(), contentDisposition.length() - 1);
-      else
-        throw new IllegalArgumentException(contentDisposition);
+    finally {
+      connection.disconnect();
     }
-
-    connection.disconnect();
-
-    File newFile = new File (file.getParentFile(), fileName);
-    FileUtil.rename(file, newFile);
-    return newFile;
   }
 }
