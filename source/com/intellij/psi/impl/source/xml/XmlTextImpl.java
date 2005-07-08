@@ -154,6 +154,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
 
   public void setValue(String s) throws IncorrectOperationException {
     final ASTNode firstEncodedElement = getPolicy().encodeXmlTextContents(s, this, SharedImplUtil.findCharTableByTree(this));
+    
     if(firstEncodedElement == null){
       delete();
       return;
