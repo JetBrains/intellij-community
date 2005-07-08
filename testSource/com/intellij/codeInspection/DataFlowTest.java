@@ -182,4 +182,8 @@ public class DataFlowTest extends InspectionTestCase {
   public void testIDEADEV1575() throws Exception {
     doTest15();
   }
+
+  public void testAlexBug() throws Exception {
+    doTest15();
+  }
 }

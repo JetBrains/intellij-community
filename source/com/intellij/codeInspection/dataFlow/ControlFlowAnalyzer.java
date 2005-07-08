@@ -1093,6 +1093,8 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
   public void visitNewExpression(PsiNewExpression expression) {
     startElement(expression);
 
+    pushUnknown();
+
     final PsiExpressionList args = expression.getArgumentList();
     if (args != null) {
       PsiExpression[] params = args.getExpressions();
@@ -1101,7 +1103,6 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
       }
     }
 
-    pushUnknown();
     addInstruction(new MethodCallInstruction(expression, myFactory));
 
     if (myCatchStack.size() > 0) {
