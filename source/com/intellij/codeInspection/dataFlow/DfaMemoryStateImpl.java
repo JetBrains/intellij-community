@@ -422,6 +422,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     DfaValue dfaLeft = dfaRelation.getLeftOperand();
     DfaValue dfaRight = dfaRelation.getRightOperand();
 
+    if (dfaLeft instanceof DfaNotNullValue && dfaRight == myFactory.getConstFactory().getNull()) {
+      return dfaRelation.isNegated();
+    }
+
     if (dfaRight instanceof DfaTypeValue) {
       if (dfaLeft instanceof DfaVariableValue) {
         DfaVariableState varState = getVariableState((DfaVariableValue)dfaLeft);

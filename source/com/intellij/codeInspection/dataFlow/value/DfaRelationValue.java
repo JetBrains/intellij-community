@@ -9,6 +9,7 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
@@ -29,17 +30,32 @@ public class DfaRelationValue extends DfaValue {
       myStringToObject = new HashMap<String, ArrayList<DfaRelationValue>>();
     }
 
+    @Nullable
     public DfaRelationValue create(DfaValue dfaLeft, DfaValue dfaRight, String relation, boolean negated) {
       if (dfaRight instanceof DfaTypeValue && !"instanceof".equals(relation)) return null;
 
-      if (!(dfaLeft instanceof DfaVariableValue || dfaRight instanceof DfaVariableValue)) {
+      if (dfaLeft instanceof DfaVariableValue || dfaRight instanceof DfaVariableValue) {
+        if (!(dfaLeft instanceof DfaVariableValue)) {
+          return create(dfaRight, dfaLeft, getSymmetricOperation(relation), negated);
+        }
+
+        return createCanonicalRelation(relation, negated, dfaLeft, dfaRight);
+      }
+      if (dfaLeft instanceof DfaNotNullValue && dfaRight instanceof DfaConstValue) {
+        return createCanonicalRelation(relation, negated, dfaLeft, dfaRight);
+      }
+      else if (dfaRight instanceof DfaNotNullValue && dfaLeft instanceof DfaConstValue) {
+        return createCanonicalRelation(relation, negated, dfaRight, dfaLeft);
+      }
+      else {
         return null;
       }
+    }
 
-      if (!(dfaLeft instanceof DfaVariableValue)) {
-        return create(dfaRight, dfaLeft, getSymmetricOperation(relation), negated);
-      }
-
+    private DfaRelationValue createCanonicalRelation(String relation,
+                                                     boolean negated,
+                                                     final DfaValue dfaLeft,
+                                                     final DfaValue dfaRight) {
       // To canonical form.
       if ("!=".equals(relation)) {
         relation = "==";
