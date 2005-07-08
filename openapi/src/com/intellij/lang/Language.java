@@ -113,6 +113,7 @@ public abstract class Language {
    * @return instance of the <code>klass</code> language registered if any.
    */
   public static <T extends Language> T findInstance(Class<T> klass) {
+    //noinspection unchecked
     return (T)ourRegisteredLanguages.get(klass);
   }
 
@@ -123,7 +124,7 @@ public abstract class Language {
    *
    * Default implementation doesn't highlight anything.
    * @param project might be necessary to gather various project settings from.
-   * @return <code>SyntaxHighligher</code> interface implementation for this particular language.
+   * @return <code>SyntaxHighlighter</code> interface implementation for this particular language.
    */
   @NotNull
   public SyntaxHighlighter getSyntaxHighlighter(Project project) {
@@ -131,10 +132,10 @@ public abstract class Language {
   }
 
   /**
-   * Override this method to provide code formatter (aka pretty print, aka code buitifier) for your language implementation.
+   * Override this method to provide code formatter (aka pretty print, aka code beauitifier) for your language implementation.
    * Note that formatter implementation is necessary to make smart enter and smart end functions to work properly.
    *
-   * @return <code>FormatterModelBuilder</code> interface implementation for this particular language or <code>null</code>
+   * @return <code>FormattingModelBuilder</code> interface implementation for this particular language or <code>null</code>
    * if no formatting capabilities provided.
    */
   @Nullable
@@ -169,7 +170,7 @@ public abstract class Language {
   }
 
   /**
-   * Override this method to provide paired brace matching and highlighting ability this language editors.
+   * Override this method to provide paired brace matching and highlighting ability for editors of the language.
    * For this functionality to work properly own {@link SyntaxHighlighter} implementation is necessary.
    *
    * @return <code>PairedBraceMatcher</code> interface implementation for this particular language or <code>null</code>
@@ -181,7 +182,7 @@ public abstract class Language {
   }
 
   /**
-   * Override this method to provide comment-by-block and/or comment-by-line actions implementations for your language
+   * Override this method to provide comment-by-block and/or comment-by-line actions implementations for your language.
    * For this functionality to work properly {@link ParserDefinition} implementation is necessary.
    *
    * @return <code>Commenter</code> interface implementation for this particular language or <code>null</code>
@@ -256,7 +257,7 @@ public abstract class Language {
 
   /**
    * Override this method to provide common refactorings implementation for the elements of your language.
-   * For the time being only safe delete refactoring implemented.
+   * For the time being only safe delete refactoring is implemented.
    * Note that rename refactoring will be automatically enabled with <code>FindUsagesProvider</code> and <code>ParserDefinition</code>.
    *
    * @return <code>RefactoringSupportProvider</code> interface implementation for this particular language or <code>null</code>
@@ -282,10 +283,22 @@ public abstract class Language {
     return "Language: " + myID;
   }
 
+  /**
+   * Returns the list of MIME types corresponding to the language. The language MIME type is used for specifying the base language
+   * of a JSP page.
+   * @return The list of MIME types.
+   */
+
   public String[] getMimeTypes(){
     return myMimeTypes;
   }
 
+  /**
+   * Returns a user-readable name of the language.
+   * @return the name of the language.
+   */
+
+  @NotNull
   public String getID() {
     return myID;
   }
