@@ -48,14 +48,12 @@ public class XmlFileTreeElement extends PsiTreeElementBase<XmlFile> {
   }
 
   public Collection<StructureViewTreeElement> getChildrenBase() {
-    XmlDocument document = getElement().getDocument();
-    if (document != null && document.getRootTag() != null) {
-      Collection<StructureViewTreeElement> rootTags = new ArrayList<StructureViewTreeElement>();
+    final Collection<StructureViewTreeElement> rootTags = new ArrayList<StructureViewTreeElement>();
+    final XmlDocument document = getElement().getDocument();
+    if (document != null)
       for (PsiElement element : document.getChildren())
         if (element instanceof XmlTag) rootTags.add(new XmlTagTreeElement((XmlTag)element));
-      return rootTags;
-    }
-    return Collections.EMPTY_LIST;
+    return rootTags;
   }
 
   public String getPresentableText() {
