@@ -14,6 +14,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -47,6 +48,8 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
         return;
       }
     }
+
+    PsiDocumentManager.getInstance(project).commitDocument(myDocument);
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.comment.line");
 
