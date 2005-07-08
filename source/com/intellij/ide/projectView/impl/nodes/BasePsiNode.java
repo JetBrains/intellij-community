@@ -7,6 +7,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
@@ -16,25 +17,28 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
-@SuppressWarnings({"UNCHECKED_WARNING"})
-public abstract class BasePsiNode <Type extends PsiElement> extends ProjectViewNode<Type> {
+@SuppressWarnings({"unchecked"})
+public abstract class BasePsiNode <T extends PsiElement> extends ProjectViewNode<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.nodes.BasePsiNode");
 
-  protected BasePsiNode(Project project, Type value, ViewSettings viewSettings) {
+  protected BasePsiNode(Project project, T value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 
+  @NotNull
   public final Collection<AbstractTreeNode> getChildren() {
-    Type value = getValue();
+    T value = getValue();
     if (value == null) return new ArrayList<AbstractTreeNode>();
     boolean valid = value.isValid();
     if (!LOG.assertTrue(valid)) {
-      return null;
+      return Collections.EMPTY_LIST;
     }
     return getChildrenImpl();
   }
@@ -43,7 +47,7 @@ public abstract class BasePsiNode <Type extends PsiElement> extends ProjectViewN
 
   protected boolean isMarkReadOnly() {
     final Object parentValue = getParentValue();
-    return parentValue instanceof PsiDirectory || parentValue instanceof PackageElement;
+    return parentValue instanceof PsiDirectory || parentValue instanceof PackageElement || parentValue instanceof Module;
   }
 
   public FileStatus getFileStatus() {
@@ -56,7 +60,7 @@ public abstract class BasePsiNode <Type extends PsiElement> extends ProjectViewN
   }
 
   private VirtualFile getVirtualFileForValue() {
-    Type value = getValue();
+    T value = getValue();
     if (value == null) return null;
     if (value instanceof PsiDirectory) {
       return ((PsiDirectory)value).getVirtualFile();
@@ -77,7 +81,7 @@ public abstract class BasePsiNode <Type extends PsiElement> extends ProjectViewN
 
 
   public void update(PresentationData data) {
-    final Type value = getValue();
+    final T value = getValue();
     if (value == null || !value.isValid()) {
       setValue(null);
     }
@@ -102,7 +106,7 @@ public abstract class BasePsiNode <Type extends PsiElement> extends ProjectViewN
   }
 
   private boolean isDeprecated() {
-    final Type element = getValue();
+    final T element = getValue();
     if (element == null || !element.isValid()) return false;
     if (!(element instanceof PsiDocCommentOwner)) return false;
     return ((PsiDocCommentOwner)element).isDeprecated();
