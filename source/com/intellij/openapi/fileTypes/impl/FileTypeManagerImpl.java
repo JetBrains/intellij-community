@@ -28,6 +28,7 @@ import gnu.trove.THashSet;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
@@ -96,11 +97,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   // Implementation of abstract methods
   // -------------------------------------------------------------------------
 
+  @NotNull
   public FileType getFileTypeByFileName(String fileName) {
     String ext = getExtension(fileName);
     return getFileTypeByExtension(ext);
   }
 
+  @NotNull
   public FileType getFileTypeByFile(VirtualFile file) {
     // first let file recognize its type
     for (int i = 0; i < mySpecialFileTypes.size(); i++) {
@@ -113,7 +116,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return getFileTypeByExtension(extension);
   }
 
-  public FileType getFileTypeByExtension(String extension) {
+  @NotNull
+  public FileType getFileTypeByExtension(@NotNull String extension) {
     FileType type = myExtToFileTypeMap.get(extension);
     if (type != null) return type;
     type = myExtToFileTypeMap.get(extension.toLowerCase());
@@ -907,6 +911,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       }
     }
   }
+  @NotNull
   public FileType getKnownFileTypeOrAssociate(VirtualFile file) {
     return FileTypeChooser.getKnownFileTypeOrAssociate(file);
   }

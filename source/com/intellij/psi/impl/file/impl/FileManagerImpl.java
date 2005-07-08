@@ -10,6 +10,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -189,7 +191,7 @@ public class FileManagerImpl implements FileManager {
     myVirtualFileManager.dispatchPendingEvent(myVirtualFileListener);
     myFileDocumentManager.dispatchPendingEvents(myFileDocumentManagerListener);
     myProjectRootManager.dispatchPendingEvent(myModuleRootListener);
-    myFileTypeManager.dispatchPendingEvents(myFileTypeListener);
+    ((FileTypeManagerEx) myFileTypeManager).dispatchPendingEvents(myFileTypeListener);
     //TODO: other listeners
   }
 
