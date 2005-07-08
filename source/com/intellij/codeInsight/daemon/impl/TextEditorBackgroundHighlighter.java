@@ -44,7 +44,7 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.lang.annotation.HighlightSeverity;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -121,6 +121,7 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
     }
   }
 
+  @Nullable
   private TextEditorHighlightingPass createDaemonPass(int startOffset,
                                                       int endOffset,
                                                       int pass) {
@@ -160,7 +161,7 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
         return new ExternalToolPass(myFile, myEditor);
 
       default:
-        LOG.error("" + pass);
+        LOG.error(Integer.toString(pass));
         return null;
     }
   }

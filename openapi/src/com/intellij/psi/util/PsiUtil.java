@@ -7,6 +7,9 @@ package com.intellij.psi.util;
 import com.intellij.aspects.psi.PsiIdPattern;
 import com.intellij.aspects.psi.PsiTypeNamePattern;
 import com.intellij.aspects.psi.PsiTypeNamePatternElement;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Comparing;
@@ -21,9 +24,7 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -42,7 +43,7 @@ public final class PsiUtil {
   public static boolean isOnAssignmentLeftHand(PsiExpression expr) {
     PsiElement parent = expr.getParent();
     return parent instanceof PsiAssignmentExpression
-        && expr.equals(((PsiAssignmentExpression) parent).getLExpression());
+           && expr.equals(((PsiAssignmentExpression) parent).getLExpression());
   }
 
   public static boolean isAccessibleFromPackage(PsiModifierListOwner element, PsiPackage aPackage) {
@@ -96,7 +97,7 @@ public final class PsiUtil {
             final PsiClassType parameterType = resolve.getManager().getElementFactory().createType((PsiTypeParameter) resolve);
             final PsiType superType = result.getSubstitutor().substitute(parameterType);
             if (superType instanceof PsiArrayType) {
-              return resolve.getManager().getElementFactory().getArrayClassType(((PsiArrayType)superType).getComponentType()).resolveGenerics(); 
+              return resolve.getManager().getElementFactory().getArrayClassType(((PsiArrayType)superType).getComponentType()).resolveGenerics();
             }
             else if (superType instanceof PsiClassType) {
               final PsiClassType type = (PsiClassType)superType;
@@ -214,8 +215,7 @@ public final class PsiUtil {
   public static boolean isVariableNameUnique(String name, PsiElement place) {
     PsiResolveHelper helper = place.getManager().getResolveHelper();
     PsiVariable refVar = helper.resolveReferencedVariable(name, place);
-    if (refVar != null) return false;
-    return true;
+    return refVar == null;
   }
 
   /**
@@ -231,6 +231,7 @@ public final class PsiUtil {
     PsiManager manager = file.getManager();
     PsiElementFactory factory = manager.getElementFactory();
     PsiDirectory dir = file.getContainingDirectory();
+    if (dir == null) return;
     PsiPackage aPackage = dir.getPackage();
     if (aPackage == null) return;
     String packageName = aPackage.getQualifiedName();
@@ -300,6 +301,7 @@ public final class PsiUtil {
   /**
    * @return codeblock topmost codeblock where variable makes sense
    */
+  @Nullable
   public static PsiElement getVariableCodeBlock(PsiVariable variable, PsiElement context) {
     PsiElement codeBlock = null;
     if (variable instanceof PsiParameter) {
@@ -323,8 +325,8 @@ public final class PsiUtil {
         context = context.getParent();
       }
       return context instanceof PsiMethod ?
-          ((PsiMethod) context).getBody() :
-          context instanceof PsiClassInitializer ? ((PsiClassInitializer) context).getBody() : null;
+             ((PsiMethod) context).getBody() :
+             context instanceof PsiClassInitializer ? ((PsiClassInitializer) context).getBody() : null;
     }
     else {
       final PsiElement scope = variable.getParent() == null ? null : variable.getParent().getParent();
@@ -363,6 +365,7 @@ public final class PsiUtil {
     }
   }
 
+  @Nullable
   public static String getAccessModifier(int accessLevel) {
     return accessLevel > accessModifiers.length ? null : accessModifiers[accessLevel - 1];
   }
@@ -371,6 +374,7 @@ public final class PsiUtil {
     PsiModifier.PRIVATE, PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED, PsiModifier.PUBLIC
   };
 
+  @Nullable
   public static PsiFile findRelativeFile(String uri, PsiElement base) {
     if (base instanceof PsiFile) {
       PsiFile baseFile = (PsiFile) base;
@@ -389,6 +393,7 @@ public final class PsiUtil {
     return null;
   }
 
+  @Nullable
   public static PsiDirectory findRelativeDirectory(String uri, PsiElement base) {
     if (base instanceof PsiFile) {
       PsiFile baseFile = (PsiFile) base;
@@ -446,10 +451,10 @@ public final class PsiUtil {
     if (element instanceof PsiNewExpression) {
       return !(((PsiNewExpression) element).getType() instanceof PsiArrayType);
     }
-    if (element instanceof PsiCodeBlock) return true;
-    return false;
+    return element instanceof PsiCodeBlock;
   }
 
+  @Nullable
   public static PsiElement getEnclosingStatement(PsiElement element) {
     while (element != null) {
       if (element.getParent() instanceof PsiCodeBlock) return element;
@@ -459,6 +464,7 @@ public final class PsiUtil {
   }
 
 
+  @Nullable
   public static PsiElement getElementInclusiveRange(PsiElement scope, TextRange range) {
     PsiElement psiElement = scope.findElementAt(range.getStartOffset());
     while (!psiElement.getTextRange().contains(range)) {
@@ -526,6 +532,7 @@ public final class PsiUtil {
     }
   }
 
+  @Nullable
   public static PsiClass resolveClassInType(PsiType type) {
     if (type instanceof PsiClassType) {
       return ((PsiClassType) type).resolve();
@@ -666,9 +673,9 @@ public final class PsiUtil {
    */
   public static boolean isCompileTimeConstant(final PsiField field) {
     return field.hasModifierProperty(PsiModifier.FINAL)
-        && (TypeConversionUtil.isPrimitiveAndNotNull(field.getType()) || field.getType().equalsToText("java.lang.String"))
-        && field.hasInitializer()
-        && isConstantExpression(field.getInitializer());
+           && (TypeConversionUtil.isPrimitiveAndNotNull(field.getType()) || field.getType().equalsToText("java.lang.String"))
+           && field.hasInitializer()
+           && isConstantExpression(field.getInitializer());
   }
 
   public static boolean allMethodsHaveSameSignature(PsiMethod[] methods) {
@@ -697,12 +704,12 @@ public final class PsiUtil {
    * Checks whether given class is inner (as opposed to nested)
    *
    * @param aClass
-   * @return
    */
   public static boolean isInnerClass(PsiClass aClass) {
     return !aClass.hasModifierProperty(PsiModifier.STATIC) && aClass.getContainingClass() != null;
   }
 
+  @Nullable
   public static PsiElement findModifierInList(final PsiModifierList modifierList, String modifier) {
     final PsiElement[] children = modifierList.getChildren();
     for (PsiElement child : children) {
@@ -718,6 +725,7 @@ public final class PsiUtil {
            || element instanceof PsiForeachStatement;
   }
 
+  @Nullable
   public static PsiClass getTopLevelClass(PsiElement element) {
     final PsiFile file = element.getContainingFile();
     if (file instanceof PsiJavaFile) {
@@ -732,6 +740,7 @@ public final class PsiUtil {
   /**
    * @return element with static modifier enclosing place and enclosed by aClass (if not null)
    */
+  @Nullable
   public static PsiModifierListOwner getEnclosingStaticElement(PsiElement place, PsiClass aClass) {
     LOG.assertTrue(aClass == null || PsiTreeUtil.isAncestor(aClass, place, false));
     PsiElement parent = place;
@@ -745,6 +754,7 @@ public final class PsiUtil {
     return null;
   }
 
+  @Nullable
   public static PsiType getTypeByPsiElement(final PsiElement element) {
     if (element instanceof PsiVariable) {
       return ((PsiVariable)element).getType();
@@ -830,7 +840,6 @@ public final class PsiUtil {
    * Returns iterator of type parameters visible in owner. Type parameters are iterated in
    * inner-to-outer, right-to-left order.
    * @param owner
-   * @return
    */
   public static Iterator<PsiTypeParameter> typeParametersIterator(PsiTypeParameterListOwner owner) {
     return new TypeParameterIterator(owner);
@@ -844,8 +853,7 @@ public final class PsiUtil {
     if (method.hasModifierProperty(PsiModifier.FINAL)) return false;
     if (method.hasModifierProperty(PsiModifier.PRIVATE)) return false;
     if (parentClass instanceof PsiAnonymousClass) return false;
-    if (parentClass.hasModifierProperty(PsiModifier.FINAL)) return false;
-    return true;
+    return !parentClass.hasModifierProperty(PsiModifier.FINAL);
   }
 
   public static PsiElement[] mapElements(ResolveResult[] candidates) {
@@ -863,6 +871,7 @@ public final class PsiUtil {
     return false;
   }
 
+  @Nullable
   public static PsiMember findEnclosingConstructorOrInitializer(PsiElement expression) {
     PsiMember parent = PsiTreeUtil.getParentOfType(expression, PsiClassInitializer.class, PsiMethod.class);
     if (parent instanceof PsiMethod && !((PsiMethod)parent).isConstructor()) return null;
