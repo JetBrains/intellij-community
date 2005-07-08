@@ -2,8 +2,10 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.util.CharTable;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.text.CharSequenceHashingStrategy;
+import com.intellij.psi.impl.source.CharTableEntryHashingStrategy;
 import gnu.trove.THashMap;
+
+import java.lang.ref.WeakReference;
 
 /**
  * Created by IntelliJ IDEA.
@@ -13,8 +15,18 @@ import gnu.trove.THashMap;
  * To change this template use File | Settings | File Templates.
  */
 public class CharTableImpl implements CharTable {
-  private final THashMap<CharSequence, CharSequence> myEntries =
-    new THashMap<CharSequence, CharSequence>(new CharSequenceHashingStrategy());
+  private final THashMap<WeakReference<? extends CharSequence>, WeakReference<? extends CharSequence>> myEntries =
+    new THashMap<WeakReference<? extends CharSequence>, WeakReference<? extends CharSequence>>(new CharTableEntryHashingStrategy()){
+      protected void rehash(final int newCapacity) {
+        for (int i = 0; i < _set.length; i++) {
+          final Object o = _set[i];
+          if(o == REMOVED) continue;
+          final WeakReference<? extends CharSequence> reference = (WeakReference<? extends CharSequence>)o;
+          if(reference != null && reference.get() == null) _set[i] = REMOVED;
+        }
+        super.rehash(newCapacity);
+      }
+    };
   private char[] myCurrentPage = null;
   private int bufferEnd = 0;
 
@@ -23,10 +35,13 @@ public class CharTableImpl implements CharTable {
   }
 
   public CharSequence intern(final CharSequence text) {
-    CharSequence entry = myEntries.get(text);
-    if (entry == null) {
+
+    WeakReference<? extends CharSequence> weakReference = myEntries.get(new WeakReference(text));
+    CharSequence entry = weakReference != null ? weakReference.get() : null;
+    if (entry == null ) {
       entry = createEntry(text);
-      myEntries.put(entry, entry);
+      weakReference = new WeakReference<CharSequence>(entry);
+      myEntries.put(weakReference, weakReference);
     }
     return entry;
   }
