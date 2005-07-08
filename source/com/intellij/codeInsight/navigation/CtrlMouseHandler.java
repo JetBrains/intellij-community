@@ -19,12 +19,13 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.*;
-import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -32,6 +33,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.ui.LightweightHint;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -171,6 +173,8 @@ public class CtrlMouseHandler implements ProjectComponent {
   }
 
   private static class JavaInfoGenerator {
+    private JavaInfoGenerator() {}
+
     private static void newLine(StringBuffer buffer) {
       // Don't know why space has to be added after newline for good text alignment...
       buffer.append("\n ");
@@ -244,8 +248,6 @@ public class CtrlMouseHandler implements ProjectComponent {
           }
         }
       }
-
-      return;
     }
 
     private static void generateInitializer(StringBuffer buffer, PsiVariable variable) {
@@ -280,6 +282,7 @@ public class CtrlMouseHandler implements ProjectComponent {
       return aPackage.getQualifiedName();
     }
 
+    @Nullable
     private static String generateAttributeValueInfo(PsiAntElement antElement) {
       if (antElement instanceof PsiAntTarget) return null;
 
@@ -297,6 +300,10 @@ public class CtrlMouseHandler implements ProjectComponent {
       if (aClass instanceof PsiAnonymousClass) return "anonymous class";
 
       PsiFile file = aClass.getContainingFile();
+      final Module module = ModuleUtil.findModuleForPsiElement(file);
+      if (module != null) {
+        buffer.append('[').append(module.getName()).append("] ");
+      }
 
       if (file instanceof PsiJavaFile) {
         String packageName = ((PsiJavaFile) file).getPackageName();
@@ -503,6 +510,7 @@ public class CtrlMouseHandler implements ProjectComponent {
       return file.getVirtualFile().getPresentableUrl();
     }
 
+    @Nullable
     public static String generateInfo(PsiElement element) {
       if (element instanceof PsiClass) {
         return generateClassInfo((PsiClass) element);
@@ -545,6 +553,7 @@ public class CtrlMouseHandler implements ProjectComponent {
     }
   }
 
+  @Nullable
   private Info getInfoAt(final Editor editor, LogicalPosition pos, boolean browseType) {
     Document document = editor.getDocument();
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
@@ -577,9 +586,9 @@ public class CtrlMouseHandler implements ProjectComponent {
         if (resolvedElement != null) {
           PsiElement e = ref.getElement();
           return new Info(resolvedElement,
-                  e,
-                  e.getTextRange().getStartOffset() + ref.getRangeInElement().getStartOffset(),
-                  e.getTextRange().getStartOffset() + ref.getRangeInElement().getEndOffset());
+                          e,
+                          e.getTextRange().getStartOffset() + ref.getRangeInElement().getStartOffset(),
+                          e.getTextRange().getStartOffset() + ref.getRangeInElement().getEndOffset());
         }
       }
       targetElement = GotoDeclarationAction.findTargetElement(myProject, editor, offset);
@@ -587,9 +596,9 @@ public class CtrlMouseHandler implements ProjectComponent {
     if (targetElement != null && targetElement.isPhysical()) {
       PsiElement elementAtPointer = file.findElementAt(offset);
       if (elementAtPointer instanceof PsiIdentifier
-              || elementAtPointer instanceof PsiKeyword
-              || elementAtPointer instanceof PsiDocToken
-              || elementAtPointer instanceof XmlToken) {
+          || elementAtPointer instanceof PsiKeyword
+          || elementAtPointer instanceof PsiDocToken
+          || elementAtPointer instanceof XmlToken) {
         return new Info(targetElement, elementAtPointer);
       }
     }
@@ -636,8 +645,8 @@ public class CtrlMouseHandler implements ProjectComponent {
       Component internalComponent = myEditor.getContentComponent();
       if (myHighlighter != null) {
         if (!Comparing.equal(info.myElementAtPointer, myStoredInfo.myElementAtPointer) ||
-                info.myStartOffset != myStoredInfo.myStartOffset ||
-                info.myEndOffset != myStoredInfo.myEndOffset) {
+            info.myStartOffset != myStoredInfo.myStartOffset ||
+            info.myEndOffset != myStoredInfo.myEndOffset) {
           disposeHighlighter();
         } else {
           // highlighter already set
@@ -675,9 +684,9 @@ public class CtrlMouseHandler implements ProjectComponent {
         });
         Point p = hintManager.getHintPosition(hint, myEditor, myPosition, HintManager.ABOVE);
         hintManager.showEditorHint(hint, myEditor, p,
-                HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE |
-                HintManager.HIDE_BY_SCROLLING,
-                0, false);
+                                   HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE |
+                                   HintManager.HIDE_BY_SCROLLING,
+                                   0, false);
       }
     }
 
@@ -685,8 +694,8 @@ public class CtrlMouseHandler implements ProjectComponent {
       int startOffset = info.myStartOffset;
       int endOffset = info.myEndOffset;
       myHighlighter =
-              myEditor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, HighlighterLayer.SELECTION + 1,
-                      ourReferenceAttributes, HighlighterTargetArea.EXACT_RANGE);
+      myEditor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, HighlighterLayer.SELECTION + 1,
+                                                    ourReferenceAttributes, HighlighterTargetArea.EXACT_RANGE);
       myHighlighterView = myEditor;
     }
   }

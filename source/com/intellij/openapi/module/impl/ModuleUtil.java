@@ -21,11 +21,14 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 public class ModuleUtil {
   public static final Object MODULE_RENAMING_REQUESTOR = new Object();
+
+  private ModuleUtil() {}
 
   public static boolean checkSourceRootsConfigured(final Module module) {
     VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
@@ -56,13 +59,11 @@ public class ModuleUtil {
   }
 
   public static String getModuleNameInReadAction(final Module module) {
-    final String moduleName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       public String compute() {
-        final String name = module.getName();
-        return name;
+        return module.getName();
       }
     });
-    return moduleName;
   }
 
   public static boolean isModuleDisposed(PsiElement element) {
@@ -77,6 +78,7 @@ public class ModuleUtil {
     return module == null ? !projectFileIndex.isInLibraryClasses(vFile) : module.isDisposed();
   }
 
+  @Nullable
   public static Module getParentModuleOfType(ModuleType expectedModuleType, Module module) {
     if (expectedModuleType.equals(module.getModuleType())) return module;
     final List<Module> parents = getParentModulesOfType(expectedModuleType, module);
@@ -86,8 +88,7 @@ public class ModuleUtil {
   public static List<Module> getParentModulesOfType(ModuleType expectedModuleType, Module module) {
     final List<Module> parents = ModuleManager.getInstance(module.getProject()).getModuleDependentModules(module);
     ArrayList<Module> modules = new ArrayList<Module>();
-    for (int i = 0; i < parents.size(); i++) {
-      Module parent = parents.get(i);
+    for (Module parent : parents) {
       if (expectedModuleType.equals(parent.getModuleType())) {
         modules.add(parent);
       }
@@ -95,6 +96,7 @@ public class ModuleUtil {
     return modules;
   }
 
+  @Nullable
   public static Module findModuleForPsiElement(PsiElement element) {
     if (!element.isValid()) return null;
     Project project = element.getProject();
