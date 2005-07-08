@@ -94,6 +94,11 @@ public class CompositeElement extends TreeElement implements Cloneable {
     current = lastKnownStart != parent ? lastKnownStart : (TreeElement)parent.getFirstChildNode();
     int start = lastKnownStart.myStartOffset;
     while(current != this) {
+      if(current instanceof CompositeElement){
+        final CompositeElement compositeElement = (CompositeElement)current;
+        compositeElement.myParentModifications = parentModificationsCount;
+        compositeElement.myStartOffset = start;
+      }
       start += current.getTextLength();
       current = current.getTreeNext();
     }
