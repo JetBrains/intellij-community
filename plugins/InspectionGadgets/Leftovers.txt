@@ -19,6 +19,8 @@
     Inaccessible matching methods
     Complex assignments
     Mixed logical operators without parentheses
+    Use of XML class without factory
 
     Move and restructure categories
     Static import quickfix
+    Static inheritance to static import quickfix
