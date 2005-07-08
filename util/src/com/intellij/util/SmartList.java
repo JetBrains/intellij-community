@@ -7,20 +7,15 @@
  */
 package com.intellij.util;
 
-import com.intellij.openapi.diagnostic.Logger;
-
 import java.util.AbstractList;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collection;
+import java.util.List;
 
+@SuppressWarnings({"unchecked"})
 public class SmartList<E> extends AbstractList<E> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.SmartList");
-
-  private int mySize;
-  private E[] myArray1;
-  private final E[] myArray2 = (E[])new Object[2];
-  private List<E> myList;
+  private int mySize = 0;
+  private Object myElem = null;
 
   public SmartList() {
   }
@@ -30,28 +25,42 @@ public class SmartList<E> extends AbstractList<E> {
   }
 
   public E get(int index) {
-    if (mySize <= 2) {
-      return myArray2[index];
+    if (index < 0 || index >= mySize) {
+      throw new IndexOutOfBoundsException("index= " + index + ". Must be index > 0 && index < " + mySize);
+    }
+    if (mySize == 1) {
+      return (E)myElem;
+    }
+    if (mySize == 2) {
+      return (E)((Object[])myElem)[index];
     }
     else {
-      return myList.get(index);
+      return ((List<E>)myElem).get(index);
     }
   }
 
   public boolean add(E e) {
-    if (mySize < 2) {
-      myArray2[mySize] = e;
+    if (mySize == 0) {
+      myElem = e;
+    }
+    else if (mySize == 1) {
+      Object[] array= new Object[2];
+      array[0] = myElem;
+      array[1] = e;
+      myElem = array;
+    }
+    else if (mySize == 2) {
+      List<E> list = new ArrayList<E>(3);
+      final Object[] array = ((Object[])myElem);
+      list.add((E)array[0]);
+      list.add((E)array[1]);
+      list.add(e);
+      myElem = list;
     }
     else {
-      if (mySize == 2) {
-        if (myList == null) {
-          myList = new ArrayList<E>(3);
-        }
-        myList.add(myArray2[0]);
-        myList.add(myArray2[1]);
-      }
-      myList.add(e);
+      ((List<E>)myElem).add(e);
     }
+
     mySize++;
     return true;
   }
@@ -61,42 +70,29 @@ public class SmartList<E> extends AbstractList<E> {
   }
 
   public void clear() {
-    if (myList != null) {
-      myList.clear();
-    }
-    if (myArray1 != null) {
-      myArray1[0] = null;
-    }
-    if (myArray2 != null) {
-      myArray2[0] = null;
-      myArray2[1] = null;
-    }
+    myElem = null;
     mySize = 0;
   }
 
-  public E[] toArray() {
-    if (mySize > 2) {
-      LOG.assertTrue(myList != null && myList.size() == mySize);
-      return myList.toArray((E[])new Object[myList.size()]);
-    }
-    if (mySize == 2) {
-      return myArray2;
-    }
-    if (mySize == 1) {
-      if (myArray1 == null) {
-        myArray1 = (E[])new Object[1];
-      }
-      myArray1[0] = myArray2[0];
-      return myArray1;
-    }
-    return ArrayUtil.<E>emptyArray();
-  }
-
   public E set(final int index, final E element) {
-    if (mySize <= 2) {
-      return myArray2[index] = element;
+    if (index < 0 || index >= mySize) {
+      throw new IndexOutOfBoundsException("index= " + index + ". Must be index > 0 && index < " + mySize);
     }
-    return myList.set(index, element);
+    final E oldValue;
+    if (mySize == 1) {
+      oldValue = (E)myElem;
+      myElem = element;
+    }
+    else if (mySize == 2) {
+      final Object[] array = ((Object[])myElem);
+      oldValue = (E)array[index];
+      array[index] = element;
+    }
+    else {
+      oldValue = ((List<E>)myElem).set(index, element);
+    }
+
+    return oldValue;
   }
 }
 
