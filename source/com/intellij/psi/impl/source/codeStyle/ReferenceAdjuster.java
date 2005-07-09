@@ -35,9 +35,12 @@ class ReferenceAdjuster implements Constants {
     if (elementType == JAVA_CODE_REFERENCE || elementType == REFERENCE_EXPRESSION) {
       if (elementType == JAVA_CODE_REFERENCE || element.getTreeParent().getElementType() == REFERENCE_EXPRESSION || uncompleteCode) {
         final PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(element);
-        final PsiTypeElement[] typeParameters = ref.getParameterList().getTypeParameterElements();
-        for (PsiTypeElement typeParameter : typeParameters) {
-          process((TreeElement)SourceTreeToPsiMap.psiElementToTree(typeParameter), addImports, uncompleteCode);
+        final PsiReferenceParameterList parameterList = ref.getParameterList();
+        if (parameterList != null) {
+          final PsiTypeElement[] typeParameters = parameterList.getTypeParameterElements();
+          for (PsiTypeElement typeParameter : typeParameters) {
+            process((TreeElement)SourceTreeToPsiMap.psiElementToTree(typeParameter), addImports, uncompleteCode);
+          }
         }
 
         boolean rightKind = true;
@@ -152,8 +155,8 @@ class ReferenceAdjuster implements Constants {
     boolean addImports,
     boolean uncompleteCode
     ) {
-    if (refClass.getContainingClass() != null) {
-      PsiClass parentClass = refClass.getContainingClass();
+    PsiClass parentClass = refClass.getContainingClass();
+    if (parentClass != null) {
       PsiJavaCodeReferenceElement psiReference = (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(reference);
       PsiManager manager = parentClass.getManager();
       final PsiResolveHelper resolveHelper = manager.getResolveHelper();
