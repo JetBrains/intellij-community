@@ -17,7 +17,8 @@
           </grid>
         </constraints>
         <properties>
-          <dividerLocation value="488"/>
+          <dividerLocation value="400"/>
+          <resizeWeight value="1.0"/>
         </properties>
         <border type="none"/>
         <children>
