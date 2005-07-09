@@ -138,7 +138,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
       }
 
       public boolean isShowLibraryContents() {
-        return false;
+        return true;
       }
 
       public boolean isShowModules() {
