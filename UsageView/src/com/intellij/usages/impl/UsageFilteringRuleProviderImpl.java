@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.rules.ImportFilteringRule;
 import com.intellij.usages.impl.rules.ReadAccessFilteringRule;
@@ -48,19 +49,29 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
   public AnAction[] createFilteringActions(UsageView view) {
     final UsageViewImpl impl = (UsageViewImpl)view;
     if(view.getPresentation().isCodeUsages()) {
+      final JComponent component = view.getComponent();
+
       final ShowImportsAction showImportsAction = new ShowImportsAction(impl);
-      showImportsAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_I, KeyEvent.CTRL_DOWN_MASK)), view.getComponent());
+      showImportsAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_I, KeyEvent.CTRL_DOWN_MASK)), component);
 
       final ReadWriteState readWriteSharedState = new ReadWriteState();
 
       final ShowReadAccessUsagesAction showReadAccessUsagesAction = new ShowReadAccessUsagesAction(impl, readWriteSharedState);
-      showReadAccessUsagesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.CTRL_DOWN_MASK)), view.getComponent());
+      showReadAccessUsagesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.CTRL_DOWN_MASK)), component);
 
       final ShowWriteAccessUsagesAction showWriteAccessUsagesAction = new ShowWriteAccessUsagesAction(impl, readWriteSharedState);
-      showWriteAccessUsagesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_W, KeyEvent.CTRL_DOWN_MASK)), view.getComponent());
+      showWriteAccessUsagesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_W, KeyEvent.CTRL_DOWN_MASK)), component);
 
+      impl.scheduleDisposeOnClose(new Disposable() {
+        public void dispose() {
+          showImportsAction.unregisterCustomShortcutSet(component);
+          showReadAccessUsagesAction.unregisterCustomShortcutSet(component);
+          showWriteAccessUsagesAction.unregisterCustomShortcutSet(component);
+        }
+      });
       return new AnAction[] {showImportsAction, showReadAccessUsagesAction, showWriteAccessUsagesAction};
-    } else {
+    }
+    else {
       return AnAction.EMPTY_ARRAY;
     }
   }

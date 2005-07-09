@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.Disposable;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.PopupHandler;
@@ -73,6 +74,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private boolean myChangesDetected = false;
   private List<Usage> myUsagesToFlush = new ArrayList<Usage>();
   private Factory<ProgressIndicator> myIndicatorFactory;
+  private List<Disposable> myDisposables = new ArrayList<Disposable>();
 
   public UsageViewImpl(UsageViewPresentation presentation,
                        UsageTarget[] targets,
@@ -207,16 +209,28 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       group.add(groupingActions[i]);
     }
 
-    group.add(new MergeDupLines());
+    final JComponent component = getComponent();
+    final MergeDupLines mergeDupLines = new MergeDupLines();
+    mergeDupLines.registerCustomShortcutSet(mergeDupLines.getShortcutSet(), component);
+    scheduleDisposeOnClose(new Disposable() {
+      public void dispose() {
+        mergeDupLines.unregisterCustomShortcutSet(component);
+      }
+    });
+    group.add(mergeDupLines);
+
 
     final AnAction[] filteringActions = createFilteringActions();
-    for (int i = 0; i < filteringActions.length; i++) {
-      group.add(filteringActions[i]);
+    for (AnAction filteringAction : filteringActions) {
+      group.add(filteringAction);
     }
 
-    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.USAGE_VIEW_TOOLBAR,
-                                                                                  group, false);
+    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.USAGE_VIEW_TOOLBAR, group, false);
     return actionToolbar.getComponent();
+  }
+
+  public void scheduleDisposeOnClose(final Disposable disposable) {
+    myDisposables.add(disposable);
   }
 
   private AnAction[] createActions() {
@@ -241,10 +255,22 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     CommonActionsManager actionsManager = CommonActionsManager.getInstance();
 
     myTextFileExporter = new ExporterToTextFile(this);
+
+    final JComponent component = getComponent();
+
     final AnAction collapseAllAction = actionsManager.createCollapseAllAction(myTreeExpander);
-    collapseAllAction.registerCustomShortcutSet(collapseAllAction.getShortcutSet(), getComponent());
+    collapseAllAction.registerCustomShortcutSet(collapseAllAction.getShortcutSet(), component);
+
     final AnAction expandAllAction = actionsManager.createExpandAllAction(myTreeExpander);
-    expandAllAction.registerCustomShortcutSet(expandAllAction.getShortcutSet(), getComponent());
+    expandAllAction.registerCustomShortcutSet(expandAllAction.getShortcutSet(), component);
+
+    scheduleDisposeOnClose(new Disposable() {
+      public void dispose() {
+        collapseAllAction.unregisterCustomShortcutSet(component);
+        expandAllAction.unregisterCustomShortcutSet(component);
+      }
+    });
+
     return new AnAction[]{
       canPerformReRun() ? new ReRunAction() : null,
       new CloseAction(),
@@ -261,8 +287,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private AnAction[] createGroupingActions() {
     final UsageGroupingRuleProvider[] providers = ApplicationManager.getApplication().getComponents(UsageGroupingRuleProvider.class);
     List<AnAction> list = new ArrayList<AnAction>();
-    for (int i = 0; i < providers.length; i++) {
-      list.addAll(Arrays.asList(providers[i].createGroupingActions(this)));
+    for (UsageGroupingRuleProvider provider : providers) {
+      list.addAll(Arrays.asList(provider.createGroupingActions(this)));
     }
     return list.toArray(new AnAction[list.size()]);
   }
@@ -370,6 +396,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private class MergeDupLines extends RuleAction {
     public MergeDupLines() {
       super(UsageViewImpl.this, "Merge usages from the same line", IconLoader.getIcon("/toolbar/filterdups.png"));
+      setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F, KeyEvent.CTRL_DOWN_MASK)));
     }
 
     protected boolean getOptionValue() {
@@ -588,6 +615,10 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   public void dispose() {
+    for (Disposable disposable : myDisposables) {
+      disposable.dispose();
+    }
+    myDisposables.clear();
     myModelTracker.removeListener(this);
     myModelTracker.dispose();
     myUpdateAlarm.cancelAllRequests();

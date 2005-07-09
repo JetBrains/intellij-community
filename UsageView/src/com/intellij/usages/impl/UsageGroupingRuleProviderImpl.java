@@ -1,8 +1,10 @@
 package com.intellij.usages.impl;
 
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.rules.*;
 import com.intellij.usages.rules.UsageGroupingRule;
@@ -10,8 +12,10 @@ import com.intellij.usages.rules.UsageGroupingRuleProvider;
 import com.intellij.util.Icons;
 import org.jdom.Element;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.awt.event.KeyEvent;
 
 /**
  * Created by IntelliJ IDEA.
@@ -52,17 +56,46 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider,
 
   public AnAction[] createGroupingActions(UsageView view) {
     final UsageViewImpl impl = (UsageViewImpl)view;
+    final JComponent component = impl.getComponent();
+
+    final GroupByModuleTypeAction groupByModuleTypeAction = new GroupByModuleTypeAction(impl);
+    groupByModuleTypeAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, KeyEvent.CTRL_DOWN_MASK)), component);
+
+    final GroupByFileStructureAction groupByFileStructureAction = new GroupByFileStructureAction(impl);
+    groupByFileStructureAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_M, KeyEvent.CTRL_DOWN_MASK)), component);
+
+    impl.scheduleDisposeOnClose(new Disposable() {
+      public void dispose() {
+        groupByModuleTypeAction.unregisterCustomShortcutSet(component);
+        groupByFileStructureAction.unregisterCustomShortcutSet(component);
+      }
+    });
+
     if(view.getPresentation().isCodeUsages()) {
+      final GroupByUsageTypeAction groupByUsageTypeAction = new GroupByUsageTypeAction(impl);
+      groupByUsageTypeAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_T, KeyEvent.CTRL_DOWN_MASK)), component);
+
+      final GroupByPackageAction groupByPackageAction = new GroupByPackageAction(impl);
+      groupByPackageAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P, KeyEvent.CTRL_DOWN_MASK)), component);
+
+      impl.scheduleDisposeOnClose(new Disposable() {
+        public void dispose() {
+          groupByUsageTypeAction.unregisterCustomShortcutSet(component);
+          groupByPackageAction.unregisterCustomShortcutSet(component);
+        }
+      });
+
       return new AnAction[] {
-        new GroupByUsageTypeAction(impl),
-        new GroupByModuleTypeAction(impl),
-        new GroupByPackageAction(impl),
-        new GroupByFileStructureAction(impl)
+        groupByUsageTypeAction,
+        groupByModuleTypeAction,
+        groupByPackageAction,
+        groupByFileStructureAction
       };
-    } else {
+    }
+    else {
       return new AnAction[] {
-        new GroupByModuleTypeAction(impl),
-        new GroupByFileStructureAction(impl)
+        groupByModuleTypeAction,
+        groupByFileStructureAction
       };
     }
   }
