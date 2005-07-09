@@ -76,7 +76,9 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
     List children = element.getChildren("setting");
     for (final Object aChildren : children) {
       final Element child = (Element)aChildren;
-      final VirtualFile fileByUrl = VirtualFileManager.getInstance().findFileByUrl(child.getAttributeValue("file"));
+      final String url = child.getAttributeValue("file");
+      if (url == null) continue;
+      final VirtualFile fileByUrl = VirtualFileManager.getInstance().findFileByUrl(url);
       if (fileByUrl != null) {
         final List<FileHighlighingSetting> settings = new ArrayList<FileHighlighingSetting>();
         int index = 0;

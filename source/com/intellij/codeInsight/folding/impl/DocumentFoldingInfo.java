@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.folding.CodeFoldingState;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -11,33 +12,35 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.util.text.StringTokenizer;
 import org.jdom.Element;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.NoSuchElementException;
 
 public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.DocumentFoldingInfo");
 
   private final Project myProject;
-  private final Document myDocument;
+  private final VirtualFile myFile;
 
-  private ArrayList mySmartPointersOrRangeMarkers = new ArrayList();
+  private ArrayList<Object> mySmartPointersOrRangeMarkers = new ArrayList<Object>();
   private ArrayList<Boolean> myExpandedStates = new ArrayList<Boolean>();
   private Map<RangeMarker, String> myPlaceholderTexts = new HashMap<RangeMarker,String>();
   private static final String DEFAULT_PLACEHOLDER = "...";
 
   public DocumentFoldingInfo(Project project, Document document) {
     myProject = project;
-    myDocument = document;
+    myFile = FileDocumentManager.getInstance().getFile(document);
   }
 
   public void loadFromEditor(Editor editor) {
     clear();
 
-    PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
+    PsiDocumentManager.getInstance(myProject).commitDocument(editor.getDocument());
 
     EditorFoldingInfo info = EditorFoldingInfo.get(editor);
     FoldRegion[] foldRegions = editor.getFoldingModel().getAllFoldRegions();
@@ -154,7 +157,12 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
     mySmartPointersOrRangeMarkers.clear();
     myExpandedStates.clear();
 
-    PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
+    if (!myFile.isValid()) return;
+
+    final Document document = FileDocumentManager.getInstance().getDocument(myFile);
+    if (document == null) return;
+
+    PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     if (psiFile == null) return;
 
     String date = null;
@@ -177,13 +185,13 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
         }
         if ("".equals(date)) continue;
 
-        if (!date.equals(e.getAttributeValue("date")) || FileDocumentManager.getInstance().isDocumentUnsaved(myDocument)) continue;
+        if (!date.equals(e.getAttributeValue("date")) || FileDocumentManager.getInstance().isDocumentUnsaved(document)) continue;
         StringTokenizer tokenizer = new StringTokenizer(e.getAttributeValue("signature"), ":");
         try {
           int start = Integer.valueOf(tokenizer.nextToken()).intValue();
           int end = Integer.valueOf(tokenizer.nextToken()).intValue();
-          if (start < 0 || end >= myDocument.getTextLength() || start > end) continue;
-          RangeMarker marker = myDocument.createRangeMarker(start, end);
+          if (start < 0 || end >= document.getTextLength() || start > end) continue;
+          RangeMarker marker = document.createRangeMarker(start, end);
           mySmartPointersOrRangeMarkers.add(marker);
           myExpandedStates.add(Boolean.valueOf(e.getAttributeValue("expanded")));
           String placeHolderText = e.getAttributeValue("placeholder");
@@ -203,10 +211,8 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
 
   private String getTimeStamp() {
     String date;
-    FileDocumentManager manager = FileDocumentManager.getInstance();
-    VirtualFile vFile = manager.getFile(myDocument);
-    if (vFile == null) return "";
-    date = new Long(vFile.getTimeStamp()).toString();
+    if (!myFile.isValid()) return "";
+    date = new Long(myFile.getTimeStamp()).toString();
     return date;
   }
 }
