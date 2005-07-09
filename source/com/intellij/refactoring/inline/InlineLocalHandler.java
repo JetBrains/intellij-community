@@ -136,7 +136,7 @@ class InlineLocalHandler {
     catch (AnalysisCanceledException e) {
     }
 
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+    if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
       // TODO : check if initializer uses fieldNames that possibly will be hidden by other
       // locals with the same names after inlining
       highlightManager.addOccurrenceHighlights(
@@ -204,7 +204,7 @@ class InlineLocalHandler {
           }
           local.delete();
 
-          if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
             highlightManager.addOccurrenceHighlights(editor, exprs, attributes, true, null);
             WindowManager.getInstance().getStatusBar(project).setInfo("Press Escape to remove the highlighting");
           }
