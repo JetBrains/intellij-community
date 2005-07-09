@@ -49,6 +49,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
 
   PsiElement findElementAt(int offset);
 
+  @Nullable
   PsiReference findReferenceAt(int offset);
 
   int getTextOffset();
@@ -99,6 +100,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
 
   boolean isWritable();
 
+  @Nullable
   PsiReference getReference();
 
   @NotNull PsiReference[] getReferences();
