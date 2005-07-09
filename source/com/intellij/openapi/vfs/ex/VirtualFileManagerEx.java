@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class VirtualFileManagerEx extends VirtualFileManager {
   public abstract ProgressIndicator getRefreshIndicator();
@@ -25,5 +26,6 @@ public abstract class VirtualFileManagerEx extends VirtualFileManager {
   public abstract void registerRefreshUpdater(CacheUpdater updater);
   public abstract void unregisterRefreshUpdater(CacheUpdater updater);
 
+  @Nullable
   public abstract ProvidedContent getProvidedContent(VirtualFile file);
 }

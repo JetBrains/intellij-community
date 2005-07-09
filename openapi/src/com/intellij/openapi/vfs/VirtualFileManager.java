@@ -5,6 +5,8 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Manages virtual file systems
@@ -19,6 +21,7 @@ public abstract class VirtualFileManager {
    *
    * @return <code>VirtualFileManager</code>
    */
+  @NotNull
   public static VirtualFileManager getInstance(){
     return ApplicationManager.getApplication().getComponent(VirtualFileManager.class);
   }
@@ -54,7 +57,7 @@ public abstract class VirtualFileManager {
    * The same as {@link #refresh(boolean asynchronous)} but also runs <code>postRunnable</code>
    * after the operation is completed.
    */
-  public abstract void refresh(boolean asynchronous, Runnable postAction);
+  public abstract void refresh(boolean asynchronous, @NotNull Runnable postAction);
 
   /**
    * Searches for the file specified by given URL. URL is a string which uniquely identifies file in all
@@ -66,7 +69,8 @@ public abstract class VirtualFileManager {
    * @see VirtualFileSystem#findFileByPath
    * @see #refreshAndFindFileByUrl
    */
-  public abstract VirtualFile findFileByUrl(String url);
+  @Nullable
+  public abstract VirtualFile findFileByUrl(@NotNull String url);
 
   /**
    * Refreshes only the part of the file system needed for searching the file by the given URL and finds file
@@ -83,7 +87,8 @@ public abstract class VirtualFileManager {
    * @see VirtualFileSystem#findFileByPath
    * @see VirtualFileSystem#refreshAndFindFileByPath
    */
-  public abstract VirtualFile refreshAndFindFileByUrl(String url);
+  @Nullable
+  public abstract VirtualFile refreshAndFindFileByUrl(@NotNull String url);
 
   /**
    * Adds listener to the file system.
@@ -91,21 +96,21 @@ public abstract class VirtualFileManager {
    * @param listener  the listener
    * @see VirtualFileListener
    */
-  public abstract void addVirtualFileListener(VirtualFileListener listener);
+  public abstract void addVirtualFileListener(@NotNull VirtualFileListener listener);
 
   /**
    * Removes listener form the file system.
    *
    * @param listener  the listener
    */
-  public abstract void removeVirtualFileListener(VirtualFileListener listener);
+  public abstract void removeVirtualFileListener(@NotNull VirtualFileListener listener);
 
-  public abstract void dispatchPendingEvent(VirtualFileListener listener);
+  public abstract void dispatchPendingEvent(@NotNull VirtualFileListener listener);
 
-  public abstract void addModificationAttemptListener(ModificationAttemptListener listener);
-  public abstract void removeModificationAttemptListener(ModificationAttemptListener listener);
+  public abstract void addModificationAttemptListener(@NotNull ModificationAttemptListener listener);
+  public abstract void removeModificationAttemptListener(@NotNull ModificationAttemptListener listener);
 
-  public abstract void fireReadOnlyModificationAttempt(VirtualFile[] files);
+  public abstract void fireReadOnlyModificationAttempt(@NotNull VirtualFile[] files);
 
   /**
    * Constructs URL by specified protocol and path. URL is a string which uniquely identifies file in all
@@ -115,7 +120,8 @@ public abstract class VirtualFileManager {
    * @param path the path
    * @return URL
    */
-  public static String constructUrl(String protocol, String path){
+  @NotNull
+  public static String constructUrl(@NotNull String protocol, @NotNull String path){
     return protocol + "://" + path;
   }
 
@@ -126,7 +132,8 @@ public abstract class VirtualFileManager {
    * @return protocol or <code>null</code> if there is no "://" in the URL
    * @see VirtualFileSystem#getProtocol
    */
-  public static String extractProtocol(String url){
+  @Nullable
+  public static String extractProtocol(@NotNull String url){
     int index = url.indexOf("://");
     if (index < 0) return null;
     return url.substring(0, index);
@@ -139,7 +146,8 @@ public abstract class VirtualFileManager {
    * @param url the URL
    * @return path
    */
-  public static String extractPath(String url){
+  @NotNull
+  public static String extractPath(@NotNull String url){
     int index = url.indexOf("://");
     if (index < 0) return url;
     return url.substring(index + "://".length());

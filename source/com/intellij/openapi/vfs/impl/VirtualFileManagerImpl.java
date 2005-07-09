@@ -48,8 +48,8 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     myProgressManager = progressManager;
     myFileSystems = new ArrayList<VirtualFileSystem>();
     myProtocolToSystemMap = new HashMap<String, VirtualFileSystem>();
-    for (int i = 0; i < fileSystems.length; i++) {
-      registerFileSystem(fileSystems[i]);
+    for (VirtualFileSystem fileSystem : fileSystems) {
+      registerFileSystem(fileSystem);
     }
 
     if (LOG.isDebugEnabled()) {
@@ -117,8 +117,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
 
       LOG.info("refresh(), modalityState=" + modalityState);
 
-      for (int i = 0; i < myFileSystems.size(); i++) {
-        VirtualFileSystem fileSystem = myFileSystems.get(i);
+      for (VirtualFileSystem fileSystem : myFileSystems) {
         fileSystem.refresh(asynchronous);
       }
     }
@@ -222,8 +221,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
         ApplicationManager.getApplication().runWriteAction(
           new Runnable() {
             public void run() {
-              for (int i = 0; i < myRefreshEventsToFire.size(); i++) {
-                Runnable runnable = myRefreshEventsToFire.get(i);
+              for (Runnable runnable : myRefreshEventsToFire) {
                 try {
                   runnable.run();
                 }
@@ -241,8 +239,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
                 final FileSystemSynchronizer synchronizer;
                 if (asynchronous) {
                   synchronizer = new FileSystemSynchronizer();
-                  for (int i = 0; i < myRefreshParticipants.size(); i++) {
-                    CacheUpdater participant = myRefreshParticipants.get(i);
+                  for (CacheUpdater participant : myRefreshParticipants) {
                     synchronizer.registerCacheUpdater(participant);
                   }
                 }
@@ -326,13 +323,10 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   }
 
   public ProvidedContent getProvidedContent(VirtualFile file) {
-    for (int i = 0; i < myContentProviders.size(); i++) {
-      FileContentProvider provider = myContentProviders.get(i);
+    for (FileContentProvider provider : myContentProviders) {
       // not needed because of special order!
       //dispatchPendingEvent(provider.getVirtualFileListener());
-      VirtualFile[] coveredDirectories = provider.getCoveredDirectories();
-      for (int j = 0; j < coveredDirectories.length; j++) {
-        VirtualFile coveredDirectory = coveredDirectories[j];
+      for (VirtualFile coveredDirectory : provider.getCoveredDirectories()) {
         if (VfsUtil.isAncestor(coveredDirectory, file, true)) {
           return provider.getProvidedContent(file);
         }
