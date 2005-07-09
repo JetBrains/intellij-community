@@ -472,9 +472,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     @Override
     public Component getMostRecentFocusOwner() {
       if (!myOpened) {
-        JComponent toFocus = getDialogWrapper().getPreferredFocusedComponent();
-        if (toFocus != null) {
-          return toFocus;
+        final DialogWrapper wrapper = getDialogWrapper();
+        if (wrapper != null) {
+          JComponent toFocus = wrapper.getPreferredFocusedComponent();
+          if (toFocus != null) {
+            return toFocus;
+          }
         }
       }
       return super.getMostRecentFocusOwner();
