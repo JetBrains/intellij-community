@@ -22,6 +22,11 @@ public interface DiffTool {
   Object HINT_SHOW_NOT_MODAL_DIALOG = "showNotModalDialog";
 
   /**
+   * @see DiffManager#getIdeaDiffTool()
+   */
+  Object HINT_DO_NOT_IGNORE_WHITESPACES = "doNotIgnoreWhitespaces";
+
+  /**
    * Opens window to compare contents. Clients should call {@link #canShow(com.intellij.openapi.diff.DiffRequest)} first.
    */
   void show(DiffRequest request);

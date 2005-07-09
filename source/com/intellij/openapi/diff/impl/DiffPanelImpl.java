@@ -3,23 +3,20 @@ package com.intellij.openapi.diff.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.DiffContent;
-import com.intellij.openapi.diff.DiffRequest;
-import com.intellij.openapi.diff.DiffToolbar;
-import com.intellij.openapi.diff.DiffViewer;
+import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.actions.IgnoreWhiteSpacesAction;
 import com.intellij.openapi.diff.actions.MergeActionGroup;
 import com.intellij.openapi.diff.actions.NextDiffAction;
 import com.intellij.openapi.diff.actions.PreviousDiffAction;
 import com.intellij.openapi.diff.ex.DiffPanelEx;
 import com.intellij.openapi.diff.ex.DiffPanelOptions;
+import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
 import com.intellij.openapi.diff.impl.fragments.FragmentList;
 import com.intellij.openapi.diff.impl.highlighting.DiffPanelState;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.splitter.DiffDividerPaint;
 import com.intellij.openapi.diff.impl.splitter.LineBlocks;
 import com.intellij.openapi.diff.impl.util.*;
-import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
@@ -30,6 +27,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.PopupHandler;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -86,11 +84,11 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
     final ComparisonPolicy comparisonPolicy = getComparisonPolicy();
     final ComparisonPolicy defaultComparisonPolicy = DiffManagerImpl.getInstanceEx().getComparisonPolicy();
-    
+
     if (defaultComparisonPolicy != null && comparisonPolicy != defaultComparisonPolicy) {
       setComparisonPolicy(defaultComparisonPolicy);
     }
-    
+
 
   }
 
@@ -195,10 +193,17 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     return myData.getComparisonPolicy();
   }
 
-  public void setComparisonPolicy(ComparisonPolicy comparisonPolicy) {
-    myData.setComparisonPolicy(comparisonPolicy);
-    DiffManagerImpl.getInstanceEx().setComparisonPolicy(comparisonPolicy);
+  private void setComparisonPolicy(ComparisonPolicy policy, boolean notifyManager) {
+    myData.setComparisonPolicy(policy);
     rediff();
+
+    if (notifyManager) {
+      DiffManagerImpl.getInstanceEx().setComparisonPolicy(policy);
+    }
+  }
+
+  public void setComparisonPolicy(ComparisonPolicy comparisonPolicy) {
+    setComparisonPolicy(comparisonPolicy, true);
   }
 
   public Rediffers getDiffUpdater() {
@@ -283,6 +288,10 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   public LineBlocks getLineBlocks() { return myLineBlocks; }
 
   public void setDiffRequest(DiffRequest data) {
+    if (data.getHints().contains(DiffTool.HINT_DO_NOT_IGNORE_WHITESPACES)) {
+      setComparisonPolicy(ComparisonPolicy.DEFAULT, false);
+    }
+
     setContents(data.getContents()[0], data.getContents()[1]);
     setTitle1(data.getContentTitles()[0]);
     setTitle2(data.getContentTitles()[1]);
@@ -298,6 +307,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     else if (window instanceof JFrame) ((JFrame)window).setTitle(title);
   }
 
+  @Nullable
   public static DiffPanelImpl fromDataContext(DataContext dataContext) {
     DiffViewer viewer = (DiffViewer)dataContext.getData(DataConstants.DIFF_VIEWER);
     return viewer instanceof DiffPanelImpl ? (DiffPanelImpl)viewer : null;

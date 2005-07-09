@@ -36,6 +36,7 @@ public class DiffHyperlink implements Printable {
     diffData.setContents(expectedContent, new SimpleContent(myActual));
     diffData.setContentTitles(expectedTitle, "Actual");
     diffData.addHint(DiffTool.HINT_SHOW_NOT_MODAL_DIALOG);
+    diffData.addHint(DiffTool.HINT_DO_NOT_IGNORE_WHITESPACES);
     diffData.setGroupKey("#com.intellij.execution.junit2.states.ComparisonFailureState$DiffDialog");
     DiffManager.getInstance().getIdeaDiffTool().show(diffData);
   }
