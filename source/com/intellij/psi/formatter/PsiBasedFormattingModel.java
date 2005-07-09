@@ -136,6 +136,7 @@ public class PsiBasedFormattingModel implements FormattingModel {
 
   private TextRange shiftIndentInsideWithPsi(final TextRange textRange, final int shift) {
     final int offset = textRange.getStartOffset();
+    //if (isJspTextAt(offset))
     final ASTNode leafElement = findElementAt(offset);
     return new Helper(StdFileTypes.JAVA, myProject).shiftIndentInside(leafElement, shift).getTextRange();
   }

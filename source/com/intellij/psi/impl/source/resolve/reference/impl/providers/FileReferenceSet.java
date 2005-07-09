@@ -135,10 +135,13 @@ public class FileReferenceSet {
         result = JspManager.getInstance(project).findWebDirectoryElementByPath("/", properties);
       }
       else {
-        final VirtualFile contentRootForFile = ProjectRootManager.getInstance(project).getFileIndex()
-          .getContentRootForFile(file.getVirtualFile());
-        if (contentRootForFile != null) {
-          result = PsiManager.getInstance(project).findDirectory(contentRootForFile);
+        final VirtualFile virtualFile = file.getVirtualFile();
+        if (virtualFile != null) {
+          final VirtualFile contentRootForFile = ProjectRootManager.getInstance(project).getFileIndex()
+            .getContentRootForFile(virtualFile);
+          if (contentRootForFile != null) {
+            result = PsiManager.getInstance(project).findDirectory(contentRootForFile);
+          }
         }
       }
     }

@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -18,7 +19,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspText;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -117,7 +118,9 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
       if (canBeAnotherTreeTagStart(child)) {
         PsiElement tag = JspTextBlock.findXmlElementAt(child, child.getStartOffset());
-        if (tag instanceof XmlTag && tag.getTextRange().getEndOffset() <= myNode.getTextRange().getEndOffset()) {
+        if (tag instanceof XmlTag
+            && containsTag(tag)
+            && doesNotIntersectSubTagsWith(tag)) {
           ASTNode currentChild = createAnotherTreeTagBlock(result, child, tag, indent, wrap, alignment);
 
           if (currentChild == null) {
@@ -125,7 +128,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
           }
 
           while (currentChild != null && currentChild.getTreeParent() != myNode && currentChild.getTreeParent() != child.getTreeParent()) {
-            currentChild = processAllChildrenFrom(result, currentChild.getTreeNext(), wrap, alignment, indent);
+            currentChild = processAllChildrenFrom(result, currentChild, wrap, alignment, indent);
             if (currentChild != null && (currentChild.getTreeParent() == myNode || currentChild.getTreeParent() == child.getTreeParent())) {
               return currentChild;
             }
@@ -147,19 +150,75 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     }
   }
 
-  private ASTNode processAllChildrenFrom(final List<Block> result,
-                                      ASTNode child,
-                                      final Wrap wrap,
-                                      final Alignment alignment,
-                                      final Indent indent) {
-    ASTNode resultNode = child;
-    while (child!= null && child.getElementType() != ElementType.XML_END_TAG_START) {
-      if (!FormatterUtil.containsWhiteSpacesOnly(child)) {
-        child = processChild(result, child, wrap, alignment, indent);
-        resultNode = child;
+  private boolean doesNotIntersectSubTagsWith(final PsiElement tag) {
+    final TextRange tagRange = tag.getTextRange();
+    final XmlTag[] subTags = getSubTags();
+    for (XmlTag subTag : subTags) {
+      final TextRange subTagRange = subTag.getTextRange();
+      if (subTagRange.getEndOffset() < tagRange.getStartOffset()) continue;
+      if (subTagRange.getStartOffset() > tagRange.getEndOffset()) return true;
+
+      if (tagRange.getStartOffset() > subTagRange.getStartOffset() && tagRange.getEndOffset() < subTagRange.getEndOffset()) return false;
+      if (tagRange.getEndOffset() > subTagRange.getStartOffset() && tagRange.getEndOffset() < subTagRange.getEndOffset()) return false;
+
+    }
+    return true;
+  }
+
+  private XmlTag[] getSubTags() {
+
+    if (myNode instanceof XmlTag) {
+      return ((XmlTag)myNode.getPsi()).getSubTags();
+    } else if (myNode.getPsi() instanceof XmlElement){
+      return collectSubTags((XmlElement)myNode.getPsi());
+    } else {
+      return new XmlTag[0];
+    }
+
+  }
+
+  private XmlTag[] collectSubTags(final XmlElement node) {
+    final List<XmlTag> result = new ArrayList<XmlTag>();
+    node.processElements(new PsiElementProcessor() {
+      public boolean execute(final PsiElement element) {
+        if (element instanceof XmlTag) {
+          result.add((XmlTag)element);
+        }
+        return true;
       }
-      if (child != null) {
-        child = child.getTreeNext();
+    }, node);
+    return result.toArray(new XmlTag[result.size()]);
+  }
+
+  private boolean containsTag(final PsiElement tag) {
+    final ASTNode closingTagStart = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(myNode);
+    final ASTNode startTagStart = XmlChildRole.START_TAG_END_FINDER.findChild(myNode);
+
+    if (closingTagStart == null && startTagStart == null) {
+      return tag.getTextRange().getEndOffset() <= myNode.getTextRange().getEndOffset();
+    }
+    else if (closingTagStart == null) {
+      return false;
+    }
+    else {
+      return tag.getTextRange().getEndOffset() <= closingTagStart.getTextRange().getEndOffset();
+    }
+  }
+
+  private ASTNode processAllChildrenFrom(final List<Block> result,
+                                         final @NotNull ASTNode child,
+                                         final Wrap wrap,
+                                         final Alignment alignment,
+                                         final Indent indent) {
+    ASTNode resultNode = child;
+    ASTNode currentChild = child.getTreeNext();
+    while (currentChild!= null && currentChild.getElementType() != ElementType.XML_END_TAG_START) {
+      if (!FormatterUtil.containsWhiteSpacesOnly(currentChild)) {
+        currentChild = processChild(result, currentChild, wrap, alignment, indent);
+        resultNode = currentChild;
+      }
+      if (currentChild != null) {
+        currentChild = currentChild.getTreeNext();
       }
     }
     return resultNode;
@@ -220,7 +279,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
       if (psiElement != null) {
         if (psiElement instanceof XmlTag &&
             psiElement.getTextRange().getStartOffset() >= currentChild.getTextRange().getStartOffset() &&
-            psiElement.getTextRange().getEndOffset() <= myNode.getTextRange().getEndOffset()) {
+            containsTag(psiElement)) {
           result.add(new XmlTagBlock(psiElement.getNode(), null, null, myXmlFormattingPolicy, childIndent));
           currentChild = findChildAfter(currentChild, psiElement.getTextRange().getEndOffset());
           tag = psiElement;
@@ -236,12 +295,10 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   private boolean canBeAnotherTreeTagStart(final ASTNode child) {
-    return myXmlFormattingPolicy.processJsp() && (isXmlTag(myNode)
-                                                  || myNode.getElementType() == ElementType.HTML_DOCUMENT
-                                                  || myNode.getPsi() instanceof PsiFile) &&
-                                                                                         (child.getElementType() == ElementType.XML_DATA_CHARACTERS
-                                                                                          || child.getElementType() == ElementType.JSP_XML_TEXT
-                                                                                          || child.getPsi() instanceof JspText);
+    return myXmlFormattingPolicy.processJsp()
+           && myNode.getPsi().getContainingFile().getLanguage() == StdLanguages.JSP
+           && (isXmlTag(myNode) || myNode.getElementType() == ElementType.HTML_DOCUMENT || myNode.getPsi() instanceof PsiFile) &&
+           (child.getElementType() == ElementType.XML_DATA_CHARACTERS || child.getElementType() == ElementType.JSP_XML_TEXT || child.getPsi() instanceof JspText);
   }
 
   protected boolean isXmlTag(final ASTNode child) {
@@ -333,7 +390,8 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     localResult.add(new JspTextBlock(child,
                                      myXmlFormattingPolicy,
                                      JspTextBlock.findPsiRootAt(child),
-                                     indent));
+                                     indent
+    ));
   }
 
   private ASTNode findChildAfter(@NotNull final ASTNode child, final int endOffset) {
