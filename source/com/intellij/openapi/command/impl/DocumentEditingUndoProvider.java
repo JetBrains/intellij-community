@@ -87,13 +87,14 @@ class DocumentEditingUndoProvider {
 
     private void createNonUndoableAction(final Document document) {
       UndoManagerImpl undoManager = getUndoManager();
-      if (undoManager.undoableActionsForDocumentAreEmpty(DocumentReferenceByDocument.createDocumentReference(document))) {
+      final DocumentReference ref = DocumentReferenceByDocument.createDocumentReference(document);
+      if (undoManager.undoableActionsForDocumentAreEmpty(ref)) {
         return;
       }
       undoManager.undoableActionPerformed(
         new NonUndoableAction() {
           public DocumentReference[] getAffectedDocuments() {
-            return new DocumentReference[]{DocumentReferenceByDocument.createDocumentReference(document)};
+            return new DocumentReference[]{ref};
           }
 
           public boolean isComplex() {
