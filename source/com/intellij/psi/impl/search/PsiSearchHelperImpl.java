@@ -13,8 +13,8 @@ import com.intellij.j2ee.ejb.role.EjbMethodRole;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -274,7 +274,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       public boolean execute(PsiElement element, int offsetInElement) {
         final PsiFile currentfile = element.getContainingFile();
         if (myLastFileProcessed != currentfile) {
-          myRefs = new java.util.HashSet<PsiReference>();
+          myRefs = new HashSet<PsiReference>();
           myLastFileProcessed = currentfile;
         }
 
@@ -454,8 +454,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     PsiElementProcessor<PsiClass> processor2 = new PsiElementProcessor<PsiClass>() {
       public boolean execute(PsiClass inheritor) {
         PsiMethod[] methods = inheritor.getMethods();
-        for (int j = 0; j < methods.length; j++) {
-          PsiMethod method = methods[j];
+        for (PsiMethod method : methods) {
           if (method.isConstructor()) {
             PsiCodeBlock body = method.getBody();
             if (body != null) {
@@ -642,8 +641,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         PsiReference reference = element.findReferenceAt(offsetInElement);
 
         if (reference != null) {
-          for (int i = 0; i < methods.length; i++) {
-            PsiMethod method = methods[i];
+          for (PsiMethod method : methods) {
             if (reference.isReferenceTo(method)) {
               return processor.execute(reference);
             }
@@ -889,7 +887,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       // collect comment offsets to prevent long locks by PsiManagerImpl.LOCK
       synchronized (PsiLock.LOCK) {
         final Language lang = file.getLanguage();
-        Lexer lexer = lang.getSyntaxHighlighter(file.getProject()).getHighlightingLexer();;
+        Lexer lexer = lang.getSyntaxHighlighter(file.getProject()).getHighlightingLexer();
         TokenSet commentTokens = null;
         if (file instanceof PsiJavaFile) {
           commentTokens = TokenSet.orSet(ElementType.COMMENT_BIT_SET, XML_COMMENT_BIT_SET, JavaDocTokenType.ALL_JAVADOC_TOKENS, XML_DATA_CHARS);

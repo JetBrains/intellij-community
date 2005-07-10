@@ -33,6 +33,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -143,6 +144,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     return myManager.findDirectory(parentFile);
   }
 
+  @NotNull
   public PsiDirectory[] getSubdirectories() {
     VirtualFile[] files = myFile.getChildren();
     ArrayList<PsiDirectory> dirs = new ArrayList<PsiDirectory>();
@@ -155,6 +157,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     return dirs.toArray(new PsiDirectory[dirs.size()]);
   }
 
+  @NotNull
   public PsiFile[] getFiles() {
     LOG.assertTrue(myFile.isValid());
     VirtualFile[] files = myFile.getChildren();
@@ -180,6 +183,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     return myManager.findFile(childVFile);
   }
 
+  @NotNull
   public PsiClass[] getClasses() {
     LOG.assertTrue(isValid());
 
@@ -197,6 +201,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     return classes.toArray(new PsiClass[classes.size()]);
   }
 
+  @NotNull
   public PsiElement[] getChildren() {
     LOG.assertTrue(isValid());
 
@@ -248,11 +253,12 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
   }
 
   public String getText() {
-    return null;
+    return ""; // TODO throw new InsupportedOperationException()
   }
 
+  @NotNull
   public char[] textToCharArray() {
-    return null;
+    return new char[0]; // TODO throw new InsupportedOperationException()
   }
 
   public boolean textMatches(CharSequence text) {
@@ -328,7 +334,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     }
     catch (Exception e) {
       throw new RuntimeException("Unable to load template for " + FileTemplateManager.getInstance().internalTemplateToSubject(templateName),
-                                                                                                                                           e);
+                                 e);
     }
 
     PsiElementFactory factory = myManager.getElementFactory();

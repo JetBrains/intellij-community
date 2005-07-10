@@ -12,6 +12,7 @@ import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -88,26 +89,31 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     myModificationStamp = modificationStamp;
   }
 
+  @NotNull
   public PsiElement[] getOnDemandImports(boolean includeImplicit, boolean checkIncludes) {
-    return null;
+    return PsiElement.EMPTY_ARRAY; // TODO throw new InsupportedOperationException()
   }
 
+  @NotNull
   public PsiClass[] getSingleClassImports(boolean checkIncludes) {
-    return null;
+    return PsiClass.EMPTY_ARRAY; // TODO throw new InsupportedOperationException()
   }
 
+  @NotNull
   public String[] getImplicitlyImportedPackages() {
-    return null;
+    return new String[0];// TODO throw new InsupportedOperationException()
   }
 
+  @NotNull
   public PsiJavaCodeReferenceElement[] getImplicitlyImportedPackageReferences() {
-    return null;
+    return PsiJavaCodeReferenceElement.EMPTY_ARRAY; // TODO throw new InsupportedOperationException()
   }
 
   public PsiJavaCodeReferenceElement findImportReferenceTo(PsiClass aClass) {
     return null;
   }
 
+  @NotNull
   public Language getLanguage() {
     return Language.ANY;
   }
@@ -116,6 +122,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     return myManager;
   }
 
+  @NotNull
   public PsiElement[] getChildren() {
     return PsiElement.EMPTY_ARRAY;
   }
@@ -149,11 +156,12 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   }
 
   public String getText() {
-    return null;
+    return ""; // TODO throw new InsupportedOperationException()
   }
 
+  @NotNull
   public char[] textToCharArray() {
-    return null;
+    return new char[0]; // TODO throw new InsupportedOperationException()
   }
 
   public boolean textMatches(CharSequence text) {
@@ -242,20 +250,23 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     return false;
   }
 
+  @NotNull
   public FileType getFileType() {
     return myFileType;
   }
 
+  @NotNull
   public PsiFile[] getPsiRoots() {
     return new PsiFile[]{this};
   }
 
+  @NotNull
   public PsiFile createPseudoPhysicalCopy() {
     LOG.assertTrue(false);
     return null;
   }
 
   public ASTNode getNode() {
-    return null;
+    return null; // TODO throw new InsupportedOperationException()
   }
 }

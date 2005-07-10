@@ -56,7 +56,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
 
   String getText();
 
-  @Nullable char[] textToCharArray();
+  @NotNull char[] textToCharArray();
 
   PsiElement getNavigationElement();
   PsiElement getOriginalElement();

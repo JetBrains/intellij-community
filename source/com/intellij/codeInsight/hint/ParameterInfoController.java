@@ -20,6 +20,7 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -410,9 +411,9 @@ class ParameterInfoController {
     }
   }
 
+  @Nullable
   public static PsiExpressionList findArgumentList(PsiFile file, int offset, int lbraceOffset){
     char[] chars = file.textToCharArray();
-    if (chars == null) return null;
     if (offset >= chars.length) offset = chars.length - 1;
     int offset1 = CharArrayUtil.shiftBackward(chars, offset, " \t\n\r");
     if (offset1 < 0) return null;
@@ -468,6 +469,7 @@ class ParameterInfoController {
     }
   }
 
+  @Nullable
   public static XmlTag findXmlTag(PsiFile file, int offset){
     if (!(file instanceof XmlFile)) return null;
 

@@ -1325,7 +1325,6 @@ public class HighlightUtil {
                                                                       start, end,
                                                                       description);
       char[] chars = statement.getContainingFile().textToCharArray();
-      assert chars != null;
       highlightInfo.isAfterEndOfLine = end >= chars.length || chars[start] == '\n' || chars[start] == '\r';
       return highlightInfo;
     }
