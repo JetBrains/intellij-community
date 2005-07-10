@@ -29,6 +29,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   private Indent myChildIndent;
   private Alignment myChildAlignment;
   private boolean myUseChildAttributes = false;
+  private boolean myIsAfterClassKeyword = false;
   private Wrap myAnnotationWrap = null;
 
   public AbstractJavaBlock(final ASTNode node,
@@ -283,6 +284,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                  Alignment defaultAlignment,
                                  final Wrap defaultWrap,
                                  final Indent childIndent) {
+    if (child.getElementType() == ElementType.CLASS_KEYWORD || child.getElementType() == ElementType.INTERFACE_KEYWORD) {
+      myIsAfterClassKeyword = true;
+    }
     if (child.getElementType() == ElementType.METHOD_CALL_EXPRESSION) {
       result.add(createMethodCallExpressiobBlock(child,
                                                  arrangeChildWrap(child, defaultWrap),
@@ -497,7 +501,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
     else if (myNode.getElementType() == ElementType.CLASS) {
       if (role == ChildRole.CLASS_OR_INTERFACE_KEYWORD) return defaultAlignment;
-      if (isAfterClassKeyword(child)) return null;
+      if (myIsAfterClassKeyword) return null;
       if (role == ChildRole.MODIFIER_LIST) return defaultAlignment;
       if (role == ChildRole.DOC_COMMENT) return defaultAlignment;
       return null;
@@ -514,6 +518,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
   }
 
+  /*
   private boolean isAfterClassKeyword(final ASTNode child) {
     ASTNode treePrev = child.getTreePrev();
     while (treePrev != null) {
@@ -526,6 +531,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return false;
   }
 
+  */
   private Alignment createAlignment(final boolean alignOption, final Alignment defaultAlignment) {
     return alignOption ?
            (createAlignmentOrDefault(defaultAlignment)) : defaultAlignment;
