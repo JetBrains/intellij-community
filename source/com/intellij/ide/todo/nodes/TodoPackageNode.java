@@ -50,13 +50,20 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
 
   public void update(PresentationData data) {
     super.update(data);
-    int fileCount = getStructure().getFileCount(getValue());
-    if (getValue() == null || !getValue().getPackage().isValid() || fileCount == 0) {
+    final PackageElement packageElement = getValue();
+
+    if (packageElement == null || !packageElement.getPackage().isValid()) {
       setValue(null);
       return;
     }
 
-    PsiPackage aPackage = getValue().getPackage();
+    int fileCount = getStructure().getFileCount(packageElement);
+    if (fileCount == 0){
+      setValue(null);
+      return;
+    }
+
+    PsiPackage aPackage = packageElement.getPackage();
     String newName;
     if (getStructure().areFlattenPackages()) {
       newName = aPackage.getQualifiedName();
@@ -68,7 +75,7 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
 
     StringBuffer sb = new StringBuffer(newName);
     int nameEndOffset = newName.length();
-    int todoItemCount = getStructure().getTodoItemCount(getValue());
+    int todoItemCount = getStructure().getTodoItemCount(packageElement);
     sb.append(" ( ").append(todoItemCount).append(" item");
     if (todoItemCount > 1) {
       sb.append('s');
@@ -85,7 +92,7 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
     TextAttributes textAttributes = new TextAttributes();
     Color newColor = null;
 
-    if (CopyPasteManager.getInstance().isCutElement(getValue())) {
+    if (CopyPasteManager.getInstance().isCutElement(packageElement)) {
       newColor = CopyPasteManager.CUT_COLOR;
     }
     textAttributes.setForegroundColor(newColor);
