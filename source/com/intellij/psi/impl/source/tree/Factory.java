@@ -3,8 +3,6 @@ package com.intellij.psi.impl.source.tree;
 import com.intellij.aspects.psi.IAspectElementType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.jsp.JspTokenType;
-import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.html.HtmlTagImpl;
@@ -13,6 +11,8 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspText;
 import com.intellij.psi.impl.source.jsp.jspXml.JspCommentImpl;
 import com.intellij.psi.impl.source.tree.java.*;
 import com.intellij.psi.impl.source.xml.*;
+import com.intellij.psi.jsp.JspElementType;
+import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaDocElementType;
@@ -53,7 +53,7 @@ public class Factory implements Constants {
       element = new XmlTokenImpl(type, buffer, startOffset, endOffset, lexerState, table);
     }
     else if (type == PLAIN_TEXT) {
-      element = new PsiPlainTextImpl(buffer, startOffset, endOffset, lexerState, table);
+      element = new PsiPlainTextImpl(buffer, startOffset, endOffset, lexerState);
     }
     else if (type == WHITE_SPACE) {
       element = new PsiWhiteSpaceImpl(buffer, startOffset, endOffset, lexerState, table);
