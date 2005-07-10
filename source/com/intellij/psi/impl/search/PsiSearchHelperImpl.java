@@ -270,7 +270,14 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     final PsiElementProcessorEx processor1 = new PsiElementProcessorEx() {
       Set<PsiReference> myRefs = new HashSet<PsiReference>();
+      PsiFile myLastFileProcessed = null;
       public boolean execute(PsiElement element, int offsetInElement) {
+        final PsiFile currentfile = element.getContainingFile();
+        if (myLastFileProcessed != currentfile) {
+          myRefs = new java.util.HashSet<PsiReference>();
+          myLastFileProcessed = currentfile;
+        }
+
         final PsiReference reference = element.findReferenceAt(offsetInElement);
         if (reference == null) return true;
         if (!myRefs.add(reference)) return true;  //Hack:(
