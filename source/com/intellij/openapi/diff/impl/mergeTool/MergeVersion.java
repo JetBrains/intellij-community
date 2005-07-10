@@ -46,6 +46,7 @@ public interface MergeVersion {
       final Document workingDocument = DocumentUtil.createCopy(myDocument, project);
       LOG.assertTrue(workingDocument != myDocument);
       workingDocument.setReadOnly(false);
+      final DocumentReference ref = DocumentReferenceByDocument.createDocumentReference(workingDocument);
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           setDocumentText(workingDocument, myOriginalText, "initMergeContent", project);
@@ -55,7 +56,7 @@ public interface MergeVersion {
             }
 
             public DocumentReference[] getAffectedDocuments() {
-              return new DocumentReference[]{DocumentReferenceByDocument.createDocumentReference(workingDocument)};
+              return new DocumentReference[]{ref};
             }
           });
         }

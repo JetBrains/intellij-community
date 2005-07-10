@@ -46,13 +46,14 @@ public final class QuickFixAction extends IntentionActionComposite {
   public static void markDocumentForUndo(PsiFile file) {
     Project project = file.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    final DocumentReference ref = DocumentReferenceByDocument.createDocumentReference(document);
     UndoManager.getInstance(project).undoableActionPerformed(new UndoableAction() {
       public void undo() {}
 
       public void redo() {}
 
       public DocumentReference[] getAffectedDocuments() {
-        return new DocumentReference[] {DocumentReferenceByDocument.createDocumentReference(document)};
+        return new DocumentReference[] {ref};
       }
 
       public boolean isComplex() { return false; }
