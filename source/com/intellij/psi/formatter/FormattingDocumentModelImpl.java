@@ -1,15 +1,15 @@
 package com.intellij.psi.formatter;
 
 import com.intellij.formatting.FormattingDocumentModel;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.impl.PsiToDocumentSynchronizer;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.psi.impl.PsiToDocumentSynchronizer;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 
 public class FormattingDocumentModelImpl implements FormattingDocumentModel{
@@ -63,10 +63,6 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel{
 
   public int getTextLength() {
     return myDocument.getTextLength();
-  }
-
-  public boolean useDocument() {
-    return myDocument.getUserData(CodeStyleManagerEx.USE_DOCUMENT_TO_REFORMAT) == Boolean.TRUE;
   }
 
   public Document getDocument() {

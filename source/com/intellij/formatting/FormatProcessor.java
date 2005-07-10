@@ -161,27 +161,36 @@ class FormatProcessor {
 
     int shift = 0;
 
-    for (LeafBlockWrapper block : blocksToModify) {
-      final WhiteSpace whiteSpace = block.getWhiteSpace();
-      final String newWhiteSpace = whiteSpace.generateWhiteSpace(myIndentOption);
-      final TextRange textRange = whiteSpace.getTextRange();
-      final TextRange wsRange = shiftRange(textRange, shift);
-      model.replaceWhiteSpace(wsRange, newWhiteSpace);
-
-      shift += (newWhiteSpace.length() - (textRange.getLength()));
-
-      if (block.isLeaf() && whiteSpace.containsLineFeeds() && block.containsLineFeeds()) {
-        final TextRange currentBlockRange = shiftRange(block.getTextRange(), shift);
-
-        IndentInside lastLineIndent = block.getLastLineIndent();
-        IndentInside whiteSpaceIndent = IndentInside.createIndentOn(IndentInside.getLastLine(newWhiteSpace));
-        final int shiftInside = calcShift(lastLineIndent, whiteSpaceIndent);
-
-        final TextRange newBlockRange = model.shiftIndentInsideRange(currentBlockRange, shiftInside);
-        shift +=  newBlockRange.getLength() - block.getTextRange().getLength();
+    try {
+      for (LeafBlockWrapper block : blocksToModify) {
+        shift = replaceWhiteSpace(model, block, shift);
       }
-
     }
+    finally {
+      model.commitChanges();
+    }
+  }
+
+  protected int replaceWhiteSpace(final FormattingModel model, final LeafBlockWrapper block, int shift) {
+    final WhiteSpace whiteSpace = block.getWhiteSpace();
+    final String newWhiteSpace = whiteSpace.generateWhiteSpace(myIndentOption);
+    final TextRange textRange = whiteSpace.getTextRange();
+    final TextRange wsRange = shiftRange(textRange, shift);
+    model.replaceWhiteSpace(wsRange, newWhiteSpace);
+
+    shift += (newWhiteSpace.length() - (textRange.getLength()));
+
+    if (block.isLeaf() && whiteSpace.containsLineFeeds() && block.containsLineFeeds()) {
+      final TextRange currentBlockRange = shiftRange(block.getTextRange(), shift);
+
+      IndentInside lastLineIndent = block.getLastLineIndent();
+      IndentInside whiteSpaceIndent = IndentInside.createIndentOn(IndentInside.getLastLine(newWhiteSpace));
+      final int shiftInside = calcShift(lastLineIndent, whiteSpaceIndent);
+
+      final TextRange newBlockRange = model.shiftIndentInsideRange(currentBlockRange, shiftInside);
+      shift +=  newBlockRange.getLength() - block.getTextRange().getLength();
+    }
+    return shift;
   }
 
   private List<LeafBlockWrapper> collectBlocksToModify() {

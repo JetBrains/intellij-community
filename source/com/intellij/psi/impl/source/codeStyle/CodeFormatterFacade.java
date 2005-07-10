@@ -8,10 +8,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -84,11 +84,11 @@ public class CodeFormatterFacade implements Constants {
       TextRange range = formatComments(element, startOffset, endOffset);
       final SmartPsiElementPointer pointer = SmartPointerManager.getInstance(psiElement.getProject()).createSmartPsiElementPointer(psiElement);
       final PsiFile containingFile = psiElement.getContainingFile();
-      final FormattingModel model = builder.createModel(containingFile, mySettings);
+      final FormattingModel model = createModel(builder, containingFile);
       if (containingFile.getTextLength() > 0) {
         try {
           FormatterEx.getInstanceEx().format(model, mySettings,
-                                         mySettings.getIndentOptions(fileType), range);
+                                             mySettings.getIndentOptions(fileType), range);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
@@ -101,6 +101,17 @@ public class CodeFormatterFacade implements Constants {
     }
 
     return element;
+  }
+
+  private FormattingModel createModel(final FormattingModelBuilder builder, final PsiFile containingFile) {
+    final FormattingModel original = builder.createModel(containingFile, mySettings);
+    final Project project = containingFile.getProject();
+    final Document document = PsiDocumentManager.getInstance(project).getDocument(containingFile);
+    if (document != null && document.getUserData(CodeStyleManagerEx.USE_DOCUMENT_TO_REFORMAT) == Boolean.TRUE) {
+      return new DocumentBasedFormattingModel(original.getRootBlock(), document, project, mySettings, containingFile.getFileType());
+    } else {
+      return original;
+    }
   }
 
   private boolean useNewFormatter(FileType fileType) {

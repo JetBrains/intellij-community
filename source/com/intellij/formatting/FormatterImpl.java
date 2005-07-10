@@ -186,7 +186,12 @@ public class FormatterImpl extends FormatterEx
         }
 
         final String newWS = whiteSpace.generateWhiteSpace(indentOptions, lineStartOffset, indent);
-        model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS);
+        try {
+          processor.replaceWhiteSpace(model, blockAfterOffset, 0);
+        }
+        finally {
+          model.commitChanges();
+        }
 
 
         if (wsContainsCaret) {
@@ -201,7 +206,7 @@ public class FormatterImpl extends FormatterEx
 
         final IndentInfo indent = new IndentInfo(0, 0, 0);
         final String newWS = lastWS.generateWhiteSpace(indentOptions, lineStartOffset, indent);
-        model.replaceWhiteSpace(lastWS.getTextRange(), newWS);
+        processor.replaceWhiteSpace(model, blockAfterOffset, 0);
 
         return lastWS.getTextRange().getStartOffset()
                + CharArrayUtil.shiftForward(newWS.toCharArray(), lineStartOffset - lastWS.getTextRange().getStartOffset(), " \t");
@@ -343,7 +348,7 @@ public class FormatterImpl extends FormatterEx
   public FormattingModel createFormattingModelForPsiFile(final PsiFile file,
                                                          final Block rootBlock,
                                                          final CodeStyleSettings settings) {
-    return new PsiBasedFormattingModel(file, rootBlock, settings);
+    return new PsiBasedFormattingModel(file, rootBlock);
   }
 
   public boolean isDisabled() {
