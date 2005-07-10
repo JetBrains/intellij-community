@@ -6,6 +6,7 @@ package com.intellij.execution.remote;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.configurations.RemoteConnection;
+import com.intellij.execution.ui.ConfigurationArgumentsHelpArea;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
@@ -30,7 +31,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
   private JTextField myPortField;
   private JPanel myShmemPanel;
   private JPanel mySocketPanel;
-  private RemoteConfigurationArguments myHelpArea;
+  private ConfigurationArgumentsHelpArea myHelpArea;
   private JPanel myLogsPanel;
   private final LogConfigurationPanel myLogConfigurations;
   private String myHostName = "";
@@ -158,12 +159,13 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
   private void updateHelpText() {
     boolean useSockets = !myRbShmem.isSelected();
 
-    myHelpArea.updateText(new RemoteConnection(
+    final RemoteConnection connection = new RemoteConnection(
       useSockets,
       myHostName,
       useSockets ? myPortField.getText().trim() : myAddressField.getText().trim(),
       myRbListen.isSelected()
-    ));
+    );
+    myHelpArea.updateText(connection.getLaunchCommandLine());
   }
 
 

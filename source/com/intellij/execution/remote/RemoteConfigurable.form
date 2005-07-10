@@ -181,7 +181,7 @@
           </grid>
         </children>
       </grid>
-      <component id="aa30e" class="com.intellij.execution.remote.RemoteConfigurationArguments" binding="myHelpArea">
+      <component id="aa30e" class="com.intellij.execution.ui.ConfigurationArgumentsHelpArea" binding="myHelpArea">
         <constraints>
           <xy x="0" y="25" width="478" height="121"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="6" anchor="8" fill="3">
