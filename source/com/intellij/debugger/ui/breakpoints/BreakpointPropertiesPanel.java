@@ -242,6 +242,7 @@ public abstract class BreakpointPropertiesPanel {
 
     myConditionCombo.setContext(context);
     myConditionCombo.setText(breakpoint.getCondition() != null ? breakpoint.getCondition() : new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, ""));
+
     myLogExpressionCombo.setContext(context);
     myLogExpressionCombo.setText(breakpoint.getLogMessage() != null? breakpoint.getLogMessage() : new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, ""));
 

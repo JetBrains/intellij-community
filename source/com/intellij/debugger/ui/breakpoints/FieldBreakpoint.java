@@ -240,7 +240,8 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
     if(!isValid()) {
       return "INVALID";
     }
-    return getClassName() + "." + myFieldName;
+    final String className = getClassName();
+    return (className != null && className.length() > 0) ? (className + "." + myFieldName) : myFieldName;
   }
 
   public static FieldBreakpoint create(Project project, Document document, int lineIndex, String fieldName) {

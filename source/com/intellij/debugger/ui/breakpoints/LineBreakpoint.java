@@ -175,8 +175,13 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     StringBuffer buffer = new StringBuffer();
     final int lineNumber = (getHighlighter().getDocument().getLineNumber(getHighlighter().getStartOffset()) + 1);
     if(isValid()) {
-      buffer.append("Line ").append(lineNumber).append(", in ").append(getClassName());
-      if(myMethodName != null) {
+      buffer.append("Line ").append(lineNumber);
+      final String className = getClassName();
+      if (className != null && className.length() > 0) {
+        buffer.append(", in ");
+        buffer.append(className);
+      }
+      if(myMethodName != null && myMethodName.length() > 0) {
         buffer.append(".");
         buffer.append(myMethodName);
       }

@@ -336,8 +336,10 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static TextWithImports getEditorText(final Editor editor) {
-    if(editor == null) return null;
-    final Project         project = editor.getProject();
+    if(editor == null) {
+      return null;
+    }
+    final Project project = editor.getProject();
 
     String defaultExpression = editor.getSelectionModel().getSelectedText();
     if (defaultExpression == null) {

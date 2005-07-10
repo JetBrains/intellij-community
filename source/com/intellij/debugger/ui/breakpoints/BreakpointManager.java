@@ -10,6 +10,9 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.actions.ViewBreakpointsAction;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -275,7 +278,8 @@ public class BreakpointManager implements JDOMExternalizable {
 
                   if(e.getMouseEvent().isShiftDown() && breakpoint != null) {
                     breakpoint.LOG_EXPRESSION_ENABLED = true;
-                    breakpoint.setLogMessage(DebuggerUtilsEx.getEditorText(editor));
+                    final TextWithImports logMessage = DebuggerUtilsEx.getEditorText(editor);
+                    breakpoint.setLogMessage(logMessage != null? logMessage : new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "\"reached " + breakpoint.getDisplayName() + "\""));
                     breakpoint.SUSPEND_POLICY = DebuggerSettings.SUSPEND_NONE;
 
                     DialogWrapper dialog = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().createConfigurationDialog(breakpoint, BreakpointPropertiesPanel.CONTROL_LOG_MESSAGE);

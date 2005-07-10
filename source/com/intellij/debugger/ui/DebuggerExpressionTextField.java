@@ -34,6 +34,10 @@ public class DebuggerExpressionTextField extends DebuggerEditorImpl {
     return myEditor.getEditor().getContentComponent();
   }
 
+  public void selectAll() {
+    myEditor.selectAll();
+  }
+  
   public TextWithImports getText() {
     return createItem(myEditor.getDocument(), getProject());
   }

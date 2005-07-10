@@ -1,6 +1,8 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.ui.DebuggerExpressionComboBox;
+import com.intellij.debugger.ui.DebuggerExpressionTextField;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
@@ -180,7 +182,16 @@ public class BreakpointsConfigurationDialogFactory {
     }
 
     public JComponent getPreferredFocusedComponent() {
-      return myPreferredComponent != null ? myPreferredComponent : IdeFocusTraversalPolicy.getPreferredFocusedComponent(myTabbedPane.getComponent());
+      if (myPreferredComponent != null) {
+        if (myPreferredComponent instanceof DebuggerExpressionComboBox) {
+          ((DebuggerExpressionComboBox)myPreferredComponent).selectAll();
+        }
+        else if (myPreferredComponent instanceof DebuggerExpressionTextField) {
+          ((DebuggerExpressionTextField)myPreferredComponent).selectAll();
+        }
+        return myPreferredComponent;
+      }
+      return IdeFocusTraversalPolicy.getPreferredFocusedComponent(myTabbedPane.getComponent());
     }
 
     public void setPreferredFocusedComponent(String control) {

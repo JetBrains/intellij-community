@@ -197,9 +197,15 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
   public String getDisplayName() {
     StringBuffer buffer = new StringBuffer();
     if(isValid()) {
-      buffer.append(getClassName());
+      final String className = getClassName();
+      final boolean classNameExists = className != null && className.length() > 0;
+      if (classNameExists) {
+        buffer.append(className);
+      }
       if(myMethodName != null) {
-        buffer.append(".");
+        if (classNameExists) {
+          buffer.append(".");
+        }
         buffer.append(myMethodName);
       }
     } 
