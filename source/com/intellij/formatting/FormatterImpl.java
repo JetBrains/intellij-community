@@ -187,7 +187,7 @@ public class FormatterImpl extends FormatterEx
 
         final String newWS = whiteSpace.generateWhiteSpace(indentOptions, lineStartOffset, indent);
         try {
-          processor.replaceWhiteSpace(model, blockAfterOffset, 0);
+          processor.replaceWhiteSpace(model, blockAfterOffset, 0, newWS);
         }
         finally {
           model.commitChanges();
@@ -206,7 +206,8 @@ public class FormatterImpl extends FormatterEx
 
         final IndentInfo indent = new IndentInfo(0, 0, 0);
         final String newWS = lastWS.generateWhiteSpace(indentOptions, lineStartOffset, indent);
-        processor.replaceWhiteSpace(model, blockAfterOffset, 0);
+        model.replaceWhiteSpace(lastWS.getTextRange(), newWS);
+
 
         return lastWS.getTextRange().getStartOffset()
                + CharArrayUtil.shiftForward(newWS.toCharArray(), lineStartOffset - lastWS.getTextRange().getStartOffset(), " \t");

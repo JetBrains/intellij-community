@@ -6,6 +6,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import gnu.trove.TIntObjectHashMap;
 import org.jdom.Element;
 import org.jdom.Text;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -163,7 +165,7 @@ class FormatProcessor {
 
     try {
       for (LeafBlockWrapper block : blocksToModify) {
-        shift = replaceWhiteSpace(model, block, shift);
+        shift = replaceWhiteSpace(model, block, shift, block.getWhiteSpace().generateWhiteSpace(myIndentOption));
       }
     }
     finally {
@@ -171,9 +173,8 @@ class FormatProcessor {
     }
   }
 
-  protected int replaceWhiteSpace(final FormattingModel model, final LeafBlockWrapper block, int shift) {
+  protected int replaceWhiteSpace(final FormattingModel model, @NotNull final LeafBlockWrapper block, int shift, final String newWhiteSpace) {
     final WhiteSpace whiteSpace = block.getWhiteSpace();
-    final String newWhiteSpace = whiteSpace.generateWhiteSpace(myIndentOption);
     final TextRange textRange = whiteSpace.getTextRange();
     final TextRange wsRange = shiftRange(textRange, shift);
     model.replaceWhiteSpace(wsRange, newWhiteSpace);
