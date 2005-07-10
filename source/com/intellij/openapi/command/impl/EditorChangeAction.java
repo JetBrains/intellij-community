@@ -9,9 +9,13 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PatchedWeakReference;
+
+import java.lang.ref.Reference;
 
 class EditorChangeAction implements UndoableAction {
-  private DocumentEx myDocument;
+  private Object myDocument; // DocumentEx or WeakReference<DocumentEx> or null
+  private VirtualFile myDocumentFile;
   private int myOffset;
   private CharSequence myOldString;
   private CharSequence myNewString;
@@ -21,40 +25,49 @@ class EditorChangeAction implements UndoableAction {
   public EditorChangeAction(DocumentEx document, int offset,
                             CharSequence oldString, CharSequence newString,
                             long oldTimeStamp, Project project) {
-    myDocument = document;
+    myDocumentFile = FileDocumentManager.getInstance().getFile(document);
+    if (myDocumentFile != null) {
+      myDocument = new PatchedWeakReference(document);
+    }
+    else {
+      myDocument = document;
+    }
+
     myOffset = offset;
     myOldString = oldString;
-    if (myOldString == null)
+    if (myOldString == null) {
       myOldString = "";
+    }
     myNewString = newString;
-    if (myNewString == null)
+    if (myNewString == null) {
       myNewString = "";
+    }
     myTimeStamp = oldTimeStamp;
     myProject = project;
   }
 
   public void undo() {
     exchangeStrings(myNewString, myOldString);
-    myDocument.setModificationStamp(myTimeStamp);
+    getDocument().setModificationStamp(myTimeStamp);
     fileFileStatusChanged();
   }
 
   private void fileFileStatusChanged() {
     if (myProject == null) return;
-    VirtualFile file = FileDocumentManager.getInstance().getFile(myDocument);
+    VirtualFile file = FileDocumentManager.getInstance().getFile(getDocument());
     if (file == null) return;
     FileStatusManager.getInstance(myProject).fileStatusChanged(file);
   }
 
   private void exchangeStrings(CharSequence newString, CharSequence oldString) {
     if (newString.length() > 0 && oldString.length() == 0){
-      myDocument.deleteString(myOffset, myOffset + newString.length());
+      getDocument().deleteString(myOffset, myOffset + newString.length());
     }
     else if (oldString.length() > 0 && newString.length() == 0){
-      myDocument.insertString(myOffset, oldString);
+      getDocument().insertString(myOffset, oldString);
     }
     else if (oldString.length() > 0 && newString.length() > 0){
-      myDocument.replaceString(myOffset, myOffset + newString.length(), oldString);
+      getDocument().replaceString(myOffset, myOffset + newString.length(), oldString);
     }
   }
 
@@ -63,11 +76,21 @@ class EditorChangeAction implements UndoableAction {
   }
 
   public DocumentReference[] getAffectedDocuments() {
-    return new DocumentReference[]{DocumentReferenceByDocument.createDocumentReference(myDocument)};
+    return new DocumentReference[]{DocumentReferenceByDocument.createDocumentReference(getDocument())};
   }
 
   public boolean isComplex() {
     return false;
+  }
+
+  public DocumentEx getDocument() {
+    if (myDocument instanceof DocumentEx) return (DocumentEx)myDocument;
+    Reference ref = (PatchedWeakReference)myDocument;
+    final DocumentEx doc = (DocumentEx)ref.get();
+    if (doc != null) return doc;
+    final DocumentEx document = (DocumentEx)FileDocumentManager.getInstance().getDocument(myDocumentFile);
+    myDocument = new PatchedWeakReference(document);
+    return document;
   }
 }
 
