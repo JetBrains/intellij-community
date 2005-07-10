@@ -34,10 +34,19 @@ public class Semaphore {
     }
   }
 
-  public synchronized void waitFor(long timeout) {
+  public synchronized void waitFor(final long timeout) {
     try {
+      final long startTime = System.currentTimeMillis();
+      long waitTime = timeout;
       while (mySemaphore > 0) {
-        wait(timeout);
+        wait(waitTime);
+        final long elapsed = System.currentTimeMillis() - startTime;
+        if (elapsed < timeout) {
+          waitTime = timeout - elapsed;
+        }
+        else {
+          break;
+        }
       }
     }
     catch (InterruptedException e) {
