@@ -52,7 +52,7 @@ public interface ActionInfo {
 
   ActionInfo STATUS = new ActionInfo() {
     public boolean showOptions(Project project) {
-      return false;
+      return ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.STATUS).getValue();
     }
 
     public UpdateEnvironment getEnvironment(AbstractVcs vcs) {
@@ -67,12 +67,12 @@ public interface ActionInfo {
         }
 
         protected boolean isToBeShown() {
-          return ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.UPDATE).getValue();
+          return ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.STATUS).getValue();
         }
 
         protected void setToBeShown(boolean value, boolean onOk) {
           if (onOk) {
-            ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.UPDATE).setValue(value);
+            ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.STATUS).setValue(value);
           }
         }
       };
