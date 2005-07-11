@@ -13,8 +13,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.pom.xml.impl.events.XmlAttributeSetImpl;
 import com.intellij.psi.tree.IElementType;
