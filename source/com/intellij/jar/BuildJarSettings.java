@@ -17,6 +17,7 @@ public class BuildJarSettings implements ModuleComponent, JDOMExternalizable {
   private final ModuleContainer myModuleContainer;
   private String myJarPath = "";
   private boolean myBuildJar;
+  private String myMainClass = "";
 
   public static BuildJarSettings getInstance(Module module) {
     return module.getComponent(BuildJarSettings.class);
@@ -29,6 +30,10 @@ public class BuildJarSettings implements ModuleComponent, JDOMExternalizable {
     return myBuildJar;
   }
 
+  public String getMainClass() {
+    return myMainClass;
+  }
+
   public void readExternal(Element element) throws InvalidDataException {
     Element settings = element.getChild("containerInfo");
     if (settings != null) {
@@ -36,6 +41,7 @@ public class BuildJarSettings implements ModuleComponent, JDOMExternalizable {
     }
     myJarPath = JDOMExternalizer.readString(element, "jarPath");
     myBuildJar = JDOMExternalizer.readBoolean(element, "buildJar");
+    myMainClass = JDOMExternalizer.readString(element, "mainClass");
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -45,6 +51,7 @@ public class BuildJarSettings implements ModuleComponent, JDOMExternalizable {
     myModuleContainer.writeExternal(settings);
     JDOMExternalizer.write(element, "jarPath", myJarPath);
     JDOMExternalizer.write(element, "buildJar", myBuildJar);
+    JDOMExternalizer.write(element, "mainClass", myMainClass);
   }
 
   public ModuleContainer getModuleContainer() {
@@ -84,5 +91,9 @@ public class BuildJarSettings implements ModuleComponent, JDOMExternalizable {
 
   public void setBuildJar(final boolean buildJar) {
     myBuildJar = buildJar;
+  }
+
+  public void setMainClass(final String mainClass) {
+    myMainClass = mainClass;
   }
 }

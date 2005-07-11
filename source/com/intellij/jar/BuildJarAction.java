@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.WindowManager;
 import gnu.trove.THashSet;
 
@@ -95,6 +96,10 @@ public class BuildJarAction extends AnAction {
     ModuleLink[] modules = moduleContainer.getContainingModules();
     MakeUtil.getInstance().addJavaModuleOutputs(module, modules, buildRecipe, compileContext, null);
     Manifest manifest = MakeUtil.getInstance().createManifest(buildRecipe);
+    String mainClass = buildJarSettings.getMainClass();
+    if (manifest != null && !Comparing.strEqual(mainClass, null)) {
+      manifest.getMainAttributes().putValue("Main-Class",mainClass);
+    }
 
     // write temp file and rename it to the jar to avoid deployment of incomplete jar. SCR #30303
     final File tempFile = File.createTempFile("_"+ FileUtil.getNameWithoutExtension(jarFile), ".jar", jarFile.getParentFile());
@@ -108,13 +113,14 @@ public class BuildJarAction extends AnAction {
       buildRecipe.visitInstructionsWithExceptions(new BuildInstructionVisitor() {
         public boolean visitInstruction(BuildInstruction instruction) throws IOException {
           ProgressManager.getInstance().checkCanceled();
-          instruction.addFilesToJar(compileContext, tempFile, jarOutputStream, dependencies, tempWrittenRelativePaths, allFilesFilter);
           if (instruction instanceof FileCopyInstruction) {
             FileCopyInstruction fileCopyInstruction = (FileCopyInstruction)instruction;
             File file = fileCopyInstruction.getFile();
-            String presentablePath = file == null ? "" : FileUtil.toSystemDependentName(file.getPath());
+            if (file == null || !file.exists()) return true;
+            String presentablePath = FileUtil.toSystemDependentName(file.getPath());
             ProgressManager.getInstance().getProgressIndicator().setText2("Processing file "+presentablePath+" ...");
           }
+          instruction.addFilesToJar(compileContext, tempFile, jarOutputStream, dependencies, tempWrittenRelativePaths, allFilesFilter);
           return true;
         }
       }, false);

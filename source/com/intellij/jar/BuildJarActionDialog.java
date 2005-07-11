@@ -2,6 +2,8 @@ package com.intellij.jar;
 
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.util.ElementsChooser;
+import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -13,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModuleChooserElement;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
@@ -20,6 +23,9 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.io.FileTypeFilter;
 import gnu.trove.THashMap;
@@ -45,12 +51,15 @@ public class BuildJarActionDialog extends DialogWrapper {
   private JPanel myModulesPanel;
   private JPanel myEditorPanel;
   private TextFieldWithBrowseButton myJarPath;
+  private TextFieldWithBrowseButton myMainClass;
   private JPanel myPanel;
   private PackagingSettingsEditor myEditor;
   private final Map<Module, SettingsEditor> mySettings = new THashMap<Module, SettingsEditor>();
   private Module myCurrentModule;
   private ElementsChooser<ModuleChooserElement> myElementsChooser;
   private JPanel myModuleSettingsPanel;
+  private LabeledComponent<TextFieldWithBrowseButton> myMainClassComponent;
+  private LabeledComponent<TextFieldWithBrowseButton> myJarFilePathComponent;
 
   protected BuildJarActionDialog(Project project) {
     super(true);
@@ -79,6 +88,9 @@ public class BuildJarActionDialog extends DialogWrapper {
   }
 
   private void setupControls() {
+    myJarPath = myJarFilePathComponent.getComponent();
+    myMainClass = myMainClassComponent.getComponent();
+
     myElementsChooser = new ElementsChooser<ModuleChooserElement>();
     myModulesPanel.setLayout(new BorderLayout());
     myModulesPanel.add(myElementsChooser, BorderLayout.CENTER);
@@ -144,7 +156,21 @@ public class BuildJarActionDialog extends DialogWrapper {
         if (file == null) return;
         myJarPath.setText(file.getPath());
       }
+    });
 
+    myMainClass.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        String mainClass = myMainClass.getText();
+        GlobalSearchScope scope = createMainClassScope();
+        PsiClass aClass = PsiManager.getInstance(myProject).findClass(mainClass, scope);
+        TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(myProject);
+        final TreeClassChooser dialog = factory.createNoInnerClassesScopeChooser("Choose Main Class", scope, null, aClass);
+        dialog.showDialog();
+        final PsiClass psiClass = dialog.getSelectedClass();
+        if (psiClass != null && psiClass.getQualifiedName() != null) {
+          myMainClass.setText(psiClass.getQualifiedName());
+        }
+      }
     });
 
     SwingUtilities.invokeLater(new Runnable(){
@@ -154,6 +180,20 @@ public class BuildJarActionDialog extends DialogWrapper {
       }
     });
     GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel,true);
+  }
+
+  private GlobalSearchScope createMainClassScope() {
+    GlobalSearchScope result = null;
+    for (Module module : mySettings.keySet()) {
+      GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(module);
+      if (result == null) {
+        result = scope;
+      }
+      else {
+        result = result.uniteWith(scope);
+      }
+    }
+    return result;
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -218,6 +258,7 @@ public class BuildJarActionDialog extends DialogWrapper {
       myEditorPanel.revalidate();
 
       myJarPath.setText(buildJarSettings.getJarPath());
+      myMainClass.setText(buildJarSettings.getMainClass());
     }
 
     public void apply() {
@@ -232,11 +273,11 @@ public class BuildJarActionDialog extends DialogWrapper {
       myModifiedBuildJarSettings.setJarPath(myJarPath.getText());
       boolean isBuildJar = myElementsChooser.getMarkedElements().contains(new ModuleChooserElement(myModule, null));
       myModifiedBuildJarSettings.setBuildJar(isBuildJar);
+      myModifiedBuildJarSettings.setMainClass(myMainClass.getText());
       copySettings(myModifiedBuildJarSettings, myBuildJarSettings);
-
     }
-
   }
+
   private static void copySettings(BuildJarSettings from, BuildJarSettings to) {
     Element element = new Element("dummy");
     try {
