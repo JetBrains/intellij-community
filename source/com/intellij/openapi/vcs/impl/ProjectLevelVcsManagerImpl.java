@@ -72,6 +72,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.util.Alarm;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.EditorAdapter;
 import org.jdom.Element;
@@ -85,8 +86,13 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private List<AbstractVcs> myVcss = new ArrayList<AbstractVcs>();
   private AbstractVcs[] myCachedVCSs = null;
   private final Project myProject;
+
   private com.intellij.util.containers.HashMap<Document, LineStatusTracker> myLineStatusTrackers =
     new com.intellij.util.containers.HashMap<Document, LineStatusTracker>();
+
+  private com.intellij.util.containers.HashMap<Document, Alarm> myLineStatusUpdateAlarms =
+    new com.intellij.util.containers.HashMap<Document, Alarm>();
+
   private boolean myIsDisposed = false;
 
   private EditorFactoryListener myEditorFactoryListener = new MyEditorFactoryListener();
@@ -320,7 +326,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
 
   public LineStatusTracker setUpToDateContent(Document document, String lastUpToDateContent) {
-    if (System.getProperty("idea.ignore.changemarkers") != null) return null;
     LineStatusTracker result = myLineStatusTrackers.get(document);
     if (result == null) {
       result = LineStatusTracker.createOn(document, lastUpToDateContent, getProject());
@@ -353,11 +358,20 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   private synchronized boolean releaseTracker(Document document) {
+    releaseUpdateAlarms(document);
     if (myLineStatusTrackers == null) return false;
     if (!myLineStatusTrackers.containsKey(document)) return false;
     LineStatusTracker tracker = myLineStatusTrackers.remove(document);
     tracker.release();
     return true;
+  }
+
+  private void releaseUpdateAlarms(final Document document) {
+    if (myLineStatusUpdateAlarms.containsKey(document)) {
+      final Alarm alarm = myLineStatusUpdateAlarms.get(document);
+      alarm.cancelAllRequests();
+      myLineStatusUpdateAlarms.remove(document);
+    }
   }
 
   public synchronized void resetTracker(final LineStatusTracker tracker) {
@@ -416,7 +430,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     }
   }
 
-  private synchronized void installTracker(VirtualFile virtualFile, Document document) {
+  private synchronized void installTracker(final VirtualFile virtualFile, final Document document) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     AbstractVcs activeVcs = getVcsFor(virtualFile);
 
@@ -425,18 +439,45 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
     if (!(virtualFile.getFileSystem() instanceof LocalFileSystem)) return;
 
-    UpToDateRevisionProvider upToDateRevisionProvider = activeVcs.getUpToDateRevisionProvider();
+    final UpToDateRevisionProvider upToDateRevisionProvider = activeVcs.getUpToDateRevisionProvider();
     if (upToDateRevisionProvider == null) return;
+    if (System.getProperty("idea.ignore.changemarkers") != null) return;
 
-    try {
-      String lastUpToDateContent = upToDateRevisionProvider.getLastUpToDateContentFor(virtualFile, true);
-      if (lastUpToDateContent == null) return;
+    final Alarm alarm;
 
-      setUpToDateContent(document, lastUpToDateContent);
+    if (myLineStatusUpdateAlarms.containsKey(document)) {
+      alarm = myLineStatusUpdateAlarms.get(document);
+      alarm.cancelAllRequests();
+    } else {
+      alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+      myLineStatusUpdateAlarms.put(document, alarm);
     }
-    catch (VcsException e) {
-      //ignore
-    }
+
+
+    alarm.addRequest(new Runnable(){
+      public void run() {
+        try {
+          try {
+            alarm.cancelAllRequests();
+            if (!virtualFile.isValid()) return;
+            final String lastUpToDateContent = upToDateRevisionProvider.getLastUpToDateContentFor(virtualFile, true);
+            if (lastUpToDateContent == null) return;
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              public void run() {
+                setUpToDateContent(document, lastUpToDateContent);
+              }
+            });
+          }
+          finally {
+            myLineStatusUpdateAlarms.remove(document);
+          }
+        }
+        catch (VcsException e) {
+          //ignore
+        }
+      }
+    }, 10);
+
   }
 
   public boolean checkVcsIsActive(AbstractVcs vcs) {

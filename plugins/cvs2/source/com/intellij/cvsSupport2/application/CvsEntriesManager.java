@@ -258,15 +258,14 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
 
   private void onEntriesChanged(final VirtualFile parent) {
     final CvsEntriesListener[] listeners = myEntriesListeners.toArray(new CvsEntriesListener[myEntriesListeners.size()]);
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].entriesChanged(parent);
+    for (CvsEntriesListener listener : listeners) {
+      listener.entriesChanged(parent);
     }
   }
 
   private void onEntryChanged(final VirtualFile file) {
     final CvsEntriesListener[] listeners = myEntriesListeners.toArray(new CvsEntriesListener[myEntriesListeners.size()]);
-    for (int i = 0; i < listeners.length; i++) {
-      CvsEntriesListener listener = listeners[i];
+    for (CvsEntriesListener listener : listeners) {
       listener.entryChanged(file);
     }
   }
@@ -274,7 +273,7 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
   public void watchForCvsAdminFiles(VirtualFile parent) {
     if (parent == null) return;
     synchronized (myFilesToRefresh) {
-      myFilesToRefresh.add(parent.getPath() + "/" + CVS_ADMIN_DIRECTORY_NAME);
+      myFilesToRefresh.add(CvsVfsUtil.getPathFor(parent) + "/" + CVS_ADMIN_DIRECTORY_NAME);
     }
 
     refreshFiles();
