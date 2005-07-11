@@ -1,12 +1,14 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiSwitchLabelStatement;
-import com.intellij.psi.PsiSwitchStatement;
+import com.intellij.psi.*;
+import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.util.PsiScopesUtil;
+import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.resolve.VariableResolverProcessor;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.lang.ASTNode;
 
@@ -72,6 +74,19 @@ public class PsiSwitchLabelStatementImpl extends CompositePsiElement implements 
         return ChildRole.NONE;
       }
     }
+  }
+
+  public boolean processDeclarations(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
+    final PsiSwitchStatement switchStatement = getEnclosingSwitchStatement();
+    if (switchStatement != null) {
+      final PsiExpression expression = switchStatement.getExpression();
+      if (expression != null && expression.getType() instanceof PsiClassType) {
+        final PsiClass aClass = ((PsiClassType)expression.getType()).resolve();
+        aClass.processDeclarations(processor, substitutor, this, place);
+        return false;
+      }
+    }
+    return true;
   }
 
   public void accept(PsiElementVisitor visitor) {

@@ -185,37 +185,6 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
         return processor.getResult();
       }
     }
-    else if (parentType == SWITCH_LABEL_STATEMENT) {
-      if (!isQualified()) {
-        PsiSwitchStatement switchStatement =
-          ((PsiSwitchLabelStatement)SourceTreeToPsiMap.treeElementToPsi(getTreeParent())).getEnclosingSwitchStatement();
-        if (switchStatement != null) {
-          PsiExpression expression = switchStatement.getExpression();
-          if (expression != null && expression.getType() instanceof PsiClassType) {
-            PsiClass aClass = ((PsiClassType)expression.getType()).resolve();
-            if (aClass != null && aClass.isEnum()) {
-              VariablesProcessor processor = new VariablesProcessor(true) {
-                protected boolean check(PsiVariable var, PsiSubstitutor substitutor) {
-                  return var instanceof PsiEnumConstant && var.getName().equals(getReferenceName());
-                }
-              };
-              PsiScopesUtil.treeWalkUp(processor, aClass, aClass);
-              if (processor.size() == 1) {
-                return new JavaResolveResult[]{new CandidateInfo(processor.getResult(0), PsiSubstitutor.EMPTY)};
-              }
-
-              return JavaResolveResult.EMPTY_ARRAY;
-            }
-          }
-        }
-      }
-      //fall through
-      {
-        final VariableResolverProcessor processor = new VariableResolverProcessor(this);
-        PsiScopesUtil.resolveAndWalk(processor, this, null);
-        return processor.getResult();
-      }
-    }
     else {
       {
         final VariableResolverProcessor processor = new VariableResolverProcessor(this);
