@@ -216,4 +216,8 @@ public class AbstractBlockWrapper {
   public void setIndent(final IndentImpl indent) {
     myIndent = indent;
   }
+
+  public int getEndOffset() {
+    return getTextRange().getEndOffset();
+  }
 }

@@ -6,7 +6,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import gnu.trove.TIntObjectHashMap;
 import org.jdom.Element;
 import org.jdom.Text;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -719,4 +718,17 @@ class FormatProcessor {
   }
 
 
+  public boolean previousBlockIsComplete(final LeafBlockWrapper blockAfterOffset) {
+
+    AbstractBlockWrapper current = blockAfterOffset.getPreviousBlock();
+
+    if (current == null) return true;
+
+    while (current.getParent() != null && current.getParent().getEndOffset() == current.getEndOffset()) {
+      if (current.getBlock().isIncomplete()) return false;
+      current = current.getParent();
+    }
+
+    return true;
+  }
 }

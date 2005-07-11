@@ -700,17 +700,20 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     setChildIndent(internalIndent);
     setChildAlignment(alignmentStrategy.getAlignment(null));
 
+    boolean isAfterIncomplete = false;
+
     ASTNode prev = child;
     while (child != null) {
+      isAfterIncomplete = isAfterIncomplete || child.getElementType() == ElementType.ERROR_ELEMENT || child.getElementType() == ElementType.EMPTY_EXPRESSION;
       if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {
         if (child.getElementType() == from) {
           result.add(createJavaBlock(child, mySettings, externalIndent, null, null));
         }
         else if (child.getElementType() == to) {
-          result
-            .add(
-              createJavaBlock(child, mySettings, externalIndent, null,
-                              FormatterUtil.isAfterIncompleted(child) ? alignmentStrategy.getAlignment(null) : null));
+          result.add(createJavaBlock(child, mySettings,
+                                     isAfterIncomplete ? internalIndent : externalIndent,
+                                     null,
+                                     isAfterIncomplete ? alignmentStrategy.getAlignment(null) : null));
           return child;
         }
         else {
@@ -722,6 +725,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
             return child;
           }
         }
+        isAfterIncomplete = false;
       }
       prev = child;
       child = child.getTreeNext();
