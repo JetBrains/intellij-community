@@ -45,5 +45,9 @@ public class ObjectEqualsInspection
         {
 
         }
+        if(char.class == char.class)
+        {
+
+        }
     }
 }

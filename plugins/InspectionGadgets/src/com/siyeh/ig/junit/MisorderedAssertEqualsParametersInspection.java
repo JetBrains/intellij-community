@@ -99,7 +99,10 @@ public class MisorderedAssertEqualsParametersInspection extends ExpressionInspec
                 return;
             }
             final PsiParameter[] parameters = paramList.getParameters();
-
+            if(parameters.length== 0)
+            {
+                return;
+            }
             final PsiManager psiManager = expression.getManager();
 
             final Project project = psiManager.getProject();
@@ -121,6 +124,10 @@ public class MisorderedAssertEqualsParametersInspection extends ExpressionInspec
                 return;
             }
             final PsiExpression[] args = argumentList.getExpressions();
+            if(actualPosition>= args.length)
+            {
+                return;
+            }
             final PsiExpression expectedArg = args[expectedPosition];
             final PsiExpression actualArg = args[actualPosition];
             if(expectedArg == null || actualArg == null)

@@ -210,6 +210,7 @@
   <component name="com.siyeh.metrics.MetricsReloaded">
     <option name="selectedProfile" value="Default" />
     <option name="autoscroll" value="false" />
+    <option name="calculateMetrics" value="false" />
     <option name="includeTestClasses" value="false" />
     <option name="flattenInnerClasses" value="false" />
     <option name="cycleTableSpecificationString" value="" />
