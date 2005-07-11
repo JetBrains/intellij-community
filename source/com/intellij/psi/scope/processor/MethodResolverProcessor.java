@@ -56,4 +56,8 @@ public class MethodResolverProcessor extends MethodCandidatesProcessor implement
       super.add(element, substitutor);
     }
   }
+
+  public boolean shouldProcess(Class elementClass) {
+    return PsiMethod.class.isAssignableFrom(elementClass);
+  }
 }

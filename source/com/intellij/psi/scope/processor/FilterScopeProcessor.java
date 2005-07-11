@@ -17,8 +17,7 @@ import java.util.List;
  * Time: 15:21:27
  * To change this template use Options | File Templates.
  */
-public class FilterScopeProcessor extends BaseScopeProcessor
- implements ElementClassHint{
+public class FilterScopeProcessor extends BaseScopeProcessor{
   private final PsiElement myElement;
   protected final List myResults;
   private PsiElement myCurrentDeclarationHolder;
@@ -79,9 +78,5 @@ public class FilterScopeProcessor extends BaseScopeProcessor
 
   public List getResults(){
     return myResults;
-  }
-
-  public boolean shouldProcess(Class elementClass){
-    return myFilter.isClassAcceptable(elementClass);
   }
 }

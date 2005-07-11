@@ -75,4 +75,8 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
   public String getProcessorType(){
     return "variables resolver";
   }
+
+  public boolean shouldProcess(Class elementClass) {
+    return PsiVariable.class.isAssignableFrom(elementClass);
+  }
 }

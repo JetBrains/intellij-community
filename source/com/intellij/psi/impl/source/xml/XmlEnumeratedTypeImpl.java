@@ -1,13 +1,10 @@
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.scope.processor.FilterScopeProcessor;
+import com.intellij.psi.filters.position.TokenTypeFilter;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlEnumeratedType;
-import com.intellij.psi.xml.XmlToken;
-import com.intellij.psi.filters.position.TokenTypeFilter;
+import com.intellij.psi.xml.XmlTokenType;
 
 import java.util.ArrayList;
 import java.util.List;

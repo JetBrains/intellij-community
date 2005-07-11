@@ -2,10 +2,12 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.scope.processor.VariablesProcessor;
+import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.VariableResolverProcessor;
@@ -82,7 +84,7 @@ public class PsiSwitchLabelStatementImpl extends CompositePsiElement implements 
       final PsiExpression expression = switchStatement.getExpression();
       if (expression != null && expression.getType() instanceof PsiClassType) {
         final PsiClass aClass = ((PsiClassType)expression.getType()).resolve();
-        aClass.processDeclarations(processor, substitutor, this, place);
+        aClass.processDeclarations(new FilterScopeProcessor(new ClassFilter(PsiEnumConstant.class), processor), substitutor, this, place);
         return false;
       }
     }
