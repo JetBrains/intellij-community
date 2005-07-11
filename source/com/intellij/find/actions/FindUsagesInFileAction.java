@@ -1,6 +1,6 @@
 package com.intellij.find.actions;
 
-import com.intellij.lang.EmptyFindUsagesProvider;
+import com.intellij.lang.findUsages.EmptyFindUsagesProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;

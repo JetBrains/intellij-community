@@ -35,6 +35,7 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.findUsages.FindUsagesProvider;
+import com.intellij.lang.findUsages.EmptyFindUsagesProvider;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.lang.surroundWith.SurroundDescriptor;

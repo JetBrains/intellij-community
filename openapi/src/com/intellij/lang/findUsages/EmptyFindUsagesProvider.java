@@ -29,60 +29,50 @@
  * IF JETBRAINS HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
  *
  */
-package com.intellij.lang;
+package com.intellij.lang.findUsages;
+
+import com.intellij.lang.cacheBuilder.WordsScanner;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * Defines the standard languages supported by IDEA.
+ * The default empty implementation of the {@link FindUsagesProvider} interface.
  * @author max
  */
-public class StdLanguages {
-  /**
-   * The definition for the Java language.
-   */
-  public static Language JAVA;
+public class EmptyFindUsagesProvider implements FindUsagesProvider {
+  public boolean mayHaveReferences(IElementType token, final short searchContext) {
+    return false;
+  }
 
-  /**
-   * The definition for the CSS language.
-   */
-  public static Language CSS;
+  @Nullable
+  public WordsScanner getWordsScanner() {
+    return null;
+  }
 
-  /**
-   * The definition for the AspectJ language.
-   */
-  public static Language ASPECTJ;
+  public boolean canFindUsagesFor(PsiElement psiElement) {
+    return false;
+  }
 
-  /**
-   * The definition for the DTD language.
-   */
-  public static Language DTD;
+  @Nullable
+  public String getHelpId(PsiElement psiElement) {
+    return null;
+  }
 
-  /**
-   * The definition for the JSP language.
-   */
-  public static Language JSP;
+  @NotNull
+  public String getType(PsiElement element) {
+    return "";
+  }
 
-  /**
-   * The definition for the XML language.
-   */
-  public static Language XML;
+  @NotNull
+  public String getDescriptiveName(PsiElement element) {
+    return element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : "";
+  }
 
-  /**
-   * The definition for the HTML language.
-   */
-  public static Language HTML;
-
-  /**
-   * The definition for the XHTML language.
-   */
-  public static Language XHTML;
-
-  /**
-   * The definition for the JSP language (JSP with XML syntax).
-   */
-  public static Language JSPX;
-
-  /**
-   * The definition for the JSP Expression Language language. 
-   */
-  public static Language EL;
+  @NotNull
+  public String getNodeText(PsiElement element, boolean useFullName) {
+    return element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : "";
+  }
 }
