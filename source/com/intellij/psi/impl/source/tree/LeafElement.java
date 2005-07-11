@@ -124,9 +124,7 @@ public abstract class LeafElement extends TreeElement {
     return null;
   }
 
-  public ASTNode[] findChildrenByFilter(TokenSet filter) {
-    return ASTNode.EMPTY_ARRAY;
-  }
+
 
   public ASTNode getFirstChildNode() {
     return null;

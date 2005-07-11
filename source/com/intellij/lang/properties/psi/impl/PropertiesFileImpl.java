@@ -69,7 +69,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
       return;
     }
 
-    final ASTNode[] props = getPropertiesList().findChildrenByFilter(PropertiesElementTypes.PROPERTIES);
+    final ASTNode[] props = getPropertiesList().getChildren(PropertiesElementTypes.PROPERTIES);
     myPropertiesMap = new LinkedHashMap<String, List<Property>>();
     myProperties = new ArrayList<Property>(props.length);
     for (final ASTNode prop : props) {

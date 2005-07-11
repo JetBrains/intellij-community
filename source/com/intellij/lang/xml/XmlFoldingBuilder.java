@@ -103,7 +103,7 @@ public class XmlFoldingBuilder implements FoldingBuilder {
 
       int nameEnd = tagNameElement.getTextRange().getEndOffset();
       int end = tagNode.getLastChildNode().getTextRange().getStartOffset();
-      ASTNode[] attributes = tagNode.findChildrenByFilter(XML_ATTRIBUTE_SET);
+      ASTNode[] attributes = tagNode.getChildren(XML_ATTRIBUTE_SET);
 
       if (attributes.length > 0) {
         ASTNode lastAttribute = attributes[attributes.length - 1];

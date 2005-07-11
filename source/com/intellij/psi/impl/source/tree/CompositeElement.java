@@ -184,9 +184,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
     return TreeUtil.findChild(this, type);
   }
 
-  public ASTNode[] findChildrenByFilter(TokenSet filter) {
-    return TreeUtil.findChildren(this, filter);
-  }
+  
 
   public String getText() {
     synchronized (PsiLock.LOCK) {
