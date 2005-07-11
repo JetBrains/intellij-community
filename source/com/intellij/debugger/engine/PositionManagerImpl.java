@@ -139,8 +139,11 @@ public class PositionManagerImpl implements PositionManager {
       if(document == null){
         return -1;
       }
-
-      return document.getLineNumber(finder.getCompiledMethod().getTextOffset());
+      final int offset = finder.getCompiledMethod().getTextOffset();
+      if (offset < 0) {
+        return -1;
+      }
+      return document.getLineNumber(offset);
     }
 
     return lineNumber;
