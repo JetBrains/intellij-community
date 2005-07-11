@@ -64,7 +64,7 @@ public class CompilerProgressDialog extends DialogWrapper{
     myStatisticsLabel.setText(text);
   }
 
-  protected JComponent createSouthPanel(){
+  protected JComponent createCenterPanel(){
     return myFunPanel;
   }
 
@@ -72,7 +72,7 @@ public class CompilerProgressDialog extends DialogWrapper{
     return null;
   }
 
-  protected JComponent createCenterPanel(){
+  protected JComponent createNorthPanel(){
     JPanel panel = new JPanel();
     panel.setLayout(new GridBagLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
@@ -123,6 +123,10 @@ public class CompilerProgressDialog extends DialogWrapper{
     );
 
     return panel;
+  }
+
+  protected JComponent createSouthPanel() {
+    return null;
   }
 
   public void doCancelAction() {
