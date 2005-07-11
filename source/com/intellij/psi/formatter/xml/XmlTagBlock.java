@@ -49,6 +49,10 @@ public class XmlTagBlock extends AbstractXmlBlock{
         }
         else if (child.getElementType() == ElementType.XML_START_TAG_START) {
           insideTag = false;
+          if (!localResult.isEmpty()) {
+            result.add(createTagContentNode(localResult));
+          }
+          localResult = new ArrayList<Block>();
           child = processChild(localResult,child, wrap, alignment, null);
         }
         else if (child.getElementType() == ElementType.XML_END_TAG_START) {

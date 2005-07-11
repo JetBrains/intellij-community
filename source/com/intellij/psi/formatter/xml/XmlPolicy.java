@@ -3,6 +3,7 @@ package com.intellij.psi.formatter.xml;
 import com.intellij.formatting.Wrap;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
+import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 
 public class XmlPolicy extends XmlFormattingPolicy{
@@ -13,7 +14,12 @@ public class XmlPolicy extends XmlFormattingPolicy{
   }
 
   public boolean indentChildrenOf(final XmlTag parentTag) {
-    return !(parentTag instanceof JspXmlRootTag);
+
+    if( XmlChildRole.START_TAG_START_FINDER.findChild(parentTag.getNode()) == null ) {
+      return false;
+    }
+
+    return true;
   }
 
   public boolean insertLineBreakBeforeTag(final XmlTag xmlTag) {
