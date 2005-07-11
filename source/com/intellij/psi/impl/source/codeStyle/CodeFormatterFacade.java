@@ -1,18 +1,16 @@
 package com.intellij.psi.impl.source.codeStyle;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.formatting.FormatterEx;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.javadoc.CommentFormatter;
@@ -62,14 +60,6 @@ public class CodeFormatterFacade implements Constants {
       return processRange(element, range.getStartOffset(), range.getEndOffset());
     }
 
-    if (useNewFormatter(myHelper.getFileType())) {
-      TextRange range = element.getTextRange();
-      int startOffset = range.getStartOffset();
-      int endOffset = range.getEndOffset();
-
-      processRange(element, startOffset, endOffset);
-      return element;
-    }
     return element;
   }
 
@@ -84,7 +74,7 @@ public class CodeFormatterFacade implements Constants {
       TextRange range = formatComments(element, startOffset, endOffset);
       final SmartPsiElementPointer pointer = SmartPointerManager.getInstance(psiElement.getProject()).createSmartPsiElementPointer(psiElement);
       final PsiFile containingFile = psiElement.getContainingFile();
-      final FormattingModel model = createModel(builder, containingFile);
+      final FormattingModel model = builder.createModel(containingFile, mySettings);
       if (containingFile.getTextLength() > 0) {
         try {
           FormatterEx.getInstanceEx().format(model, mySettings,
@@ -103,19 +93,30 @@ public class CodeFormatterFacade implements Constants {
     return element;
   }
 
-  private FormattingModel createModel(final FormattingModelBuilder builder, final PsiFile containingFile) {
-    final FormattingModel original = builder.createModel(containingFile, mySettings);
-    final Project project = containingFile.getProject();
-    final Document document = PsiDocumentManager.getInstance(project).getDocument(containingFile);
-    if (document != null && document.getUserData(CodeStyleManagerEx.USE_DOCUMENT_TO_REFORMAT) == Boolean.TRUE) {
-      return new DocumentBasedFormattingModel(original.getRootBlock(), document, project, mySettings, containingFile.getFileType());
-    } else {
-      return original;
+  public void processText(final PsiFile file, final int startOffset, final int endOffset) {
+    final FileType fileType = myHelper.getFileType();
+
+    final FormattingModelBuilder builder = file.getLanguage().getFormattingModelBuilder();
+
+    if (builder != null) {
+      if (file.getTextLength() > 0) {
+        try {
+          TextRange range = formatComments(file.getNode(), startOffset, endOffset);
+          FormattingModel originalModel = builder.createModel(file, mySettings);
+          Project project = file.getProject();
+          final FormattingModel model = new DocumentBasedFormattingModel(originalModel.getRootBlock(),
+            PsiDocumentManager.getInstance(project).getDocument(file),
+            project, mySettings, fileType);
+
+          FormatterEx.getInstanceEx().format(model, mySettings,
+                                             mySettings.getIndentOptions(fileType), range);
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }
     }
   }
 
-  private boolean useNewFormatter(FileType fileType) {
-    return fileType instanceof LanguageFileType && USE_NEW_CODE_FORMATTER > 0;
-  }
 }
 

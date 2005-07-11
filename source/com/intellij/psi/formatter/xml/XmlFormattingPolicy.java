@@ -17,6 +17,11 @@ public abstract class XmlFormattingPolicy {
   private Map<Pair<PsiElement, Language>, Block> myRootToBlockMap = new HashMap<Pair<PsiElement, Language>, Block>();
   private boolean myProcessJsp = true;
 
+  public void copyFrom(final XmlFormattingPolicy xmlFormattingPolicy) {
+    myProcessJsp = xmlFormattingPolicy.myProcessJsp;
+    myRootToBlockMap.putAll(xmlFormattingPolicy.myRootToBlockMap);
+  }
+
   public Block getOrCreateBlockFor(Pair<PsiElement, Language> root){
     if (!myRootToBlockMap.containsKey(root)) {
       myRootToBlockMap.put(root, createBlockFor(root));

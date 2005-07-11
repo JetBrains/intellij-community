@@ -254,7 +254,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     final FormattingModelBuilder builder = childLanguage.getFormattingModelBuilder();
     LOG.assertTrue(builder != null);
     final FormattingModel childModel = builder.createModel(child.getPsi(),
-                                                           myXmlFormattingPolicy.getSettings());
+                                                           getSettings());
     result.add(new AnotherLanguageBlockWrapper(child, myXmlFormattingPolicy, childModel.getRootBlock()));
     return child;
   }
@@ -271,7 +271,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
         && myXmlFormattingPolicy.indentChildrenOf((XmlTag)tag.getParent())) {
       childIndent = Indent.createNormalIndent();
     }
-    result.add(new XmlTagBlock(tag.getNode(), null, null, myXmlFormattingPolicy, childIndent));
+    result.add(new XmlTagBlock(tag.getNode(), null, null, createPolicyFor(tag), childIndent));
     ASTNode currentChild = findChildAfter(child, tag.getTextRange().getEndOffset());
 
     while (currentChild != null && currentChild.getTextRange().getEndOffset() > tag.getTextRange().getEndOffset()) {
@@ -280,7 +280,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
         if (psiElement instanceof XmlTag &&
             psiElement.getTextRange().getStartOffset() >= currentChild.getTextRange().getStartOffset() &&
             containsTag(psiElement)) {
-          result.add(new XmlTagBlock(psiElement.getNode(), null, null, myXmlFormattingPolicy, childIndent));
+          result.add(new XmlTagBlock(psiElement.getNode(), null, null, createPolicyFor(psiElement), childIndent));
           currentChild = findChildAfter(currentChild, psiElement.getTextRange().getEndOffset());
           tag = psiElement;
         } else {
@@ -292,6 +292,22 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     }
 
     return currentChild;
+  }
+
+  private XmlFormattingPolicy createPolicyFor(final PsiElement psiElement) {
+    final Language language = psiElement.getLanguage();
+    final XmlFormattingPolicy result;
+    if (language == StdLanguages.JSP || language == StdLanguages.XML) {
+      result = new XmlPolicy(getSettings());
+    } else {
+      result = new HtmlPolicy(getSettings());
+    }
+    result.copyFrom(myXmlFormattingPolicy);
+    return result;
+  }
+
+  private CodeStyleSettings getSettings() {
+    return myXmlFormattingPolicy.getSettings();
   }
 
   private boolean canBeAnotherTreeTagStart(final ASTNode child) {

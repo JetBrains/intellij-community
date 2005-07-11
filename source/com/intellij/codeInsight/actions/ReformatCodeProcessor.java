@@ -1,14 +1,11 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 
@@ -44,22 +41,10 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     return new Runnable() {
       public void run() {
         try {
-          Document doc = PsiDocumentManager.getInstance(myProject).getDocument(file);
-
-          doc.putUserData(CodeStyleManagerEx.USE_DOCUMENT_TO_REFORMAT, Boolean.TRUE);
-
-          try {
-            if (myRange == null) {
-              CodeStyleManager.getInstance(myProject).reformat(file);
-            }
-            else {
-              CodeStyleManager.getInstance(myProject).reformatRange(file, myRange.getStartOffset(),
-                                                                    myRange.getEndOffset());
-            }
-          }
-          finally {
-            PsiDocumentManager.getInstance(myProject).commitDocument(doc);
-            doc.putUserData(CodeStyleManagerEx.USE_DOCUMENT_TO_REFORMAT, null);
+          if (myRange != null) {
+            CodeStyleManager.getInstance(myProject).reformatText(file, myRange.getStartOffset(), myRange.getEndOffset());
+          } else {
+            CodeStyleManager.getInstance(myProject).reformatText(file, 0, file.getTextRange().getEndOffset());
           }
         }
         catch (IncorrectOperationException e) {

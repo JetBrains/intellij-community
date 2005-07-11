@@ -1,7 +1,7 @@
 package com.intellij.psi.formatter.xml;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.formatting.Wrap;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -24,9 +24,15 @@ public class HtmlPolicy extends XmlFormattingPolicy{
     }
     final PsiElement firstChild = findFirstNonEmptyChild(parentTag);
 
-    if (firstChild == null) return false;
+    if( firstChild == null )
+    {
+      return false;
+    }
 
-    if (firstChild.getNode().getElementType() != ElementType.XML_START_TAG_START) return false;
+    if( firstChild.getNode().getElementType() != ElementType.XML_START_TAG_START )
+    {
+      return false;
+    }
 
     if (getLines(parentTag) > mySettings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES) {
       return false;
@@ -95,7 +101,7 @@ public class HtmlPolicy extends XmlFormattingPolicy{
   }
 
   public int getWrappingTypeForTagBegin(final XmlTag tag) {
-    if (mySettings.HTML_WRAP_TAG_BEGIN || shouldBeWrapped(tag)) {
+    if (mySettings.HTML_WRAP_TAG_BEGIN || shouldBeWrapped(tag) || checkName(tag, mySettings.HTML_PLACE_ON_NEW_LINE)) {
       return Wrap.ALWAYS;
     } else {
       return Wrap.NORMAL;
@@ -105,7 +111,10 @@ public class HtmlPolicy extends XmlFormattingPolicy{
   private boolean shouldBeWrapped(final XmlTag tag) {
     final String name = tag.getName();
     if (name == null) return false;
-    return name.toLowerCase().startsWith("jsp:");
+    if (name.toLowerCase().startsWith("jsp:")) {
+      return true;
+    }
+    return false;
   }
 
   public boolean isTextElement(XmlTag tag) {
@@ -152,7 +161,7 @@ public class HtmlPolicy extends XmlFormattingPolicy{
     return mySettings;
   }
 
-  public boolean addSpaceIntoEmptyTag() {
+  public boolean addSpaceIntoEmptyTag() {    
     return mySettings.HTML_SPACE_INSIDE_EMPTY_TAG;
   }
 

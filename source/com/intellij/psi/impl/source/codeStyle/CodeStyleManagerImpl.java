@@ -30,6 +30,7 @@ import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.beans.Introspector;
 import java.util.*;
@@ -66,7 +67,10 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
   public PsiElement reformat(PsiElement element) throws IncorrectOperationException {
     CheckUtil.checkWritable(element);
-    if (!SourceTreeToPsiMap.hasTreeElement(element)) return element;
+    if( !SourceTreeToPsiMap.hasTreeElement( element ) )
+    {
+      return element;
+    }
 
     ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(element);
     if (treeElement instanceof CompositeElement) {
@@ -96,12 +100,55 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
   }
 
+
+  public void reformatText(@NotNull PsiFile file, int startOffset, int endOffset) throws IncorrectOperationException {
+
+    CheckUtil.checkWritable(file);
+    if (!SourceTreeToPsiMap.hasTreeElement(file)) {
+      return;
+    }
+
+    ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(file);
+    if (treeElement instanceof CompositeElement) {
+      ChameleonTransforming.transformChildren(treeElement, true); // optimization : parse all first
+    }
+    FileType fileType = file.getFileType();
+    Helper helper = new Helper(fileType, myProject);
+    final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(), helper);
+    final PsiElement start = file.getContainingFile().findElementAt(startOffset);
+    final PsiElement end = file.getContainingFile().findElementAt(endOffset);
+
+    boolean formatFromStart = startOffset == 0;
+    boolean formatToEnd = endOffset == file.getTextLength();
+
+    final SmartPsiElementPointer startPointer = start == null ? null : SmartPointerManager.getInstance(getProject())
+      .createSmartPsiElementPointer(start);
+
+    final SmartPsiElementPointer endPointer = end == null ? null : SmartPointerManager.getInstance(getProject())
+      .createSmartPsiElementPointer(end);
+
+    codeFormatter.processText(file, startOffset, endOffset);
+    final PsiElement startElement = startPointer == null ? null : startPointer.getElement();
+    final PsiElement endElement = endPointer == null ? null : endPointer.getElement();
+
+    if ((startElement != null || formatFromStart)
+      && (endElement != null || formatToEnd)) {
+      new BraceEnforcer(getSettings()).process(file,
+        formatFromStart ? 0 : startElement.getTextRange().getStartOffset(),
+        formatToEnd ? file.getTextLength() : endElement.getTextRange().getEndOffset());
+    }
+  }
+
+
   private PsiElement reformatRangeImpl(final PsiElement element,
                                        final int startOffset,
                                        final int endOffset,
                                        boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException {
     CheckUtil.checkWritable(element);
-    if (!SourceTreeToPsiMap.hasTreeElement(element)) return element;
+    if( !SourceTreeToPsiMap.hasTreeElement( element ) )
+    {
+      return element;
+    }
 
     ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(element);
     if (treeElement instanceof CompositeElement) {
@@ -142,7 +189,10 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
   public PsiElement shortenClassReferences(PsiElement element, int flags) throws IncorrectOperationException {
     CheckUtil.checkWritable(element);
-    if (!SourceTreeToPsiMap.hasTreeElement(element)) return element;
+    if( !SourceTreeToPsiMap.hasTreeElement( element ) )
+    {
+      return element;
+    }
 
     boolean addImports = (flags & DO_NOT_ADD_IMPORTS) == 0;
     boolean uncompleteCode = (flags & UNCOMPLETE_CODE) != 0;
@@ -154,7 +204,10 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   public void shortenClassReferences(PsiElement element, int startOffset, int endOffset)
     throws IncorrectOperationException {
     CheckUtil.checkWritable(element);
-    if (!SourceTreeToPsiMap.hasTreeElement(element)) return;
+    if( !SourceTreeToPsiMap.hasTreeElement( element ) )
+    {
+      return;
+    }
     new ReferenceAdjuster(getSettings()).processRange((TreeElement)SourceTreeToPsiMap.psiElementToTree(element), startOffset,
                                                       endOffset);
   }
@@ -176,7 +229,10 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   }
 
   public PsiImportList prepareOptimizeImportsResult(PsiFile file) {
-    if (!(file instanceof PsiJavaFile)) return null;
+    if( !( file instanceof PsiJavaFile ) )
+    {
+      return null;
+    }
     return new ImportHelper(getSettings()).prepareOptimizeImportsResult(this, (PsiJavaFile)file);
   }
 
@@ -186,7 +242,10 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
   public void removeRedundantImports(PsiJavaFile file) throws IncorrectOperationException {
     final PsiImportStatementBase[] imports = file.getImportList().getAllImportStatements();
-    if (imports.length == 0) return;
+    if( imports.length == 0 )
+    {
+      return;
+    }
 
     final Set<PsiImportStatementBase> redundants = new HashSet<PsiImportStatementBase>(Arrays.asList(imports));
     final PsiElement[] roots = file.getPsiRoots();
@@ -209,7 +268,10 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     for (final PsiImportStatementBase importStatement : redundants) {
       final PsiJavaCodeReferenceElement ref = importStatement.getImportReference();
       //Do not remove non-resolving refs
-      if (ref == null || ref.resolve() == null) continue;
+      if( ref == null || ref.resolve() == null )
+      {
+        continue;
+      }
 
       importStatement.delete();
     }
@@ -221,7 +283,10 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
   public int adjustLineIndent(PsiFile file, int offset) throws IncorrectOperationException {
     final PsiElement element = file.findElementAt(offset);
-    if (element == null) return offset;
+    if( element == null )
+    {
+      return offset;
+    }
     if (!(element instanceof PsiWhiteSpace) && insideElement(element, offset)) {
       return CharArrayUtil.shiftForward(file.textToCharArray(), offset, " \t");
     }
@@ -267,7 +332,10 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   @Nullable
   public String getLineIndent(PsiFile file, int offset) {
     final PsiElement element = file.findElementAt(offset);
-    if (element == null) return null;
+    if( element == null )
+    {
+      return null;
+    }
     if (!(element instanceof PsiWhiteSpace) && insideElement(element, offset)) {
       return null;
     }
@@ -295,7 +363,10 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   public String getLineIndent(Editor editor) {
     Document doc = editor.getDocument();
     int offset = editor.getCaretModel().getOffset();
-    if (offset >= doc.getTextLength()) return "";
+    if( offset >= doc.getTextLength() )
+    {
+      return "";
+    }
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(doc);
     return getLineIndent(file, offset);
   }
@@ -324,30 +395,47 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
   }
 
-  private boolean isSignificantJavaElement(final ASTNode current) {
-    final ASTNode treeParent = current.getTreeParent();
-    if (treeParent == null) return true;
-    if (treeParent.getElementType() == ElementType.BINARY_EXPRESSION) return false;
-    return true;
-  }
-
   public boolean isLineToBeIndented(PsiFile file, int offset) {
-    if (!SourceTreeToPsiMap.hasTreeElement(file)) return false;
+    if( !SourceTreeToPsiMap.hasTreeElement( file ) )
+    {
+      return false;
+    }
     Helper helper = new Helper(file.getFileType(), myProject);
     char[] chars = file.textToCharArray();
     int start = CharArrayUtil.shiftBackward(chars, offset - 1, " \t");
-    if (start > 0 && chars[start] != '\n' && chars[start] != '\r') return false;
+    if( start > 0 && chars[start] != '\n' && chars[start] != '\r' )
+    {
+      return false;
+    }
     int end = CharArrayUtil.shiftForward(chars, offset, " \t");
-    if (end >= chars.length) return false;
+    if( end >= chars.length )
+    {
+      return false;
+    }
     ASTNode element = SourceTreeToPsiMap.psiElementToTree(file.findElementAt(end));
-    if (element == null) return false;
-    if (element.getElementType() == ElementType.WHITE_SPACE) return false;
-    if (element.getElementType() == ElementType.PLAIN_TEXT) return false;
-    if (element.getElementType() instanceof IJspElementType) return false;
+    if( element == null )
+    {
+      return false;
+    }
+    if( element.getElementType() == ElementType.WHITE_SPACE )
+    {
+      return false;
+    }
+    if( element.getElementType() == ElementType.PLAIN_TEXT )
+    {
+      return false;
+    }
+    if( element.getElementType() instanceof IJspElementType )
+    {
+      return false;
+    }
     if (getSettings().KEEP_FIRST_COLUMN_COMMENT
         && (element.getElementType() == ElementType.END_OF_LINE_COMMENT || element.getElementType() == ElementType.C_STYLE_COMMENT)
     ) {
-      if (helper.getIndent(element, true) == 0) return false;
+      if( helper.getIndent( element, true ) == 0 )
+      {
+        return false;
+      }
     }
     return true;
   }
@@ -356,7 +444,10 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     CheckUtil.checkWritable(file);
     final CharTable charTable = ((FileElement)SourceTreeToPsiMap.psiElementToTree(file)).getCharTable();
     PsiElement elementAt = file.findElementAt(offset);
-    if (elementAt == null) return null;
+    if( elementAt == null )
+    {
+      return null;
+    }
     ASTNode element = SourceTreeToPsiMap.psiElementToTree(elementAt);
     ASTNode parent = element.getTreeParent();
     int elementStart = element.getTextRange().getStartOffset();
@@ -499,7 +590,10 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     return new SuggestedNameInfo(namesArray) {
       public void nameChoosen(String name) {
         if (_propertyName != null || _type != null) {
-          if (_type != null && !_type.isValid()) return;
+          if( _type != null && !_type.isValid() )
+          {
+            return;
+          }
           myStatisticsManager.incVariableNameUseCount(name, kind, _propertyName, _type);
         }
       }
@@ -518,7 +612,10 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     int frequencyLimit = Math.max(5, maxFrequency / 2);
 
     for (String name : allNames) {
-      if (names.contains(name)) continue;
+      if( names.contains( name ) )
+      {
+        continue;
+      }
       int count = myStatisticsManager.getVariableNameUseCount(name, variableKind, propertyName, type);
       if (LOG.isDebugEnabled()) {
         LOG.debug("new name:" + name + " count:" + count);
@@ -563,13 +660,22 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   private void suggestNamesForCollectionInheritors(final PsiType type,
                                                    final VariableKind variableKind,
                                                    List<String> suggestions) {
-    if (!(type instanceof PsiClassType)) return;
+    if( !( type instanceof PsiClassType ) )
+    {
+      return;
+    }
     PsiClassType classType = (PsiClassType)type;
     PsiClassType.ClassResolveResult resolved = classType.resolveGenerics();
-    if (resolved.getElement() == null) return;
+    if( resolved.getElement() == null )
+    {
+      return;
+    }
     final PsiManager manager = PsiManager.getInstance(myProject);
     final PsiClass collectionClass = manager.findClass("java.util.Collection", resolved.getElement().getResolveScope());
-    if (collectionClass == null) return;
+    if( collectionClass == null )
+    {
+      return;
+    }
 
     if (InheritanceUtil.isInheritorOrSelf(resolved.getElement(), collectionClass, true)) {
       final PsiSubstitutor substitutor;
@@ -582,9 +688,15 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       }
 
       PsiTypeParameterList typeParameterList = collectionClass.getTypeParameterList();
-      if (typeParameterList == null) return;
+      if( typeParameterList == null )
+      {
+        return;
+      }
       PsiTypeParameter[] typeParameters = typeParameterList.getTypeParameters();
-      if (typeParameters.length == 0) return;
+      if( typeParameters.length == 0 )
+      {
+        return;
+      }
 
       PsiType componentTypeParameter = substitutor.substitute(typeParameters[0]);
       if (componentTypeParameter instanceof PsiClassType) {
@@ -593,7 +705,10 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
           if (collectionClass.getManager().areElementsEquivalent(((PsiTypeParameter)componentClass).getOwner(),
                                                                                                    resolved.getElement())) {
             PsiType componentType = resolved.getSubstitutor().substitute((PsiTypeParameter)componentClass);
-            if (componentType == null) return;
+            if( componentType == null )
+            {
+              return;
+            }
             String typeName = normalizeTypeName(getTypeName(componentType));
             if (typeName != null) {
               suggestions.addAll(Arrays.asList(getSuggestionsByName(typeName, variableKind, true)));
@@ -605,7 +720,10 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   }
 
   private static String normalizeTypeName(String typeName) {
-    if (typeName == null) return null;
+    if( typeName == null )
+    {
+      return null;
+    }
     if (typeName.endsWith("Impl") && typeName.length() > "Impl".length()) {
       return typeName.substring(0, typeName.length() - "Impl".length());
     }
@@ -659,10 +777,16 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   private @Nullable String getLongTypeName(PsiType type) {
     if (type instanceof PsiClassType) {
       PsiClass aClass = ((PsiClassType)type).resolve();
-      if (aClass == null) return null;
+      if( aClass == null )
+      {
+        return null;
+      }
       if (aClass instanceof PsiAnonymousClass) {
         PsiClass baseClass = ((PsiAnonymousClass)aClass).getBaseClassType().resolve();
-        if (baseClass == null) return null;
+        if( baseClass == null )
+        {
+          return null;
+        }
         return baseClass.getQualifiedName();
       }
       return aClass.getQualifiedName();
@@ -867,7 +991,10 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       for (int i = 0; i < name.length(); i++) {
         char c = name.charAt(i);
         if (c != '_') {
-          if (Character.isLowerCase(c)) return variableNameToPropertyNameInner(name, variableKind);
+          if( Character.isLowerCase( c ) )
+          {
+            return variableNameToPropertyNameInner( name, variableKind );
+          }
 
           buffer.append(Character.toLowerCase(c));
         continue;
@@ -945,7 +1072,10 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
       String startWord = words[words.length - wordCount];
       char c = startWord.charAt(0);
-      if (c == '_' || !Character.isJavaIdentifierStart(c)) continue;
+      if( c == '_' || !Character.isJavaIdentifierStart( c ) )
+      {
+        continue;
+      }
 
       StringBuffer buffer = new StringBuffer();
       buffer.append(prefix);
@@ -999,9 +1129,18 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     if (lookForward) {
       scope = place.getParent();
       while (true) {
-        if (scope instanceof PsiCodeBlock) break;
-        if (scope instanceof PsiClass) break;
-        if (scope instanceof PsiFile) break;
+        if( scope instanceof PsiCodeBlock )
+        {
+          break;
+        }
+        if( scope instanceof PsiClass )
+        {
+          break;
+        }
+        if( scope instanceof PsiFile )
+        {
+          break;
+        }
         scope = scope.getParent();
       }
       place = scope.getLastChild();
@@ -1074,7 +1213,10 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
                                            final VariableKind variableKind,
                                            final String propertyName,
                                            final PsiType type) {
-    if (names.length <= 1) return;
+    if( names.length <= 1 )
+    {
+      return;
+    }
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("sorting names:" + variableKind);

@@ -568,12 +568,12 @@ public class CodeEditUtil {
           final int endOffset = first.getTextRange().getEndOffset();
           if (startOffset < endOffset) {
             FormatterEx.getInstanceEx().adjustTextRange(builder.createModel(file, settings), settings,
-                                                    settings.getIndentOptions(file.getFileType()),
-                                                    new TextRange(startOffset, endOffset),
-                                                    keepBlankLines,
-                                                    keepLineBreaks,
-                                                    changeWSBeforeFirstElement,
-                                                    changeLineFeedsBeforeFirstElement, new MyIndentInfoStorage(file, null));
+                                                        settings.getIndentOptions(file.getFileType()),
+                                                        new TextRange(startOffset, endOffset),
+                                                        keepBlankLines,
+                                                        keepLineBreaks,
+                                                        changeWSBeforeFirstElement,
+                                                        changeLineFeedsBeforeFirstElement, new MyIndentInfoStorage(file, null));
           }
         }
       }

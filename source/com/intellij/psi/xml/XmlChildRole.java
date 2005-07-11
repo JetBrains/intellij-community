@@ -59,6 +59,7 @@ public class XmlChildRole {
   public static final RoleFinder ATTRIBUTE_NAME_FINDER = new DefaultRoleFinder(XmlTokenType.XML_NAME, null);
   public static final RoleFinder ATTRIBUTE_VALUE_VALUE_FINDER = new DefaultRoleFinder(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN, null);
   public static final RoleFinder START_TAG_END_FINDER = new DefaultRoleFinder(XmlTokenType.XML_TAG_END, null);
+  public static final RoleFinder START_TAG_START_FINDER = new DefaultRoleFinder(XmlTokenType.XML_START_TAG_START, null);
   public static final RoleFinder PROLOG_FINDER = new DefaultRoleFinder(XmlElementType.XML_PROLOG, null);
 
 }
