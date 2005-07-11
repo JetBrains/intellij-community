@@ -2,6 +2,7 @@ package com.siyeh.ipp.concatenation;
 
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -66,6 +67,7 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention{
         } else{
             result += rhsText;
         }
+	    result = StringUtil.escapeStringCharacters(result);
         return result;
     }
 
