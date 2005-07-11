@@ -38,6 +38,6 @@ public class CommonCheckinProjectAction extends AbstractCommonCheckinAction {
   }
 
   protected boolean filterRootsBeforeAction() {
-    return true;
+    return false;
   }
 }
