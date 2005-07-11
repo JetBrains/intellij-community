@@ -4,7 +4,7 @@ import com.intellij.aspects.lexer.AspectjLexer;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.Language;
-import com.intellij.lang.cacheBuilder.WordOccurence;
+import com.intellij.lang.cacheBuilder.WordOccurrence;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.properties.parsing.PropertiesLexer;
@@ -275,11 +275,11 @@ public class IdTableBuilding {
                       final TodoPattern[] todoPatterns,
                       final int[] todoCounts,
                       final PsiManager manager) {
-      myScanner.processWords(new CharArrayCharSequence(chars, 0, length), new Processor<WordOccurence>() {
-        public boolean process(final WordOccurence t) {
+      myScanner.processWords(new CharArrayCharSequence(chars, 0, length), new Processor<WordOccurrence>() {
+        public boolean process(final WordOccurrence t) {
           IdCacheUtil.addOccurrence(wordsTable, t.getText(), convertToMask(t.getKind()));
 
-          if (t.getKind() == WordOccurence.Kind.COMMENTS || t.getKind() == null) {
+          if (t.getKind() == WordOccurrence.Kind.COMMENTS || t.getKind() == null) {
             if (todoCounts != null) {
               for (int index = 0; index < todoPatterns.length; index++) {
                 Pattern pattern = todoPatterns[index].getPattern();
@@ -298,11 +298,11 @@ public class IdTableBuilding {
           return true;
         }
 
-        private int convertToMask(final WordOccurence.Kind kind) {
+        private int convertToMask(final WordOccurrence.Kind kind) {
           if (kind == null) return UsageSearchContext.ANY;
-          if (kind == WordOccurence.Kind.CODE) return UsageSearchContext.IN_CODE;
-          if (kind == WordOccurence.Kind.COMMENTS) return UsageSearchContext.IN_COMMENTS;
-          if (kind == WordOccurence.Kind.LITERALS) return UsageSearchContext.IN_STRINGS;
+          if (kind == WordOccurrence.Kind.CODE) return UsageSearchContext.IN_CODE;
+          if (kind == WordOccurrence.Kind.COMMENTS) return UsageSearchContext.IN_COMMENTS;
+          if (kind == WordOccurrence.Kind.LITERALS) return UsageSearchContext.IN_STRINGS;
           return 0;
         }
       });

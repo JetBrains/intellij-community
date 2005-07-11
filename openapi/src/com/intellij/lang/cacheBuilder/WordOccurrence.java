@@ -31,41 +31,66 @@
  */
 package com.intellij.lang.cacheBuilder;
 
-import com.intellij.util.Processor;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * The default primitive implementation of a words scanner. The implementation does not
- * use any lexer, breaks text into words at boundaries of sequences of English letters
- * and treats all words as occurred in unknown context.
+ * A single word instance extracted by {@link WordsScanner}.
  *
  * @author max
  */
-public class SimpleWordsScanner implements WordsScanner {
-  public void processWords(CharSequence fileText, Processor<WordOccurrence> processor) {
-    int index = 0;
-    ScanWordsLoop:
-    while (true) {
-      while (true) {
-        if (index == fileText.length()) break ScanWordsLoop;
-        char c = fileText.charAt(index);
-        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') ||
-            (Character.isJavaIdentifierStart(c) && c != '$')) {
-          break;
-        }
-        index++;
-      }
-      int index1 = index;
-      while (true) {
-        index++;
-        if (index == fileText.length()) break;
-        char c = fileText.charAt(index);
-        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) continue;
-        if (!Character.isJavaIdentifierPart(c) || c == '$') break;
-      }
-      if (index - index1 > 100) continue; // Strange limit but we should have some!
 
-      final CharSequence text = fileText.subSequence(index1, index);
-      processor.process(new WordOccurrence(text, null));
+public class WordOccurrence {
+  private Kind myKind;
+  private CharSequence myText;
+
+  /**
+   * Creates a new occurrence with the specified text and kind.
+   * @param text The text of the word.
+   * @param kind The type of text where the word was encountered (code, comments or literals).
+   */
+
+  public WordOccurrence(final CharSequence text, @Nullable final Kind kind) {
+    myKind = kind;
+    myText = text;
+  }
+
+  /**
+   * Returns the type of text where the word was encountered (code, comments or literals).
+   * @return the kind of the occurrence.
+   */
+
+  @Nullable
+  public Kind getKind() {
+    return myKind;
+  }
+
+  /**
+   * Returns the text of the occurred word.
+   * @return the text of the word.
+   */
+  public CharSequence getText() {
+    return myText;
+  }
+
+  /**
+   * Defines possible locations where words can be encountered.
+   */
+  public static class Kind {
+    /** Kind for words encountered in code (keywords and identifiers). */
+    public static final Kind CODE = new Kind("CODE");
+    /** Kind for words encountered in comments. */
+    public static final Kind COMMENTS = new Kind("COMMENTS");
+    /** Kind for words encountered in literals (particularly string literals). */
+    public static final Kind LITERALS = new Kind("LITERALS");
+
+    private String myName;
+
+    private Kind(String name) {
+      myName = name;
+    }
+
+    public String toString() {
+      return "WordOccurrence.Kind(" + myName + ")";
     }
   }
 }
