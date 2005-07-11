@@ -66,7 +66,7 @@ public class PsiBuilderImpl implements PsiBuilder {
       }
     }
 
-    public Marker preceed() {
+    public Marker precede() {
       return PsiBuilderImpl.this.preceed(this);
     }
 
@@ -86,7 +86,7 @@ public class PsiBuilderImpl implements PsiBuilder {
 
   private Marker preceed(final StartMarker marker) {
     int idx = myProduction.lastIndexOf(marker);
-    LOG.assertTrue(idx >= 0, "Cannot preceed dropped or rolled-back marker");
+    LOG.assertTrue(idx >= 0, "Cannot precede dropped or rolled-back marker");
     StartMarker pre = new StartMarker(marker.myLexemIndex);
     myProduction.add(idx, pre);
     return pre;

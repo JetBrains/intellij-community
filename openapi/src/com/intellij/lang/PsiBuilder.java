@@ -38,6 +38,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The IDEA side of a custom language parser. Provides lexing results to the
  * plugin and allows the plugin to build the AST tree.
+ * @see PsiParser
+ * @see ASTNode
  */
 
 public interface PsiBuilder {
@@ -72,13 +74,43 @@ public interface PsiBuilder {
    */
   int getCurrentOffset();
 
+  /**
+   * A marker defines a range in the document text which becomes a node in the AST
+   * tree. The ranges defined by markers within the text range of the current marker
+   * become child nodes of the node defined by the current marker.
+   */
   interface Marker {
-    Marker preceed();
+    /**
+     * Creates and returns a new marker starting immediately before the start of
+     * this marker and extending after its end. Can be called only on a completed marker.
+     * @return the new marker instance.
+     */
+    Marker precede();
+
+    /**
+     * Drops this marker. Can be called after other markers have been added and completed
+     * after this marker. Does not affect lexer position or markers added after this marker.
+     */
     void drop();
+
+    /**
+     * Drops this marker and all markers added after it, and reverts the lexer position to the
+     * position of this marker.
+     */
     void rollbackTo();
+
+    /**
+     * Completes this marker and labels it with the specified AST node type. Before calling this method,
+     * all markers added after the beginning of this marker must be either dropped or completed.
+     * @param type the type of the node in the AST tree.
+     */
     void done(IElementType type);
   }
 
+  /**
+   * Creates a marker at the current parsing position.
+   * @return the new marker instance.
+   */
   Marker mark();
 
   /**
