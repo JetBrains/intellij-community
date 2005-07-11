@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.pom.xml.impl.events.XmlAttributeSetImpl;
 import com.intellij.psi.tree.IElementType;
@@ -62,10 +63,10 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     model.runTransaction(new PomTransactionBase(this, aspect) {
       public PomModelEvent runInner(){
         if(value != null){
-          CodeEditUtil.replaceChild(XmlAttributeImpl.this, value, newValue);
+          XmlAttributeImpl.this.replaceChild(value, newValue);
         }
         else {
-          CodeEditUtil.addChild(XmlAttributeImpl.this, (TreeElement)newValue, null);
+          XmlAttributeImpl.this.addChild(newValue);
         }
         return XmlAttributeSetImpl.createXmlAttributeSet(model, getParent(), getName(), value != null ? value.getText() : null);
       }
