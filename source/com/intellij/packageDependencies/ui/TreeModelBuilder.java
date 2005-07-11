@@ -154,11 +154,13 @@ public class TreeModelBuilder {
       for (OrderEntry entry : orderEntries) {
         if (entry instanceof LibraryOrderEntry){
           final Library library = ((LibraryOrderEntry)entry).getLibrary();
-          VirtualFile[] files = library.getFiles(OrderRootType.SOURCES);
-          if (files == null || files.length == 0){
-            files = library.getFiles(OrderRootType.CLASSES);
+          if (library != null) {
+            VirtualFile[] files = library.getFiles(OrderRootType.SOURCES);
+            if (files == null || files.length == 0){
+              files = library.getFiles(OrderRootType.CLASSES);
+            }
+            roots.addAll(Arrays.asList(files));
           }
-          roots.addAll(Arrays.asList(files));
         } else if (entry instanceof JdkOrderEntry){
           VirtualFile[] files = entry.getFiles(OrderRootType.SOURCES);
           if (files == null || files.length == 0){
