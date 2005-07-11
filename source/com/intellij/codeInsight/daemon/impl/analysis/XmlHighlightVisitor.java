@@ -56,7 +56,7 @@ import java.util.StringTokenizer;
  */
 public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.ValidationHost {
   private static final String UNKNOWN_SYMBOL = "Cannot resolve symbol {0}";
-  private static final Key<String> DO_NOT_VALIDATE_KEY = Key.create("do not validate");
+  static final Key<String> DO_NOT_VALIDATE_KEY = Key.create("do not validate");
   private List<HighlightInfo> myResult = new SmartList<HighlightInfo>();
   private RefCountHolder myRefCountHolder;
   private DaemonCodeAnalyzerSettings mySettings;
@@ -233,7 +233,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
     for (PsiElement child : children) {
       if (child instanceof XmlToken) {
-        XmlToken xmlToken = (XmlToken)child;
+        final XmlToken xmlToken = (XmlToken)child;
         if (xmlToken.getTokenType() == XmlTokenType.XML_EMPTY_ELEMENT_END) return true;
         if (xmlToken.getTokenType() == XmlTokenType.XML_END_TAG_START) {
           insideEndTag = true;
@@ -247,18 +247,57 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
               name = name.toLowerCase();
             }
 
-            if (text.equals(name)) return true;
+            boolean isExtraHtmlTagEnd = false;
+            if (text.equals(name)) {
+              isExtraHtmlTagEnd = (tag instanceof HtmlTag && HtmlUtil.isSingleHtmlTag(name));
+              if (!isExtraHtmlTagEnd) return true;
+            }
 
             HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
-              HighlightInfoType.ERROR,
+              (isExtraHtmlTagEnd)?HighlightInfoType.WARNING:HighlightInfoType.ERROR,
               xmlToken,
-              "Wrong closing tag name");
+              (isExtraHtmlTagEnd)?"Extra closing tag for empty element":"Wrong closing tag name");
             myResult.add(highlightInfo);
-            IntentionAction intentionAction = new RenameTagBeginOrEndIntentionAction(tag, name, false);
-            IntentionAction intentionAction2 = new RenameTagBeginOrEndIntentionAction(tag, text, true);
+            
+            if (isExtraHtmlTagEnd) {
+              QuickFixAction.registerQuickFixAction(highlightInfo, new IntentionAction() {
+                public String getText() {
+                  return "Remove Extra Closing Tag";
+                }
 
-            QuickFixAction.registerQuickFixAction(highlightInfo, intentionAction, null);
-            QuickFixAction.registerQuickFixAction(highlightInfo, startTagNameToken.getTextRange(), intentionAction2, null);
+                public String getFamilyName() {
+                  return "Remove Extra Closing Tag";
+                }
+
+                public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+                  return true;
+                }
+
+                public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+                  if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+                  
+                  XmlToken tagEndStart = xmlToken;
+                  while(tagEndStart.getTokenType() != XmlTokenType.XML_END_TAG_START) {
+                    final PsiElement prevSibling = tagEndStart.getPrevSibling();
+                    if (!(prevSibling instanceof XmlToken)) break;
+                    tagEndStart = (XmlToken)prevSibling;
+                  }
+
+                  final PsiElement parent = tagEndStart.getParent();
+                  parent.deleteChildRange(tagEndStart,parent.getLastChild());
+                }
+
+                public boolean startInWriteAction() {
+                  return true;
+                }
+              }, null);
+            } else {
+              IntentionAction intentionAction = new RenameTagBeginOrEndIntentionAction(tag, name, false);
+              IntentionAction intentionAction2 = new RenameTagBeginOrEndIntentionAction(tag, text, true);
+  
+              QuickFixAction.registerQuickFixAction(highlightInfo, intentionAction, null);
+              QuickFixAction.registerQuickFixAction(highlightInfo, startTagNameToken.getTextRange(), intentionAction2, null);
+            }
 
             return false;
           }

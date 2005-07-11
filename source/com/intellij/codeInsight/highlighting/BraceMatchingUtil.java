@@ -185,9 +185,14 @@ public class BraceMatchingUtil {
         return true;
       }
       else if (tokenType == XmlTokenType.XML_TAG_END) {
-        boolean result = findEndTagStart(iterator);
-        if (!result && (fileType == StdFileTypes.HTML || fileType == StdFileTypes.JSP)) {
-          result = isEndOfSingleHtmlTag(fileText, iterator);
+        final boolean result = findEndTagStart(iterator);
+        
+        if (fileType == StdFileTypes.HTML || fileType == StdFileTypes.JSP) {
+          final String tagName = getTagName(fileText, iterator);
+          
+          if (tagName != null && HtmlUtil.isSingleHtmlTag(tagName)) {
+            return !result;
+          }
         }
 
         return result;
