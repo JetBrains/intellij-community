@@ -39,6 +39,13 @@ public class FileGroup implements JDOMExternalizable {
   public static final String RESTORED_ID = "RESTORED";
   public static final String CHANGED_ON_SERVER_ID = "CHANGED_ON_SERVER";
 
+  /**
+   * @param updateName - Name for "update" action
+   * @param statusName - Name for "status action"
+   * @param supportsDeletion - User can perform delete action for files from the group
+   * @param id - Using in order to find the group
+   * @param canBeAbsent - If canBeAbsent == true absent files from the group will not be marked as invalid
+   */
   public FileGroup(String updateName, String statusName, boolean supportsDeletion, String id, boolean canBeAbsent) {
     mySupportsDeletion = supportsDeletion;
     myId = id;
