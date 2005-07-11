@@ -231,7 +231,9 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
             visitor.visit(element, holder);
           }
 
-          for (HighlightInfo info : holder) {
+          //noinspection ForLoopReplaceableByForEach
+          for (int i=0; i<holder.size(); i++) {
+            HighlightInfo info = holder.get(i);
             // have to filter out already obtained highlights
             if (gotHighlights.contains(info)) continue;
 
