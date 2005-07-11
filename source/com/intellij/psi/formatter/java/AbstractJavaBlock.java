@@ -227,7 +227,13 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   @Nullable
   protected Alignment createChildAlignment() {
     if (myNode.getElementType() == ElementType.ASSIGNMENT_EXPRESSION) {
-      return createAlignment(mySettings.ALIGN_MULTILINE_ASSIGNMENT, null);
+      if (myNode.getTreeParent() != null
+          && myNode.getTreeParent().getElementType() == ElementType.ASSIGNMENT_EXPRESSION
+          && myAlignment != null) {
+        return myAlignment;
+      } else {
+        return createAlignment(mySettings.ALIGN_MULTILINE_ASSIGNMENT, null);
+      }
     }
     else if (myNode.getElementType() == ElementType.PARENTH_EXPRESSION) {
       return createAlignment(mySettings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION, null);
@@ -511,6 +517,15 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       if (role == ChildRole.MODIFIER_LIST) return defaultAlignment;
       if (role == ChildRole.TYPE) return defaultAlignment;
       return null;
+    }
+
+    else if (myNode.getElementType() == ElementType.ASSIGNMENT_EXPRESSION) {
+      if (role == ChildRole.LOPERAND) return defaultAlignment;
+      if (role == ChildRole.ROPERAND && child.getElementType() == ElementType.ASSIGNMENT_EXPRESSION) {
+        return defaultAlignment;
+      } else {
+        return null;
+      }
     }
 
     else {

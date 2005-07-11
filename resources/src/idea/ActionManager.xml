@@ -562,8 +562,6 @@
           <separator/>
           <action id="DropAnError" internal="true" class="com.intellij.diagnostic.DropAnErrorAction" text="Drop an error"/>
           <separator/>
-          <action id="Use new code formatter" class="com.intellij.psi.impl.source.codeStyle.NewCodeFormatterAction" text="Use New Code Formatter" description="Use New Code Formatter"/>
-          <separator/>
           <action id="ShowUserActivities" class="com.intellij.localVcs.actions.ShowActivePeriodsAction" text="Show Activities" internal="true"/>
         </group>
       </group>
