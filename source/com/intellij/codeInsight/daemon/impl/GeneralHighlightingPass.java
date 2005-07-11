@@ -216,6 +216,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
 
     final HighlightInfoFilter[] filters = ApplicationManager.getApplication().getComponents(HighlightInfoFilter.class);
 
+    final HighlightInfoHolder holder = new HighlightInfoHolder(myFile, filters);
     PsiManager.getInstance(myProject).performActionWithFormatterDisabled(new Runnable() {
       public void run() {
         for (PsiElement element : elements) {
@@ -226,7 +227,6 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
             continue;
           }
 
-          HighlightInfoHolder holder = new HighlightInfoHolder(myFile, filters);
           for (HighlightVisitor visitor : visitors) {
             visitor.visit(element, holder);
           }
@@ -242,6 +242,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
               skipParentsSet.add(element.getParent());
             }
           }
+          holder.clear();
         }
       }
     });
