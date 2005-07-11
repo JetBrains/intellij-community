@@ -64,11 +64,10 @@ class HTMLTextPainter {
     Document document = psiDocumentManager.getDocument(psiFile);
 
     GeneralHighlightingPass action = new GeneralHighlightingPass(myProject, psiFile, document, 0, psiFile.getTextLength(), false, true);
-    LineMarkerInfo[] lineMarkerInfos = action.queryLineMarkers();
+    Collection<LineMarkerInfo> lineMarkerInfos = action.queryLineMarkers();
     ArrayList<LineMarkerInfo> methodSeparators = new ArrayList<LineMarkerInfo>();
-    for (int i = 0; i < lineMarkerInfos.length; i++) {
-      LineMarkerInfo lineMarkerInfo = lineMarkerInfos[i];
-      if (lineMarkerInfo.separatorColor != null ) {
+    for (LineMarkerInfo lineMarkerInfo : lineMarkerInfos) {
+      if (lineMarkerInfo.separatorColor != null) {
         methodSeparators.add(lineMarkerInfo);
       }
     }

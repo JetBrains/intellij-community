@@ -147,7 +147,7 @@ public class UpdateHighlightersUtil {
                                             Document document,
                                             int startOffset,
                                             int endOffset,
-                                            LineMarkerInfo[] markers,
+                                            Collection<LineMarkerInfo> markers,
                                             int group) {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
 
@@ -194,7 +194,7 @@ public class UpdateHighlightersUtil {
     LineMarkerInfo[] newMarkers = array.toArray(new LineMarkerInfo[array.size()]);
     DaemonCodeAnalyzerImpl.setLineMarkers(document, newMarkers, project);
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Added line markers:" + markers.length);
+      LOG.debug("Added line markers:" + markers.size());
     }
   }
 

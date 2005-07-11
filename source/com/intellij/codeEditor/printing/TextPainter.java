@@ -31,6 +31,7 @@ import java.awt.print.PrinterException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Collection;
 
 public class TextPainter implements Printable {
   private DocumentEx myDocument;
@@ -84,9 +85,8 @@ public class TextPainter implements Printable {
       public void run() {
         GeneralHighlightingPass action = new GeneralHighlightingPass(project, psiFile, myDocument, 0,
                                                                      psiFile.getTextLength(), false, true);
-        LineMarkerInfo[] lineMarkerInfos = action.queryLineMarkers();
-        for (int i = 0; i < lineMarkerInfos.length; i++) {
-          LineMarkerInfo lineMarkerInfo = lineMarkerInfos[i];
+        Collection<LineMarkerInfo> lineMarkerInfos = action.queryLineMarkers();
+        for (LineMarkerInfo lineMarkerInfo : lineMarkerInfos) {
           if (lineMarkerInfo.separatorColor != null) {
             methodSeparators.add(lineMarkerInfo);
           }

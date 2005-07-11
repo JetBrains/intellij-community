@@ -23,10 +23,7 @@ import com.intellij.util.Icons;
 import gnu.trove.THashMap;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class OverridenMarkersPass extends TextEditorHighlightingPass {
   private static final Icon OVERRIDEN_METHOD_MARKER_RENDERER = IconLoader.getIcon("/gutter/overridenMethod.png");
@@ -40,7 +37,7 @@ public class OverridenMarkersPass extends TextEditorHighlightingPass {
   private final int myStartOffset;
   private final int myEndOffset;
 
-  private LineMarkerInfo[] myMarkers = LineMarkerInfo.EMPTY_ARRAY;
+  private Collection<LineMarkerInfo> myMarkers = Collections.EMPTY_LIST;
 
   private Map<PsiClass,PsiClass> myClassToFirstDerivedMap = new THashMap<PsiClass, PsiClass>();
 
@@ -81,7 +78,7 @@ public class OverridenMarkersPass extends TextEditorHighlightingPass {
     return Pass.UPDATE_OVERRIDEN_MARKERS;
   }
 
-  private LineMarkerInfo[] collectLineMarkers(PsiElement[] elements) throws ProcessCanceledException {
+  private Collection<LineMarkerInfo> collectLineMarkers(PsiElement[] elements) throws ProcessCanceledException {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     List<LineMarkerInfo> array = new ArrayList<LineMarkerInfo>();
@@ -89,7 +86,7 @@ public class OverridenMarkersPass extends TextEditorHighlightingPass {
       ProgressManager.getInstance().checkCanceled();
       addLineMarkerInfo(element, array);
     }
-    return array.toArray(new LineMarkerInfo[array.size()]);
+    return array;
   }
 
   private void addLineMarkerInfo(PsiElement element, List<LineMarkerInfo> result) {
@@ -108,7 +105,7 @@ public class OverridenMarkersPass extends TextEditorHighlightingPass {
     }
   }
 
-  private void collectBoundForms(PsiElement element, PsiSearchHelper helper, List<LineMarkerInfo> result) {
+  private static void collectBoundForms(PsiElement element, PsiSearchHelper helper, List<LineMarkerInfo> result) {
     PsiField field = (PsiField)element.getParent();
     PsiClass aClass = field.getContainingClass();
     if (aClass != null && aClass.getQualifiedName() != null) {
@@ -129,7 +126,7 @@ public class OverridenMarkersPass extends TextEditorHighlightingPass {
 
   private void collectInheritingClasses(PsiElement element, PsiSearchHelper helper, List<LineMarkerInfo> result) {
     PsiClass aClass = (PsiClass) element.getParent();
-    if (aClass.getNameIdentifier().equals(element)) {
+    if (element.equals(aClass.getNameIdentifier())) {
       if (!aClass.hasModifierProperty(PsiModifier.FINAL)) {
         if ("java.lang.Object".equals(aClass.getQualifiedName())) return; // It's useless to have overriden markers for object.
 
@@ -181,7 +178,7 @@ public class OverridenMarkersPass extends TextEditorHighlightingPass {
       PsiMethod method1 = MethodSignatureUtil.findMethodBySuperSignature(derived, signature);
       if (method1 != null) {
         if (method1.hasModifierProperty(PsiModifier.STATIC) ||
-           (method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) && !manager.arePackagesTheSame(parentClass, derived))) {
+            (method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) && !manager.arePackagesTheSame(parentClass, derived))) {
           method1 = null;
         }
       }

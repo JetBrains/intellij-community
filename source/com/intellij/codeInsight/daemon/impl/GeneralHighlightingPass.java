@@ -61,7 +61,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
   private final HighlightVisitor[] myHighlightVisitors;
 
   private Collection<HighlightInfo> myHighlights = Collections.EMPTY_LIST;
-  private LineMarkerInfo[] myMarkers = LineMarkerInfo.EMPTY_ARRAY;
+  private Collection<LineMarkerInfo> myMarkers = Collections.EMPTY_LIST;
 
   private final DaemonCodeAnalyzerSettings mySettings = DaemonCodeAnalyzerSettings.getInstance();
 
@@ -131,13 +131,13 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     try {
       for (final PsiElement psiRoot : psiRoots) {
         if(!HighlightUtil.isRootHighlighted(psiRoot)) continue;
-        long time = System.currentTimeMillis();
+        //long time = System.currentTimeMillis();
         PsiElement[] elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
-        LOG.debug("Elements collected for: " + (System.currentTimeMillis() - time) / 1000.0 + "s");
-        time = System.currentTimeMillis();
+        //LOG.debug("Elements collected for: " + (System.currentTimeMillis() - time) / 1000.0 + "s");
+        //time = System.currentTimeMillis();
 
         myMarkers = collectLineMarkers(elements);
-        LOG.debug("Line markers collected for: " + (System.currentTimeMillis() - time) / 1000.0 + "s");
+        //LOG.debug("Line markers collected for: " + (System.currentTimeMillis() - time) / 1000.0 + "s");
 
         Collection<HighlightInfo> highlights1 = collectHighlights(elements);
         Collection<HighlightInfo> highlights2 = collectTextHighlights();
@@ -184,7 +184,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     return myUpdateAll ? Pass.UPDATE_ALL : Pass.UPDATE_VISIBLE;
   }
 
-  public LineMarkerInfo[] queryLineMarkers() {
+  public Collection<LineMarkerInfo> queryLineMarkers() {
     try {
       PsiElement[] elements = CodeInsightUtil.getElementsInRange(myFile, myStartOffset, myEndOffset);
       return collectLineMarkers(elements);
@@ -204,10 +204,10 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
 
     final Set<PsiElement> skipParentsSet = new THashSet<PsiElement>();
     final Set<HighlightInfo> gotHighlights = new THashSet<HighlightInfo>();
-    long totalTime = 0;
-    if (LOG.isDebugEnabled()) {
-      totalTime = System.currentTimeMillis();
-    }
+    //long totalTime = 0;
+    //if (LOG.isDebugEnabled()) {
+    //  totalTime = System.currentTimeMillis();
+    //}
 
     final List<HighlightVisitor> visitors = new ArrayList<HighlightVisitor>();
     for (HighlightVisitor visitor : myHighlightVisitors) {
@@ -226,10 +226,10 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
             continue;
           }
 
-      HighlightInfoHolder holder = new HighlightInfoHolder(myFile, filters);
-      for (HighlightVisitor visitor : visitors) {
-        visitor.visit(element, holder);
-      }
+          HighlightInfoHolder holder = new HighlightInfoHolder(myFile, filters);
+          for (HighlightVisitor visitor : visitors) {
+            visitor.visit(element, holder);
+          }
 
           for (HighlightInfo info : holder) {
             // have to filter out already obtained highlights
@@ -244,13 +244,13 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
       }
     });
 
-    if (LOG.isDebugEnabled()) {
+    //if (LOG.isDebugEnabled()) {
       //if(maxVisitElement != null){
       //  LOG.debug("maxVisitTime = " + maxVisitTime);
       //  LOG.debug("maxVisitElement = " + maxVisitElement+ " ");
       //}
-      LOG.debug("totalTime = " + (System.currentTimeMillis() - totalTime) / (double)1000 + "s for " + elements.length + " elements");
-    }
+      //LOG.debug("totalTime = " + (System.currentTimeMillis() - totalTime) / (double)1000 + "s for " + elements.length + " elements");
+    //}
 
     return gotHighlights;
   }
@@ -309,7 +309,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     }
   }
 
-  private LineMarkerInfo[] collectLineMarkers(PsiElement[] elements) throws ProcessCanceledException {
+  private Collection<LineMarkerInfo> collectLineMarkers(PsiElement[] elements) throws ProcessCanceledException {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     List<LineMarkerInfo> array = new ArrayList<LineMarkerInfo>();
@@ -321,7 +321,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
         array.add(info);
       }
     }
-    return array.toArray(new LineMarkerInfo[array.size()]);
+    return array;
   }
 
   private LineMarkerInfo getLineMarkerInfo(PsiElement element) {
