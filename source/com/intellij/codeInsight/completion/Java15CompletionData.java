@@ -62,6 +62,24 @@ public class Java15CompletionData extends JavaCompletionData {
       variant.addCompletion(new AnnotationMethodsGetter(), TailType.NONE);
       registerVariant(variant);
     }
+
+    {
+      final ElementFilter position = new ScopeFilter(new ParentElementFilter(new AndFilter(
+        new ClassFilter(PsiSwitchLabelStatement.class),
+        new ParentElementFilter(
+          new PositionElementFilter() {
+            public boolean isAcceptable(Object element, PsiElement context) {
+              final PsiExpression expression = ((PsiSwitchStatement)element).getExpression();
+              if(expression == null) return false;
+              final PsiType type = expression.getType();
+              return type instanceof PsiClassType;
+            }
+          }, 2)
+      )));
+      final CompletionVariant variant = new CompletionVariant(PsiReferenceExpression.class, position);
+      variant.addCompletionFilterOnElement(new ClassFilter(PsiEnumConstant.class), TailType.COND_EXPR_COLON);
+      registerVariant(variant);
+    }
   }
 
   protected void initVariantsInClassScope() {

@@ -84,8 +84,7 @@ public class PsiSwitchLabelStatementImpl extends CompositePsiElement implements 
       final PsiExpression expression = switchStatement.getExpression();
       if (expression != null && expression.getType() instanceof PsiClassType) {
         final PsiClass aClass = ((PsiClassType)expression.getType()).resolve();
-        aClass.processDeclarations(new FilterScopeProcessor(new ClassFilter(PsiEnumConstant.class), processor), substitutor, this, place);
-        return false;
+        if(aClass != null) aClass.processDeclarations(new FilterScopeProcessor(new ClassFilter(PsiEnumConstant.class), processor), substitutor, this, place);
       }
     }
     return true;
