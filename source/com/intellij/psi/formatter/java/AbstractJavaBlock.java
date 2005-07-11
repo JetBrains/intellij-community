@@ -26,9 +26,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   protected final CodeStyleSettings mySettings;
   protected Indent myIndent;
-  private Indent myChildIndent;
-  private Alignment myChildAlignment;
-  private boolean myUseChildAttributes = false;
+  protected Indent myChildIndent;
+  protected Alignment myChildAlignment;
+  protected boolean myUseChildAttributes = false;
   private boolean myIsAfterClassKeyword = false;
   private Wrap myAnnotationWrap = null;
 

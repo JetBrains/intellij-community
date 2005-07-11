@@ -1,14 +1,17 @@
 package com.intellij.psi.formatter.java;
 
+import com.intellij.codeFormatting.general.FormatterUtil;
+import com.intellij.formatting.Alignment;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.Indent;
+import com.intellij.formatting.Wrap;
 import com.intellij.lang.ASTNode;
-import com.intellij.formatting.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.codeFormatting.general.FormatterUtil;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class ExtendsListBlock extends AbstractJavaBlock{
   public ExtendsListBlock(final ASTNode node, final Wrap wrap, final Alignment alignment, CodeStyleSettings settings) {
@@ -19,7 +22,9 @@ public class ExtendsListBlock extends AbstractJavaBlock{
     ChameleonTransforming.transformChildren(myNode);
     final ArrayList<Block> result = new ArrayList<Block>();
     ArrayList<Block> elementsExceptKeyword = new ArrayList<Block>();
-    Alignment childAlignment = createChildAlignment();
+    myChildAlignment = createChildAlignment();
+    myChildIndent = Indent.createContinuationIndent();
+    myUseChildAttributes = true;
     Wrap childWrap = createChildWrap();
     ASTNode child = myNode.getFirstChildNode();
 
@@ -32,10 +37,10 @@ public class ExtendsListBlock extends AbstractJavaBlock{
             result.add(new SyntheticCodeBlock(elementsExceptKeyword, null,  mySettings, Indent.getNoneIndent(), null));
             elementsExceptKeyword = new ArrayList<Block>();
           }
-          result.add(createJavaBlock(child, mySettings, Indent.createContinuationIndent(), arrangeChildWrap(child, childWrap), alignment));
+          result.add(createJavaBlock(child, mySettings, myChildIndent, arrangeChildWrap(child, childWrap), alignment));
         } else {
-          processChild(elementsExceptKeyword, child, childAlignment, childWrap, Indent.createContinuationIndent());
-          
+          processChild(elementsExceptKeyword, child, myChildAlignment, childWrap, myChildIndent);
+
         }
       }
       child = child.getTreeNext();
@@ -43,7 +48,7 @@ public class ExtendsListBlock extends AbstractJavaBlock{
     if (!elementsExceptKeyword.isEmpty()) {
       result.add(new SyntheticCodeBlock(elementsExceptKeyword, alignment,  mySettings, Indent.getNoneIndent(), null));
     }
-    
+
     return result;
 
   }
@@ -65,5 +70,4 @@ public class ExtendsListBlock extends AbstractJavaBlock{
 
   protected void setReservedWrap(final Wrap reservedWrap) {
   }
-  
 }
