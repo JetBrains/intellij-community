@@ -103,22 +103,24 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
     if (myHighlightSettings.isEmpty()) throw new WriteExternalException();
     for (Map.Entry<VirtualFile, FileHighlighingSetting[]> entry : myHighlightSettings.entrySet()) {
       final Element child = new Element("setting");
-      element.addContent(child);
+
       final VirtualFile vFile = entry.getKey();
       if (!vFile.isValid()) continue;
-
       child.setAttribute("file", vFile.getUrl());
       for (int i = 0; i < entry.getValue().length; i++) {
         final FileHighlighingSetting fileHighlighingSetting = entry.getValue()[i];
         child.setAttribute("root" + i, fileHighlighingSetting.toString());
       }
+      element.addContent(child);
     }
     for (Map.Entry<VirtualFile, String> entry : myProfileSettings.entrySet()) {
       final String name = entry.getValue();
       final Element child = new Element("profiles");
-      element.addContent(child);
-      child.setAttribute("file", entry.getKey().getUrl());
+      final VirtualFile vFile = entry.getKey();
+      if (!vFile.isValid()) continue;
+      child.setAttribute("file", vFile.getUrl());
       child.setAttribute("profile_name", name);
+      element.addContent(child);
     }
   }
 
