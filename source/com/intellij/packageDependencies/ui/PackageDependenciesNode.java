@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.pom.Navigatable;
@@ -15,6 +16,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import java.util.HashSet;
 import java.util.Set;
+
+import org.jetbrains.annotations.Nullable;
 
 public class PackageDependenciesNode extends DefaultMutableTreeNode implements Navigatable{
   private static final EmptyIcon EMPTY_ICON = EmptyIcon.create(0, IconUtilEx.getEmptyIcon(false).getIconHeight());
@@ -60,6 +63,7 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     return myHasMarked;
   }
 
+  @Nullable
   public PsiElement getPsiElement() {
     return null;
   }
@@ -101,8 +105,13 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     }
   }
 
+  @Nullable
   private Editor openTextEditor(boolean focus) {
-    return FileEditorManager.getInstance(getProject()).openTextEditor(getDescriptor(), focus);
+    final OpenFileDescriptor descriptor = getDescriptor();
+    if (descriptor != null) {
+      return FileEditorManager.getInstance(getProject()).openTextEditor(descriptor, focus);
+    }
+    return null;
   }
 
   public boolean canNavigate() {
@@ -114,17 +123,22 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     return canNavigate();
   }
 
+  @Nullable
   private Project getProject(){
-    if (getPsiElement() == null || getPsiElement().getContainingFile() == null){
+    final PsiElement psiElement = getPsiElement();
+    if (psiElement == null || psiElement.getContainingFile() == null){
       return null;
     }
-    return getPsiElement().getContainingFile().getProject();
+    return psiElement.getContainingFile().getProject();
   }
 
+  @Nullable
   private OpenFileDescriptor getDescriptor() {
     if (getProject() == null){
       return null;
     }
-    return new OpenFileDescriptor(getProject(), getPsiElement().getContainingFile().getVirtualFile());
+    final VirtualFile virtualFile = getPsiElement().getContainingFile().getVirtualFile();
+    if (virtualFile == null || !virtualFile.isValid()) return null;
+    return new OpenFileDescriptor(getProject(), virtualFile);
   }
 }
