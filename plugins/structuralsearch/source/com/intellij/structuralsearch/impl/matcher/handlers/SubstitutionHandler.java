@@ -28,9 +28,10 @@ public class SubstitutionHandler extends Handler {
   // matchedOccurs + 1 = number of item being matched
   private int matchedOccurs;
   private int totalMatchedOccurs = -1;
+  private MatchResultImpl myNestedResult;
 
   public SubstitutionHandler(final String _name, final boolean _target, int _minOccurs,
-                      int _maxOccurs, boolean _greedy) {
+                             int _maxOccurs, boolean _greedy) {
     name = _name;
     maxOccurs = _maxOccurs;
     minOccurs = _minOccurs;
@@ -93,6 +94,10 @@ public class SubstitutionHandler extends Handler {
     }
 
     MatchResultImpl result = context.getResult().findSon(name);
+    
+    if (result == null && context.getPreviousResult() != null) {
+      result = context.getPreviousResult().findSon(name);
+    }
 
     if (result!=null) {
       if (minOccurs == 1 && maxOccurs == 1) {
@@ -133,42 +138,48 @@ public class SubstitutionHandler extends Handler {
   }
 
   public void addResult(PsiElement match,int start, int end,MatchContext context) {
-    final MatchResultImpl matchResult = context.getResult();
-    final MatchResultImpl substituion = matchResult.findSon(name);
+    if (totalMatchedOccurs == -1) {
+      final MatchResultImpl matchResult = context.getResult();
+      final MatchResultImpl substituion = matchResult.findSon(name);
 
-    if (substituion == null) {
-      matchResult.addSon( createMatch(match,start,end) );
-    } else if (maxOccurs > 1 && totalMatchedOccurs==-1) {
-      final MatchResultImpl result = createMatch(match,start,end);
-
-      if (!substituion.hasSons()) {
-        // adding intermediate node to contain all multiple matches
-        MatchResultImpl sonresult;
-
-        substituion.addSon(
-          sonresult = new MatchResultImpl(
-            substituion.getName(),
-            substituion.getMatchImage(),
-            substituion.getMatchRef(),
-            substituion.getStart(),
-            substituion.getEnd(),
-            target
-          )
-        );
-
-        sonresult.setParent(substituion);
-        substituion.setMatchRef(
-          new SmartPsiPointer((match!=null)?match:null)
-        );
+      if (substituion == null) {
+        matchResult.addSon( createMatch(match,start,end) );
+      } else if (maxOccurs > 1) {
+        final MatchResultImpl result = createMatch(match,start,end);
+  
+        if (!substituion.isMultipleMatch()) {
+          // adding intermediate node to contain all multiple matches
+          MatchResultImpl sonresult;
+  
+          substituion.addSon(
+            sonresult = new MatchResultImpl(
+              substituion.getName(),
+              substituion.getMatchImage(),
+              substituion.getMatchRef(),
+              substituion.getStart(),
+              substituion.getEnd(),
+              target
+            )
+          );
+  
+          sonresult.setParent(substituion);
+          substituion.setMatchRef(
+            new SmartPsiPointer((match!=null)?match:null)
+          );
+          
+          substituion.setMultipleMatch(true);
+        }
+  
+        result.setParent(substituion);
+        substituion.addSon( result );
       }
-
-      result.setParent(substituion);
-      substituion.addSon( result );
     }
   }
 
   public boolean handle(final PsiElement match, int start, int end, MatchContext context) {
-    if (!validate(match,start,end,context)) {
+    if (!validate(match,start,end,context)) { 
+      myNestedResult = null;
+      
       if (maxOccurs==1 && minOccurs==1) {
         context.getResult().removeSon(name);
       }
@@ -183,14 +194,29 @@ public class SubstitutionHandler extends Handler {
   }
 
   private MatchResultImpl createMatch(final PsiElement match, int start, int end) {
-    final MatchResultImpl result = new MatchResultImpl(
-      name,
-      (match!=null)?MatchingVisitor.getText(match,start,end):null,
-      new SmartPsiPointer(match),
-      start,
-      end,
-      target
-    );
+    final String image = (match != null) ? MatchingVisitor.getText(match, start, end) : null;
+    final SmartPsiPointer ref = new SmartPsiPointer(match);
+    
+    final MatchResultImpl result = (myNestedResult != null)? 
+      myNestedResult:
+      new MatchResultImpl(
+        name,
+        image,
+        ref,
+        start,
+        end,
+        target
+      );
+    
+    if (myNestedResult != null) {
+      myNestedResult.setName( name );
+      myNestedResult.setMatchImage( image );
+      myNestedResult.setMatchRef( ref );
+      myNestedResult.setStart( start );
+      myNestedResult.setEnd( end );
+      myNestedResult.setTarget( target );
+      myNestedResult = null;
+    }
 
     return result;
   }
@@ -416,5 +442,13 @@ public class SubstitutionHandler extends Handler {
   public boolean shouldAdvanceThePatternFor(PsiElement patternElement, PsiElement matchedElement) {
     if(maxOccurs > 1) return false;
     return super.shouldAdvanceThePatternFor(patternElement,matchedElement);
+  }
+
+  public void setNestedResult(final MatchResultImpl nestedResult) {
+    myNestedResult = nestedResult;
+  }
+
+  public MatchResultImpl getNestedResult() {
+    return myNestedResult;
   }
 }

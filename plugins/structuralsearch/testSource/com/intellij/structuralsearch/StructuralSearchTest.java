@@ -6,6 +6,7 @@ import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.idea.IdeaTestUtil;
 
 /**
  * Created by IntelliJ IDEA.
@@ -159,37 +160,37 @@ public class StructuralSearchTest extends IdeaTestCase {
   private static final String s52 = "class '_ extends '_ {  }";
 
   private static final String s53 = "class C { " +
-                                   "   String a = System.getProperty(\"abcd\"); " +
-                                   "  static { String s = System.getProperty(a); }" +
-                                   "  static void b() { String s = System.getProperty(a); }" +
-                                   " }";
+                                    "   String a = System.getProperty(\"abcd\"); " +
+                                    "  static { String s = System.getProperty(a); }" +
+                                    "  static void b() { String s = System.getProperty(a); }" +
+                                    " }";
   private static final String s54 = "System.getProperty('T)";
 
   private static final String s55 = " a = b.class; ";
   private static final String s56 = "'T.class";
 
   private static final String s57 = "{ /** @author Maxim */ class C { " +
-                                     "} " +
-                                     "class D {" +
-                                     "/** @serializable */ private int value; " +
-                                     "/** @since 1.4 */ void a() {} "+
-                                     "}" +
-                                     "class F { " +
-                                     "/** @since 1.4 */ void a() {} "+
-                                     "/** @serializable */ private int value2; " +
-                                     "}" +
-                                     "class G { /** @param a*/ void a() {} } }";
+                                    "} " +
+                                    "class D {" +
+                                    "/** @serializable */ private int value; " +
+                                    "/** @since 1.4 */ void a() {} "+
+                                    "}" +
+                                    "class F { " +
+                                    "/** @since 1.4 */ void a() {} "+
+                                    "/** @serializable */ private int value2; " +
+                                    "}" +
+                                    "class G { /** @param a*/ void a() {} } }";
   private static final String s57_2 = "/** @author Maxim */ class C { " +
-                                     "} " +
-                                     "class D {" +
-                                     "/** @serializable */ private int value; " +
-                                     "/** @since 1.4 */ void a() {} "+
-                                     "}" +
-                                     "class F { " +
-                                     "/** @since 1.4 */ void a() {} "+
-                                     "/** @serializable */ private int value2; " +
-                                     "}" +
-                                     "class G { /** @param a*/ void a() {} }";
+                                      "} " +
+                                      "class D {" +
+                                      "/** @serializable */ private int value; " +
+                                      "/** @since 1.4 */ void a() {} "+
+                                      "}" +
+                                      "class F { " +
+                                      "/** @since 1.4 */ void a() {} "+
+                                      "/** @serializable */ private int value2; " +
+                                      "}" +
+                                      "class G { /** @param a*/ void a() {} }";
   private static final String s58 = "/** @'T '_T2 */ class '_ { }";
   private static final String s58_2 = "class '_ { /** @serializable '_ */ '_ '_; }";
   private static final String s58_3 = "class '_ { /** @'T 1.4 */ '_ '_() {} }";
@@ -210,10 +211,10 @@ public class StructuralSearchTest extends IdeaTestCase {
 
   private static final String s63 = " class A { A() {} } class B { public void run() {} }";
   private static final String s63_2 = " class A { A() {} " +
-    "class B { public void run() {} } " +
-    "class D { public void run() {} } " +
-    "} " +
-    "class C {}";
+                                      "class B { public void run() {} } " +
+                                      "class D { public void run() {} } " +
+                                      "} " +
+                                      "class C {}";
   private static final String s64 = " class 'T { public void '_T2:run () {} }";
   private static final String s64_2 = "class '_ { class 'T { public void '_T2:run () {} } }";
 
@@ -227,16 +228,16 @@ public class StructuralSearchTest extends IdeaTestCase {
   private static final String s70 = " System.out ";
 
   private static final String s71 = " class A { " +
-    "class D { D() { c(); } }" +
-    "void a() { c(); new MouseListenener() { void b() { c(); } } }" +
-    " }";
+                                    "class D { D() { c(); } }" +
+                                    "void a() { c(); new MouseListenener() { void b() { c(); } } }" +
+                                    " }";
   private static final String s72 = " c(); ";
 
   private static final String s73 = " class A { int A; static int B=5; public abstract void a(int c); void q() { ind d=7; } }";
   private static final String s74 = " '_Type 'Var = '_Init?; ";
   private static final String s75 = "{ /** @class aClass\n @author the author */ class A {}\n" +
-      " /** */ class B {}\n" +
-      " /** @class aClass */ class C {} }";
+                                    " /** */ class B {}\n" +
+                                    " /** @class aClass */ class C {} }";
   private static final String s76 = " /** @'_tag+ '_value+ */";
   private static final String s76_2 = " /** @'_tag* '_value* */";
   private static final String s76_3 = " /** @'_tag? '_value? */ class 't {}";
@@ -248,12 +249,12 @@ public class StructuralSearchTest extends IdeaTestCase {
   private static final String s80 = " { '_T 'T3 = '_T2?; '_*; } ";
 
   private static final String s81 = "class Pair<First,Second> {" +
-    "  <C,F> void a(B<C> b, D<F> e) throws C {" +
-    "    P<Q> r = (S<T>)null;"+
-    "    Q q = null; "+
-    "    if (r instanceof S<T>) {}"+
-    "  } " +
-    "} class Q { void b() {} } ";
+                                    "  <C,F> void a(B<C> b, D<F> e) throws C {" +
+                                    "    P<Q> r = (S<T>)null;"+
+                                    "    Q q = null; "+
+                                    "    if (r instanceof S<T>) {}"+
+                                    "  } " +
+                                    "} class Q { void b() {} } ";
 
   private static final String s81_2 = "class Double<T> {} class T {} class Single<First extends A & B> {}";
 
@@ -266,57 +267,57 @@ public class StructuralSearchTest extends IdeaTestCase {
   private static final String s82_7 = "'Type";
 
   private static final String s83 = "/**\n" +
-    " * @hibernate.class\n" +
-    " *  table=\"CATS\"\n" +
-    " */\n" +
-    "public class Cat {\n" +
-    "    private Long id; // identifier\n" +
-    "    private Date birthdate;\n" +
-    "    /**\n" +
-    "     * @hibernate.id\n" +
-    "     *  generator-class=\"native\"\n" +
-    "     *  column=\"CAT_ID\"\n" +
-    "     */\n" +
-    "    public Long getId() {\n" +
-    "        return id;\n" +
-    "    }\n" +
-    "    private void setId(Long id) {\n" +
-    "        this.id=id;\n" +
-    "    }\n" +
-    "\n" +
-    "    /**\n" +
-    "     * @hibernate.property\n" +
-    "     *  column=\"BIRTH_DATE\"\n" +
-    "     */\n" +
-    "    public Date getBirthdate() {\n" +
-    "        return birthdate;\n" +
-    "    }\n" +
-    "    void setBirthdate(Date date) {\n" +
-    "        birthdate = date;\n" +
-    "    }\n" +
-    "    /**\n" +
-    "     * @hibernate.property\n" +
-    "     *  column=\"SEX\"\n" +
-    "     *  not-null=\"true\"\n" +
-    "     *  update=\"false\"\n" +
-    "     */\n" +
-    "    public char getSex() {\n" +
-    "        return sex;\n" +
-    "    }\n" +
-    "    void setSex(char sex) {\n" +
-    "        this.sex=sex;\n" +
-    "    }\n" +
-    "}";
+                                    " * @hibernate.class\n" +
+                                    " *  table=\"CATS\"\n" +
+                                    " */\n" +
+                                    "public class Cat {\n" +
+                                    "    private Long id; // identifier\n" +
+                                    "    private Date birthdate;\n" +
+                                    "    /**\n" +
+                                    "     * @hibernate.id\n" +
+                                    "     *  generator-class=\"native\"\n" +
+                                    "     *  column=\"CAT_ID\"\n" +
+                                    "     */\n" +
+                                    "    public Long getId() {\n" +
+                                    "        return id;\n" +
+                                    "    }\n" +
+                                    "    private void setId(Long id) {\n" +
+                                    "        this.id=id;\n" +
+                                    "    }\n" +
+                                    "\n" +
+                                    "    /**\n" +
+                                    "     * @hibernate.property\n" +
+                                    "     *  column=\"BIRTH_DATE\"\n" +
+                                    "     */\n" +
+                                    "    public Date getBirthdate() {\n" +
+                                    "        return birthdate;\n" +
+                                    "    }\n" +
+                                    "    void setBirthdate(Date date) {\n" +
+                                    "        birthdate = date;\n" +
+                                    "    }\n" +
+                                    "    /**\n" +
+                                    "     * @hibernate.property\n" +
+                                    "     *  column=\"SEX\"\n" +
+                                    "     *  not-null=\"true\"\n" +
+                                    "     *  update=\"false\"\n" +
+                                    "     */\n" +
+                                    "    public char getSex() {\n" +
+                                    "        return sex;\n" +
+                                    "    }\n" +
+                                    "    void setSex(char sex) {\n" +
+                                    "        this.sex=sex;\n" +
+                                    "    }\n" +
+                                    "}";
 
     private static final String s84 = "    /**\n" +
-    "     * @hibernate.property\n" +
-    "     *  'Property+\n" +
-    "     */\n";
+                                      "     * @hibernate.property\n" +
+                                      "     *  'Property+\n" +
+                                      "     */\n";
 
   private static final String s84_2 = "    /**\n" +
-    "     * @hibernate.property\n" +
-    "     *  update=\"fa.se\"\n" +
-    "     */\n";
+                                      "     * @hibernate.property\n" +
+                                      "     *  update=\"fa.se\"\n" +
+                                      "     */\n";
 
   private static final String s85 = "{ int a; a=1; a=1; return a; }";
   private static final String s86 = "'T; 'T;";
@@ -334,44 +335,44 @@ public class StructuralSearchTest extends IdeaTestCase {
   private static final String s90_6 = " { '_T{1}?; '_T2{1,2}?; '_T3+?; '_T4+?; } ";
 
   private static final String s91 = "class a {\n" +
-    "  void b() {\n" +
-    "    int c;\n" +
-    "\n" +
-    "    c = 1;\n" +
-    "    b();\n" +
-    "    a a1;\n" +
-    "  }\n" +
-    "}";
+                                    "  void b() {\n" +
+                                    "    int c;\n" +
+                                    "\n" +
+                                    "    c = 1;\n" +
+                                    "    b();\n" +
+                                    "    a a1;\n" +
+                                    "  }\n" +
+                                    "}";
   private static final String s92 = "'T:a";
   private static final String s92_2 = "'T:b";
   private static final String s92_3 = "'T:c";
 
   private static final String s93 = " class A {" +
-    "private int field;" +
-    "public void b() {}" +
-    "}";
+                                    "private int field;" +
+                                    "public void b() {}" +
+                                    "}";
   private static final String s94 = " class '_ {" +
-    "private void b() {}" +
-    "}";
+                                    "private void b() {}" +
+                                    "}";
    private static final String s94_2 = " class '_ {" +
-    "public void b() {}" +
-    "}";
+                                       "public void b() {}" +
+                                       "}";
   private static final String s94_3 = " class '_ {" +
-    "protected int field;" +
-    "}";
+                                      "protected int field;" +
+                                      "}";
   private static final String s94_4 = " class '_ {" +
-      "private int field;" +
-      "}";
+                                      "private int field;" +
+                                      "}";
 
   private static final String s95 = " class Clazz {" +
-        "private int field;" +
-        "private int field2;" +
-        "private int fiel-d2;" +
-        "}";
+                                    "private int field;" +
+                                    "private int field2;" +
+                                    "private int fiel-d2;" +
+                                    "}";
 
   private static final String  s96 = " class '_ {" +
-    "private int 'T+:field.* ;" +
-    "}";
+                                     "private int 'T+:field.* ;" +
+                                     "}";
 
   private MatchOptions options;
   private Matcher testMatcher;
@@ -405,8 +406,8 @@ public class StructuralSearchTest extends IdeaTestCase {
     );
 
     String complexCode = "interface I { void b(); } interface I2 extends I {} class I3 extends I {} " +
-        "class A implements I2 {  void b() {} } class B implements I3 { void b() {}} " +
-        "I2 a; I3 b; a.b(); b.b(); b.b(); A c; B d; c.b(); d.b(); d.b(); ";
+                         "class A implements I2 {  void b() {} } class B implements I3 { void b() {}} " +
+                         "I2 a; I3 b; a.b(); b.b(); b.b(); A c; B d; c.b(); d.b(); d.b(); ";
 
     String exprTypePattern1 = "'t:[exprtype( I2 )].b();";
     String exprTypePattern2 = "'t:[!exprtype( I2 )].b();";
@@ -545,42 +546,42 @@ public class StructuralSearchTest extends IdeaTestCase {
 
     String s13 = "try { } catch(Exception e) { e.printStackTrace(); }";
     String s14 = "'_Instance.'_MethodCall('_Parameter*)";
-    
+
     assertEquals(
       "Find statement in catch",
       1,
       findMatchesCount(s13,s14)
     );
-    
+
     String s9 = "int a[] = new int[] { 1,2,3,4};\n" +
                 "int b[] = { 2,3,4,5 };\n" +
                 "Object[] c = new Object[] { \"\", null};";
     String s10 = "new '_ []{ '_* }";
     String s10_2 = "new int []{ '_* }";
-    
+
     assertEquals(
       "Find array instatiation",
       3,
       findMatchesCount(s9,s10)
     );
-    
+
     assertEquals(
       "Find array instatiation, 2",
       2,
       findMatchesCount(s9,s10_2)
     );
-    
-    //String s11 = "class A {\n" +
-    //             "  void main(String[] argv);" +
-    //             "}";
-    //String s12 = "'t:[regex( *Object\\[\\] ) ] 't2";
-    //
-    //assertEquals(
-    //  "Find array covariant types",
-    //  1,
-    //  findMatchesCount(s11,s12)
-    //);
-    
+
+    if (!IdeaTestUtil.bombExplodes(2005,7,20,12,0,"maxim.mossienko","Covariant array types")) return;
+    String s11 = "class A {\n" +
+                 "  void main(String[] argv);" +
+                 "}";
+    String s12 = "'t:[regex( *Object\\[\\] ) ] 't2";
+
+    assertEquals(
+      "Find array covariant types",
+      1,
+      findMatchesCount(s11,s12)
+    );
   }
 
   private int findMatchesCount(String in, String pattern, boolean filePattern, FileType fileType) {
@@ -696,8 +697,8 @@ public class StructuralSearchTest extends IdeaTestCase {
     //);
 
     String s10021 = "short a = 1;\n" +
-                 "short b = 2;\n" +
-                 "short c = a.b();";
+                    "short b = 2;\n" +
+                    "short c = a.b();";
     String s10022 = "short '_a = '_b.b();";
 
     assertEquals(
@@ -767,7 +768,7 @@ public class StructuralSearchTest extends IdeaTestCase {
     //  2,
     //  findMatchesCount(s10031,s10032)
     //);
-    
+
     String s10033 = "return x;\n" +
                     "return !x;\n" +
                     "return (x);\n" +
@@ -947,8 +948,8 @@ public class StructuralSearchTest extends IdeaTestCase {
                         "        }";
     assertEquals(
       "complex expr matching",
-      findMatchesCount(s133,s134),
-      1
+      1,
+      findMatchesCount(s133,s134)
     );
     //final String s133 = "class A extends java.util.List {}"
 
@@ -1163,13 +1164,13 @@ public class StructuralSearchTest extends IdeaTestCase {
     );
 
     String s81_3 = " class A {\n" +
-          "  public static <T> Collection<T> unmodifiableCollection(int c) {\n" +
-          "    return new d<T>(c);\n" +
-          "  }\n" +
-          "  static class d<E> implements Collection<E>, Serializable {\n" +
-	        "    public <T> T[] toArray(T[] a)       {return c.toArray(a);}\n" +
-          "  }\n" +
-          "}";
+                   "  public static <T> Collection<T> unmodifiableCollection(int c) {\n" +
+                   "    return new d<T>(c);\n" +
+                   "  }\n" +
+                   "  static class d<E> implements Collection<E>, Serializable {\n" +
+                   "    public <T> T[] toArray(T[] a)       {return c.toArray(a);}\n" +
+                   "  }\n" +
+                   "}";
     assertEquals(
       "typed symbol symbol",
       findMatchesCount(s81_3,s82_5),
@@ -1177,18 +1178,18 @@ public class StructuralSearchTest extends IdeaTestCase {
     );
 
     String s81_4="class A<B> { \n" +
-          "  static <C> void c(D<E> f) throws R<S> {\n" +
-          "    if ( f instanceof G<H>) {\n" +
-          "      ((I<G<K>>)l).a();\n" +
-          "      throw new P<Q>();" +
-          "    }\n" +
-          "  }\n" +
-          "} " +
-          "class C {\n" +
-          "  void d(E f) throws Q {\n" +
-          "    if (g instanceof H) { a.c(); b.d(new A() {}); throw new Exception(((I)k)); }"+
-          "  }\n" +
-          "}";
+                 "  static <C> void c(D<E> f) throws R<S> {\n" +
+                 "    if ( f instanceof G<H>) {\n" +
+                 "      ((I<G<K>>)l).a();\n" +
+                 "      throw new P<Q>();" +
+                 "    }\n" +
+                 "  }\n" +
+                 "} " +
+                 "class C {\n" +
+                 "  void d(E f) throws Q {\n" +
+                 "    if (g instanceof H) { a.c(); b.d(new A() {}); throw new Exception(((I)k)); }"+
+                 "  }\n" +
+                 "}";
     String s82_8 = "'T<'_Subst+>";
     assertEquals(
       "typed symbol",
@@ -1528,28 +1529,28 @@ public class StructuralSearchTest extends IdeaTestCase {
 
   public void testNamedPatterns() {
     String s133 = "class String1 implements java.io.Serializable { " +
-      "private static final long serialVersionUID = -6849794470754667710L;" +
-      "private static final ObjectStreamField[] serialPersistentFields = new ObjectStreamField[0];" +
-      "}" +
-      "class StringBuilder1 implements java.io.Serializable {" +
-      "    private void writeObject(java.io.ObjectOutputStream s)\n" +
-      "        throws java.io.IOException {\n" +
-      "        s.defaultWriteObject();\n" +
-      "    }" +
-      "private void readObject(java.io.ObjectInputStream s)\n" +
-      "        throws java.io.IOException, ClassNotFoundException {\n" +
-      "        s.defaultReadObject();\n" +
-      "    }" +
-      "    static final long serialVersionUID = 4383685877147921099L;" +
-      "}";
+                  "private static final long serialVersionUID = -6849794470754667710L;" +
+                  "private static final ObjectStreamField[] serialPersistentFields = new ObjectStreamField[0];" +
+                  "}" +
+                  "class StringBuilder1 implements java.io.Serializable {" +
+                  "    private void writeObject(java.io.ObjectOutputStream s)\n" +
+                  "        throws java.io.IOException {\n" +
+                  "        s.defaultWriteObject();\n" +
+                  "    }" +
+                  "private void readObject(java.io.ObjectInputStream s)\n" +
+                  "        throws java.io.IOException, ClassNotFoundException {\n" +
+                  "        s.defaultReadObject();\n" +
+                  "    }" +
+                  "    static final long serialVersionUID = 4383685877147921099L;" +
+                  "}";
     String s134 = "class '_ implements '_:*Serializable {\n" +
-      "  static final long 'VersionField?:serialVersionUID = '_?;\n" +
-      "  private static final ObjectStreamField[] '_?:serialPersistentFields = '_?; \n" +
-      "  private void '_SerializationWriteHandler?:writeObject (ObjectOutputStream s) throws IOException;\n" +
-      "  private void '_SerializationReadHandler?:readObject (ObjectInputStream s) throws IOException, ClassNotFoundException;\n" +
-      "  Object '_SpecialSerializationReadHandler?:readResolve () throws ObjectStreamException;" +
-      "  Object '_SpecialSerializationWriteHandler?:writeReplace () throws ObjectStreamException;" +
-      "}";
+                  "  static final long 'VersionField?:serialVersionUID = '_?;\n" +
+                  "  private static final ObjectStreamField[] '_?:serialPersistentFields = '_?; \n" +
+                  "  private void '_SerializationWriteHandler?:writeObject (ObjectOutputStream s) throws IOException;\n" +
+                  "  private void '_SerializationReadHandler?:readObject (ObjectInputStream s) throws IOException, ClassNotFoundException;\n" +
+                  "  Object '_SpecialSerializationReadHandler?:readResolve () throws ObjectStreamException;" +
+                  "  Object '_SpecialSerializationWriteHandler?:writeReplace () throws ObjectStreamException;" +
+                  "}";
 
     assertEquals(
       "serialization match",
@@ -1558,20 +1559,20 @@ public class StructuralSearchTest extends IdeaTestCase {
     );
 
     String s135 = "class SimpleStudentEventActionImpl extends Action { " +
-      "  public ActionForward execute(ActionMapping mapping,\n" +
-      "         ActionForm _form,\n" +
-      "         HttpServletRequest _request,\n" +
-      "         HttpServletResponse _response)" +
-      "  throws Exception {}" +
-      "} " +
-      "public class DoEnrollStudent extends SimpleStudentEventActionImpl { }" +
-      "public class DoCancelStudent extends SimpleStudentEventActionImpl { }";
+                  "  public ActionForward execute(ActionMapping mapping,\n" +
+                  "         ActionForm _form,\n" +
+                  "         HttpServletRequest _request,\n" +
+                  "         HttpServletResponse _response)" +
+                  "  throws Exception {}" +
+                  "} " +
+                  "public class DoEnrollStudent extends SimpleStudentEventActionImpl { }" +
+                  "public class DoCancelStudent extends SimpleStudentEventActionImpl { }";
     String s136 = "public class 'StrutsActionClass extends '_*:Action {" +
-      "  public ActionForward '_AnActionMethod:*execute (ActionMapping '_,\n" +
-      "                                 ActionForm '_,\n" +
-      "                                 HttpServletRequest '_,\n" +
-      "                                 HttpServletResponse '_);" +
-      "}";
+                  "  public ActionForward '_AnActionMethod:*execute (ActionMapping '_,\n" +
+                  "                                 ActionForm '_,\n" +
+                  "                                 HttpServletRequest '_,\n" +
+                  "                                 HttpServletResponse '_);" +
+                  "}";
 
     assertEquals(
       "Struts actions",
@@ -1580,24 +1581,24 @@ public class StructuralSearchTest extends IdeaTestCase {
     );
 
     final String s123 = "class NodeFilter {} public class MethodFilter extends NodeFilter {\n" +
-      "  private MethodFilter() {}\n" +
-      "\n" +
-      "  public static NodeFilter getInstance() {\n" +
-      "    if (instance==null) instance = new MethodFilter();\n" +
-      "    return instance;\n" +
-      "  }\n" +
-      "  private static NodeFilter instance;\n" +
-      "}";
+                        "  private MethodFilter() {}\n" +
+                        "\n" +
+                        "  public static NodeFilter getInstance() {\n" +
+                        "    if (instance==null) instance = new MethodFilter();\n" +
+                        "    return instance;\n" +
+                        "  }\n" +
+                        "  private static NodeFilter instance;\n" +
+                        "}";
     final String s124 = "class 'Class {\n" +
-      "  private 'Class('_* '_*) {\n" +
-      "   '_*;\n" +
-      "  }\n" +
-      "  private static '_Class2:* '_Instance;\n" +
-      "  static '_Class2:* '_GetInstance() {\n" +
-      "    '_*;\n" +
-      "    return '_Instance;\n" +
-      "  }\n" +
-      "}";
+                        "  private 'Class('_* '_*) {\n" +
+                        "   '_*;\n" +
+                        "  }\n" +
+                        "  private static '_Class2:* '_Instance;\n" +
+                        "  static '_Class2:* '_GetInstance() {\n" +
+                        "    '_*;\n" +
+                        "    return '_Instance;\n" +
+                        "  }\n" +
+                        "}";
 
     assertEquals(
       "singleton search",
@@ -1627,7 +1628,7 @@ public class StructuralSearchTest extends IdeaTestCase {
     );
 
     final String s107 = "interface IA {} interface IB extends IA { } interface IC extends IB {} interface ID extends IC {}" +
-      "class A implemenents IA {} class B extends A { } class C extends B implements IC {} class D extends C {}";
+                        "class A implemenents IA {} class B extends A { } class C extends B implements IC {} class D extends C {}";
     final String s108 = "class '_ extends 'Type:+A {}";
     final String s108_2 = "class '_ implements 'Type:+IA {}";
 
@@ -1680,7 +1681,7 @@ public class StructuralSearchTest extends IdeaTestCase {
     );
 
     final String s113 = "class B {int c; void d() {} } int a; B b; a = 1; b.d(); ++a; int c=a; System.out.println(a); " +
-      "b.c = 1; System.out.println(b.c); b.c++;";
+                        "b.c = 1; System.out.println(b.c); b.c++;";
     final String s114 = "'_:[read]";
     final String s114_2 = "'_:[write]";
     assertEquals(
@@ -1704,8 +1705,8 @@ public class StructuralSearchTest extends IdeaTestCase {
     );
 
     final String s117 = "class A { int b; void c() { int e; b=1; this.b=1; e=5; " +
-      "System.out.println(e); " +
-      "System.out.println(b); System.out.println(this.b);} }";
+                        "System.out.println(e); " +
+                        "System.out.println(b); System.out.println(this.b);} }";
     final String s118 = "this.'Field";
     final String s118_2 = "this.'Field:[read]";
     final String s118_3 = "this.'Field:[write]";
@@ -1744,7 +1745,7 @@ public class StructuralSearchTest extends IdeaTestCase {
     );
 
     final String s121 = "class A { private int a; class Inner {} } " +
-      "class B extends A { private int a; class Inner2 {} }";
+                        "class B extends A { private int a; class Inner2 {} }";
     final String s122 = "class '_ { int '_:* ; }";
     final String s122_2 = "class '_ { int '_:+hashCode (); }";
     final String s122_3 = "class '_ { class '_:* {} }";
@@ -2022,7 +2023,7 @@ public class StructuralSearchTest extends IdeaTestCase {
     String s1 = "import java.awt.List;\n" +
                 "class A { List l; }";
     String s1_2 = "import java.util.List;\n" +
-                "class A { List l; }";
+                  "class A { List l; }";
     String s2 = "class '_ { 'Type:java\\.util\\.List '_Field; }";
 
     assertEquals("No matches for qualified class",findMatchesCount(s1,s2,true),0);
@@ -2114,9 +2115,9 @@ public class StructuralSearchTest extends IdeaTestCase {
                 "  String '_field* ;\n" +
                 "}";
     String s4_2 = "class '_a {\n" +
-                "  @'_Annotation+ ()\n" +
-                "  String 'field* ;\n" +
-                "}";
+                  "  @'_Annotation+ ()\n" +
+                  "  String 'field* ;\n" +
+                  "}";
 
     assertEquals("Find annotation members of annotated field class",4,findMatchesCount(s3,s4,false));
     assertEquals("Find annotation fields",3,findMatchesCount(s3,s4_2,false));
@@ -2176,21 +2177,21 @@ public class StructuralSearchTest extends IdeaTestCase {
 
   public void testCommentsInDclSearch() {
     String s1 = "class A {\n" +
-                 "  int a; // comment\n" +
-                 "  char b;\n" +
-                 "  int c; // comment2\n" +
-                 "}";
+                "  int a; // comment\n" +
+                "  char b;\n" +
+                "  int c; // comment2\n" +
+                "}";
     String s1_2 = "class A {\n" +
                   "  // comment\n" +
                   "  int a;\n" +
                   "  char b;\n" +
                   "  // comment2\n" +
                   "  int c;\n" +
-                 "}";
+                  "}";
 
     String s2 = "'_Type '_Variable = '_Value?; //'Comment";
     String s2_2 = "//'Comment\n" +
-                "'_Type '_Variable = '_Value?;";
+                  "'_Type '_Variable = '_Value?;";
 
     assertEquals("Find field by dcl with comment",2,findMatchesCount(s1,s2));
     assertEquals("Find field by dcl with comment 2",2,findMatchesCount(s1_2,s2_2));

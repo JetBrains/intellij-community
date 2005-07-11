@@ -959,7 +959,8 @@ public class MatchingVisitor extends PsiElementVisitor {
     Iterator candidateSons;
 
     if (realResult.hasSons() &&
-        (candidateResult = (MatchResultImpl)(candidateSons = realResult.getSons()).next()).getName().equals(realResult.getName())
+        (candidateResult = (MatchResultImpl)(candidateSons = realResult.getSons()).next()) != null &&
+        candidateResult.getName().equals(realResult.getName())
        ) {
       // many results of one, show them nicely
       result = candidateResult;
@@ -1404,32 +1405,64 @@ public class MatchingVisitor extends PsiElementVisitor {
   }
 
   public void visitMethod(PsiMethod method) {
-    if (method.getTypeParameters().length > 0) {
-      result = match(
-        method.getTypeParameterList(),
-        ((PsiMethod)element).getTypeParameterList()
-      );
-
-      if (!result) return;
-    }
-
-    final PsiMethod method2 = (PsiMethod) element;
-    if (!checkHierarchy(method2,method)) {
-      result = false;
-      return;
-    }
     final boolean isTypedVar = matchContext.getPattern().isTypedVar(method.getNameIdentifier());
-
-    result = (method.getName().equals(method2.getName()) || isTypedVar) &&
-      match(method.getModifierList(),method2.getModifierList()) &&
-      matchSons(method.getParameterList(),method2.getParameterList()) &&
-      match(method.getReturnTypeElement(),method2.getReturnTypeElement()) &&
-      matchInAnyOrder(method.getThrowsList(),method2.getThrowsList()) &&
-      matchSonsOptionally( method.getBody(), method2.getBody() );
-
-    if (result && isTypedVar) {
-      result = handleTypedElement(method.getNameIdentifier(),method2.getNameIdentifier());
+    final PsiMethod method2 = (PsiMethod) element;
+    
+    matchContext.pushResult();
+    
+    try {
+        if (method.getTypeParameters().length > 0) {
+        result = match(
+          method.getTypeParameterList(),
+          ((PsiMethod)element).getTypeParameterList()
+        );
+  
+        if (!result) return;
+      }
+  
+      if (!checkHierarchy(method2,method)) {
+        result = false;
+        return;
+      }
+      
+      result = (method.getName().equals(method2.getName()) || isTypedVar) &&
+        match(method.getModifierList(),method2.getModifierList()) &&
+        matchSons(method.getParameterList(),method2.getParameterList()) &&
+        match(method.getReturnTypeElement(),method2.getReturnTypeElement()) &&
+        matchInAnyOrder(method.getThrowsList(),method2.getThrowsList()) &&
+        matchSonsOptionally( method.getBody(), method2.getBody() );
+    } finally {
+      MatchResultImpl ourResult = matchContext.hasResult() ? matchContext.getResult():null;
+      matchContext.popResult();
+      
+      if (result) {
+        if (isTypedVar) {
+          final SubstitutionHandler handler = (SubstitutionHandler) matchContext.getPattern().getHandler(method.getNameIdentifier());
+          if (ourResult != null) ourResult.setScopeMatch(true);
+          handler.setNestedResult( ourResult );
+          result = handler.handle(method2.getNameIdentifier(),matchContext);
+          
+          if (handler.getNestedResult() != null) { // some constraint prevent from adding
+            handler.setNestedResult(null);
+            copyResults(ourResult);
+          }
+        } else if (ourResult != null) {
+          copyResults(ourResult);
+        }
+      }
     }
+  }
+
+  private void copyResults(final MatchResultImpl ourResult) {
+    //if (ourResult.isMultipleMatch()) {
+      if (ourResult.hasSons()) {
+        for(MatchResult son:ourResult.getAllSons()) {
+          matchContext.getResult().addSon((MatchResultImpl)son);
+        }
+      }
+    //} else {
+   //   matchContext.getResult().addSon(ourResult);
+   // }
   }
 
   public static final String getText(final PsiElement match, int start,int end) {

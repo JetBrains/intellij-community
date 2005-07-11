@@ -8,7 +8,7 @@ import com.intellij.structuralsearch.MatchOptions;
  */
 public class MatchContext {
   private MatchResultSink sink;
-  // result being found
+  private MatchResultImpl previousResult;
   private MatchResultImpl result;
   private CompiledPattern pattern;
   private MatchOptions options;
@@ -30,11 +30,29 @@ public class MatchContext {
     this.options = options;
   }
 
+  public MatchResultImpl getPreviousResult() {
+    return previousResult;
+  }
+
+  public void setPreviousResult(final MatchResultImpl previousResult) {
+    this.previousResult = previousResult;
+  }
+
   public MatchResultImpl getResult() {
     if (result==null) result = new MatchResultImpl();
     return result;
   }
 
+  public void pushResult() {
+    previousResult = result;
+    result = null;
+  }
+  
+  public void popResult() {
+    result = previousResult;
+    previousResult = null;
+  }
+  
   public void setResult(MatchResultImpl result) {
     this.result = result;
     if (result == null) {

@@ -23,6 +23,8 @@ public final class MatchResultImpl extends MatchResult {
 
   public static final String DEFAULT_NAME2 = "end of context match";
   public static final String DEFAULT_NAME = "start of context match";
+  private boolean myScopeMatch;
+  private boolean myMultipleMatch;
 
   MatchResultImpl() {
   }
@@ -67,7 +69,7 @@ public final class MatchResultImpl extends MatchResult {
     return name;
   }
 
-  void setName(String name) {
+  public void setName(String name) {
     this.name = name;
   }
 
@@ -131,6 +133,14 @@ public final class MatchResultImpl extends MatchResult {
     return matches!=null;
   }
 
+  public boolean isScopeMatch() {
+    return myScopeMatch;
+  }
+
+  public boolean isMultipleMatch() {
+    return myMultipleMatch;
+  }
+
   public void clear() {
     if (matchRef!=null) {
       matchRef.clear();
@@ -146,6 +156,14 @@ public final class MatchResultImpl extends MatchResult {
 
     name = null;
     matchImage = null;
+  }
+
+  public void setScopeMatch(final boolean scopeMatch) {
+    myScopeMatch = scopeMatch;
+  }
+
+  public void setMultipleMatch(final boolean multipleMatch) {
+    myMultipleMatch = multipleMatch;
   }
 
   public MatchResultImpl findSon(String name) {
@@ -179,7 +197,7 @@ public final class MatchResultImpl extends MatchResult {
     getMatches().add(result);
   }
 
-  void setMatchImage(String matchImage) {
+  public void setMatchImage(String matchImage) {
     this.matchImage = matchImage;
   }
 
@@ -187,7 +205,7 @@ public final class MatchResultImpl extends MatchResult {
     return target;
   }
 
-  void setTarget(boolean target) {
+  public void setTarget(boolean target) {
     this.target = target;
   }
 

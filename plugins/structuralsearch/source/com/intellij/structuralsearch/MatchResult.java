@@ -25,4 +25,6 @@ public abstract class MatchResult {
   public abstract Iterator<MatchResult> getSons();
   public abstract List<MatchResult> getAllSons();
   public abstract boolean hasSons();
+  public abstract boolean isScopeMatch();
+  public abstract boolean isMultipleMatch();
 }

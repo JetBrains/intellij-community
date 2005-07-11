@@ -7,6 +7,7 @@ import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.Replacer;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.idea.Bombed;
+import com.intellij.idea.IdeaTestUtil;
 
 import java.util.Calendar;
 
@@ -1158,6 +1159,22 @@ public class StructuralReplaceTest extends IdeaTestCase {
     assertEquals(
       "Replacing interface with interface, saving comments properly",
       expectedResult13,
+      actualResult
+    );
+    
+    String s37 = "class A { void B() {} int C(char ch) { int z = 1; } }";
+
+    String s38 = "class 'A { 'T* 'M*('PT* 'PN*) { 'S*; } 'O* }";
+    String s39 = "class $A$ { $T$ $M$($PT$ $PN$) { System.out.println(\"$M$\"); $S$; } $O$ }";
+
+    String expectedResult14 = "class A { void B () { System.out.println(\"B\");} int C(char ch) { System.out.println(\"C\"); int z = 1; } }";
+
+    if (!IdeaTestUtil.bombExplodes(2005,7,20,12,0,"maxim.mossienko","Fix class replacements with multiple members")) return;
+    actualResult = replacer.testReplace(s37,s38,s39,options, true);
+
+    assertEquals(
+      "Multiple methods replacement",
+      expectedResult14,
       actualResult
     );
   }
