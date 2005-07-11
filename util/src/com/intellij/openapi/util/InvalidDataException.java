@@ -12,4 +12,12 @@ public class InvalidDataException extends Exception {
   public InvalidDataException(String s){
     super(s);
   }
+
+  public InvalidDataException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
+  public InvalidDataException(Throwable cause) {
+    super(cause);
+  }
 }
