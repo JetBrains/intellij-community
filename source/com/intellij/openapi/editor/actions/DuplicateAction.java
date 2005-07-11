@@ -23,6 +23,10 @@ public class DuplicateAction extends EditorAction {
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       duplicateLineOrSelectedBlockAtCaret(editor);
     }
+
+    public boolean isEnabled(Editor editor, DataContext dataContext) {
+      return !editor.isOneLineMode() || editor.getSelectionModel().hasSelection();
+    }
   }
 
   private static void duplicateLineOrSelectedBlockAtCaret(Editor editor) {
