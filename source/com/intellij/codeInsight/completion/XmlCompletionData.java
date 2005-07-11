@@ -49,10 +49,12 @@ import java.util.List;
 public class XmlCompletionData extends CompletionData {
   public XmlCompletionData(){
     declareFinalScope(XmlTag.class);
+    declareFinalScope(XmlAttribute.class);
+    declareFinalScope(XmlAttributeValue.class);
 
     {
       final CompletionVariant variant = new CompletionVariant(createTagCompletionFilter());
-      variant.includeScopeClass(XmlTag.class, true);
+      variant.includeScopeClass(XmlTag.class);
       variant.addCompletionFilterOnElement(TrueFilter.INSTANCE);
       variant.setInsertHandler(new XmlTagInsertHandler());
       registerVariant(variant);
@@ -60,7 +62,7 @@ public class XmlCompletionData extends CompletionData {
 
     {
       final CompletionVariant variant = new CompletionVariant(createAttributeCompletion());
-      variant.includeScopeClass(XmlAttribute.class, true);
+      variant.includeScopeClass(XmlAttribute.class);
       variant.addCompletionFilterOnElement(TrueFilter.INSTANCE);
       variant.setInsertHandler(new XmlAttributeInsertHandler());
       registerVariant(variant);
@@ -68,7 +70,7 @@ public class XmlCompletionData extends CompletionData {
 
     {
       final CompletionVariant variant = new CompletionVariant(createAttributeValueCompletionFilter());
-      variant.includeScopeClass(XmlAttributeValue.class, true);
+      variant.includeScopeClass(XmlAttributeValue.class);
       variant.addCompletion(new XmlAttributeValueGetter());
       variant.addCompletionFilter(TrueFilter.INSTANCE, TailType.NONE);
       variant.setInsertHandler(new XmlAttributeValueInsertHandler());
