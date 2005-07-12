@@ -35,6 +35,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
+import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.scope.processor.VariablesNotProcessor;
@@ -664,7 +665,7 @@ public class HighlightUtil {
       if (fixRange == null) {
         fixRange = element.getTextRange();
       }
-      HighlightInfoType highlightType = getUnhandledExceptionHighlightType(element.getContainingFile());
+      HighlightInfoType highlightType = getUnhandledExceptionHighlightType(element);
       if (highlightType == null) return null;
       errorResult = HighlightInfo.createHighlightInfo(highlightType,
                                                       fixRange,
@@ -679,10 +680,13 @@ public class HighlightUtil {
     return errorResult;
   }
 
-  private static HighlightInfoType getUnhandledExceptionHighlightType(final PsiFile containingFile) {
+  private static HighlightInfoType getUnhandledExceptionHighlightType(final PsiElement element) {
+    PsiFile containingFile = element.getContainingFile();
     if (!(containingFile instanceof JspFile)) {
       return HighlightInfoType.UNHANDLED_EXCEPTION;
     }
+    PsiMethod targetMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+    if (!(targetMethod instanceof JspHolderMethod)) return HighlightInfoType.UNHANDLED_EXCEPTION;
     JspFile jspFile = (JspFile)containingFile;
     PsiFile errorPage = jspFile.getErrorPage();
     // highlight unhandled exception as warning if there is no errorPage directive
