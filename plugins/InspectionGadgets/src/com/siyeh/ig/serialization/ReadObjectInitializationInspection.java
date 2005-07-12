@@ -3,12 +3,12 @@ package com.siyeh.ig.serialization;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.FieldInspection;
+import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.psiutils.InitializationUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ReadObjectInitializationInspection extends FieldInspection {
+public class ReadObjectInitializationInspection extends ClassInspection {
     public String getID(){
         return "InstanceVariableMayNotBeInitializedByReadObject";
     }
