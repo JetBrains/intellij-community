@@ -475,47 +475,16 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
 
   public void load() {
     try {
-      if (myFile == null || !myFile.exists()) {
-        if (myBaseProfile != null) {
-          loadAdditionalSettingsFromBaseProfile();
-        }
-        return;
+      if (myFile != null && myFile.exists()) {
+        Document document = JDOMUtil.loadDocument(myFile);
+        readExternal(document.getRootElement());
+        myInitialized = true;
       }
-
-      Document document = JDOMUtil.loadDocument(myFile);
-      readExternal(document.getRootElement());
-      myInitialized = true;
     }
     catch (JDOMException e) {
       LOG.error(e);
     }
     catch (IOException e) {
-      LOG.error(e);
-    }
-    catch (InvalidDataException e) {
-      LOG.error(e);
-    }
-  }
-
-  public void loadAdditionalSettingsFromBaseProfile() {//load additional settings from base profile
-    if (myBaseProfile == null) return;
-    try {
-      final ArrayList<String> toolNames = new ArrayList<String>(myTools.keySet());
-      for (Iterator<String> iterator = toolNames.iterator(); iterator.hasNext();) {
-        final String key = iterator.next();
-        if (myDisplayLevelMap.containsKey(HighlightDisplayKey.find(key))) {
-          continue;
-        }
-        Element root = new Element("root");
-        final InspectionTool baseInspectionTool = myBaseProfile.getInspectionTool(key);
-        if (baseInspectionTool != null) {
-          baseInspectionTool.writeExternal(root);
-          InspectionTool tool = getInspectionTool(key);
-          tool.readExternal(root);
-        }
-      }
-    }
-    catch (WriteExternalException e) {
       LOG.error(e);
     }
     catch (InvalidDataException e) {
@@ -541,11 +510,10 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     }
     if (myTools.isEmpty() && !ApplicationManager.getApplication().isUnitTestMode()) {
       final InspectionTool[] tools = InspectionToolRegistrar.getInstance().createTools();
-      for (int i = 0; i < tools.length; i++) {
-        myTools.put(tools[i].getShortName(), tools[i]);
+      for (InspectionTool tool : tools) {
+        myTools.put(tool.getShortName(), tool);
       }
       load();
-      loadAdditionalSettingsFromBaseProfile();
     }
     ArrayList<InspectionTool> result = new ArrayList<InspectionTool>();
     result.addAll(myTools.values());

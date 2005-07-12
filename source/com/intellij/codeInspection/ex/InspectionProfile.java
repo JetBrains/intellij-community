@@ -100,8 +100,6 @@ public interface InspectionProfile {
 
     void inheritFrom(InspectionProfileImpl profile);
 
-    void loadAdditionalSettingsFromBaseProfile();
-
     UnusedSymbolSettings getUnusedSymbolSettings();
 
     void setUnusedSymbolSettings(UnusedSymbolSettings settings);
