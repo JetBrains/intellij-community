@@ -235,6 +235,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
           PsiDeclarationStatement declaration = factory.createVariableDeclarationStatement(variableName, type, expr1);
           if (!isInsideLoop) {
             declaration = (PsiDeclarationStatement) container.addBefore(declaration, anchor);
+            LOG.assertTrue(expr1.isValid());
             if (deleteSelf) { // never true
               if (statement.getLastChild() instanceof PsiComment) { // keep trailing comment
                 declaration.addBefore(statement.getLastChild(), null);
