@@ -383,7 +383,7 @@ public class CompletionUtil {
           final PsiElement parent = reference.getParent();
           if(parent instanceof PsiReference) return;
           if(referenceOnMethod && parent instanceof PsiMethodCallExpression && reference == ((PsiMethodCallExpression)parent).getMethodExpression()) {
-            if (reference.resolve() == null) unresolvedRefs.add(reference.getReferenceName());
+            if (reference.resolve() == null && reference.getReferenceName() != null) unresolvedRefs.add(reference.getReferenceName());
           }
           else if(!referenceOnMethod && reference.resolve() == null) unresolvedRefs.add(reference.getReferenceName());
         }
