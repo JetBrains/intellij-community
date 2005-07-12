@@ -106,6 +106,9 @@ public class UsageViewContext {
         return null;
       }
 
+      public void update() {
+      }
+
       public String getName() {
         return "my name";
       }
