@@ -53,14 +53,17 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
 
   public XmlElementDescriptor getElementDescriptor(String localName, String namespace, Set<XmlNSDescriptorImpl> visited, boolean reference) {
     if(visited.contains(this)) return null;
+    
     final Pair<String, String> pair = new Pair<String, String>(namespace, localName);
     final CachedValue<XmlElementDescriptor> descriptor = myDescriptorsMap.get(pair);
     if(descriptor != null) return descriptor.getValue();
+    
     XmlDocument document = myFile.getDocument();
     XmlTag rootTag = document.getRootTag();
     if (rootTag == null) return null;
     XmlTag[] tags = rootTag.getSubTags();
-
+    visited.add( this );
+    
     for (int i = 0; i < tags.length; i++) {
       final XmlTag tag = tags[i];
 
