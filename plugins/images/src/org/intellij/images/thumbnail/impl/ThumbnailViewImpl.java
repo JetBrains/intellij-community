@@ -43,7 +43,7 @@ final class ThumbnailViewImpl implements ThumbnailView {
         updateUI();
     }
 
-    public VirtualFile getRoot() {
+    @NotNull public VirtualFile getRoot() {
         return root;
     }
 
@@ -56,18 +56,32 @@ final class ThumbnailViewImpl implements ThumbnailView {
         updateUI();
     }
 
-    public void setSelected(VirtualFile file) {
+    public void setSelected(@NotNull VirtualFile file, boolean selected) {
         if (isVisible()) {
-            getUI().setSelected(file);
+            getUI().setSelected(file, selected);
         }
     }
 
-    public void scrollTo(final VirtualFile file) {
+    public boolean isSelected(@NotNull VirtualFile file) {
+        if (isVisible()) {
+            return getUI().isSelected(file);
+        }
+        return false;
+    }
+
+    public @NotNull VirtualFile[] getSelection() {
+        if (isVisible()) {
+            return getUI().getSelection();
+        }
+        return VirtualFile.EMPTY_ARRAY;
+    }
+
+    public void scrollToSelection() {
         if (isVisible()) {
             if (!toolWindow.isActive()) {
-                toolWindow.activate(new LazyScroller(file));
+                toolWindow.activate(new LazyScroller());
             } else {
-                getUI().scrollTo(file);
+                getUI().scrollToSelection();
             }
         }
     }
@@ -97,7 +111,7 @@ final class ThumbnailViewImpl implements ThumbnailView {
         }
     }
 
-    public Project getProject() {
+    @NotNull public Project getProject() {
         return project;
     }
 
@@ -117,16 +131,10 @@ final class ThumbnailViewImpl implements ThumbnailView {
     }
 
     private final class LazyScroller implements Runnable {
-        private final VirtualFile file;
-
-        public LazyScroller(VirtualFile file) {
-            this.file = file;
-        }
-
         public void run() {
             SwingUtilities.invokeLater(new Runnable() {
                 public void run() {
-                    getUI().scrollTo(file);
+                    getUI().scrollToSelection();
                 }
             });
         }

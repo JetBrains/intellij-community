@@ -86,8 +86,8 @@ final class ThumbnailManagerImpl extends ThumbnailManager implements Application
                 ThumbnailView thumbnailView = getThumbnailView(context.getProject());
                 thumbnailView.setRoot(parent);
                 thumbnailView.setVisible(true);
-                thumbnailView.setSelected(virtualFile);
-                thumbnailView.scrollTo(virtualFile);
+                thumbnailView.setSelected(virtualFile, true);
+                thumbnailView.scrollToSelection();
             }
         }
 

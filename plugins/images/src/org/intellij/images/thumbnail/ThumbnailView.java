@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 public interface ThumbnailView extends Disposable {
     String TOOLWINDOW_ID = "Thumbnails";
 
-    Project getProject();
+    @NotNull Project getProject();
 
     /**
      * Add virtual files to view
@@ -24,20 +24,22 @@ public interface ThumbnailView extends Disposable {
     /**
      * Return current root
      */
-    VirtualFile getRoot();
+    @NotNull VirtualFile getRoot();
 
     boolean isRecursive();
 
     void setRecursive(boolean recursive);
 
-    void setSelected(VirtualFile file);
+    void setSelected(@NotNull VirtualFile file, boolean selected);
+    boolean isSelected(@NotNull VirtualFile file);
+
+    @NotNull VirtualFile[] getSelection();
 
     /**
-     * Scroll to file. If ToolWindow is not active, then
+     * Scroll to selection. If ToolWindow is not active, then
      * it will perform activatation before scroll.
-     * @param file File to scroll
      */
-    void scrollTo(VirtualFile file);
+    void scrollToSelection();
 
     void setVisible(boolean visible);
 

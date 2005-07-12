@@ -17,6 +17,7 @@ import org.intellij.images.ui.ThumbnailComponent;
 import org.intellij.images.ui.ThumbnailComponentUI;
 import org.intellij.images.vfs.IfsUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,8 +32,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
-    private static final VirtualFile[] EMPTY_VIRTUAL_FILE_ARRAY = new VirtualFile[] {};
-
     private final VFSListener vfsListener = new VFSListener();
     private final OptionsChangeListener optionsListener = new OptionsChangeListener();
 
@@ -69,6 +68,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             list.setLayoutOrientation(JList.HORIZONTAL_WRAP);
             list.setVisibleRowCount(-1);
             list.setCellRenderer(cellRenderer);
+            list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
             list.addMouseListener(new ThumbnailsMouseAdapter());
 
@@ -107,7 +107,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         model.clear();
 
         Set<VirtualFile> files = findFiles(thumbnailView.getRoot().getChildren());
-        VirtualFile[] virtualFiles = files.toArray(EMPTY_VIRTUAL_FILE_ARRAY);
+        VirtualFile[] virtualFiles = files.toArray(VirtualFile.EMPTY_ARRAY);
         Arrays.sort(
             virtualFiles, new Comparator<VirtualFile>() {
             public int compare(VirtualFile o1, VirtualFile o2) {
@@ -140,16 +140,37 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         list.repaint();
     }
 
-    public void setSelected(VirtualFile file) {
+    public void setSelected(VirtualFile file, boolean selected) {
         createUI();
         list.setSelectedValue(file, false);
     }
 
-    public void scrollTo(VirtualFile file) {
+    public void scrollToSelection() {
+        int minSelectionIndex = list.getMinSelectionIndex();
+        int maxSelectionIndex = list.getMaxSelectionIndex();
+        if (minSelectionIndex != -1 && maxSelectionIndex != -1) {
+            list.scrollRectToVisible(list.getCellBounds(minSelectionIndex, maxSelectionIndex));
+        }
+    }
+
+    public boolean isSelected(VirtualFile file) {
         int index = ((DefaultListModel)list.getModel()).indexOf(file);
         if (index != -1) {
-            list.scrollRectToVisible(list.getCellBounds(index, index));
+            return list.isSelectedIndex(index);
         }
+        return false;
+    }
+
+    public @NotNull VirtualFile[] getSelection() {
+        Object[] selectedValues = list.getSelectedValues();
+        if (selectedValues != null) {
+            VirtualFile[] files = new VirtualFile[selectedValues.length];
+            for (int i = 0; i < selectedValues.length; i++) {
+                files[i] = (VirtualFile)selectedValues[i];
+            }
+            return files;
+        }
+        return VirtualFile.EMPTY_ARRAY;
     }
 
     private static final class ThumbnailListCellRenderer extends ThumbnailComponent
@@ -316,8 +337,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             if (selectedValues != null) {
                 VirtualFile[] files = new VirtualFile[selectedValues.length];
                 for (int i = 0; i < selectedValues.length; i++) {
-                    Object value = selectedValues[i];
-                    files[i] = (VirtualFile)value;
+                    files[i] = (VirtualFile)selectedValues[i];
                 }
                 return files;
             }
