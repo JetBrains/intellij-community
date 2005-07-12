@@ -103,6 +103,8 @@ public interface InspectionProfile {
     UnusedSymbolSettings getUnusedSymbolSettings();
 
     void setUnusedSymbolSettings(UnusedSymbolSettings settings);
+
+    boolean isDefault();
   }
 
   static class UnusedSymbolSettings implements JDOMExternalizable{

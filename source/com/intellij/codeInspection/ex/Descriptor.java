@@ -134,7 +134,7 @@ public class Descriptor {
       myAdditionalConfigPanel = myTool.createOptionsPanel();
       return myAdditionalConfigPanel;
     }
-    
+
     if (myKey.equals(HighlightDisplayKey.UNKNOWN_JAVADOC_TAG)){
       myAdditionalConfigPanel = createAdditionalJavadocTagsPanel(inspectionProfile);
     } else if (myKey.equals(HighlightDisplayKey.UNKNOWN_HTML_TAG)){
@@ -151,6 +151,10 @@ public class Descriptor {
       }
     }
     return myAdditionalConfigPanel;
+  }
+
+  public void resetConfigPanel(){
+    myAdditionalConfigPanel = null;
   }
 
   public InspectionToolsPanel.LevelChooser getChooser() {

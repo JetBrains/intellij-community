@@ -500,6 +500,10 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     myUnusedSymbolSettings = settings;
   }
 
+  public boolean isDefault() {
+    return myDisplayLevelMap.isEmpty();
+  }
+
   public File getFile() {
     return myFile;
   }
