@@ -223,32 +223,38 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
 
     Set<PsiExpression> exprs = runner.getNullableArguments();
     for (PsiExpression expr : exprs) {
-      descriptions.add(manager.createProblemDescriptor(expr, "Argument <code>#ref</code> #loc is probably null", (LocalQuickFix [])null,
-                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+      final String text = isNullLiteralExpression(expr)
+                          ? "Passing <code>null</code> argument to parameter annotated as @NotNull"
+                          : "Argument <code>#ref</code> #loc is probably null";
+      descriptions.add(manager.createProblemDescriptor(expr, text, (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
     }
 
     exprs = runner.getNullableAssignments();
     for (PsiExpression expr : exprs) {
+      final String exprText = isNullLiteralExpression(expr)
+                              ? "<code>null</code>"
+                              : "Expression <code>#ref</code> probably evaluates to null and";
       descriptions.add(manager.createProblemDescriptor(expr,
-                                                       "Expression <code>#ref</code> probably evaluates to null and is being assigned " +
-                                                       "to a variable that is annotated with @NotNull",
+                                                       exprText + " is being assigned to a variable that is annotated with @NotNull",
                                                        (LocalQuickFix [])null,
                                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
     }
 
     final HashSet<PsiReturnStatement> statements = runner.getNullableReturns();
     for (PsiReturnStatement statement : statements) {
+      final PsiExpression expr = statement.getReturnValue();
+      final String exprText = isNullLiteralExpression(expr)
+                              ? "<code>null</code>"
+                              : "Expression <code>#ref</code> probably evaluates to null and";
       if (runner.isInNotNullMethod()) {
-        descriptions.add(manager.createProblemDescriptor(statement.getReturnValue(),
-                                                         "Expression <code>#ref</code> probably evaluates to null and is being " +
-                                                         "returned by the method declared as @NotNull",
+        descriptions.add(manager.createProblemDescriptor(expr,
+                                                         exprText + " is being returned by the method declared as @NotNull",
                                                          (LocalQuickFix [])null,
                                                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
       }
       else if (AnnotationUtil.isAnnotatingApplicable(statement)) {
-        descriptions.add(manager.createProblemDescriptor(statement.getReturnValue(),
-                                                         "Expression <code>#ref</code> probably evaluates to null and is being " +
-                                                         "returned by the method which isn't declared as @Nullable",
+        descriptions.add(manager.createProblemDescriptor(expr,
+                                                         exprText + " is being returned by the method which isn't declared as @Nullable",
                                                          new AnnotateMethodFix(AnnotationUtil.NULLABLE),
                                                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
 
@@ -256,6 +262,14 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     }
 
     return descriptions.toArray(new ProblemDescriptor[descriptions.size()]);
+  }
+
+  private static boolean isNullLiteralExpression(PsiExpression expr) {
+    if (expr instanceof PsiLiteralExpression) {
+      final PsiLiteralExpression literalExpression = (PsiLiteralExpression)expr;
+      return literalExpression.getType() == PsiType.NULL;
+    }
+    return false;
   }
 
   private static boolean onTheLeftSideOfConditionalAssignemnt(final PsiElement psiAnchor) {

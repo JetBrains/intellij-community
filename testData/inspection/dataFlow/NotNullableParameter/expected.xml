@@ -3,7 +3,7 @@
   <problem>
     <file>Npe.java</file>
     <line>9</line>
-    <description>Argument 'null' is probably null</description>
+    <description>Passing null argument to parameter annotated as @NotNull</description>
   </problem>
 </problems>
 

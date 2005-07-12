@@ -3,6 +3,6 @@
   <problem>
     <file>Npe.java</file>
     <line>6</line>
-    <description>Expression 'null' probably evaluates to null is being returned</description>
+    <description>null is being returned</description>
   </problem>
 </problems>
