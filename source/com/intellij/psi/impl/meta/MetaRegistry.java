@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.NamespaceFilter;
 import com.intellij.psi.filters.position.RootTagFilter;
@@ -12,10 +13,7 @@ import com.intellij.psi.filters.position.TargetNamespaceFilter;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.xml.XmlAttributeDecl;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlElementDecl;
-import com.intellij.psi.xml.XmlMarkupDecl;
+import com.intellij.psi.xml.*;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.jsp.impl.*;
 
@@ -93,11 +91,20 @@ public class MetaRegistry {
 
     {
       addMetadataBinding(
+        new OrFilter(
           new AndFilter(
               new NamespaceFilter(TAGLIB_URIS),
               new TextFilter("attribute")
           ),
-          TldAttributeDescriptor.class
+          new OrFilter(
+            new TextFilter("directive.attribute"),
+            new AndFilter(
+              new ClassFilter(JspDirective.class),
+              new TextFilter("attribute")
+            )
+          ) 
+         ),
+        TldAttributeDescriptor.class
       );
     }
     

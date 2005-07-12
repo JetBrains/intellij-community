@@ -24,7 +24,7 @@ import java.util.List;
  * Time: 8:55:41 PM
  * To change this template use File | Settings | File Templates.
  */
-public class TldTagDescriptor extends CustomTagDescriptorBase implements Validator {
+public class TldTagDescriptor extends CustomTagDescriptorBase  {
   private String myTagClass;
   private String myTeiClass;
 
@@ -109,6 +109,8 @@ public class TldTagDescriptor extends CustomTagDescriptorBase implements Validat
   }
 
   public void validate(PsiElement context,ValidationHost host) {
+    super.validate(context, host);
+    
     final WebModuleProperties properties = ((JspFile)context.getContainingFile()).getWebModuleProperties();
 
     if(properties != null) {
