@@ -1108,6 +1108,12 @@
     <action id="FindInPath">
       <keyboard-shortcut first-keystroke="control shift F"/>
     </action>
+    <action id="Refresh">
+      <keyboard-shortcut first-keystroke="control F5"/>
+    </action>
+    <action id="Rerun">
+      <keyboard-shortcut first-keystroke="control F5"/>
+    </action>
   </keymap>
 
   <!-- ############################################################################## -->
