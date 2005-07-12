@@ -22,9 +22,12 @@ import javax.swing.text.html.HTMLFrameHyperlinkEvent;
 import java.awt.*;
 import java.io.IOException;
 import java.io.StringReader;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.jetbrains.annotations.Nullable;
 
 public class Browser extends JPanel {
   private static final String UNDER_CONSTRUCTION = "Under construction";
@@ -198,8 +201,7 @@ public class Browser extends JPanel {
   private void fireClickEvent(VirtualFile file, int startPosition, int endPosition) {
     ClickEvent e = new ClickEvent(file, startPosition, endPosition);
 
-    for (int i = 0; i < myClickListeners.size(); i++) {
-      ClickListener listener = myClickListeners.get(i);
+    for (ClickListener listener : myClickListeners) {
       listener.referenceClicked(e);
     }
   }
@@ -264,12 +266,34 @@ public class Browser extends JPanel {
   }
 
   public void showDescription(InspectionTool tool){
+    if (tool.getShortName().length() == 0){
+      showEmpty();
+      return;
+    }
+    StringBuffer page = new StringBuffer("<html><title>");
+    HTMLComposer.appendHeading(page, "ID");
+    page.append("</title>&nbsp;&nbsp;<br>");
+    page.append(tool.getShortName());
+    page.append("<br>");
+    page.append("<title><br><font style=\"font-family:verdana; font-weight:bold; color:#005555\"; size = \"3\">Description:</font></title><br>");
+    final URL descriptionUrl = getDescriptionUrl(tool);
+    final String underConstruction = "<b>" + UNDER_CONSTRUCTION + "</b></html>";
     try {
-      myHTMLViewer.setPage(getDescriptionUrl(tool));
+      if (descriptionUrl != null){
+        final StringBuffer description = readInputStream(descriptionUrl.openStream());
+        if (description != null && description.toString().startsWith("<html>")) {
+          page.append(description.substring(description.indexOf("<html>") + 6));
+        } else {
+          page.append(underConstruction);
+        }
+      } else {
+        page.append(underConstruction);
+      }
+      myHTMLViewer.setText(page.toString());
     }
     catch (IOException e) {
       try {
-        myHTMLViewer.read(new StringReader("<html><body><b>" + UNDER_CONSTRUCTION + "</b></body></html>"), null);
+        myHTMLViewer.read(new StringReader(page.append(underConstruction).toString()), null);
       }
       catch (IOException e1) {
         //Can't be
@@ -279,13 +303,42 @@ public class Browser extends JPanel {
     }
   }
 
+  @Nullable
+  private static StringBuffer readInputStream(InputStream in) {
+    try {
+      StringBuffer str = new StringBuffer();
+      int c = in.read();
+      while (c != -1) {
+        str.append((char)c);
+        c = in.read();
+      }
+      return str;
+    }
+    catch (IOException e) {
+      return null;
+    }
+  }
+
   private URL getDescriptionUrl(InspectionTool tool) {
     Class aClass = tool instanceof LocalInspectionToolWrapper ? ((LocalInspectionToolWrapper)tool).getTool().getClass() : tool.getClass();
     return aClass.getResource("/inspectionDescriptions/" + tool.getDescriptionFileName());
   }
 
-  private InspectionTool getTool() { return myView.getSelectedTool(); }
+  @Nullable
+  private InspectionTool getTool() {
+    if (myView != null){
+      return myView.getSelectedTool();
+    }
+    return null;
+  }
 
-  private HTMLComposer getComposer() { return getTool().getComposer(); }
+  @Nullable
+  private HTMLComposer getComposer() {
+    final InspectionTool tool = getTool();
+    if (tool != null){
+      return tool.getComposer();
+    }
+    return null;
+  }
 }
 
