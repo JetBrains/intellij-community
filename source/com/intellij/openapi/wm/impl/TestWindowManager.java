@@ -60,7 +60,7 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
   }
 
   public final IdeFrame getFrame(final Project project) {
-    throw new UnsupportedOperationException();
+    return null;
   }
 
   public final IdeFrame allocateFrame(final Project project) {

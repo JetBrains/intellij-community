@@ -51,6 +51,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.IdeFrame;
 import com.intellij.psi.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
@@ -60,6 +63,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowFocusListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
@@ -103,6 +108,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   private AntConfigurationListener myAntConfigurationListener = new MyAntConfigurationListener();
   private EditorMouseMotionListener myEditorMouseMotionListener = new MyEditorMouseMotionListener();
 
+  private final WindowFocusListener myIdeFrameFocusListener = new MyWindowFocusListener();
+
   private DocumentListener myDocumentListener;
   private CaretListener myCaretListener;
   private ErrorStripeHandler myErrorStripeHandler;
@@ -116,6 +123,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   private boolean myDisposed;
   private boolean myInitialized;
+
+  private boolean myIsFrameFocused = true;
 
   protected DaemonCodeAnalyzerImpl(Project project, DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings) {
     myProject = project;
@@ -163,7 +172,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
     myEditorTracker = createEditorTracker();
     myEditorTracker.addEditorTrackerListener(new EditorTrackerListener() {
-      public void activeEditorsChanged() {
+      public void activeEditorsChanged(final Editor[] editors) {
         stopProcess(true);
       }
     });
@@ -208,6 +217,11 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
       }
     );
 
+    IdeFrame frame = ((WindowManagerEx)WindowManager.getInstance()).getFrame(myProject);
+    if (frame != null) {
+      frame.addWindowFocusListener(myIdeFrameFocusListener);
+    }
+
     myInitialized = true;
   }
 
@@ -245,6 +259,11 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     stopProcess(false);
     myUpdateThreadSemaphore.waitFor();
     myLastSettings = null;
+
+    IdeFrame frame = ((WindowManagerEx)WindowManager.getInstance()).getFrame(myProject);
+    if (frame != null) {
+      frame.addWindowFocusListener(myIdeFrameFocusListener);
+    }
   }
 
   public void settingsChanged() {
@@ -366,7 +385,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   public void stopProcess(boolean toRestartAlarm) {
     myAlarm.cancelAllRequests();
-    if (toRestartAlarm && !myDisposed && myInitialized) {
+    if (toRestartAlarm && !myDisposed && myInitialized && myIsFrameFocused) {
       LOG.assertTrue(!ApplicationManager.getApplication().isUnitTestMode());
       myAlarm.addRequest(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY);
     }
@@ -763,6 +782,24 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
     public void mouseDragged(EditorMouseEvent e) {
       HintManager.getInstance().getTooltipController().cancelTooltips();
+    }
+  }
+
+  private class MyWindowFocusListener implements WindowFocusListener {
+    public void windowGainedFocus(WindowEvent e) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("windowGainedFocus for IdeFrame");
+      }
+      myIsFrameFocused = true;
+      stopProcess(true);
+    }
+
+    public void windowLostFocus(WindowEvent e) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("windowLostFocus for IdeFrame");
+      }
+      myIsFrameFocused = false;
+      stopProcess(false);
     }
   }
 }

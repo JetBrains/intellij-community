@@ -18,8 +18,10 @@ import com.intellij.util.EventDispatcher;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class EditorTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.EditorTracker");
@@ -204,7 +206,6 @@ public class EditorTracker {
 
   private void setActiveWindow(Window window) {
     myActiveWindow = window;
-
     if (myActiveWindow == null || myActiveWindow == myIdeFrame) {
       setActiveEditors(EMPTY_EDITOR_ARRAY);
     }
@@ -251,7 +252,7 @@ public class EditorTracker {
       }
     }
 
-    myDispatcher.getMulticaster().activeEditorsChanged();
+    myDispatcher.getMulticaster().activeEditorsChanged(editors);
   }
 
   public void addEditorTrackerListener(EditorTrackerListener listener) {
