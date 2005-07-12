@@ -9,7 +9,9 @@ import gnu.trove.THashMap;
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.util.EventListener;
 import java.util.EventObject;
 import java.util.Map;
@@ -17,7 +19,7 @@ import java.util.Map;
 public class LightweightHint implements Hint, UserDataHolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.LightweightHint");
 
-  private final MyResizableComponent myComponent;
+  private final JComponent myComponent;
   private JComponent myFocusBackComponent;
   private final Map<Key,Object> myUserMap = new THashMap<Key, Object>(1);
   private final EventListenerList myListenerList = new EventListenerList();
@@ -25,7 +27,7 @@ public class LightweightHint implements Hint, UserDataHolder {
 
   public LightweightHint(final JComponent component) {
     LOG.assertTrue(component != null);
-    myComponent = new MyResizableComponent(component);
+    myComponent = component;
   }
 
   /**
@@ -38,7 +40,7 @@ public class LightweightHint implements Hint, UserDataHolder {
 
     myFocusBackComponent = focusBackComponent;
 
-    final Dimension preferredSize = myComponent.getComponent().getPreferredSize();
+    final Dimension preferredSize = myComponent.getPreferredSize();
 
     LOG.assertTrue(parentComponent.isShowing());
     myEscListener = new MyEscListener();
@@ -118,7 +120,7 @@ public class LightweightHint implements Hint, UserDataHolder {
   }
 
   public final JComponent getComponent() {
-    return myComponent.getComponent();
+    return myComponent;
   }
 
   public <T> T getUserData(final Key<T> key) {
@@ -145,56 +147,6 @@ public class LightweightHint implements Hint, UserDataHolder {
   private final class MyEscListener implements ActionListener {
     public final void actionPerformed(final ActionEvent e) {
       LightweightHint.this.hide();
-    }
-  }
-
-  private final class MyResizableComponent extends JPanel{
-    private final JComponent myComponent;
-    private Point myLastPoint;
-    private Rectangle myBounds;
-
-
-    public MyResizableComponent(final JComponent component) {
-      myComponent = component;
-      setLayout(new BorderLayout());
-      add(myComponent, BorderLayout.CENTER);
-      enableEvents(AWTEvent.KEY_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
-    }
-
-    public JComponent getComponent() {
-      return myComponent;
-    }
-
-    protected void processMouseEvent(MouseEvent e) {
-      if (e.getID() == MouseEvent.MOUSE_PRESSED) {
-           myLastPoint = e.getPoint();
-           myBounds = myComponent.getBounds();
-         }
-         else if(e.getID()==MouseEvent.MOUSE_DRAGGED){
-           final int dx = e.getX() - myLastPoint.x;
-            myBounds.x += dx;
-            myBounds.width -= dx;
-
-           final Dimension minSize = myComponent.getMinimumSize();
-
-           final Rectangle newBounds = myComponent.getBounds();
-
-           // Component's bounds cannot be less the some minimum size
-           if (myBounds.width >= minSize.width) {
-             newBounds.x = myBounds.x;
-             newBounds.width = myBounds.width;
-           }
-
-           final Dimension size = newBounds.getSize();
-           newBounds.width = size.width;
-           newBounds.height = size.height;
-
-           myComponent.setBounds(newBounds);
-
-
-           myLastPoint=e.getPoint();
-         }
-      super.processMouseEvent(e);
     }
   }
 }
