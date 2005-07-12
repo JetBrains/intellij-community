@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -128,6 +129,9 @@ public class TooBroadScopeInspection extends StatementInspection
                 (PsiDeclarationStatement)commonParent.addAfter(newDeclaration,
                                                                location);
             }
+
+
+            newDeclaration = (PsiDeclarationStatement) CodeStyleManager.getInstance(project).reformat(newDeclaration);
 
             removeOldVariable(variable);
             highlightElement(newDeclaration);
