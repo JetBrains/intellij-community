@@ -8,7 +8,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class Splash extends JWindow {
-  private static final Color ideaDARK_BLUE = new Color(40, 60, 180);
+  private static final Color ideaDARK_BLUE = new Color(0, 35, 135);
   private Icon myImage;
   private JLabel myLabel;
   private boolean myShowLicenseeInfo;
