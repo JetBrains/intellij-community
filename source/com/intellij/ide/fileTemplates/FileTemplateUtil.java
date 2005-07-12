@@ -304,8 +304,14 @@ public class FileTemplateUtil{
   }
 
   private static PsiFile createPsiFile(Project project, PsiDirectory directory, String content, String fileName, String extension) throws IncorrectOperationException{
-    directory.checkCreateFile(fileName + "." + extension);
-    PsiFile file = PsiManager.getInstance(project).getElementFactory().createFileFromText(fileName + "." + extension, content);
+    final String suggestedFileNameEnd = "." + extension;
+    
+    if (!fileName.endsWith(suggestedFileNameEnd)) {
+      fileName = fileName + suggestedFileNameEnd;
+    }
+    
+    directory.checkCreateFile(fileName);
+    PsiFile file = PsiManager.getInstance(project).getElementFactory().createFileFromText(fileName, content);
     file = (PsiFile)directory.add(file);
     return file;
   }
