@@ -2,6 +2,8 @@ package com.intellij.diagnostic.logging;
 
 import com.intellij.execution.filters.TextConsoleBuidlerFactory;
 import com.intellij.execution.filters.TextConsoleBuilder;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleView;
@@ -18,18 +20,16 @@ import java.io.*;
  * User: anna
  * Date: Apr 19, 2005
  */
-public abstract class LogConsoleTab extends JPanel implements Disposable{
+public abstract class LogConsole extends JPanel implements Disposable{
   private final ConsoleView myConsole;
-  private final Project myProject;
   private final LightProcessHandler myProcessHandler = new LightProcessHandler();
   private ReaderThread myReaderThread;
 
   private static final long PROCESS_IDLE_TIMEOUT = 200;
-  public LogConsoleTab(Project project, File file) {
+  public LogConsole(Project project, File file) {
     super(new BorderLayout());
-    myProject = project;
     myReaderThread = new ReaderThread(file);
-    TextConsoleBuilder builder = TextConsoleBuidlerFactory.getInstance().createBuilder(myProject);
+    TextConsoleBuilder builder = TextConsoleBuidlerFactory.getInstance().createBuilder(project);
     myConsole = builder.getConsole();
     myConsole.attachToProcess(myProcessHandler);
     add(myConsole.getComponent(), BorderLayout.CENTER);
@@ -55,6 +55,18 @@ public abstract class LogConsoleTab extends JPanel implements Disposable{
     myProcessHandler.notifyTextAvailable(text + "\n", ProcessOutputTypes.STDOUT);
   }
 
+  public void attachStopLogConsoleTrackingListener(final ProcessHandler process) {
+    if (process != null) {
+      final ProcessAdapter stopListener = new ProcessAdapter() {
+        public void processTerminated(final ProcessEvent event) {
+          process.removeProcessListener(this);
+          stopRunning();
+        }
+      };
+      process.addProcessListener(stopListener);
+    }
+  }
+
   private static class LightProcessHandler extends ProcessHandler {
     protected void destroyProcessImpl() {
       throw new UnsupportedOperationException();
@@ -74,7 +86,7 @@ public abstract class LogConsoleTab extends JPanel implements Disposable{
     }
   }
 
-  private static final Logger LOG = Logger.getInstance("com.intellij.diagnostic.logging.LogConsoleTab");
+  private static final Logger LOG = Logger.getInstance("com.intellij.diagnostic.logging.LogConsole");
 
   private class ReaderThread extends Thread{
     private BufferedReader myFileStream;
@@ -102,7 +114,7 @@ public abstract class LogConsoleTab extends JPanel implements Disposable{
         try {
           long endTime = System.currentTimeMillis() + PROCESS_IDLE_TIMEOUT;
           while (System.currentTimeMillis() < endTime){
-            if (myFileStream.ready()){
+            if (myRunning && myFileStream != null && myFileStream.ready()){
               addMessage(myFileStream.readLine());
             }
           }
@@ -124,6 +136,15 @@ public abstract class LogConsoleTab extends JPanel implements Disposable{
 
     public void stopRunning(){
       myRunning = false;
+      try {
+        if (myFileStream != null){
+          myFileStream.close();
+          myFileStream = null;
+        }
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
     }
 
   }

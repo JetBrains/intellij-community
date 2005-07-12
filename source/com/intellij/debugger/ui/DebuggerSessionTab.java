@@ -13,7 +13,7 @@ import com.intellij.debugger.ui.impl.FramePanel;
 import com.intellij.debugger.ui.impl.MainWatchPanel;
 import com.intellij.debugger.ui.impl.ThreadsPanel;
 import com.intellij.debugger.ui.impl.watch.*;
-import com.intellij.diagnostic.logging.LogConsoleTab;
+import com.intellij.diagnostic.logging.LogConsole;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionResult;
@@ -22,6 +22,7 @@ import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.junit.JUnitConfiguration;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RestartAction;
 import com.intellij.execution.ui.CloseAction;
@@ -101,7 +102,7 @@ public class DebuggerSessionTab {
   private final MyDebuggerStateManager myStateManager = new MyDebuggerStateManager();
   private static final Key LOG_CONTENTS = Key.create("LogContent");
 
-  private ArrayList<LogConsoleTab> myLogTabs = new ArrayList<LogConsoleTab>();
+  private ArrayList<LogConsole> myLogTabs = new ArrayList<LogConsole>();
 
   public DebuggerSessionTab(Project project) {
     myProject = project;
@@ -238,10 +239,11 @@ public class DebuggerSessionTab {
       clearLogContents();
       RunConfigurationBase base = (RunConfigurationBase)myConfiguration;
       final Map<Pair<String,String>,Boolean> logFiles = base.getLogFiles();
+      final ProcessHandler processHandler = myRunContentDescriptor.getProcessHandler();
       for (Iterator<Pair<String,String>> iterator = logFiles.keySet().iterator(); iterator.hasNext();) {
         Pair<String,String>  pair = iterator.next();
         if (logFiles.get(pair).booleanValue()){
-          final LogConsoleTab logTab = new LogConsoleTab(myProject, new File(pair.first)){
+          final LogConsole log = new LogConsole(myProject, new File(pair.first)){
             public boolean isActive() {
               final Content selectedContent = myViewsContentManager.getSelectedContent();
               if (selectedContent == null){
@@ -251,8 +253,9 @@ public class DebuggerSessionTab {
               return selectedContent.getComponent() == this;
             }
           };
-          myLogTabs.add(logTab);
-          Content logContent = PeerFactory.getInstance().getContentFactory().createContent(logTab.getComponent(), "Log: " + pair.second, false);
+          myLogTabs.add(log);
+          log.attachStopLogConsoleTrackingListener(processHandler);
+          Content logContent = PeerFactory.getInstance().getContentFactory().createContent(log.getComponent(), "Log: " + pair.second, false);
           //todo icons
           logContent.putUserData(CONTENT_KIND, LOG_CONTENTS);
           logContents.add(logContent);
@@ -390,10 +393,10 @@ public class DebuggerSessionTab {
     myWatchPanel.dispose();
     myViewsContentManager.removeAllContents();
 
-    for (Iterator<LogConsoleTab> iterator = myLogTabs.iterator(); iterator.hasNext();) {
+    for (Iterator<LogConsole> iterator = myLogTabs.iterator(); iterator.hasNext();) {
       iterator.next().dispose();
     }
-    
+
     myConsole = null;
   }
 

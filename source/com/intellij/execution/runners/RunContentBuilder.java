@@ -4,7 +4,7 @@
  */
 package com.intellij.execution.runners;
 
-import com.intellij.diagnostic.logging.LogConsoleTab;
+import com.intellij.diagnostic.logging.LogConsole;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunConfigurationBase;
@@ -96,17 +96,19 @@ public class RunContentBuilder {
               RunConfigurationBase base = (RunConfigurationBase)myRunProfile;
               final Map<Pair<String,String>,Boolean> logFiles = base.getLogFiles();
               if (!logFiles.isEmpty()){
+                final ProcessHandler processHandler = myExecutionResult.getProcessHandler();
                 myComponent = new JTabbedPane();
                 ((JTabbedPane)myComponent).addTab("Console", console.getComponent());
                 for (Pair<String, String> pair : logFiles.keySet()) {
                   if (logFiles.get(pair).booleanValue()) {
-                    final LogConsoleTab logTab = new LogConsoleTab(myProject, new File(pair.first)){
+                    final LogConsole log = new LogConsole(myProject, new File(pair.first)){
                       public boolean isActive() {
                         return ((JTabbedPane)myComponent).getSelectedComponent() == this;  
                       }
                     };
-                    myDisposeables.add(logTab);
-                    ((JTabbedPane)myComponent).addTab("Log: " + pair.second, logTab);
+                    myDisposeables.add(log);
+                    log.attachStopLogConsoleTrackingListener(processHandler);
+                    ((JTabbedPane)myComponent).addTab("Log: " + pair.second, log);
                   }
                 }
               }
@@ -184,8 +186,7 @@ public class RunContentBuilder {
     }
 
     public void dispose() {
-      for (int i = 0; i < myAdditionalDisposables.length; i++) {
-        final Disposable disposable = myAdditionalDisposables[i];
+      for (final Disposable disposable : myAdditionalDisposables) {
         disposable.dispose();
       }
       super.dispose();
