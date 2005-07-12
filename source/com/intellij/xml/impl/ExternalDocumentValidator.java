@@ -95,16 +95,7 @@ public class ExternalDocumentValidator {
           return true;
         }
         
-        super.filterValidationException(ex);
-        if (ex instanceof FileNotFoundException ||
-            ex instanceof MalformedURLException || 
-            ex instanceof NoRouteToHostException || 
-            ex instanceof ConnectException
-            ) {
-          // do not log problems caused by malformed and/or ignored external resources
-          return true;
-        }
-        return false;
+        return super.filterValidationException(ex);
       }
 
       public void processError(final SAXParseException e, final boolean warning) {

@@ -36,7 +36,11 @@ import javax.swing.*;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.StringReader;
+import java.io.FileNotFoundException;
 import java.net.UnknownHostException;
+import java.net.MalformedURLException;
+import java.net.NoRouteToHostException;
+import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -77,6 +81,16 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
 
     public boolean filterValidationException(Exception ex) {
       if (ex instanceof ProcessCanceledException) throw (ProcessCanceledException)ex;
+      
+      if (ex instanceof FileNotFoundException ||
+            ex instanceof MalformedURLException || 
+            ex instanceof NoRouteToHostException || 
+            ex instanceof ConnectException
+            ) {
+        // do not log problems caused by malformed and/or ignored external resources
+        return true;
+      }
+        
       return false;
     }
 
