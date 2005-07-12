@@ -30,6 +30,7 @@ public class RmicConfigurable implements Configurable{
         setOptionsEnabled(e.getStateChange() == ItemEvent.SELECTED);
       }
     });
+    myAdditionalOptionsField.setDialodCaption(myFieldLabel.getText());
   }
 
   private void setOptionsEnabled(final boolean selected) {

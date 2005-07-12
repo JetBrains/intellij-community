@@ -22,6 +22,7 @@ public class JavacConfigurable implements Configurable{
 
   public JavacConfigurable(final JavacSettings javacSettings) {
     myJavacSettings = javacSettings;
+    myAdditionalOptionsField.setDialodCaption("Additional command line parameters:");
   }
 
   public String getDisplayName() {
