@@ -44,11 +44,11 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
 
-  protected int getWrapType(final int type) {
-    if (type == CodeStyleSettings.DO_NOT_WRAP) return Wrap.NONE;
-    if (type == CodeStyleSettings.WRAP_ALWAYS) return Wrap.ALWAYS;
-    if (type == CodeStyleSettings.WRAP_AS_NEEDED) return Wrap.NORMAL;
-    return Wrap.CHOP_DOWN_IF_LONG;
+  protected WrapType getWrapType(final int type) {
+    if (type == CodeStyleSettings.DO_NOT_WRAP) return WrapType.NONE;
+    if (type == CodeStyleSettings.WRAP_ALWAYS) return WrapType.ALWAYS;
+    if (type == CodeStyleSettings.WRAP_AS_NEEDED) return WrapType.NORMAL;
+    return WrapType.CHOP_DOWN_IF_LONG;
   }
 
   protected Alignment chooseAlignment(final ASTNode child, final Alignment attrAlignment, final Alignment textAlignment) {

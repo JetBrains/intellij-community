@@ -31,18 +31,37 @@
  */
 package com.intellij.formatting;
 
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-
 /**
- * A factory for standard formatting model implementations. Not to be used directly
- * by plugins - use {@link FormattingModelProvider} instead.
+ * Defines possible types of a wrap.
  *
- * @see FormattingModelProvider 
+ * @see Wrap#createWrap(WrapType, boolean)
+ * @see Wrap#createChildWrap(Wrap, WrapType, boolean)
  */
 
-interface FormattingModelFactory {
-  FormattingModel createFormattingModelForPsiFile(PsiFile file,
-                                                  Block rootBlock,
-                                                  CodeStyleSettings settings);
+public enum WrapType {
+  /**
+   * A line break is always inserted before the start of the element.
+   * This corresponds to the "Wrap always" setting in Global Code Style | Wrapping.
+   */
+  ALWAYS,
+
+  /**
+   * A line break is inserted before the start of the element if the right edge
+   * of the element goes beyond the specified wrap margin.
+   * This corresponds to the "Wrap if long" setting in Global Code Style | Wrapping.
+   */
+  NORMAL,
+
+  /**
+   * A line break is never inserted before the start of the element.
+   * This corresponds to the "Do not wrap" setting in Global Code Style | Wrapping.
+   */
+  NONE,
+
+  /**
+   * A line break is inserted before the start of the element if it is a part
+   * of list of elements of the same type and at least one of the elements was wrapped.
+   * This corresponds to the "Chop down if long" setting in Global Code Style | Wrapping.
+   */
+  CHOP_DOWN_IF_LONG
 }

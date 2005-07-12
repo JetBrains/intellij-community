@@ -1,6 +1,6 @@
 package com.intellij.psi.formatter.xml;
 
-import com.intellij.formatting.Wrap;
+import com.intellij.formatting.WrapType;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -96,15 +96,15 @@ public class HtmlPolicy extends XmlFormattingPolicy{
     return checkName(tag, mySettings.HTML_KEEP_WHITESPACES_INSIDE);
   }
 
-  public int getWrappingTypeForTagEnd(final XmlTag xmlTag) {
-    return shouldBeWrapped(xmlTag)? Wrap.ALWAYS : Wrap.NORMAL;
+  public WrapType getWrappingTypeForTagEnd(final XmlTag xmlTag) {
+    return shouldBeWrapped(xmlTag)? WrapType.ALWAYS : WrapType.NORMAL;
   }
 
-  public int getWrappingTypeForTagBegin(final XmlTag tag) {
+  public WrapType getWrappingTypeForTagBegin(final XmlTag tag) {
     if (mySettings.HTML_WRAP_TAG_BEGIN || shouldBeWrapped(tag) || checkName(tag, mySettings.HTML_PLACE_ON_NEW_LINE)) {
-      return Wrap.ALWAYS;
+      return WrapType.ALWAYS;
     } else {
-      return Wrap.NORMAL;
+      return WrapType.NORMAL;
     }
   }
 

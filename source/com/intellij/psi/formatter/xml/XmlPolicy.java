@@ -1,8 +1,7 @@
 package com.intellij.psi.formatter.xml;
 
-import com.intellij.formatting.Wrap;
+import com.intellij.formatting.WrapType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 
@@ -30,13 +29,13 @@ public class XmlPolicy extends XmlFormattingPolicy{
     return false;
   }
 
-  public int getWrappingTypeForTagEnd(final XmlTag xmlTag) {
-    return xmlTag.getSubTags().length > 0 ? Wrap.ALWAYS
-           : Wrap.NORMAL;
+  public WrapType getWrappingTypeForTagEnd(final XmlTag xmlTag) {
+    return xmlTag.getSubTags().length > 0 ? WrapType.ALWAYS
+           : WrapType.NORMAL;
   }
 
-  public int getWrappingTypeForTagBegin(final XmlTag tag) {
-    return Wrap.ALWAYS;
+  public WrapType getWrappingTypeForTagBegin(final XmlTag tag) {
+    return WrapType.ALWAYS;
   }
 
   public boolean isTextElement(XmlTag tag) {

@@ -1,11 +1,8 @@
 package com.intellij.formatting;
 
-import com.intellij.formatting.Wrap;
-import com.intellij.formatting.LeafBlockWrapper;
-
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.Collection;
 
 class WrapImpl extends Wrap {
   private LeafBlockWrapper myFirstEntry = null;
@@ -90,7 +87,7 @@ class WrapImpl extends Wrap {
 
   private final Type myType;
 
-  public WrapImpl(int type, boolean wrapFirstElement) {
+  public WrapImpl(WrapType type, boolean wrapFirstElement) {
     switch(type) {
         case NORMAL: myType = Type.WRAP_AS_NEEDED;break;
         case NONE: myType= Type.DO_NOT_WRAP;break;

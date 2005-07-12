@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.formatting.WrapType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -53,9 +54,9 @@ public abstract class XmlFormattingPolicy {
     myRootToBlockMap = rootToBlockMap;
   }
 
-  public abstract int getWrappingTypeForTagEnd(XmlTag xmlTag);
+  public abstract WrapType getWrappingTypeForTagEnd(XmlTag xmlTag);
 
-  public abstract int getWrappingTypeForTagBegin(final XmlTag tag);
+  public abstract WrapType getWrappingTypeForTagBegin(final XmlTag tag);
 
   public abstract boolean insertLineBreakBeforeTag(XmlTag xmlTag);
 

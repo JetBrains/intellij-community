@@ -49,11 +49,11 @@ public class FormatterImpl extends FormatterEx
     return NONE_INDENT;
   }
 
-  public Wrap createWrap(int type, boolean wrapFirstElement) {
+  public Wrap createWrap(WrapType type, boolean wrapFirstElement) {
     return new WrapImpl(type, wrapFirstElement);
   }
 
-  public Wrap createChildWrap(final Wrap parentWrap, final int wrapType, final boolean wrapFirstElement) {
+  public Wrap createChildWrap(final Wrap parentWrap, final WrapType wrapType, final boolean wrapFirstElement) {
     final WrapImpl result = new WrapImpl(wrapType, wrapFirstElement);
     result.registerParent((WrapImpl)parentWrap);
     return result;

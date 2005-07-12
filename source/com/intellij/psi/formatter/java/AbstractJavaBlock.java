@@ -678,16 +678,16 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
   }
 
-  protected int getWrapType(final int wrap) {
+  protected WrapType getWrapType(final int wrap) {
     switch (wrap) {
-      case Wrap.ALWAYS:
-        return CodeStyleSettings.WRAP_ALWAYS;
-      case Wrap.NORMAL:
-        return CodeStyleSettings.WRAP_AS_NEEDED;
-      case Wrap.NONE:
-        return CodeStyleSettings.DO_NOT_WRAP;
+      case CodeStyleSettings.WRAP_ALWAYS:
+        return WrapType.ALWAYS;
+      case CodeStyleSettings.WRAP_AS_NEEDED:
+        return WrapType.NORMAL;
+      case CodeStyleSettings.DO_NOT_WRAP:
+        return WrapType.NONE;
       default:
-        return CodeStyleSettings.WRAP_ON_EVERY_ITEM;
+        return WrapType.CHOP_DOWN_IF_LONG;
     }
   }
 

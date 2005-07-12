@@ -3,16 +3,16 @@ package com.intellij.formatting;
 import com.intellij.openapi.diagnostic.Logger;
 
 public abstract class Wrap {
-  public static final int ALWAYS = 0;
-  public static final int NORMAL = 1;
-  public static final int NONE = 2;
-  public static final int CHOP_DOWN_IF_LONG = 3;
-
   public abstract void ignoreParentWraps();
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.Wrap");
 
   private static WrapFactory myFactory;
+
+  public static WrapType ALWAYS = WrapType.ALWAYS;
+  public static WrapType NORMAL = WrapType.NORMAL;
+  public static WrapType NONE = WrapType.NONE;
+  public static WrapType CHOP_DOWN_IF_LONG = WrapType.CHOP_DOWN_IF_LONG;
 
   static void setFactory(WrapFactory factory) {
     LOG.assertTrue(myFactory == null);
@@ -21,11 +21,11 @@ public abstract class Wrap {
     }
   }
 
-  public static Wrap createWrap(int type, boolean wrapFirstElement){
+  public static Wrap createWrap(WrapType type, boolean wrapFirstElement){
     return myFactory.createWrap(type, wrapFirstElement);
   }
 
-  public static Wrap createChildWrap(final Wrap parentWrap, final int wrapType, final boolean wrapFirstElement){
+  public static Wrap createChildWrap(final Wrap parentWrap, final WrapType wrapType, final boolean wrapFirstElement){
     return myFactory.createChildWrap(parentWrap, wrapType, wrapFirstElement);    
   }
 
