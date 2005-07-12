@@ -3,6 +3,7 @@ package com.intellij.psi.impl.file.impl;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -11,7 +12,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
-import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -366,7 +366,7 @@ public class FileManagerImpl implements FileManager {
       final Project project = myManager.getProject();
       if (fileType instanceof LanguageFileType) {
         final Language language = ((LanguageFileType)fileType).getLanguage();
-        if (!isTooLarge(vFile)) {
+        if (language == StdLanguages.JAVA || !isTooLarge(vFile)) {
           final ParserDefinition parserDefinition = language.getParserDefinition();
           if (parserDefinition != null) {
             return parserDefinition.createFile(project, vFile);
