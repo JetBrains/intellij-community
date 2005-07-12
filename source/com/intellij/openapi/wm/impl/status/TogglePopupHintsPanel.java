@@ -5,7 +5,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.impl.EmptyIcon;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.impl.EditorMarkupHintComponent;
+import com.intellij.openapi.editor.impl.HectorComponent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -33,7 +33,7 @@ public class TogglePopupHintsPanel extends JLabel {
         final PsiFile file = getCurrentFile();
         if (editor != null && file != null) {
           point = SwingUtilities.convertPoint(TogglePopupHintsPanel.this, point, editor.getComponent().getRootPane().getLayeredPane());
-          final EditorMarkupHintComponent component = new EditorMarkupHintComponent(file);
+          final HectorComponent component = new HectorComponent(file);
           final Dimension dimension = component.getPreferredSize();
           point = new Point(point.x - dimension.width, point.y - dimension.height);
           component.showComponent(editor, point);

@@ -523,7 +523,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           next.setSelected(!isErrorsFirst);
           hLevel.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-              final EditorMarkupHintComponent component = new EditorMarkupHintComponent(
+              final HectorComponent component = new HectorComponent(
                 (PsiFile)myEditor.getDataContext().getData(DataConstants.PSI_FILE));
               final Dimension dimension = component.getPreferredSize();
               Point point = new Point(x, y);
