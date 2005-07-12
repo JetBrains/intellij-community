@@ -27,6 +27,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.Nullable;
+
 public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor implements Navigatable {
   private int myUsageCount = 1;
   private final static Class<? extends PsiMember>[] ourEnclosingElementClasses = new Class[]{PsiMethod.class, PsiClass.class};
@@ -155,7 +157,9 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
     if (callElement instanceof Navigatable && ((Navigatable)callElement).canNavigate()) {
       ((Navigatable)callElement).navigate(requestFocus);
     } else {
-      FileEditorManager.getInstance(myProject).openFile(callElement.getContainingFile().getVirtualFile(), requestFocus);
+      final PsiFile psiFile = callElement.getContainingFile();
+      if (psiFile == null) return;
+      FileEditorManager.getInstance(myProject).openFile(psiFile.getVirtualFile(), requestFocus);
     }
 
     Editor editor = getEditor(callElement);
@@ -174,6 +178,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
     }
   }
 
+  @Nullable
   private Editor getEditor(final PsiElement callElement) {
     final FileEditor editor = FileEditorManager.getInstance(myProject).getSelectedEditor(callElement.getContainingFile().getVirtualFile());
     if (editor instanceof TextEditor) {
@@ -184,7 +189,14 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
   }
 
   public boolean canNavigate() {
-    return !myReferences.isEmpty();
+    if (myReferences.isEmpty()) return false;
+    final PsiReference firstReference = myReferences.get(0);
+    final PsiElement callElement = firstReference.getElement().getParent();
+    if (!(callElement instanceof Navigatable) || !((Navigatable)callElement).canNavigate()) {
+      final PsiFile psiFile = callElement.getContainingFile();
+      if (psiFile == null) return false;
+    }
+    return true;
   }
 
   public boolean canNavigateToSource() {
