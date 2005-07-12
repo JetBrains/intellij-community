@@ -53,7 +53,7 @@ public class VcsGroupsWrapper extends DefaultActionGroup {
   }
 
   public void update(AnActionEvent e) {
-    VcsContext dataContext = VcsContextWrapper.on(e);
+    VcsContext dataContext = VcsContextWrapper.createInstanceOn(e);
     if (myChildren == null) {
       DefaultActionGroup vcsGroupsGroup = (DefaultActionGroup)ActionManager.getInstance().getAction("VcsGroup");
       ArrayList<AnAction> validChildren = new ArrayList<AnAction>();

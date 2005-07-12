@@ -99,11 +99,11 @@ public abstract class AbstractVcsAction extends AnAction {
 
   public final void update(AnActionEvent e) {
     super.update(e);
-    update(VcsContextWrapper.on(e), e.getPresentation());
+    update(VcsContextWrapper.createInstanceOn(e), e.getPresentation());
   }
 
   public final void actionPerformed(AnActionEvent e) {
-    actionPerformed(VcsContextWrapper.on(e));
+    actionPerformed(VcsContextWrapper.createCachedInstanceOn(e));
   }
 
   protected abstract void actionPerformed(VcsContext e);

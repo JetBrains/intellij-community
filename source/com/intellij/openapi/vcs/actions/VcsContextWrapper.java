@@ -73,8 +73,12 @@ public class VcsContextWrapper implements VcsContext {
     return (PsiElement)myContext.getData(DataConstants.PSI_ELEMENT);
   }
 
-  public static VcsContext on(AnActionEvent event) {
-    return new CachedVcsContext(new VcsContextWrapper(event.getDataContext(), event.getModifiers(), event.getPlace()));
+  public static VcsContext createCachedInstanceOn(AnActionEvent event) {
+    return new CachedVcsContext(createCachedInstanceOn(event));
+  }
+
+  public static VcsContextWrapper createInstanceOn(final AnActionEvent event) {
+    return new VcsContextWrapper(event.getDataContext(), event.getModifiers(), event.getPlace());
   }
 
   public Project getProject() {

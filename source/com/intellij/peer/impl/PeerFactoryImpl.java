@@ -230,7 +230,7 @@ public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent
   public VcsContextFactory getVcsContextFactory() {
     return new VcsContextFactory() {
       public VcsContext createCachedContextOn(AnActionEvent event) {
-        return VcsContextWrapper.on(event);
+        return VcsContextWrapper.createCachedInstanceOn(event);
       }
 
       public VcsContext createContextOn(final AnActionEvent event) {
