@@ -158,7 +158,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
       ((Navigatable)callElement).navigate(requestFocus);
     } else {
       final PsiFile psiFile = callElement.getContainingFile();
-      if (psiFile == null) return;
+      if (psiFile == null || psiFile.getVirtualFile() == null) return;
       FileEditorManager.getInstance(myProject).openFile(psiFile.getVirtualFile(), requestFocus);
     }
 

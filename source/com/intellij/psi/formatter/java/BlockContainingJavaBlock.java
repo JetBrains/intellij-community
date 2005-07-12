@@ -7,6 +7,7 @@ import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.codeFormatting.general.FormatterUtil;
+import com.intellij.openapi.diagnostic.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +25,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
   public BlockContainingJavaBlock(final ASTNode node, final Wrap wrap, final Alignment alignment, final Indent indent, CodeStyleSettings settings) {
     super(node, wrap, alignment, indent, settings);
   }
-
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.java.BlockContainingJavaBlock");
   protected List<Block> buildChildren() {
     final ArrayList<Block> result = new ArrayList<Block>();
     Alignment childAlignment = createChildAlignment();
@@ -48,6 +49,9 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
         myIndentsBefore.add(calcIndentBefore(child,  state));
         state = calcNewState(child, state);
         child = processChild(result, child, childAlignment, childWrap, indent);
+        for (int i = myIndentsBefore.size(); i < result.size(); i++) {
+          myIndentsBefore.add(Indent.createContinuationIndent());
+        }
       }
       if (child != null) {
         child = child.getTreeNext();

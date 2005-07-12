@@ -1,8 +1,5 @@
 package com.intellij.formatting;
 
-import com.intellij.formatting.FormattingDocumentModel;
-import com.intellij.formatting.IndentInfo;
-import com.intellij.formatting.SpaceProperty;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -51,7 +48,7 @@ class WhiteSpace {
     myTextRange = new TextRange(myTextRange.getStartOffset(), newEndOffset);
     myInitial = model.getText(myTextRange);
     
-    if (myInitial != null && myInitial.toString().trim().length() > 0) {
+    if (LOG.isDebugEnabled() && myInitial != null && myInitial.toString().trim().length() > 0) {
       LOG.assertTrue(false, model.getText(new TextRange(0, model.getTextLength())).toString() + ":" + myInitial.toString());
     }
 
