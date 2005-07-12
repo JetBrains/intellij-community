@@ -2,18 +2,10 @@
 package org.intellij.images.vfs;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.intellij.images.options.Options;
-import org.intellij.images.options.OptionsManager;
-import org.intellij.images.options.impl.OptionsConfigurabe;
-import org.intellij.images.fileTypes.ImageFileTypeManager;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReadParam;
@@ -22,8 +14,6 @@ import javax.imageio.stream.ImageInputStream;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.File;
-import java.lang.ref.SoftReference;
 import java.util.Iterator;
 
 /**
