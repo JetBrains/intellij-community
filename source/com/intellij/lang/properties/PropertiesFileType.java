@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -23,14 +24,17 @@ public class PropertiesFileType extends LanguageFileType {
     super(new PropertiesLanguage());
   }
 
+  @NotNull
   public String getName() {
     return "Properties";
   }
 
+  @NotNull
   public String getDescription() {
-    return "Properties";
+    return "Properties Files";
   }
 
+  @NotNull
   public String getDefaultExtension() {
     return "properties";
   }
