@@ -54,10 +54,11 @@ public class PsiAnchor {
     if (myElement != null) return myElement;
 
     PsiElement element = myFile.getPsiRoots()[myRootIndex].findElementAt(myStartOffset);
+    if (element == null) return null;
 
     while  (!element.getClass().equals(myClass) ||
-           (element.getTextRange().getStartOffset() != myStartOffset) ||
-           (element.getTextRange().getEndOffset() != myEndOffset)) {
+            element.getTextRange().getStartOffset() != myStartOffset ||
+            element.getTextRange().getEndOffset() != myEndOffset) {
       element = element.getParent();
       if (element == null || element.getTextRange() == null) return null;
     }
