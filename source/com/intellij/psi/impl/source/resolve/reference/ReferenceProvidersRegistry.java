@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.PlainFileManipulator;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlAttributeValueManipulator;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlTokenManipulator;
+import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlTagValueManipulator;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.xml.*;
@@ -65,6 +66,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     registerManipulator(XmlAttributeValue.class, new XmlAttributeValueManipulator());
     registerManipulator(PsiPlainTextFile.class, new PlainFileManipulator());
     registerManipulator(XmlToken.class, new XmlTokenManipulator());
+    registerManipulator(XmlTag.class, new XmlTagValueManipulator());
     // Binding declarations
 
     myReferenceTypeToProviderMap.put(CLASS_REFERENCE_PROVIDER, new JavaClassReferenceProvider());
@@ -353,7 +355,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
         new AndFilter(
           new TextFilter(
             new String[] {
-              "function-class", "tag-class", "tei-class", "variable-class", "type", 
+              "function-class", "tag-class", "tei-class", "variable-class", "type", "path", 
               "function-signature", "name", "name-given"
             }
           ),
