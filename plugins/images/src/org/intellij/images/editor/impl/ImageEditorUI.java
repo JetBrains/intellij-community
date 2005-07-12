@@ -1,8 +1,6 @@
 package org.intellij.images.editor.impl;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.Messages;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.editor.ImageZoomModel;
@@ -26,8 +24,8 @@ import java.awt.image.BufferedImage;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 final class ImageEditorUI extends JPanel {
-    public static final String IMAGE_PANEL = "image";
-    public static final String ERROR_PANEL = "error";
+    private static final String IMAGE_PANEL = "image";
+    private static final String ERROR_PANEL = "error";
 
     private final ImageZoomModel zoomModel = new ImageZoomModelImpl();
     private final ImageWheelAdapter wheelAdapter = new ImageWheelAdapter();
@@ -50,7 +48,11 @@ final class ImageEditorUI extends JPanel {
         imageComponent.setGridLineColor(gridOptions.getLineColor());
 
         // Create layout
-        JScrollPane scrollPane = new JScrollPane(new ImageContainerPane(imageComponent));
+        ImageContainerPane view = new ImageContainerPane(imageComponent);
+        view.addMouseListener(new EditorMouseAdapter());
+        view.addMouseListener(new FocusRequester());
+
+        JScrollPane scrollPane = new JScrollPane(view);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
@@ -63,13 +65,11 @@ final class ImageEditorUI extends JPanel {
         ActionManager actionManager = ActionManager.getInstance();
         ActionGroup actionGroup = (ActionGroup)actionManager.getAction(ImageEditorActions.GROUP_TOOLBAR);
         ActionToolbar actionToolbar = actionManager.createActionToolbar(
-            ImageEditorActions.GROUP_TOOLBAR, actionGroup, true
+            ImageEditorActions.ACTION_PLACE, actionGroup, true
         );
 
-        FocusRequester focusRequester = new FocusRequester();
         JComponent component = actionToolbar.getComponent();
-        component.addMouseListener(focusRequester);
-        scrollPane.addMouseListener(focusRequester);
+        component.addMouseListener(new FocusRequester());
 
         JLabel errorLabel = new JLabel(
             "<html><b>Image not loaded</b><br>Try to open it externaly to fix format problem</html>",
@@ -82,7 +82,6 @@ final class ImageEditorUI extends JPanel {
         contentPanel = new JPanel(new CardLayout());
         contentPanel.add(scrollPane, IMAGE_PANEL);
         contentPanel.add(errorPanel, ERROR_PANEL);
-
 
         add(component, BorderLayout.NORTH);
         add(contentPanel, BorderLayout.CENTER);
@@ -131,7 +130,6 @@ final class ImageEditorUI extends JPanel {
         public Dimension getPreferredSize() {
             return imageComponent.getSize();
         }
-
     }
 
     private final class ImageWheelAdapter implements MouseWheelListener {
@@ -236,6 +234,22 @@ final class ImageEditorUI extends JPanel {
     private class FocusRequester extends MouseAdapter {
         public void mouseClicked(MouseEvent e) {
             requestFocus();
+        }
+    }
+
+    private final static class EditorMouseAdapter extends MouseAdapter {
+        public void mouseClicked(MouseEvent e) {
+            if (MouseEvent.BUTTON3 == e.getButton() && e.getClickCount() == 1) {
+                // Single right click
+                ActionManager actionManager = ActionManager.getInstance();
+                ActionGroup actionGroup = (ActionGroup)actionManager.getAction(ImageEditorActions.GROUP_POPUP);
+                ActionPopupMenu menu = actionManager.createActionPopupMenu(ImageEditorActions.ACTION_PLACE, actionGroup);
+                JPopupMenu popupMenu = menu.getComponent();
+                popupMenu.pack();
+                popupMenu.show(e.getComponent(), e.getX(), e.getY());
+
+                e.consume();
+            }
         }
     }
 }

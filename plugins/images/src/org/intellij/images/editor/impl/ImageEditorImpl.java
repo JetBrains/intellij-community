@@ -130,9 +130,9 @@ final class ImageEditorImpl extends VirtualFileAdapter implements ImageEditor {
         disposed = true;
     }
 
-    public void contentsChanged(VirtualFileEvent virtualFileEvent) {
-        super.contentsChanged(virtualFileEvent);
-        if (file.equals(virtualFileEvent.getFile())) {
+    public void contentsChanged(VirtualFileEvent event) {
+        super.contentsChanged(event);
+        if (file.equals(event.getFile())) {
             // Change document
             file.refresh(true, false, new Runnable() {
                 public void run() {
