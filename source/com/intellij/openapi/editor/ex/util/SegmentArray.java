@@ -10,8 +10,12 @@ public class SegmentArray {
   }
 
   protected void setElementAt(int i, int startOffset, int endOffset) {
-    LOG.assertTrue(startOffset >= 0, "Invalid value: "+startOffset);
-    LOG.assertTrue(endOffset >= 0, "Invalid value: "+endOffset);
+    if (startOffset < 0) {
+      LOG.error("Invalid startOffset:" + startOffset);
+    }
+    if (endOffset < 0) {
+      LOG.error("Invalid endOffset:" + endOffset);
+    }
 
     if(i >= mySegmentCount) {
       mySegmentCount = i+1;
@@ -96,8 +100,9 @@ public class SegmentArray {
     for(int i=startIndex; i<mySegmentCount; i++) {
       myStarts[i] += shift;
       myEnds[i] += shift;
-      LOG.assertTrue(myStarts[i] >= 0, "Invalid value: "+myStarts[i]);
-      LOG.assertTrue(myEnds[i] >= 0, "Invalid value: "+myEnds[i]);
+      if (myStarts[i] < 0 || myEnds[i] < 0) {
+        LOG.error("Error shifting segments: myStarts[" + i + "] = " + myStarts[i] + ", myEnds[" + i + "] = " + myEnds[i]);
+      }
     }
   }
 

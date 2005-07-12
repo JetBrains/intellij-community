@@ -11,8 +11,7 @@ package com.intellij.psi.controlFlow;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
-
-import java.lang.ref.SoftReference;
+import com.intellij.reference.SoftReference;
 
 public class ControlFlowFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.controlFlow.ControlFlowFactory");

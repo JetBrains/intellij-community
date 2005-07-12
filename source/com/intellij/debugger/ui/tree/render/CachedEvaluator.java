@@ -10,8 +10,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
-
-import java.lang.ref.SoftReference;
+import com.intellij.reference.SoftReference;
 
 /**
  * Created by IntelliJ IDEA.

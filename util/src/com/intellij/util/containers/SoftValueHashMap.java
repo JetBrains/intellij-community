@@ -4,10 +4,10 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.reference.SoftReference;
 import gnu.trove.THashMap;
 
 import java.lang.ref.ReferenceQueue;
-import java.lang.ref.SoftReference;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;

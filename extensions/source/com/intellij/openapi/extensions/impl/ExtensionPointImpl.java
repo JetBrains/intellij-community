@@ -5,10 +5,10 @@
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.*;
+import com.intellij.reference.SoftReference;
 import org.jdom.Element;
 import org.picocontainer.MutablePicoContainer;
 
-import java.lang.ref.SoftReference;
 import java.lang.reflect.Array;
 import java.util.*;
 

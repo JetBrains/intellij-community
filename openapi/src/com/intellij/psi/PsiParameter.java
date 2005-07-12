@@ -4,8 +4,12 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 public interface PsiParameter extends PsiVariable {
   PsiParameter[] EMPTY_ARRAY = new PsiParameter[0];
   PsiElement getDeclarationScope();
   boolean isVarArgs();
+
+  @NotNull PsiAnnotation[] getAnnotations();
 }

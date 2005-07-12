@@ -5,11 +5,10 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.reference.SoftReference;
 import org.jdom.Element;
-
-import java.lang.ref.SoftReference;
 
 /**
  * Created by IntelliJ IDEA.

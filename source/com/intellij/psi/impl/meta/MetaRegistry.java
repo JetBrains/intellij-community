@@ -1,25 +1,27 @@
 package com.intellij.psi.impl.meta;
 
 import com.intellij.ant.impl.dom.impl.RegisterInPsi;
+import com.intellij.jsp.impl.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.NamespaceFilter;
 import com.intellij.psi.filters.position.RootTagFilter;
 import com.intellij.psi.filters.position.TargetNamespaceFilter;
+import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttributeDecl;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlElementDecl;
+import com.intellij.psi.xml.XmlMarkupDecl;
+import com.intellij.reference.SoftReference;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.jsp.impl.*;
 
-import java.lang.ref.SoftReference;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**

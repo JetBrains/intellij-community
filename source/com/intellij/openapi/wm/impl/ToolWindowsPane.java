@@ -7,13 +7,13 @@ import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentEvent;
 import java.awt.image.BufferedImage;
-import java.lang.ref.SoftReference;
 import java.util.Comparator;
 
 /**

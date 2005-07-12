@@ -4,9 +4,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
+import com.intellij.reference.SoftReference;
 import org.jdom.Element;
-
-import java.lang.ref.SoftReference;
 
 /**
  * Created by IntelliJ IDEA.

@@ -4,10 +4,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.WeakHashMap;
 
 import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
 import java.util.Set;
 
 public class ResolveCache {

@@ -1,14 +1,13 @@
 package com.intellij.psi.filters.element;
 
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.util.*;
-import com.intellij.psi.filters.position.PositionElementFilter;
 import com.intellij.psi.filters.ElementFilter;
-
-import java.lang.ref.SoftReference;
+import com.intellij.psi.filters.position.PositionElementFilter;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.reference.SoftReference;
 
 /**
  * Created by IntelliJ IDEA.

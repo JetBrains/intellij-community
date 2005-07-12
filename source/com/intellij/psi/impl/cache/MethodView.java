@@ -12,6 +12,7 @@ public interface MethodView extends DeclarationView {
   int getParameterCount(long methodId);
   String getParameterName(long methodId, int paramIdx);
   String getParameterTypeText(long methodId, int paramIdx);
+  boolean isParameterTypeEllipsis(long methodId, int paramIdx);
 
   int getTypeParametersCount(long methodId);
   String getTypeParameterText(long methodId, int paramIdx);

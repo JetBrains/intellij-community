@@ -1,32 +1,27 @@
 package com.intellij.xml.impl;
 
-import com.intellij.xml.actions.ValidateXmlActionHandler;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.codeInsight.daemon.Validator;
-import com.intellij.psi.xml.*;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.util.PsiTreeUtil;
-
-import java.util.List;
-import java.util.LinkedList;
-import java.util.Iterator;
-import java.lang.ref.WeakReference;
-import java.lang.ref.SoftReference;
-import java.io.FileNotFoundException;
-import java.net.MalformedURLException;
-import java.net.NoRouteToHostException;
-import java.net.ConnectException;
-
+import com.intellij.psi.xml.*;
+import com.intellij.reference.SoftReference;
+import com.intellij.xml.actions.ValidateXmlActionHandler;
 import org.xml.sax.SAXParseException;
+
+import java.lang.ref.WeakReference;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.

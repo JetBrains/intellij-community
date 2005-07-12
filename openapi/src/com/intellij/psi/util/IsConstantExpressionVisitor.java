@@ -108,11 +108,11 @@ public class IsConstantExpressionVisitor extends PsiElementVisitor {
       myIsConstant = false;
       return;
     }
-    PsiExpression initializer = variable.getInitializer();
-    if (initializer == null){
+    if (!variable.hasInitializer()){
       myIsConstant = false;
       return;
     }
+    PsiExpression initializer = variable.getInitializer();
     initializer.accept(this);
   }
 }

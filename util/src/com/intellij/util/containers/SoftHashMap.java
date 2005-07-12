@@ -5,10 +5,10 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.reference.SoftReference;
 import gnu.trove.THashMap;
 
 import java.lang.ref.ReferenceQueue;
-import java.lang.ref.SoftReference;
 import java.util.*;
 
 public final class SoftHashMap<K,V> extends AbstractMap<K,V> implements Map<K,V> {
