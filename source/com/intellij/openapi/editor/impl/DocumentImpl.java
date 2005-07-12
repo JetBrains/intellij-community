@@ -1,9 +1,9 @@
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -15,13 +15,11 @@ import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.CoModifiableList;
 import com.intellij.util.containers.WeakList;
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.THashMap;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -120,8 +118,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     lines:
         for (int i = 0; i < myLineSet.getLineCount(); i++) {
           if (!isTestMode) {
-            for (int j = 0; j < caretLines.length; j++) {
-              if (caretLines[j] == i) continue lines;
+            for (int caretLine : caretLines) {
+              if (caretLine == i) continue lines;
             }
           }
 
@@ -402,8 +400,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     updateRangeMarkers(event);
 
     DocumentListener[] listeners = getCachedListeners();
-    for (int i = 0; i < listeners.length; i++) {
-      DocumentListener listener = listeners[i];
+    for (DocumentListener listener : listeners) {
       try {
         listener.documentChanged(event);
       }
@@ -449,7 +446,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return myText.getLength();
   }
 
-  private void assertReadAccessToDocumentsAllowed() {
+  private static void assertReadAccessToDocumentsAllowed() {
     final ApplicationEx application = ApplicationManagerEx.getApplicationEx();
     if (application != null) {
       application.assertReadAccessToDocumentsAllowed();
@@ -487,7 +484,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   public int getLineNumber(int offset) {
     assertReadAccessToDocumentsAllowed();
-    return myLineSet.findLineIndex(offset);
+    int lineIndex = myLineSet.findLineIndex(offset);
+    LOG.assertTrue(lineIndex >= 0);
+    return lineIndex;
   }
 
   public LineIterator createLineIterator() {
@@ -498,22 +497,30 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   public final int getLineStartOffset(int line) {
     assertReadAccessToDocumentsAllowed();
     if (line == 0) return 0; // otherwise it crashed for zero-length document
-    return myLineSet.getLineStart(line);
+    int lineStart = myLineSet.getLineStart(line);
+    LOG.assertTrue(lineStart >= 0);
+    return lineStart;
   }
 
   public final int getLineEndOffset(int line) {
     ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
-    return myLineSet.getLineEnd(line) - getLineSeparatorLength(line);
+    int result = myLineSet.getLineEnd(line) - getLineSeparatorLength(line);
+    LOG.assertTrue(result >= 0);
+    return result;
   }
 
   public final int getLineSeparatorLength(int line) {
     ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
-    return myLineSet.getSeparatorLength(line);
+    int separatorLength = myLineSet.getSeparatorLength(line);
+    LOG.assertTrue(separatorLength >= 0);
+    return separatorLength;
   }
 
   public final int getLineCount() {
     ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
-    return myLineSet.getLineCount();
+    int lineCount = myLineSet.getLineCount();
+    LOG.assertTrue(lineCount >= 0);
+    return lineCount;
   }
 
   private DocumentListener[] getCachedListeners() {
@@ -529,8 +536,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
     EditReadOnlyListener[] listeners = myReadOnlyListeners.toArray(
       new EditReadOnlyListener[myReadOnlyListeners.size()]);
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].readOnlyModificationAttempt(this);
+    for (EditReadOnlyListener listener : listeners) {
+      listener.readOnlyModificationAttempt(this);
     }
   }
 

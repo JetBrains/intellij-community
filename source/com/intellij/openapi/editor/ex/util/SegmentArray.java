@@ -10,6 +10,9 @@ public class SegmentArray {
   }
 
   protected void setElementAt(int i, int startOffset, int endOffset) {
+    LOG.assertTrue(startOffset >= 0, "Invalid value: "+startOffset);
+    LOG.assertTrue(endOffset >= 0, "Invalid value: "+endOffset);
+
     if(i >= mySegmentCount) {
       mySegmentCount = i+1;
     }
@@ -47,21 +50,6 @@ public class SegmentArray {
       newArraySize = (newArraySize * 120) / 100;
     }
     short[] newArray = new short[newArraySize];
-    System.arraycopy(array, 0, newArray, 0, array.length);
-    return newArray;
-  }
-  protected static long[] relocateArray(long[] array, int index) {
-    if(index < array.length)
-      return array;
-
-    int newArraySize = array.length;
-    if(newArraySize == 0) {
-      newArraySize = 16;
-    }
-    while(newArraySize <= index) {
-      newArraySize = (newArraySize * 120) / 100;
-    }
-    long[] newArray = new long[newArraySize];
     System.arraycopy(array, 0, newArray, 0, array.length);
     return newArray;
   }
@@ -106,8 +94,10 @@ public class SegmentArray {
 
   public final void shiftSegments(int startIndex, int shift) {
     for(int i=startIndex; i<mySegmentCount; i++) {
-       myStarts[i] += shift;
-       myEnds[i] += shift;
+      myStarts[i] += shift;
+      myEnds[i] += shift;
+      LOG.assertTrue(myStarts[i] >= 0, "Invalid value: "+myStarts[i]);
+      LOG.assertTrue(myEnds[i] >= 0, "Invalid value: "+myEnds[i]);
     }
   }
 
@@ -118,7 +108,7 @@ public class SegmentArray {
   public void remove(int startIndex, int endIndex) {
     myStarts = remove(myStarts, startIndex, endIndex);
     myEnds = remove(myEnds, startIndex, endIndex);
-    mySegmentCount -= (endIndex - startIndex);
+    mySegmentCount -= endIndex - startIndex;
   }
 
   protected int[] remove(int[] array, int startIndex, int endIndex) {
@@ -163,25 +153,17 @@ public class SegmentArray {
     System.arraycopy(insertArray, 0, newArray, startIndex, insertLength);
     return newArray;
   }
-  protected long[] insert(long[] array, long[] insertArray, int startIndex, int insertLength) {
-    long[] newArray = relocateArray(array, mySegmentCount + insertLength);
-    if(startIndex < mySegmentCount) {
-      System.arraycopy(newArray, startIndex, newArray, startIndex+insertLength, mySegmentCount-startIndex);
-    }
-    System.arraycopy(insertArray, 0, newArray, startIndex, insertLength);
-    return newArray;
-  }
 
   public int getSegmentStart(int index) {
     if(index < 0 || index >= mySegmentCount) {
-      throw(new IndexOutOfBoundsException("Wrong line: " + index));
+      throw new IndexOutOfBoundsException("Wrong line: " + index);
     }
     return myStarts[index];
   }
 
   public int getSegmentEnd(int index) {
     if(index < 0 || index >= mySegmentCount) {
-      throw(new IndexOutOfBoundsException("Wrong line: " + index));
+      throw new IndexOutOfBoundsException("Wrong line: " + index);
     }
     return myEnds[index];
   }
