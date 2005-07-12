@@ -12,6 +12,7 @@ import com.intellij.uiDesigner.lw.LwRootContainer;
 import org.apache.bcel.Repository;
 import org.apache.bcel.util.ClassPath;
 import org.apache.bcel.util.SyntheticRepository;
+import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.Javac;
 import org.apache.tools.ant.types.Path;
@@ -68,7 +69,7 @@ public final class Javac2 extends Javac{
         loader = createClassLoader(classPath);
       }
       catch (MalformedURLException e) {
-        log(e.getMessage(), Project.MSG_ERR);
+        fireError(e.getMessage());
         return;
       }
 
@@ -86,7 +87,7 @@ public final class Javac2 extends Javac{
           fileReader.close();
         }
         catch (IOException e) {
-          log(e.getMessage(), Project.MSG_ERR);
+          fireError(e.getMessage());
           continue;
         }
 
@@ -95,7 +96,7 @@ public final class Javac2 extends Javac{
           formFileContent = new String(bytes, "utf8");
         }
         catch (UnsupportedEncodingException e) {
-          log(e.getMessage(), Project.MSG_ERR);
+          fireError(e.getMessage());
           continue;
         }
 
@@ -108,7 +109,7 @@ public final class Javac2 extends Javac{
           continue;
         }
         catch (Exception e) {
-          log("Cannot process form file " + formFile.getAbsolutePath() + ". Reason: " + e, Project.MSG_ERR);
+          fireError("Cannot process form file " + formFile.getAbsolutePath() + ". Reason: " + e);
           continue;
         }
 
@@ -126,11 +127,10 @@ public final class Javac2 extends Javac{
 
         final File alreadyProcessedForm = (File)class2form.get(classToBind);
         if (alreadyProcessedForm != null) {
-          log(
+          fireError(
             formFile.getAbsolutePath() + ": " +
             "The form is bound to the class " + classToBind + ".\n" +
-            "Another form " + alreadyProcessedForm.getAbsolutePath() + " is also bound to this class.",
-            Project.MSG_ERR
+            "Another form " + alreadyProcessedForm.getAbsolutePath() + " is also bound to this class."
           );
           continue;
         }
@@ -138,19 +138,35 @@ public final class Javac2 extends Javac{
 
         final CodeGenerator codeGenerator = new CodeGenerator(rootContainer, classFile, loader);
         codeGenerator.patch();
-        final String[] errors = codeGenerator.getErrors();
         final String[] warnings = codeGenerator.getWarnings();
 
         for (int j = 0; j < warnings.length; j++) {
           log(formFile.getAbsolutePath() + ": " + warnings[j], Project.MSG_WARN);
         }
-        for (int j = 0; j < errors.length; j++) {
-          log(formFile.getAbsolutePath() + ": " + errors[j], Project.MSG_ERR);
+        final String[] errors = codeGenerator.getErrors();
+        if (errors.length > 0) {
+          StringBuffer message = new StringBuffer();
+          for (int j = 0; j < errors.length; j++) {
+            if (message.length() > 0) {
+              message.append("\n");
+            }
+            message.append(formFile.getAbsolutePath()).append(": ").append(errors[j]);
+          }
+          fireError(message.toString());
         }
       }
     }
     finally {
       disposeBcel();
+    }
+  }
+
+  private void fireError(final String message) {
+    if (failOnError) {
+      throw new BuildException(message, getLocation());
+    }
+    else {
+      log(message, Project.MSG_ERR);
     }
   }
 
