@@ -140,6 +140,7 @@ public class CvsTabbedWindow implements ProjectComponent {
   }
 
   public Editor addOutput(Editor output) {
+    LOG.assertTrue(myOutput == null);
     if (myOutput == null) {
       addTab("Cvs Output", output.getComponent(), false, false, false, true, "cvs.cvsOutput");
       myOutput = output;
@@ -175,5 +176,9 @@ public class CvsTabbedWindow implements ProjectComponent {
 
     public ContentManager getContentManager() {
     return myContentManager;
+  }
+
+  public Editor getOutput() {
+    return myOutput;
   }
 }

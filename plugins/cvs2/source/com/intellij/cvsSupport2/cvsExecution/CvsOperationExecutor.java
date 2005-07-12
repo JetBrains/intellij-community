@@ -35,6 +35,8 @@ import com.intellij.util.ui.MessageCategory;
 
 import java.util.*;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * author: lesya
  */
@@ -261,7 +263,7 @@ public class CvsOperationExecutor {
 
   }
 
-  private Editor createView(Project project) {
+  @NotNull private Editor createView(Project project) {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document document = editorFactory.createDocument("");
     LOG.assertTrue(document != null);
@@ -287,17 +289,11 @@ public class CvsOperationExecutor {
       final CvsTabbedWindow tabbedWindow = CvsTabbedWindow.getInstance(myProject);
       if (CvsConfiguration.getInstance(myProject).SHOW_OUTPUT && !myIsQuietOperation) {
         if (ApplicationManager.getApplication().isDispatchThread()) {
-          Editor view = createView(myProject);
-          if (view != null) {
-            output.connectToOutputView(tabbedWindow.addOutput(view), myProject);
-          }
+          connectToOutput(output, tabbedWindow);
         } else {
           ApplicationManager.getApplication().invokeAndWait(new Runnable() {
             public void run() {
-              Editor view = createView(myProject);
-              if (view != null) {
-                output.connectToOutputView(tabbedWindow.addOutput(view), myProject);
-              }              
+              connectToOutput(output, tabbedWindow);
             }
           }, ModalityState.defaultModalityState());
         }
@@ -305,6 +301,15 @@ public class CvsOperationExecutor {
       return tabbedWindow;
     }
     return null;
+  }
+
+  private void connectToOutput(CvsHandler output, CvsTabbedWindow tabbedWindow) {
+    Editor editor = tabbedWindow.getOutput();
+    if (editor == null) {
+      output.connectToOutputView(tabbedWindow.addOutput(createView(myProject)), myProject);
+    } else {
+      output.connectToOutputView(editor, myProject);
+    }
   }
 
   public VcsException getFirstError() {
