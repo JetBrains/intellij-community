@@ -11,7 +11,7 @@ import java.util.ArrayList;
 
 public class ControlFlowStack {
   IntArrayList myIpStack = new IntArrayList();
-  ArrayList myCallInstructionStack = new ArrayList();
+  ArrayList<CallInstruction> myCallInstructionStack = new ArrayList<CallInstruction>();
 
   public void push(int ip, CallInstruction callInstruction) {
     myIpStack.add(ip);
