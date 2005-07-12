@@ -105,7 +105,9 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   public final void setContext(EvaluationContextImpl evaluationContext) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    myStoredEvaluationContext = evaluationContext;
+    if (Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
+      myStoredEvaluationContext = evaluationContext;
+    }
     Value value = null;
     try {
       value = calcValue(evaluationContext);
