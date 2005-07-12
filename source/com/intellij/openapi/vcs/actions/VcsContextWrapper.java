@@ -74,7 +74,7 @@ public class VcsContextWrapper implements VcsContext {
   }
 
   public static VcsContext createCachedInstanceOn(AnActionEvent event) {
-    return new CachedVcsContext(createCachedInstanceOn(event));
+    return new CachedVcsContext(createInstanceOn(event));
   }
 
   public static VcsContextWrapper createInstanceOn(final AnActionEvent event) {
