@@ -596,10 +596,10 @@
         <action id="SplitVertically"        class="com.intellij.ide.actions.SplitVerticallyAction"   text="Split _Vertically" icon="/actions/splitVertically.png" description="Split editor area into 2 tab groups and move the current tab to the right group"/>
         <action id="SplitHorizontally"      class="com.intellij.ide.actions.SplitHorizontallyAction" text="Split _Horizontally"  icon="/actions/splitHorizontally.png" description="Split editor area into 2 tab groups and move the current tab to the bottom group"/>
         <action id="ChangeSplitOrientation" class="com.intellij.ide.actions.ChangeSplitterOrientationAction" text="Change Splitter _Orientation" description="Changes orientation of splitter"/>
-        <action id="Unsplit"                class="com.intellij.ide.actions.UnsplitAction"         text="Unsplit"     description="Unsplit Window"/>
-        <action id="UnsplitAll"             class="com.intellij.ide.actions.UnsplitAllAction"      text="Unsplit All" description="Remove all splitters"/>
-        <action id="NextSplitter"           class="com.intellij.ide.actions.NextSplitAction"       text="Goto Next Splitter"     description="Goto next splitter window"/>
-        <action id="PrevSplitter"           class="com.intellij.ide.actions.PrevSplitAction"       text="Goto Previons Splitter"     description="Goto previous splitter window"/>
+        <action id="Unsplit"                class="com.intellij.ide.actions.UnsplitAction"         text="Un_split"     description="Unsplit Window"/>
+        <action id="UnsplitAll"             class="com.intellij.ide.actions.UnsplitAllAction"      text="Un_split All" description="Remove all splitters"/>
+        <action id="NextSplitter"           class="com.intellij.ide.actions.NextSplitAction"       text="Goto _Next Splitter"     description="Goto next splitter window"/>
+        <action id="PrevSplitter"           class="com.intellij.ide.actions.PrevSplitAction"       text="Goto _Previons Splitter"     description="Goto previous splitter window"/>
       </group>
 
       <!-- Help -->
