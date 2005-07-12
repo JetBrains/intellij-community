@@ -552,8 +552,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (!parameters[0].getType().equalsToText("java.io.ObjectOutputStream")) return false;
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
     PsiClass aClass = method.getContainingClass();
-    if (aClass != null && !isSerializable(aClass)) return false;
-    return true;
+    return aClass == null || isSerializable(aClass);
   }
 
   private static boolean isWriteReplaceMethod(PsiMethod method) {
@@ -564,8 +563,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (parameters.length != 0) return false;
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
     PsiClass aClass = method.getContainingClass();
-    if (aClass != null && !isSerializable(aClass)) return false;
-    return true;
+    return aClass == null || isSerializable(aClass);
   }
 
   private static boolean isReadResolveMethod(PsiMethod method) {
@@ -576,8 +574,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     PsiType returnType = method.getReturnType();
     if (returnType == null || !returnType.equalsToText("java.lang.Object")) return false;
     PsiClass aClass = method.getContainingClass();
-    if (aClass != null && !isSerializable(aClass)) return false;
-    return true;
+    return aClass == null || isSerializable(aClass);
   }
 
   private static boolean isReadObjectMethod(PsiMethod method) {
@@ -591,8 +588,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (!TypeConversionUtil.isVoidType(returnType)) return false;
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
     PsiClass aClass = method.getContainingClass();
-    if (aClass != null && !isSerializable(aClass)) return false;
-    return true;
+    return aClass == null || isSerializable(aClass);
   }
 
   private static boolean isReadObjectNoDataMethod(PsiMethod method) {
@@ -603,8 +599,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (!TypeConversionUtil.isVoidType(returnType)) return false;
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
     PsiClass aClass = method.getContainingClass();
-    if (aClass != null && !isSerializable(aClass)) return false;
-    return true;
+    return aClass == null || isSerializable(aClass);
   }
 
   private static boolean isMainMethod(PsiMethod method) {

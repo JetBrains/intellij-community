@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 
@@ -309,7 +310,10 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     int offset2 = ref.getTextRange().getEndOffset();
     QuestionAction action = new AddImportAction(manager.getProject(), ref, classes, editor);
 
-    if (classes.length == 1 && CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY && !isCaretNearRef(editor,ref)) {
+    if (classes.length == 1
+        && CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY
+        && !isCaretNearRef(editor,ref)
+        && !(ref.getContainingFile() instanceof JspFile)) {
       action.execute();
       return false;
     }
