@@ -66,10 +66,10 @@ public class CloseAllUnmodifiedEditorsAction extends AnAction {
     final DataContext dataContext = event.getDataContext();
     final EditorWindow editorWindow = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
     if (editorWindow != null && editorWindow.inSplitter()) {
-      presentation.setText("Close All Unmodified Editors In Tab Group");
+      presentation.setText("Close All _Unmodified Editors In Tab Group");
     }
     else {
-      presentation.setText("Close All Unmodified Editors");
+      presentation.setText("Close All _Unmodified Editors");
     }
     final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     if (project == null) {
