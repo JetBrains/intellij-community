@@ -180,8 +180,7 @@ public class ProjectUtil {
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     Project project = null;
     try {
-      project = projectManager.loadProject(path);
-      projectManager.openProject(project);
+      project = projectManager.loadAndOpenProject(path);
     }
     catch (IOException e) {
       Messages.showMessageDialog("Cannot load project: " + e.getMessage(), "Cannot Load Project",

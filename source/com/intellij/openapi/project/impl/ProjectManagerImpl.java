@@ -267,9 +267,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return myOpenProjects.contains(project);
   }
 
-  public void openProject(final Project project) {
-    if (myOpenProjects.contains(project)) return;
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !checkVersion(project)) return;
+  public boolean openProject(final Project project) {
+    if (myOpenProjects.contains(project)) return false;
+    if (!ApplicationManager.getApplication().isUnitTestMode() && !checkVersion(project)) return false;
 
 
     myCountOfProjectsBeingOpen++;
@@ -295,6 +295,15 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       ((FileDocumentManagerImpl)fdManager).getDummyProject();
     }
     myCountOfProjectsBeingOpen--;
+    return true;
+  }
+
+  public Project loadAndOpenProject(String filePath) throws IOException, JDOMException, InvalidDataException {
+    Project project = loadProject(filePath);
+    if (!openProject(project)) {
+      return null;
+    }
+    return project;
   }
 
   private void registerExternalProjectFileListener(VirtualFileManagerEx virtualFileManager) {

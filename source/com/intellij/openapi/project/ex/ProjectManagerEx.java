@@ -20,11 +20,7 @@ public abstract class ProjectManagerEx extends ProjectManager {
 
   public abstract Project loadProject(String filePath) throws IOException, JDOMException, InvalidDataException;
 
-  public abstract void openProject(Project project);
-
-  public abstract boolean closeProject(Project project);
-
-  public abstract void reloadProject(Project project);
+  public abstract boolean openProject(Project project);
 
   public abstract boolean isProjectOpened(Project project);
 
