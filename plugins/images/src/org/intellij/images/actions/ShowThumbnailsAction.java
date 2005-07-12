@@ -23,7 +23,8 @@ public final class ShowThumbnailsAction extends AnAction {
             ThumbnailManager thumbnailManager = ThumbnailManager.getInstance();
             ThumbnailView thumbnailView = thumbnailManager.getThumbnailView(project);
             thumbnailView.setRoot(file);
-            thumbnailView.show();
+            thumbnailView.setVisible(true);
+            thumbnailView.activate();
         }
     }
 

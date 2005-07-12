@@ -31,6 +31,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
+    private static final VirtualFile[] EMPTY_VIRTUAL_FILE_ARRAY = new VirtualFile[] {};
+
     private final VFSListener vfsListener = new VFSListener();
     private final OptionsChangeListener optionsListener = new OptionsChangeListener();
 
@@ -44,7 +46,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         this.thumbnailView = thumbnailView;
     }
 
-    public void createUI() {
+    private void createUI() {
         if (cellRenderer == null || list == null) {
             cellRenderer = new ThumbnailListCellRenderer();
             ImageComponent imageComponent = cellRenderer.getImageComponent();
@@ -70,8 +72,8 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
 
             list.addMouseListener(new ThumbnailsMouseAdapter());
 
-            ThumbnailComponentUI ui = (ThumbnailComponentUI)UIManager.getUI(cellRenderer);
-            Dimension preferredSize = ui.getPreferredSize(cellRenderer);
+            ThumbnailComponentUI componentUI = (ThumbnailComponentUI)UIManager.getUI(cellRenderer);
+            Dimension preferredSize = componentUI.getPreferredSize(cellRenderer);
 
             list.setFixedCellWidth(preferredSize.width);
             list.setFixedCellHeight(preferredSize.height);
@@ -95,47 +97,59 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
 
             add(toolbar, BorderLayout.NORTH);
             add(scrollPane, BorderLayout.CENTER);
-
-            refresh();
         }
     }
 
     public void refresh() {
-        if (list != null && cellRenderer != null) {
-            DefaultListModel model = (DefaultListModel)list.getModel();
-            model.clear();
+        createUI();
 
-            Set<VirtualFile> files = findFiles(thumbnailView.getRoot().getChildren());
-            VirtualFile[] virtualFiles = files.toArray(new VirtualFile[]{});
-            Arrays.sort(
-                virtualFiles, new Comparator<VirtualFile>() {
-                public int compare(VirtualFile o1, VirtualFile o2) {
-                    if (o1.isDirectory() && !o2.isDirectory()) {
-                        return -1;
-                    }
-                    if (o2.isDirectory() && !o1.isDirectory()) {
-                        return 1;
-                    }
+        DefaultListModel model = (DefaultListModel)list.getModel();
+        model.clear();
 
-                    return o1.getPath().toLowerCase().compareTo(o2.getPath().toLowerCase());
+        Set<VirtualFile> files = findFiles(thumbnailView.getRoot().getChildren());
+        VirtualFile[] virtualFiles = files.toArray(EMPTY_VIRTUAL_FILE_ARRAY);
+        Arrays.sort(
+            virtualFiles, new Comparator<VirtualFile>() {
+            public int compare(VirtualFile o1, VirtualFile o2) {
+                if (o1.isDirectory() && !o2.isDirectory()) {
+                    return -1;
                 }
-            }
-            );
+                if (o2.isDirectory() && !o1.isDirectory()) {
+                    return 1;
+                }
 
-            model.ensureCapacity(model.size() + virtualFiles.length);
-            for (VirtualFile virtualFile : virtualFiles) {
-                model.addElement(virtualFile);
+                return o1.getPath().toLowerCase().compareTo(o2.getPath().toLowerCase());
             }
+        }
+        );
+
+        model.ensureCapacity(model.size() + virtualFiles.length);
+        for (VirtualFile virtualFile : virtualFiles) {
+            model.addElement(virtualFile);
         }
     }
 
     public boolean isTransparencyChessboardVisible() {
+        createUI();
         return cellRenderer.getImageComponent().isTransparencyChessboardVisible();
     }
 
     public void setTransparencyChessboardVisible(boolean visible) {
+        createUI();
         cellRenderer.getImageComponent().setTransparencyChessboardVisible(visible);
         list.repaint();
+    }
+
+    public void setSelected(VirtualFile file) {
+        createUI();
+        list.setSelectedValue(file, false);
+    }
+
+    public void scrollTo(VirtualFile file) {
+        int index = ((DefaultListModel)list.getModel()).indexOf(file);
+        if (index != -1) {
+            list.scrollRectToVisible(list.getCellBounds(index, index));
+        }
     }
 
     private static final class ThumbnailListCellRenderer extends ThumbnailComponent
@@ -257,8 +271,8 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             if (MouseEvent.BUTTON3 == e.getButton() && e.getClickCount() == 1) {
                 // Single right click
                 ActionManager actionManager = ActionManager.getInstance();
-                ActionGroup actionGroup = (ActionGroup)actionManager.getAction(ThumbnailsActions.GROUP_POPUP_MENU);
-                ActionPopupMenu menu = actionManager.createActionPopupMenu(ThumbnailsActions.GROUP_POPUP_MENU, actionGroup);
+                ActionGroup actionGroup = (ActionGroup)actionManager.getAction(ThumbnailsActions.GROUP_POPUP);
+                ActionPopupMenu menu = actionManager.createActionPopupMenu(ThumbnailsActions.ACTION_PLACE, actionGroup);
                 JPopupMenu popupMenu = menu.getComponent();
                 popupMenu.pack();
                 popupMenu.show(e.getComponent(), e.getX(), e.getY());
@@ -278,7 +292,19 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         } else if (DataConstants.VIRTUAL_FILE_ARRAY.equals(dataId)) {
             return getSelectedFiles();
         } else if (DataConstants.NAVIGATABLE.equals(dataId)) {
-            return new ThumbnailNavigatable(getSelectedFiles());
+            VirtualFile[] selectedFiles = getSelectedFiles();
+            return new ThumbnailNavigatable(selectedFiles != null && selectedFiles.length > 0 ? selectedFiles[0] : null);
+        } else if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
+            VirtualFile[] selectedFiles = getSelectedFiles();
+            if (selectedFiles != null) {
+                Navigatable[] navigatables = new Navigatable[selectedFiles.length];
+                for (int i = 0; i < selectedFiles.length; i++) {
+                    VirtualFile selectedFile = selectedFiles[i];
+                    navigatables[i] = new ThumbnailNavigatable(selectedFile);
+                }
+                return navigatables;
+            }
+            return null;
         }
 
         return null;
@@ -312,31 +338,25 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     }
 
     private final class ThumbnailNavigatable implements Navigatable {
-        private VirtualFile[] files;
+        private VirtualFile file;
 
-        public ThumbnailNavigatable(VirtualFile[] files) {
-            this.files = files;
+        public ThumbnailNavigatable(VirtualFile file) {
+            this.file = file;
         }
 
         public void navigate(boolean requestFocus) {
-            if (files != null) {
+            if (file != null) {
                 FileEditorManager manager = FileEditorManager.getInstance(thumbnailView.getProject());
-                if (files.length > 2) {
-                    for (VirtualFile file : files) {
-                        manager.openFile(file, false);
-                    }
-                } else {
-                    manager.openFile(files[0], true);
-                }
+                manager.openFile(file, true);
             }
         }
 
         public boolean canNavigate() {
-            return files != null;
+            return file != null;
         }
 
         public boolean canNavigateToSource() {
-            return files != null;
+            return file != null;
         }
     }
 

@@ -12,6 +12,6 @@ import org.intellij.images.thumbnail.actionSystem.AbstractThumbnailViewAction;
  */
 final public class HideThumbnailsAction extends AbstractThumbnailViewAction {
     public void actionPerformed(ThumbnailView thumbnailView, AnActionEvent e) {
-        thumbnailView.hide();
+        thumbnailView.setVisible(false);
     }
 }

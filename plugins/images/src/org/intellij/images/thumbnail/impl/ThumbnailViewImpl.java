@@ -26,7 +26,6 @@ final class ThumbnailViewImpl implements ThumbnailView {
     private boolean recursive = false;
     private VirtualFile root = null;
 
-
     public ThumbnailViewImpl(Project project) {
         this.project = project;
 
@@ -57,21 +56,45 @@ final class ThumbnailViewImpl implements ThumbnailView {
         updateUI();
     }
 
+    public void setSelected(VirtualFile file) {
+        if (isVisible()) {
+            getUI().setSelected(file);
+        }
+    }
+
+    public void scrollTo(final VirtualFile file) {
+        if (isVisible()) {
+            if (!toolWindow.isActive()) {
+                toolWindow.activate(new LazyScroller(file));
+            } else {
+                getUI().scrollTo(file);
+            }
+        }
+    }
+
+    public boolean isVisible() {
+        return toolWindow.isAvailable();
+    }
+
+    public void activate() {
+        if (isVisible() && !toolWindow.isActive()) {
+            toolWindow.activate(null);
+        }
+    }
+
+    public void setVisible(boolean visible) {
+        toolWindow.setAvailable(visible, null);
+        if (visible) {
+            getUI().refresh();
+        } else {
+            getUI().dispose();
+        }
+    }
+
     private void updateUI() {
-        getUI().refresh();
-    }
-
-    public void show() {
-        getUI().createUI();
-
-        toolWindow.setAvailable(true, null);
-        toolWindow.activate(null);
-    }
-
-    public void hide() {
-        toolWindow.setAvailable(false, null);
-
-        getUI().dispose();
+        if (isVisible()) {
+            getUI().refresh();
+        }
     }
 
     public Project getProject() {
@@ -79,15 +102,33 @@ final class ThumbnailViewImpl implements ThumbnailView {
     }
 
     public void setTransparencyChessboardVisible(boolean visible) {
-        getUI().setTransparencyChessboardVisible(visible);
+        if (isVisible()) {
+            getUI().setTransparencyChessboardVisible(visible);
+        }
     }
 
     public boolean isTransparencyChessboardVisible() {
-        return getUI().isTransparencyChessboardVisible();
+        return isVisible() && getUI().isTransparencyChessboardVisible();
     }
 
     public void dispose() {
         ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
         windowManager.unregisterToolWindow(TOOLWINDOW_ID);
+    }
+
+    private final class LazyScroller implements Runnable {
+        private final VirtualFile file;
+
+        public LazyScroller(VirtualFile file) {
+            this.file = file;
+        }
+
+        public void run() {
+            SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                    getUI().scrollTo(file);
+                }
+            });
+        }
     }
 }
