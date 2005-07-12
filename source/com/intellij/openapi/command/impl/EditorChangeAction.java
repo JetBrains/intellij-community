@@ -9,13 +9,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PatchedWeakReference;
-
-import java.lang.ref.Reference;
 
 class EditorChangeAction implements UndoableAction {
-  private Object myDocument; // DocumentEx or WeakReference<DocumentEx> or null
-  private VirtualFile myDocumentFile;
+  private final DocumentEx myDocument; // DocumentEx or WeakReference<DocumentEx> or null
+  private final VirtualFile myDocumentFile;
   private int myOffset;
   private CharSequence myOldString;
   private CharSequence myNewString;
@@ -27,7 +24,7 @@ class EditorChangeAction implements UndoableAction {
                             long oldTimeStamp, Project project) {
     myDocumentFile = FileDocumentManager.getInstance().getFile(document);
     if (myDocumentFile != null) {
-      myDocument = new PatchedWeakReference(document);
+      myDocument = null;
     }
     else {
       myDocument = document;
@@ -84,13 +81,8 @@ class EditorChangeAction implements UndoableAction {
   }
 
   public DocumentEx getDocument() {
-    if (myDocument instanceof DocumentEx) return (DocumentEx)myDocument;
-    Reference ref = (PatchedWeakReference)myDocument;
-    final DocumentEx doc = (DocumentEx)ref.get();
-    if (doc != null) return doc;
-    final DocumentEx document = (DocumentEx)FileDocumentManager.getInstance().getDocument(myDocumentFile);
-    myDocument = new PatchedWeakReference(document);
-    return document;
+    if (myDocument != null) return myDocument;
+    return (DocumentEx)FileDocumentManager.getInstance().getDocument(myDocumentFile);
   }
 }
 

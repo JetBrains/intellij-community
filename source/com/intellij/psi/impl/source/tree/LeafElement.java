@@ -173,4 +173,6 @@ public abstract class LeafElement extends TreeElement {
   public boolean isChameleon(){
     return false;
   }
+
+  public abstract void setInternedText(CharSequence id);
 }

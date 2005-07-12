@@ -1,11 +1,11 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.util.CharTable;
-import com.intellij.util.PatchedWeakReference;
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.THashMap;
+import org.apache.commons.collections.map.ReferenceMap;
 
-import java.lang.ref.WeakReference;
+import java.lang.ref.Reference;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -15,18 +15,9 @@ import java.lang.ref.WeakReference;
  * To change this template use File | Settings | File Templates.
  */
 public class CharTableImpl implements CharTable {
-  private final THashMap<Object, WeakReference<? extends CharSequence>> myEntries =
-    new THashMap<Object, WeakReference<? extends CharSequence>>(new CharTableEntryHashingStrategy()){
-      protected void rehash(final int newCapacity) {
-        for (int i = 0; i < _set.length; i++) {
-          final Object o = _set[i];
-          if(o == REMOVED) continue;
-          final WeakReference<? extends CharSequence> reference = (WeakReference<? extends CharSequence>)o;
-          if(reference != null && reference.get() == null) _set[i] = REMOVED;
-        }
-        super.rehash(newCapacity);
-      }
-    };
+  private final static CharTableEntryHashingStrategy HASHER = new CharTableEntryHashingStrategy();
+  private final Map myEntries = new WeakCharEntryMap();
+
   private char[] myCurrentPage = null;
   private int bufferEnd = 0;
 
@@ -35,12 +26,10 @@ public class CharTableImpl implements CharTable {
   }
 
   public CharSequence intern(final CharSequence text) {
-    WeakReference<? extends CharSequence> weakReference = myEntries.get(text);
-    CharSequence entry = weakReference != null ? weakReference.get() : null;
+    CharSequence entry = (CharSequence)myEntries.get(text);
     if (entry == null ) {
       entry = createEntry(text);
-      weakReference = new PatchedWeakReference(entry);
-      myEntries.put(weakReference, weakReference);
+      myEntries.put(entry, entry);
     }
     return entry;
   }
@@ -91,6 +80,24 @@ public class CharTableImpl implements CharTable {
 
     public String toString() {
       return StringFactory.createStringFromConstantArray(buffer, offset, length);
+    }
+  }
+
+  private static class WeakCharEntryMap extends ReferenceMap {
+    public WeakCharEntryMap() {
+      super(ReferenceMap.WEAK, ReferenceMap.WEAK, true);
+    }
+
+    protected int hash(Object key) {
+      return HASHER.computeHashCode((CharSequence)key);
+    }
+
+    protected int hashEntry(Object key, Object value) {
+      return HASHER.computeHashCode((CharSequence)key);
+    }
+
+    protected boolean isEqualKey(Object key1, Object key2) {
+      return HASHER.equals((CharSequence)key1, (CharSequence)((Reference)key2).get());
     }
   }
 }
