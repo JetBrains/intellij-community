@@ -419,6 +419,25 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       uriProvider.getNamespaceAttributeFilter(),
       uriProvider
     );
+    
+    registerXmlAttributeValueReferenceProvider(
+      new String[] {"fragment"},
+      new ScopeFilter(
+        new ParentElementFilter(
+          new AndFilter(
+            new NamespaceFilter(XmlUtil.JSP_URI),
+            new AndFilter(
+              new OrFilter(
+                new ClassFilter(JspDirective.class),
+                new ClassFilter(XmlTag.class)
+              ),
+              new TextFilter("invoke")
+            )
+          ), 2
+        )
+      ),
+      new TagFileReferenceProvider()
+    );
   }
 
   public void registerReferenceProvider(ElementFilter elementFilter, Class scope, PsiReferenceProvider provider) {
