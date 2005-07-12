@@ -59,9 +59,9 @@
       <reference id="Vcs.ShowTabbedFileHistory"/>
       <separator/>
       <action id="Subversion.SetProperty" class="com.qintsoft.svn4idea.actions.SetPropertyAction" text="Set Property..." description="Set versioned property on file or directory"/>
-      <action id="Subversion.Revert" class="com.qintsoft.svn4idea.actions.RevertAction" text="Revert file" description="Revert file to pristine state"/>
-      <action id="Subversion.Resolve" class="com.qintsoft.svn4idea.actions.ResolveAction" text="Resolve Conflict..." description="Resolve text conflict on file"/>
-      <action id="Subversion.MarkResolved" class="com.qintsoft.svn4idea.actions.MarkResolvedAction" text="Mark Resolved" description="Mark text and properties conflicts as resolved"/>
+      <action id="Subversion.Revert" class="com.qintsoft.svn4idea.actions.RevertAction" text="Revert..." description="Revert file to pristine state"/>
+      <action id="Subversion.Resolve" class="com.qintsoft.svn4idea.actions.ResolveAction" text="Resolve Text Conflict..." description="Resolve text conflict on file"/>
+      <action id="Subversion.MarkResolved" class="com.qintsoft.svn4idea.actions.MarkResolvedAction" text="Mark Resolved..." description="Mark text and properties conflicts as resolved"/>
       <action id="Subversion.Clenaup" class="com.qintsoft.svn4idea.actions.CleanupAction" text="Cleanup" description="Unlock locked directories and run all remaining incompleted operations"/>
       <separator/>
       <reference id="Compare.SameVersion" text="Compare with BASE revision"/>
