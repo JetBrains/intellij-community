@@ -8,6 +8,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.Nullable;
 
 public class FormatterImpl extends FormatterEx
   implements ApplicationComponent,
@@ -284,7 +285,8 @@ public class FormatterImpl extends FormatterEx
                               final boolean keepBlankLines,
                               final boolean keepLineBreaks,
                               final boolean changeWSBeforeFirstElement,
-                              final boolean changeLineFeedsBeforeFirstElement, final IndentInfoStorage indentInfoStorage) {
+                              final boolean changeLineFeedsBeforeFirstElement,
+                              @Nullable final IndentInfoStorage indentInfoStorage) {
     myIsDisabledCount++;
     try {
       Block block = model.getRootBlock();
@@ -295,7 +297,7 @@ public class FormatterImpl extends FormatterEx
 
         if (!whiteSpace.isReadOnly()) {
           if (whiteSpace.getTextRange().getStartOffset() > affectedRange.getStartOffset()) {
-            if (whiteSpace.containsLineFeeds()) {
+            if (whiteSpace.containsLineFeeds() && indentInfoStorage != null) {
               whiteSpace.setLineFeedsAreReadOnly(true);
               current.setIndentFromParent(indentInfoStorage.getIndentInfo(current.getStartOffset()));
             } else {
