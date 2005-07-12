@@ -42,7 +42,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     reloadProfiles(profiles, inspectionManager, manager);
     comboboxWithBrowseButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        InspectCodePanel inspectCodeDialog = new InspectCodePanel(manager, null){
+        InspectCodePanel inspectCodeDialog = new InspectCodePanel(manager, null, (String)profiles.getSelectedItem()){
           protected void init() {
             super.init();
             setOKButtonText("OK");
