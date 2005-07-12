@@ -39,4 +39,9 @@ public class UsageTargetNode extends Node {
   public UsageTarget getTarget() {
     return myTarget;
   }
+
+  protected void updateNotify() {
+    super.updateNotify();
+    myTarget.update();
+  }
 }

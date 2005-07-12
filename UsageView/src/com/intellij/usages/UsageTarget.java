@@ -31,4 +31,5 @@ public interface UsageTarget extends NavigationItem {
    */
   VirtualFile[] getFiles();
 
+  void update();
 }

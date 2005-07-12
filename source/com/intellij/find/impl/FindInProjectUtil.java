@@ -543,6 +543,9 @@ public class FindInProjectUtil {
       return null;
     }
 
+    public void update() {
+    }
+
     public String getName() {
       return myStringToFind;
     }

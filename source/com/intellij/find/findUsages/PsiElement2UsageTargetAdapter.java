@@ -25,7 +25,7 @@ import javax.swing.*;
  */
 public class PsiElement2UsageTargetAdapter implements UsageTarget {
   private SmartPsiElementPointer myPointer;
-  private ItemPresentation myPresentation;
+  private MyItemPresentation myPresentation;
 
   public PsiElement2UsageTargetAdapter(final PsiElement element) {
     myPointer = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
@@ -102,6 +102,10 @@ public class PsiElement2UsageTargetAdapter implements UsageTarget {
     return virtualFile == null ? null : new VirtualFile[]{virtualFile};
   }
 
+  public void update() {
+    myPresentation.update();
+  }
+
   public static UsageTarget[] convert(PsiElement[] psiElements) {
     UsageTarget[] targets = new UsageTarget[psiElements.length];
     for (int i = 0; i < targets.length; i++) {
@@ -116,16 +120,20 @@ public class PsiElement2UsageTargetAdapter implements UsageTarget {
     private long myModificationStamp;
     private final PsiElement myElement;
     private final ItemPresentation myPresentation;
-    private final Icon myIconOpen;
-    private final Icon myIconClosed;
+    private Icon myIconOpen;
+    private Icon myIconClosed;
 
     public MyItemPresentation(final PsiElement element) {
       myElement = element;
       myPresentation = ((NavigationItem)element).getPresentation();
-      myIconOpen = myPresentation != null ? myPresentation.getIcon(true) : null;
-      myIconClosed = myPresentation != null ? myPresentation.getIcon(false) : null;
+      update();
       myPresentableText = createPresentableText(myElement);
       myModificationStamp = getCurrentModificationStamp();
+    }
+
+    public void update() {
+      myIconOpen = myPresentation != null ? myPresentation.getIcon(true) : null;
+      myIconClosed = myPresentation != null ? myPresentation.getIcon(false) : null;
     }
 
     public String getPresentableText() {
@@ -159,12 +167,7 @@ public class PsiElement2UsageTargetAdapter implements UsageTarget {
     }
 
     public Icon getIcon(boolean open) {
-      if (!isValid() || myPresentation == null) {
-        return open ? myIconOpen : myIconClosed;
-      }
-      else {
-        return myPresentation.getIcon(open);
-      }
+      return open ? myIconOpen : myIconClosed;
     }
   }
 }
