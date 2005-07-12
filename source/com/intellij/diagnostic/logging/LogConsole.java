@@ -40,11 +40,11 @@ public abstract class LogConsole extends JPanel implements Disposable{
 
   public void dispose() {
     myConsole.dispose();
-    myReaderThread.stopRunning();
+    myReaderThread.stopRunning(false);
   }
 
   public void stopRunning(){
-    myReaderThread.stopRunning();
+    myReaderThread.stopRunning(true);
   }
 
   public JComponent getComponent() {
@@ -134,10 +134,17 @@ public abstract class LogConsole extends JPanel implements Disposable{
       }
     }
 
-    public void stopRunning(){
+    public void stopRunning(boolean flush){
       myRunning = false;
       try {
-        if (myFileStream != null){
+        if (myFileStream != null){          
+          if (flush) {//flush everything to log on stop
+            String line = myFileStream.readLine();
+            while (line != null){
+              addMessage(line);
+              line = myFileStream.readLine();
+            }
+          }
           myFileStream.close();
           myFileStream = null;
         }
