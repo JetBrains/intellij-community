@@ -100,6 +100,16 @@ public class MetaRegistry {
           TldAttributeDescriptor.class
       );
     }
+    
+    {
+      addMetadataBinding(
+          new AndFilter(
+              new NamespaceFilter(TAGLIB_URIS),
+              new TextFilter("variable")
+          ),
+          TldVariableDescriptor.class
+      );
+    }
 
     {
       addMetadataBinding(

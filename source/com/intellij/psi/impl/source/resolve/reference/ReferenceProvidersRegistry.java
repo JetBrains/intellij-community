@@ -353,7 +353,8 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
         new AndFilter(
           new TextFilter(
             new String[] {
-              "function-class", "tag-class", "tei-class", "variable-class", "type", "function-signature"
+              "function-class", "tag-class", "tei-class", "variable-class", "type", 
+              "function-signature", "name", "name-given"
             }
           ),
           new NamespaceFilter(MetaRegistry.TAGLIB_URIS)
