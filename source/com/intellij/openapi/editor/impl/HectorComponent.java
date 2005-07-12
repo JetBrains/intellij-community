@@ -8,7 +8,10 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInspection.ex.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileManager;
 import com.intellij.codeInspection.ex.InspectionToolsPanel;
+import com.intellij.codeInspection.ui.ApplyAction;
+import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -182,7 +185,7 @@ public class HectorComponent extends JPanel {
     myProfilesCombo.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         if (myHint != null && myHint.isVisible()) myHint.hide();
-        ErrorsDialog errorsDialog = new ErrorsDialog(DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(myFile).getName(),
+        ErrorsDialog errorsDialog = new ErrorsDialog((String)myProfilesCombo.getComboBox().getSelectedItem(),
                                                      myFile.getProject());
         errorsDialog.show();
       }
@@ -302,10 +305,12 @@ public class HectorComponent extends JPanel {
 
   private static class ErrorsDialog extends DialogWrapper {
     private final InspectionToolsPanel myPanel;
+    private ApplyAction myApplyAction;
 
     public ErrorsDialog(String initialProfileName, Project project) {
       super(true);
       myPanel = new InspectionToolsPanel(initialProfileName, project) {
+        //just panel
       };
       setTitle("Inspection Profiles:");
       init();
@@ -322,6 +327,25 @@ public class HectorComponent extends JPanel {
       catch (ConfigurationException e) {
       }
       super.doOKAction();
+    }
+
+    protected void dispose() {
+      if (myPanel != null) myPanel.saveVisibleState();
+      super.dispose();
+    }
+
+    public void doCancelAction() {
+      myApplyAction.dispose();
+      super.doCancelAction();
+    }
+
+    protected void doHelpAction() {
+      HelpManager.getInstance().invokeHelp(InspectionResultsView.HELP_ID); //todo correct help id 
+    }
+
+    protected Action[] createActions() {
+      myApplyAction = new ApplyAction(myPanel, this);
+      return new Action[]{getOKAction(), myApplyAction, getCancelAction(), getHelpAction()};
     }
 
     @Nullable
