@@ -232,7 +232,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   }
 
   public void dropResolveCaches() {
-    onChange(true);
+    myResolveCache.clearCache();
   }
 
   public boolean isInPackage(PsiElement element, PsiPackage aPackage) {
