@@ -43,6 +43,10 @@ public class DefaultActionGroup extends ActionGroup {
    *
    * @param action Action to be added
    */
+  public final void add(AnAction action, ActionManager actionManager){
+    add(action, new Constraints(Anchor.LAST, null), actionManager);
+  }
+
   public final void add(AnAction action){
     add(action, new Constraints(Anchor.LAST, null));
   }
@@ -65,6 +69,10 @@ public class DefaultActionGroup extends ActionGroup {
    * <li>action is already in the group
    */
   public final void add(AnAction action, Constraints constraint){
+    add(action, constraint, ActionManager.getInstance());
+  }
+
+  public final void add(AnAction action, Constraints constraint, ActionManager actionManager){
     if (action == null) {
       throw new IllegalArgumentException("action cannot be null");
     }
@@ -93,20 +101,20 @@ public class DefaultActionGroup extends ActionGroup {
     }else if (constraint.myAnchor == Anchor.LAST){
       mySortedChildren.add(action);
     }else{
-      if (addToSortedList(action, constraint)){
-        actionAdded(action);
+      if (addToSortedList(action, constraint, actionManager)){
+        actionAdded(action, actionManager);
       }else{
         myPairs.add(new Pair<AnAction, Constraints>(action, constraint));
       }
     }
   }
 
-  private void actionAdded(AnAction addedAction){
+  private void actionAdded(AnAction addedAction, ActionManager actionManager){
     String addedActionId;
     if(addedAction instanceof ActionStub){
       addedActionId=((ActionStub)addedAction).getId();
     }else{
-      addedActionId=ActionManager.getInstance().getId(addedAction);
+      addedActionId=actionManager.getId(addedAction);
     }
     if (addedActionId == null){
       return;
@@ -114,7 +122,7 @@ public class DefaultActionGroup extends ActionGroup {
     outer: while(myPairs.size() > 0){
       for(int i = 0; i < myPairs.size(); i++){
         Pair<AnAction, Constraints> pair = myPairs.get(i);
-        if (addToSortedList(pair.first, pair.second)){
+        if (addToSortedList(pair.first, pair.second, actionManager)){
           myPairs.remove(i);
           continue outer;
         }
@@ -123,8 +131,8 @@ public class DefaultActionGroup extends ActionGroup {
     }
   }
 
-  private final boolean addToSortedList(AnAction action, Constraints constraint){
-    int index = findIndex(constraint.myRelativeToActionId, mySortedChildren);
+  private final boolean addToSortedList(AnAction action, Constraints constraint, ActionManager actionManager){
+    int index = findIndex(constraint.myRelativeToActionId, mySortedChildren, actionManager);
     if (index == -1){
       return false;
     }
@@ -137,8 +145,7 @@ public class DefaultActionGroup extends ActionGroup {
     return true;
   }
 
-  private final int findIndex(String actionId, ArrayList<AnAction> actions){
-    ActionManager actionManager = ActionManager.getInstance();
+  private final int findIndex(String actionId, ArrayList<AnAction> actions, ActionManager actionManager){
     for(int i = 0; i < actions.size(); i++){
       AnAction action = actions.get(i);
       if(action instanceof ActionStub){

@@ -1,6 +1,8 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.plugins.PluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -119,6 +121,19 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       Element children = (Element)o;
       if ("actions".equals(children.getName())) {
         processActionsElement(children, classLoader, null);
+      }
+    }
+    registerActions();
+  }
+
+  private void registerActions() {
+    final PluginDescriptor[] plugins = PluginManager.getPlugins();
+    for (int i = 0; i < plugins.length; i++) {
+      PluginDescriptor plugin = plugins[i];
+
+      final Element e = plugin.getActionsDescriptionElement();
+      if (e != null) {
+        processActionsElement(e, plugin.getLoader(), plugin.getPluginId());
       }
     }
   }
@@ -311,7 +326,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
         LOG.error("class with name \"" + className + "\" should be instance of " + ActionGroup.class.getName());
         return null;
       }
-      if (element.getChildren().size() > 0) {
+      if (element.getChildren().size() != element.getChildren("add-to-group").size() ) {  //
         if (!(obj instanceof DefaultActionGroup)) {
           LOG.error("class with name \"" + className + "\" should be instance of " + DefaultActionGroup.class.getName() +
                     " because there are children specified");
@@ -358,7 +373,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
           AnAction action = processActionElement(child, loader, pluginId);
           if (action != null) {
             assertActionIsGroupOrStub(action);
-            ((DefaultActionGroup)group).add(action);
+            ((DefaultActionGroup)group).add(action, this);
           }
         }
         else if ("separator".equals(name)) {
@@ -367,7 +382,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
         else if ("group".equals(name)) {
           AnAction action = processGroupElement(child, loader, pluginId);
           if (action != null) {
-            ((DefaultActionGroup)group).add(action);
+            ((DefaultActionGroup)group).add(action, this);
           }
         }
         else if ("add-to-group".equals(name)) {
@@ -376,7 +391,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
         else if ("reference".equals(name)) {
           AnAction action = processReferenceElement(child);
           if (action != null) {
-            ((DefaultActionGroup)group).add(action);
+            ((DefaultActionGroup)group).add(action, this);
           }
         }
         else {
@@ -428,7 +443,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       return;
     }
     String anchorStr = element.getAttributeValue("anchor");
-    if (anchorStr == null || groupId.length() == 0) {
+    if (anchorStr == null) {
       LOG.error("attribute \"anchor\" should be defined");
       return;
     }
@@ -454,7 +469,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       LOG.error("\"relative-to-action\" cannot be null if anchor is \"after\" or \"before\"");
       return;
     }
-    ((DefaultActionGroup)parentGroup).add(action, new Constraints(anchor, relativeToActionId));
+    ((DefaultActionGroup)parentGroup).add(action, new Constraints(anchor, relativeToActionId), this);
   }
 
   /**
@@ -469,7 +484,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     }
     Separator separator = Separator.getInstance();
     if (parentGroup != null) {
-      parentGroup.add(separator);
+      parentGroup.add(separator, this);
     }
     // try to find inner <add-to-parent...> tag
     for (final Object o : element.getChildren()) {

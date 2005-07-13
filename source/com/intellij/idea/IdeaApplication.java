@@ -5,10 +5,8 @@ import com.intellij.ExtensionPoints;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.ide.plugins.PluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.reporter.ConnectionException;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
@@ -24,7 +22,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.ui.Splash;
-import org.jdom.Element;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -112,8 +109,7 @@ public class IdeaApplication {
     }
 
     public void main(String[] args) {
-      registerActions();
-
+     
       // Event queue should not be changed during initialization of application components.
       // It also cannot be changed before initialization of application components because IdeEventQueue uses other
       // application components. So it is proper to perform replacement only here.
@@ -149,18 +145,6 @@ public class IdeaApplication {
           }
         }
       });
-    }
-  }
-
-  private void registerActions() {
-    final PluginDescriptor[] plugins = PluginManager.getPlugins();
-    for (int i = 0; i < plugins.length; i++) {
-      PluginDescriptor plugin = plugins[i];
-
-      final Element e = plugin.getActionsDescriptionElement();
-      if (e != null) {
-        ActionManagerEx.getInstanceEx().processActionsElement(e, plugin.getLoader(), plugin.getPluginId());
-      }
     }
   }
 
