@@ -45,6 +45,7 @@ public class XMLLanguage extends Language {
   protected static final CDATAOnAnyEncodedPolicy CDATA_ON_ANY_ENCODED_POLICY = new CDATAOnAnyEncodedPolicy();
   protected static final EncodeEachSymbolPolicy ENCODE_EACH_SYMBOL_POLICY = new EncodeEachSymbolPolicy();
   private final FormattingModelBuilder myFormattingModelBuilder;
+  private XmlFindUsagesProvider myXmlFindUsagesProvider;
 
   public XMLLanguage() {
     this("XML", "text/xml");
@@ -73,8 +74,10 @@ public class XMLLanguage extends Language {
     return new XMLParserDefinition();
   }
 
+  @NotNull
   public FindUsagesProvider getFindUsagesProvider() {
-    return new XmlFindUsagesProvider();
+    if(myXmlFindUsagesProvider == null) myXmlFindUsagesProvider = new XmlFindUsagesProvider();
+    return myXmlFindUsagesProvider;
   }
 
   @NotNull public SurroundDescriptor[] getSurroundDescriptors() {
