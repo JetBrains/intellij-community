@@ -186,7 +186,7 @@ class JavacCompiler implements BackendCompiler {
       classPath = cp;
 
       commandLine.add("-bootclasspath");
-      addClassPathValue(jdk, isVersion1_0, commandLine, bootCp, "javac_bootcp");
+      addClassPathValue(jdk, isVersion1_0, commandLine, CompilerUtil.quotePath(bootCp), "javac_bootcp");
       LOG.info("; classpath=\"" + bootCp + "\"");
     }
 
