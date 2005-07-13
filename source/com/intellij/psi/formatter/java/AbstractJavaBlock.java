@@ -805,8 +805,19 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
     final int braceStyle = getBraceStyle();
     return braceStyle == CodeStyleSettings.NEXT_LINE_SHIFTED ?
-           Indent.createNormalIndent(baseChildrenIndent - 1)
-           : Indent.createNormalIndent(baseChildrenIndent);
+           createNormalIndent(baseChildrenIndent - 1)
+           : createNormalIndent(baseChildrenIndent);
+  }
+
+  private Indent createNormalIndent(final int baseChildrenIndent) {
+    if (baseChildrenIndent == 1) {
+      return Indent.getNormalIndent();
+    } else if (baseChildrenIndent <= 0) {
+      return Indent.getNoneIndent();
+    } else {
+      LOG.assertTrue(false);
+      return Indent.getNormalIndent();
+    }
   }
 
   private boolean isTopLevelClass() {

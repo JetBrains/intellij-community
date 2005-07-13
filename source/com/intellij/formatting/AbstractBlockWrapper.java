@@ -108,7 +108,7 @@ public class AbstractBlockWrapper {
     if (indent.getType() == IndentImpl.Type.LABEL) return new IndentData(options.LABEL_INDENT_SIZE);
     if (indent.getType() == IndentImpl.Type.NONE) return new IndentData(0);
     if (indent.getType() == IndentImpl.Type.SPACES) return new IndentData(0, indent.getSpaces());
-    return new IndentData(options.INDENT_SIZE * indent.getCount());
+    return new IndentData(options.INDENT_SIZE);
 
   }
 
@@ -193,7 +193,7 @@ public class AbstractBlockWrapper {
     if (indent.getType() == IndentImpl.Type.LABEL) return new IndentData(options.LABEL_INDENT_SIZE);
     if (indent.getType() == IndentImpl.Type.NONE) return new IndentData(0);
     if (indent.getType() == IndentImpl.Type.SPACES) return new IndentData(0, indent.getSpaces());
-    return new IndentData(options.INDENT_SIZE * indent.getCount());
+    return new IndentData(options.INDENT_SIZE);
 
   }
 

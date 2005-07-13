@@ -37,7 +37,6 @@ package com.intellij.formatting;
 
 interface IndentFactory {
   public abstract Indent getNormalIndent();
-  public abstract Indent createNormalIndent(int count);
   public abstract Indent getNoneIndent();
   public abstract Indent getAbsoluteNoneIndent();
   public abstract Indent getAbsoluteLabelIndent();

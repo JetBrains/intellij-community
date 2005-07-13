@@ -39,12 +39,6 @@ public class FormatterImpl extends FormatterEx
     return new IndentImpl(IndentImpl.Type.NORMAL, false);
   }
 
-  public Indent createNormalIndent(int count) {
-    final IndentImpl result = new IndentImpl(IndentImpl.Type.NORMAL, false);
-    result.setCount(count);
-    return result;
-  }
-
   public Indent getNoneIndent() {
     return NONE_INDENT;
   }

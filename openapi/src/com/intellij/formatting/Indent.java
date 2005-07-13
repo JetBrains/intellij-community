@@ -62,10 +62,6 @@ public abstract class Indent {
     return myFactory.getNormalIndent();
   }
 
-  public static Indent createNormalIndent(int count){
-    return myFactory.createNormalIndent(count);
-  }
-
   /**
    * Returns the standard "empty indent" instance, indicating that the block is not
    * indented relative to its parent block.

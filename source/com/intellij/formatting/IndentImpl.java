@@ -1,10 +1,7 @@
 package com.intellij.formatting;
 
-import com.intellij.formatting.Indent;
-
 class IndentImpl extends Indent {
   private final boolean myIsAbsolute;
-  private int myCount = 1;
 
   public boolean isContinuation() {
     return myType == Type.CONTINUATION_WITHOUT_FIRST;
@@ -12,10 +9,6 @@ class IndentImpl extends Indent {
 
   public boolean isNone() {
     return getType() == Type.NONE;
-  }
-
-  public void setCount(final int count) {
-    myCount = count;
   }
 
   static class Type{
@@ -53,10 +46,6 @@ class IndentImpl extends Indent {
 
   Type getType() {
     return myType;
-  }
-
-  public int getCount() {
-    return myCount;
   }
 
   public int getSpaces() {
