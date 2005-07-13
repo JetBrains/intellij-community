@@ -416,7 +416,7 @@ public class FormatterImpl extends FormatterEx
 
   public void enableFormatting() {
     synchronized (DISABLING_LOCK) {
-      if (myIsDisabledCount > 0) {
+      if (myIsDisabledCount <= 0) {
         LOG.error("enableFormatting()/disableFormatting() not paired. DisabledLevel = " + myIsDisabledCount);
       }
       myIsDisabledCount--;
