@@ -189,4 +189,8 @@ public class DataFlowTest extends InspectionTestCase {
   public void testYoleBug() throws Exception {
     doTest15();
   }
+
+  public void testForeachFlow() throws Exception {
+    doTest15();
+  }
 }

@@ -325,6 +325,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
       addInstruction(new PopInstruction());
     }
 
+    int offset = myCurrentFlow.getInstructionCount();
     if (parameter != null) {
       DfaVariableValue dfaVariable = myFactory.getVarFactory().create(parameter, false);
       addInstruction(new PushInstruction(dfaVariable));
@@ -332,8 +333,6 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
       addInstruction(new AssignInstruction(null));
       addInstruction(new PopInstruction());
     }
-
-    int offset = myCurrentFlow.getInstructionCount();
 
     pushUnknown();
     addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), true, null));
