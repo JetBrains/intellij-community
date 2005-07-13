@@ -4,7 +4,6 @@ import com.intellij.ant.AntConfiguration;
 import com.intellij.ant.BuildFile;
 import com.intellij.ant.actions.TargetAction;
 import com.intellij.ide.actionMacro.ActionMacro;
-import com.intellij.ide.actions.ToolWindowsGroup;
 import com.intellij.ide.plugins.PluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.actionSystem.*;
@@ -14,7 +13,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.tools.SimpleActionGroup;
 import com.intellij.tools.Tool;
 import com.intellij.tools.ToolManager;
 
@@ -123,11 +121,9 @@ public class ActionsTreeUtil {
     AnAction[] mainMenuTopGroups = actionGroup.getChildren(null);
     for (int i = 0; i < mainMenuTopGroups.length; i++) {
       AnAction action = mainMenuTopGroups[i];
-      if (action instanceof DefaultActionGroup) {
-        Group subGroup = createGroup((ActionGroup)action, ignore);
-        if (subGroup.getSize() > 0) {
-          group.addGroup(subGroup);
-        }
+      Group subGroup = createGroup((ActionGroup)action, ignore);
+      if (subGroup.getSize() > 0) {
+        group.addGroup(subGroup);
       }
     }
   }
@@ -140,24 +136,28 @@ public class ActionsTreeUtil {
   public static Group createGroup(ActionGroup actionGroup, String groupName, Icon icon, Icon openIcon, boolean ignore) {
     ActionManager actionManager = ActionManager.getInstance();
     Group group = new Group(groupName, actionManager.getId(actionGroup), icon, openIcon);
-    AnAction[] children = actionGroup.getChildren(null);
+    AnAction[] children;
+    try {
+      children = actionGroup.getChildren(null);
+    }
+    catch (NullPointerException e) {
+      return group; //without children
+    }
     for (int i = 0; i < children.length; i++) {
       AnAction action = children[i];
 
       if (action instanceof ActionGroup) {
-        if (action instanceof DefaultActionGroup || action instanceof ToolWindowsGroup || action instanceof SimpleActionGroup) {
-          Group subGroup = createGroup((ActionGroup)action, ignore);
-          if (subGroup.getSize() > 0) {
-            if (!ignore && !((ActionGroup)action).isPopup()) {
-              group.addAll(subGroup);
-            }
-            else {
-              group.addGroup(subGroup);
-            }
+        Group subGroup = createGroup((ActionGroup)action, ignore);
+        if (subGroup.getSize() > 0) {
+          if (!ignore && !((ActionGroup)action).isPopup()) {
+            group.addAll(subGroup);
           }
           else {
             group.addGroup(subGroup);
           }
+        }
+        else {
+          group.addGroup(subGroup);
         }
       }
       else if (action instanceof Separator){
