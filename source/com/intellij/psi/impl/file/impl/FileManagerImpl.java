@@ -236,7 +236,9 @@ public class FileManagerImpl implements FileManager {
       LOG.assertTrue(false);
       return null;
     }
-    LOG.assertTrue(vFile.isValid());
+    if (!vFile.isValid()) {
+      LOG.assertTrue(false, "Invalid file: " + vFile);
+    }
 
     dispatchPendingEvents();
 
