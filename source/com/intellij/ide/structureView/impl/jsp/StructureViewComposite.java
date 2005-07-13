@@ -43,6 +43,7 @@ public class StructureViewComposite implements StructureView {
         mySelectedViewDescriptor = myStructureViews[index];
       }
     });
+    myTabbedPaneWrapper.installKeyboardNavigation();
   }
 
   public StructureView getSelectedStructureView() {
