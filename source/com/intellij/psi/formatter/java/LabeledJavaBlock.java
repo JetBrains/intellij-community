@@ -40,9 +40,9 @@ public class LabeledJavaBlock extends AbstractJavaBlock{
 
   private Indent getLabelIndent() {
     if (mySettings.JAVA_INDENT_OPTIONS.LABEL_INDENT_ABSOLUTE) {
-      return Indent.createAbsoluteLabelIndent();
+      return Indent.getAbsoluteLabelIndent();
     } else {
-      return Indent.createLabelIndent();
+      return Indent.getLabelIndent();
     }
   }
 

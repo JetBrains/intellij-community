@@ -269,7 +269,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     if (myNode.getElementType() == ElementType.HTML_DOCUMENT
         && tag.getParent() instanceof XmlTag
         && myXmlFormattingPolicy.indentChildrenOf((XmlTag)tag.getParent())) {
-      childIndent = Indent.createNormalIndent();
+      childIndent = Indent.getNormalIndent();
     }
     result.add(new XmlTagBlock(tag.getNode(), null, null, createPolicyFor(tag), childIndent));
     ASTNode currentChild = findChildAfter(child, tag.getTextRange().getEndOffset());
@@ -340,7 +340,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
             .getPsiRoots()[0].getNode().findLeafElementAt(nextOffset);
         }
       }
-      return new SyntheticBlock(subBlocks, this, indent, myXmlFormattingPolicy, Indent.createNormalIndent());
+      return new SyntheticBlock(subBlocks, this, indent, myXmlFormattingPolicy, Indent.getNormalIndent());
     } else {
       return null;
     }

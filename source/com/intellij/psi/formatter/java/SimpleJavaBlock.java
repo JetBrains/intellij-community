@@ -43,9 +43,9 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
       if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
         child = processChild(result, child, childAlignment, childWrap, indent);
         if (indent != null && !(myNode.getPsi() instanceof PsiFile)) {
-          indent = Indent.createContinuationIndent();
+          indent = Indent.getContinuationIndent();
         }
-        //indent = FormatterEx.getInstance().createContinuationIndent();
+        //indent = FormatterEx.getInstance().getContinuationIndent();
       }
       if (child != null) {
         child = child.getTreeNext();

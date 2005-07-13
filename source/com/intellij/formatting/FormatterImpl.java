@@ -35,7 +35,7 @@ public class FormatterImpl extends FormatterEx
     return new AlignmentImpl(AlignmentImpl.Type.NORMAL);
   }
 
-  public Indent createNormalIndent() {
+  public Indent getNormalIndent() {
     return new IndentImpl(IndentImpl.Type.NORMAL, false);
   }
 
@@ -358,11 +358,11 @@ public class FormatterImpl extends FormatterEx
     return myIsDisabledCount > 0;
   }
 
-  public Indent createSpaceIndent(final int spaces) {
+  public Indent getSpaceIndent(final int spaces) {
     return new IndentImpl(IndentImpl.Type.SPACES, false, spaces);
   }
 
-  public Indent createAbsoluteLabelIndent() {
+  public Indent getAbsoluteLabelIndent() {
     return new IndentImpl(IndentImpl.Type.LABEL, true);
   }
 
@@ -389,23 +389,19 @@ public class FormatterImpl extends FormatterEx
   public void disposeComponent() {
   }
 
-  public Indent createAbsoluteNormalIndent() {
-    return new IndentImpl(IndentImpl.Type.NORMAL, true);
-  }
-
-  public Indent createAbsoluteNoneIndent() {
+  public Indent getAbsoluteNoneIndent() {
     return new IndentImpl(IndentImpl.Type.NONE, true);
   }
 
-  public Indent createLabelIndent() {
+  public Indent getLabelIndent() {
     return new IndentImpl(IndentImpl.Type.LABEL, false);
   }
 
-  public Indent createContinuationIndent() {
+  public Indent getContinuationIndent() {
     return new IndentImpl(IndentImpl.Type.CONTINUATION, false);
   }
 
-  public Indent createContinuationWithoutFirstIndent()//is default
+  public Indent getContinuationWithoutFirstIndent()//is default
   {
     return new IndentImpl(IndentImpl.Type.CONTINUATION_WITHOUT_FIRST, false);
   }

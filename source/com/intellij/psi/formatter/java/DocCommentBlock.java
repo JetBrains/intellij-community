@@ -28,7 +28,7 @@ public class DocCommentBlock extends AbstractJavaBlock{
         result.add(createJavaBlock(child, mySettings, Indent.getNoneIndent(),
                                    null, null));
       } else if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
-        result.add(createJavaBlock(child, mySettings, Indent.createSpaceIndent(1), null, null));
+        result.add(createJavaBlock(child, mySettings, Indent.getSpaceIndent(1), null, null));
       }
       child = child.getTreeNext();
     }
@@ -45,6 +45,6 @@ public class DocCommentBlock extends AbstractJavaBlock{
 
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
-    return new ChildAttributes(Indent.createSpaceIndent(1), null);
+    return new ChildAttributes(Indent.getSpaceIndent(1), null);
   }
 }

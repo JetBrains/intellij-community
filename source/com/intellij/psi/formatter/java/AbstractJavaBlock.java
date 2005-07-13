@@ -120,7 +120,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
 
     if (child.getElementType() == ElementType.DOC_TAG) return Indent.getNoneIndent();
-    if (child.getElementType() == ElementType.DOC_COMMENT_LEADING_ASTERISKS) return Indent.createSpaceIndent(1);
+    if (child.getElementType() == ElementType.DOC_COMMENT_LEADING_ASTERISKS) return Indent.getSpaceIndent(1);
     if (child.getPsi() instanceof PsiFile) return Indent.getNoneIndent();
     if (parent != null) {
       final Indent defaultChildIndent = getChildIndent(parent);
@@ -133,7 +133,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   @Nullable
   private static Indent getChildIndent(final ASTNode parent) {
     if (parent.getElementType() == ElementType.MODIFIER_LIST) return Indent.getNoneIndent();
-    if (parent.getElementType() == ElementType.JSP_CODE_BLOCK) return Indent.createNormalIndent();
+    if (parent.getElementType() == ElementType.JSP_CODE_BLOCK) return Indent.getNormalIndent();
     if (parent.getElementType() == ElementType.DUMMY_HOLDER) return Indent.getNoneIndent();
     if (parent.getElementType() == ElementType.CLASS) return Indent.getNoneIndent();
     if (parent.getElementType() == ElementType.IF_STATEMENT) return Indent.getNoneIndent();
@@ -386,7 +386,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       subBlocks.add(createSynthBlock(subNodes, wrap));
     }
 
-    return new SyntheticCodeBlock(subBlocks, alignment, mySettings, Indent.createContinuationWithoutFirstIndent(),
+    return new SyntheticCodeBlock(subBlocks, alignment, mySettings, Indent.getContinuationWithoutFirstIndent(),
                                   blockWrap);
   }
 
@@ -401,18 +401,18 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       if (!subNodes.isEmpty()) {
         subBlocks.add(createSynthBlock(subNodes, wrap));
       }
-      return new SyntheticCodeBlock(subBlocks, null, mySettings, Indent.createContinuationIndent(), wrap);
+      return new SyntheticCodeBlock(subBlocks, null, mySettings, Indent.getContinuationIndent(), wrap);
     }
     else {
       return new SyntheticCodeBlock(createJavaBlocks(subNodes), null, mySettings,
-                                    Indent.createContinuationWithoutFirstIndent(), null);
+                                    Indent.getContinuationWithoutFirstIndent(), null);
     }
   }
 
   private List<Block> createJavaBlocks(final ArrayList<ASTNode> subNodes) {
     final ArrayList<Block> result = new ArrayList<Block>();
     for (ASTNode node : subNodes) {
-      result.add(createJavaBlock(node, getSettings(), Indent.createContinuationWithoutFirstIndent(), null, null));
+      result.add(createJavaBlock(node, getSettings(), Indent.getContinuationWithoutFirstIndent(), null, null));
     }
     return result;
   }
@@ -710,7 +710,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                     final WrappingStrategy wrappingStrategy, final boolean doAlign
   ) {
     final Indent externalIndent = Indent.getNoneIndent();
-    final Indent internalIndent = Indent.createContinuationIndent();
+    final Indent internalIndent = Indent.getContinuationIndent();
     AlignmentStrategy alignmentStrategy = AlignmentStrategy.createDoNotAlingCommaStrategy(createAlignment(doAlign, null));
     setChildIndent(internalIndent);
     setChildAlignment(alignmentStrategy.getAlignment(null));
@@ -758,7 +758,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       .createWrap(getWrapType(mySettings.ENUM_CONSTANTS_WRAP), true));
     while (child != null) {
       if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {
-        result.add(createJavaBlock(child, mySettings, Indent.createNormalIndent(),
+        result.add(createJavaBlock(child, mySettings, Indent.getNormalIndent(),
                                    wrappingStrategy.getWrap(child.getElementType()), null));
         if (child == last) return child;
       }
@@ -821,7 +821,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return Indent.getNoneIndent();
     }
     else {
-      return Indent.createNormalIndent();
+      return Indent.getNormalIndent();
     }
   }
 

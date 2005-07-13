@@ -58,7 +58,8 @@ public interface Block {
 
   /**
    * Returns a wrap object indicating the conditions under which a line break
-   * is inserted before this block when formatting.
+   * is inserted before this block when formatting, if the block extends beyond the
+   * right margin.
    *
    * @return the wrap object, or null if the line break is never inserted.
    * @see Wrap#createWrap(WrapType, boolean)
@@ -66,6 +67,12 @@ public interface Block {
    */
   @Nullable Wrap getWrap();
 
+  /**
+   * Returns an indent object indicating how this block is indented relative
+   * to its parent block.
+   *
+   * @return the indent object, or null if the default indent (line continuation indent) should be used.
+   */
   @Nullable Indent getIndent();
 
   @Nullable Alignment getAlignment();

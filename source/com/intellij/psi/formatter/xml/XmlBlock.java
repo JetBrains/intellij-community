@@ -6,7 +6,6 @@ import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlDocument;
@@ -162,7 +161,7 @@ public class XmlBlock extends AbstractXmlBlock {
     }
     /*
     else if (myNode.getElementType() == ElementType.XML_COMMENT && myNode.textContains('\n')) {
-      return getFormatter().createAbsoluteNoneIndent();
+      return getFormatter().getAbsoluteNoneIndent();
     }
     */
 
@@ -171,7 +170,7 @@ public class XmlBlock extends AbstractXmlBlock {
       return getFormatter().getNoneIndent();
     }
     if (myNode.getElementType() == ElementType.JSP_XML_TEXT) {
-      return getFormatter().createNormalIndent();
+      return getFormatter().getNormalIndent();
     }
     if (myNode.getElementType() == ElementType.XML_TEXT) {
       if (myNode.getPsi().getParent() instanceof JspXmlRootTag) {
@@ -184,7 +183,7 @@ public class XmlBlock extends AbstractXmlBlock {
       return getFormatter().getNoneIndent();
     }
     else if (myNode.getElementType() == ElementType.XML_COMMENT && myNode.textContains('\n')) {
-      return getFormatter().createAbsoluteNoneIndent();
+      return getFormatter().getAbsoluteNoneIndent();
     }
     else if (myNode.getElementType() == ElementType.XML_DOCUMENT) {
       return getFormatter().getNoneIndent();
@@ -218,7 +217,7 @@ public class XmlBlock extends AbstractXmlBlock {
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
     if (myNode.getElementType() == ElementType.JSP_DECLARATION || myNode.getElementType() == JspElementType.JSP_SCRIPTLET) {
-      return new ChildAttributes(Indent.createNormalIndent(), null);
+      return new ChildAttributes(Indent.getNormalIndent(), null);
     }
     else if (myNode.getPsi() instanceof PsiFile) {
       return new ChildAttributes(Indent.getNoneIndent(), null);

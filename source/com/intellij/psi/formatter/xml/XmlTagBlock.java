@@ -79,14 +79,14 @@ public class XmlTagBlock extends AbstractXmlBlock{
           if (localResult.size() == 1 && localResult.get(0) instanceof JspTextBlock) {
             //indent = FormatterEx.getInstance().getNoneIndent();
             indent = myXmlFormattingPolicy.indentChildrenOf(getTag())
-                     ? Indent.createNormalIndent()
+                     ? Indent.getNormalIndent()
                      : Indent.getNoneIndent();
           } else if (!insideTag) {
             indent = null;
           }
           else {
             indent = myXmlFormattingPolicy.indentChildrenOf(getTag())
-                     ? Indent.createNormalIndent()
+                     ? Indent.getNormalIndent()
                      : Indent.getNoneIndent();
           }
 
@@ -123,7 +123,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
     while (child != null) {
       if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
         final Indent indent = myXmlFormattingPolicy.indentChildrenOf(getTag())
-                              ? Indent.createNormalIndent()
+                              ? Indent.getNormalIndent()
                               : Indent.getNoneIndent();
         child = processChild(list,child,  wrap, alignment, indent);
         if (child == null) return child;
@@ -144,7 +144,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
     return AbstractSyntheticBlock.createSynteticBlock(
       localResult, this, Indent.getNoneIndent(),
       myXmlFormattingPolicy,
-      Indent.createNormalIndent());
+      Indent.getNormalIndent());
   }
 
   private Block createTagDescriptionNode(final ArrayList<Block> localResult) {
@@ -205,7 +205,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
     if (myXmlFormattingPolicy.indentChildrenOf(getTag())) {
-      return new ChildAttributes(Indent.createNormalIndent(), null);
+      return new ChildAttributes(Indent.getNormalIndent(), null);
     } else {
       return new ChildAttributes(Indent.getNoneIndent(), null);
     }

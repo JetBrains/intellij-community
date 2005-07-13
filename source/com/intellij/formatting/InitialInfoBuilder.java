@@ -110,7 +110,7 @@ class InitialInfoBuilder {
       for (Iterator<AbstractBlockWrapper> iterator = list.iterator(); iterator.hasNext();) {
         AbstractBlockWrapper wrapper = iterator.next();
         if (wrapper.getIndent() == null) {
-          wrapper.setIndent((IndentImpl)Indent.createContinuationWithoutFirstIndent());
+          wrapper.setIndent((IndentImpl)Indent.getContinuationWithoutFirstIndent());
         }
       }
     }

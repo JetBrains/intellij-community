@@ -122,7 +122,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
         if (child.getElementType() == ElementType.BLOCK_STATEMENT) {
           childIndent = Indent.getNoneIndent();
         } else {
-          childIndent = Indent.createNormalIndent();
+          childIndent = Indent.getNormalIndent();
         }
         processChild(localResult, child, null, null, childIndent);
       }
@@ -135,7 +135,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
   private SyntheticCodeBlock createCaseSectionBlock(final ArrayList<Block> localResult, final Alignment childAlignment, final Indent indent,
                                                    final Wrap childWrap) {
     final SyntheticCodeBlock result = new SyntheticCodeBlock(localResult, childAlignment, getSettings(), indent, childWrap);
-    result.setChildAttributes(new ChildAttributes(Indent.createNormalIndent(), null));
+    result.setChildAttributes(new ChildAttributes(Indent.getNormalIndent(), null));
     return result;
   }
 
@@ -185,7 +185,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
         return Indent.getNoneIndent();
       }
       else {
-        return Indent.createContinuationIndent();
+        return Indent.getContinuationIndent();
       }
     }
     else {

@@ -164,7 +164,7 @@ public class AbstractBlockWrapper {
                                          int index) {
     IndentImpl childIndent = (IndentImpl)childAttributes.getChildIndent();
 
-    if (childIndent == null) childIndent = (IndentImpl)Indent.createContinuationWithoutFirstIndent();
+    if (childIndent == null) childIndent = (IndentImpl)Indent.getContinuationWithoutFirstIndent();
 
     IndentData indent = getIndent(indentOption, index, childIndent);
     if (myParent == null) {
