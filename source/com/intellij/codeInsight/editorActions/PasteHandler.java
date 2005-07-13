@@ -372,7 +372,7 @@ public class PasteHandler extends EditorActionHandler {
 
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-      if (file.getFileType() == StdFileTypes.JAVA || file.getFileType() == StdFileTypes.XML) {
+      if (file.getLanguage().getFormattingModelBuilder() != null) {
         adjustBlockIndent(project, document, file, startOffset, endOffset);
       }
       else {

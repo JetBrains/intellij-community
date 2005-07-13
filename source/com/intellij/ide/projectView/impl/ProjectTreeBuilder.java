@@ -15,10 +15,7 @@ import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -91,8 +88,13 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
         element = psiManager.findFile(vFile);
       }
 
-      if (!myUpdater.addSubtreeToUpdateByElement(element) && element instanceof PsiJavaFile) {
-        myUpdater.addSubtreeToUpdateByElement(((PsiJavaFile)element).getContainingDirectory());
+      final boolean fileAdded = myUpdater.addSubtreeToUpdateByElement(element);
+      if (!fileAdded) {
+        if (element instanceof PsiFile) {
+          myUpdater.addSubtreeToUpdateByElement(((PsiFile)element).getContainingDirectory());
+        } else {
+          myUpdater.addSubtreeToUpdate(myRootNode);
+        }
       }
     }
   }
