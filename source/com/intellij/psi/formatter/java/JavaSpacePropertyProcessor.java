@@ -37,7 +37,7 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
 
     if (myChild2 != null && mySettings.KEEP_FIRST_COLUMN_COMMENT && ElementType.COMMENT_BIT_SET.isInSet(myChild2.getElementType())) {
       myResult = Spacing
-        .createKeepingFirstLineSpacing(0, Integer.MAX_VALUE, mySettings.KEEP_LINE_BREAKS, getKeepBlankLines());
+        .createKeepingFirstColumnSpacing(0, Integer.MAX_VALUE, mySettings.KEEP_LINE_BREAKS, getKeepBlankLines());
     }
     else {
 

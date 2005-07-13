@@ -39,6 +39,7 @@ import com.intellij.openapi.diagnostic.Logger;
  * are aligned with each other.
  *
  * @see com.intellij.formatting.Block#getAlignment()
+ * @see com.intellij.formatting.ChildAttributes#getAlignment()
  */
 
 public abstract class Alignment {

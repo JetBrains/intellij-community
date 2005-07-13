@@ -38,6 +38,7 @@ import com.intellij.openapi.diagnostic.Logger;
  * relative to its parent block.
  *
  * @see com.intellij.formatting.Block#getIndent()
+ * @see com.intellij.formatting.ChildAttributes#getChildIndent() 
  */
 
 public abstract class Indent {

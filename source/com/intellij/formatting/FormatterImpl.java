@@ -364,10 +364,10 @@ public class FormatterImpl extends FormatterEx
     return new SpacingImpl(0, 0, 0, false, true, shouldKeepLineBreaks, keepBlankLines);
   }
 
-  public Spacing createKeepingFirstLineSpacing(final int minSpace,
-                                               final int maxSpace,
-                                               final boolean keepLineBreaks,
-                                               final int keepBlankLines) {
+  public Spacing createKeepingFirstColumnSpacing(final int minSpace,
+                                                 final int maxSpace,
+                                                 final boolean keepLineBreaks,
+                                                 final int keepBlankLines) {
     final SpacingImpl result = new SpacingImpl(minSpace, maxSpace, -1, false, false, keepLineBreaks, keepBlankLines);
     result.setKeepFirstColumn(true);
     return result;
