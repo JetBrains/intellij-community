@@ -252,7 +252,7 @@ public class IdTableBuilding {
       final Language lang = ((LanguageFileType)fileType).getLanguage();
       if (lang != null) {
         final FindUsagesProvider findUsagesProvider = lang.getFindUsagesProvider();
-        final WordsScanner scanner = findUsagesProvider.getWordsScanner();
+        final WordsScanner scanner = findUsagesProvider == null ? null : findUsagesProvider.getWordsScanner();
         if (scanner != null) {
           return new WordsScannerIdCacheBuilderAdapter(scanner);
         }
