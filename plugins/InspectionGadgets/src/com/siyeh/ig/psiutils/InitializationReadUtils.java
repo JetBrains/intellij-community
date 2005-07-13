@@ -152,12 +152,18 @@ public class InitializationReadUtils{
     private boolean tryStatementMustAssignVariable(PsiVariable field,
                                                    PsiTryStatement tryStatement,
                                                    Set<MethodSignature> checkedMethods){
+        final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
+        boolean initializedInTryOrCatch =
+                cachingBlockMustAssignVariable(field, tryBlock, checkedMethods);
         final PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
-        if(catchBlocks == null || catchBlocks.length == 0){
-            final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-            if(cachingBlockMustAssignVariable(field, tryBlock, checkedMethods)){
-                return true;
+        if (catchBlocks != null) {
+            for (final PsiCodeBlock catchBlock : catchBlocks){
+                initializedInTryOrCatch &=
+                        cachingBlockMustAssignVariable(field, catchBlock, checkedMethods);
             }
+        }
+        if (initializedInTryOrCatch) {
+            return true;
         }
         final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
         return cachingBlockMustAssignVariable(field, finallyBlock,
