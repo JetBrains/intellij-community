@@ -79,12 +79,22 @@ public class TreeUtil {
   }
 
   public static ASTNode skipElementsBack(ASTNode element, TokenSet types) {
-    while(true){
-      if (element == null) return null;
-      if (!types.isInSet(element.getElementType())) break;
-      element = element.getTreePrev();
+    if (!types.isInSet(element.getElementType())) return element;
+
+    ASTNode parent = element.getTreeParent();
+    ASTNode prev = element;
+    while (element instanceof CompositeElement) {
+      if (!types.isInSet(prev.getElementType())) return prev;
+      prev = prev.getTreePrev();
     }
-    return element;
+    if (prev == null) return null;
+    ASTNode firstChildNode = parent.getFirstChildNode();
+    ASTNode lastRelevant = null;
+    while(firstChildNode != prev){
+      if (!types.isInSet(firstChildNode.getElementType())) lastRelevant = firstChildNode;
+      firstChildNode = firstChildNode.getTreeNext();
+    }
+    return lastRelevant;
   }
 
   public static ASTNode findParent(ASTNode element, IElementType type) {
