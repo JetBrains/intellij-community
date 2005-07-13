@@ -304,7 +304,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
               }
 
               final File classFile = VfsUtil.virtualToIoFile(item.getFile());
-              LOG.assertTrue(classFile.exists());
+              LOG.assertTrue(classFile.exists(), classFile.getPath());
 
               final CodeGenerator codeGenerator = new CodeGenerator(rootContainer, classFile, loader);
               codeGenerator.patch();

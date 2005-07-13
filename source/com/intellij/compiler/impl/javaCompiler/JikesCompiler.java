@@ -125,7 +125,7 @@ class JikesCompiler implements BackendCompiler {
     commandLine.add("-classpath");
 
     // must include output path to classpath, otherwise javac will compile all dependent files no matter were they compiled before or not
-    commandLine.add(chunk.getCompilationClasspath());
+    commandLine.add(chunk.getCompilationBootClasspath() + File.pathSeparator + chunk.getCompilationClasspath());
 
     setupSourceVersion(chunk, commandLine);
     commandLine.add("-sourcepath");

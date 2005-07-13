@@ -172,24 +172,27 @@ class JavacCompiler implements BackendCompiler {
     }
 
     commandLine.add("-verbose");
-    commandLine.add("-classpath");
 
-    // must include output path to classpath, otherwise javac will compile all dependent files no matter were they compiled before or not
     final String cp = chunk.getCompilationClasspath();
-    if (isVersion1_0) {
-      commandLine.add(jdk.getToolsPath() + File.pathSeparator + cp);
+    final String bootCp = chunk.getCompilationBootClasspath();
+
+    LOG.info("compiling module chunk " + chunk);
+
+    final String classPath;
+    if (isVersion1_0 || isVersion1_1) {
+      classPath = bootCp + File.pathSeparator + cp;
     }
     else {
-      File cpFile = FileUtil.createTempFile("javac_cp", ".tmp");
-      cpFile.deleteOnExit();
-      myTempFiles.add(cpFile);
-      PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(cpFile)));
-      writer.println(cp);
-      writer.close();
-      commandLine.add("@" + cpFile.getAbsolutePath());
+      classPath = cp;
+
+      commandLine.add("-bootclasspath");
+      addClassPathValue(jdk, isVersion1_0, commandLine, bootCp, "javac_bootcp");
+      LOG.info("; classpath=\"" + bootCp + "\"");
     }
 
-    LOG.info("compiling module chunk" + chunk + "; classpath=\"" + cp + "\"");
+    commandLine.add("-classpath");
+    addClassPathValue(jdk, isVersion1_0, commandLine, classPath, "javac_cp");
+    LOG.info("; classpath=\"" + classPath + "\"");
 
     if (!isVersion1_1 && !isVersion1_0) {
       commandLine.add("-sourcepath");
@@ -238,14 +241,34 @@ class JavacCompiler implements BackendCompiler {
         final VirtualFile file = files[i];
         // Important: should use "/" slashes!
         // but not for JDK 1.5 - see SCR 36673
-        final String path = isVersion1_5? file.getPath().replace('/', File.separatorChar) : file.getPath();
+        final String path = isVersion1_5 ? file.getPath().replace('/', File.separatorChar) : file.getPath();
         if (LOG.isDebugEnabled()) {
           LOG.debug("Adding path for compilation " + path);
         }
-        writer.println(isVersion1_1? path : CompilerUtil.quotePath(path));
+        writer.println(isVersion1_1 ? path : CompilerUtil.quotePath(path));
       }
       writer.close();
       commandLine.add("@" + sourcesFile.getAbsolutePath());
+    }
+  }
+
+  private void addClassPathValue(final ProjectJdk jdk,
+                                 final boolean isVersion1_0,
+                                 final ArrayList<String> commandLine,
+                                 final String cpString,
+                                 final String tempFileName) throws IOException {
+    // must include output path to classpath, otherwise javac will compile all dependent files no matter were they compiled before or not
+    if (isVersion1_0) {
+      commandLine.add(jdk.getToolsPath() + File.pathSeparator + cpString);
+    }
+    else {
+      File cpFile = FileUtil.createTempFile(tempFileName, ".tmp");
+      cpFile.deleteOnExit();
+      myTempFiles.add(cpFile);
+      PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(cpFile)));
+      writer.println(cpString);
+      writer.close();
+      commandLine.add("@" + cpFile.getAbsolutePath());
     }
   }
 

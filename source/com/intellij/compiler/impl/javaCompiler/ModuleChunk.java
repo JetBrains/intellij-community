@@ -142,21 +142,51 @@ public class ModuleChunk extends Chunk<Module> {
   }
 
   public String getCompilationClasspath() {
-    final StringBuffer classpathBuffer = new StringBuffer();
-
     final Set<Module> modules = getNodes();
 
     final OrderedSet<VirtualFile> cpFiles = new OrderedSet<VirtualFile>((TObjectHashingStrategy<VirtualFile>)TObjectHashingStrategy.CANONICAL);
-    for (Iterator<Module> it = modules.iterator(); it.hasNext();) {
-      final Module module = it.next();
+    for (final Module module : modules) {
       final OrderEntry[] orderEntries = CompilerPathsEx.getOrderEntries(module);
-      for (int i = 0; i < orderEntries.length; i++) {
-        cpFiles.addAll(Arrays.asList(orderEntries[i].getFiles(OrderRootType.COMPILATION_CLASSES)));
+      boolean skip = true;
+      for (OrderEntry orderEntry : orderEntries) {
+        if (orderEntry instanceof JdkOrderEntry) {
+          skip = false;
+          continue;
+        }
+        if (skip) {
+          continue;
+        }
+        cpFiles.addAll(Arrays.asList(orderEntry.getFiles(OrderRootType.COMPILATION_CLASSES)));
       }
     }
 
-    for (Iterator<VirtualFile> it = cpFiles.iterator(); it.hasNext();) {
-      final VirtualFile file = it.next();
+    return convertToStringPath(cpFiles);
+
+  }
+
+  public String getCompilationBootClasspath() {
+    final Set<Module> modules = getNodes();
+    final OrderedSet<VirtualFile> cpFiles = new OrderedSet<VirtualFile>((TObjectHashingStrategy<VirtualFile>)TObjectHashingStrategy.CANONICAL);
+    final OrderedSet<VirtualFile> jdkFiles = new OrderedSet<VirtualFile>((TObjectHashingStrategy<VirtualFile>)TObjectHashingStrategy.CANONICAL);
+    for (final Module module : modules) {
+      final OrderEntry[] orderEntries = CompilerPathsEx.getOrderEntries(module);
+      for (OrderEntry orderEntry : orderEntries) {
+        if (orderEntry instanceof JdkOrderEntry) {
+          jdkFiles.addAll(Arrays.asList(orderEntry.getFiles(OrderRootType.COMPILATION_CLASSES)));
+          break;
+        }
+        else {
+          cpFiles.addAll(Arrays.asList(orderEntry.getFiles(OrderRootType.COMPILATION_CLASSES)));
+        }
+      }
+    }
+    cpFiles.addAll(jdkFiles);
+    return convertToStringPath(cpFiles);
+  }
+
+  private String convertToStringPath(final OrderedSet<VirtualFile> cpFiles) {
+    final StringBuffer classpathBuffer = new StringBuffer();
+    for (final VirtualFile file : cpFiles) {
       final String path = PathUtil.getLocalPath(file);
       if (path == null) {
         continue;
@@ -168,7 +198,6 @@ public class ModuleChunk extends Chunk<Module> {
     }
 
     return classpathBuffer.toString();
-
   }
 
   public int getModuleCount() {
