@@ -173,6 +173,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     myEditorTracker = createEditorTracker();
     myEditorTracker.addEditorTrackerListener(new EditorTrackerListener() {
       public void activeEditorsChanged(final Editor[] editors) {
+        if (editors.length > 0) {
+          myIsFrameFocused = true; // Happens when debugger evaluation window gains focus out of main frame.
+        }
         stopProcess(true);
       }
     });
@@ -392,10 +395,13 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     myUpdateProgress.cancel();
   }
 
+  @Nullable
   public static HighlightInfo[] getHighlights(Document document, Project project) {
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
     MarkupModel markup = document.getMarkupModel(project);
-    if (markup == null) return null;
+    if (markup == null) {
+      return null;
+    }
     return markup.getUserData(HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY);
   }
 
@@ -499,6 +505,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return testInfo.startOffset <= coveringCandidate.endOffset && testInfo.endOffset >= coveringCandidate.startOffset;
   }
 
+  @Nullable
   public static LineMarkerInfo[] getLineMarkers(Document document, Project project) {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     MarkupModel markup = document.getMarkupModel(project);
