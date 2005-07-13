@@ -132,6 +132,7 @@ public class StringConcatenationInsideStringBufferAppendInspection
             final String className = containingClass.getQualifiedName();
             if(!"java.lang.StringBuffer".equals(className) &&
                     !"java.lang.StringBuilder".equals(className)){
+                return;
             }
             registerMethodCallError(expression);
         }
