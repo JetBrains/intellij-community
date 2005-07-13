@@ -252,7 +252,8 @@ public class IntroduceParameterDialog extends RefactoringDialog {
       gbConstraints.insets = new Insets(4, 0, 4, 8);
       if(myHasInitializer) {
         myCbUseInitializer = new StateRestoringCheckBox("Use variable initializer to initialize parameter");
-        myCbUseInitializer.setMnemonic('p');
+        myCbUseInitializer.setMnemonic('i');
+        myCbUseInitializer.setDisplayedMnemonicIndex("Use variable ".length());
 
         gbConstraints.gridy++;
         panel.add(myCbUseInitializer, gbConstraints);
