@@ -543,7 +543,7 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
       int space = spaceBeforeLbrace ? 1 : 0;
       return createNonLFSpace(space, false, dependantRange);
     }
-    else if (braceStyle == CodeStyleSettings.END_OF_LINE) {
+    else if (braceStyle == CodeStyleSettings.END_OF_LINE || braceStyle == CodeStyleSettings.NEXT_LINE_IF_WRAPPED) {
       int space = spaceBeforeLbrace ? 1 : 0;
       return createNonLFSpace(space, false, null);
     }
