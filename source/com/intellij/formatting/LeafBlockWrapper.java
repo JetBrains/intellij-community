@@ -15,7 +15,7 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
   private final LeafBlockWrapper myPreviousBlock;
   private LeafBlockWrapper myNextBlock;
   private final boolean myIsReadOnly;
-  private SpacePropertyImpl mySpaceProperty;
+  private SpacingImpl mySpaceProperty;
   private final boolean myIsLeaf;
   private final IndentInside myLastLineIndent;
 
@@ -60,7 +60,7 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     myNextBlock = nextBlock;
   }
 
-  public SpacePropertyImpl getSpaceProperty() {
+  public SpacingImpl getSpaceProperty() {
     return mySpaceProperty;
   }
   public List<Block> getSubBlocks(){
@@ -97,7 +97,7 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     return myParent.getChildOffset(this, options, this.getStartOffset());
   }
 
-  public void setSpaceProperty(final SpacePropertyImpl currentSpaceProperty) {
+  public void setSpaceProperty(final SpacingImpl currentSpaceProperty) {
     mySpaceProperty = currentSpaceProperty;
   }
 

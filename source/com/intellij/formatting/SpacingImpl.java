@@ -1,9 +1,9 @@
 package com.intellij.formatting;
 
-import com.intellij.formatting.SpaceProperty;
+import com.intellij.formatting.Spacing;
 import com.intellij.formatting.FormatProcessor;
 
-class SpacePropertyImpl extends SpaceProperty {
+class SpacingImpl extends Spacing {
   private final int myMinSpaces;
   private int myKeepBlankLines;
   private final int myMaxSpaces;
@@ -13,13 +13,13 @@ class SpacePropertyImpl extends SpaceProperty {
   private boolean myShouldKeepLineBreaks;
   private boolean myKeepFirstColumn;
 
-  public SpacePropertyImpl(final int minSpaces,
-                           final int maxSpaces,
-                           final int minLineFeeds,
-                           boolean isReadOnly,
-                           final boolean safe,
-                           final boolean shouldKeepLineBreaks,
-                           final int keepBlankLines) {
+  public SpacingImpl(final int minSpaces,
+                     final int maxSpaces,
+                     final int minLineFeeds,
+                     boolean isReadOnly,
+                     final boolean safe,
+                     final boolean shouldKeepLineBreaks,
+                     final int keepBlankLines) {
     myMinSpaces = minSpaces;
     myKeepBlankLines = keepBlankLines;
     myMaxSpaces = Math.max(minSpaces, maxSpaces);

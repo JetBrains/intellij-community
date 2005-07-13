@@ -379,9 +379,9 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   public abstract boolean removeLineBreakBeforeTag();
 
-  protected SpaceProperty createDefaultSpace(boolean forceKeepLineBreaks) {
+  protected Spacing createDefaultSpace(boolean forceKeepLineBreaks) {
     boolean shouldKeepLineBreaks = myXmlFormattingPolicy.getShouldKeepLineBreaks() || forceKeepLineBreaks;
-    return SpaceProperty.createSpaceProperty(0, Integer.MAX_VALUE, 0, shouldKeepLineBreaks, myXmlFormattingPolicy.getKeepBlankLines());
+    return Spacing.createSpacing(0, Integer.MAX_VALUE, 0, shouldKeepLineBreaks, myXmlFormattingPolicy.getKeepBlankLines());
   }
 
   public abstract boolean isTextElement();

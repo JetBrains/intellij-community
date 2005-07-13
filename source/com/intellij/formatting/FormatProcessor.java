@@ -89,9 +89,9 @@ class FormatProcessor {
     Block prev = null;
     for (Block block : subBlocks) {
       if (prev != null) {
-        final SpaceProperty spaceProperty = root.getSpaceProperty(prev, block);
-        if (spaceProperty != null) {
-          result.addContent(save((SpacePropertyImpl)spaceProperty));
+        final Spacing spacing = root.getSpacing(prev, block);
+        if (spacing != null) {
+          result.addContent(save((SpacingImpl)spacing));
         }
       }
       result.addContent(saveToXml(block));
@@ -102,7 +102,7 @@ class FormatProcessor {
     return result;
   }
 
-  private Element save(final SpacePropertyImpl spaceProperty) {
+  private Element save(final SpacingImpl spaceProperty) {
     final Element result = new Element("Space");
     spaceProperty.refresh(this);
     result.setAttribute("minspace", String.valueOf(spaceProperty.getMinSpaces()));
@@ -219,7 +219,7 @@ class FormatProcessor {
 
   private void processToken() {
 
-    final SpacePropertyImpl spaceProperty = myCurrentBlock.getSpaceProperty();
+    final SpacingImpl spaceProperty = myCurrentBlock.getSpaceProperty();
     final WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
 
     whiteSpace.arrangeLineFeeds(spaceProperty, this);
@@ -279,8 +279,8 @@ class FormatProcessor {
     return false;
   }
 
-  private void saveDependancy(final SpacePropertyImpl spaceProperty) {
-    final DependantSpacePropertyImpl dependantSpaceProperty = ((DependantSpacePropertyImpl)spaceProperty);
+  private void saveDependancy(final SpacingImpl spaceProperty) {
+    final DependantSpacingImpl dependantSpaceProperty = ((DependantSpacingImpl)spaceProperty);
     final TextRange dependancy = dependantSpaceProperty.getDependancy();
     if (dependantSpaceProperty.wasLFUsed()) {
       myPreviousDependancies.put(dependancy,
@@ -295,14 +295,14 @@ class FormatProcessor {
     }
   }
 
-  private boolean shouldSaveDependancy(final SpacePropertyImpl spaceProperty, WhiteSpace whiteSpace) {
-    if (!(spaceProperty instanceof DependantSpacePropertyImpl)) return false;
+  private boolean shouldSaveDependancy(final SpacingImpl spaceProperty, WhiteSpace whiteSpace) {
+    if (!(spaceProperty instanceof DependantSpacingImpl)) return false;
 
-    final TextRange dependancy = ((DependantSpacePropertyImpl)spaceProperty).getDependancy();
+    final TextRange dependancy = ((DependantSpacingImpl)spaceProperty).getDependancy();
     return whiteSpace.getTextRange().getStartOffset() < dependancy.getEndOffset();
   }
 
-  private boolean processWrap(SpaceProperty spaceProperty) {
+  private boolean processWrap(Spacing spacing) {
     final WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
     final TextRange textRange = myCurrentBlock.getTextRange();
     final WrapImpl[] wraps = myCurrentBlock.getWraps();
@@ -314,7 +314,7 @@ class FormatProcessor {
     }
 
     if (whiteSpace.containsLineFeeds() && !whiteSpace.containsLineFeedsInitially()) {
-      whiteSpace.removeLineFeeds(spaceProperty, this);
+      whiteSpace.removeLineFeeds(spacing, this);
     }
 
     boolean wrapIsPresent = whiteSpace.containsLineFeeds();

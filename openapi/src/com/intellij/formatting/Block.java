@@ -71,13 +71,29 @@ public interface Block {
    * Returns an indent object indicating how this block is indented relative
    * to its parent block.
    *
-   * @return the indent object, or null if the default indent (line continuation indent) should be used.
+   * @return the indent object, or null if the default indent ("continuation without first") should be used.
+   * @see com.intellij.formatting.Indent#getContinuationWithoutFirstIndent()
    */
   @Nullable Indent getIndent();
 
+  /**
+   * Returns an alignment object indicating how this block is aligned with other blocks. Blocks
+   * which return the same alignment object instance from the <code>getAlignment</code> method
+   * are aligned with each other.
+   *
+   * @return the alignment object instance, or null if no alignment is required for the block.
+   */
   @Nullable Alignment getAlignment();
 
-  @Nullable SpaceProperty getSpaceProperty(Block child1, Block child2);
+  /**
+   * Returns a spacing object indicating what spaces and/or line breaks are added between two
+   * specified children of this block.
+   *
+   * @param child1 the first child for which spacing is requested.
+   * @param child2 the second child for which spacing is requested.
+   * @return the spacing instance.
+   */
+  @Nullable Spacing getSpacing(Block child1, Block child2);
 
   @NotNull ChildAttributes getChildAttributes(final int newChildIndex);
 

@@ -3,7 +3,7 @@ package com.intellij.psi.formatter.xml;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.ChildAttributes;
 import com.intellij.formatting.Indent;
-import com.intellij.formatting.SpaceProperty;
+import com.intellij.formatting.Spacing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -34,9 +34,9 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block{
     return mySubBlocks;
   }
 
-  public SpaceProperty getSpaceProperty(Block child1, Block child2) {
+  public Spacing getSpacing(Block child1, Block child2) {
     if (child1 instanceof ReadOnlyBlock || child2 instanceof ReadOnlyBlock) {
-      return SpaceProperty.getReadOnlySpace();
+      return Spacing.getReadOnlySpacing();
     }
     if (!(child1 instanceof AbstractXmlBlock) || !(child2 instanceof AbstractXmlBlock)) {
       return null;
@@ -54,62 +54,62 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block{
     boolean secondIsTag = node2.getPsi() instanceof XmlTag;
 
     if (isSpaceInText(firstIsTag, secondIsTag, firstIsText, secondIsText) && keepWhiteSpaces()) {
-        return SpaceProperty.getReadOnlySpace();
+        return Spacing.getReadOnlySpacing();
     }
 
     if (type1 == ElementType.XML_NAME && type2 == ElementType.XML_EMPTY_ELEMENT_END && myXmlFormattingPolicy.addSpaceIntoEmptyTag()) {
-      return SpaceProperty.createSpaceProperty(1, 1, 0,
-                                                myXmlFormattingPolicy.getShouldKeepLineBreaks(),
-                                                myXmlFormattingPolicy.getKeepBlankLines());
+      return Spacing.createSpacing(1, 1, 0,
+                                   myXmlFormattingPolicy.getShouldKeepLineBreaks(),
+                                   myXmlFormattingPolicy.getKeepBlankLines());
     }
 
     if (isXmlTagName(type1, type2)){
       final int spaces = shouldAddSpaceAroundTagName(node1, node2) ? 1 : 0;
-      return SpaceProperty.createSpaceProperty(spaces, spaces, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
+      return Spacing.createSpacing(spaces, spaces, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
     }
 
     if (type2 == ElementType.XML_ATTRIBUTE) {
-      return SpaceProperty.createSpaceProperty(1, 1, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
+      return Spacing.createSpacing(1, 1, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
     }
 
     if (((AbstractXmlBlock)child1).isTextElement() && ((AbstractXmlBlock)child2).isTextElement()) {
-      return SpaceProperty.createSafeSpace(myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
+      return Spacing.createSafeSpacing(myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
     }
 
     if ((firstIsText || firstIsTag) && secondIsTag) {
       //<tag/>text <tag/></tag>
       if (((AbstractXmlBlock)child2).insertLineBreakBeforeTag()) {
-        return SpaceProperty.createSpaceProperty(0, Integer.MAX_VALUE, 2, myXmlFormattingPolicy.getShouldKeepLineBreaks(),
-                                                  myXmlFormattingPolicy.getKeepBlankLines());
+        return Spacing.createSpacing(0, Integer.MAX_VALUE, 2, myXmlFormattingPolicy.getShouldKeepLineBreaks(),
+                                     myXmlFormattingPolicy.getKeepBlankLines());
       } else if (((AbstractXmlBlock)child2).removeLineBreakBeforeTag()) {
-        return SpaceProperty.createSpaceProperty(0, Integer.MAX_VALUE, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(),
-                                                  myXmlFormattingPolicy.getKeepBlankLines());
+        return Spacing.createSpacing(0, Integer.MAX_VALUE, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(),
+                                     myXmlFormattingPolicy.getKeepBlankLines());
       }
     }
 
 
     if (firstIsTag && secondIsText) {     //<tag/>-text
       if (((AbstractXmlBlock)child1).isTextElement()) {
-        return SpaceProperty.createSafeSpace(myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
+        return Spacing.createSafeSpacing(myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
       } else {
-        return SpaceProperty.createSpaceProperty(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
+        return Spacing.createSpacing(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
       }
     }
 
     if ( firstIsText && secondIsTag) {     //text-<tag/>
       if (((AbstractXmlBlock)child2).isTextElement()) {
-        return SpaceProperty.createSafeSpace(true, myXmlFormattingPolicy.getKeepBlankLines());
+        return Spacing.createSafeSpacing(true, myXmlFormattingPolicy.getKeepBlankLines());
       } else {
-        return SpaceProperty.createSpaceProperty(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
+        return Spacing.createSpacing(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
       }
     }
 
     if (firstIsTag && secondIsTag) {//<tag/><tag/>
-      return SpaceProperty.createSpaceProperty(0, Integer.MAX_VALUE, 0, true,
-                                                myXmlFormattingPolicy.getKeepBlankLines());
+      return Spacing.createSpacing(0, Integer.MAX_VALUE, 0, true,
+                                   myXmlFormattingPolicy.getKeepBlankLines());
     }
 
-    return SpaceProperty.createSpaceProperty(0, Integer.MAX_VALUE, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
+    return Spacing.createSpacing(0, Integer.MAX_VALUE, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
   }
 
   private boolean shouldAddSpaceAroundTagName(final ASTNode node1, final ASTNode node2) {

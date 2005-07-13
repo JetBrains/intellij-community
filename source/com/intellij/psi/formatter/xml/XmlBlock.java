@@ -98,7 +98,7 @@ public class XmlBlock extends AbstractXmlBlock {
     }
   }
 
-  public SpaceProperty getSpaceProperty(Block child1, Block child2) {
+  public Spacing getSpacing(Block child1, Block child2) {
     if (!(child1 instanceof AbstractBlock) || !(child2 instanceof AbstractBlock)) {
       return null;
     }
@@ -110,7 +110,7 @@ public class XmlBlock extends AbstractXmlBlock {
 
     if ((isXmlTag(node2) || type2 == ElementType.XML_END_TAG_START || type2 == ElementType.XML_TEXT) && myXmlFormattingPolicy
       .getShouldKeepWhiteSpaces()) {
-      return SpaceProperty.getReadOnlySpace();
+      return Spacing.getReadOnlySpacing();
     }
 
     if (elementType == ElementType.XML_TEXT) {
@@ -132,21 +132,21 @@ public class XmlBlock extends AbstractXmlBlock {
     return createDefaultSpace(false);
   }
 
-  private SpaceProperty getSpacesInsideAttribute(final IElementType type1, final IElementType type2) {
+  private Spacing getSpacesInsideAttribute(final IElementType type1, final IElementType type2) {
     if (type1 == ElementType.XML_EQ || type2 == ElementType.XML_EQ) {
       int spaces = myXmlFormattingPolicy.getShouldAddSpaceAroundEqualityInAttribute() ? 1 : 0;
-      return SpaceProperty.createSpaceProperty(spaces, spaces, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(),
-                                                myXmlFormattingPolicy.getKeepBlankLines());
+      return Spacing.createSpacing(spaces, spaces, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(),
+                                   myXmlFormattingPolicy.getKeepBlankLines());
     }
     else {
       return createDefaultSpace(false);
     }
   }
 
-  private SpaceProperty getSpacesInsideText(final IElementType type1, final IElementType type2) {
+  private Spacing getSpacesInsideText(final IElementType type1, final IElementType type2) {
     if (type1 == ElementType.XML_DATA_CHARACTERS && type2 == ElementType.XML_DATA_CHARACTERS) {
-      return SpaceProperty.createSpaceProperty(1, 1, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(),
-                                                myXmlFormattingPolicy.getKeepBlankLines());
+      return Spacing.createSpacing(1, 1, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(),
+                                   myXmlFormattingPolicy.getKeepBlankLines());
     }
     else {
       return createDefaultSpace(false);

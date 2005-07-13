@@ -72,30 +72,69 @@ public abstract class Indent {
     return myFactory.getNoneIndent();
   }
 
-
-
+  /**
+   * Returns the "absolute none" indent instance, indicating that the block will
+   * be placed at the leftmost column in the document.
+   *
+   * @return the indent instance.
+   */
   public static Indent getAbsoluteNoneIndent() {
     return myFactory.getAbsoluteNoneIndent();
   }
 
-  public static Indent getAbsoluteLabelIndent(){
+  /**
+   * Returns the "absolute label" indent instance, indicating that the block will be
+   * indented by the number of spaces indicated in the "Project Code Style | General |
+   * Label indent" setting from the leftmost column in the document.
+   *
+   * @return the indent instance.
+   */
+  public static Indent getAbsoluteLabelIndent() {
     return myFactory.getAbsoluteLabelIndent();
   }
 
-  public static Indent getLabelIndent(){
+  /**
+   * Returns the "label" indent instance, indicating that the block will be indented by
+   * the number of spaces indicated in the "Project Code Style | General | Label indent"
+   * setting relative to its parent block.
+   *
+   * @return the indent instance.
+   */
+  public static Indent getLabelIndent() {
     return myFactory.getLabelIndent();
   }
 
-  public static Indent getContinuationIndent(){
+  /**
+   * Returns the "continuation" indent instance, indicating that the block will be indented by
+   * the number of spaces indicated in the "Project Code Style | General | Continuation indent"
+   * setting relative to its parent block.
+   *
+   * @return the indent instance.
+   */
+  public static Indent getContinuationIndent() {
     return myFactory.getContinuationIndent();
   }
 
+  /**
+   * Returns the "continuation without first" indent instance, indicating that the block will
+   * be indented by the number of spaces indicated in the "Project Code Style | General | Continuation indent"
+   * setting relative to its parent block, unless this block is the first of the children of its
+   * parent having the same indent type. This is used for things like parameter lists, where the first parameter
+   * does not have any indent and the remaining parameters are indented by the continuation indent.
+   *
+   * @return the indent instance.
+   */
   public static Indent getContinuationWithoutFirstIndent() {//is default
     return myFactory.getContinuationWithoutFirstIndent();
   }
 
-  public static Indent getSpaceIndent(final int spaces){
+  /**
+   * Returns an indent with the specified width.
+   *
+   * @param spaces the number of spaces in the indent.
+   * @return the indent instance.
+   */
+  public static Indent getSpaceIndent(final int spaces) {
     return myFactory.getSpaceIndent(spaces);
   }
-
 }

@@ -15,7 +15,7 @@ public class FormatterImpl extends FormatterEx
              IndentFactory,
              WrapFactory,
              AlignmentFactory,
-             SpacePropertyFactory,
+             SpacingFactory,
              FormattingModelFactory
 {
   private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.FormatterImpl");
@@ -27,7 +27,7 @@ public class FormatterImpl extends FormatterEx
     Indent.setFactory(this);
     Wrap.setFactory(this);
     Alignment.setFactory(this);
-    SpaceProperty.setFactory(this);
+    Spacing.setFactory(this);
     FormattingModelProvider.setFactory(this);
   }
 
@@ -53,21 +53,21 @@ public class FormatterImpl extends FormatterEx
     return result;
   }
 
-  public SpaceProperty createSpaceProperty(int minOffset,
-                                           int maxOffset,
-                                           int minLineFeeds,
-                                           final boolean keepLineBreaks,
-                                           final int keepBlankLines) {
-    return new SpacePropertyImpl(minOffset, maxOffset, minLineFeeds, false, false, keepLineBreaks, keepBlankLines);
+  public Spacing createSpacing(int minOffset,
+                               int maxOffset,
+                               int minLineFeeds,
+                               final boolean keepLineBreaks,
+                               final int keepBlankLines) {
+    return new SpacingImpl(minOffset, maxOffset, minLineFeeds, false, false, keepLineBreaks, keepBlankLines);
   }
 
-  public SpaceProperty getReadOnlySpace() {
-    return new SpacePropertyImpl(0, 0, 0, true, false, true, 0);
+  public Spacing getReadOnlySpacing() {
+    return new SpacingImpl(0, 0, 0, true, false, true, 0);
   }
 
-  public SpaceProperty createDependentLFProperty(int minOffset, int maxOffset, TextRange dependence, boolean keepLineBreaks,
-                                                 int keepBlankLines) {
-    return new DependantSpacePropertyImpl(minOffset, maxOffset, dependence, keepLineBreaks, keepBlankLines);
+  public Spacing createDependentLFSpacing(int minOffset, int maxOffset, TextRange dependence, boolean keepLineBreaks,
+                                          int keepBlankLines) {
+    return new DependantSpacingImpl(minOffset, maxOffset, dependence, keepLineBreaks, keepBlankLines);
   }
 
   public void format(FormattingModel model, CodeStyleSettings settings,
@@ -304,7 +304,7 @@ public class FormatterImpl extends FormatterEx
               if (!changeLineFeedsBeforeFirstElement) {
                 whiteSpace.setLineFeedsAreReadOnly(true);
               }
-              final SpacePropertyImpl spaceProperty = current.getSpaceProperty();
+              final SpacingImpl spaceProperty = current.getSpaceProperty();
               if (spaceProperty != null) {
                 if (!keepLineBreaks) {
                   spaceProperty.setKeepLineBreaks(false);
@@ -360,15 +360,15 @@ public class FormatterImpl extends FormatterEx
     return new IndentImpl(IndentImpl.Type.LABEL, true);
   }
 
-  public SpaceProperty createSafeSpace(final boolean shouldKeepLineBreaks, final int keepBlankLines) {
-    return new SpacePropertyImpl(0, 0, 0, false, true, shouldKeepLineBreaks, keepBlankLines);
+  public Spacing createSafeSpacing(final boolean shouldKeepLineBreaks, final int keepBlankLines) {
+    return new SpacingImpl(0, 0, 0, false, true, shouldKeepLineBreaks, keepBlankLines);
   }
 
-  public SpaceProperty createKeepingFirstLineSpaceProperty(final int minSpace,
-                                                           final int maxSpace,
-                                                           final boolean keepLineBreaks,
-                                                           final int keepBlankLines) {
-    final SpacePropertyImpl result = new SpacePropertyImpl(minSpace, maxSpace, -1, false, false, keepLineBreaks, keepBlankLines);
+  public Spacing createKeepingFirstLineSpacing(final int minSpace,
+                                               final int maxSpace,
+                                               final boolean keepLineBreaks,
+                                               final int keepBlankLines) {
+    final SpacingImpl result = new SpacingImpl(minSpace, maxSpace, -1, false, false, keepLineBreaks, keepBlankLines);
     result.setKeepFirstColumn(true);
     return result;
   }

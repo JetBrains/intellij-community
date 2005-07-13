@@ -15,7 +15,7 @@ class InitialInfoBuilder {
   private final Map<Block, AbstractBlockWrapper> myResult = new LinkedHashMap<Block, AbstractBlockWrapper>();
   private LeafBlockWrapper myPreviousBlock;
   private LeafBlockWrapper myFirstTokenBlock;
-  private SpacePropertyImpl myCurrentSpaceProperty;
+  private SpacingImpl myCurrentSpaceProperty;
   private final CodeStyleSettings.IndentOptions myOptions;
 
   private InitialInfoBuilder(final FormattingDocumentModel model,
@@ -92,7 +92,7 @@ class InitialInfoBuilder {
     for (int i = 0; i < subBlocks.size(); i++) {
       final Block block = subBlocks.get(i);
       if (previous != null) {
-        myCurrentSpaceProperty = (SpacePropertyImpl)rootBlock.getSpaceProperty(previous, block);
+        myCurrentSpaceProperty = (SpacingImpl)rootBlock.getSpacing(previous, block);
       }
       final TextRange blockRange = block.getTextRange();
       final AbstractBlockWrapper wrapper = buildFrom(block, i, info, currentWrapParent, blockRange);

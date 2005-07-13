@@ -158,7 +158,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
   }
 
-  public SpaceProperty getSpaceProperty(Block child1, Block child2) {
+  public Spacing getSpacing(Block child1, Block child2) {
     return new JavaSpacePropertyProcessor(AbstractJavaBlock.getTreeNode(child2), mySettings).getResult();
   }
 

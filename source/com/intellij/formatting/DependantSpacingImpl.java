@@ -2,16 +2,16 @@ package com.intellij.formatting;
 
 import com.intellij.openapi.util.TextRange;
 
-public class DependantSpacePropertyImpl extends SpacePropertyImpl{
+public class DependantSpacingImpl extends SpacingImpl {
   private final TextRange myDependance;
   private boolean myDependanceContainsLF;
   private boolean myLineFeedWasUsed = false;
 
-  public DependantSpacePropertyImpl(final int minSpaces,
-                                    final int maxSpaces,
-                                    TextRange dependance,
-                                    final boolean keepLineBreaks,
-                                    final int keepBlankLines) {
+  public DependantSpacingImpl(final int minSpaces,
+                              final int maxSpaces,
+                              TextRange dependance,
+                              final boolean keepLineBreaks,
+                              final int keepBlankLines) {
     super(minSpaces, maxSpaces, 0, false, false, keepLineBreaks, keepBlankLines);
     myDependance = dependance;
   }

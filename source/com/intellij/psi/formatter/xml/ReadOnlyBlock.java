@@ -2,7 +2,7 @@ package com.intellij.psi.formatter.xml;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.formatting.Block;
-import com.intellij.formatting.SpaceProperty;
+import com.intellij.formatting.Spacing;
 import com.intellij.psi.formatter.common.AbstractBlock;
 
 import java.util.ArrayList;
@@ -15,7 +15,7 @@ public class ReadOnlyBlock extends AbstractBlock {
     super(node, null, null);
   }
 
-  public SpaceProperty getSpaceProperty(Block child1, Block child2) {
+  public Spacing getSpacing(Block child1, Block child2) {
     return null;
   }
 

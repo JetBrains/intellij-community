@@ -37,7 +37,7 @@ public class AnotherLanguageBlockWrapper extends AbstractXmlBlock{
     return myOriginal.getSubBlocks();
   }
 
-  @Nullable public SpaceProperty getSpaceProperty(Block child1, Block child2) {
-    return myOriginal.getSpaceProperty(child1,  child2);
+  @Nullable public Spacing getSpacing(Block child1, Block child2) {
+    return myOriginal.getSpacing(child1,  child2);
   }
 }

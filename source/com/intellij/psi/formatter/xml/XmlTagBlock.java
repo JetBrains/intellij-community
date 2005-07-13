@@ -154,34 +154,34 @@ public class XmlTagBlock extends AbstractXmlBlock{
       null);
   }
 
-  public SpaceProperty getSpaceProperty(Block child1, Block child2) {
+  public Spacing getSpacing(Block child1, Block child2) {
     final AbstractSyntheticBlock syntheticBlock1 = ((AbstractSyntheticBlock)child1);
     final AbstractSyntheticBlock syntheticBlock2 = ((AbstractSyntheticBlock)child2);
 
     if (syntheticBlock2.isJspTextBlock()) {
-      return SpaceProperty.createSpaceProperty(0, 0, 1, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
+      return Spacing.createSpacing(0, 0, 1, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
     }
 
-    if (myXmlFormattingPolicy.keepWhiteSpacesInsideTag(getTag())) return SpaceProperty.getReadOnlySpace();
+    if (myXmlFormattingPolicy.keepWhiteSpacesInsideTag(getTag())) return Spacing.getReadOnlySpacing();
 
     if (myXmlFormattingPolicy.getShouldKeepWhiteSpaces()) {
-      return SpaceProperty.getReadOnlySpace();
+      return Spacing.getReadOnlySpacing();
     }
 
     if (syntheticBlock1.endsWithTextElement() && syntheticBlock2.startsWithTextElement()) {
-      return SpaceProperty.createSafeSpace(myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
+      return Spacing.createSafeSpacing(myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
     }
 
     if (syntheticBlock1.endsWithText()) { //text</tag
-      return SpaceProperty.createSpaceProperty(0, 0, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
+      return Spacing.createSpacing(0, 0, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
     } else if (syntheticBlock1.isTagDescription() && syntheticBlock2.isTagDescription()) { //></
-      return SpaceProperty.createSpaceProperty(0, 0, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
+      return Spacing.createSpacing(0, 0, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
     } else if (syntheticBlock2.startsWithText()) { //>text
-      return SpaceProperty.createSpaceProperty(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
+      return Spacing.createSpacing(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
     } else if (syntheticBlock1.isTagDescription() && syntheticBlock2.startsWithTag()) {
-      return SpaceProperty.createSpaceProperty(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
+      return Spacing.createSpacing(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
     } else if (syntheticBlock1.endsWithTag() && syntheticBlock2.isTagDescription()) {
-      return SpaceProperty.createSpaceProperty(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
+      return Spacing.createSpacing(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
     }
     else {
       return createDefaultSpace(true);

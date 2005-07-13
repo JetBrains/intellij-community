@@ -155,7 +155,7 @@ class WhiteSpace {
     }
   }
 
-  public void arrangeSpaces(final SpacePropertyImpl spaceProperty) {
+  public void arrangeSpaces(final SpacingImpl spaceProperty) {
     performModification(new Runnable() {
       public void run() {
         if (spaceProperty != null) {
@@ -174,7 +174,7 @@ class WhiteSpace {
 
   }
 
-  public void arrangeLineFeeds(final SpacePropertyImpl spaceProperty, final FormatProcessor formatProcessor) {
+  public void arrangeLineFeeds(final SpacingImpl spaceProperty, final FormatProcessor formatProcessor) {
     performModification(new Runnable() {
       public void run() {
         if (spaceProperty != null) {
@@ -272,7 +272,7 @@ class WhiteSpace {
     return myInitialLineFeeds > 0;
   }
 
-  public void removeLineFeeds(final SpaceProperty spaceProperty, final FormatProcessor formatProcessor) {
+  public void removeLineFeeds(final Spacing spacing, final FormatProcessor formatProcessor) {
     performModification(new Runnable() {
       public void run() {
         myLineFeeds = 0;
@@ -280,8 +280,8 @@ class WhiteSpace {
         myIndentSpaces = 0;
       }
     });
-    arrangeLineFeeds((SpacePropertyImpl)spaceProperty, formatProcessor);
-    arrangeSpaces((SpacePropertyImpl)spaceProperty);
+    arrangeLineFeeds((SpacingImpl)spacing, formatProcessor);
+    arrangeSpaces((SpacingImpl)spacing);
   }
 
   public int getIndentOffset() {

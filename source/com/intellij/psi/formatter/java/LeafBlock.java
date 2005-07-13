@@ -47,7 +47,7 @@ public class LeafBlock implements Block{
     return myAlignment;
   }
 
-  public SpaceProperty getSpaceProperty(Block child1, Block child2) {
+  public Spacing getSpacing(Block child1, Block child2) {
     return null;
   }
 
