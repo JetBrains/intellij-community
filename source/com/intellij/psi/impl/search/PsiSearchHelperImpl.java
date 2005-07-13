@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.RepositoryElementsManager;
@@ -246,6 +247,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       if (refElement instanceof PsiMetaOwner) {
         final PsiMetaData metaData = ((PsiMetaOwner)refElement).getMetaData();
         if (metaData!=null) text = metaData.getName();
+      } else if (refElement instanceof JspFile) {
+        final VirtualFile virtualFile = ((JspFile)refElement).getVirtualFile();
+        text = virtualFile != null ? virtualFile.getNameWithoutExtension():text;
       }
     }
     else {

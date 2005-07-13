@@ -63,6 +63,19 @@ class TagNameReference implements PsiReference {
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     final XmlTag element = getElement();
+    
+    if (element != null &&
+        (newElementName.endsWith(".tag") || newElementName.endsWith(".tagx")) &&
+        element.getContainingFile() instanceof JspFile
+       ) {
+      final String namespacePrefix = element.getNamespacePrefix();
+      newElementName = newElementName.substring(0,newElementName.lastIndexOf('.'));
+      
+      if (namespacePrefix != null && namespacePrefix.length() > 0) {
+        newElementName = namespacePrefix + ":" + newElementName;
+      }
+    }
+    
     if(element!=null) element.setName(newElementName);
     return element;
   }

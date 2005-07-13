@@ -4,6 +4,7 @@ import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
@@ -17,7 +18,8 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
     return element instanceof XmlElementDecl ||
            element instanceof XmlAttributeDecl ||
            element instanceof XmlTag ||
-           element instanceof XmlAttributeValue;
+           element instanceof XmlAttributeValue ||
+           element instanceof JspFile;
   }
 
   public String getType(PsiElement element) {
