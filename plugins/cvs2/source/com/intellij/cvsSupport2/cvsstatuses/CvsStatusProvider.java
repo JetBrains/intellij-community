@@ -34,6 +34,7 @@ public class CvsStatusProvider {
   }
 
   public static FileStatus getStatus(VirtualFile file) {
+    if (!CvsEntriesManager.getInstance().isActive()) return FileStatus.NOT_CHANGED;
     return getStatus(file, getEntriesManager().getEntryFor(CvsVfsUtil.getParentFor(file), file.getName()));
   }
 
