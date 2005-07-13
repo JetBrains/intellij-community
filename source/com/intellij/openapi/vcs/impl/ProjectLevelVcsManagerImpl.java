@@ -464,7 +464,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
             if (lastUpToDateContent == null) return;
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
-                setUpToDateContent(document, lastUpToDateContent);
+                if (!myProject.isDisposed()) {
+                  setUpToDateContent(document, lastUpToDateContent);
+                }
               }
             });
           }
