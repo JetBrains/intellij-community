@@ -57,6 +57,9 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.*;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiManagerImpl");
 
@@ -173,14 +176,12 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     elementFinders.add(new PsiElementFinderImpl()); //this finder should be added at end for Fabrique's needs
     myElementFinders = elementFinders.toArray(new PsiElementFinder[elementFinders.size()]);
 
-    ExternalResourceManagerEx externalResourceManager = externalResourceManagerEx;
-    if (externalResourceManager != null) {
-      externalResourceManager.addExteralResourceListener(myExternalResourceListener);
+    if (externalResourceManagerEx != null) {
+      externalResourceManagerEx.addExteralResourceListener(myExternalResourceListener);
     }
 
-    StartupManagerEx startupManager = startupManagerEx;
-    if (startupManager != null) {
-      startupManager.registerPreStartupActivity(
+    if (startupManagerEx != null) {
+      startupManagerEx.registerPreStartupActivity(
         new Runnable() {
           public void run() {
             runStartupActivity();
@@ -190,6 +191,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     }
   }
 
+  @NotNull
   public PsiConstantEvaluationHelper getConstantEvaluationHelper() {
     return myConstantEvaluationHelper;
   }
@@ -213,6 +215,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     return myIsDisposed;
   }
 
+  @NotNull
   public LanguageLevel getEffectiveLanguageLevel() {
     return myLanguageLevel;
   }
@@ -329,6 +332,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     return myAssertOnFileLoadingFilter.accept(file);
   }
 
+  @NotNull
   public Project getProject() {
     return myProject;
   }
@@ -351,6 +355,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     return myCacheManager;
   }
 
+  @NotNull
   public CodeStyleManager getCodeStyleManager() {
     return CodeStyleManager.getInstance(myProject);
   }
@@ -359,6 +364,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     return myResolveCache;
   }
 
+  @NotNull
   public PsiDirectory[] getRootDirectories(int rootType) {
     return myFileManager.getRootDirectories(rootType);
   }
@@ -379,6 +385,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     return null;
   }
 
+  @NotNull
   public PsiClass[] findClasses(String qualifiedName, GlobalSearchScope scope) {
     List<PsiClass> classes = new ArrayList<PsiClass>();
     for (PsiElementFinder finder : myElementFinders) {
@@ -411,6 +418,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
       String qName1 = ((PsiClass)element1).getQualifiedName();
       String qName2 = ((PsiClass)element2).getQualifiedName();
       if (qName1 == null || qName2 == null) {
+        //noinspection StringEquality
         if (qName1 != qName2) return false;
 
         if (element1 instanceof PsiTypeParameter && element2 instanceof PsiTypeParameter) {
@@ -469,6 +477,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode());
   }
 
+  @Nullable
   public PsiFile getFile(FileContent content) {
     PsiFile psiFile = content.getUserData(CACHED_PSI_FILE_COPY_IN_FILECONTENT);
     if (psiFile == null) {
@@ -806,18 +815,22 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     }
   }
 
+  @NotNull
   public PsiElementFactory getElementFactory() {
     return myElementFactory;
   }
 
+  @NotNull
   public PsiSearchHelper getSearchHelper() {
     return mySearchHelper;
   }
 
+  @NotNull
   public PsiResolveHelper getResolveHelper() {
     return myResolveHelper;
   }
 
+  @NotNull
   public PsiShortNamesCache getShortNamesCache() {
     return myShortNamesCache;
   }
@@ -835,28 +848,34 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     }
   }
 
+  @NotNull
   public PsiMigration startMigration() {
     LOG.assertTrue(myCurrentMigration == null);
     myCurrentMigration = new PsiMigrationImpl(this);
     return myCurrentMigration;
   }
 
+  @NotNull
   public JavadocManager getJavadocManager() {
     return myJavadocManager;
   }
 
+  @NotNull
   public PsiModificationTracker getModificationTracker() {
     return myModificationTracker;
   }
 
+  @NotNull
   public PsiAspectManager getAspectManager() {
     return myAspectManager;
   }
 
+  @NotNull
   public CachedValuesManager getCachedValuesManager() {
     return myCachedValuesManager;
   }
 
+  @NotNull
   public PsiNameHelper getNameHelper() {
     return myNameHelper;
   }
@@ -876,7 +895,9 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     checkMove(file, newParent);
 
     try {
-      file.getVirtualFile().move(this, newParent.getVirtualFile());
+      final VirtualFile virtualFile = file.getVirtualFile();
+      assert virtualFile != null;
+      virtualFile.move(this, newParent.getVirtualFile());
     }
     catch (IOException e) {
       throw new IncorrectOperationException(e.toString());
@@ -935,12 +956,14 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     return myBatchFilesProcessingModeCount > 0;
   }
 
+  @SuppressWarnings({"unchecked"})
   public <T> T getUserData(Key<T> key) {
     synchronized (myUserMap) {
       return (T)myUserMap.get(key);
     }
   }
 
+  @SuppressWarnings({"unchecked"})
   public <T> void putUserData(Key<T> key, T value) {
     synchronized (myUserMap) {
       if (value != null) {
