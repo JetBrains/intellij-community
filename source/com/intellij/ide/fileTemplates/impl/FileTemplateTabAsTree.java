@@ -114,10 +114,15 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
   }
 
   public void selectTemplate(FileTemplate template) {
-    final TreeNode nodeToFind = new TreeNode(null, template.getName());
-    final TreeNode node = (TreeNode)TreeUtil.findNodeWithObject(myRoot, nodeToFind);
+    String name = template.getName();
+    if (template.getExtension() != null && template.getExtension().length() > 0) {
+      name += "." + template.getExtension();
+    }
+    
+    final TreeNode node = (TreeNode)TreeUtil.findNodeWithObject(myRoot, name);
     if (node != null) {
       TreeUtil.selectNode(myTree, node);
+      onTemplateSelected(); // this is important because we select different Template for the same node
     }
   }
 
