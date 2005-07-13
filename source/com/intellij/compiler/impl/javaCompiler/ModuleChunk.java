@@ -6,6 +6,7 @@ package com.intellij.compiler.impl.javaCompiler;
 
 import com.intellij.compiler.Chunk;
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
@@ -197,7 +198,7 @@ public class ModuleChunk extends Chunk<Module> {
       classpathBuffer.append(path);
     }
 
-    return classpathBuffer.toString();
+    return CompilerUtil.quotePath(classpathBuffer.toString());
   }
 
   public int getModuleCount() {
