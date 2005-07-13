@@ -19,7 +19,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.util.ImageLoader;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,8 +47,7 @@ public class IdeFrame extends JFrame implements DataProvider {
 
     setRootPane(new IdeRootPane(actionManager, uiSettings, dataManager, keymapManager));
 
-    final Image image = ImageLoader.loadFromResource("/icon.png");
-    setIconImage(image);
+    UIUtil.updateFrameIcon(this);
     final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
     setBounds(10, 10, screenSize.width - 20, screenSize.height - 40);
 

@@ -1,6 +1,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ImageLoader;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -36,4 +37,8 @@ public class UIUtil {
     }
   }
 
+  public static void updateFrameIcon(final Frame frame) {
+    final Image image = ImageLoader.loadFromResource("/icon.png");
+    frame.setIconImage(image);
+  }
 }

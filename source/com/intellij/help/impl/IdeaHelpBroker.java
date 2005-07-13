@@ -1,6 +1,6 @@
 package com.intellij.help.impl;
 
-import com.intellij.util.ImageLoader;
+import com.intellij.util.ui.UIUtil;
 
 import javax.help.*;
 import javax.help.Map.ID;
@@ -700,8 +700,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
       if(myFrame==null){
         myFrame=new JFrame(helpTitle);
         resize = true;
-        Image image = ImageLoader.loadFromResource("/icon.png");
-        myFrame.setIconImage(image);
+        UIUtil.updateFrameIcon(myFrame);
         WindowListener l=new WindowAdapter(){
           public void windowClosing(WindowEvent e){
             myFrame.setVisible(false);
