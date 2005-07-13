@@ -238,7 +238,7 @@ public abstract class BaseRefactoringProcessor {
                               "There were changes in code after the usages have been found.\n" +
                               "Please, perform the usage search again.";
 
-    usageView.addPerformOperationAction(refactoringRunnable, getCommandName(), canNotMakeString, "Do Refactor", SystemInfo.isMac ? 0 : 'D');
+    usageView.addPerformOperationAction(refactoringRunnable, getCommandName(), canNotMakeString, "Do Refactor", 'D');
   }
 
   private static Set<UsageInfo> getExcludedUsages(final UsageView usageView) {
