@@ -982,6 +982,14 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
     }
   }
 
+  public void visitClassInitializer(PsiClassInitializer initializer) {
+    if (myChild2.getElementType() == ElementType.CODE_BLOCK) {
+      myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_METHOD_LBRACE, mySettings.BRACE_STYLE,
+                                      null,
+                                      false);
+    }
+  }
+
   public void visitAnnotationParameterList(PsiAnnotationParameterList list) {
     if (myRole1 == ChildRole.LPARENTH && myRole2 == ChildRole.RPARENTH) {
       createSpaceInCode(false);
