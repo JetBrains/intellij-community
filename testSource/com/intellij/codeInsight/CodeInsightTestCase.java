@@ -21,6 +21,8 @@ import com.intellij.testFramework.PsiTestData;
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author Mike
@@ -79,7 +81,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   protected VirtualFile configureByFiles(final VirtualFile[] vFiles, final File projectRoot) throws IOException {
     myFile = null;
     myEditor = null;
-    
+
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
     final ModifiableRootModel rootModel = rootManager.getModifiableModel();
     if (clearModelBeforeConfiguring()) {
@@ -96,6 +98,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
     boolean projectCopied = false;
 
+    List<Writer> writersToClose = new ArrayList<Writer>(vFiles.length);
     for (int i = 0; i < vFiles.length; i++) {
       VirtualFile vFile = vFiles[i];
 
@@ -134,13 +137,13 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
         newVFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
         Writer writer = newVFile.getWriter(this);
         writer.write(newFileText);
-        writer.close();
+        writersToClose.add(writer);
       }
       else {
         newVFile = vDir.createChildData(this, vFile.getName());
         Writer writer = newVFile.getWriter(this);
         writer.write(newFileText);
-        writer.close();
+        writersToClose.add(writer);
       }
 
       newVFiles[i]=newVFile;
@@ -150,6 +153,10 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
       caretMarkers[i]=caretMarker;
     }
 
+    for(int i = writersToClose.size() -1; i >= 0 ; --i) {
+      writersToClose.get(i).close();
+    }
+    
     final ContentEntry contentEntry = rootModel.addContentEntry(vDir);
     if (isAddDirToSource()) contentEntry.addSourceFolder(vDir, false);
     rootModel.commit();
