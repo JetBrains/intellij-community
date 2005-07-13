@@ -112,38 +112,43 @@ public class GenericsUtil {
                                                         PsiType type2,
                                                         Set<Pair<PsiType, PsiType>> compared,
                                                         PsiManager manager) {
-    Pair<PsiType, PsiType> p = new Pair<PsiType, PsiType>(type1, type2);
-    if (compared.contains(p)) return PsiWildcardType.createUnbounded(manager);
-    compared.add(p);
+    Pair<PsiType, PsiType> types = new Pair<PsiType, PsiType>(type1, type2);
+    if (compared.contains(types)) return PsiWildcardType.createUnbounded(manager);
+    compared.add(types);
 
-    if (type1 instanceof PsiWildcardType) {
-      PsiWildcardType wild1 = (PsiWildcardType)type1;
-      if (type2 instanceof PsiWildcardType) {
-        PsiWildcardType wild2 = (PsiWildcardType)type2;
-        if (wild1.isExtends() == wild2.isExtends()) {
-          return wild1.isExtends() ? PsiWildcardType.createExtends(manager,
-                                                                   getLeastUpperBound(wild1.getBound(), wild2.getBound(), compared,
-                                                                                      manager)) :
-                                                                                                wild1.isSuper() ? PsiWildcardType.createSuper(manager, getGreatestLowerBound(wild1.getBound(), wild2.getBound())) :
-                                                                                                                wild1;
+    try {
+      if (type1 instanceof PsiWildcardType) {
+        PsiWildcardType wild1 = (PsiWildcardType)type1;
+        if (type2 instanceof PsiWildcardType) {
+          PsiWildcardType wild2 = (PsiWildcardType)type2;
+          if (wild1.isExtends() == wild2.isExtends()) {
+            return wild1.isExtends() ? PsiWildcardType.createExtends(manager,
+                                                                     getLeastUpperBound(wild1.getBound(), wild2.getBound(), compared,
+                                                                                        manager)) :
+                                                                                                  wild1.isSuper() ? PsiWildcardType.createSuper(manager, getGreatestLowerBound(wild1.getBound(), wild2.getBound())) :
+                                                                                                  wild1;
+          }
+          else {
+            return wild1.getBound().equals(wild2.getBound()) ? wild1.getBound() : PsiWildcardType.createUnbounded(manager);
+          }
         }
         else {
-          return wild1.getBound().equals(wild2.getBound()) ? wild1.getBound() : PsiWildcardType.createUnbounded(manager);
+          return wild1.isExtends() ? PsiWildcardType.createExtends(manager, getLeastUpperBound(wild1.getBound(), type2, compared, manager)) :
+                 wild1.isSuper() ? PsiWildcardType.createSuper(manager, getGreatestLowerBound(wild1.getBound(), type2)) :
+                 wild1;
         }
       }
-      else {
-        return wild1.isExtends() ? PsiWildcardType.createExtends(manager, getLeastUpperBound(wild1.getBound(), type2, compared, manager)) :
-                                 wild1.isSuper() ? PsiWildcardType.createSuper(manager, getGreatestLowerBound(wild1.getBound(), type2)) :
-                                                 wild1;
+      else if (type2 instanceof PsiWildcardType) {
+        return getLeastContainingTypeArgument(type2, type1, compared, manager);
       }
-    }
-    else if (type2 instanceof PsiWildcardType) {
-      return getLeastContainingTypeArgument(type2, type1, compared, manager);
-    }
-    //Done with wildcards
+      //Done with wildcards
 
-    if (type1.equals(type2)) return type1;
-    return PsiWildcardType.createExtends(manager, getLeastUpperBound(type1, type2, compared, manager));
+      if (type1.equals(type2)) return type1;
+      return PsiWildcardType.createExtends(manager, getLeastUpperBound(type1, type2, compared, manager));
+    }
+    finally {
+      compared.remove(types);
+    }
   }
 
   public static PsiClass[] getLeastUpperClasses(PsiClass aClass, PsiClass bClass) {
@@ -155,7 +160,7 @@ public class GenericsUtil {
 
   private static void getLeastUpperClassesInner(PsiClass aClass, PsiClass bClass, Set<PsiClass> supers) {
     if (bClass.isInheritor(aClass, true)) {
-      supers.add(aClass);
+      addSuper(supers, aClass);
     }
     else {
       final PsiClass[] aSupers = aClass.getSupers();
@@ -163,6 +168,16 @@ public class GenericsUtil {
         getLeastUpperClassesInner(aSuper, bClass, supers);
       }
     }
+  }
+
+  private static void addSuper(final Set<PsiClass> supers, final PsiClass classToAdd) {
+    for (Iterator<PsiClass> iterator = supers.iterator(); iterator.hasNext();) {
+      PsiClass superClass = iterator.next();
+      if (InheritanceUtil.isInheritorOrSelf(superClass, classToAdd, true)) return;
+      if (classToAdd.isInheritor(superClass, true)) iterator.remove();
+    }
+    
+    supers.add(classToAdd);
   }
 
   public static boolean isTypeArgumentsApplicable(PsiTypeParameter[] typeParams, PsiSubstitutor substitutor) {
