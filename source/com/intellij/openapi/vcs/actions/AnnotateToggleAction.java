@@ -37,6 +37,7 @@ public class AnnotateToggleAction extends ToggleAction {
     if (selectedFiles == null) return false;
     if (selectedFiles.length == 0) return false;
     VirtualFile file = selectedFiles[0];
+    if (file.isDirectory()) return false;
     Project project = context.getProject();
     if (project == null) return false;
     AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
@@ -78,8 +79,7 @@ public class AnnotateToggleAction extends ToggleAction {
       if (editor == null) {
         VirtualFile selectedFile = context.getSelectedFile();
         FileEditor[] fileEditors = FileEditorManager.getInstance(context.getProject()).openFile(selectedFile, false);
-        for (int i = 0; i < fileEditors.length; i++) {
-          FileEditor fileEditor = fileEditors[i];
+        for (FileEditor fileEditor : fileEditors) {
           if (fileEditor instanceof TextEditor) {
             editor = ((TextEditor)fileEditor).getEditor();
           }

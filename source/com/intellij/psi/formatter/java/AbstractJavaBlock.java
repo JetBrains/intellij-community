@@ -787,6 +787,11 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     else if (psiNode instanceof PsiMethod) {
       return mySettings.METHOD_BRACE_STYLE;
     }
+
+    else if (psiNode instanceof PsiCodeBlock && psiNode.getParent() != null && psiNode.getParent() instanceof PsiMethod) {
+      return mySettings.METHOD_BRACE_STYLE;
+    }
+
     else {
       return mySettings.BRACE_STYLE;
     }

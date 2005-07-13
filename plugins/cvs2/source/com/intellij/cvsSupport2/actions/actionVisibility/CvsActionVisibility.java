@@ -3,6 +3,7 @@ package com.intellij.cvsSupport2.actions.actionVisibility;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContextWrapper;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsLightweightFile;
+import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -135,6 +136,12 @@ public class CvsActionVisibility {
   }
 
   public void applyToEvent(AnActionEvent e) {
+    if (!CvsEntriesManager.getInstance().isActive()) {
+      final Presentation presentation = e.getPresentation();
+      presentation.setVisible(false);
+      presentation.setEnabled(false);
+      return;
+    }
     CvsContext cvsContext = CvsContextWrapper.createInstance(e);
     Presentation presentation = e.getPresentation();
     presentation.setEnabled(isEnabled(cvsContext));

@@ -153,7 +153,9 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
 
   public void navigate(boolean requestFocus) {
     final PsiReference firstReference = myReferences.get(0);
-    final PsiElement callElement = firstReference.getElement().getParent();
+    final PsiElement element = firstReference.getElement();
+    if (element == null) return;
+    final PsiElement callElement = element.getParent();
     if (callElement instanceof Navigatable && ((Navigatable)callElement).canNavigate()) {
       ((Navigatable)callElement).navigate(requestFocus);
     } else {
@@ -171,9 +173,14 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
       TextAttributes attributes = colorManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
       ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
       for (PsiReference psiReference : myReferences) {
-        final PsiElement eachMethidCall = psiReference.getElement().getParent();
-        final TextRange textRange = eachMethidCall.getTextRange();
-        highlightManager.addRangeHighlight(editor, textRange.getStartOffset(), textRange.getEndOffset(), attributes, false, highlighters);
+        final PsiElement eachElement = psiReference.getElement();
+        if (eachElement != null) {
+          final PsiElement eachMethodCall = eachElement.getParent();
+          if (eachMethodCall != null) {
+            final TextRange textRange = eachMethodCall.getTextRange();
+            highlightManager.addRangeHighlight(editor, textRange.getStartOffset(), textRange.getEndOffset(), attributes, false, highlighters);
+          }
+        }
       }
     }
   }

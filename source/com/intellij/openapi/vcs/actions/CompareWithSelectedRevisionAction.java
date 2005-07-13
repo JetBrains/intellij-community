@@ -237,7 +237,10 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
       Dimension listPreferredSize = list.getPreferredSize();
       list.setVisibleRowCount(0);
       Dimension viewPreferredSize = new Dimension(listPreferredSize.width, Math.min(listPreferredSize.height, r.height - 20));
-      (list.getParent()).setPreferredSize(viewPreferredSize);
+      final Container parent = list.getParent();
+      if (parent instanceof JComponent) {
+        ((JComponent)parent).setPreferredSize(viewPreferredSize);
+      }
     }
 
     popup.getWindow().pack();
