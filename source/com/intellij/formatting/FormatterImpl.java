@@ -73,11 +73,11 @@ public class FormatterImpl extends FormatterEx
   public void format(FormattingModel model, CodeStyleSettings settings,
                      CodeStyleSettings.IndentOptions indentOptions,
                      TextRange affectedRange) throws IncorrectOperationException {
-    myIsDisabledCount++;
+    disableFormatting();
     try {
       new FormatProcessor(model.getDocumentModel(), model.getRootBlock(), settings, indentOptions, affectedRange).format(model);
     } finally {
-      myIsDisabledCount--;
+      enableFormatting();
     }
 
   }
@@ -87,11 +87,11 @@ public class FormatterImpl extends FormatterEx
                                          CodeStyleSettings settings,
                                          CodeStyleSettings.IndentOptions indentOptions,
                                          TextRange affectedRange) throws IncorrectOperationException {
-    myIsDisabledCount++;
+    disableFormatting();
     try {
       new FormatProcessor(model, rootBlock, settings, indentOptions, affectedRange).formatWithoutRealModifications();
     } finally {
-      myIsDisabledCount--;
+      enableFormatting();
     }
 
   }
@@ -101,7 +101,7 @@ public class FormatterImpl extends FormatterEx
                                         final CodeStyleSettings settings,
                                         final CodeStyleSettings.IndentOptions indentOptions,
                                         final TextRange affectedRange, final boolean mayChangeLineFeeds) {
-    myIsDisabledCount++;
+    disableFormatting();
     try {
       final FormatProcessor processor = new FormatProcessor(model, block, settings, indentOptions, affectedRange);
       final LeafBlockWrapper blockBefore = processor.getBlockBefore(affectedRange.getStartOffset());
@@ -116,7 +116,7 @@ public class FormatterImpl extends FormatterEx
       processor.formatWithoutRealModifications();
       return new IndentInfo(whiteSpace.getLineFeeds(), whiteSpace.getIndentOffset(), whiteSpace.getSpaces());
     } finally {
-      myIsDisabledCount--;
+      enableFormatting();
     }
 
   }
@@ -125,7 +125,7 @@ public class FormatterImpl extends FormatterEx
                                         final CodeStyleSettings settings,
                                         final CodeStyleSettings.IndentOptions indentOptions,
                                         final TextRange rangeToAdjust) {
-    myIsDisabledCount++;
+    disableFormatting();
     try {
       final FormattingDocumentModel documentModel = model.getDocumentModel();
       final Block block = model.getRootBlock();
@@ -143,7 +143,7 @@ public class FormatterImpl extends FormatterEx
       processor.performModifications(model);
     }
     finally {
-      myIsDisabledCount--;
+      enableFormatting();
     }
 
   }
@@ -153,7 +153,7 @@ public class FormatterImpl extends FormatterEx
                               final CodeStyleSettings.IndentOptions indentOptions,
                               final int offset,
                               final TextRange affectedRange) throws IncorrectOperationException {
-    myIsDisabledCount++;
+    disableFormatting();
     try {
       final FormattingDocumentModel documentModel = model.getDocumentModel();
       final Block block = model.getRootBlock();
@@ -208,7 +208,7 @@ public class FormatterImpl extends FormatterEx
                + CharArrayUtil.shiftForward(newWS.toCharArray(), lineStartOffset - lastWS.getTextRange().getStartOffset(), " \t");
       }
     } finally {
-      myIsDisabledCount--;
+      enableFormatting();
     }
   }
 
@@ -281,7 +281,7 @@ public class FormatterImpl extends FormatterEx
                               final boolean changeWSBeforeFirstElement,
                               final boolean changeLineFeedsBeforeFirstElement,
                               @Nullable final IndentInfoStorage indentInfoStorage) {
-    myIsDisabledCount++;
+    disableFormatting();
     try {
       Block block = model.getRootBlock();
       final FormatProcessor processor = new FormatProcessor(model.getDocumentModel(), block, settings, indentOptions, affectedRange);
@@ -320,7 +320,7 @@ public class FormatterImpl extends FormatterEx
       }
       processor.format(model);
     } finally {
-      myIsDisabledCount--;
+      enableFormatting();
     }
 
   }
@@ -346,10 +346,6 @@ public class FormatterImpl extends FormatterEx
                                                          final Block rootBlock,
                                                          final CodeStyleSettings settings) {
     return new PsiBasedFormattingModel(file, rootBlock);
-  }
-
-  public boolean isDisabled() {
-    return myIsDisabledCount > 0;
   }
 
   public Indent getSpaceIndent(final int spaces) {
@@ -404,12 +400,26 @@ public class FormatterImpl extends FormatterEx
     return model.getLineNumber(offset) - model.getLineNumber(startOffset);
   }
 
+  private final Object DISABLING_LOCK = new Object();
+
+  public boolean isDisabled() {
+    synchronized (DISABLING_LOCK) {
+      return myIsDisabledCount > 0;
+    }
+  }
+
   public void disableFormatting() {
-    myIsDisabledCount++;
+    synchronized (DISABLING_LOCK) {
+      myIsDisabledCount++;
+    }
   }
 
   public void enableFormatting() {
-    LOG.assertTrue(myIsDisabledCount > 0, "enableFormatting()/disableFormatting() not paired");
-    myIsDisabledCount--;
+    synchronized (DISABLING_LOCK) {
+      if (myIsDisabledCount > 0) {
+        LOG.error("enableFormatting()/disableFormatting() not paired. DisabledLevel = " + myIsDisabledCount);
+      }
+      myIsDisabledCount--;
+    }
   }
 }
