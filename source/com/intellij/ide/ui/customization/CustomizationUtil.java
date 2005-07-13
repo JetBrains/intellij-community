@@ -63,15 +63,8 @@ public class CustomizationUtil {
            }
            else if (actionUrl.getActionType() == ActionUrl.DELETED && reordableChildren.size() > actionUrl.getAbsolutePosition()) {
              final AnAction anAction = reordableChildren.get(actionUrl.getAbsolutePosition());
-             //for unnamed groups
-             if (anAction.getTemplatePresentation().getText() == null && anAction instanceof ActionGroup) {
-               final Group eqGroup = ActionsTreeUtil.createGroup((ActionGroup)anAction, true);
-               if (!actionUrl.getComponent().equals(eqGroup)) {
-                 continue;
-               }
-             }
              if (anAction.getTemplatePresentation().getText() == null
-                 ? componentAction.getTemplatePresentation().getText() != null
+                 ? (componentAction.getTemplatePresentation().getText() != null && componentAction.getTemplatePresentation().getText().length() > 0)
                  : !anAction.getTemplatePresentation().getText().equals(componentAction.getTemplatePresentation().getText())) {
                continue;
              }
@@ -147,6 +140,7 @@ public class CustomizationUtil {
           final ActionUrl[] currentUserObjects = getChildUserObjects(treeNode, url);
           computeDiff(defaultUserObjects, currentUserObjects, actions);
         } else {
+          //customizations at the new place
           url.getGroupPath().remove(url.getParentGroup());
           if (actions.contains(url)){
             url.getGroupPath().add(((Group)treeNode.getUserObject()).getName());
@@ -163,15 +157,13 @@ public class CustomizationUtil {
                                   final ActionUrl[] currentUserObjects,
                                   final ArrayList<ActionUrl> actions) {
     Diff.Change change = Diff.buildChanges(defaultUserObjects, currentUserObjects);
-    int deletedLines = 0;
     while (change != null) {
       for (int i = 0; i < change.deleted; i++) {
         final int idx = change.line0 + i;
         ActionUrl currentUserObject = defaultUserObjects[idx];
         currentUserObject.setActionType(ActionUrl.DELETED);
-        currentUserObject.setAbsolutePosition(idx - deletedLines);
+        currentUserObject.setAbsolutePosition(change.line1);
         actions.add(currentUserObject);
-        deletedLines++;
       }
       for (int i = 0; i < change.inserted; i++) {
         final int idx = change.line1 + i;
