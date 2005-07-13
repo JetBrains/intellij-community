@@ -35,41 +35,57 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.util.ui.OptionsDialog;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
   private final JComponent myMainPanel;
-  private final Map<UpdateEnvironment, Configurable> myEnvToConfMap = new HashMap<UpdateEnvironment, Configurable>();
+  private final Map<AbstractVcs, Configurable> myEnvToConfMap = new HashMap<AbstractVcs, Configurable>();
   protected final Project myProject;
 
 
-  public UpdateOrStatusOptionsDialog(Project project, Map<Configurable, UpdateEnvironment> confs) {
+  public UpdateOrStatusOptionsDialog(Project project, Map<Configurable, AbstractVcs> confs) {
     super(project);
     setTitle(getRealTitle());
     myProject = project;
     if (confs.size() == 1) {
       myMainPanel = new JPanel(new BorderLayout());
-      addComponent(confs.get(confs.keySet().iterator().next()), confs.keySet().iterator().next(), BorderLayout.CENTER);
+      final Configurable configurable = confs.keySet().iterator().next();
+      addComponent(confs.get(configurable), configurable, BorderLayout.CENTER);
       myMainPanel.add(new JSeparator(), BorderLayout.SOUTH);
     }
     else {
       myMainPanel = new JTabbedPane();
-      for (final Configurable conf : confs.keySet()) {
-        addComponent(confs.get(conf), conf, conf.getDisplayName());
+      final ArrayList<AbstractVcs> vcses = new ArrayList<AbstractVcs>(confs.values());
+      Collections.sort(vcses, new Comparator<AbstractVcs>() {
+        public int compare(final AbstractVcs o1, final AbstractVcs o2) {
+          return o1.getDisplayName().compareTo(o2.getDisplayName());
+        }
+      });
+      Map<AbstractVcs, Configurable> vcsToConfigurable = revertMap(confs);
+      for (AbstractVcs vcs : vcses) {
+        addComponent(vcs, vcsToConfigurable.get(vcs), vcs.getDisplayName());
       }
     }
     init();
   }
 
+  private Map<AbstractVcs, Configurable> revertMap(final Map<Configurable, AbstractVcs> confs) {
+    final HashMap<AbstractVcs, Configurable> result = new HashMap<AbstractVcs, Configurable>();
+    for (Configurable configurable : confs.keySet()) {
+      result.put(confs.get(configurable), configurable);
+    }
+    return result;
+  }
+
   protected abstract String getRealTitle();
 
-  private void addComponent(UpdateEnvironment updateEnvironment, Configurable configurable, String constraint) {
-    myEnvToConfMap.put(updateEnvironment, configurable);
+  private void addComponent(AbstractVcs vcs, Configurable configurable, String constraint) {
+    myEnvToConfMap.put(vcs, configurable);
     myMainPanel.add(configurable.createComponent(), constraint);
     configurable.reset();
   }

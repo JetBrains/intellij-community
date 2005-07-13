@@ -117,7 +117,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
       }
 
       if (canBeAnotherTreeTagStart(child)) {
-        PsiElement tag = JspTextBlock.findXmlElementAt(child, child.getStartOffset());
+        XmlTag tag = JspTextBlock.findXmlTagAt(child, child.getStartOffset());
         if (tag instanceof XmlTag
             && containsTag(tag)
             && doesNotIntersectSubTagsWith(tag)) {
@@ -275,7 +275,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     ASTNode currentChild = findChildAfter(child, tag.getTextRange().getEndOffset());
 
     while (currentChild != null && currentChild.getTextRange().getEndOffset() > tag.getTextRange().getEndOffset()) {
-      PsiElement psiElement = JspTextBlock.findXmlElementAt(currentChild, tag.getTextRange().getEndOffset());
+      PsiElement psiElement = JspTextBlock.findXmlTagAt(currentChild, tag.getTextRange().getEndOffset());
       if (psiElement != null) {
         if (psiElement instanceof XmlTag &&
             psiElement.getTextRange().getStartOffset() >= currentChild.getTextRange().getStartOffset() &&
@@ -288,6 +288,8 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
                                                                                                               currentChild.getTextRange().getEndOffset())));
           return currentChild;
         }
+      } else {
+        return currentChild;
       }
     }
 
@@ -391,8 +393,8 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   public static Block creareJspRoot(final PsiElement element, final CodeStyleSettings settings) {
     final PsiElement[] psiRoots = (element.getContainingFile()).getPsiRoots();
     LOG.assertTrue(psiRoots.length == 4);
-    final ASTNode rootNode = SourceTreeToPsiMap.psiElementToTree(psiRoots[1]);
-    return new XmlBlock(rootNode, null, null, new HtmlPolicy(settings), null, null);
+    final ASTNode rootNode = SourceTreeToPsiMap.psiElementToTree(psiRoots[0]);
+    return new XmlBlock(rootNode, null, null, new XmlPolicy(settings), null, null);
   }
 
   public static Block creareJspxRoot(final PsiElement element, final CodeStyleSettings settings) {

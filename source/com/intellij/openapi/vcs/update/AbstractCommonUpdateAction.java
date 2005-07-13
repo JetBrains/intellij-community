@@ -90,11 +90,11 @@ public class AbstractCommonUpdateAction extends AbstractVcsAction {
 
         final FilePath[] roots = filterDescindingFiles(filterRoots(myScopeInfo.getRoots(context), context), project);
 
-        final Map<UpdateEnvironment, Collection<FilePath>> updateEnvToVirtualFiles = createEnvToFilesMap(roots, project);
+        final Map<AbstractVcs, Collection<FilePath>> vcsToVirtualFiles = createVcsToFilesMap(roots, project);
 
 
         if (showUpdateOptions || OptionsDialog.shiftIsPressed(context.getModifiers())) {
-          showOptionsDialog(updateEnvToVirtualFiles, project);
+          showOptionsDialog(vcsToVirtualFiles, project);
         }
         final ArrayList<VcsException> vcsExceptions = new ArrayList<VcsException>();
         final List<UpdateSession> updateSessions = new ArrayList<UpdateSession>();
@@ -102,17 +102,17 @@ public class AbstractCommonUpdateAction extends AbstractVcsAction {
           public void run() {
 
             ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-            int toBeProcessed = updateEnvToVirtualFiles.size();
+            int toBeProcessed = vcsToVirtualFiles.size();
             int processed = 0;
-            for (Iterator<UpdateEnvironment> iterator = updateEnvToVirtualFiles.keySet().iterator(); iterator.hasNext();) {
-              UpdateEnvironment updateEnvironment = iterator.next();
+            for (AbstractVcs vcs : vcsToVirtualFiles.keySet()) {
+              final UpdateEnvironment updateEnvironment = vcs.getUpdateEnvironment();
               updateEnvironment.fillGroups(updatedFiles);
-              Collection<FilePath> files = updateEnvToVirtualFiles.get(updateEnvironment);
+              Collection<FilePath> files = vcsToVirtualFiles.get(vcs);
               UpdateSession updateSession = updateEnvironment.updateDirectories(files.toArray(new FilePath[files.size()]),
                                                                                 updatedFiles,
                                                                                 progressIndicator);
               processed++;
-              progressIndicator.setFraction((double) processed / (double) toBeProcessed);
+              progressIndicator.setFraction((double)processed / (double)toBeProcessed);
               vcsExceptions.addAll(updateSession.getExceptions());
               updateSessions.add(updateSession);
             }
@@ -136,8 +136,8 @@ public class AbstractCommonUpdateAction extends AbstractVcsAction {
             });
             semaphore.waitFor();
             if (!someSessionWasCanceled(updateSessions)) {
-              for (Iterator<UpdateSession> iterator = updateSessions.iterator(); iterator.hasNext();) {
-                iterator.next().onRefreshFilesCompleted();
+              for (final UpdateSession updateSession : updateSessions) {
+                updateSession.onRefreshFilesCompleted();
               }
             }
           }
@@ -156,7 +156,6 @@ public class AbstractCommonUpdateAction extends AbstractVcsAction {
                                            getCompleteActionName(context),
                                            Messages.getInformationIcon());
 
-                return;
               }
               else if (!updatedFiles.isEmpty()) {
                 RestoreUpdateTree restoreUpdateTree = RestoreUpdateTree.getInstance(project);
@@ -169,14 +168,13 @@ public class AbstractCommonUpdateAction extends AbstractVcsAction {
         }
       }
       catch (ProcessCanceledException e1) {
-
+        //ignore
       }
     }
   }
 
   private boolean someSessionWasCanceled(List<UpdateSession> updateSessions) {
-    for (Iterator<UpdateSession> iterator = updateSessions.iterator(); iterator.hasNext();) {
-      UpdateSession updateSession = iterator.next();
+    for (UpdateSession updateSession : updateSessions) {
       if (updateSession.isCanceled()) {
         return true;
       }
@@ -206,8 +204,8 @@ public class AbstractCommonUpdateAction extends AbstractVcsAction {
     updateInfoTree.expandRootChildren();
   }
 
-  private void showOptionsDialog(final Map<UpdateEnvironment, Collection<FilePath>> updateEnvToVirtualFiles, final Project project) {
-    LinkedHashMap<Configurable, UpdateEnvironment> envToConfMap = createConfigurableToEnvMap(updateEnvToVirtualFiles);
+  private void showOptionsDialog(final Map<AbstractVcs, Collection<FilePath>> updateEnvToVirtualFiles, final Project project) {
+    LinkedHashMap<Configurable, AbstractVcs> envToConfMap = createConfigurableToEnvMap(updateEnvToVirtualFiles);
     if (!envToConfMap.isEmpty()) {
       UpdateOrStatusOptionsDialog dialogOrStatus = myActionInfo.createOptionsDialog(project, envToConfMap);
       dialogOrStatus.show();
@@ -217,36 +215,33 @@ public class AbstractCommonUpdateAction extends AbstractVcsAction {
     }
   }
 
-  private LinkedHashMap<Configurable, UpdateEnvironment> createConfigurableToEnvMap(
-    Map<UpdateEnvironment, Collection<FilePath>> updateEnvToVirtualFiles) {
-    LinkedHashMap<Configurable, UpdateEnvironment> envToConfMap = new LinkedHashMap<Configurable, UpdateEnvironment>();
-    for (Iterator<UpdateEnvironment> iterator = updateEnvToVirtualFiles.keySet().iterator(); iterator.hasNext();) {
-      UpdateEnvironment updateEnvironment = iterator.next();
-      Configurable configurable = updateEnvironment.createConfigurable(updateEnvToVirtualFiles.get(updateEnvironment));
+  private LinkedHashMap<Configurable, AbstractVcs> createConfigurableToEnvMap(Map<AbstractVcs, Collection<FilePath>> updateEnvToVirtualFiles) {
+    LinkedHashMap<Configurable, AbstractVcs> envToConfMap = new LinkedHashMap<Configurable, AbstractVcs>();
+    for (AbstractVcs vcs : updateEnvToVirtualFiles.keySet()) {
+      Configurable configurable = vcs.getUpdateEnvironment().createConfigurable(updateEnvToVirtualFiles.get(vcs));
       if (configurable != null) {
-        envToConfMap.put(configurable, updateEnvironment);
+        envToConfMap.put(configurable, vcs);
       }
     }
     return envToConfMap;
   }
 
-  private Map<UpdateEnvironment,Collection<FilePath>> createEnvToFilesMap(FilePath[] roots, Project project) {
-    HashMap<UpdateEnvironment, Collection<FilePath>> result = new HashMap<UpdateEnvironment, Collection<FilePath>>();
+  private Map<AbstractVcs,Collection<FilePath>> createVcsToFilesMap(FilePath[] roots, Project project) {
+    HashMap<AbstractVcs, Collection<FilePath>> result = new HashMap<AbstractVcs, Collection<FilePath>>();
 
-    for (int i = 0; i < roots.length; i++) {
-      FilePath file = roots[i];
+    for (FilePath file : roots) {
       AbstractVcs vcs = VcsUtil.getVcsFor(project, file);
       if (vcs != null) {
         UpdateEnvironment updateEnvironment = myActionInfo.getEnvironment(vcs);
         if (updateEnvironment != null) {
-          if (!result.containsKey(updateEnvironment)) result.put(updateEnvironment, new HashSet<FilePath>());
-          result.get(updateEnvironment).add(file);
+          if (!result.containsKey(vcs)) result.put(vcs, new HashSet<FilePath>());
+          result.get(vcs).add(file);
         }
       }
     }
 
-    for (Iterator<Collection<FilePath>> iterator = result.values().iterator(); iterator.hasNext();) {
-      filterSubDirectories(iterator.next());
+    for (final Collection<FilePath> filePaths : result.values()) {
+      filterSubDirectories(filePaths);
     }
 
     return result;
@@ -254,8 +249,7 @@ public class AbstractCommonUpdateAction extends AbstractVcsAction {
 
   private void filterSubDirectories(Collection<FilePath> virtualFiles) {
     FilePath[] array = virtualFiles.toArray(new FilePath[virtualFiles.size()]);
-    for (int i = 0; i < array.length; i++) {
-      FilePath file = array[i];
+    for (FilePath file : array) {
       if (containsParent(array, file)) {
         virtualFiles.remove(file);
       }
@@ -263,8 +257,7 @@ public class AbstractCommonUpdateAction extends AbstractVcsAction {
   }
 
   private boolean containsParent(FilePath[] array, FilePath file) {
-    for (int i = 0; i < array.length; i++) {
-      FilePath virtualFile = array[i];
+    for (FilePath virtualFile : array) {
       if (virtualFile == file) continue;
       if (VfsUtil.isAncestor(virtualFile.getIOFile(), file.getIOFile(), false)) return true;
     }
@@ -273,8 +266,7 @@ public class AbstractCommonUpdateAction extends AbstractVcsAction {
 
   private final FilePath[] filterRoots(FilePath[] roots, VcsContext vcsContext) {
     final ArrayList<FilePath> result = new ArrayList<FilePath>();
-    for (int i = 0; i < roots.length; i++) {
-      FilePath file = roots[i];
+    for (FilePath file : roots) {
       AbstractVcs vcs = VcsUtil.getVcsFor(vcsContext.getProject(), file);
       if (vcs != null) {
         if (vcs.fileExistsInVcs(file)) {
@@ -308,7 +300,6 @@ public class AbstractCommonUpdateAction extends AbstractVcsAction {
       if (roots == null || roots.length == 0) {
         presentation.setVisible(false);
         presentation.setEnabled(false);
-        return;
       }
     } else {
       presentation.setVisible(false);

@@ -23,7 +23,7 @@ public interface ActionInfo {
     }
 
     public UpdateOrStatusOptionsDialog createOptionsDialog(final Project project,
-                                                           LinkedHashMap<Configurable, UpdateEnvironment> envToConfMap) {
+                                                           LinkedHashMap<Configurable,AbstractVcs> envToConfMap) {
       return new UpdateOrStatusOptionsDialog(project, envToConfMap) {
         protected String getRealTitle() {
           return getActionName();
@@ -60,7 +60,7 @@ public interface ActionInfo {
     }
 
     public UpdateOrStatusOptionsDialog createOptionsDialog(final Project project,
-                                                           LinkedHashMap<Configurable, UpdateEnvironment> envToConfMap) {
+                                                           LinkedHashMap<Configurable,AbstractVcs> envToConfMap) {
       return new UpdateOrStatusOptionsDialog(project, envToConfMap) {
         protected String getRealTitle() {
           return getActionName();
@@ -95,7 +95,7 @@ public interface ActionInfo {
 
   UpdateEnvironment getEnvironment(AbstractVcs vcs);
 
-  UpdateOrStatusOptionsDialog createOptionsDialog(Project project, LinkedHashMap<Configurable, UpdateEnvironment> envToConfMap);
+  UpdateOrStatusOptionsDialog createOptionsDialog(Project project, LinkedHashMap<Configurable,AbstractVcs> envToConfMap);
 
   String getActionName(String scopeName);
 
