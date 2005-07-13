@@ -58,12 +58,7 @@ public class EnumConstantElement extends RepositoryTreeElement {
     }
     else if (i == JavaTokenType.C_STYLE_COMMENT || i == JavaTokenType.END_OF_LINE_COMMENT) {
       {
-        if (TreeUtil.skipElementsBack(child, ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET) == null) {
-          return ChildRole.PRECEDING_COMMENT;
-        }
-        else {
-          return ChildRole.NONE;
-        }
+        return ChildRole.NONE;
       }
     }
     else if (i == JavaTokenType.IDENTIFIER) {

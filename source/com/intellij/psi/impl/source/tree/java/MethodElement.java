@@ -90,12 +90,7 @@ public class MethodElement extends RepositoryTreeElement{
     }
     else if (i == C_STYLE_COMMENT || i == END_OF_LINE_COMMENT) {
       {
-        if (TreeUtil.skipElementsBack(child, WHITE_SPACE_OR_COMMENT_BIT_SET) == null) {
-          return ChildRole.PRECEDING_COMMENT;
-        }
-        else {
-          return ChildRole.NONE;
-        }
+        return ChildRole.NONE;
       }
     }
     else if (i == MODIFIER_LIST) {
