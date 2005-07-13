@@ -2171,7 +2171,7 @@ public class HighlightUtil {
     final VirtualFile virtualFile = psiRoot.getContainingFile().getVirtualFile();
     if (virtualFile == null || !virtualFile.isValid()) return false;
     if ((fileIndex.isInLibrarySource(virtualFile) || fileIndex.isInLibraryClasses(virtualFile))
-        && !fileIndex.isInSourceContent(virtualFile)) {
+        && !fileIndex.isInContent(virtualFile)) {
       return false;
     }
     final HighlightingSettingsPerFile component = HighlightingSettingsPerFile.getInstance(project);

@@ -68,7 +68,8 @@ public class HectorComponent extends JPanel {
     final Project project = myFile.getProject();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final VirtualFile virtualFile = myFile.getContainingFile().getVirtualFile();
-    final boolean notInLibrary = !fileIndex.isInLibrarySource(virtualFile) && !fileIndex.isInLibraryClasses(virtualFile);
+    final boolean notInLibrary = (!fileIndex.isInLibrarySource(virtualFile) && !fileIndex.isInLibraryClasses(virtualFile)) ||
+                                  fileIndex.isInContent(virtualFile);
     for (int i = 0; i < mySliders.length; i++) {
 
       final Hashtable<Integer, JLabel> sliderLabels = new Hashtable<Integer, JLabel>();
