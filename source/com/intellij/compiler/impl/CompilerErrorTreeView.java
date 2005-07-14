@@ -37,7 +37,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
 
   private static class CompilerPropertiesAction extends AnAction {
     public CompilerPropertiesAction() {
-      super("Compiler Properties", null, IconLoader.getIcon("/general/projectProperties.png"));
+      super("Compiler Properties", null, IconLoader.getIcon("/general/ideOptions.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {
