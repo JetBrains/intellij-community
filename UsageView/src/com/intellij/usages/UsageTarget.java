@@ -3,6 +3,7 @@ package com.intellij.usages;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -29,6 +30,7 @@ public interface UsageTarget extends NavigationItem {
   /**
    * @return the files this usage target is in. Might be null is usage target is not file-based
    */
+  @Nullable
   VirtualFile[] getFiles();
 
   void update();

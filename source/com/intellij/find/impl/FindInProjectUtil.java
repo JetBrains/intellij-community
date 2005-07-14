@@ -48,6 +48,7 @@ import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
@@ -56,7 +57,10 @@ import java.util.regex.Pattern;
 
 public class FindInProjectUtil {
   private static final int USAGES_LIMIT = 1000;
-  private static final int FILES_SIZE_LIMIT = 10 * 1024 * 1024; // megabytes.
+  private static final int FILES_SIZE_LIMIT = 70 * 1024 * 1024; // megabytes.
+  private static final int SINGLE_FILE_SIZE_LIMIT = 5 * 1024 * 1024; // megabytes.
+
+  private FindInProjectUtil() {}
 
   public static void setDirectoryName(FindModel model, DataContext dataContext) {
     PsiElement psiElement = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
@@ -92,6 +96,7 @@ public class FindInProjectUtil {
     }
   }
 
+  @Nullable
   public static PsiDirectory getPsiDirectory(final FindModel findModel, Project project) {
     if (findModel.isProjectScope() || findModel.getDirectoryName() == null) {
       return null;
@@ -153,6 +158,7 @@ public class FindInProjectUtil {
     return consumer.usages;
   }
 
+  @Nullable
   private static Pattern createFileMaskRegExp(FindModel findModel) {
     if (findModel.getFileFilter() != null) {
       return Pattern.compile(PatternUtil.convertToRegex(findModel.getFileFilter()), Pattern.CASE_INSENSITIVE);
@@ -172,7 +178,6 @@ public class FindInProjectUtil {
     final FileDocumentManager manager = FileDocumentManager.getInstance();
     try {
       int i =0;
-      final Set<VirtualFile> processedFiles = new HashSet<VirtualFile>();
       long totalFilesSize = 0;
       final int[] count = new int[]{0};
       boolean warningShown = false;
@@ -183,16 +188,12 @@ public class FindInProjectUtil {
         final int index = i++;
         if (virtualFile == null) continue;
 
-        long fileLength = 0;
-        if (!processedFiles.contains(virtualFile)) {
-          processedFiles.add(virtualFile);
-          fileLength = getFileLength(virtualFile);
-          totalFilesSize += fileLength;
-          if (totalFilesSize > FILES_SIZE_LIMIT && !warningShown) {
-            showTooManyUsagesWaring(project, "Usages in files of total size " + totalFilesSize + " (bytes) found. IDEA may become " +
-                                             "unresponsive or even fail with OutOfMemoryError if you continue. Continue?");
-            warningShown = true;
-          }
+        long fileLength = getFileLength(virtualFile);
+
+        if (fileLength > SINGLE_FILE_SIZE_LIMIT) {
+          int retCode = showMessage(project, "IDEA is about to scan for occurences in\n" + getPresentablePath(virtualFile) + "\n" +
+                                             "which is " + presentableSize(fileLength) + " long. Skip?", "Too Large File");
+          if (retCode == DialogWrapper.OK_EXIT_CODE) continue;
         }
 
         int countBefore = count[0];
@@ -219,9 +220,13 @@ public class FindInProjectUtil {
           }
         });
 
-        if (countBefore == count[0]) {
-          totalFilesSize -= fileLength;
-          processedFiles.remove(virtualFile);
+        if (countBefore < count[0]) {
+          totalFilesSize += fileLength;
+          if (totalFilesSize > FILES_SIZE_LIMIT && !warningShown) {
+            showTooManyUsagesWaring(project, "Usages in files of total size " + presentableSize(totalFilesSize) + " found. IDEA may become " +
+                                             "unresponsive or even fail with OutOfMemoryError if you continue. Continue?");
+            warningShown = true;
+          }
         }
 
         if (count[0] > USAGES_LIMIT && !warningShown) {
@@ -241,6 +246,19 @@ public class FindInProjectUtil {
     consumer.findUsagesCompleted();
   }
 
+  private static String getPresentablePath(final VirtualFile virtualFile) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      public String compute() {
+        return virtualFile.getPresentableUrl();
+      }
+    });
+  }
+
+  private static String presentableSize(long bytes) {
+    long megabytes = bytes / (1024 * 1024);
+    return Long.toString(megabytes) + " megabytes";
+  }
+
   private static long getFileLength(final VirtualFile virtualFile) {
     final long[] length = new long[1];
     ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -252,21 +270,25 @@ public class FindInProjectUtil {
   }
 
   private static void showTooManyUsagesWaring(final Project project, final String message) {
+    if (showMessage(project, message, "Too Many Usages") != DialogWrapper.OK_EXIT_CODE) {
+      throw new ProcessCanceledException();
+    }
+  }
+
+  private static int showMessage(final Project project, final String message, final String title) {
     final int[] answer = new int[1];
     try {
       SwingUtilities.invokeAndWait(new Runnable() {
         public void run() {
-          answer[0] = Messages.showYesNoDialog(project, message, "Too Many Usages", Messages.getWarningIcon());
+          answer[0] = Messages.showYesNoDialog(project, message, title, Messages.getWarningIcon());
         }
       });
     }
     catch (Exception e) {
-      return; //OK?
+      answer[0] = DialogWrapper.OK_EXIT_CODE;
     }
 
-    if (answer[0] != DialogWrapper.OK_EXIT_CODE) {
-      throw new ProcessCanceledException();
-    }
+    return answer[0];
   }
 
   private static Collection<PsiFile> getFilesToSearchIn(final FindModel findModel, final Project project, final PsiDirectory psiDirectory) {
@@ -449,14 +471,14 @@ public class FindInProjectUtil {
       result.append("Project");
     }
     else if (findModel.getModuleName() != null) {
-      result.append("Module " + findModel.getModuleName());
+      result.append("Module ").append(findModel.getModuleName());
     }
     else {
-      result.append("Directory " + findModel.getDirectoryName());
+      result.append("Directory ").append(findModel.getDirectoryName());
     }
 
     if (findModel.getFileFilter() != null) {
-      result.append(" Files with Mask " + findModel.getFileFilter());
+      result.append(" Files with Mask ").append(findModel.getFileFilter());
     }
 
     return result.toString();
@@ -539,6 +561,7 @@ public class FindInProjectUtil {
       return true;
     }
 
+    @Nullable
     public VirtualFile[] getFiles() {
       return null;
     }
@@ -555,7 +578,7 @@ public class FindInProjectUtil {
     }
 
     public FileStatus getFileStatus() {
-      return null;
+      return FileStatus.NOT_CHANGED;
     }
 
     public void navigate(boolean requestFocus) {
