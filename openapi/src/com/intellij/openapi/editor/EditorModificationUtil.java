@@ -4,6 +4,9 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.MockDocumentEvent;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -211,5 +214,37 @@ public class EditorModificationUtil {
     }
 
     return "";
+  }
+
+  public static void typeInStringAtCaretHonorBlockSelection(final Editor editor, final String str, final boolean toProcessOverwriteMode)
+    throws ReadOnlyFragmentModificationException
+  {
+    Document doc = editor.getDocument();
+    final SelectionModel selectionModel = editor.getSelectionModel();
+    if (selectionModel.hasBlockSelection()) {
+      RangeMarker guard = selectionModel.getBlockSelectionGuard();
+      if (guard != null) {
+        DocumentEvent evt = new MockDocumentEvent(doc, editor.getCaretModel().getOffset());
+        ReadOnlyFragmentModificationException e = new ReadOnlyFragmentModificationException(evt, guard);
+        EditorActionManager.getInstance().getReadonlyFragmentModificationHandler().handle(e);
+      }
+      else {
+        final LogicalPosition start = selectionModel.getBlockStart();
+        final LogicalPosition end = selectionModel.getBlockEnd();
+        int column = Math.min(start.column, end.column);
+        int startLine = Math.min(start.line, end.line);
+        int endLine = Math.max(start.line, end.line);
+        deleteBlockSelection(editor);
+        for (int i = startLine; i <= endLine; i++) {
+          editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(i, column));
+          insertStringAtCaret(editor, str, toProcessOverwriteMode, true);
+        }
+        selectionModel.setBlockSelection(new LogicalPosition(startLine, column + str.length()),
+                                         new LogicalPosition(endLine, column + str.length()));
+      }
+    }
+    else {
+      insertStringAtCaret(editor, str, toProcessOverwriteMode, true);
+    }
   }
 }

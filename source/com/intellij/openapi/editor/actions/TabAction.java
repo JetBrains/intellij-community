@@ -11,11 +11,14 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ReadOnlyFragmentModificationException;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -47,7 +50,8 @@ public class TabAction extends EditorAction {
 
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
 
-    VirtualFile vFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
+    final Document doc = editor.getDocument();
+    VirtualFile vFile = FileDocumentManager.getInstance().getFile(doc);
     final FileType fileType = vFile == null ? null : FileTypeManager.getInstance().getFileTypeByFile(vFile);
 
     int tabSize = settings.getIndentSize(fileType);
@@ -55,7 +59,7 @@ public class TabAction extends EditorAction {
 
     boolean useTab = editor.getSettings().isUseTabCharacter(project);
 
-    CharSequence chars = editor.getDocument().getCharsSequence();
+    CharSequence chars = doc.getCharsSequence();
     if (useTab && settings.isSmartTabs(fileType)) {
       int offset = editor.getCaretModel().getOffset();
       while (offset > 0) {
@@ -67,15 +71,24 @@ public class TabAction extends EditorAction {
       }
     }
 
-    if(useTab) {
-      EditorModificationUtil.insertStringAtCaret(editor, "\t");
-    }
-    else {
-      StringBuffer buffer = new StringBuffer();
-      for(int i=0; i<spacesToAddCount; i++) {
-        buffer.append(' ');
+    doc.startGuardedBlockChecking();
+    try {
+      if(useTab) {
+        EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, "\t", false);
       }
-      EditorModificationUtil.insertStringAtCaret(editor, buffer.toString());
+      else {
+        StringBuffer buffer = new StringBuffer();
+        for(int i=0; i<spacesToAddCount; i++) {
+          buffer.append(' ');
+        }
+        EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, buffer.toString(), false);
+      }
+    }
+    catch (ReadOnlyFragmentModificationException e) {
+      EditorActionManager.getInstance().getReadonlyFragmentModificationHandler().handle(e);
+    }
+    finally {
+      doc.stopGuardedBlockChecking();
     }
   }
 }

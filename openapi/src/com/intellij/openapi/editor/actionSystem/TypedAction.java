@@ -9,16 +9,17 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.MockDocumentEvent;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.ReadOnlyFragmentModificationException;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiTreeChangeAdapter;
 import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.psi.PsiTreeChangeListener;
-import com.intellij.psi.PsiTreeChangeAdapter;
 
 public class TypedAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.actionSystem.TypedAction");
@@ -49,32 +50,7 @@ public class TypedAction {
       try {
         final String str = String.valueOf(charTyped);
         CommandProcessor.getInstance().setCurrentCommandName("Typing");
-        final SelectionModel selectionModel = editor.getSelectionModel();
-        if (selectionModel.hasBlockSelection()) {
-          RangeMarker guard = selectionModel.getBlockSelectionGuard();
-          if (guard != null) {
-            DocumentEvent evt = new MockDocumentEvent(doc, editor.getCaretModel().getOffset());
-            ReadOnlyFragmentModificationException e = new ReadOnlyFragmentModificationException(evt, guard);
-            EditorActionManager.getInstance().getReadonlyFragmentModificationHandler().handle(e);
-            return;
-          }
-
-          final LogicalPosition start = selectionModel.getBlockStart();
-          final LogicalPosition end = selectionModel.getBlockEnd();
-          int column = Math.min(start.column, end.column);
-          int startLine = Math.min(start.line, end.line);
-          int endLine = Math.max(start.line, end.line);
-          EditorModificationUtil.deleteBlockSelection(editor);
-          for (int i = startLine; i <= endLine; i++) {
-            editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(i, column));
-            EditorModificationUtil.insertStringAtCaret(editor, str, true, true);
-          }
-          selectionModel.setBlockSelection(new LogicalPosition(startLine, column + 1),
-                                           new LogicalPosition(endLine, column + 1));
-          return;
-        }
-
-        EditorModificationUtil.insertStringAtCaret(editor, str, true, true);
+        EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, str, true);
       }
       catch (ReadOnlyFragmentModificationException e) {
         EditorActionManager.getInstance().getReadonlyFragmentModificationHandler().handle(e);
