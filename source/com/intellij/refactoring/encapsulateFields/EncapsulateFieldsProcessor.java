@@ -150,7 +150,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
           if (qualifier != null){
             accessObjectClass = (PsiClass) PsiUtil.getAccessObjectClass(qualifier).getElement();
           }
-          if (PsiManager.getInstance(myProject).getResolveHelper().isAccessible(field, newModifierList, ref, accessObjectClass)) continue;
+          if (PsiManager.getInstance(myProject).getResolveHelper().isAccessible(field, newModifierList, ref, accessObjectClass, null)) continue;
         }
         UsageInfo usageInfo = new MyUsageInfo(ref, i);
         array.add(usageInfo);

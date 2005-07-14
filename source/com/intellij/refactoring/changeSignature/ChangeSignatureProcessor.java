@@ -345,7 +345,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
             accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass(qualifier).getElement();
           }
 
-          if (!element.getManager().getResolveHelper().isAccessible(method, modifierList, element, accessObjectClass)) {
+          if (!element.getManager().getResolveHelper().isAccessible(method, modifierList, element, accessObjectClass, null)) {
             String message =
               ConflictsUtil.getDescription(method, true) + " with " + myNewVisibility + " visibility is not accesible from " +
               ConflictsUtil.getDescription(ConflictsUtil.getContainer(element), true);

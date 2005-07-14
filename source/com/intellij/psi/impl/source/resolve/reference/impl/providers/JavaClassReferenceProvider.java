@@ -242,20 +242,23 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider{
       public Object[] getVariants() {
         final PsiElement context = getContext();
         if (context != null) {
-          PsiPackage aPackage = (PsiPackage)context;
-          final PsiPackage[] subPackages = aPackage.getSubPackages();
-          final PsiClass[] classes = aPackage.getClasses();
-          Object[] result = new Object[subPackages.length + classes.length];
-          System.arraycopy(subPackages, 0, result, 0, subPackages.length);
-          System.arraycopy(classes, 0, result, subPackages.length, classes.length);
-          return result;
+          return processPackage((PsiPackage)context);
         } else {
           final PsiPackage defaultPackage = myElement.getManager().findPackage("");
           if (defaultPackage != null) {
-            return defaultPackage.getSubPackages();
+            return processPackage(defaultPackage);
           }
           return ArrayUtil.EMPTY_OBJECT_ARRAY;
         }
+      }
+
+      private Object[] processPackage(final PsiPackage aPackage) {
+        final PsiPackage[] subPackages = aPackage.getSubPackages();
+        final PsiClass[] classes = aPackage.getClasses();
+        Object[] result = new Object[subPackages.length + classes.length];
+        System.arraycopy(subPackages, 0, result, 0, subPackages.length);
+        System.arraycopy(classes, 0, result, subPackages.length, classes.length);
+        return result;
       }
     }
 

@@ -626,7 +626,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     for (PsiReference reference : references) {
       final PsiElement element = reference.getElement();
       if (!isInside(element, myElements) && !isInside(element, deleted)
-          && !manager.getResolveHelper().isAccessible(method, privateModifierList, element, null)) {
+          && !manager.getResolveHelper().isAccessible(method, privateModifierList, element, null, null)) {
         return false;
       }
     }

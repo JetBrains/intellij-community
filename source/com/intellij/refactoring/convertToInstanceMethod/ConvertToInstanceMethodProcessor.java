@@ -185,7 +185,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
           final PsiType argumentType = argument.getType();
           if (argumentType instanceof PsiClassType) accessObjectClass = ((PsiClassType)argumentType).resolve();
         }
-        if (!ResolveUtil.isAccessible(myMethod, myTargetClass, copy, call, accessObjectClass)) {
+        if (!ResolveUtil.isAccessible(myMethod, myTargetClass, copy, call, accessObjectClass, null)) {
           final String newVisibility = myNewVisibility == null ? VisibilityUtil.getVisiblityStringToDisplay(myMethod) : myNewVisibility;
           String message =
             ConflictsUtil.getDescription(myMethod, true) + " with " + newVisibility + " visibility is not accesible from " +

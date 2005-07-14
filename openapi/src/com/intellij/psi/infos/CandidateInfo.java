@@ -82,7 +82,8 @@ public class CandidateInfo implements JavaResolveResult {
     if(myAccessProblem == null){
       boolean accessProblem = false;
       if (myPlace != null && myCandidate instanceof PsiMember) {
-        accessProblem = !myPlace.getManager().getResolveHelper().isAccessible((PsiMember)myCandidate, myPlace, myAccessClass);
+        final PsiMember member = (PsiMember)myCandidate;
+        accessProblem = !myPlace.getManager().getResolveHelper().isAccessible(member, member.getModifierList(), myPlace, myAccessClass, myCurrentFileResolveContext);
       }
       myAccessProblem = accessProblem ? Boolean.TRUE : Boolean.FALSE;
     }

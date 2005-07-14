@@ -241,7 +241,10 @@ public class HighlightUtil {
   /**
    * make element protected/package local/public suggestion
    */
-  static void registerAccessQuickFixAction(PsiMember refElement, PsiJavaCodeReferenceElement place, HighlightInfo errorResult) {
+  static void registerAccessQuickFixAction(PsiMember refElement,
+                                           PsiJavaCodeReferenceElement place,
+                                           HighlightInfo errorResult,
+                                           final PsiElement fileResolveScope) {
     if (refElement instanceof PsiCompiledElement) return;
     PsiModifierList modifierList = refElement.getModifierList();
     if (modifierList == null) return;
@@ -276,7 +279,7 @@ public class HighlightUtil {
       for (; i < modifiers.length; i++) {
         String modifier = modifiers[i];
         modifierListCopy.setModifierProperty(modifier, true);
-        if (refElement.getManager().getResolveHelper().isAccessible(refElement, modifierListCopy, place, accessObjectClass)) {
+        if (refElement.getManager().getResolveHelper().isAccessible(refElement, modifierListCopy, place, accessObjectClass, fileResolveScope)) {
           QuickFixAction.registerQuickFixAction(errorResult, new ModifierFix(refElement, modifier, true, true), null);
         }
       }
@@ -2046,7 +2049,7 @@ public class HighlightUtil {
           HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, ref.getReferenceNameElement(),
                                                                  description);
           if (result.isStaticsScopeCorrect()) {
-            registerAccessQuickFixAction((PsiMember)resolved, ref, info);
+            registerAccessQuickFixAction((PsiMember)resolved, ref, info, result.getCurrentFileResolveScope());
             if (ref instanceof PsiReferenceExpression) {
               QuickFixAction.registerQuickFixAction(info, new RenameWrongRefAction((PsiReferenceExpression)ref), null);
             }

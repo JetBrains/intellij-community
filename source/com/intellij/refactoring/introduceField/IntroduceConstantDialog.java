@@ -333,7 +333,7 @@ class IntroduceConstantDialog extends DialogWrapper {
           try {
             final String modifierText = modifier == PsiModifier.PACKAGE_LOCAL ? "" : modifier;
             final PsiField field = psiManager.getElementFactory().createFieldFromText(modifierText + " int xxx;", myTargetClass);
-            if (!ResolveUtil.isAccessible(field, myTargetClass, field.getModifierList(), occurrence, myTargetClass)) {
+            if (!ResolveUtil.isAccessible(field, myTargetClass, field.getModifierList(), occurrence, myTargetClass, null)) {
               iterator.remove();
             }
           }

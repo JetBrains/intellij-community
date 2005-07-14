@@ -6,8 +6,10 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 
 import java.util.List;
+import java.util.Iterator;
 
 /**
  * Created by IntelliJ IDEA.
@@ -32,14 +34,13 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     if (conflictsCount <= 0) return null;
     if (conflictsCount == 1) return conflicts.get(0);
     if (conflictsCount > 1){
-      final PsiExpression[] args = myArgumentsList.getExpressions();
 
       int maxCheckLevel = -1;
       int[] checkLevels = new int[conflictsCount];
       int index = 0;
       for (final CandidateInfo conflict1 : conflicts) {
         final MethodCandidateInfo method = (MethodCandidateInfo)conflict1;
-        final int level = getCheckLevel(method, args);
+        final int level = getCheckLevel(method);
         checkLevels[index++] = level;
         maxCheckLevel = Math.max(maxCheckLevel, level);
       }
@@ -53,10 +54,19 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
       conflictsCount = conflicts.size();
       if(conflictsCount == 1) return conflicts.get(0);
-      checkApplicability(conflicts);
 
+      checkInnerMostClass(conflicts);
       conflictsCount = conflicts.size();
       if(conflictsCount == 1) return conflicts.get(0);
+
+      checkParametersNumber(conflicts, myArgumentsList.getExpressions().length);
+      conflictsCount = conflicts.size();
+      if(conflictsCount == 1) return conflicts.get(0);
+
+      final boolean applicable = checkApplicability(conflicts);
+      conflictsCount = conflicts.size();
+      if(conflictsCount == 1) return conflicts.get(0);
+
       CandidateInfo[] conflictsArray;
       conflictsArray = conflicts.toArray(new CandidateInfo[conflictsCount]);
 outer:
@@ -74,7 +84,7 @@ outer:
         }
 
         // Specifics
-        if (maxCheckLevel >= VISIBLE_AND_PARMS_COUNT){
+        if (applicable){
           final CandidateInfo[] newConflictsArray = conflicts.toArray(new CandidateInfo[conflicts.size()]);
 
           for(int j = 0; j < i; j++){
@@ -101,7 +111,49 @@ outer:
     return null;
   }
 
-  private void checkApplicability(List<CandidateInfo> conflicts) {
+  private void checkParametersNumber(final List<CandidateInfo> conflicts, final int argumentsCount) {
+    boolean found = false;
+    for (CandidateInfo info : conflicts) {
+      if (info instanceof MethodCandidateInfo) {
+        final PsiMethod method = ((MethodCandidateInfo)info).getElement();
+        if (!method.isVarArgs() && method.getParameterList().getParameters().length == argumentsCount) {
+          found = true;
+        }
+      }
+    }
+
+    if (found) {
+      for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext();) {
+        CandidateInfo info = iterator.next();
+        if (info instanceof MethodCandidateInfo) {
+          final PsiMethod method = ((MethodCandidateInfo)info).getElement();
+          if (method.getParameterList().getParameters().length != argumentsCount) {
+            iterator.remove();
+          }
+        }
+      }
+    }
+  }
+
+  private void checkInnerMostClass(final List<CandidateInfo> conflicts) {
+    PsiClass innerMostClass = null;
+    for (CandidateInfo info : conflicts) {
+      final PsiClass containingClass = ((PsiMember)info.getElement()).getContainingClass();
+      if (innerMostClass == null || PsiTreeUtil.isAncestor(innerMostClass, containingClass, true)) {
+        innerMostClass = containingClass;
+      }
+    }
+
+    for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext();) {
+      CandidateInfo info = iterator.next();
+      final PsiClass containingClass = ((PsiMember)info.getElement()).getContainingClass();
+      if (PsiTreeUtil.isAncestor(containingClass, innerMostClass, true)) {
+        iterator.remove();
+      }
+    }
+  }
+
+  private boolean checkApplicability(List<CandidateInfo> conflicts) {
     boolean applicableFound = false;
     for (int i = conflicts.size() - 1; i >= 0; i--) {
       final MethodCandidateInfo info = (MethodCandidateInfo)conflicts.get(i);
@@ -116,17 +168,15 @@ outer:
         applicableFound = true;
       }
     }
+
+    return applicableFound;
   }
 
-
-  private int getCheckLevel(MethodCandidateInfo method, PsiExpression[] args){
+  private int getCheckLevel(MethodCandidateInfo method){
     boolean visible = method.isAccessible();// && !method.myStaticProblem;
     boolean available = method.isStaticsScopeCorrect();
-    boolean paramsCount = method.getElement().isVarArgs() || method.getElement().getParameterList().getParameters().length == args.length;
-    return (visible ? 1 : 0) << 3 | (available ? 1 : 0) << 2 | (paramsCount ? 1 : 0) << 1;
+    return (visible ? 1 : 0) << 1 | (available ? 1 : 0);
   }
-
-  private final int VISIBLE_AND_PARMS_COUNT = 14;
 
   private final class Specifics {
     public static final int FALSE = 0;
@@ -219,11 +269,11 @@ outer:
     if (isMoreSpecific == null){
       if (class1 != class2){
         if (class2.isInheritor(class1, true)
-           || class1.isInterface() && !class2.isInterface()){
+            || class1.isInterface() && !class2.isInterface()){
           isMoreSpecific = Boolean.FALSE;
         }
         else if (class1.isInheritor(class2, true)
-                  || class2.isInterface()){
+                 || class2.isInterface()){
             isMoreSpecific = Boolean.TRUE;
           }
       }

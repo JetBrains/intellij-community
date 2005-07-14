@@ -22,17 +22,16 @@ public class JavaVariableConflictResolver implements PsiConflictResolver{
   public CandidateInfo resolveConflict(List<CandidateInfo> conflicts){
     final int size = conflicts.size();
     if(size == 1){
-      return (CandidateInfo) conflicts.get(0);
+      return conflicts.get(0);
     }
     if(size > 0){
-      final CandidateInfo[] uncheckedResult = (CandidateInfo[])conflicts.toArray(new CandidateInfo[size]);
+      final CandidateInfo[] uncheckedResult = conflicts.toArray(new CandidateInfo[size]);
       CandidateInfo currentResult = uncheckedResult[0];
 
       if(currentResult.getElement() instanceof PsiField){
         for(int i = 1; i < uncheckedResult.length; i++){
           //TODO[ik]: Handle introduced fields properly.
           final CandidateInfo candidate = uncheckedResult[i];
-          if(currentResult == candidate || currentResult.getElement() == candidate.getElement()) continue;
           if(candidate.getElement() == null || candidate.getElement() instanceof PsiIntertypeField) continue;
 
           if (!(candidate.getElement() instanceof PsiField)) {

@@ -75,13 +75,30 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
   }
 
   public boolean isAccessible(PsiMember member, PsiElement place, PsiClass accessObjectClass) {
-    return isAccessible(member, member.getModifierList(), place, accessObjectClass);
+    return isAccessible(member, member.getModifierList(), place, accessObjectClass, null);
   }
 
 
-  public boolean isAccessible(PsiMember member, PsiModifierList modifierList, PsiElement place, PsiClass accessObjectClass) {
-    return ResolveUtil.isAccessible(member, member.getContainingClass(), modifierList, place, accessObjectClass);
+  public boolean isAccessible(PsiMember member,
+                              PsiModifierList modifierList,
+                              PsiElement place,
+                              PsiClass accessObjectClass,
+                              final PsiElement currentFileResolveScope) {
+    return ResolveUtil.isAccessible(member, member.getContainingClass(), modifierList, place, accessObjectClass, currentFileResolveScope);
   }
+
+  class InnerClass {
+    void foo() {}
+
+    class Inner {
+        void foo(int i) {}
+
+        void bar() {
+//            foo();
+        }
+    }
+
+}
 
   public CandidateInfo[] getReferencedMethodCandidates(PsiCallExpression expr, boolean dummyImplicitConstructor) {
     final MethodCandidatesProcessor processor = new MethodCandidatesProcessor(expr);

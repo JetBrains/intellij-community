@@ -527,7 +527,7 @@ public class HighlightMethodUtil {
       registerMethodCallIntentions(highlightInfo, methodCall, list, resolveHelper);
     }
     if (!resolveResult.isAccessible() && resolveResult.isStaticsScopeCorrect() && methodCandidate2 != null) {
-      HighlightUtil.registerAccessQuickFixAction((PsiMember)element, referenceToMethod, highlightInfo);
+      HighlightUtil.registerAccessQuickFixAction((PsiMember)element, referenceToMethod, highlightInfo, resolveResult.getCurrentFileResolveScope());
     }
     if (!resolveResult.isStaticsScopeCorrect()) {
       HighlightUtil.registerStaticProblemQuickFixAction(element, highlightInfo, referenceToMethod);
@@ -563,7 +563,7 @@ public class HighlightMethodUtil {
     for (CandidateInfo methodCandidate : methodCandidates) {
       PsiMethod method = (PsiMethod)methodCandidate.getElement();
       if (!methodCandidate.isAccessible() && PsiUtil.isApplicable(method, methodCandidate.getSubstitutor(), exprList)) {
-        HighlightUtil.registerAccessQuickFixAction(method, methodCall.getMethodExpression(), highlightInfo);
+        HighlightUtil.registerAccessQuickFixAction(method, methodCall.getMethodExpression(), highlightInfo, methodCandidate.getCurrentFileResolveScope());
       }
     }
   }
@@ -1288,7 +1288,7 @@ public class HighlightMethodUtil {
           HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, description);
           info.navigationShift = +1;
           if (classReference != null && result.isStaticsScopeCorrect()) {
-            HighlightUtil.registerAccessQuickFixAction(constructor, classReference, info);
+            HighlightUtil.registerAccessQuickFixAction(constructor, classReference, info, result.getCurrentFileResolveScope());
           }
           return info;
         }

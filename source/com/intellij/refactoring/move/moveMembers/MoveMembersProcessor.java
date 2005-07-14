@@ -302,7 +302,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
               accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass(qualifier).getElement();
             }
 
-            if (!ResolveUtil.isAccessible(member, myTargetClass, modifierListCopies.get(member), element, accessObjectClass)) {
+            if (!ResolveUtil.isAccessible(member, myTargetClass, modifierListCopies.get(member), element, accessObjectClass, null)) {
               final String newVisibility = myNewVisibility == null ? VisibilityUtil.getVisiblityStringToDisplay(member) : myNewVisibility;
               String message =
                 ConflictsUtil.getDescription(member, true) + " with " + newVisibility + " visibility is not accesible from " +
@@ -387,7 +387,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
         for (PsiReference psiReference : references) {
           PsiElement ref = psiReference.getElement();
           if (!RefactoringHierarchyUtil.willBeInTargetClass(ref, membersToMove, targetClass, false)) {
-            if (!manager.getResolveHelper().isAccessible(member, modifierList, ref, null)) {
+            if (!manager.getResolveHelper().isAccessible(member, modifierList, ref, null, null)) {
               String message = ConflictsUtil.getDescription(member, true)
                                + " is " + VisibilityUtil.getVisiblityStringToDisplay(member)
                                + " and will not be accessible from "
