@@ -147,10 +147,14 @@ public class ExpectedTypeUtils{
 
         public void visitArrayInitializerExpression(
                 PsiArrayInitializerExpression initializer){
-            final PsiArrayType arrayType = (PsiArrayType) initializer.getType();
-            if(arrayType != null){
-                expectedType = arrayType.getComponentType();
+            final PsiType type = initializer.getType();
+            if(!(type instanceof PsiArrayType))
+            {
+                expectedType = null;
+                return;
             }
+            final PsiArrayType arrayType = (PsiArrayType) type;
+            expectedType = arrayType.getComponentType();
         }
 
         public void visitArrayAccessExpression(
