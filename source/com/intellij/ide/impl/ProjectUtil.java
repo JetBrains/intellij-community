@@ -14,6 +14,7 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
@@ -22,6 +23,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.pom.java.LanguageLevel;
 import org.jdom.JDOMException;
 
 import javax.swing.*;
@@ -52,7 +54,9 @@ public class ProjectUtil {
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
-              ProjectRootManager.getInstance(newProject).setProjectJdk(jdk);
+              final ProjectRootManagerEx projectRootManager = (ProjectRootManagerEx)ProjectRootManager.getInstance(newProject);
+              projectRootManager.setProjectJdk(jdk);
+              projectRootManager.setLanguageLevel(getDefaultLanguageLevel(jdk.getVersionString()));
             }
           });
         }
@@ -112,6 +116,22 @@ public class ProjectUtil {
     updateLastProjectLocation(projectFilePath);
 
     projectManager.openProject(newProject);
+  }
+
+  private static LanguageLevel getDefaultLanguageLevel(String versionString) {
+    if (isOfVersion(versionString, "1.5") || isOfVersion(versionString, "5.0")) {
+      return LanguageLevel.JDK_1_5;
+    }
+
+    if (isOfVersion(versionString, "1.4")) {
+      return LanguageLevel.JDK_1_4;
+    }
+
+    return LanguageLevel.JDK_1_3;
+  }
+
+  private static boolean isOfVersion(String versionString, String checkedVersion) {
+    return versionString.indexOf(checkedVersion) > -1;
   }
 
   private static void updateLastProjectLocation(final String projectFilePath) {

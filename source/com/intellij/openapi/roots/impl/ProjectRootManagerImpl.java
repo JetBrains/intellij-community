@@ -137,24 +137,26 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   public void setLanguageLevel(LanguageLevel languageLevel) {
     myLanguageLevel = languageLevel;
-    myReloadProjectRequest = new Runnable() {
-      public void run() {
-        if (myReloadProjectRequest != this) {
-          // obsolete, another request has already replaced this one
-          return;
+    if (myProject.isOpen()) {
+      myReloadProjectRequest = new Runnable() {
+        public void run() {
+          if (myReloadProjectRequest != this) {
+            // obsolete, another request has already replaced this one
+            return;
+          }
+          if (myOriginalLanguageLevel.equals(getLanguageLevel())) {
+            // the question does not make sence now
+            return;
+          }
+          final String _message = "Language level changes will take effect on project reload.\nWould you like to reload project \"" + myProject.getName() + "\" now?";
+          if (Messages.showYesNoDialog(myProject, _message, "Language Level Changed", Messages.getQuestionIcon()) == 0) {
+            ProjectManagerEx.getInstanceEx().reloadProject(myProject);
+          }
+          myReloadProjectRequest = null;
         }
-        if (myOriginalLanguageLevel.equals(getLanguageLevel())) {
-          // the question does not make sence now
-          return;
-        }
-        final String _message = "Language level changes will take effect on project reload.\nWould you like to reload project \"" + myProject.getName() + "\" now?";
-        if (Messages.showYesNoDialog(myProject, _message, "Language Level Changed", Messages.getQuestionIcon()) == 0) {
-          ProjectManagerEx.getInstanceEx().reloadProject(myProject);
-        }
-        myReloadProjectRequest = null;
-      }
-    };
-    ApplicationManager.getApplication().invokeLater(myReloadProjectRequest, ModalityState.NON_MMODAL);
+      };
+      ApplicationManager.getApplication().invokeLater(myReloadProjectRequest, ModalityState.NON_MMODAL);
+    }
   }
 
   private final static HashMap<ProjectRootType, OrderRootType> ourProjectRootTypeToOrderRootType = new HashMap<ProjectRootType, OrderRootType>();
