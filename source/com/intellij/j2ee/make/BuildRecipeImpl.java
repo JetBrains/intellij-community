@@ -15,7 +15,13 @@ public class BuildRecipeImpl implements BuildRecipe {
   private final List<BuildInstruction> myInstructions = new ArrayList<BuildInstruction>();
 
   public void addInstruction(BuildInstruction instruction) {
-    myInstructions.add(instruction);
+    if (!contains(instruction)) {
+      myInstructions.add(instruction);
+    }
+  }
+
+  public boolean contains(final BuildInstruction instruction) {
+    return myInstructions.contains(instruction);
   }
 
   public boolean visitInstructions(BuildInstructionVisitor visitor, boolean reverseOrder){
