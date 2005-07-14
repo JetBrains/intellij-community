@@ -6,13 +6,13 @@ package com.intellij.psi.util;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import gnu.trove.THashSet;
+import gnu.trove.THashMap;
 
-import java.util.Set;
+import java.util.Map;
 
 public class IsConstantExpressionVisitor extends PsiElementVisitor {
   protected boolean myIsConstant;
-  private Set<PsiVariable> visitedVars = new THashSet<PsiVariable>();
+  private final Map<PsiVariable, Boolean> varIsConst = new THashMap<PsiVariable, Boolean>();
 
   public boolean isConstant() {
     return myIsConstant;
@@ -69,8 +69,9 @@ public class IsConstantExpressionVisitor extends PsiElementVisitor {
   public void visitBinaryExpression(PsiBinaryExpression expression) {
     expression.getLOperand().accept(this);
     if (!myIsConstant) return;
-    if (expression.getROperand() != null){
-      expression.getROperand().accept(this);
+    PsiExpression rOperand = expression.getROperand();
+    if (rOperand != null){
+      rOperand.accept(this);
     }
   }
 
@@ -96,14 +97,17 @@ public class IsConstantExpressionVisitor extends PsiElementVisitor {
       return;
     }
     PsiVariable variable = (PsiVariable)refElement;
-    if (!visitedVars.add(variable)) {
-      myIsConstant = false;
+    Boolean isConst = varIsConst.get(variable);
+    if (isConst != null) {
+      myIsConstant &= isConst.booleanValue();
       return;
     }
     if (variable instanceof PsiEnumConstant) {
       myIsConstant = true;
+      varIsConst.put(variable, Boolean.TRUE);
       return;
     }
+    varIsConst.put(variable, Boolean.FALSE);
     if (!variable.hasModifierProperty(PsiModifier.FINAL)){
       myIsConstant = false;
       return;
@@ -114,5 +118,6 @@ public class IsConstantExpressionVisitor extends PsiElementVisitor {
     }
     PsiExpression initializer = variable.getInitializer();
     initializer.accept(this);
+    varIsConst.put(variable, Boolean.valueOf(myIsConstant));
   }
 }

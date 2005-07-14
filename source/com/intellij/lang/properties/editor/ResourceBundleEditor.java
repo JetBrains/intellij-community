@@ -44,6 +44,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -389,10 +390,12 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   private Object getData(final String dataId) {
     if (SelectInContext.DATA_CONTEXT_ID.equals(dataId)) {
       return new SelectInContext(){
+        @NotNull
         public Project getProject() {
           return myProject;
         }
 
+        @NotNull
         public VirtualFile getVirtualFile() {
           PropertiesFile selectedFile = getSelectedPropertiesFile();
           if (selectedFile == null) return null;
