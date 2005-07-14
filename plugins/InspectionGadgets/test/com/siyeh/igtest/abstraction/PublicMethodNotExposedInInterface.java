@@ -16,7 +16,7 @@ public class PublicMethodNotExposedInInterface extends TestCase implements Inter
     }
 
     public void test() {
-         fail();
+         fail();    
     }
 
     private void bar2() {
