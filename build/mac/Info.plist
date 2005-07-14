@@ -32,7 +32,7 @@
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleGetInfoString</key>
-    <string>Irida, Copyright JetBrains s.r.o., (c) 2000-2005</string>
+    <string>Irida. Build @@@@. Copyright JetBrains s.r.o., (c) 2000-2005</string>
     <key>CFBundleShortVersionString</key>
     <string>Irida</string>
     <key>CFBundleVersion</key>
