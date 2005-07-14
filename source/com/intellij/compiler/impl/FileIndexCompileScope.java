@@ -4,6 +4,7 @@ import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.UserDataHolderBase;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +13,7 @@ import java.util.List;
  * @author Eugene Zhuravlev
  *         Date: Dec 18, 2003
  */
-public abstract class FileIndexCompileScope implements CompileScope {
+public abstract class FileIndexCompileScope extends UserDataHolderBase implements CompileScope {
 
   protected abstract FileIndex[] getFileIndices();
 

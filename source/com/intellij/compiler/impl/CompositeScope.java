@@ -9,10 +9,12 @@ import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderBase;
 
 import java.util.*;
 
-public class CompositeScope implements CompileScope{
+public class CompositeScope extends UserDataHolderBase implements CompileScope{
   private final List<CompileScope> myScopes = new ArrayList<CompileScope>();
 
   public CompositeScope(CompileScope scope1, CompileScope scope2) {
@@ -53,5 +55,16 @@ public class CompositeScope implements CompileScope{
       modules.addAll(Arrays.asList(compileScope.getAffectedModules()));
     }
     return modules.toArray(new Module[modules.size()]);
+  }
+
+  public <T> T getUserData(Key<T> key) {
+    for (Iterator<CompileScope> it = myScopes.iterator(); it.hasNext();) {
+      CompileScope compileScope = it.next();
+      T userData = compileScope.getUserData(key);
+      if (userData != null) {
+        return userData;
+      }
+    }
+    return super.getUserData(key);
   }
 }

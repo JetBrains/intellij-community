@@ -19,9 +19,13 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.compiler.impl.ModuleCompileScope;
+import com.intellij.compiler.impl.ProjectCompileScope;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +34,7 @@ import java.util.List;
  * @author dyoma
  */
 public class ExecutionManagerImpl extends ExecutionManager implements ProjectComponent {
+  public static final Key<RunProfileState> RUN_PROFILE_STATE_KEY = new Key<RunProfileState>("RUN_PROFILE_STATE_KEY");
   private final Project myProject;
 
   private RunContentManagerImpl myContentManager;
@@ -110,18 +115,16 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
           }
         }
       };
+      CompileScope scope;
       if ("true".equals(System.getProperty("makeProjectOnRun", "false"))) {
         // user explicitly requested whole-project make
-        CompilerManager.getInstance(myProject).make(callback);
+        scope = new ProjectCompileScope(myProject);
       }
       else {
-        if (modulesToCompile.length > 0) {
-          CompilerManager.getInstance(myProject).make(myProject, modulesToCompile, callback);
-        }
-        else {
-          CompilerManager.getInstance(myProject).make(callback);
-        }
+        scope = new ModuleCompileScope(myProject, modulesToCompile, true);
       }
+      scope.putUserData(RUN_PROFILE_STATE_KEY, state);
+      CompilerManager.getInstance(myProject).make(scope, callback);
     }
     else {
       antAwareRunnable.run();

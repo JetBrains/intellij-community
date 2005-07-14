@@ -5,6 +5,8 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderBase;
 
 import java.util.Collection;
 import java.util.Set;
@@ -17,7 +19,7 @@ import java.util.HashSet;
  * @author Eugene Zhuravlev
  *         Date: May 5, 2004
  */
-public class TrackDependenciesScope implements CompileScope{
+public class TrackDependenciesScope extends UserDataHolderBase implements CompileScope{
   private final CompileScope myDelegate;
 
   public TrackDependenciesScope(CompileScope delegate) {
@@ -55,4 +57,11 @@ public class TrackDependenciesScope implements CompileScope{
     }
   }
 
+  public <T> T getUserData(final Key<T> key) {
+    T userData = myDelegate.getUserData(key);
+    if (userData != null) {
+      return userData;
+    }
+    return super.getUserData(key);
+  }
 }

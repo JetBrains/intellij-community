@@ -7,12 +7,13 @@ package com.intellij.openapi.compiler;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.UserDataHolder;
 
 /**
  * An interface describing the current compilation scope
  * Only sources that belong to the scope are compiled
  */
-public interface CompileScope {
+public interface CompileScope extends UserDataHolder {
   /**
    * @param fileType the type of the files. Null should be passed if all available files are needed
    * @param inSourceOnly if true, files are searched only in directories within the scope that are marked as "sources" or "test sources" in module settings.

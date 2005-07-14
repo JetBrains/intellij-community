@@ -10,11 +10,12 @@ import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.UserDataHolderBase;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class OneProjectItemCompileScope implements CompileScope{
+public class OneProjectItemCompileScope extends UserDataHolderBase implements CompileScope{
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.OneProjectItemCompileScope");
   private final Project myProject;
   private final VirtualFile myFile;

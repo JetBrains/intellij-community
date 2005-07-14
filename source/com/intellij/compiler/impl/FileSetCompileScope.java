@@ -11,10 +11,11 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.UserDataHolderBase;
 
 import java.util.*;
 
-public class FileSetCompileScope implements CompileScope {
+public class FileSetCompileScope extends UserDataHolderBase implements CompileScope {
   private Set<VirtualFile> myRootFiles = new HashSet<VirtualFile>();
   private Set<String> myDirectoryUrls = new HashSet<String>();
   private Set<String> myUrls = null; // urls caching
