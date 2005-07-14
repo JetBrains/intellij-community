@@ -17,9 +17,45 @@ public class TestUtils{
         final PsiFile file = aClass.getContainingFile();
         final VirtualFile virtualFile = file.getVirtualFile();
         final Project project = manager.getProject();
-        final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
+        final ProjectRootManager rootManager = ProjectRootManager
+                .getInstance(project);
         final ProjectFileIndex fileIndex = rootManager.getFileIndex();
         return fileIndex.isInTestSourceContent(virtualFile);
     }
 
+    public static boolean isJUnitTestMethod(PsiMethod method){
+        final String methodName = method.getName();
+        if(!methodName.startsWith("test")){
+            return false;
+        }
+        if(method.hasModifierProperty(PsiModifier.ABSTRACT) ||
+                !method.hasModifierProperty(PsiModifier.PUBLIC)){
+            return false;
+        }
+        final PsiType returnType = method.getReturnType();
+        if(returnType == null){
+            return false;
+        }
+        if(!returnType.equals(PsiType.VOID)){
+            return false;
+        }
+        final PsiParameterList parameterList = method.getParameterList();
+        if(parameterList == null){
+            return false;
+        }
+        final PsiParameter[] parameters = parameterList.getParameters();
+        if(parameters == null){
+            return false;
+        }
+        if(parameters.length != 0){
+            return false;
+        }
+        final PsiClass targetClass = method.getContainingClass();
+        return !isJUnitTestClass(targetClass);
+    }
+
+    private static boolean isJUnitTestClass(PsiClass targetClass){
+        return targetClass == null ||
+                !ClassUtils.isSubclass(targetClass, "junit.framework.TestCase");
+    }
 }

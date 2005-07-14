@@ -1,6 +1,8 @@
 package com.siyeh.igtest.abstraction;
 
-public class PublicMethodNotExposedInInterface implements Interface {
+import junit.framework.TestCase;
+
+public class PublicMethodNotExposedInInterface extends TestCase implements Interface {
     public void foo() {
 
     }
@@ -11,6 +13,10 @@ public class PublicMethodNotExposedInInterface implements Interface {
 
     public static void bar() {
 
+    }
+
+    public void test() {
+         fail();
     }
 
     private void bar2() {

@@ -8,6 +8,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class PublicMethodNotExposedInInterfaceInspection extends MethodInspection {
@@ -52,6 +53,10 @@ public class PublicMethodNotExposedInInterfaceInspection extends MethodInspectio
                 return;
             }
             if (exposedInInterface(method)) {
+                return;
+            }
+            if(TestUtils.isJUnitTestMethod(method))
+            {
                 return;
             }
             registerMethodError(method);

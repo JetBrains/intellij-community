@@ -1,10 +1,11 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class TestMethodWithoutAssertionInspection extends ExpressionInspection {
@@ -31,36 +32,8 @@ public class TestMethodWithoutAssertionInspection extends ExpressionInspection {
 
         public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
-            if(method.hasModifierProperty(PsiModifier.ABSTRACT) ||
-                       !method.hasModifierProperty(PsiModifier.PUBLIC)){
-                return;
-            }
-
-            final PsiType returnType = method.getReturnType();
-            if (returnType == null) {
-                return;
-            }
-            if(!returnType.equals(PsiType.VOID)){
-                return;
-            }
-            final PsiParameterList parameterList = method.getParameterList();
-            if (parameterList == null) {
-                return;
-            }
-            final PsiParameter[] parameters = parameterList.getParameters();
-            if (parameters == null) {
-                return;
-            }
-            if (parameters.length != 0) {
-                return;
-            }
-            final String methodName = method.getName();
-            if(!methodName.startsWith("test")){
-                return;
-            }
-            final PsiClass targetClass = method.getContainingClass();
-            if (targetClass == null ||
-                        !ClassUtils.isSubclass(targetClass, "junit.framework.TestCase")) {
+            if(!TestUtils.isJUnitTestMethod(method))
+            {
                 return;
             }
             final ContainsAssertionVisitor visitor = new ContainsAssertionVisitor();
