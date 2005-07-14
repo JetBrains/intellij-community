@@ -48,7 +48,7 @@ class WhiteSpace {
     myTextRange = new TextRange(myTextRange.getStartOffset(), newEndOffset);
     myInitial = model.getText(myTextRange);
     
-    if (LOG.isDebugEnabled() && myInitial != null && myInitial.toString().trim().length() > 0) {
+    if (myInitial != null && myInitial.toString().trim().length() > 0) {
       LOG.assertTrue(false, model.getText(new TextRange(0, model.getTextLength())).toString() + ":" + myInitial.toString());
     }
 

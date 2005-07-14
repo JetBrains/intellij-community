@@ -50,8 +50,8 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block{
     boolean firstIsText = isTextFragment(node1);
     boolean secondIsText = isTextFragment(node2);
 
-    boolean firstIsTag = node1.getPsi() instanceof XmlTag;
-    boolean secondIsTag = node2.getPsi() instanceof XmlTag;
+    boolean firstIsTag = node1.getPsi() instanceof XmlTag && !firstIsText;
+    boolean secondIsTag = node2.getPsi() instanceof XmlTag && !secondIsText;
 
     if (isSpaceInText(firstIsTag, secondIsTag, firstIsText, secondIsText) && keepWhiteSpaces()) {
         return Spacing.getReadOnlySpacing();
@@ -133,8 +133,13 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block{
     return (myXmlFormattingPolicy.keepWhiteSpacesInsideTag( getTag()) || myXmlFormattingPolicy.getShouldKeepWhiteSpaces());
   }
 
-  private boolean isTextFragment(final ASTNode node1) {
-    return node1.getTreeParent().getElementType() == ElementType.XML_TEXT || node1.getElementType() == ElementType.XML_DATA_CHARACTERS;
+  private boolean isTextFragment(final ASTNode node) {
+    return node.getTreeParent().getElementType() == ElementType.XML_TEXT
+           || node.getElementType() == ElementType.XML_DATA_CHARACTERS
+           || node.getElementType() == ElementType.JSP_SCRIPTLET
+           || node.getElementType() == ElementType.JSP_DECLARATION
+           || node.getElementType() == ElementType.JSP_EXPRESSION
+      ;
   }
 
   @NotNull

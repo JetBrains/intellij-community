@@ -144,7 +144,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
     return AbstractSyntheticBlock.createSynteticBlock(
       localResult, this, Indent.getNoneIndent(),
       myXmlFormattingPolicy,
-      Indent.getNormalIndent());
+      Indent.getNoneIndent());
   }
 
   private Block createTagDescriptionNode(final ArrayList<Block> localResult) {

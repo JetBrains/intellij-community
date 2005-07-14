@@ -1,5 +1,6 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsUpdate.ui;
 
+import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.actions.CvsMergeAction;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.cvsoperations.cvsUpdate.MergedWithConflictProjectOrModuleFile;
@@ -22,10 +23,7 @@ import com.intellij.util.Options;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
+import java.util.*;
 
 public class CorruptedProjectFilesDialog extends DialogWrapper {
 
@@ -165,7 +163,9 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
       try {
         try {
           VirtualFile currentVirtualFile = getCurrentVirtualFile();
-          CvsMergeAction internalMergeAction = new CvsMergeAction(currentVirtualFile, myProject, null,new AbstractMergeAction.FileValueHolder());
+          final Map<VirtualFile, List<String>> fileToRevisions = new com.intellij.util.containers.HashMap<VirtualFile, List<String>>();
+          fileToRevisions.put(currentVirtualFile, CvsUtil.getAllRevisionsForFile(currentVirtualFile));
+          CvsMergeAction internalMergeAction = new CvsMergeAction(currentVirtualFile, myProject, fileToRevisions, new AbstractMergeAction.FileValueHolder());
           Document conflictWasResolved = internalMergeAction.showMergeDialogForFile(new String(currentVirtualFile.contentsToCharArray()),
                                                                                     null);
           if (conflictWasResolved != null) {

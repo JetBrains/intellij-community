@@ -1,25 +1,24 @@
 package com.intellij.psi.formatter.xml;
 
-import com.intellij.lang.ASTNode;
+import com.intellij.codeFormatting.general.FormatterUtil;
 import com.intellij.formatting.*;
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.formatter.common.AbstractBlock;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.jsp.JspElementType;
-import com.intellij.psi.PsiFile;
-import com.intellij.codeFormatting.general.FormatterUtil;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
 
 public class XmlBlock extends AbstractXmlBlock {
   private final Indent myIndent;
@@ -93,6 +92,16 @@ public class XmlBlock extends AbstractXmlBlock {
     if (myNode.getElementType() == ElementType.XML_PROLOG) {
       return Indent.getNoneIndent();
     }
+    if (myNode.getElementType() == ElementType.JSP_SCRIPTLET) {
+      return Indent.getNoneIndent();
+    }
+    if (myNode.getElementType() == ElementType.JSP_DECLARATION) {
+      return Indent.getNoneIndent();
+    }
+    if (myNode.getElementType() == ElementType.JSP_EXPRESSION) {
+      return Indent.getNoneIndent();
+    }
+
     else {
       return null;
     }

@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
@@ -50,10 +51,16 @@ public class DocumentBasedFormattingModel implements FormattingModel {
     return myDocumentModel;
   }
 
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.DocumentBasedFormattingModel");
   public void replaceWhiteSpace(TextRange textRange, String whiteSpace) {
+    if (textRange.getLength() > 0) {
+      final CharSequence current = myDocument.getCharsSequence().subSequence(textRange.getStartOffset(), textRange.getEndOffset());
+      final String ws = current.toString();
+      LOG.assertTrue(ws.trim().length() == 0, ws);
+    }
     myDocument.replaceString(textRange.getStartOffset(),
-                                                textRange.getEndOffset(),
-                                                whiteSpace);
+                             textRange.getEndOffset(),
+                             whiteSpace);
   }
 
   public TextRange shiftIndentInsideRange(TextRange range, int indent) {

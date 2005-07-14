@@ -43,14 +43,18 @@ public abstract class CvsOperationOnFiles extends CvsCommandOperation {
 
   private void clearCachedEntriesForProcessedFiles() {
     final CvsEntriesManager entriesManager = CvsEntriesManager.getInstance();
-    for (Iterator each = myFiles.iterator(); each.hasNext();) {
-      final File parentFile = ((File) each.next()).getParentFile();
-      try {
-        VirtualFile vParent = CvsVfsUtil.findFileByPath(parentFile.getCanonicalPath().replace(File.separatorChar, '/'));
-        if (vParent != null)
-          entriesManager.clearCachedEntriesFor(vParent);
-      } catch (IOException error) {
-        LOG.error(error);
+    for (final Object myFile : myFiles) {
+      final File parentFile = ((File)myFile).getParentFile();
+      if (parentFile != null) {
+        try {
+          VirtualFile vParent = CvsVfsUtil.findFileByPath(parentFile.getCanonicalPath().replace(File.separatorChar, '/'));
+          if (vParent != null) {
+            entriesManager.clearCachedEntriesFor(vParent);
+          }
+        }
+        catch (IOException error) {
+          LOG.error(error);
+        }
       }
     }
   }
