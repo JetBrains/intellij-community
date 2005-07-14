@@ -79,7 +79,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   protected UsageInfo[] findUsages() {
     if (myInlineThisOnly) return new UsageInfo[]{new UsageInfo(myReference)};
     PsiSearchHelper helper = myManager.getSearchHelper();
-    PsiReference[] refs = helper.findReferences(myMethod, GlobalSearchScope.projectScope(myProject), true);
+    PsiReference[] refs = helper.findReferences(myMethod, GlobalSearchScope.projectScope(myProject), false);
     UsageInfo[] infos = new UsageInfo[refs.length];
     for (int i = 0; i < refs.length; i++) {
       infos[i] = new UsageInfo(refs[i].getElement());
