@@ -13,8 +13,6 @@ import com.intellij.xml.XmlNSDescriptor;
  * To change this template use File | Settings | File Templates.
  */
 public class HtmlDocumentImpl extends XmlDocumentImpl {
-  private CachedValue<XmlNSDescriptor> myDescriptor;
-
   public HtmlDocumentImpl() {
     super(HTML_DOCUMENT);
   }
