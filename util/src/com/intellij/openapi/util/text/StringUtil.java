@@ -424,6 +424,8 @@ public class StringUtil {
   }
 
   public static int stringHashCode(CharSequence chars) {
+    if (chars instanceof String) return chars.hashCode();
+    if (chars instanceof CharSequenceWithStringHash) return chars.hashCode();
     int h = 0;
     int to = chars.length();
     for( int off = 0; off < to; ) {

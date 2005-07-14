@@ -2,6 +2,8 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.util.CharTable;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.openapi.util.text.CharSequenceWithStringHash;
+import com.intellij.openapi.util.text.StringUtil;
 import org.apache.commons.collections.map.ReferenceMap;
 
 import java.lang.ref.Reference;
@@ -53,7 +55,7 @@ public class CharTableImpl implements CharTable {
     return new CharTableEntry(myCurrentPage, bufferEnd - length, length);
   }
 
-  private static final class CharTableEntry implements CharSequence {
+  private static final class CharTableEntry implements CharSequenceWithStringHash {
     char[] buffer;
     int offset;
     int length;
@@ -64,6 +66,7 @@ public class CharTableImpl implements CharTable {
       this.buffer = buffer;
       this.offset = offset;
       this.length = length;
+      hashCode = StringUtil.stringHashCode(buffer, offset, length);
     }
 
     public int length() {
@@ -80,6 +83,10 @@ public class CharTableImpl implements CharTable {
 
     public String toString() {
       return StringFactory.createStringFromConstantArray(buffer, offset, length);
+    }
+
+    public int hashCode() {
+      return hashCode;
     }
   }
 
