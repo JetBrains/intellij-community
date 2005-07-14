@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -85,6 +86,7 @@ public class ModuleUtil {
     return parents.size() == 0 ? null : parents.get(0);
   }
 
+  @NotNull
   public static List<Module> getParentModulesOfType(ModuleType expectedModuleType, Module module) {
     final List<Module> parents = ModuleManager.getInstance(module.getProject()).getModuleDependentModules(module);
     ArrayList<Module> modules = new ArrayList<Module>();

@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 
 public abstract class ModuleTestCase extends IdeaTestCase {
   protected final Collection<Module> myModulesToDispose = new ArrayList<Module>();
@@ -30,8 +29,7 @@ public abstract class ModuleTestCase extends IdeaTestCase {
     final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        for (Iterator<Module> iterator = myModulesToDispose.iterator(); iterator.hasNext();) {
-          Module module = iterator.next();
+        for (Module module : myModulesToDispose) {
           String moduleName = module.getName();
           if (moduleManager.findModuleByName(moduleName) != null) {
             moduleManager.disposeModule(module);
@@ -91,8 +89,7 @@ public abstract class ModuleTestCase extends IdeaTestCase {
   protected ModuleImpl loadAllModulesUnder(VirtualFile rootDir) throws Exception {
     ModuleImpl module = null;
     final VirtualFile[] children = rootDir.getChildren();
-    for (int i = 0; i < children.length; i++) {
-      VirtualFile child = children[i];
+    for (VirtualFile child : children) {
       if (child.isDirectory()) {
         final ModuleImpl childModule = loadAllModulesUnder(child);
         if (module == null) module = childModule;

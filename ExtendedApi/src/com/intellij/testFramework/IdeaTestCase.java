@@ -100,7 +100,7 @@ public abstract class IdeaTestCase extends TestCase implements DataProvider {
     ourTestCase = this;
     IdeaLogger.ourErrorsOccurred = null;
 
-    LOG.info("" + this.getClass().getName() + ".setUp()");
+    LOG.info(getClass().getName() + ".setUp()");
 
     initApplication();
 
@@ -181,8 +181,7 @@ public abstract class IdeaTestCase extends TestCase implements DataProvider {
         ((ProjectEx)myProject).dispose();
 
         for (final File fileToDelete : myFilesToDelete) {
-          File file = fileToDelete;
-          delete(file);
+          delete(fileToDelete);
         }
 
         Throwable fromThreadGroup = MY_THREAD_GROUP.popThrowable();
@@ -257,15 +256,17 @@ public abstract class IdeaTestCase extends TestCase implements DataProvider {
     //final ProjectJdkEx jdk = ProjectJdkUtil.getDefaultJdk("java 1.4");
     final ProjectJdk jdk = getTestProjectJdk();
 //    ProjectJdkImpl jdk = ProjectJdkTable.getInstance().addJdk(defaultJdk);
-    final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
-
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-        rootModel.setJdk(jdk);
-        rootModel.commit();
-      }
-    });
+    Module[] modules = ModuleManager.getInstance(myProject).getModules();
+    for (Module module : modules) {
+      final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          final ModifiableRootModel rootModel = rootManager.getModifiableModel();
+          rootModel.setJdk(jdk);
+          rootModel.commit();
+        }
+      });
+    }
   }
 
   protected ProjectJdk getTestProjectJdk() {
