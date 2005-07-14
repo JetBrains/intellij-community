@@ -1,5 +1,6 @@
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -32,6 +33,7 @@ public class TogglePopupHintsPanel extends JLabel {
         final Editor editor = getCurrentEditor();
         final PsiFile file = getCurrentFile();
         if (editor != null && file != null) {
+          if (!DaemonCodeAnalyzer.getInstance(file.getProject()).isHighlightingAvailable(file)) return;
           point = SwingUtilities.convertPoint(TogglePopupHintsPanel.this, point, editor.getComponent().getRootPane().getLayeredPane());
           final HectorComponent component = new HectorComponent(file);
           final Dimension dimension = component.getPreferredSize();
@@ -64,9 +66,11 @@ public class TogglePopupHintsPanel extends JLabel {
   }
 
   private boolean isStateChangeable() {
-    if (getCurrentFile() == null) {
+    final PsiFile file = getCurrentFile();
+    if (file == null) {
       return false;
     }
+    if (!DaemonCodeAnalyzer.getInstance(file.getProject()).isHighlightingAvailable(file)) return false;
     return getCurrentEditor() != null;
   }
 

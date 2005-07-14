@@ -8,6 +8,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoComposite;
@@ -531,7 +532,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               component.showComponent(myEditor, new Point(point.x - dimension.width, point.y));
             }
           });
-          popupMenu.show(comp, x, y);
+          if (DaemonCodeAnalyzer.getInstance(myEditor.getProject()).isHighlightingAvailable((PsiFile)myEditor.getDataContext().getData(DataConstants.PSI_FILE))){
+            popupMenu.show(comp, x, y);
+          }
         }
       };
       addMouseListener(popupHandler);
