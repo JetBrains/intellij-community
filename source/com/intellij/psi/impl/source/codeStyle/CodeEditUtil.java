@@ -216,13 +216,15 @@ public class CodeEditUtil {
 
   private static void checkAllWhiteSpaces(final ASTNode parent) {
     LOG.assertTrue(parent.getPsi().isValid());
-    ASTNode node = parent.getPsi().getContainingFile().getNode();
-    ASTNode leaf = TreeUtil.findFirstLeaf(node);
-    while (leaf != null) {
-      if (isInvalidWhiteSpace(leaf)) {
-        LOG.assertTrue(false);
+    if (LOG.isDebugEnabled()) {
+      ASTNode node = parent.getPsi().getContainingFile().getNode();
+      ASTNode leaf = TreeUtil.findFirstLeaf(node);
+      while (leaf != null) {
+        if (isInvalidWhiteSpace(leaf)) {
+          LOG.assertTrue(false);
+        }
+        leaf = TreeUtil.nextLeaf(leaf);
       }
-      leaf = TreeUtil.nextLeaf(leaf);
     }
   }
 
