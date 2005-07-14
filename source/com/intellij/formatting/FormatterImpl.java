@@ -6,6 +6,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
+import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nullable;
@@ -345,7 +346,7 @@ public class FormatterImpl extends FormatterEx
   public FormattingModel createFormattingModelForPsiFile(final PsiFile file,
                                                          final Block rootBlock,
                                                          final CodeStyleSettings settings) {
-    return new PsiBasedFormattingModel(file, rootBlock);
+    return new PsiBasedFormattingModel(file, rootBlock, FormattingDocumentModelImpl.createOn(file));
   }
 
   public Indent getSpaceIndent(final int spaces) {

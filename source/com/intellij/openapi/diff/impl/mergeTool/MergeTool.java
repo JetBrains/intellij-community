@@ -35,7 +35,7 @@ public class MergeTool implements DiffTool {
     MergePanel2 mergePanel = createMergeComponent(data, builder);
     builder.setCenterPanel(mergePanel.getComponent());
     builder.setPreferedFocusComponent(mergePanel.getPreferredFocusedComponent());
-    data.setActions(builder, mergePanel);
+    data.setActions(builder, mergePanel, true);
     builder.setHelpId(data.getHelpId());
     int result = builder.show();
     data.setResult(result);
@@ -44,8 +44,7 @@ public class MergeTool implements DiffTool {
   public boolean canShow(DiffRequest data) {
     DiffContent[] contents = data.getContents();
     if (contents.length != 3) return false;
-    for (int i = 0; i < contents.length; i++) {
-      DiffContent content = contents[i];
+    for (DiffContent content : contents) {
       if (content.getDocument() == null) return false;
     }
     return true;

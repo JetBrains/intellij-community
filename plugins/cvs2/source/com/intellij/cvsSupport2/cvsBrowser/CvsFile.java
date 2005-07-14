@@ -41,9 +41,12 @@ public class CvsFile extends CvsElement {
   }
 
   private VirtualFile createVirtualFile() {
-    return new VcsVirtualFile(myPath, new ComparableVcsRevisionOnOperation(new GetFileContentOperation(getCvsLightFile(),
-                                                                                                       myEnvironment,
-                                                                                                       myEnvironment.getRevisionOrDate()), myProject),
+    return new VcsVirtualFile(myPath,
+                              new ComparableVcsRevisionOnOperation(new GetFileContentOperation(getCvsLightFile(),
+                                                                                               myEnvironment,
+                                                                                               myEnvironment.getRevisionOrDate()
+                              ),
+                                                                   myProject),
                               VcsFileSystem.getInstance());
   }
 

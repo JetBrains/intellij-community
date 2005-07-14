@@ -302,9 +302,9 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     final Language language = psiElement.getLanguage();
     final XmlFormattingPolicy result;
     if (language == StdLanguages.JSP || language == StdLanguages.XML) {
-      result = new XmlPolicy(getSettings());
+      result = new XmlPolicy(getSettings(), myXmlFormattingPolicy.getDocumentModel());
     } else {
-      result = new HtmlPolicy(getSettings());
+      result = new HtmlPolicy(getSettings(), myXmlFormattingPolicy.getDocumentModel());
     }
     result.copyFrom(myXmlFormattingPolicy);
     return result;
@@ -368,16 +368,18 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.xml.AbstractXmlBlock");
 
-  public static Block creareJspRoot(final PsiElement element, final CodeStyleSettings settings) {
+  public static Block creareJspRoot(final PsiElement element, final CodeStyleSettings settings, final FormattingDocumentModel documentModel) {
     final PsiElement[] psiRoots = (element.getContainingFile()).getPsiRoots();
     LOG.assertTrue(psiRoots.length == 4);
     final ASTNode rootNode = SourceTreeToPsiMap.psiElementToTree(psiRoots[0]);
-    return new XmlBlock(rootNode, null, null, new XmlPolicy(settings), null, null);
+    return new XmlBlock(rootNode, null, null, new XmlPolicy(settings, documentModel), null, null);
   }
 
-  public static Block creareJspxRoot(final PsiElement element, final CodeStyleSettings settings) {
+  public static Block creareJspxRoot(final PsiElement element,
+                                     final CodeStyleSettings settings,
+                                     final FormattingDocumentModel documentModel) {
     final ASTNode rootNode = SourceTreeToPsiMap.psiElementToTree(element);
-    return new XmlBlock(rootNode, null, null, new HtmlPolicy(settings), null, null);
+    return new XmlBlock(rootNode, null, null, new HtmlPolicy(settings, documentModel), null, null);
   }
 
   @Nullable

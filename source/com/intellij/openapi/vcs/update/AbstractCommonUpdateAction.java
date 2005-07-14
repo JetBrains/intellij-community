@@ -71,7 +71,7 @@ public class AbstractCommonUpdateAction extends AbstractVcsAction {
   }
 
   protected final String getCompleteActionName(VcsContext dataContext) {
-    return myActionInfo.getActionName(myScopeInfo.getScopeName(dataContext));
+    return myActionInfo.getActionName(myScopeInfo.getScopeName(dataContext, myActionInfo));
   }
 
 
@@ -88,7 +88,7 @@ public class AbstractCommonUpdateAction extends AbstractVcsAction {
           ApplicationManager.getApplication().saveAll();
         }
 
-        final FilePath[] roots = filterDescindingFiles(filterRoots(myScopeInfo.getRoots(context), context), project);
+        final FilePath[] roots = filterDescindingFiles(filterRoots(myScopeInfo.getRoots(context, myActionInfo), context), project);
 
         final Map<AbstractVcs, Collection<FilePath>> vcsToVirtualFiles = createVcsToFilesMap(roots, project);
 
@@ -105,7 +105,7 @@ public class AbstractCommonUpdateAction extends AbstractVcsAction {
             int toBeProcessed = vcsToVirtualFiles.size();
             int processed = 0;
             for (AbstractVcs vcs : vcsToVirtualFiles.keySet()) {
-              final UpdateEnvironment updateEnvironment = vcs.getUpdateEnvironment();
+              final UpdateEnvironment updateEnvironment = myActionInfo.getEnvironment(vcs);
               updateEnvironment.fillGroups(updatedFiles);
               Collection<FilePath> files = vcsToVirtualFiles.get(vcs);
               UpdateSession updateSession = updateEnvironment.updateDirectories(files.toArray(new FilePath[files.size()]),
@@ -218,7 +218,7 @@ public class AbstractCommonUpdateAction extends AbstractVcsAction {
   private LinkedHashMap<Configurable, AbstractVcs> createConfigurableToEnvMap(Map<AbstractVcs, Collection<FilePath>> updateEnvToVirtualFiles) {
     LinkedHashMap<Configurable, AbstractVcs> envToConfMap = new LinkedHashMap<Configurable, AbstractVcs>();
     for (AbstractVcs vcs : updateEnvToVirtualFiles.keySet()) {
-      Configurable configurable = vcs.getUpdateEnvironment().createConfigurable(updateEnvToVirtualFiles.get(vcs));
+      Configurable configurable = myActionInfo.getEnvironment(vcs).createConfigurable(updateEnvToVirtualFiles.get(vcs));
       if (configurable != null) {
         envToConfMap.put(configurable, vcs);
       }
@@ -264,7 +264,7 @@ public class AbstractCommonUpdateAction extends AbstractVcsAction {
     return false;
   }
 
-  private final FilePath[] filterRoots(FilePath[] roots, VcsContext vcsContext) {
+  private FilePath[] filterRoots(FilePath[] roots, VcsContext vcsContext) {
     final ArrayList<FilePath> result = new ArrayList<FilePath>();
     for (FilePath file : roots) {
       AbstractVcs vcs = VcsUtil.getVcsFor(vcsContext.getProject(), file);
@@ -296,7 +296,7 @@ public class AbstractCommonUpdateAction extends AbstractVcsAction {
       presentation.setVisible(true);
       presentation.setEnabled(true);
 
-      FilePath[] roots = filterRoots(myScopeInfo.getRoots(vcsContext), vcsContext);
+      FilePath[] roots = filterRoots(myScopeInfo.getRoots(vcsContext, myActionInfo), vcsContext);
       if (roots == null || roots.length == 0) {
         presentation.setVisible(false);
         presentation.setEnabled(false);

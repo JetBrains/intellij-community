@@ -1,7 +1,7 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsUpdate.ui;
 
 import com.intellij.cvsSupport2.CvsUtil;
-import com.intellij.cvsSupport2.actions.CvsMergeAction;
+import com.intellij.cvsSupport2.actions.merge.CvsMergeAction;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.cvsoperations.cvsUpdate.MergedWithConflictProjectOrModuleFile;
 import com.intellij.openapi.diagnostic.Logger;
@@ -92,7 +92,6 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
 
     if (myCorruptedFiles.isEmpty()) {
       doCloseAction(isOk);
-      return;
     }
     else {
       showNextFileInfo();
@@ -145,9 +144,8 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
     }
 
     public void actionPerformed(ActionEvent e) {
-      for (Iterator iterator = myCorruptedFiles.iterator(); iterator.hasNext();) {
-        MergedWithConflictProjectOrModuleFile mergedWithConflictProjectOrModuleFile = (MergedWithConflictProjectOrModuleFile)iterator.next();
-        mergedWithConflictProjectOrModuleFile.setShouldBeCheckedOut();
+      for (final MergedWithConflictProjectOrModuleFile myCorruptedFile : myCorruptedFiles) {
+        myCorruptedFile.setShouldBeCheckedOut();
       }
       myCorruptedFiles.clear();
       onCurrentFileProcessed(true);
@@ -161,20 +159,14 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
 
     public void actionPerformed(ActionEvent e) {
       try {
-        try {
-          VirtualFile currentVirtualFile = getCurrentVirtualFile();
-          final Map<VirtualFile, List<String>> fileToRevisions = new com.intellij.util.containers.HashMap<VirtualFile, List<String>>();
-          fileToRevisions.put(currentVirtualFile, CvsUtil.getAllRevisionsForFile(currentVirtualFile));
-          CvsMergeAction internalMergeAction = new CvsMergeAction(currentVirtualFile, myProject, fileToRevisions, new AbstractMergeAction.FileValueHolder());
-          Document conflictWasResolved = internalMergeAction.showMergeDialogForFile(new String(currentVirtualFile.contentsToCharArray()),
-                                                                                    null);
-          if (conflictWasResolved != null) {
-            saveExternally(currentVirtualFile, conflictWasResolved);
-            onCurrentFileProcessed(false);
-          }
-        }
-        catch (IOException e1) {
-          throw new VcsException(e1);
+        VirtualFile currentVirtualFile = getCurrentVirtualFile();
+        final Map<VirtualFile, List<String>> fileToRevisions = new com.intellij.util.containers.HashMap<VirtualFile, List<String>>();
+        fileToRevisions.put(currentVirtualFile, CvsUtil.getAllRevisionsForFile(currentVirtualFile));
+        CvsMergeAction internalMergeAction = new CvsMergeAction(currentVirtualFile, myProject, fileToRevisions, new AbstractMergeAction.FileValueHolder());
+        Document conflictWasResolved = internalMergeAction.showMergeDialogForFile(null);
+        if (conflictWasResolved != null) {
+          saveExternally(currentVirtualFile, conflictWasResolved);
+          onCurrentFileProcessed(false);
         }
       }
       catch (VcsException e1) {

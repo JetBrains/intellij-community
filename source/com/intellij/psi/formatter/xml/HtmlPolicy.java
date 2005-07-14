@@ -1,8 +1,9 @@
 package com.intellij.psi.formatter.xml;
 
+import com.intellij.formatting.FormattingDocumentModel;
 import com.intellij.formatting.WrapType;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -14,8 +15,10 @@ import com.intellij.psi.xml.XmlTag;
 public class HtmlPolicy extends XmlFormattingPolicy{
   private CodeStyleSettings mySettings;
 
-  public HtmlPolicy(final CodeStyleSettings settings) {
+  public HtmlPolicy(final CodeStyleSettings settings, final FormattingDocumentModel documentModel) {
+    super(documentModel);
     mySettings = settings;
+
   }
 
   public boolean indentChildrenOf(final XmlTag parentTag) {
@@ -51,14 +54,15 @@ public class HtmlPolicy extends XmlFormattingPolicy{
   }
 
   private int getLines(final XmlTag parentTag) {
-    return StringUtil.getLineBreakCount(parentTag.getText());
+    final TextRange textRange = parentTag.getTextRange();
+    return myDocumentModel.getLineNumber(textRange.getEndOffset()) - myDocumentModel.getLineNumber(textRange.getStartOffset());
   }
 
   public boolean insertLineBreakBeforeTag(final XmlTag xmlTag) {
     PsiElement prev = xmlTag.getPrevSibling();
     if (prev == null) return false;
     ASTNode prevNode = SourceTreeToPsiMap.psiElementToTree(prev);
-    while (containsWhiteSpacesOnly(prevNode)) {
+    while (prevNode != null && containsWhiteSpacesOnly(prevNode)) {
       prevNode = prevNode.getTreePrev();
     }
     if (prevNode == null) return false;
@@ -111,10 +115,7 @@ public class HtmlPolicy extends XmlFormattingPolicy{
   private boolean shouldBeWrapped(final XmlTag tag) {
     final String name = tag.getName();
     if (name == null) return false;
-    if (name.toLowerCase().startsWith("jsp:")) {
-      return true;
-    }
-    return false;
+    return name.toLowerCase().startsWith("jsp:");
   }
 
   public boolean isTextElement(XmlTag tag) {

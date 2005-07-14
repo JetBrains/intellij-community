@@ -12,24 +12,23 @@ import com.intellij.openapi.vfs.VirtualFile;
 import java.util.ArrayList;
 
 public interface ScopeInfo {
-  FilePath[] getRoots(VcsContext context);
+  FilePath[] getRoots(VcsContext context, final ActionInfo actionInfo);
 
-  String getScopeName(VcsContext dataContext);
+  String getScopeName(VcsContext dataContext, final ActionInfo actionInfo);
 
   ScopeInfo PROJECT = new ScopeInfo() {
-    public String getScopeName(VcsContext dataContext) {
+    public String getScopeName(VcsContext dataContext, final ActionInfo actionInfo) {
       return "Project";
     }
 
-    public FilePath[] getRoots(VcsContext context) {
+    public FilePath[] getRoots(VcsContext context, final ActionInfo actionInfo) {
       ArrayList<FilePath> result = new ArrayList<FilePath>();
       Project project = context.getProject();
       VirtualFile[] contentRoots = ProjectRootManager.getInstance(project).getContentRoots();
-      for (int i = 0; i < contentRoots.length; i++) {
-        VirtualFile contentRoot = contentRoots[i];
+      for (VirtualFile contentRoot : contentRoots) {
         AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(contentRoot);
         if (vcs != null) {
-          UpdateEnvironment updateEnvironment = vcs.getUpdateEnvironment();
+          UpdateEnvironment updateEnvironment = actionInfo.getEnvironment(vcs);
           if (updateEnvironment != null) {
             result.add(new FilePathImpl(contentRoot));
           }
@@ -40,8 +39,8 @@ public interface ScopeInfo {
   };
 
   ScopeInfo FILES = new ScopeInfo() {
-    public String getScopeName(VcsContext dataContext) {
-      FilePath[] roots = getRoots(dataContext);
+    public String getScopeName(VcsContext dataContext, final ActionInfo actionInfo) {
+      FilePath[] roots = getRoots(dataContext, actionInfo);
       if (roots == null || roots.length == 0) {
         return "Files";
       }
@@ -65,7 +64,7 @@ public interface ScopeInfo {
 
     }
 
-    public FilePath[] getRoots(VcsContext context) {
+    public FilePath[] getRoots(VcsContext context, final ActionInfo actionInfo) {
       return context.getSelectedFilePaths();
     }
 

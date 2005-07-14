@@ -59,7 +59,7 @@ public class MergeRequestImpl extends MergeRequest {
 
   public DiffContent getResultContent() { return getMergeContent(); }
 
-  public void setActions(final DialogBuilder builder, MergePanel2 mergePanel) {
+  public void setActions(final DialogBuilder builder, MergePanel2 mergePanel, boolean initial) {
     if (builder.getOkAction() == null) {
       builder.addOkAction();
     }
@@ -88,7 +88,7 @@ public class MergeRequestImpl extends MergeRequest {
       public void run() {
         myActionButtonPresenation.run((DiffViewer)DataManager.getInstance().getDataContext(builder.getCenterPanel()).getData(DataConstants.DIFF_VIEWER));
         if (myActionButtonPresenation.closeDialog()) {
-          builder.getDialogWrapper().close(DialogWrapper.CANCEL_EXIT_CODE);
+          builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
         }
       }
     });
@@ -156,11 +156,13 @@ public class MergeRequestImpl extends MergeRequest {
     public AllResolvedListener(MergePanel2 mergePanel, DialogWrapper dialogWrapper) {
       myMergePanel = mergePanel;
       myDialogWrapper = dialogWrapper;
-      ChangeCounter.getOrCreate(myMergePanel.getMergeList()).addListener(this);
+      final ChangeCounter changeCounter = ChangeCounter.getOrCreate(myMergePanel.getMergeList());
+      changeCounter.removeListener(this);
+      changeCounter.addListener(this);
     }
 
     public void run() {
-      if (!myActionButtonPresenation.isEnabled()) return;
+      if (!myActionButtonPresenation.closeDialog()) return;
       if (myWasInvoked) return;
       if (!getWholePanel().isDisplayable()) return;
       myWasInvoked = true;

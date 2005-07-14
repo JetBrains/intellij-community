@@ -226,7 +226,7 @@ public class MergePanel2 implements DiffViewer {
       data.customizeToolbar(myPanel.resetToolbar());
       myPanel.registerToolbarActions();
       if ( data instanceof MergeRequestImpl && myBuilder != null){
-        ((MergeRequestImpl)data).setActions(myBuilder, this);
+        ((MergeRequestImpl)data).setActions(myBuilder, this, false);
       }
     }
     finally {

@@ -25,7 +25,7 @@ public class ChangeCounter implements ChangeList.Listener {
   }
 
   public void addListener(Listener listener) { myListeners.add(listener); }
-  public void removeListener(Listener listener) { LOG.assertTrue(myListeners.remove(listener)); }
+  public void removeListener(Listener listener) { myListeners.remove(listener); }
 
   private void updateCounters() {
     int conflictCounter = 0;

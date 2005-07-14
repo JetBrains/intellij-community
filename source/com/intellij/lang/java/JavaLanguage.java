@@ -17,6 +17,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
+import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.java.AbstractJavaBlock;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -48,7 +49,8 @@ public class JavaLanguage extends Language {
       @NotNull
       public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
         return new PsiBasedFormattingModel(element.getContainingFile(), AbstractJavaBlock.createJavaBlock(SourceTreeToPsiMap.psiElementToTree(element),
-                                                                                                          settings));
+                                                                                                          settings),
+                                           FormattingDocumentModelImpl.createOn(element.getContainingFile()));
       }
     };
   }

@@ -1,7 +1,6 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsContent;
 
 import com.intellij.cvsSupport2.CvsUtil;
-import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
@@ -18,7 +17,6 @@ import org.netbeans.lib.cvsclient.command.checkout.CheckoutCommand;
 import org.netbeans.lib.cvsclient.file.FileObject;
 
 import java.io.File;
-import java.io.UnsupportedEncodingException;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -46,7 +44,9 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
     throws CannotFindCvsRootException {
     File ioFile = CvsVfsUtil.getFileFor(file);
     return new GetFileContentOperation(new File(getPathInRepository(ioFile)),
-                                       CvsRootProvider.createOn(ioFile), revisionOrDate);
+                                       CvsRootProvider.createOn(ioFile),
+                                       revisionOrDate
+    );
   }
 
   public static GetFileContentOperation createForFile(VirtualFile file) throws CannotFindCvsRootException {
@@ -120,16 +120,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
       if (myBinaryContent != null) {
         return myBinaryContent;
       } else {
-        if (CvsApplicationLevelConfiguration.getInstance().USE_UTF8) {
-          try {
-            return myContent.toString().getBytes("utf-8");
-          }
-          catch (UnsupportedEncodingException e) {
-            return myContent.toString().getBytes();
-          }
-        } else {
-          return myContent.toString().getBytes();
-        }
+        return myContent.toString().getBytes();
       }
     }
   }
@@ -172,11 +163,13 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
           String tagType = message.substring(0, separatorIndex);
           if ("text".equals(tagType)) {
             message = message.substring(separatorIndex + 1);
-            myContent.append(message + "\n");
+            myContent.append(message);
+            myContent.append("\n");
           }
         }
       } else {
-        myContent.append(message + "\n");
+        myContent.append(message);
+        myContent.append("\n");
       }
 
     } else if (message.startsWith("VERS:")) {

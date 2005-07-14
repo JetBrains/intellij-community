@@ -28,10 +28,11 @@ public class PsiBasedFormattingModel implements FormattingModel {
 
 
   public PsiBasedFormattingModel(final PsiFile file,
-                                 final Block rootBlock) {
+                                 final Block rootBlock,
+                                 final FormattingDocumentModelImpl documentModel) {
     myASTNode = SourceTreeToPsiMap.psiElementToTree(file);
     myProject = file.getProject();
-    myDocumentModel = FormattingDocumentModelImpl.createOn(file);
+    myDocumentModel = documentModel;
     myRootBlock = rootBlock;
 
   }

@@ -1,5 +1,6 @@
 package com.intellij.psi.formatter.xml;
 
+import com.intellij.formatting.FormattingDocumentModel;
 import com.intellij.formatting.WrapType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.xml.XmlChildRole;
@@ -8,17 +9,13 @@ import com.intellij.psi.xml.XmlTag;
 public class XmlPolicy extends XmlFormattingPolicy{
   private final CodeStyleSettings mySettings;
 
-  public XmlPolicy(final CodeStyleSettings settings) {
+  public XmlPolicy(final CodeStyleSettings settings, final FormattingDocumentModel documentModel) {
+    super(documentModel);
     mySettings = settings;
   }
 
   public boolean indentChildrenOf(final XmlTag parentTag) {
-
-    if( XmlChildRole.START_TAG_START_FINDER.findChild(parentTag.getNode()) == null ) {
-      return false;
-    }
-
-    return true;
+    return XmlChildRole.START_TAG_START_FINDER.findChild(parentTag.getNode()) != null;
   }
 
   public boolean insertLineBreakBeforeTag(final XmlTag xmlTag) {

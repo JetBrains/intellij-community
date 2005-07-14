@@ -296,8 +296,6 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
   }
 
   public UpdateEnvironment getUpdateEnvironment() {
-    CvsConfiguration.getInstance(myProject).CLEAN_COPY = false;
-    CvsConfiguration.getInstance(myProject).RESET_STICKY = false;    
     return myCvsUpdateEnvironment;
   }
 

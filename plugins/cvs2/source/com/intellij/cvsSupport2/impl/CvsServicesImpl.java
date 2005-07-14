@@ -72,7 +72,8 @@ public class CvsServicesImpl extends CvsServices implements ApplicationComponent
                                                                                                 .getStringRepresentation()));
 
     GetFileContentOperation operation = new GetFileContentOperation(new File(module.getPathInCvs()),
-                                                                    env, new SimpleRevision(module.getRevision()));
+                                                                    env, new SimpleRevision(module.getRevision())
+    );
 
     return new ComparableVcsRevisionOnOperation(operation, project);
 
@@ -113,7 +114,8 @@ public class CvsServicesImpl extends CvsServices implements ApplicationComponent
 
     GetFileContentOperation operation = new GetFileContentOperation(new File(cvsFile.getPathInCvs()),
                                                                     CvsRootConfiguration.createOn(repository),
-                                                                    revisionOrDate);
+                                                                    revisionOrDate
+    );
 
     ComparableVcsRevisionOnOperation revision = new ComparableVcsRevisionOnOperation(operation,
                                                                                      project);
@@ -128,7 +130,8 @@ public class CvsServicesImpl extends CvsServices implements ApplicationComponent
   public byte[] getFileContent(Project project, CvsModule cvsFile) throws IOException {
     final GetFileContentOperation operation = new GetFileContentOperation(new File(cvsFile.getPathInCvs()),
                                                                           CvsRootConfiguration.createOn(cvsFile.getRepository()),
-                                                                          new SimpleRevision(cvsFile.getRevision()));
+                                                                          new SimpleRevision(cvsFile.getRevision())
+    );
 
     final CvsOperationExecutor executor = new CvsOperationExecutor(project);
     executor.performActionSync(new CommandCvsHandler("Load File Content", operation, false),

@@ -31,7 +31,7 @@
  */
 package com.intellij.cvsSupport2;
 
-import com.intellij.cvsSupport2.actions.CvsMergeAction;
+import com.intellij.cvsSupport2.actions.merge.CvsMergeAction;
 import com.intellij.cvsSupport2.actions.update.UpdateSettingsOnCvsConfiguration;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
@@ -70,39 +70,50 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
 
   public UpdateSession updateDirectories(FilePath[] contentRoots, final UpdatedFiles updatedFiles, ProgressIndicator progressIndicator) {
     CvsConfiguration cvsConfiguration = CvsConfiguration.getInstance(myProject);
-    final UpdateSettingsOnCvsConfiguration updateSettings = new UpdateSettingsOnCvsConfiguration(cvsConfiguration,
-                                                                                                 cvsConfiguration.CLEAN_COPY,
-                                                                                                 cvsConfiguration.RESET_STICKY);
-    final UpdateHandler handler = CommandCvsHandler.createUpdateHandler(contentRoots,
-                                                                        updateSettings, myProject, updatedFiles);
-    handler.addCvsListener(new UpdatedFilesProcessor(updatedFiles));
-    CvsOperationExecutor cvsOperationExecutor = new CvsOperationExecutor(true, myProject, ModalityState.defaultModalityState());
-    cvsOperationExecutor.setShowErrors(false);
-    cvsOperationExecutor.performActionSync(handler, new CvsOperationExecutorCallback() {
-      public void executionFinished(boolean successfully) {
+    if (!CvsVcs2.getInstance(myProject).getUpdateOptions().getValue()) {
+      cvsConfiguration.CLEAN_COPY = false;
+      cvsConfiguration.RESET_STICKY = false;
+    }
 
-      }
+    try {
+      final UpdateSettingsOnCvsConfiguration updateSettings = new UpdateSettingsOnCvsConfiguration(cvsConfiguration,
+                                                                                                   cvsConfiguration.CLEAN_COPY,
+                                                                                                   cvsConfiguration.RESET_STICKY);
+      final UpdateHandler handler = CommandCvsHandler.createUpdateHandler(contentRoots,
+                                                                          updateSettings, myProject, updatedFiles);
+      handler.addCvsListener(new UpdatedFilesProcessor(updatedFiles));
+      CvsOperationExecutor cvsOperationExecutor = new CvsOperationExecutor(true, myProject, ModalityState.defaultModalityState());
+      cvsOperationExecutor.setShowErrors(false);
+      cvsOperationExecutor.performActionSync(handler, new CvsOperationExecutorCallback() {
+        public void executionFinished(boolean successfully) {
 
-      public void executionFinishedSuccessfully() {
-
-      }
-
-      public void executeInProgressAfterAction(ModalityContext modaityContext) {
-
-      }
-    });
-    final CvsResult result = cvsOperationExecutor.getResult();
-    return new UpdateSessionAdapter(result.getErrorsAndWarnings(), result.isCanceled() || !result.isLoggedIn()) {
-      public void onRefreshFilesCompleted() {
-        if (!updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).isEmpty()) {
-          ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-            public void run() {
-              invokeManualMerging(updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID), myProject);
-            }
-          }, ModalityState.defaultModalityState());
         }
-      }
-    };
+
+        public void executionFinishedSuccessfully() {
+
+        }
+
+        public void executeInProgressAfterAction(ModalityContext modaityContext) {
+
+        }
+      });
+      final CvsResult result = cvsOperationExecutor.getResult();
+      return new UpdateSessionAdapter(result.getErrorsAndWarnings(), result.isCanceled() || !result.isLoggedIn()) {
+        public void onRefreshFilesCompleted() {
+          if (!updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).isEmpty()) {
+            ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+              public void run() {
+                invokeManualMerging(updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID), myProject);
+              }
+            }, ModalityState.defaultModalityState());
+          }
+        }
+      };
+    }
+    finally {
+      cvsConfiguration.CLEAN_COPY = false;
+      cvsConfiguration.RESET_STICKY = false;                    
+    }
   }
 
   private void invokeManualMerging(FileGroup mergedWithConflict, Project project) {
@@ -125,6 +136,8 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
 
 
   public Configurable createConfigurable(Collection<FilePath> files) {
+    CvsConfiguration.getInstance(myProject).CLEAN_COPY = false;
+    CvsConfiguration.getInstance(myProject).RESET_STICKY = false;
     return new UpdateConfigurable(myProject, files);
   }
 }

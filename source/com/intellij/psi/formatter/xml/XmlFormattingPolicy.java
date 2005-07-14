@@ -5,6 +5,7 @@ import com.intellij.lang.Language;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.formatting.WrapType;
+import com.intellij.formatting.FormattingDocumentModel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -17,6 +18,11 @@ public abstract class XmlFormattingPolicy {
 
   private Map<Pair<PsiElement, Language>, Block> myRootToBlockMap = new HashMap<Pair<PsiElement, Language>, Block>();
   private boolean myProcessJsp = true;
+  protected final FormattingDocumentModel myDocumentModel;
+
+  protected XmlFormattingPolicy(final FormattingDocumentModel documentModel) {
+    myDocumentModel = documentModel;
+  }
 
   public void copyFrom(final XmlFormattingPolicy xmlFormattingPolicy) {
     myProcessJsp = xmlFormattingPolicy.myProcessJsp;
@@ -96,5 +102,9 @@ public abstract class XmlFormattingPolicy {
 
   public void setRootBlock(final ASTNode node, final Block rootBlock) {
     myRootToBlockMap.put(new Pair<PsiElement, Language>(node.getPsi(), node.getPsi().getLanguage()), rootBlock);
+  }
+
+  public FormattingDocumentModel getDocumentModel() {
+    return myDocumentModel;
   }
 }

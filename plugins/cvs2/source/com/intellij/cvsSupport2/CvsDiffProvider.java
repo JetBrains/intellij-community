@@ -38,7 +38,8 @@ public class CvsDiffProvider implements DiffProvider{
     final GetFileContentOperation operation = new GetFileContentOperation(new File(CvsUtil.getModuleName(new File(selectedFile.getPath()))),
                                                                           CvsEntriesManager.getInstance()
                                                                             .getCvsConnectionSettingsFor(selectedFile.getParent()),
-                                                                          new SimpleRevision(revisionNumber.asString()));
+                                                                          new SimpleRevision(revisionNumber.asString())
+    );
     return new CvsFileContent(new ComparableVcsRevisionOnOperation(operation, myProject)) {
       public VcsRevisionNumber getRevisionNumber() {
         return revisionNumber;
