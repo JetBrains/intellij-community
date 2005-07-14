@@ -1,12 +1,17 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 
@@ -45,6 +50,26 @@ public class GenerateDTDAction extends BaseCodeInsightAction{
         return true;
       }
     };
+  }
+
+  public void update(AnActionEvent event) {
+    super.update(event);
+
+    final DataContext dataContext = event.getDataContext();
+    final Presentation presentation = event.getPresentation();
+    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+
+    final boolean visible;
+    if (editor != null && project != null) {
+      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      visible = file instanceof XmlFile;
+    }
+    else {
+      visible = false;
+    }
+
+    presentation.setVisible(visible);
   }
 
   protected boolean isValidForFile(Project project, Editor editor, PsiFile file){
