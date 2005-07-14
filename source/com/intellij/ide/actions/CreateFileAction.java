@@ -4,6 +4,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Icons;
@@ -13,7 +14,7 @@ import java.io.File;
 
 public class CreateFileAction extends CreateElementActionBase {
   public CreateFileAction() {
-    super("Create New File", "Create New File", Icons.CUSTOM_FILE_ICON);
+    super("Create New File", "Create New File", IconLoader.getIcon("/fileTypes/text.png"));
   }
 
   protected PsiElement[] invokeDialog(final Project project, PsiDirectory directory) {
