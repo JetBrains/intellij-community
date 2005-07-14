@@ -235,12 +235,16 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
       }
     }
 
-    if (isXmlTag(child) || child.getElementType() == ElementType.XML_TAG) {
+    if (isXmlTag(child)
+     //   || child.getElementType() == ElementType.XML_TAG
+      ) {
       result.add(new XmlTagBlock(child, wrap, alignment, myXmlFormattingPolicy, indent != null ? indent : Indent.getNoneIndent()));
     }
+    /*
     else if (child.getElementType() == ElementType.JSP_SCRIPTLET_END) {
       result.add(new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, Indent.getNoneIndent(), null));
     }
+    */
     else {
       result.add(new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, indent, null));
     }
@@ -318,7 +322,8 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   protected boolean isXmlTag(final ASTNode child) {
-    return child.getPsi() instanceof XmlTag;
+    final PsiElement psi = child.getPsi();
+    return psi instanceof XmlTag && !(psi instanceof JspScriptlet) && !(psi instanceof JspDeclaration);
   }
 
   private boolean useMyFormatter(final Language myLanguage, final Language childLanguage) {
