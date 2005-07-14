@@ -151,7 +151,6 @@ public class EditorOptionsPanel {
     myTabbedPaneWrapper = new TabbedPaneWrapper();
     myTabbedPaneWrapper.addTab("Behaviour", myBehaviourPanel);
     myTabbedPaneWrapper.addTab("Appearance", myAppearancePanel);
-    myTabbedPaneWrapper.installKeyboardNavigation();
   }
 
 

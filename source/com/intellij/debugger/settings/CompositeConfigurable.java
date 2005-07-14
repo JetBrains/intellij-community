@@ -48,15 +48,11 @@ public abstract class CompositeConfigurable extends BaseConfigurable {
       Configurable configurable = iterator.next();
       myTabbedPane.addTab(configurable.getDisplayName(), configurable.getIcon(), configurable.createComponent(), null);
     }
-    myTabbedPane.installKeyboardNavigation();
     return myTabbedPane.getComponent();
   }
 
   public void disposeUIResources() {
-    if (myTabbedPane != null) {
-      myTabbedPane.uninstallKeyboardNavigation();
-      myTabbedPane = null;
-    }
+    myTabbedPane = null;
     if (myConfigurables != null) {
       for (Iterator<Configurable> it = myConfigurables.iterator(); it.hasNext();) {
         it.next().disposeUIResources();

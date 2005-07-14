@@ -230,7 +230,6 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
     };
     myTabs = new FileTemplateTab[]{myTemplatesList, myPatternsList, myCodeTemplatesList, myJ2eeTemplatesList};
     myTabbedPane = new TabbedPaneWrapper();
-    myTabbedPane.installKeyboardNavigation();
     myTabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
     for (int i = 0; i < myTabs.length; i++) {
       FileTemplateTab tab = myTabs[i];
@@ -710,9 +709,6 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
       myEditor.disposeUIResources();
       myEditor = null;
       myEditorComponent = null;
-    }
-    if (myTabbedPane != null) {
-      myTabbedPane.uninstallKeyboardNavigation();
     }
     myMainPanel = null;
   }

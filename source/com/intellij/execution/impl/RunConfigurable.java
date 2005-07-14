@@ -1,6 +1,5 @@
 package com.intellij.execution.impl;
 
-import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunManagerConfig;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.configurations.ConfigurationType;
@@ -48,7 +47,6 @@ class RunConfigurable extends BaseConfigurable {
     myPanel = new JPanel(new BorderLayout());
 
     myTabbedPane = new TabbedPaneWrapper();
-    myTabbedPane.installKeyboardNavigation();
 
     final ConfigurationType[] factories = getConfigurationFactories();
     myTabs = new ConfigurationTab[factories.length];
@@ -159,9 +157,6 @@ class RunConfigurable extends BaseConfigurable {
   }
 
   public void disposeUIResources() {
-    if (myTabbedPane != null) {
-      myTabbedPane.uninstallKeyboardNavigation();
-    }
     for (int i = 0; i < myTabs.length; i++) {
       final ConfigurationTab tab = myTabs[i];
       tab.disposeUIResources();

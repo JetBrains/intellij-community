@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.module.Module;
@@ -41,7 +42,6 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
@@ -253,7 +253,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
   private void setupImpl() {
     myTabbedPane = new TabbedPaneWrapper();
-    myTabbedPane.installKeyboardNavigation();
 
     mySplitter = new Splitter(true);
     mySplitter.setHonorComponentsMinimumSize(true);
@@ -376,9 +375,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     myProject = null;
     myStructureViewWrapper.dispose();
     myStructureViewWrapper = null;
-    if (myTabbedPane != null) {
-      myTabbedPane.uninstallKeyboardNavigation();
-    }
   }
   public void rebuildStructureViewPane() {
     if (myStructureViewWrapper != null) {

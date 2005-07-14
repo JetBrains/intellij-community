@@ -6,8 +6,8 @@ import com.intellij.ui.TabbedPaneWrapper;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 /**
  * @author cdr
@@ -43,7 +43,6 @@ public class StructureViewComposite implements StructureView {
         mySelectedViewDescriptor = myStructureViews[index];
       }
     });
-    myTabbedPaneWrapper.installKeyboardNavigation();
   }
 
   public StructureView getSelectedStructureView() {

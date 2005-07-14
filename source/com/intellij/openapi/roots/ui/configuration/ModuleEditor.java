@@ -2,6 +2,8 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.j2ee.ex.J2EEModulePropertiesEx;
 import com.intellij.j2ee.j2eeDom.J2EEModuleProperties;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleConfigurationEditor;
 import com.intellij.openapi.module.impl.ModuleConfigurationStateImpl;
@@ -11,8 +13,6 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.EventDispatcher;
 
@@ -131,7 +131,6 @@ public class ModuleEditor {
       myTabbedPane.addTab(editor.getDisplayName(), editor.getIcon(), editor.createComponent(), null);
       editor.reset();
     }
-    myTabbedPane.installKeyboardNavigation();
     setSelectedTabName(mySelectedTabName);
 
     myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
@@ -193,7 +192,6 @@ public class ModuleEditor {
       myEditors.clear();
 
       if (myTabbedPane != null) {
-        myTabbedPane.uninstallKeyboardNavigation();
         mySelectedTabName = getSelectedTabName();
         myTabbedPane = null;
       }

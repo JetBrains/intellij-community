@@ -115,7 +115,6 @@ public class SdkEditor implements Configurable{
     myTabbedPane.addTab(myClassPathEditor.getDisplayName(), myClassPathEditor.createComponent());
     myTabbedPane.addTab(mySourcePathEditor.getDisplayName(), mySourcePathEditor.createComponent());
     myTabbedPane.addTab(myJavadocPathEditor.getDisplayName(), myJavadocPathEditor.createComponent());
-    myTabbedPane.installKeyboardNavigation();
 
     myHomeComponent = new TextFieldWithBrowseButton(new ActionListener(){
       public void actionPerformed(ActionEvent e){
@@ -229,9 +228,6 @@ public class SdkEditor implements Configurable{
   }
 
   public void disposeUIResources(){
-    if (myTabbedPane != null) {
-      myTabbedPane.uninstallKeyboardNavigation();
-    }
     myMainPanel = null;
     for (Iterator it = myAdditionalDataConfigurables.keySet().iterator(); it.hasNext();) {
       final SdkType sdkType = (SdkType)it.next();

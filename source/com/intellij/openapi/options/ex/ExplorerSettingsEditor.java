@@ -158,9 +158,6 @@ public class ExplorerSettingsEditor extends DialogWrapper {
   }
 
   protected final void dispose() {
-    if (myGroupTabs != null) {
-      myGroupTabs.uninstallKeyboardNavigation();
-    }
     rememberLastUsedPage();
 
     for (int i = 0; i < myGroups.length; i++) {
@@ -201,7 +198,6 @@ public class ExplorerSettingsEditor extends DialogWrapper {
     JPanel compoundToolbarPanel = new JPanel(new BorderLayout());
 
     myGroupTabs = new TabbedPaneWrapper();
-    myGroupTabs.installKeyboardNavigation();
 
     for (int i = 0; i < myGroups.length; i++) {
       final ConfigurableGroup group = myGroups[i];

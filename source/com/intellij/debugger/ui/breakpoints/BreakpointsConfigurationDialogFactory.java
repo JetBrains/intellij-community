@@ -108,8 +108,6 @@ public class BreakpointsConfigurationDialogFactory {
       });
       myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
 
-      myTabbedPane.installKeyboardNavigation();
-
       // "Enter" and "Esc" keys work like "Close" button.
       ActionListener closeAction = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
@@ -210,7 +208,6 @@ public class BreakpointsConfigurationDialogFactory {
           savePanelSettings(panel, panel.getBreakpointCategory());
           panel.dispose();
         }
-        myTabbedPane.uninstallKeyboardNavigation();
         myLastSelectedTabIndex = myTabbedPane.getSelectedIndex();
         myPanel.removeAll();
         myPanel = null;

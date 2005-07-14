@@ -42,7 +42,8 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 public class TreeClassChooserDialog extends DialogWrapper implements TreeClassChooser{
   private Tree myTree;
@@ -221,8 +222,6 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
 
     myGotoByNamePanel.invoke(new MyCallback(), getModalityState(), false);
 
-    myTabbedPane.installKeyboardNavigation();
-
     myTabbedPane.addChangeListener(
       new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
@@ -317,9 +316,6 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
     if (myBuilder != null) {
       myBuilder.dispose();
       myBuilder = null;
-    }
-    if (myTabbedPane != null) {
-      myTabbedPane.uninstallKeyboardNavigation();
     }
     super.dispose();
   }

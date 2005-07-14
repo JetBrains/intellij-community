@@ -197,8 +197,6 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       }
     });
 
-    myTabbedPane.installKeyboardNavigation();
-
     myTabbedPane.addChangeListener(
       new ChangeListener() {
         public void stateChanged(final ChangeEvent e) {
@@ -265,9 +263,6 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
 
 
   protected void dispose() {
-    if (myTabbedPane != null) {
-      myTabbedPane.uninstallKeyboardNavigation();
-    }
     if (myBuilder != null) {
       myBuilder.dispose();
       myBuilder = null;

@@ -18,8 +18,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * @author Anton Katilin
@@ -28,7 +26,6 @@ import java.util.Iterator;
 public class TabbedPaneWrapper {
   protected final TabbedPane myTabbedPane;
   protected final JComponent myTabbedPaneHolder;
-  private final java.util.List<UnregisterCommand> myRegistrars = new ArrayList<UnregisterCommand>();
 
   public TabbedPaneWrapper(){
     this(SwingConstants.TOP);
@@ -242,77 +239,15 @@ public class TabbedPaneWrapper {
   }
 
   /**
-   * Installs tab navigation via IdeActions.ACTION_NEXT_TAB and IdeActions.ACTION_PREVIOUS_TAB shortcuts.
-   * In order to avoid memory leaks, the uninstallKeyboardNavigation() method should be called when the TabbedPane is not needed anymore
+   * @deprecated Keyboard navigation is installed/deinstalled automatically. This method does nothing now.
    */
   public final void installKeyboardNavigation(){
-    final AnAction nextTabAction = new AnAction() {
-      {
-        setEnabledInModalContext(true);
-      }
-      public void actionPerformed(final AnActionEvent e) {
-        int index = getSelectedIndex() + 1;
-        if (index >= getTabCount()) {
-          index = 0;
-        }
-        setSelectedIndex(index);
-      }
-    };
-    final JComponent component = getComponent();
-    nextTabAction.registerCustomShortcutSet(
-      ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_TAB).getShortcutSet(),
-      component
-    );
-    myRegistrars.add(new UnregisterCommand(nextTabAction, component));
-    // make action work in modal dialog box
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        JRootPane rootPane = SwingUtilities.getRootPane(component);
-        if (rootPane != null) {
-          nextTabAction.registerCustomShortcutSet(
-            ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_TAB).getShortcutSet(), rootPane
-          );
-          myRegistrars.add(new UnregisterCommand(nextTabAction, rootPane));
-        }
-      }
-    });
-
-    final AnAction previousTabAction = new AnAction() {
-      {
-        setEnabledInModalContext(true);
-      }
-      public void actionPerformed(final AnActionEvent e) {
-        int index = getSelectedIndex() - 1;
-        if (index < 0) {
-          index = getTabCount() - 1;
-        }
-        setSelectedIndex(index);
-      }
-    };
-    previousTabAction.registerCustomShortcutSet(
-      ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_TAB).getShortcutSet(),
-      component
-    );
-    myRegistrars.add(new UnregisterCommand(previousTabAction, component));
-
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        JRootPane rootPane = SwingUtilities.getRootPane(component);
-        if (rootPane != null) {
-          previousTabAction.registerCustomShortcutSet(
-            ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_TAB).getShortcutSet(), rootPane
-          );
-          myRegistrars.add(new UnregisterCommand(previousTabAction, rootPane));
-        }
-      }
-    });
   }
 
+  /**
+   * @deprecated Keyboard navigation is installed/deinstalled automatically. This method does nothing now.
+   */
   public final void uninstallKeyboardNavigation(){
-    for (Iterator<UnregisterCommand> it = myRegistrars.iterator(); it.hasNext();) {
-      it.next().unregister();
-    }
-    myRegistrars.clear();
   }
 
   public final String getTitleAt(final int i) {
@@ -369,6 +304,8 @@ public class TabbedPaneWrapper {
 
   protected static class TabbedPane extends JTabbedPane {
     private ScrollableTabSupport myScrollableTabSupport;
+    private AnAction myNextTabAction = null;
+    private AnAction myPreviousTabAction = null;
 
     public TabbedPane(final int tabPlacement) {
       super(tabPlacement);
@@ -381,6 +318,69 @@ public class TabbedPaneWrapper {
         }
       );
     }
+
+    @Override
+    public void addNotify() {
+      super.addNotify();
+      installKeyboardNavigation();
+    }
+
+    @Override
+    public void removeNotify() {
+      super.removeNotify();
+      uninstallKeyboardNavigation();
+    }
+
+    @SuppressWarnings({"NonStaticInitializer"})
+    private void installKeyboardNavigation(){
+      myNextTabAction = new AnAction() {
+        {
+          setEnabledInModalContext(true);
+        }
+
+        public void actionPerformed(final AnActionEvent e) {
+          int index = getSelectedIndex() + 1;
+          if (index >= getTabCount()) {
+            index = 0;
+          }
+          setSelectedIndex(index);
+        }
+      };
+      myNextTabAction.registerCustomShortcutSet(
+        ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_TAB).getShortcutSet(),
+        this
+      );
+
+      myPreviousTabAction = new AnAction() {
+        {
+          setEnabledInModalContext(true);
+        }
+
+        public void actionPerformed(final AnActionEvent e) {
+          int index = getSelectedIndex() - 1;
+          if (index < 0) {
+            index = getTabCount() - 1;
+          }
+          setSelectedIndex(index);
+        }
+      };
+      myPreviousTabAction.registerCustomShortcutSet(
+        ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_TAB).getShortcutSet(),
+        this
+      );
+    }
+
+    private void uninstallKeyboardNavigation() {
+      if (myNextTabAction != null) {
+        myNextTabAction.unregisterCustomShortcutSet(this);
+        myNextTabAction = null;
+      }
+      if (myPreviousTabAction != null) {
+        myPreviousTabAction.unregisterCustomShortcutSet(this);
+        myPreviousTabAction = null;
+      }
+    }
+
 
     public final void setUI(final TabbedPaneUI ui){
       super.setUI(ui);
