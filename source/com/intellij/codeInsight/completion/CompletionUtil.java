@@ -68,6 +68,7 @@ public class CompletionUtil {
 
   private static HashMap<FileType,CompletionData> completionDatas;
   public static final Key<CompletionData> ENFORCE_COMPLETION_DATA_KEY = new Key<CompletionData>("Enforce completionData");
+  private static final int MAX_SCOPE_SIZE_TO_SEARCH_UNRESOLVED = 50000;
 
   private static void initBuiltInCompletionDatas() {
     completionDatas = new HashMap<FileType, CompletionData>();
@@ -376,6 +377,7 @@ public class CompletionUtil {
   }
 
   public static String[] getUnserolvedReferences(final PsiElement parentOfType, final boolean referenceOnMethod) {
+    if(parentOfType.getTextLength() > MAX_SCOPE_SIZE_TO_SEARCH_UNRESOLVED) return new String[0];
     final List<String> unresolvedRefs = new ArrayList<String>();
     if (parentOfType != null) {
       parentOfType.accept(new PsiRecursiveElementVisitor() {
@@ -419,26 +421,35 @@ public class CompletionUtil {
   }
 
   public static String[] getPropertiesHandlersNames(final PsiClass psiClass,
-                                                    boolean staticContext,
-                                                    PsiType varType,
+                                                    final boolean staticContext,
+                                                    final PsiType varType,
                                                     final PsiElement element) {
-    final List<String> propertyHandlers = new ArrayList<String>();
-    final PsiField[] fields = psiClass.getFields();
+    class Change implements Runnable {
+      private String[] result;
 
-    for (final PsiField field : fields) {
-      if (field == element) continue;
-      final PsiModifierList modifierList = field.getModifierList();
-      if (staticContext && (modifierList != null && !modifierList.hasModifierProperty("static"))) continue;
-      final PsiMethod getter = PropertyUtil.generateGetterPrototype(field);
-      if (getter.getReturnType().equals(varType) && psiClass.findMethodBySignature(getter, true) == null) {
-        propertyHandlers.add(getter.getName());
-      }
+      public void run() {
+        final List<String> propertyHandlers = new ArrayList<String>();
+        final PsiField[] fields = psiClass.getFields();
 
-      final PsiMethod setter = PropertyUtil.generateSetterPrototype(field);
-      if (setter.getReturnType().equals(varType) && psiClass.findMethodBySignature(setter, true) == null) {
-        propertyHandlers.add(setter.getName());
+        for (final PsiField field : fields) {
+          if (field == element) continue;
+          final PsiModifierList modifierList = field.getModifierList();
+          if (staticContext && (modifierList != null && !modifierList.hasModifierProperty("static"))) continue;
+          final PsiMethod getter = PropertyUtil.generateGetterPrototype(field);
+          if (getter.getReturnType().equals(varType) && psiClass.findMethodBySignature(getter, true) == null) {
+            propertyHandlers.add(getter.getName());
+          }
+
+          final PsiMethod setter = PropertyUtil.generateSetterPrototype(field);
+          if (setter.getReturnType().equals(varType) && psiClass.findMethodBySignature(setter, true) == null) {
+            propertyHandlers.add(setter.getName());
+          }
+        }
+        result = propertyHandlers.toArray(new String[propertyHandlers.size()]);
       }
     }
-    return propertyHandlers.toArray(new String[propertyHandlers.size()]);
+    final Change result = new Change();
+    element.getManager().performActionWithFormatterDisabled(result);
+    return result.result;
   }
 }
