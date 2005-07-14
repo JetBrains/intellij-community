@@ -10,6 +10,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.ProjectJdk;
@@ -23,6 +25,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.pom.java.LanguageLevel;
 import org.jdom.JDOMException;
 
@@ -100,18 +106,23 @@ public class ProjectUtil {
         Messages.showErrorDialog("Error adding module to project: " + ex.getMessage(), "Add Module");
       }
     }
-    else {
-      StartupManager.getInstance(newProject).registerPostStartupActivity(new Runnable() {
-        public void run() {
-          // ensure the dialog is shown after all startup activities are done
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
+
+    StartupManager.getInstance(newProject).registerPostStartupActivity(new Runnable() {
+      public void run() {
+        // ensure the dialog is shown after all startup activities are done
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            final ToolWindow toolWindow = ToolWindowManager.getInstance(newProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
+            if (toolWindow != null) {
+              toolWindow.activate(null);
+            }
+            if (moduleBuilder == null) {
               ModulesConfigurator.showDialog(newProject, null, null, true);
             }
-          });
-        }
-      });
-    }
+          }
+        });
+      }
+    });
 
     updateLastProjectLocation(projectFilePath);
 
