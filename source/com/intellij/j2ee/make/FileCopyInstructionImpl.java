@@ -109,12 +109,19 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
     final FileCopyInstruction item = (FileCopyInstruction) o;
 
     if (getFile() != null ? !getFile().equals(item.getFile()) : item.getFile() != null) return false;
+    
+    if (getOutputRelativePath() != null) {
+      if (!getOutputRelativePath().equals( item.getOutputRelativePath() )) return false;
+    } else if ( item.getOutputRelativePath() != null ) {
+      return false;
+    }
 
     return true;
   }
 
   public int hashCode() {
-    return getFile() != null ? getFile().hashCode() : 0;
+    return (getFile() != null ? getFile().hashCode() : 0) + 
+           (getOutputRelativePath() != null ? getOutputRelativePath().hashCode():0);
   }
 
   public File getFile() {
