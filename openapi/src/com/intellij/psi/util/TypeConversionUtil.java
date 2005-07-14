@@ -80,9 +80,7 @@ public class TypeConversionUtil {
     //Done with primitives
 
     if (toType instanceof PsiArrayType && !(fromType instanceof PsiArrayType)) {
-      return fromType.equalsToText("java.io.Serializable")
-             || fromType.equalsToText("java.lang.Cloneable")
-             || fromType.equalsToText("java.lang.Object");
+      return isAssignable(fromType, toType);
     }
     if (fromType instanceof PsiArrayType) {
       return toType instanceof PsiArrayType
@@ -168,8 +166,8 @@ public class TypeConversionUtil {
             List<MethodSignatureBackedByPsiMethod> toClassMethods = toClassAllMethods.get(fromClassMethod.getSignature(PsiSubstitutor.EMPTY));
             if (toClassMethods != null) {
               final PsiType fromClassReturnType = fromClassMethod.getReturnType();
-              for (int i = 0; i < toClassMethods.size(); i++) {
-                PsiMethod toClassMethod = toClassMethods.get(i).getMethod();
+              for (MethodSignatureBackedByPsiMethod toClassSignature : toClassMethods) {
+                PsiMethod toClassMethod = toClassSignature.getMethod();
                 final PsiType toClassReturnType = toClassMethod.getReturnType();
                 if (fromClassReturnType != null
                     && toClassReturnType != null
@@ -542,7 +540,16 @@ public class TypeConversionUtil {
           return "java.io.Serializable".equals(qualifiedName) || "java.lang.Cloneable".equals(qualifiedName);
         }
         else {
-          return left.equalsToText("java.lang.Object");
+          if (lClass instanceof PsiTypeParameter) {
+            final PsiClassType[] superTypes = lClass.getSuperTypes();
+            for (PsiClassType type : superTypes) {
+              if (!isAssignable(type, right, allowUncheckedConversion)) return false;
+            }
+            return true;
+          }
+          else {
+            return left.equalsToText("java.lang.Object");
+          }
         }
       }
       PsiType lCompType = ((PsiArrayType)left).getComponentType();
@@ -817,8 +824,7 @@ public class TypeConversionUtil {
                                                    PsiClass base,
                                                    Set<PsiClass> set,
                                                    PsiManager manager) {
-    final PsiClassType[] extendsReferences = types;
-    for (final PsiClassType type : extendsReferences) {
+    for (final PsiClassType type : types) {
       final PsiType substitutedType = candidateSubstitutor.substitute(type);
       //if (!(substitutedType instanceof PsiClassType)) return null;
       LOG.assertTrue(substitutedType instanceof PsiClassType);
