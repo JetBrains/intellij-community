@@ -4,7 +4,6 @@ import com.intellij.compiler.ant.taskdefs.Exclude;
 import com.intellij.compiler.ant.taskdefs.PatternSet;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
-import com.intellij.openapi.project.Project;
 
 import java.io.DataOutput;
 import java.io.IOException;
