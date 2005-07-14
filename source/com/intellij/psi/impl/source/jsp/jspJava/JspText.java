@@ -33,6 +33,7 @@ public class JspText extends LeafPsiElement {
 
   public void setFollowingText(final XmlText followingText) {
     myFollowingText = followingText;
+    clearCaches();
   }
 
   public XmlText getFollowingText() {

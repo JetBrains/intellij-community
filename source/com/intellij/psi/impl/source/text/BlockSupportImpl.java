@@ -9,8 +9,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPlainTextFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.PsiElementFactoryImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiTreeChangeEventImpl;
+import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.source.CodeFragmentElement;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.DummyHolder;
@@ -162,10 +165,44 @@ public class BlockSupportImpl extends BlockSupport implements Constants, Project
       parent.replaceAllChildrenToChildrenOf(holderElement);
     }
     else{
-      final PsiFileImpl newFile = (PsiFileImpl)PsiElementFactoryImpl.createFileFromText((PsiManagerImpl)fileImpl.getManager(), fileType, fileImpl.getName(), newFileText, 0, textLength);
+      final PsiManagerImpl manager = (PsiManagerImpl)fileImpl.getManager();
+      final PsiFileImpl newFile = (PsiFileImpl)PsiElementFactoryImpl.createFileFromText(manager, fileType, fileImpl.getName(), newFileText, 0, textLength);
       newFile.setOriginalFile(fileImpl);
       final ASTNode newFileElement = newFile.getTreeElement();
-      fileImpl.getTreeElement().replaceAllChildrenToChildrenOf(newFileElement);
+      final RepositoryManager repositoryManager = manager.getRepositoryManager();
+      final FileElement fileElement = (FileElement)fileImpl.getNode();
+      final int oldLength = fileElement.getTextLength();
+      sendPsiBeforeEvent(fileImpl);
+      if(repositoryManager != null) repositoryManager.beforeChildAddedOrRemoved(fileImpl, fileElement);
+      if(fileElement.getFirstChildNode() != null)
+        TreeUtil.removeRange((TreeElement)fileElement.getFirstChildNode(), null);
+      TreeUtil.addChildren((CompositeElement)fileElement, (TreeElement)newFileElement.getFirstChildNode());
+      if(repositoryManager != null) repositoryManager.beforeChildAddedOrRemoved(fileImpl, fileElement);
+      manager.invalidateFile(fileImpl);
+      fileElement.subtreeChanged();
+      sendPsiAfterEvent(fileImpl, oldLength);
     }
+  }
+
+  private void sendPsiAfterEvent(final PsiFileImpl scope, int oldLength) {
+    if(!scope.isPhysical()) return;
+    final PsiManagerImpl manager = (PsiManagerImpl)scope.getManager();
+    PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(manager);
+    event.setParent(scope);
+    event.setFile(scope);
+    event.setOffset(0);
+    event.setOldLength(oldLength);
+    manager.childrenChanged(event);
+  }
+
+  private void sendPsiBeforeEvent(final PsiFile scope) {
+    if(!scope.isPhysical()) return;
+    final PsiManagerImpl manager = (PsiManagerImpl)scope.getManager();
+    PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(manager);
+    event.setParent(scope);
+    event.setFile(scope);
+    event.setOffset(0);
+    event.setOldLength(scope.getTextLength());
+    manager.beforeChildrenChange(event);
   }
 }
