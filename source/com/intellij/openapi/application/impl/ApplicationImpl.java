@@ -49,6 +49,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
 
@@ -710,11 +711,27 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   public void assertReadAccessAllowed() {
     if (!isReadAccessAllowed()) {
       LOG.error("Read access is allowed from event dispatch thread or inside read-action only (see com.intellij.openapi.application.Application.runReadAction())",
-                new String[]{"Current thread: " + Thread.currentThread(),
-                  "Our dispatch thread:" + ourDispatchThread,
-                  "SystemEventQueue: " + Toolkit.getDefaultToolkit().getSystemEventQueue()
+                new String[]{"Current thread: " + describe(Thread.currentThread()),
+                  "Our dispatch thread:" + describe(ourDispatchThread),
+                  "SystemEventQueueThread: " + describe(getEventQueueThread())
                 });
     }
+  }
+
+  private String describe(Object o) {
+    if (o == null) return "null";
+    return o.toString() + " " + System.identityHashCode(o);
+  }
+
+  private Thread getEventQueueThread() {
+    EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
+    try {
+      Method method = EventQueue.class.getDeclaredMethod("getDispatchThread");
+      method.setAccessible(true);
+      return (Thread) method.invoke(eventQueue);
+    } catch (Exception e1) {
+    }
+    return null;
   }
 
   public boolean isReadAccessAllowed() {
