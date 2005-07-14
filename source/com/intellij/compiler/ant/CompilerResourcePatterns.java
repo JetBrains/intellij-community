@@ -20,8 +20,7 @@ public class CompilerResourcePatterns extends Generator{
     final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(project);
     final String[] patterns = compilerConfiguration.getResourceFilePatterns();
     myPatternSet = new PatternSet(BuildProperties.PROPERTY_COMPILER_RESOURCE_PATTERNS);
-    for (int idx = 0; idx < patterns.length; idx++) {
-      String pattern = patterns[idx];
+    for (String pattern : patterns) {
       if (compilerConfiguration.isPatternNegated(pattern)) {
         myPatternSet.add(new Exclude("**/" + pattern.substring(1)));
       }

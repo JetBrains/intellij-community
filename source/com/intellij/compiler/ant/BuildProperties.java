@@ -1,10 +1,7 @@
 package com.intellij.compiler.ant;
 
 import com.intellij.compiler.JavacSettings;
-import com.intellij.compiler.ant.taskdefs.FileSet;
-import com.intellij.compiler.ant.taskdefs.Include;
-import com.intellij.compiler.ant.taskdefs.Path;
-import com.intellij.compiler.ant.taskdefs.Property;
+import com.intellij.compiler.ant.taskdefs.*;
 import com.intellij.j2ee.appServerIntegrations.impl.ApplicationServersManagerImpl;
 import com.intellij.j2ee.serverInstances.ApplicationServersManager;
 import com.intellij.openapi.module.Module;
@@ -43,6 +40,7 @@ public class BuildProperties extends CompositeGenerator {
   public static final String PROPERTY_COMPILER_MAX_MEMORY = "compiler.max.memory";
   public static final String PROPERTY_COMPILER_EXCLUDES = "compiler.excluded";
   public static final String PROPERTY_COMPILER_RESOURCE_PATTERNS = "compiler.resources";
+  public static final String PROPERTY_IGNORED_FILES = "ignored.files";
   public static final String PROPERTY_COMPILER_GENERATE_DEBUG_INFO = "compiler.debug";
   public static final String PROPERTY_COMPILER_GENERATE_NO_WARNINGS = "compiler.generate.no.warnings";
   public static final String PROPERTY_PROJECT_JDK_HOME = "project.jdk.home";
@@ -68,6 +66,8 @@ public class BuildProperties extends CompositeGenerator {
     add(new Property(PROPERTY_COMPILER_GENERATE_NO_WARNINGS, javacSettings.GENERATE_NO_WARNINGS? "on" : "off"));
     add(new Property(PROPERTY_COMPILER_ADDITIONAL_ARGS, javacSettings.ADDITIONAL_OPTIONS_STRING));
     add(new Property(PROPERTY_COMPILER_MAX_MEMORY, Integer.toString(javacSettings.MAXIMUM_HEAP_SIZE) + "m"));
+
+    add(new IgnoredFiles());
 
     if (CompilerExcludes.isAvailable(project)) {
       add(new CompilerExcludes(project, genOptions));
@@ -230,7 +230,7 @@ public class BuildProperties extends CompositeGenerator {
 
   /**
    * left for compatibility
-   */ 
+   */
   public static String getModuleBasedirProperty(Module module) {
     return "module." + convertName(module.getName()) + ".basedir";
   }

@@ -13,8 +13,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 
-import java.io.File;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -48,6 +48,7 @@ public class ModuleChunkSourcepath extends CompositeGenerator{
 
 
       final PatternSet excludedFromModule = new PatternSet(BuildProperties.getExcludedFromModuleProperty(moduleName));
+      excludedFromModule.add(new PatternSetRef(BuildProperties.PROPERTY_IGNORED_FILES));
 
       final ContentEntry[] contentEntries = rootManager.getContentEntries();
       for (int idx = 0; idx < contentEntries.length; idx++) {
@@ -133,6 +134,10 @@ public class ModuleChunkSourcepath extends CompositeGenerator{
   }
 
   private void addExcludePatterns(Module module, final VirtualFile root, VirtualFile dir, CompositeGenerator generator, final boolean parentIncluded) {
+    if (FileTypeManager.getInstance().isFileIgnored(dir.getName())) {
+      // ignored files are handled by global 'ignored' patternset
+      return;
+    }
     final boolean isIncluded = ModuleRootManager.getInstance(module).getFileIndex().isInContent(dir);
     if (isIncluded != parentIncluded) {
       final String relativePath = VfsUtil.getRelativePath(dir, root, '/');
