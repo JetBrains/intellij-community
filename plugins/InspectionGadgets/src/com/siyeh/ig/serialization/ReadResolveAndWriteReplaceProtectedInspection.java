@@ -51,6 +51,11 @@ public class ReadResolveAndWriteReplaceProtectedInspection extends MethodInspect
             if (method.hasModifierProperty(PsiModifier.PROTECTED)) {
                 return;
             }
+            if(aClass.hasModifierProperty(PsiModifier.FINAL) &&
+                   method.hasModifierProperty(PsiModifier.PRIVATE) )
+            {
+                return;
+            }
             if(!SerializationUtils.isReadResolve(method) &&
                        !SerializationUtils.isWriteReplace(method)){
                 return;
