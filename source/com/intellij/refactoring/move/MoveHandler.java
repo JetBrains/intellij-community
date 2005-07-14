@@ -79,12 +79,14 @@ public class MoveHandler implements RefactoringActionHandler {
 
       if (tryToMoveElement(element, project, dataContext)) {
         return;
-      } else if (!(element.getParent() instanceof PsiAnonymousClass)) {
+      } else {
         final TextRange range = element.getTextRange();
         if (range != null) {
           int relative = offset - range.getStartOffset();
           final PsiReference reference = element.findReferenceAt(relative);
-          if (reference != null) {
+          if (reference != null &&
+            !(reference instanceof PsiJavaCodeReferenceElement &&
+              ((PsiJavaCodeReferenceElement)reference).getParent() instanceof PsiAnonymousClass)) {
             final PsiElement refElement = reference.resolve();
             if (refElement != null && tryToMoveElement(refElement, project, dataContext)) return;
           }
