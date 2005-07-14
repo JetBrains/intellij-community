@@ -276,12 +276,10 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
       if (!(element instanceof PsiMethod)) return false;
       if (!((PsiMethod)element).isConstructor()) return false;
     }
-    else {
-      LOG.assertTrue(false);
-    }
 
     return element.getManager().areElementsEquivalent(element, resolve());
   }
+
 
   public Object[] getVariants() {
     LOG.assertTrue(false, "This method should _not_ be used for PsiJavaReference!");
