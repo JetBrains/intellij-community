@@ -7,6 +7,7 @@ package com.intellij.debugger.ui.impl.watch;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
@@ -156,9 +157,12 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     if (node == null || node.getDescriptor() == null) {
       return;
     }
-    BuildNodeCommand builder = getBuildNodeCommand(node);
-    builder.getNode().add(myDescriptorManager.createMessageNode(MessageDescriptor.EVALUATING));
-    getDebuggerContext().getDebugProcess().getManagerThread().invokeLater(builder);
+    final DebugProcessImpl debugProcess = getDebuggerContext().getDebugProcess();
+    if (debugProcess != null) {
+      BuildNodeCommand command = getBuildNodeCommand(node);
+      command.getNode().add(myDescriptorManager.createMessageNode(MessageDescriptor.EVALUATING));
+      debugProcess.getManagerThread().invokeLater(command);
+    }
   }
 
   private BuildNodeCommand getBuildNodeCommand(final DebuggerTreeNodeImpl node) {
