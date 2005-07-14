@@ -3,7 +3,6 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 import com.intellij.help.impl.HelpManagerImpl;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.actions.CheckForUpdateAction;
 import com.intellij.ide.actions.OpenProjectAction;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.PluginDescriptor;
@@ -32,6 +31,7 @@ import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.io.File;
 
 /**
  * Created by IntelliJ IDEA.
@@ -83,9 +83,11 @@ public class WelcomeScreen {
   private static final Icon CHECK_FOR_UPDATE_ICON = IconLoader.getIcon("/general/checkForUpdate.png");
   private static final Icon READ_HELP_ICON = IconLoader.getIcon("/general/readHelp.png");
   private static final Icon KEYMAP_ICON = IconLoader.getIcon("/general/defaultKeymap.png");
+  private static final Icon PLUGIN_ICON = IconLoader.getIcon("/general/pluginManager.png");
   private static final Icon DEFAULT_ICON = IconLoader.getIcon("/general/configurableDefault.png");
 
   private static final String KEYMAP_URL = PathManager.getHomePath() + "/help/ReferenceCard.pdf";
+  private static final String PLUGIN_URL = PathManager.getHomePath() + "/Plugin Development Readme.html";
 
   private static final Font TEXT_FONT = new Font("Tahoma", Font.PLAIN, 11);
   private static final Font LINK_FONT = new Font("Tahoma", Font.BOLD, 12);
@@ -303,6 +305,20 @@ public class WelcomeScreen {
       }
     };
     docsGroup.addButton(defaultKeymap, "Default Keymap", "Open PDF file with the default keymap reference card.");
+
+    if (new File(PLUGIN_URL).isFile()) {
+      MyActionButton pluginDev = new MyActionButton(PLUGIN_ICON, null) {
+        protected void onPress(InputEvent e) {
+          try {
+            BrowserUtil.launchBrowser(PLUGIN_URL);
+          }
+          catch(IllegalStateException ex) {
+            // ignore
+          }
+        }
+      };
+      docsGroup.addButton(pluginDev, "Plugin Development", "Get started developing plugins for IntelliJ IDEA.");
+    }
   }
 
   private void addDefaultQuickStartActions(final ActionGroupDescriptor quickStarts, final ActionManager actionManager) {
