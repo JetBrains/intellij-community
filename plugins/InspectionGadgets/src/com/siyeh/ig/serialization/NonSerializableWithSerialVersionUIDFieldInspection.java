@@ -1,9 +1,12 @@
 package com.siyeh.ig.serialization;
 
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -12,7 +15,8 @@ import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class NonSerializableWithSerialVersionUIDFieldInspection extends ClassInspection {
-    private final MakeSerializableFix fix = new MakeSerializableFix();
+    private final MakeSerializableFix fix1 = new MakeSerializableFix();
+    private final RemoveSerialVersionUIDFix fix2 = new RemoveSerialVersionUIDFix();
 
     public String getID(){
         return "NonSerializableClassWithSerialVersionUID";
@@ -30,8 +34,21 @@ public class NonSerializableWithSerialVersionUIDFieldInspection extends ClassIns
         return "Non-serializable class #ref defines a serialVersionUID field #loc";
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+    protected InspectionGadgetsFix[] buildFixes(PsiElement location){
+        return new InspectionGadgetsFix[]{fix1, fix2};
+    }
+
+    private static class RemoveSerialVersionUIDFix extends InspectionGadgetsFix{
+        public String getName(){
+            return "Remove serialVersionUID field";
+        }
+
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException{
+            final PsiElement nameElement = descriptor.getPsiElement();
+            final PsiField field = (PsiField)nameElement.getParent();
+            field.delete();
+        }
     }
 
     public BaseInspectionVisitor buildVisitor() {

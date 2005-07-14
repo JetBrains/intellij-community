@@ -19,6 +19,17 @@ public  class UnnecessaryFinalOnMethodParameter
         };
 
     }
+    public void foo4(final int bar)
+    {
+        class Runnable
+        {
+            public void run()
+            {
+                int baz = bar;
+            }
+        };
+
+    }
 
     public void foo3(final int bar)
     {

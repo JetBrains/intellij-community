@@ -19,13 +19,13 @@ public class VariableUsedInInnerClassVisitor extends PsiRecursiveElementVisitor{
         }
     }
 
-    public void visitAnonymousClass(@NotNull PsiAnonymousClass psiAnonymousClass){
+    public void visitClass(@NotNull PsiClass psiClass){
         if(usedInInnerClass){
             return;
         }
         final boolean wasInInnerClass = inInnerClass;
         inInnerClass = true;
-        super.visitAnonymousClass(psiAnonymousClass);
+        super.visitClass(psiClass);
         inInnerClass = wasInInnerClass;
     }
 

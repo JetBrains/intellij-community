@@ -7,7 +7,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RemoveModifierFix;
-import com.siyeh.ig.psiutils.VariableUsedInInnerClassVisitor;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryFinalOnLocalVariableInspection extends MethodInspection {
@@ -61,7 +61,7 @@ public class UnnecessaryFinalOnLocalVariableInspection extends MethodInspection 
             }
             for(PsiElement declaredElement1 : declaredElements){
                 final PsiLocalVariable variable = (PsiLocalVariable) declaredElement1;
-                if(variableIsUsedInInnerClass(containingBlock, variable)){
+                if(VariableAccessUtils.variableIsUsedInInnerClass(variable, containingBlock)){
                     return;
                 }
             }
@@ -79,20 +79,10 @@ public class UnnecessaryFinalOnLocalVariableInspection extends MethodInspection 
                     continue;
                 }
                 if(parameter.hasModifierProperty(PsiModifier.FINAL) &&
-                        !variableIsUsedInInnerClass(catchBlock, parameter)){
+                        !VariableAccessUtils.variableIsUsedInInnerClass(parameter, catchBlock )){
                     registerModifierError(PsiModifier.FINAL, parameter);
                 }
             }
-        }
-
-
-        private static boolean variableIsUsedInInnerClass(PsiCodeBlock block,
-                                                          PsiVariable variable) {
-
-            final VariableUsedInInnerClassVisitor visitor
-                    = new VariableUsedInInnerClassVisitor(variable);
-            block.accept(visitor);
-            return visitor.isUsedInInnerClass();
         }
 
     }

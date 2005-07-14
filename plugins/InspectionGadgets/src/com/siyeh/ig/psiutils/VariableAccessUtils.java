@@ -59,7 +59,7 @@ public class VariableAccessUtils{
         return visitor.isAssigned();
     }
 
-    public static boolean variableIsUsedInInnerClass(@NotNull PsiLocalVariable variable,
+    public static boolean variableIsUsedInInnerClass(@NotNull PsiVariable variable,
                                                      @NotNull PsiElement context){
         final VariableUsedInInnerClassVisitor visitor =
                 new VariableUsedInInnerClassVisitor(variable);
