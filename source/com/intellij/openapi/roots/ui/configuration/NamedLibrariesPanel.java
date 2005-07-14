@@ -173,11 +173,10 @@ public class NamedLibrariesPanel extends JPanel {
             setChooserElementMarked(chooserElement, true);
           }
         }
-        myLibrariesChooser
-          .addElement(chooserElement, chooserElement.isAttachedToProject(),
-                      chooserElement.isValid()
-                      ? LibraryChooserElement.VALID_LIBRARY_ELEMENT_PROPERTIES
-                      : LibraryChooserElement.INVALID_LIBRARY_ELEMENT_PROPERTIES);
+        final ElementsChooser.ElementProperties elementProperties = chooserElement.isValid()
+                                                                    ? LibraryChooserElement.VALID_LIBRARY_ELEMENT_PROPERTIES
+                                                                    : LibraryChooserElement.INVALID_LIBRARY_ELEMENT_PROPERTIES;
+        myLibrariesChooser.addElement(chooserElement, chooserElement.isAttachedToProject(), elementProperties);
         if (librariesToSelect != null && librariesToSelect.contains(chooserElement.getLibrary())) {
           elementsToSelect.add(chooserElement);
         }

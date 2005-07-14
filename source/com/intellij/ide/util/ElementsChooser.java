@@ -11,8 +11,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ElementsChooser<T> extends JPanel {
   private JTable myTable = null;
@@ -441,21 +443,11 @@ public class ElementsChooser<T> extends JPanel {
       }
       final MyTableModel model = (MyTableModel)table.getModel();
       component.setEnabled(ElementsChooser.this.isEnabled() && (myColorUnmarkedElements? model.isElementMarked(row) : true));
-      ElementProperties properties = myElementToPropertiesMap.get(t);
-      if (properties != null) {
-        if (component instanceof JLabel) {
-          ((JLabel)component).setIcon(properties.getIcon());
-        }
-        final Color propertiesColor = properties.getColor();
-        if (propertiesColor != null) {
-          component.setForeground(propertiesColor);
-        }
+      final ElementProperties properties = myElementToPropertiesMap.get(t);
+      if (component instanceof JLabel) {
+        ((JLabel)component).setIcon(properties != null? properties.getIcon() : null);
       }
-      else {
-        if (component instanceof JLabel) {
-          ((JLabel)component).setIcon(null);
-        }
-      }
+      component.setForeground(properties != null? properties.getColor() : null);
       return component;
     }
   }
