@@ -29,6 +29,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.lang.StdLanguages;
 
 import javax.swing.*;
 import java.awt.*;
@@ -105,7 +106,7 @@ public class RenameDialog extends RefactoringDialog {
 
   private void createNewNameComponent() {
     String[] suggestedNames = getSuggestedNames();
-    myNameSuggestionsField = new NameSuggestionsField(suggestedNames, myProject, myPsiElement instanceof PsiAntElement ? StdFileTypes.PLAIN_TEXT : StdFileTypes.JAVA);
+    myNameSuggestionsField = new NameSuggestionsField(suggestedNames, myProject, StdLanguages.JAVA.equals(myPsiElement.getLanguage()) ? StdFileTypes.JAVA : StdFileTypes.PLAIN_TEXT);
     myNameSuggestionsField.addDataChangedListener(new NameSuggestionsField.DataChanged() {
       public void dataChanged() {
         validateButtons();
@@ -130,8 +131,8 @@ public class RenameDialog extends RefactoringDialog {
 
     if (prefix.length() == 0) {
       String[] suggestedNames = getSuggestedNames();
-      for (int i = 0; i < suggestedNames.length; i++) {
-        LookupItemUtil.addLookupItem(set, suggestedNames[i], "");
+      for (String suggestedName : suggestedNames) {
+        LookupItemUtil.addLookupItem(set, suggestedName, "");
       }
     }
 
@@ -448,8 +449,7 @@ public class RenameDialog extends RefactoringDialog {
         if (myPsiElement.getParent() instanceof PsiClass) { // innerClass
           PsiClass containingClass = (PsiClass)myPsiElement.getParent();
           PsiClass[] innerClasses = containingClass.getInnerClasses();
-          for (int idx = 0; idx < innerClasses.length; idx++) {
-            PsiClass innerClass = innerClasses[idx];
+          for (PsiClass innerClass : innerClasses) {
             if (newName.equals(innerClass.getName())) {
               int ret = Messages.showYesNoDialog(
                 myProject,
