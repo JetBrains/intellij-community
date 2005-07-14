@@ -24,7 +24,7 @@ import java.awt.event.ActionListener;
 public class CreateClassDialog extends DialogWrapper {
   private final JLabel myInformationLabel = new JLabel("X");
   private final JLabel myPackageLabel = new JLabel("Destination package:");
-  private final JTextField myTfPackage = new JTextField();
+  private final JTextField myTfPackage = new MyTextField();
   private final FixedSizeButton myPackageChooseButton = new FixedSizeButton(myTfPackage);
   private final JTextField myTfClassName = new MyTextField();
   private final Project myProject;
