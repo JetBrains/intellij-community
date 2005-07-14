@@ -75,7 +75,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     myExpression = onExpression;
     myLocalVar = onLocalVariable;
     myMethodToReplaceIn = methodToReplaceIn;
-    myIsInvokedOnDeclaration = onExpression != null;
+    myIsInvokedOnDeclaration = onExpression == null;
     myMethodToSearchFor = methodToSearchFor;
     myIsLocalVariable = onLocalVariable != null;
     myHasInitializer = onLocalVariable != null && onLocalVariable.getInitializer() != null;
