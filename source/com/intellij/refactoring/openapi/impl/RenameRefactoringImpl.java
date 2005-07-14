@@ -51,7 +51,7 @@ public class RenameRefactoringImpl extends RefactoringImpl<RenameProcessor> impl
   }
 
   public void setSearchInNonJavaFiles(boolean value) {
-    myProcessor.setSearchInNonJavaFiles(value);
+    myProcessor.setSearchTextOccurences(value);
   }
 
   public boolean isSearchInComments() {
@@ -59,6 +59,6 @@ public class RenameRefactoringImpl extends RefactoringImpl<RenameProcessor> impl
   }
 
   public boolean isSearchInNonJavaFiles() {
-    return myProcessor.isSearchInNonJavaFiles();
+    return myProcessor.isSearchTextOccurences();
   }
 }

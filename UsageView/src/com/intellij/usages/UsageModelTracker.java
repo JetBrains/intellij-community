@@ -1,9 +1,7 @@
 package com.intellij.usages;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiTreeChangeEvent;
-import com.intellij.psi.PsiTreeChangeListener;
+import com.intellij.psi.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,30 +45,47 @@ public class UsageModelTracker {
       }
 
       public void childAdded(PsiTreeChangeEvent event) {
-        fireModelChanged(false);
+        if (needToWatchFile(event.getFile())) {
+          fireModelChanged(false);
+        }
       }
 
       public void childRemoved(PsiTreeChangeEvent event) {
-        fireModelChanged(false);
+        if (needToWatchFile(event.getFile())) {
+          fireModelChanged(false);
+        }
       }
 
       public void childReplaced(PsiTreeChangeEvent event) {
-        fireModelChanged(false);
+        if (needToWatchFile(event.getFile())) {
+          fireModelChanged(false);
+        }
       }
 
       public void childrenChanged(PsiTreeChangeEvent event) {
-        fireModelChanged(false);
+        if (needToWatchFile(event.getFile())) {
+          fireModelChanged(false);
+        }
       }
 
       public void childMoved(PsiTreeChangeEvent event) {
-        fireModelChanged(false);
+        if (needToWatchFile(event.getFile())) {
+          fireModelChanged(false);
+        }
       }
 
       public void propertyChanged(PsiTreeChangeEvent event) {
-        fireModelChanged(true);
+        if (needToWatchFile(event.getFile())) {
+          fireModelChanged(true);
+        }
       }
     };
     PsiManager.getInstance(project).addPsiTreeChangeListener(myPsiListener);
+  }
+
+  private boolean needToWatchFile(final PsiFile file) {
+    return !(file instanceof PsiCodeFragment) ||
+           ((PsiCodeFragment)file).isPhysicalChangesProvider();
   }
 
   public void dispose() {

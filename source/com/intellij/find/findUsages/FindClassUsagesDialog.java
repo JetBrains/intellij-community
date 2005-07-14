@@ -36,7 +36,7 @@ public class FindClassUsagesDialog extends FindUsagesDialog {
     options.isDerivedClasses = isToChange(myCbDerivedClasses);
     options.isImplementingClasses = isToChange(myCbImplementingClasses);
     options.isDerivedInterfaces = isToChange(myCbDerivedInterfaces);
-    options.isSearchInNonJavaFiles = isToChange(myCbToSearchForTextOccurences);
+    options.isSearchForTextOccurences = isToChange(myCbToSearchForTextOccurences);
     return options;
   }
 

@@ -11,7 +11,7 @@ import com.intellij.psi.search.SearchScopeCache;
 public class FindUsagesOptions implements Cloneable {
   public SearchScope searchScope;
 
-  public boolean isSearchInNonJavaFiles = true;
+  public boolean isSearchForTextOccurences = true;
 
   public boolean isUsages = false;
   public boolean isClassesUsages = false;
@@ -49,7 +49,7 @@ public class FindUsagesOptions implements Cloneable {
   }
 
   public void clear() {
-    isSearchInNonJavaFiles = false;
+    isSearchForTextOccurences = false;
     isUsages = false;
     isClassesUsages = false;
     isMethodsUsages = false;

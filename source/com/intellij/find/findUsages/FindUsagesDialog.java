@@ -167,10 +167,10 @@ public abstract class FindUsagesDialog extends DialogWrapper{
     }
 
     if (isToChange(myCbToSearchForTextOccurences)) {
-      options.isSearchInNonJavaFiles = isSelected(myCbToSearchForTextOccurences);
+      options.isSearchForTextOccurences = isSelected(myCbToSearchForTextOccurences);
     }
     else {
-      options.isSearchInNonJavaFiles = false;
+      options.isSearchForTextOccurences = false;
     }
 
     if (myIncludeOverloadedMethodsAvailable && isToChange(myCbIncludeOverloadedMethods)) {

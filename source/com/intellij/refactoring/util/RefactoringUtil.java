@@ -232,9 +232,9 @@ public class RefactoringUtil {
     }
   }
 
-  public static void addUsagesInNonJavaFiles(PsiElement element, String stringToSearch, GlobalSearchScope searchScope,
-                                             final List<UsageInfo> results, final UsageInfoFactory factory) {
-    processUsagesInNonJavaFiles(element, stringToSearch, searchScope, new Processor<UsageInfo>() {
+  public static void addTextOccurences(PsiElement element, String stringToSearch, GlobalSearchScope searchScope,
+                                       final List<UsageInfo> results, final UsageInfoFactory factory) {
+    processTextOccurences(element, stringToSearch, searchScope, new Processor<UsageInfo>() {
       public boolean process(UsageInfo t) {
         results.add(t);
         return true;
@@ -242,8 +242,8 @@ public class RefactoringUtil {
     }, factory);
   }
 
-  public static void processUsagesInNonJavaFiles(PsiElement element, String stringToSearch, GlobalSearchScope searchScope,
-                                                 final Processor<UsageInfo> processor, final UsageInfoFactory factory) {
+  public static void processTextOccurences(PsiElement element, String stringToSearch, GlobalSearchScope searchScope,
+                                           final Processor<UsageInfo> processor, final UsageInfoFactory factory) {
     PsiSearchHelper helper = element.getManager().getSearchHelper();
 
     helper.processUsagesInNonJavaFiles(element, stringToSearch,

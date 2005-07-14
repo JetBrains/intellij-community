@@ -31,7 +31,7 @@ public class FindPackageUsagesDialog extends FindUsagesDialog {
     options.clear();
     options.isUsages = true;
     options.isClassesUsages = isToChange(myCbClassesUsages);
-    options.isSearchInNonJavaFiles = isToChange(myCbToSearchForTextOccurences);
+    options.isSearchForTextOccurences = isToChange(myCbToSearchForTextOccurences);
     return options;
   }
 

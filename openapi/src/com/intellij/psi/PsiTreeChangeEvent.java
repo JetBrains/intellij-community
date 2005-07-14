@@ -4,6 +4,8 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.EventObject;
 
 public abstract class PsiTreeChangeEvent extends EventObject {
@@ -82,6 +84,7 @@ public abstract class PsiTreeChangeEvent extends EventObject {
     return myNewValue;
   }
 
+  @NotNull
   public PsiFile getFile() {
     return myFile;
   }

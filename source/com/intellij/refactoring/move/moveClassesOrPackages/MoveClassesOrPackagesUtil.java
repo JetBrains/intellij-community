@@ -91,7 +91,7 @@ public class MoveClassesOrPackagesUtil {
 
       if (searchInNonJavaFiles) {
         GlobalSearchScope projectScope = GlobalSearchScope.projectScope(element.getProject());
-        RefactoringUtil.addUsagesInNonJavaFiles(element, stringToSearch, projectScope, results, factory);
+        RefactoringUtil.addTextOccurences(element, stringToSearch, projectScope, results, factory);
       }
     }
   }

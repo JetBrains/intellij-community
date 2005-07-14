@@ -104,7 +104,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     options.isMethodsUsages = true;
     options.isOverridingMethods = true;
     options.isUsages = true;
-    options.isSearchInNonJavaFiles = false;
+    options.isSearchForTextOccurences = false;
     final UsageInfo[][] usages = new UsageInfo[1][1];
     Runnable runnable = new Runnable() {
           public void run() {

@@ -96,6 +96,10 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
     mySuperType = superType;
   }
 
+  public boolean isPhysicalChangesProvider() {
+    return false;
+  }
+
   public String importsToString() {
     return StringUtil.join(myPseudoImports.values(), ",");
   }

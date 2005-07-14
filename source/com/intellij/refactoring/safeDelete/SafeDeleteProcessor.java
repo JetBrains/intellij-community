@@ -685,7 +685,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     if (mySearchNonJava && (element instanceof PsiClass || element instanceof PsiPackage)) {
       String stringToSearch = RefactoringUtil.getStringToSearch(element, true);
       if (stringToSearch != null) {
-        RefactoringUtil.addUsagesInNonJavaFiles(element, stringToSearch, GlobalSearchScope.projectScope(myProject), usages, nonCodeUsageFactory);
+        RefactoringUtil.addTextOccurences(element, stringToSearch, GlobalSearchScope.projectScope(myProject), usages, nonCodeUsageFactory);
       }
     }
   }

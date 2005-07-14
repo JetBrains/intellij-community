@@ -102,7 +102,7 @@ public class FindUsagesManager implements JDOMExternalizable{
     findUsagesOptions.isReadAccess = true;
     findUsagesOptions.isWriteAccess = true;
     findUsagesOptions.isCheckDeepInheritance = true;
-    findUsagesOptions.isSearchInNonJavaFiles = true;
+    findUsagesOptions.isSearchForTextOccurences = true;
     return findUsagesOptions;
   }
 

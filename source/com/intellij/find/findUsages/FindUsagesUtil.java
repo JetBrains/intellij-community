@@ -123,14 +123,14 @@ public class FindUsagesUtil {
       }
     }
 
-    if (options.isSearchInNonJavaFiles && options.searchScope instanceof GlobalSearchScope) {
+    if (options.isSearchForTextOccurences && options.searchScope instanceof GlobalSearchScope) {
       String stringToSearch = getStringToSearch(element);
       RefactoringUtil.UsageInfoFactory factory = new RefactoringUtil.UsageInfoFactory() {
         public UsageInfo createUsageInfo(PsiElement usage, int startOffset, int endOffset) {
           return new UsageInfo(usage, startOffset, endOffset, true);
         }
       };
-      RefactoringUtil.processUsagesInNonJavaFiles(element, stringToSearch, (GlobalSearchScope)options.searchScope, processor, factory);
+      RefactoringUtil.processTextOccurences(element, stringToSearch, (GlobalSearchScope)options.searchScope, processor, factory);
     }
   }
 

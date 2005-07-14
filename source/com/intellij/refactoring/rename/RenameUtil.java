@@ -37,7 +37,7 @@ public class RenameUtil {
   public static UsageInfo[] findUsages(final PsiElement element,
                                        String newName,
                                        boolean searchInStringsAndComments,
-                                       boolean searchInNonJavaFiles,
+                                       boolean searchForTextOccurences,
                                        Map<? extends PsiElement, String> allRenames) {
     final List<UsageInfo> result = new ArrayList<UsageInfo>();
 
@@ -100,7 +100,7 @@ public class RenameUtil {
     }
 
 
-    if (searchInNonJavaFiles && !(element instanceof PsiDirectory)) {
+    if (searchForTextOccurences && !(element instanceof PsiDirectory)) {
       String stringToSearch = RefactoringUtil.getStringToSearch(element, true);
 
       if (stringToSearch != null) {
@@ -111,7 +111,7 @@ public class RenameUtil {
             return NonCodeUsageInfo.create(usage.getContainingFile(), start + startOffset, start + endOffset, element, stringToReplace);
           }
         };
-        RefactoringUtil.addUsagesInNonJavaFiles(element, stringToSearch, projectScope, result, factory);
+        RefactoringUtil.addTextOccurences(element, stringToSearch, projectScope, result, factory);
 
         if (element instanceof PsiClass) {
           final PsiClass aClass = (PsiClass)element;
@@ -124,7 +124,7 @@ public class RenameUtil {
                 return NonCodeUsageInfo.create(usage.getContainingFile(), start + startOffset, start + endOffset, element, dollaredStringToReplace);
               }
             };
-            RefactoringUtil.addUsagesInNonJavaFiles(aClass, dollaredStringToSearch, projectScope, result, dollaredFactory);
+            RefactoringUtil.addTextOccurences(aClass, dollaredStringToSearch, projectScope, result, dollaredFactory);
           }
         }
       }

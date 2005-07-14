@@ -50,7 +50,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   private String myNewName = null;
 
   boolean mySearchInComments;
-  private boolean mySearchInNonJavaFiles;
+  private boolean mySearchTextOccurences;
   private String myCommandName;
   private boolean myShouldRenameVariables;
   private boolean myShouldRenameInheritors;
@@ -68,7 +68,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     myPrimaryElement = element;
 
     mySearchInComments = isSearchInComments;
-    mySearchInNonJavaFiles = toSearchInNonJavaFiles;
+    mySearchTextOccurences = toSearchInNonJavaFiles;
 
     setNewName(newName);
   }
@@ -211,7 +211,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       public void run() {
         for (Iterator<AutomaticRenamer> iterator = myRenamers.iterator(); iterator.hasNext();) {
           final AutomaticRenamer renamer = iterator.next();
-          renamer.findUsages(variableUsages, mySearchInComments, mySearchInNonJavaFiles);
+          renamer.findUsages(variableUsages, mySearchInComments, mySearchTextOccurences);
         }
       }
     };
@@ -327,7 +327,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
-    return new RenameViewDescriptor(myPrimaryElement, myAllRenames, mySearchInComments, mySearchInNonJavaFiles, usages, refreshCommand);
+    return new RenameViewDescriptor(myPrimaryElement, myAllRenames, mySearchInComments, mySearchTextOccurences, usages, refreshCommand);
   }
 
   protected UsageInfo[] findUsages() {
@@ -337,7 +337,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     for (Map.Entry<PsiElement, String> entry : myAllRenames.entrySet()) {
       PsiElement element = entry.getKey();
       final String newName = entry.getValue();
-      final UsageInfo[] usages = RenameUtil.findUsages(element, newName, mySearchInComments, mySearchInNonJavaFiles, myAllRenames);
+      final UsageInfo[] usages = RenameUtil.findUsages(element, newName, mySearchInComments, mySearchTextOccurences, myAllRenames);
       result.addAll(Arrays.asList(usages));
       if (element instanceof PsiClass && myShouldRenameVariables) {
         myRenamers.add(new AutomaticVariableRenamer((PsiClass)element, newName, Arrays.asList(usages)));
@@ -352,12 +352,12 @@ public class RenameProcessor extends BaseRefactoringProcessor {
         myRenamers.add(new FormsRenamer((PsiClass)element, newName));
       }
     }
-    // add usages in ejb-jar.xml regardless of mySearchInNonJavaFiles setting
+    // add usages in ejb-jar.xml regardless of mySearchTextOccurences setting
     // delete erroneous usages in ejb-jar.xml (e.g. belonging to another ejb)
     EjbUsagesUtil.adjustEjbUsages(myAllRenames, result);
 
     if (myPrimaryElement != null) {
-      // add usages in ejb-jar.xml regardless of mySearchInNonJavaFiles setting
+      // add usages in ejb-jar.xml regardless of mySearchTextOccurences setting
       // delete erroneous usages in ejb-jar.xml (e.g. belonging to another ejb)
       EjbUsagesUtil.adjustEjbUsages(myPrimaryElement, myNewName, result);
     }
@@ -472,16 +472,16 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     mySearchInComments = value;
   }
 
-  public void setSearchInNonJavaFiles(boolean searchInNonJavaFiles) {
-    mySearchInNonJavaFiles = searchInNonJavaFiles;
+  public void setSearchTextOccurences(boolean searchTextOccurences) {
+    mySearchTextOccurences = searchTextOccurences;
   }
 
   public boolean isSearchInComments() {
     return mySearchInComments;
   }
 
-  public boolean isSearchInNonJavaFiles() {
-    return mySearchInNonJavaFiles;
+  public boolean isSearchTextOccurences() {
+    return mySearchTextOccurences;
   }
 
 

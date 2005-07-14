@@ -22,6 +22,11 @@ public interface PsiCodeFragment extends PsiFile, PsiImportHolder {
   PsiType getSuperType();
   void setSuperType(PsiType superType);
 
+  /**
+   * @fabrique: override it as appropriate to you
+   * */
+  boolean isPhysicalChangesProvider();
+
   interface VisibilityChecker {
     Visibility isDeclarationVisible(PsiElement declaration, PsiElement place);
 

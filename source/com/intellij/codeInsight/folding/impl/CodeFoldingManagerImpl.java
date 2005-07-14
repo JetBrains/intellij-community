@@ -15,6 +15,8 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -61,6 +63,9 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
         if (project != null && !project.equals(myProject)) return;
 
         final Document document = editor.getDocument();
+        //Do not save/restore folding for code fragments
+        final VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
+        if (vFile == null) return;
 
         PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
         if (file == null) return;
@@ -75,10 +80,9 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
             DocumentFoldingInfo documentFoldingInfo = getDocumentFoldingInfo(document);
             Editor[] editors = EditorFactory.getInstance().getEditors(document, myProject);
-            for (int i = 0; i < editors.length; i++) {
-              Editor editor1 = editors[i];
-              if (editor1 == editor) continue;
-              documentFoldingInfo.loadFromEditor(editor1);
+            for (Editor otherEditor : editors) {
+              if (otherEditor == editor) continue;
+              documentFoldingInfo.loadFromEditor(otherEditor);
               break;
             }
             documentFoldingInfo.setToEditor(editor);
@@ -96,9 +100,11 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
         if (project != null && !project.equals(myProject)) return;
 
         Document document = editor.getDocument();
+        final VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
+        if (vFile == null) return;
+
         PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
         if (file == null || !file.isValid()) return;
-        PsiDocumentManager.getInstance(myProject).commitDocument(document);
 
         Editor[] otherEditors = EditorFactory.getInstance().getEditors(document, myProject);
         if (otherEditors.length == 0) {
