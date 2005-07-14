@@ -9,19 +9,21 @@ import com.intellij.lang.ASTNode;
 
 public class DefaultRoleFinder implements RoleFinder{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.tree.DefaultRoleFinder");
-  final IElementType myElementType;
-  final IElementType myParentType;
+  final IElementType[] myElementTypes;
 
-  public DefaultRoleFinder(IElementType elementType, IElementType parentType) {
-    myElementType = elementType;
-    myParentType = parentType;
+  public DefaultRoleFinder(IElementType... elementType) {
+    myElementTypes = elementType;
   }
 
   public ASTNode findChild(ASTNode parent) {
-    if(myParentType != null) LOG.assertTrue(parent.getElementType() == myParentType);
     ASTNode current = parent.getFirstChildNode();
-    while(current != null && current.getElementType() != myElementType)
+    while(current != null){
+      for (int i = 0; i < myElementTypes.length; i++) {
+        final IElementType elementType = myElementTypes[i];
+        if(current.getElementType() == elementType) return current;
+      }
       current = current.getTreeNext();
-    return current;
+    }
+    return null;
   }
 }
