@@ -108,7 +108,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
       antDOMNSDescriptor.init(this);
       return antDOMNSDescriptor;
     }
-    else if(XmlUtil.HTML_URI.equals(namespace)){
+    else if(XmlUtil.HTML_URI.equals(namespace) && doctype == null){
       final XmlNSDescriptor xhtmlNSDescriptor = getDefaultNSDescriptor(XmlUtil.XHTML_URI, false);
       final XmlNSDescriptor htmlDescriptor = new HtmlNSDescriptorImpl(xhtmlNSDescriptor);
       return htmlDescriptor;
