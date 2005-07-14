@@ -110,23 +110,6 @@ public class OpenFileDescriptor implements Navigatable {
           }
         }, true);
       }
-
-      return;
-    }
-
-    if (fileEditor instanceof TextEditor) {
-      Editor editor = ((TextEditor)fileEditor).getEditor();
-      Document document = editor.getDocument();
-      LogicalPosition position;
-      int offset = getOffset();
-      if (offset < 0) {
-        position = new LogicalPosition(Math.min(document.getLineCount() - 1, getLine()), getColumn());
-      }
-      else {
-        position = editor.offsetToLogicalPosition(Math.min(document.getTextLength(), offset));
-      }
-      editor.getCaretModel().moveToLogicalPosition(position);
-      editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
     }
   }
 
