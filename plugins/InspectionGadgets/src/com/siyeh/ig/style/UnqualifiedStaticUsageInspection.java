@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
@@ -131,6 +132,11 @@ public class UnqualifiedStaticUsageInspection extends ExpressionInspection {
             }
             final PsiElement element = expression.resolve();
             if (!(element instanceof PsiField)) {
+                return;
+            }
+            final PsiField field = (PsiField) element;
+            if(field.hasModifierProperty(PsiModifier.FINAL) && PsiUtil.isOnAssignmentLeftHand(expression))
+            {
                 return;
             }
             if (!isUnqualifiedStaticAccess(expression)) {
