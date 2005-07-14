@@ -1,13 +1,10 @@
+<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
 <idea-plugin version="2">
   <name>Comparing References Inspection</name>
   <description>Inspection for (probably) inapporpriate use of equality relation operation</description>
   <version>1.0</version>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
-  <idea-version min="3.0" max="3.0"/>
-
-  <extensions xmlns="com.intellij">
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-  </extensions>
+  <idea-version since-build="3000"/>
 
   <application-components>
     <component>

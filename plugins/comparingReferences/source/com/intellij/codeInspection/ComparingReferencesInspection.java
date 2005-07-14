@@ -1,7 +1,6 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -19,7 +18,7 @@ import java.util.StringTokenizer;
 /**
  * @author max
  */
-public class ComparingReferencesInspection extends BaseLocalInspectionTool {
+public class ComparingReferencesInspection extends LocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ComparingReferencesInspection");
 
   private LocalQuickFix myQuickFix = new MyQuickFix();
@@ -86,7 +85,7 @@ public class ComparingReferencesInspection extends BaseLocalInspectionTool {
         if (opSign == JavaTokenType.EQEQ || opSign == JavaTokenType.NE) {
           PsiExpression lOperand = expression.getLOperand();
           PsiExpression rOperand = expression.getROperand();
-          if (lOperand == null || rOperand == null || isNullLiteral(lOperand) || isNullLiteral(rOperand)) return;
+          if (rOperand == null || isNullLiteral(lOperand) || isNullLiteral(rOperand)) return;
 
           PsiType lType = lOperand.getType();
           PsiType rType = rOperand.getType();
@@ -122,6 +121,8 @@ public class ComparingReferencesInspection extends BaseLocalInspectionTool {
         IElementType opSign = binaryExpression.getOperationSign().getTokenType();
         PsiExpression lExpr = binaryExpression.getLOperand();
         PsiExpression rExpr = binaryExpression.getROperand();
+        if (rExpr == null)
+          return;
 
         PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
         PsiMethodCallExpression equalsCall = (PsiMethodCallExpression)factory.createExpressionFromText("a.equals(b)", null);
@@ -158,5 +159,9 @@ public class ComparingReferencesInspection extends BaseLocalInspectionTool {
 
     panel.add(checkedClasses);
     return panel;
+  }
+
+  public boolean isEnabledByDefault() {
+    return true;
   }
 }
