@@ -27,8 +27,8 @@ public class ParenthesesUtils{
     private static final int BINARY_AND_PRECEDENCE = 10;
     private static final int BINARY_XOR_PRECEDENCE = 11;
     private static final int BINARY_OR_PRECEDENCE = 12;
-    private static final int AND_PRECEDENCE = 13;
-    private static final int OR_PRECEDENCE = 14;
+    public static final int AND_PRECEDENCE = 13;
+    public static final int OR_PRECEDENCE = 14;
     public static final int CONDITIONAL_PRECEDENCE = 15;
     private static final int ASSIGNMENT_PRECEDENCE = 16;
 

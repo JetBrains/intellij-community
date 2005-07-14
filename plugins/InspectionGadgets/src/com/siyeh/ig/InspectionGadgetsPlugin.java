@@ -569,6 +569,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(ReplaceAssignmentWithOperatorAssignmentInspection.class);
         m_inspectionClasses.add(TrivialIfInspection.class);
         m_inspectionClasses.add(UnnecessaryConditionalExpressionInspection.class);
+        m_inspectionClasses.add(SimplifiableConditionalExpressionInspection.class);
         m_inspectionClasses.add(ConstantConditionalExpressionInspection.class);
         m_inspectionClasses.add(ConstantIfStatementInspection.class);
         m_inspectionClasses.add(UnnecessaryParenthesesInspection.class);
