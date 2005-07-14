@@ -4,7 +4,7 @@
   <name>ActionsSample</name>
 
   <!-- Description -->
-  <description>ActionSamplePlugin</description>
+  <description>Sample plugin which demonstrates integration with IntelliJ IDEA action system</description>
 
   <!-- Plugin version -->
   <version>1.0</version>

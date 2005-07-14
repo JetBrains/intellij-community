@@ -13,7 +13,9 @@ public class SampleApplicationPlugin implements ApplicationComponent {
    * Method is called after plugin is already created and configured. Plugin can start to communicate with
    * other plugins only in this method.
    */
-  public void initComponent() { System.out.println("SampleApplicationPlugin: initComponent"); }
+  public void initComponent() {
+    System.out.println("SampleApplicationPlugin: initComponent");
+  }
 
   /**
    * This method is called on plugin disposal.

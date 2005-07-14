@@ -1,13 +1,14 @@
+<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
 <idea-plugin>
 <!-- plugin name -->
   <name>Sample</name>
 <!-- description -->
-  <description>SamplePlugin</description>
+  <description>A minimalistic sample plugin for IntelliJ IDEA</description>
 <!-- plugin versuin -->
   <version>1.0</version>
   <vendor logo="/general/ijLogo.png">IntelliJ</vendor>
-<!-- minimum and maximum IDEA version plugin is supposed to work with -->
-  <idea-version min="3.0" max="3.1"/>
+<!-- minimum IDEA build number with which the plugin is compatible -->
+  <idea-version since-build="2000"/>
 <!-- application components of the plugin -->
   <application-components>
     <component>

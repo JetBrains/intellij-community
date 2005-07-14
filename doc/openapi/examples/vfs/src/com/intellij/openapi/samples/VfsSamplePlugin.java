@@ -4,7 +4,6 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
@@ -23,7 +22,7 @@ public class VfsSamplePlugin implements ProjectComponent {
 
   public void projectOpened() {
     ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
-    VirtualFile[] sourceRoots = projectRootManager.getRootFiles(ProjectRootType.SOURCE);
+    VirtualFile[] sourceRoots = projectRootManager.getContentSourceRoots();
 
     ourJavaFilesCount = 0;
 

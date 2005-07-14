@@ -178,7 +178,7 @@
   </component>
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/toolWindow.iml" filepath="$PROJECT_DIR$/toolWindow.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugin.iml" filepath="$PROJECT_DIR$/plugin.iml" />
     </modules>
   </component>
   <component name="ProjectRootManager" version="2" assert-keyword="false" jdk-15="false" project-jdk-name="IDEA 3405" />

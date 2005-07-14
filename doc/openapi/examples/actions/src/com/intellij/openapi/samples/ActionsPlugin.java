@@ -15,7 +15,8 @@ public class ActionsPlugin implements ApplicationComponent {
    * Method is called after plugin is already created and configured. Plugin can start to communicate with
    * other plugins only in this method.
    */
-  public void initComponent() { }
+  public void initComponent() { 
+  }
 
   /**
    * This method is called on plugin disposal.

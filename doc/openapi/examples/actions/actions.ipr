@@ -1,51 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project version="3" relativePaths="true">
-  <component name="ProjectRootManager" version="2">
-    <jdk name="java version &quot;1.4.1&quot;" />
-    <projectPath>
-      <root type="composite">
-        <root type="simple" url="file://$PROJECT_DIR$" />
-      </root>
-    </projectPath>
-    <sourcePath>
-      <root type="composite">
-        <root type="jdk" rootType="sourcePath" name="java version &quot;1.4.1&quot;" />
-        <root type="simple" url="file://$PROJECT_DIR$/src" />
-      </root>
-    </sourcePath>
-    <classPath>
-      <root type="composite">
-        <root type="jdk" rootType="classPath" name="java version &quot;1.4.1&quot;" />
-        <root type="output" />
-        <root type="simple" url="jar://$PROJECT_DIR$/../../../../../../idea_current/lib/idea.jar!/" />
-      </root>
-    </classPath>
-    <excludePath>
-      <root type="composite">
-        <root type="excludedOutput" />
-      </root>
-    </excludePath>
-    <javadocPath>
-      <root type="composite">
-        <root type="jdk" rootType="javadocPath" name="java version &quot;1.4.1&quot;" />
-        <root type="simple" url="file://$PROJECT_DIR$/../../../../../../jdk131/docs/api" />
-      </root>
-    </javadocPath>
-    <assert_keyword enabled="no" />
-    <exclude_output enabled="yes" />
+<project version="4" relativePaths="false">
+  <component name="AntConfiguration">
+    <defaultAnt bundledAnt="true" />
+  </component>
+  <component name="CodeStyleSettingsManager">
+    <option name="PER_PROJECT_SETTINGS" />
+    <option name="USE_PER_PROJECT_SETTINGS" value="false" />
   </component>
   <component name="CompilerConfiguration">
     <option name="DEFAULT_COMPILER" value="Javac" />
-    <option name="SYNCHRONIZE_OUTPUT_DIRECTORY" value="true" />
-    <option name="DEFAULT_OUTPUT_PATH" value="$PROJECT_DIR$/classes" />
-    <option name="OUTPUT_MODE" value="single" />
+    <option name="CLEAR_OUTPUT_DIRECTORY" value="false" />
+    <option name="DEPLOY_AFTER_MAKE" value="0" />
     <resourceExtensions>
-      <entry name="properties" />
-      <entry name="gif" />
-      <entry name="png" />
-      <entry name="jpeg" />
+      <entry name=".+\.(properties|xml|html|dtd|tld)" />
+      <entry name=".+\.(gif|png|jpeg|jpg)" />
     </resourceExtensions>
+    <wildcardResourcePatterns>
+      <entry name="?*.properties" />
+      <entry name="?*.xml" />
+      <entry name="?*.html" />
+      <entry name="?*.dtd" />
+      <entry name="?*.tld" />
+      <entry name="?*.gif" />
+      <entry name="?*.png" />
+      <entry name="?*.jpeg" />
+      <entry name="?*.jpg" />
+    </wildcardResourcePatterns>
   </component>
+  <component name="DataSourceManagerImpl" />
+  <component name="DependenciesAnalyzeManager">
+    <option name="myForwardDirection" value="false" />
+  </component>
+  <component name="DependencyValidationManager" />
+  <component name="EntryPointsManager">
+    <entry_points />
+  </component>
+  <component name="ExportToHTMLSettings">
+    <option name="PRINT_LINE_NUMBERS" value="false" />
+    <option name="OPEN_IN_BROWSER" value="false" />
+    <option name="OUTPUT_DIRECTORY" />
+  </component>
+  <component name="GUI Designer component loader factory" />
   <component name="JavacSettings">
     <option name="DEBUGGING_INFO" value="true" />
     <option name="GENERATE_NO_WARNINGS" value="false" />
@@ -53,169 +48,158 @@
     <option name="ADDITIONAL_OPTIONS_STRING" value="" />
     <option name="MAXIMUM_HEAP_SIZE" value="128" />
   </component>
-  <component name="JikesSettings">
-    <option name="DEBUGGING_INFO" value="true" />
-    <option name="DEPRECATION" value="true" />
-    <option name="GENERATE_NO_WARNINGS" value="false" />
-    <option name="GENERATE_MAKE_FILE_DEPENDENCIES" value="false" />
-    <option name="DO_FULL_DEPENDENCE_CHECK" value="false" />
-    <option name="IS_INCREMENTAL_MODE" value="false" />
-    <option name="IS_EMACS_ERRORS_MODE" value="true" />
-    <option name="ADDITIONAL_OPTIONS_STRING" value="" />
-    <option name="MAXIMUM_HEAP_SIZE" value="128" />
-  </component>
-  <component name="AntConfiguration">
-    <buildFile url="file://$PROJECT_DIR$/build/build.xml">
-      <useEmacsModeOutput value="true" />
-      <useCustomJdk value="false" />
-      <treeView value="true" />
-      <useJavaw value="false" />
-      <verbose value="true" />
-      <includeProjectClasspath value="false" />
-      <includeParser value="true" />
-      <maximumHeapSize value="128" />
-      <properties>
-        <property name="project.path" value="$ProjectFileDir$" />
-      </properties>
-      <targetFilters>
-        <filter targetName="jar_plugin" isVisible="true" />
-      </targetFilters>
-    </buildFile>
-    <option name="IS_AUTOSCROLL_TO_SOURCE" value="false" />
-    <option name="FILTER_TARGETS" value="false" />
-  </component>
-  <component name="CvsConfiguration">
-    <Checkout>
-      <option name="DATE_TAG" value="" />
-      <option name="REVISION_TAG" value="" />
-      <option name="PRUNE_EMPTY_DIRS" value="true" />
-      <option name="RESET_STICKY_TAGS" value="false" />
-      <option name="NON_RECURSIVE" value="false" />
-      <option name="CREATE_WORKING_DIR" value="" />
-      <option name="ADDITIONAL_OPTIONS" value="" />
-    </Checkout>
-    <Update>
-      <option name="DATE_TAG" value="" />
-      <option name="REVISION_TAG" value="" />
-      <option name="PRUNE_EMPTY_DIRS" value="true" />
-      <option name="RESET_STICKY_TAGS" value="false" />
-      <option name="NON_RECURSIVE" value="false" />
-      <option name="CREATE_MISSING_DIRECTORIES" value="true" />
-      <option name="DONT_CHANGE_FILES" value="false" />
-      <option name="QUIET_MODE" value="false" />
-      <option name="ADDITIONAL_OPTIONS" value="" />
-    </Update>
-    <Commit>
-      <option name="NON_RECURSIVE" value="false" />
-      <option name="REVISION_TAG" />
-      <option name="LOG_MESSAGE" />
-      <option name="ADDITIONAL_OPTIONS" />
-    </Commit>
-    <Diff>
-      <option name="REVISION_TAG" value="HEAD" />
-      <option name="DATE_TAG" value="" />
-      <option name="IGNORE_WHITESPACE" value="false" />
-    </Diff>
-    <Add>
-      <option name="ADD_AS_BINARY" value="false" />
-      <option name="LOG_MESSAGE" />
-    </Add>
-    <Status>
-      <option name="NON_RECURSIVE" value="false" />
-      <option name="INCLUDE_TAGS" value="false" />
-    </Status>
-    <Edit>
-      <option name="NON_RECURSIVE" value="false" />
-      <option name="FORCE_RECURSIVE" value="false" />
-      <option name="EDIT" value="false" />
-      <option name="UNEDIT" value="false" />
-      <option name="COMMIT" value="false" />
-      <option name="ALL" value="true" />
-      <option name="NONE" value="false" />
-    </Edit>
-    <Remove>
-      <option name="NON_RECURSIVE" value="false" />
-      <option name="FORCE_RECURSIVE" value="false" />
-      <option name="DELETE_FILE" value="false" />
-    </Remove>
-    <Log>
-      <option name="DEFAULT_BRANCH" value="false" />
-      <option name="NON_RECURSIVE" value="false" />
-      <option name="QUIET_MODE" value="true" />
-      <option name="ADDITIONAL_OPTIONS" value="" />
-    </Log>
-    <Editors>
-      <option name="NON_RECURSIVE" value="false" />
-      <option name="FORCE_RECURSIVE" value="false" />
-    </Editors>
-    <option name="CLIENT_PATH" value="" />
-    <option name="EXTERNAL_DIFF_PATH" />
-    <option name="USE_EXTERNAL_DIFF" value="false" />
-    <option name="WORKING_FILES_READONLY" value="false" />
-    <option name="COMPRESSION_LEVEL" value="0" />
-    <option name="ADDITIONAL_OPTIONS" value="" />
-    <option name="BINARY_FILES_EXTENSIONS" />
-    <option name="REUSE_LAST_LOG_MESSAGE" value="false" />
-    <option name="PUT_FOCUS_INTO_LOG_MESSAGE" value="false" />
-    <option name="SHOW_PROJECT_ROOTS" value="true" />
-    <option name="SHOW_UPDATE_OPTIONS" value="true" />
-    <option name="SHOW_COMMIT_OPTIONS" value="true" />
-    <option name="SHOW_DIFF_OPTIONS" value="true" />
-    <option name="SHOW_ADD_OPTIONS" value="true" />
-    <option name="SHOW_STATUS_OPTIONS" value="true" />
-    <option name="SHOW_EDIT_OPTIONS" value="true" />
-    <option name="SHOW_UNEDIT_OPTIONS" value="true" />
-    <option name="SHOW_REMOVE_OPTIONS" value="true" />
-    <option name="SHOW_LOG_OPTIONS" value="true" />
-    <option name="SHOW_EDITORS_OPTIONS" value="true" />
-    <option name="HIDE_UNKNOWN_FILES" value="false" />
-    <option name="HIDE_MISSING_FILES" value="false" />
-    <option name="HIDE_UP_TO_DATE_FILES" value="false" />
-  </component>
-  <component name="CvsManager">
-    <expanded_paths />
-  </component>
   <component name="JavadocGenerationManager">
-    <option name="OUTPUT_DIRECTORY" value="$PROJECT_DIR$/javadoc" />
+    <option name="OUTPUT_DIRECTORY" />
     <option name="OPTION_SCOPE" value="protected" />
     <option name="OPTION_HIERARCHY" value="true" />
     <option name="OPTION_NAVIGATOR" value="true" />
     <option name="OPTION_INDEX" value="true" />
     <option name="OPTION_SEPARATE_INDEX" value="true" />
-    <option name="OPTION_USE_1_1" value="false" />
     <option name="OPTION_DOCUMENT_TAG_USE" value="false" />
     <option name="OPTION_DOCUMENT_TAG_AUTHOR" value="false" />
     <option name="OPTION_DOCUMENT_TAG_VERSION" value="false" />
     <option name="OPTION_DOCUMENT_TAG_DEPRECATED" value="true" />
     <option name="OPTION_DEPRECATED_LIST" value="true" />
-    <option name="OTHER_OPTIONS" />
+    <option name="OTHER_OPTIONS" value="" />
     <option name="HEAP_SIZE" />
     <option name="OPEN_IN_BROWSER" value="true" />
   </component>
-  <component name="WebManager">
-    <option enabled="false" />
+  <component name="JikesSettings">
+    <option name="JIKES_PATH" value="" />
+    <option name="DEBUGGING_INFO" value="true" />
+    <option name="DEPRECATION" value="true" />
+    <option name="GENERATE_NO_WARNINGS" value="false" />
+    <option name="IS_EMACS_ERRORS_MODE" value="true" />
+    <option name="ADDITIONAL_OPTIONS_STRING" value="" />
   </component>
-  <component name="WebRootContainer" />
-  <component name="EjbManager" enabled="false" />
-  <component name="JUnitProjectSettings">
-    <option name="TEST_RUNNER" value="UI" />
+  <component name="Palette2">
+    <group name="Swing">
+      <item class="com.intellij.uiDesigner.HSpacer" tooltip-text="Horizontal Spacer" icon="/com/intellij/uiDesigner/icons/hspacer.png" removable="false">
+        <default-constraints vsize-policy="1" hsize-policy="6" anchor="0" fill="1" />
+      </item>
+      <item class="com.intellij.uiDesigner.VSpacer" tooltip-text="Vertical Spacer" icon="/com/intellij/uiDesigner/icons/vspacer.png" removable="false">
+        <default-constraints vsize-policy="6" hsize-policy="1" anchor="0" fill="2" />
+      </item>
+      <item class="javax.swing.JPanel" icon="/com/intellij/uiDesigner/icons/panel.png" removable="false">
+        <default-constraints vsize-policy="3" hsize-policy="3" anchor="0" fill="3" />
+      </item>
+      <item class="javax.swing.JScrollPane" icon="/com/intellij/uiDesigner/icons/scrollPane.png" removable="false">
+        <default-constraints vsize-policy="7" hsize-policy="7" anchor="0" fill="3" />
+      </item>
+      <item class="javax.swing.JButton" icon="/com/intellij/uiDesigner/icons/button.png" removable="false">
+        <default-constraints vsize-policy="0" hsize-policy="3" anchor="0" fill="1" />
+        <initial-values>
+          <property name="text" value="Button" />
+        </initial-values>
+      </item>
+      <item class="javax.swing.JRadioButton" icon="/com/intellij/uiDesigner/icons/radioButton.png" removable="false">
+        <default-constraints vsize-policy="0" hsize-policy="3" anchor="8" fill="0" />
+        <initial-values>
+          <property name="text" value="RadioButton" />
+        </initial-values>
+      </item>
+      <item class="javax.swing.JCheckBox" icon="/com/intellij/uiDesigner/icons/checkBox.png" removable="false">
+        <default-constraints vsize-policy="0" hsize-policy="3" anchor="8" fill="0" />
+        <initial-values>
+          <property name="text" value="CheckBox" />
+        </initial-values>
+      </item>
+      <item class="javax.swing.JLabel" icon="/com/intellij/uiDesigner/icons/label.png" removable="false">
+        <default-constraints vsize-policy="0" hsize-policy="0" anchor="8" fill="0" />
+        <initial-values>
+          <property name="text" value="Label" />
+        </initial-values>
+      </item>
+      <item class="javax.swing.JTextField" icon="/com/intellij/uiDesigner/icons/textField.png" removable="false">
+        <default-constraints vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+          <preferred-size width="150" height="-1" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JPasswordField" icon="/com/intellij/uiDesigner/icons/passwordField.png" removable="false">
+        <default-constraints vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+          <preferred-size width="150" height="-1" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JFormattedTextField" icon="/com/intellij/uiDesigner/icons/formattedTextField.png" removable="false">
+        <default-constraints vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+          <preferred-size width="150" height="-1" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JTextArea" icon="/com/intellij/uiDesigner/icons/textArea.png" removable="false">
+        <default-constraints vsize-policy="6" hsize-policy="6" anchor="0" fill="3">
+          <preferred-size width="150" height="50" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JTextPane" icon="/com/intellij/uiDesigner/icons/textPane.png" removable="false">
+        <default-constraints vsize-policy="6" hsize-policy="6" anchor="0" fill="3">
+          <preferred-size width="150" height="50" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JEditorPane" icon="/com/intellij/uiDesigner/icons/editorPane.png" removable="false">
+        <default-constraints vsize-policy="6" hsize-policy="6" anchor="0" fill="3">
+          <preferred-size width="150" height="50" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JComboBox" icon="/com/intellij/uiDesigner/icons/comboBox.png" removable="false">
+        <default-constraints vsize-policy="0" hsize-policy="2" anchor="8" fill="1" />
+      </item>
+      <item class="javax.swing.JTable" icon="/com/intellij/uiDesigner/icons/table.png" removable="false">
+        <default-constraints vsize-policy="6" hsize-policy="6" anchor="0" fill="3">
+          <preferred-size width="150" height="50" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JList" icon="/com/intellij/uiDesigner/icons/list.png" removable="false">
+        <default-constraints vsize-policy="6" hsize-policy="2" anchor="0" fill="3">
+          <preferred-size width="150" height="50" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JTree" icon="/com/intellij/uiDesigner/icons/tree.png" removable="false">
+        <default-constraints vsize-policy="6" hsize-policy="6" anchor="0" fill="3">
+          <preferred-size width="150" height="50" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JTabbedPane" icon="/com/intellij/uiDesigner/icons/tabbedPane.png" removable="false">
+        <default-constraints vsize-policy="3" hsize-policy="3" anchor="0" fill="3">
+          <preferred-size width="200" height="200" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JSplitPane" icon="/com/intellij/uiDesigner/icons/splitPane.png" removable="false">
+        <default-constraints vsize-policy="3" hsize-policy="3" anchor="0" fill="3">
+          <preferred-size width="200" height="200" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JSpinner" icon="/com/intellij/uiDesigner/icons/spinner.png" removable="false">
+        <default-constraints vsize-policy="0" hsize-policy="6" anchor="8" fill="1" />
+      </item>
+      <item class="javax.swing.JSlider" icon="/com/intellij/uiDesigner/icons/slider.png" removable="false">
+        <default-constraints vsize-policy="0" hsize-policy="6" anchor="8" fill="1" />
+      </item>
+    </group>
   </component>
-  <component name="EntryPointsManager">
-    <entry_points />
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/actions.iml" filepath="$PROJECT_DIR$/actions.iml" />
+    </modules>
   </component>
-  <component name="EjbActionsConfiguration">
-    <option name="NEW_MESSAGE_BEAN_LAST_PACKAGE" value="" />
-    <option name="NEW_ENTITY_BEAN_LAST_PACKAGE" value="" />
-    <option name="NEW_SESSION_BEAN_LAST_PACKAGE" value="" />
+  <component name="ProjectRootManager" version="2" assert-keyword="false" jdk-15="false" project-jdk-name="IDEA 3405" />
+  <component name="RmicSettings">
+    <option name="IS_EANABLED" value="false" />
+    <option name="DEBUGGING_INFO" value="true" />
+    <option name="GENERATE_NO_WARNINGS" value="false" />
+    <option name="GENERATE_IIOP_STUBS" value="false" />
+    <option name="ADDITIONAL_OPTIONS_STRING" value="" />
   </component>
-  <component name="GeneralProjectProperties">
-    <option name="USE_DEFAULT_CODE_STYLE_SCHEME" value="true" />
-    <option name="CODE_STYLE_SCHEME" value="" />
+  <component name="copyright">
+    <option name="body" value="/*&#10; * Copyright (c) $today.year Your Corporation. All Rights Reserved.&#10; */" />
+    <option name="location" value="1" />
+    <option name="remove" value="true" />
+    <option name="replace" value="2" />
   </component>
-  <component name="ExportToHTMLSettings">
-    <option name="PRINT_LINE_NUMBERS" value="false" />
-    <option name="OPEN_IN_BROWSER" value="false" />
-    <option name="OUTPUT_DIRECTORY" />
+  <component name="libraryTable" />
+  <component name="uidesigner-configuration">
+    <option name="INSTRUMENT_CLASSES" value="true" />
+    <option name="COPY_FORMS_RUNTIME_TO_OUTPUT" value="true" />
   </component>
+  <UsedPathMacros />
 </project>
 

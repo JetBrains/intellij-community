@@ -1,9 +1,10 @@
+<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
 <idea-plugin>
   <!-- Plugin name -->
   <name>VfsSample</name>
 
   <!-- Description -->
-  <description>An example of using IDEA's Vfs, dynamically keeps the count of Java files in sourcepaths</description>
+  <description>An example of using IDEA's virtual file system, dynamically keeps the count of Java files in sourcepaths</description>
 
   <!-- Plugin version -->
   <version>1.0</version>
@@ -11,8 +12,8 @@
   <!-- Plugin's vendor -->
   <vendor logo="/general/ijLogo.png">IntelliJ</vendor>
 
-  <!-- Minimum and maximum IDEA version plugin is supposed to work with -->
-  <idea-version min="3.0" max="3.1"/>
+  <!-- Minimum IDEA build number with which the plugin is compatible -->
+  <idea-version since-build="2000"/>
 
   <!-- Plugin's application components -->
   <project-components>
