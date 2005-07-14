@@ -37,10 +37,32 @@ public final class ModuleCompilerUtil {
       final ModuleInApplication moduleInApplication = iterator.next();
       final Module depModule = moduleInApplication.getReferenceModule();
       if (depModule != null && !dependsOn(depModule, module)) {
+
         result.add(depModule);
       }
     }
     return result.toArray(new Module[result.size()]);
+  }
+
+  private static boolean dependsOn(final Module dependant, final Module dependee) {
+    return new Object(){
+      final Set<Module> myChecked = new HashSet<Module>();
+      boolean dependsOn(Module dependant, Module dependee) {
+        if (dependant.equals(dependee)) {
+          return true;
+        }
+        myChecked.add(dependant);
+        final Module[] dependencies = ModuleRootManager.getInstance(dependant).getDependencies();
+        for (final Module dependency : dependencies) {
+          if (!myChecked.contains(dependency)) { // prevent cycles
+            if (dependsOn(dependency, dependee)) {
+              return true;
+            }
+          }
+        }
+        return false;
+      }
+    }.dependsOn(dependant, dependee);
   }
 
   public static Comparator<Module> moduleDependencyComparator(Project project) {
@@ -61,18 +83,6 @@ public final class ModuleCompilerUtil {
       }
     }));
   }
-
-  private static boolean dependsOn(Module dependant, Module dependee) {
-    if (dependant.equals(dependee)) return true;
-    final Module[] dependencies = ModuleRootManager.getInstance(dependant).getDependencies();
-    for (final Module dependency : dependencies) {
-      if (dependsOn(dependency, dependee)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
 
   public static List<Chunk<Module>> getSortedModuleChunks(Project project, Module[] modules) {
     final Module[] allModules = ModuleManager.getInstance(project).getModules();
