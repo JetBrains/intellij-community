@@ -18,6 +18,7 @@ import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.formatter.xml.XmlBlock;
@@ -54,6 +55,7 @@ public class XMLLanguage extends Language {
   protected XMLLanguage(String name, String mime) {
     super(name, mime);
     myFormattingModelBuilder = new FormattingModelBuilder() {
+      @NotNull
       public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
         final ASTNode root = SourceTreeToPsiMap.psiElementToTree(element);
         return new PsiBasedFormattingModel(element.getContainingFile(), new XmlBlock(root, null, null, new XmlPolicy(settings), null,
@@ -62,6 +64,7 @@ public class XMLLanguage extends Language {
     };
   }
 
+  @NotNull
   public SyntaxHighlighter getSyntaxHighlighter(Project project) {
     return new XmlFileHighlighter();
   }
@@ -88,6 +91,7 @@ public class XMLLanguage extends Language {
     return new XmlCommenter();
   }
 
+  @NotNull
   public TokenSet getReadableTextContainerElements() {
     return TokenSet.orSet(super.getReadableTextContainerElements(),
                           TokenSet.create(XmlElementType.XML_CDATA, XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN, XmlTokenType.XML_DATA_CHARACTERS));
@@ -103,10 +107,10 @@ public class XMLLanguage extends Language {
   }
 
   @Nullable
-  public StructureViewBuilder getStructureViewBuilder(final PsiElement psiElement) {
+  public StructureViewBuilder getStructureViewBuilder(final PsiFile psiFile) {
     return new TreeBasedStructureViewBuilder() {
       public StructureViewModel createStructureViewModel() {
-        return new XmlStructureViewTreeModel((XmlFile)psiElement);
+        return new XmlStructureViewTreeModel((XmlFile)psiFile);
       }
     };
   }

@@ -16,6 +16,8 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -35,6 +37,7 @@ public class PropertiesLanguage extends Language {
     return new PropertiesParserDefinition();
   }
 
+  @NotNull
   public SyntaxHighlighter getSyntaxHighlighter(Project project) {
     return new PropertiesHighlighter();
   }
@@ -55,14 +58,15 @@ public class PropertiesLanguage extends Language {
     return ANNOTATOR;
   }
 
-  public StructureViewBuilder getStructureViewBuilder(final PsiElement psiElement) {
+  public StructureViewBuilder getStructureViewBuilder(final PsiFile psiFile) {
     return new StructureViewBuilder() {
       public StructureView createStructureView(FileEditor fileEditor, Project project) {
-        return new PropertiesFileStructureViewComponent(project, (PropertiesFile)psiElement, fileEditor);
+        return new PropertiesFileStructureViewComponent(project, (PropertiesFile)psiFile, fileEditor);
       }
     };
   }
 
+  @NotNull
   public FindUsagesProvider getFindUsagesProvider() {
     return new PropertiesFindUsagesProvider();
   }

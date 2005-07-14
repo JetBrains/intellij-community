@@ -77,11 +77,11 @@ public abstract class LanguageFileType implements FileType{
 
   /**
    * Returns the structure view builder for the specified file.
+   * 
    * @param file The file for which the structure view builder is requested.
    * @param project The project to which the file belongs.
    * @return The structure view builder, or null if no structure view is available for the file.
    */
-  
   @Nullable
   public StructureViewBuilder getStructureViewBuilder(@NotNull VirtualFile file, @NotNull Project project) {
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);

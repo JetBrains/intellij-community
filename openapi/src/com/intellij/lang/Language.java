@@ -44,7 +44,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -248,11 +248,12 @@ public abstract class Language {
   /**
    * Override this method to provide structure view and file structure popup content for the files of your language.
    *
+   * @param psiFile
    * @return <code>StructureViewBuilder</code> interface implementation for this particular language or <code>null</code>
    * if no file structure implementation.
    */
   @Nullable
-  public StructureViewBuilder getStructureViewBuilder(PsiElement psiElement) {
+  public StructureViewBuilder getStructureViewBuilder(PsiFile psiFile) {
     return null;
   }
 
