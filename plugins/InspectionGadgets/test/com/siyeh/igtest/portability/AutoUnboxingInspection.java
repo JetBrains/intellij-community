@@ -12,4 +12,17 @@ public class AutoUnboxingInspection {
         }
         Integer x = 3;
     }
+
+
+    public void bar(Double value) {
+      if (value > 0.0) { // this is not found!
+        return;
+      }
+
+      bazz(value);
+    }
+
+    private void bazz(double value) {
+      System.out.println("value = " + value);
+    } 
 }

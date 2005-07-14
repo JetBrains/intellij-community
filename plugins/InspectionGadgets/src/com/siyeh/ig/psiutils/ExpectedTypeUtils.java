@@ -54,9 +54,13 @@ public class ExpectedTypeUtils{
         return arithmeticOps.contains(sign);
     }
 
-    private static boolean isEqualityOperation(IElementType sign){
+    private static boolean isComparisonOperation(IElementType sign){
         return sign.equals(JavaTokenType.EQEQ)
-                || sign.equals(JavaTokenType.NE);
+                || sign.equals(JavaTokenType.NE)
+                || sign.equals(JavaTokenType.LE)
+                || sign.equals(JavaTokenType.LT)
+                || sign.equals(JavaTokenType.GE)
+                || sign.equals(JavaTokenType.GT);
     }
 
     private static int getParameterPosition(PsiExpressionList expressionList,
@@ -167,7 +171,7 @@ public class ExpectedTypeUtils{
                 expectedType = null;
             } else if(isArithmeticOperation(tokenType)){
                 expectedType = type;
-            } else if(isEqualityOperation(tokenType)){
+            } else if(isComparisonOperation(tokenType)){
                 final PsiExpression lhs = binaryExp.getLOperand();
                 final PsiType lhsType = lhs.getType();
                 if(ClassUtils.isPrimitive(lhsType)){
