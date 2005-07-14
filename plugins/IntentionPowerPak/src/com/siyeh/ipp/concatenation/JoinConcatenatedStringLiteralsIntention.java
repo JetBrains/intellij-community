@@ -54,19 +54,12 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention{
         String result;
         if (lhsText.length() == 0) {
             result = "";
-        }else if (lhsText.charAt(0) == '\'' || lhsText.charAt(0) == '"') {
-            result = lhsText.substring(1, lhsText.length() - 1);
         } else{
             result = lhsText;
         }
         final PsiExpression rhs = expression.getROperand();
         final Object rhsConstant = constantEvaluationHelper.computeConstantExpression(rhs);
-        final String rhsText = rhsConstant.toString();
-        if (rhsText.charAt(0) == '\'' || rhsText.charAt(0) == '"') {
-            result += rhsText.substring(1, rhsText.length() - 1);
-        } else{
-            result += rhsText;
-        }
+	    result += rhsConstant.toString();
 	    result = StringUtil.escapeStringCharacters(result);
         return result;
     }

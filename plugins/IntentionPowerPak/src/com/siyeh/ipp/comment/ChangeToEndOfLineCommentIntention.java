@@ -31,21 +31,21 @@ public class ChangeToEndOfLineCommentIntention extends Intention{
         final PsiElementFactory factory = manager.getElementFactory();
         final String commentText = comment.getText();
         final PsiElement whitespace = comment.getNextSibling();
-        assert whitespace != null;
-        final String text = commentText.substring(2, commentText.length()-2);
+        final String text = commentText.substring(2, commentText.length() - 2);
         final String[] lines = text.split("\n");
 
-        for(int i = lines.length-1; i>=1; i--){
+        for(int i = lines.length - 1; i >= 1; i--){
             final PsiComment nextComment =
-                    factory.createCommentFromText("//" + lines[i].trim() ,
+                    factory.createCommentFromText("//" + lines[i].trim(),
                                                   parent);
             parent.addAfter(nextComment, comment);
-            parent.addAfter(whitespace.copy(), comment);
+            if(whitespace != null){
+                parent.addAfter(whitespace.copy(), comment);
+            }
         }
         final PsiComment newComment =
                 factory.createCommentFromText("//" + lines[0], parent);
         final PsiElement replacedComment = comment.replace(newComment);
         codeStyleManager.reformat(replacedComment);
     }
-
 }
