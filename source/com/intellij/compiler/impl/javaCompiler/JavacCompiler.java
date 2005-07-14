@@ -186,8 +186,9 @@ class JavacCompiler implements BackendCompiler {
       classPath = cp;
 
       commandLine.add("-bootclasspath");
-      addClassPathValue(jdk, isVersion1_0, commandLine, CompilerUtil.quotePath(bootCp), "javac_bootcp");
-      LOG.info("; classpath=\"" + bootCp + "\"");
+      // important: need to quote boot classpath if path to jdk contain spaces
+      addClassPathValue(jdk, false, commandLine, CompilerUtil.quotePath(bootCp), "javac_bootcp");
+      LOG.info("; bootclasspath=\"" + bootCp + "\"");
     }
 
     commandLine.add("-classpath");
@@ -223,8 +224,7 @@ class JavacCompiler implements BackendCompiler {
     final VirtualFile[] files = chunk.getFilesToCompile();
 
     if (isVersion1_0) {
-      for (int i = 0; i < files.length; i++) {
-        VirtualFile file = files[i];
+      for (VirtualFile file : files) {
         String path = file.getPath();
         if (LOG.isDebugEnabled()) {
           LOG.debug("Adding path for compilation " + path);
@@ -237,8 +237,7 @@ class JavacCompiler implements BackendCompiler {
       sourcesFile.deleteOnExit();
       myTempFiles.add(sourcesFile);
       PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(sourcesFile)));
-      for (int i = 0; i < files.length; i++) {
-        final VirtualFile file = files[i];
+      for (final VirtualFile file : files) {
         // Important: should use "/" slashes!
         // but not for JDK 1.5 - see SCR 36673
         final String path = isVersion1_5 ? file.getPath().replace('/', File.separatorChar) : file.getPath();
