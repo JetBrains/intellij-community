@@ -12,6 +12,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.ui.ConflictsDialog;
@@ -26,9 +27,9 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.*;
+
+import org.jetbrains.annotations.NotNull;
 
 public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.encapsulateFields.EncapsulateFieldsProcessor");
@@ -89,26 +90,26 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
 
   private void checkExistingMethods(PsiMethod[] prototypes, ArrayList<String> conflicts, String methodRole) {
     if(prototypes == null) return;
-    for (int i = 0; i < prototypes.length; i++) {
-      PsiMethod prototype = prototypes[i];
+    for (PsiMethod prototype : prototypes) {
       final PsiType prototypeReturnType = prototype.getReturnType();
       PsiMethod existing = myClass.findMethodBySignature(prototype, true);
-      if(existing != null) {
+      if (existing != null) {
         final PsiType returnType = existing.getReturnType();
-        if(!RefactoringUtil.equivalentTypes(prototypeReturnType, returnType, myClass.getManager())) {
+        if (!RefactoringUtil.equivalentTypes(prototypeReturnType, returnType, myClass.getManager())) {
           final String descr = PsiFormatUtil.formatMethod(existing,
-              PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS | PsiFormatUtil.SHOW_TYPE,
-                            PsiFormatUtil.SHOW_TYPE
-                    );
+                                                          PsiSubstitutor.EMPTY,
+                                                          PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS | PsiFormatUtil.SHOW_TYPE,
+                                                          PsiFormatUtil.SHOW_TYPE
+          );
           String message = "There already is a method " + ConflictsUtil.htmlEmphasize(descr) + " which differs from "
-                  + methodRole + " " + ConflictsUtil.htmlEmphasize(prototype.getName()) + " by return type only.";
+                           + methodRole + " " + ConflictsUtil.htmlEmphasize(prototype.getName()) + " by return type only.";
           conflicts.add(message);
         }
       }
     }
   }
 
-  protected UsageInfo[] findUsages() {
+  @NotNull protected UsageInfo[] findUsages() {
     boolean findGet = myDialog.isToEncapsulateGet();
     boolean findSet = myDialog.isToEncapsulateSet();
     PsiModifierList newModifierList = null;
@@ -131,26 +132,28 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
       PsiField field = fields[i];
       PsiSearchHelper helper = field.getManager().getSearchHelper();
       PsiReference[] refs = helper.findReferences(field, GlobalSearchScope.projectScope(myProject), false);
-      for(int j = 0; j < refs.length; j++){
-        final PsiReference reference = refs[j];
+      for (final PsiReference reference : refs) {
         if (!(reference instanceof PsiReferenceExpression)) continue;
         PsiReferenceExpression ref = (PsiReferenceExpression)reference;
         // [Jeka] to avoid recursion in the field's accessors
         if (findGet && isUsedInExistingAccessor(getterPrototypes[i], ref)) continue;
         if (findSet && isUsedInExistingAccessor(setterPrototypes[i], ref)) continue;
-        if (!findGet){
+        if (!findGet) {
           if (!PsiUtil.isAccessedForWriting(ref)) continue;
         }
-        if (!findSet || field.hasModifierProperty(PsiModifier.FINAL)){
+        if (!findSet || field.hasModifierProperty(PsiModifier.FINAL)) {
           if (!PsiUtil.isAccessedForReading(ref)) continue;
         }
-        if (!myDialog.isToUseAccessorsWhenAccessible()){
+        if (!myDialog.isToUseAccessorsWhenAccessible()) {
           PsiClass accessObjectClass = null;
           PsiExpression qualifier = ref.getQualifierExpression();
-          if (qualifier != null){
-            accessObjectClass = (PsiClass) PsiUtil.getAccessObjectClass(qualifier).getElement();
+          if (qualifier != null) {
+            accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass(qualifier).getElement();
           }
-          if (PsiManager.getInstance(myProject).getResolveHelper().isAccessible(field, newModifierList, ref, accessObjectClass, null)) continue;
+          if (PsiManager.getInstance(myProject).getResolveHelper()
+            .isAccessible(field, newModifierList, ref, accessObjectClass, null)) {
+            continue;
+          }
         }
         UsageInfo usageInfo = new MyUsageInfo(ref, i);
         array.add(usageInfo);
@@ -178,8 +181,8 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     // change visibility of fields
     if (myDialog.getFieldsVisibility() != null){
       // "as is"
-      for(int i = 0; i < myFields.length; i++){
-        setNewFieldVisibility(myFields[i]);
+      for (PsiField field : myFields) {
+        setNewFieldVisibility(field);
       }
     }
 
@@ -198,25 +201,41 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    HashSet<PsiElement> allFiles = new HashSet<PsiElement>();
-    HashMap<PsiElement,MyUsageInfo> treeSkeletonMap = new com.intellij.util.containers.HashMap<PsiElement, MyUsageInfo>();
-    for(int i = 0; i < usages.length; i++){
-      MyUsageInfo usage = (MyUsageInfo)usages[i];
-      if (!usage.getElement().isValid()) continue;
+    Map<PsiFile, List<MyUsageInfo>> usagesInFiles = new HashMap<PsiFile, List<MyUsageInfo>>();
+    for (UsageInfo usage : usages) {
       PsiElement element = usage.getElement();
-      treeSkeletonMap.put(element, usage);
-      while(!(element instanceof PsiFile)){
-        element = element.getParent();
-        if (!treeSkeletonMap.containsKey(element)){
-          treeSkeletonMap.put(element, null);
-        }
+      if (element == null) continue;
+      final PsiFile file = element.getContainingFile();
+      List<MyUsageInfo> usagesInFile = usagesInFiles.get(file);
+      if (usagesInFile == null) {
+        usagesInFile = new ArrayList<MyUsageInfo>();
+        usagesInFiles.put(file, usagesInFile);
       }
-      allFiles.add(element);
+      usagesInFile.add(((MyUsageInfo)usage));
     }
 
-    for(Iterator<PsiElement> iterator = allFiles.iterator(); iterator.hasNext();){
-      PsiFile file = (PsiFile)iterator.next();
-      processSubtree(file, treeSkeletonMap);
+    for (List<MyUsageInfo> usageInfos : usagesInFiles.values()) {
+      //sort usages so that descendants in the tree go first, and rhs usages go before lhs
+      //this is to avoid elements become invalid as a result of processUsage
+      Collections.sort(usageInfos, new Comparator<MyUsageInfo>() {
+        public int compare(final MyUsageInfo usage1, final MyUsageInfo usage2) {
+          final PsiElement element1 = usage1.getElement();
+          final PsiElement element2 = usage1.getElement();
+          if (PsiTreeUtil.isAncestor(element1, element2, true)) return 1;
+          if (PsiTreeUtil.isAncestor(element2, element1, true)) return -1;
+          final PsiElement commonParent = PsiTreeUtil.findCommonParent(element1, element2);
+          if (commonParent instanceof PsiAssignmentExpression) {
+            final PsiExpression lExpression = ((PsiAssignmentExpression)commonParent).getLExpression();
+            if (PsiTreeUtil.isAncestor(lExpression, element1, true)) return 1;
+            return -1;
+          }
+          return 0;
+        }
+      });
+
+      for (MyUsageInfo info : usageInfos) {
+        processUsage(info);
+      }
     }
   }
 
@@ -259,28 +278,6 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
       }
     }
     return false;
-  }
-
-  private void processSubtree(PsiElement root, HashMap<PsiElement,MyUsageInfo> treeSkeletonMap) {
-    if (!treeSkeletonMap.containsKey(root)) return;
-    if (root instanceof PsiAssignmentExpression){
-      PsiAssignmentExpression assignment = (PsiAssignmentExpression)root;
-      PsiExpression rExpr = assignment.getRExpression();
-      if (rExpr != null){
-        processSubtree(rExpr, treeSkeletonMap);
-      }
-      processSubtree(assignment.getLExpression(), treeSkeletonMap);
-    }
-    else{
-      PsiElement[] children = root.getChildren();
-      for(int i = 0; i < children.length; i++){
-        processSubtree(children[i], treeSkeletonMap);
-      }
-    }
-    MyUsageInfo usage = treeSkeletonMap.get(root);
-    if (usage != null){
-      processUsage(usage);
-    }
   }
 
   private void processUsage(MyUsageInfo usage) {
@@ -345,8 +342,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
 
             PsiExpression setExpr;
             if (processSet) {
-              PsiMethodCallExpression methodCall = createSetterCall(usage.fieldIndex, binExpr, expr);
-              setExpr = methodCall;
+              setExpr = createSetterCall(usage.fieldIndex, binExpr, expr);
             }
             else {
               text = "a = b";
@@ -395,8 +391,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
         PsiExpression setExpr;
         if (processSet){
           final int fieldIndex = usage.fieldIndex;
-          final PsiMethodCallExpression setterCall = createSetterCall(fieldIndex, binExpr, expr);
-          setExpr = setterCall;
+          setExpr = createSetterCall(fieldIndex, binExpr, expr);
         }
         else{
           text = "a = b";

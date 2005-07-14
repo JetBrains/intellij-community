@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import org.jetbrains.annotations.Nullable;
 
 public class UsageInfo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.usageView.UsageInfo");
@@ -53,6 +54,7 @@ public class UsageInfo {
     this(element, false);
   }
 
+  @Nullable
   public PsiElement getElement() { // SmartPointer is used to fix SCR #4572, hotya eto krivo i nado vse perepisat'
     return mySmartPointer.getElement();
   }
@@ -74,7 +76,7 @@ public class UsageInfo {
     int offset = range.getStartOffset() + startOffset;
     Project project = getElement().getProject();
     FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file, offset),
-                                                                                         requestFocus);
+                                                          requestFocus);
   }
 
   public final boolean isWritable() {
