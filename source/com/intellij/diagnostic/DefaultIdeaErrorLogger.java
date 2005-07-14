@@ -52,9 +52,6 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
       public void run() {
         String message = "There's not enough memory to perform the requested operation.";
         message += "\n" + "Please shutdown IDEA and increase -Xmx setting in " + getSettingsFilePath();
-        message += "\n" + ReportMessages.getReportAddress();
-        message += "\n" + "and attach the " + logFilePath;
-        message += "\n" + "with a brief description of what you were doing.";
 
         if (JOptionPane.showOptionDialog(JOptionPane.getRootFrame(), message, "Out of Memory",
                                          JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null,
