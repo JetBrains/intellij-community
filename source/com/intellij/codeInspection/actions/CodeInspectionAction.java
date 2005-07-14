@@ -57,7 +57,11 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     profiles.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final InspectionProfileImpl profile = inspectionManager.getProfile((String)profiles.getSelectedItem());
-        dialog.setOKActionEnabled(profile != null && profile.isExecutable());
+        final boolean canExecute = profile != null && profile.isExecutable();
+        dialog.setOKActionEnabled(canExecute);
+        if (canExecute){
+          manager.setProfile(profile);
+        }
       }
     });
     final InspectionProfileImpl profile = inspectionManager.getProfile((String)profiles.getSelectedItem());
