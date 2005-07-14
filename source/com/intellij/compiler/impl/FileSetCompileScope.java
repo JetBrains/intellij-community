@@ -10,8 +10,9 @@ import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.*;
 
@@ -66,7 +67,7 @@ public class FileSetCompileScope extends UserDataHolderBase implements CompileSc
     }
     for (Iterator<String> it = myDirectoryUrls.iterator(); it.hasNext();) {
       String directoryUrl = it.next();
-      if (CompilerUtil.startsWith(url, directoryUrl)) {
+      if (FileUtil.startsWith(url, directoryUrl)) {
         return true;
       }
     }

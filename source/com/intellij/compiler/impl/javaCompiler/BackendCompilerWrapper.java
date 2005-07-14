@@ -25,7 +25,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -665,7 +664,7 @@ class BackendCompilerWrapper {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Checking pair [pathToClass; relPathToSource] = " + pair);
         }
-        if (CompilerUtil.pathsEqual(filePath, pair.getSecond())) {
+        if (FileUtil.pathsEqual(filePath, pair.getSecond())) {
           final String outputPath = pair.getFirst().replace(File.separatorChar, '/');
           final Pair<String, String> realLocation = moveToRealLocation(outputDir, outputPath, javaFile);
           if (realLocation != null) {
@@ -701,7 +700,7 @@ class BackendCompilerWrapper {
       realOutputDir = getOutputDir(module);
     }
 
-    if (CompilerUtil.pathsEqual(tempOutputDir, realOutputDir)) { // no need to move
+    if (FileUtil.pathsEqual(tempOutputDir, realOutputDir)) { // no need to move
       myFilesToRefresh.add(new File(pathToClass));
       return new Pair<String, String>(realOutputDir, pathToClass);
     }

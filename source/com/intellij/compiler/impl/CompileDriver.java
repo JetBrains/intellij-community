@@ -1023,7 +1023,7 @@ public class CompileDriver {
             final String outputDir = item.getOutputRootDirectory();
 
             if (outputDir != null) {
-              if (!CompilerUtil.startsWith(outputPath, outputDir)) {
+              if (!FileUtil.startsWith(outputPath, outputDir)) {
                 LOG.assertTrue(false, outputPath + " does not start with " + outputDir);
               }
               className = MakeUtil.relativeClassPathToQName(outputPath.substring(outputDir.length(), outputPath.length()), '/');

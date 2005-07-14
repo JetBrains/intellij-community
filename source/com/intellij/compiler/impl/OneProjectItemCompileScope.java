@@ -8,9 +8,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.util.UserDataHolderBase;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,9 +44,9 @@ public class OneProjectItemCompileScope extends UserDataHolderBase implements Co
 
   public boolean belongs(String url) {
     if (myFile.isDirectory()){
-      return CompilerUtil.startsWith(url, myUrl);
+      return FileUtil.startsWith(url, myUrl);
     }
-    return CompilerUtil.pathsEqual(url, myUrl);
+    return FileUtil.pathsEqual(url, myUrl);
   }
 
   public Module[] getAffectedModules() {

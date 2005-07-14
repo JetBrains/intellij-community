@@ -79,7 +79,7 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
     myCvsStandardOperationsProvider = new CvsStandardOperationsProvider(project);
     myCvsUpdateEnvironment = new CvsUpdateEnvironment(project);
     myCvsStatusEnvironment = new CvsStatusEnvironment(myProject);
-    myUpToDateRevisionProvider = new CvsUpToDateRevisionProvider(myProject);
+    myUpToDateRevisionProvider = new CvsUpToDateRevisionProvider(myProject, CvsEntriesManager.getInstance());
 
     myConfigurable = new Cvs2Configurable(getProject());
     myStorageComponent = cvsStorageComponent;

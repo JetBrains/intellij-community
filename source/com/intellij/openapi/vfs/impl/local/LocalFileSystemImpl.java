@@ -90,7 +90,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
   private String[] getCachedRootPaths() {
     final File[] files = File.listRoots();
     if (files.length == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
-    String[] result = new String[files.length];;
+    String[] result = new String[files.length];
     for (int i = 0; i < files.length; i++) {
       result[i] = files[i].getPath();
     }
@@ -145,7 +145,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
   private boolean isPhysicalRoot(String path) {
     path = path.replace('/', File.separatorChar);
     for (String rootPath : myCachedRootPaths) {
-      if (equal(path, rootPath)) {
+      if (FileUtil.pathsEqual(path, rootPath)) {
         return true;
       }
     }
@@ -189,7 +189,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
       for (int i = 0; i < myRoots.size(); i++) {
         VirtualFile root = myRoots.get(i);
         String rootPath = root.getPath();
-        if (!startsWith(path, rootPath)) continue;
+        if (!FileUtil.startsWith(path, rootPath)) continue;
         if (path.length() == rootPath.length()) return root;
         String tail;
         if (path.charAt(rootPath.length()) == '/') {
@@ -241,7 +241,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
       for (int i = 0; i < myRoots.size(); i++) {
         VirtualFile root = myRoots.get(i);
         String rootPath = root.getPath();
-        if (!startsWith(rootPath, path)) continue;
+        if (!FileUtil.startsWith(rootPath, path)) continue;
         if (rootPath.length() == path.length()) return root;
         String tail;
         if (rootPath.charAt(path.length()) == '/') {
@@ -633,23 +633,6 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
 
   protected void fireBeforeFileMovement(Object requestor, VirtualFile file, VirtualFile newParent) {
     super.fireBeforeFileMovement(requestor, file, newParent);
-  }
-
-  private static boolean equal(String path1, String path2) {
-    if (SystemInfo.isFileSystemCaseSensitive) {
-      return path1.equals(path2);
-    }
-    else {
-      return path1.equalsIgnoreCase(path2);
-    }
-  }
-
-  private static boolean startsWith(String path1, String path2) {
-    if (!SystemInfo.isFileSystemCaseSensitive) {
-      path1 = path1.toLowerCase();
-      path2 = path2.toLowerCase();
-    }
-    return path1.startsWith(path2);
   }
 
   private String getCanonicalPath(File file) {

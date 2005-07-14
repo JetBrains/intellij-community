@@ -3,7 +3,6 @@ package com.intellij.cvsSupport2.actions;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.actions.actionVisibility.CvsActionVisibility;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
-import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.cvsstatuses.CvsStatusProvider;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
@@ -93,9 +92,9 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
     public boolean isPerformedOn(CvsContext context) {
       VirtualFile[] selectedFiles = context.getSelectedFiles();
       if (selectedFiles == null) return false;
-      for (int i = 0; i < selectedFiles.length; i++) {
-        VirtualFile selectedFile = selectedFiles[i];
-        if (CvsEntriesManager.getInstance().fileIsIgnored(selectedFile)) return false;
+      final CvsEntriesManager entriesManager = CvsEntriesManager.getInstance();
+      for (VirtualFile selectedFile : selectedFiles) {
+        if (entriesManager.fileIsIgnored(selectedFile)) return false;
       }
       return true;
     }
@@ -105,8 +104,8 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
     public boolean isPerformedOn(CvsContext context) {
       VirtualFile[] selectedFiles = context.getSelectedFiles();
       if (selectedFiles == null) return false;
-      for (int i = 0; i < selectedFiles.length; i++) {
-        if (!CvsUtil.fileIsLocallyAdded(selectedFiles[i])) return false;
+      for (VirtualFile selectedFile : selectedFiles) {
+        if (!CvsUtil.fileIsLocallyAdded(selectedFile)) return false;
       }
       return true;
     }

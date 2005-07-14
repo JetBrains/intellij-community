@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -29,17 +28,6 @@ public class CompilerUtil {
       path = "\"" + path + "\"";
     }
     return path;
-  }
-
-  public static boolean startsWith(String path1, String path2) {
-    if (path2.length() > path1.length()) {
-      return false;
-    }
-    return path1.regionMatches(!SystemInfo.isFileSystemCaseSensitive, 0, path2, 0, path2.length());
-  }
-
-  public static boolean pathsEqual(String path1, String path2) {
-    return SystemInfo.isFileSystemCaseSensitive? path1.equals(path2) : path1.equalsIgnoreCase(path2);
   }
 
   public static final FileFilter CLASS_FILES_FILTER = new FileFilter() {

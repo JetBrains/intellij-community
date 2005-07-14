@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 
@@ -137,7 +138,7 @@ public class ModuleCompileScope extends FileIndexCompileScope {
   }
 
   private static boolean isUrlUnderRoot(final String url, final String root) {
-    return (url.length() > root.length()) && url.charAt(root.length()) == '/' && CompilerUtil.startsWith(url, root);
+    return (url.length() > root.length()) && url.charAt(root.length()) == '/' && FileUtil.startsWith(url, root);
   }
 
   private Map<Module, String[]> myContentUrlsCache = new HashMap<Module, String[]>();

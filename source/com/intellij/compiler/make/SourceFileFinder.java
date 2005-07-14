@@ -1,6 +1,5 @@
 package com.intellij.compiler.make;
 
-import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.module.Module;
@@ -8,9 +7,10 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
 
 import java.util.Iterator;
@@ -44,7 +44,7 @@ public class SourceFileFinder {
       final String prefix = dirs.get(dir);
       String path;
       if (prefix.length() > 0 ) {
-        if (CompilerUtil.startsWith(relativePath, prefix)) {
+        if (FileUtil.startsWith(relativePath, prefix)) {
           // if there is package prefix assigned to the root, the relative path should be corrected
           path = dir.getPath() + relativePath.substring(prefix.length() - 1);
         }

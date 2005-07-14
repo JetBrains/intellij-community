@@ -125,9 +125,10 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
       fillFileToInfoMap();
       setAllParents();
       if (!myShouldIncludeAllRoots) {
-        for (Iterator each = files.iterator(); each.hasNext();) {
-          VirtualFile virtualFile = (VirtualFile)each.next();
-          if (CvsEntriesManager.getInstance().fileIsIgnored(virtualFile)) {
+        final CvsEntriesManager entriesManager = CvsEntriesManager.getInstance();
+        for (final VirtualFile file : files) {
+          VirtualFile virtualFile = (VirtualFile)file;
+          if (entriesManager.fileIsIgnored(virtualFile)) {
             myResult.get(virtualFile).setIncluded(false);
           }
         }

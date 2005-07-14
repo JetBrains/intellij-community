@@ -7,6 +7,7 @@ package com.intellij.openapi.util.io;
 import com.intellij.Patches;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 
 import java.io.*;
@@ -368,6 +369,17 @@ public class FileUtil {
   public static void rename(final File source, final File target) throws IOException {
     copy(source, target);
     delete(source);
+  }
+
+  public static boolean startsWith(String path1, String path2) {
+    if (path2.length() > path1.length()) {
+      return false;
+    }
+    return path1.regionMatches(!SystemInfo.isFileSystemCaseSensitive, 0, path2, 0, path2.length());
+  }
+
+  public static boolean pathsEqual(String path1, String path2) {
+    return SystemInfo.isFileSystemCaseSensitive? path1.equals(path2) : path1.equalsIgnoreCase(path2);
   }
 
   public static interface FileVisitor {

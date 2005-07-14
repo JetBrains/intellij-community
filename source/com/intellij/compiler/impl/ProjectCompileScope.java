@@ -11,6 +11,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 
@@ -32,7 +33,7 @@ public class ProjectCompileScope extends FileIndexCompileScope {
 
   public boolean belongs(String url) {
     //return !url.startsWith(myTempDirUrl);
-    return !CompilerUtil.startsWith(url, myTempDirUrl);
+    return !FileUtil.startsWith(url, myTempDirUrl);
   }
 
   public Module[] getAffectedModules() {

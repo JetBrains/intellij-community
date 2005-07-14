@@ -24,8 +24,8 @@ import com.intellij.cvsSupport2.cvsoperations.cvsImport.ImportDetails;
 import com.intellij.cvsSupport2.cvsoperations.cvsImport.ImportOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsRemove.RemoveFilesOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.BranchOperation;
-import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.RTagOperation;
+import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsUpdate.UpdateOperation;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDateImpl;
 import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
@@ -337,6 +337,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
 
   public static CvsHandler createGetFileFromRepositoryHandler(CvsLightweightFile[] cvsLightweightFiles, boolean makeNewFilesReadOnly) {
     CompositeOperaton compositeOperaton = new CompositeOperaton();
+    final CvsEntriesManager entriesManager = CvsEntriesManager.getInstance();
     for (CvsLightweightFile cvsLightweightFile : cvsLightweightFiles) {
       File root = cvsLightweightFile.getRoot();
       File workingDirectory = root;
@@ -346,7 +347,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
       }
       String alternativeCheckoutPath = getAlternativeCheckoutPath(cvsLightweightFile, workingDirectory);
       CheckoutProjectOperation checkoutFileOperation = new CheckoutProjectOperation(new String[]{cvsLightweightFile.getModuleName()},
-                                                                                    CvsEntriesManager.getInstance()
+                                                                                    entriesManager
                                                                                       .getCvsConnectionSettingsFor(root),
                                                                                     makeNewFilesReadOnly,
                                                                                     workingDirectory,
