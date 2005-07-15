@@ -35,7 +35,7 @@ class StatisticsUnit {
 
   private final int myNumber;
 
-  private TObjectIntHashMap myDataMap = new TObjectIntHashMap();
+  private TObjectIntHashMap<MyDataKey> myDataMap = new TObjectIntHashMap<MyDataKey>();
 
   public StatisticsUnit(int number) {
     myNumber = number;
@@ -51,19 +51,18 @@ class StatisticsUnit {
   }
 
   public String[] getKeys2(final String key1){
-    final HashSet keys = new HashSet();
+    final HashSet<String> keys = new HashSet<String>();
     myDataMap.forEachKey(
-      new TObjectProcedure() {
-        public boolean execute(Object object) {
-          MyDataKey dataKey = (MyDataKey)object;
-          if (dataKey.key1.equals(key1)){
-            keys.add(dataKey.key2);
+      new TObjectProcedure<MyDataKey>() {
+        public boolean execute(MyDataKey object) {
+          if (object.key1.equals(key1)){
+            keys.add(object.key2);
           }
           return true;
         }
       }
     );
-    return (String[])keys.toArray(new String[keys.size()]);
+    return keys.toArray(new String[keys.size()]);
   }
 
   public int getNumber() {
@@ -78,11 +77,11 @@ class StatisticsUnit {
 
     final IOException[] ex = new IOException[1];
     myDataMap.forEachEntry(
-      new TObjectIntProcedure() {
-        public boolean execute(Object key, int value) {
+      new TObjectIntProcedure<MyDataKey>() {
+        public boolean execute(MyDataKey key, int value) {
           try{
-            dataOut.writeUTF(((MyDataKey)key).key1);
-            dataOut.writeUTF(((MyDataKey)key).key2);
+            dataOut.writeUTF(key.key1);
+            dataOut.writeUTF(key.key2);
             dataOut.writeInt(value);
             return true;
           }

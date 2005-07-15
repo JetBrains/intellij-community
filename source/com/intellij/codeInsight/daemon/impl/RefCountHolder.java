@@ -44,7 +44,7 @@ public class RefCountHolder {
     addStatistics(dcl);
   }
 
-  private void addStatistics(final PsiNamedElement dcl) {
+  private static void addStatistics(final PsiNamedElement dcl) {
     final PsiType typeByPsiElement = PsiUtil.getTypeByPsiElement(dcl);
     final StatisticsManager.NameContext context = StatisticsManager.getContext(dcl);
     if(typeByPsiElement != null && context != null) {
@@ -84,15 +84,18 @@ public class RefCountHolder {
     if (refElement instanceof PsiMethod && PsiTreeUtil.isAncestor(refElement, ref, true)) return; // filter self-recursive calls
     if (refElement instanceof PsiClass && PsiTreeUtil.isAncestor(refElement, ref, true)) return; // filter inner use of itself
     myLocalRefsMap.put(ref, refElement);
-    if(refElement instanceof PsiNamedElement && !myUsedElements.contains(refElement)) {
-      myUsedElements.add((PsiNamedElement)refElement);
-      addStatistics((PsiNamedElement)refElement);
+    if(refElement instanceof PsiNamedElement) {
+      PsiNamedElement namedElement = (PsiNamedElement)refElement;
+      if(!myUsedElements.contains(namedElement)) {
+        myUsedElements.add(namedElement);
+        addStatistics(namedElement);
+      }
     }
   }
 
   public void removeInvalidRefs() {
-    for(Iterator iterator = myLocalRefsMap.keySet().iterator(); iterator.hasNext();){
-      PsiElement ref = (PsiElement)iterator.next();
+    for(Iterator<PsiElement> iterator = myLocalRefsMap.keySet().iterator(); iterator.hasNext();){
+      PsiElement ref = iterator.next();
       if (!ref.isValid()){
         PsiElement value = myLocalRefsMap.get(ref);
         iterator.remove();
@@ -100,14 +103,14 @@ public class RefCountHolder {
         array.remove(ref);
       }
     }
-    for (Iterator iterator = myImportStatements.keySet().iterator(); iterator.hasNext();) {
-      PsiElement ref = (PsiElement)iterator.next();
+    for (Iterator<PsiElement> iterator = myImportStatements.keySet().iterator(); iterator.hasNext();) {
+      PsiElement ref = iterator.next();
       if (!ref.isValid()) iterator.remove();
     }
   }
 
   public int getRefCount(PsiElement element) {
-    List array = myLocalRefsMap.getKeysByValue(element);
+    List<PsiElement> array = myLocalRefsMap.getKeysByValue(element);
     if(array != null) return array.size();
 
     Boolean usedStatus = myDclsUsedMap.get(element);
@@ -118,11 +121,10 @@ public class RefCountHolder {
 
   public int getReadRefCount(PsiElement element) {
     LOG.assertTrue(element instanceof PsiVariable);
-    List array = myLocalRefsMap.getKeysByValue(element);
+    List<PsiElement> array = myLocalRefsMap.getKeysByValue(element);
     if (array == null) return 0;
     int count = 0;
-    for (Object aArray : array) {
-      PsiElement ref = (PsiElement)aArray;
+    for (PsiElement ref : array) {
       if (!(ref instanceof PsiExpression)) { // possible with uncomplete code
         count++;
         continue;
@@ -141,11 +143,10 @@ public class RefCountHolder {
 
   public int getWriteRefCount(PsiElement element) {
     LOG.assertTrue(element instanceof PsiVariable);
-    List array = myLocalRefsMap.getKeysByValue(element);
+    List<PsiElement> array = myLocalRefsMap.getKeysByValue(element);
     if (array == null) return 0;
     int count = 0;
-    for (Object aArray : array) {
-      PsiElement ref = (PsiElement)aArray;
+    for (PsiElement ref : array) {
       if (!(ref instanceof PsiExpression)) { // possible with uncomplete code
         count++;
         continue;
