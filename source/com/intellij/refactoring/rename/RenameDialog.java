@@ -76,12 +76,12 @@ public class RenameDialog extends RefactoringDialog {
     myNameLabel.setText("Rename " + getFullName() + " and its usages to:");
     boolean toSearchInComments =
       RefactoringSettings.getInstance().isToSearchInCommentsForRename(myPsiElement);
-    boolean toSearchInNonJava =
-      RefactoringSettings.getInstance().isToSearchInNonJavaFilesForRename(myPsiElement);
+    boolean toSearchForTextOccurences =
+      RefactoringSettings.getInstance().isToSearchForTextOccurencesForRename(myPsiElement);
     myCbSearchInComments.setSelected(toSearchInComments);
 
     if (myCbSearchTextOccurences.isEnabled()) {
-      myCbSearchTextOccurences.setSelected(toSearchInNonJava);
+      myCbSearchTextOccurences.setSelected(toSearchForTextOccurences);
     }
 
     if (!showSearchCheckboxes(myPsiElement)) {
@@ -106,7 +106,7 @@ public class RenameDialog extends RefactoringDialog {
 
   private void createNewNameComponent() {
     String[] suggestedNames = getSuggestedNames();
-    myNameSuggestionsField = new NameSuggestionsField(suggestedNames, myProject, StdLanguages.JAVA.equals(myPsiElement.getLanguage()) ? StdFileTypes.JAVA : StdFileTypes.PLAIN_TEXT);
+    myNameSuggestionsField = new NameSuggestionsField(suggestedNames, myProject, StdFileTypes.PLAIN_TEXT);
     myNameSuggestionsField.addDataChangedListener(new NameSuggestionsField.DataChanged() {
       public void dataChanged() {
         validateButtons();

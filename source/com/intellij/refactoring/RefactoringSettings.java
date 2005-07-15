@@ -26,8 +26,8 @@ public class RefactoringSettings implements JDOMExternalizable, ApplicationCompo
   public boolean RENAME_SEARCH_IN_COMMENTS_FOR_VARIABLE = true;
   public boolean RENAME_SEARCH_IN_COMMENTS_FOR_POINTCUT_DEF = true;
 
-  public boolean RENAME_SEARCH_IN_NONJAVA_FOR_PACKAGE = true;
-  public boolean RENAME_SEARCH_IN_NONJAVA_FOR_CLASS = true;
+  public boolean RENAME_SEARCH_FOR_TEXT_FOR_PACKAGE = true;
+  public boolean RENAME_SEARCH_FOR_TEXT_FOR_CLASS = true;
   //public boolean RENAME_SEARCH_IN_NONJAVA_FOR_METHOD;
   //public boolean RENAME_SEARCH_IN_NONJAVA_FOR_FIELD;
   //public boolean RENAME_SEARCH_IN_NONJAVA_FOR_VARIABLE;
@@ -39,7 +39,7 @@ public class RefactoringSettings implements JDOMExternalizable, ApplicationCompo
 
   public boolean MOVE_PREVIEW_USAGES = true;
   public boolean MOVE_SEARCH_IN_COMMENTS = true;
-  public boolean MOVE_SEARCH_IN_NONJAVA_FILES = true;
+  public boolean MOVE_SEARCH_FOR_TEXT = true;
 
 
   //public boolean INLINE_METHOD_PREVIEW_USAGES = true;
@@ -132,15 +132,15 @@ public class RefactoringSettings implements JDOMExternalizable, ApplicationCompo
     }
   }
 
-  public boolean isToSearchInNonJavaFilesForRename(PsiElement element) {
+  public boolean isToSearchForTextOccurencesForRename(PsiElement element) {
     if (element instanceof PsiDirectory) {
       element = ((PsiDirectory)element).getPackage();
     }
     if (element instanceof PsiPackage){
-      return RENAME_SEARCH_IN_NONJAVA_FOR_PACKAGE;
+      return RENAME_SEARCH_FOR_TEXT_FOR_PACKAGE;
     }
     else if (element instanceof PsiClass){
-      return RENAME_SEARCH_IN_NONJAVA_FOR_CLASS;
+      return RENAME_SEARCH_FOR_TEXT_FOR_CLASS;
     }
     /*
     else if (element instanceof PsiMethod){
@@ -203,10 +203,10 @@ public class RefactoringSettings implements JDOMExternalizable, ApplicationCompo
       }
     }
     if (element instanceof PsiPackage){
-      RENAME_SEARCH_IN_NONJAVA_FOR_PACKAGE = value;
+      RENAME_SEARCH_FOR_TEXT_FOR_PACKAGE = value;
     }
     else if (element instanceof PsiClass){
-      RENAME_SEARCH_IN_NONJAVA_FOR_CLASS = value;
+      RENAME_SEARCH_FOR_TEXT_FOR_CLASS = value;
     }
     else if (element instanceof PsiMethod){
       //RENAME_SEARCH_IN_NONJAVA_FOR_METHOD = value;

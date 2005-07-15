@@ -165,7 +165,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
                       PsiDirectory initialTargetDirectory,
                       boolean isTargetDirectoryFixed,
                       boolean searchInComments,
-                      boolean searchInNonJavaFiles,
+                      boolean searchForTextOccurences,
                       String helpID) {
     myInitialTargetDirectory = initialTargetDirectory;
     if (targetPackageName.length() != 0) {
@@ -191,7 +191,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     }
 
     myCbSearchInComments.setSelected(searchInComments);
-    myCbSearchTextOccurences.setSelected(searchInNonJavaFiles);
+    myCbSearchTextOccurences.setSelected(searchForTextOccurences);
 
     if (getSourceRoots().length == 1) {
       myCbPreserveSourceFolders.setSelected(true);
@@ -247,9 +247,9 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
 
     final RefactoringSettings refactoringSettings = RefactoringSettings.getInstance();
     final boolean searchInComments = isSearchInComments();
-    final boolean searchInNonJavaFiles = isSearchInNonJavaFiles();
+    final boolean searchForTextOccurences = isSearchInNonJavaFiles();
     refactoringSettings.MOVE_SEARCH_IN_COMMENTS = searchInComments;
-    refactoringSettings.MOVE_SEARCH_IN_NONJAVA_FILES = searchInNonJavaFiles;
+    refactoringSettings.MOVE_SEARCH_FOR_TEXT = searchForTextOccurences;
     PsiManager manager = PsiManager.getInstance(getProject());
     for (final PsiElement element : myElementsToMove) {
       String message = verifyDestinationForElement(element, destination);
@@ -282,7 +282,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
         getProject(),
         myElementsToMove,
         destination, searchInComments,
-        searchInNonJavaFiles,
+        searchForTextOccurences,
         myMoveCallback));
     }
     catch (IncorrectOperationException e) {

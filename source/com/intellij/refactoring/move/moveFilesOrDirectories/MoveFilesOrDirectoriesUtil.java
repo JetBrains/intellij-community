@@ -90,12 +90,12 @@ public class MoveFilesOrDirectoriesUtil {
 
     final MoveFilesOrDirectoriesDialog moveDialog = new MoveFilesOrDirectoriesDialog(project, doRun);
     boolean searchInComments = RefactoringSettings.getInstance().MOVE_SEARCH_IN_COMMENTS;
-    boolean searchInNonJavaFiles = RefactoringSettings.getInstance().MOVE_SEARCH_IN_NONJAVA_FILES;
+    boolean searchForTextOccurences = RefactoringSettings.getInstance().MOVE_SEARCH_FOR_TEXT;
     moveDialog.setData(
       elements,
       initialTargetDirectory,
       searchInComments,
-      searchInNonJavaFiles,
+      searchForTextOccurences,
       HelpID.getMoveHelpID(elements[0])
     );
     moveDialog.show();
