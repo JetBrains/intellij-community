@@ -321,12 +321,10 @@ public class CodeStyleIndentAndBracesPanel extends CodeStyleAbstractPanel {
       "          default: \n" +
       "           doDefault();\n" +
       "        }\n" +
-      "      }\n" +
-      "      catch(Exception e) {\n" +
+      "      }catch(Exception e) {\n" +
       "        processException(e.getMessage(),\n" +
       "          x + y, z, a);\n" +
-      "      }\n" +
-      "      finally {\n" +
+      "      }finally {\n" +
       "        processFinally();\n" +
       "      }\n" +
       "    }while(true);\n" +
