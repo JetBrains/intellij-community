@@ -161,6 +161,8 @@ public class EditorWindow {
       if (componentIndex >= 0) { // editor could close itself while disposing.
         myTabbedPane.removeTabAt(componentIndex);
       }
+    } else {
+      myPanel.removeAll();
     }
   }
 
