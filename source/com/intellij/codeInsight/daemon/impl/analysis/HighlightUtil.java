@@ -1838,7 +1838,7 @@ public class HighlightUtil {
     }
     PsiType lRawType = lType1 instanceof PsiClassType ? ((PsiClassType)lType1).rawType() : lType1;
     PsiType rRawType = rType1 instanceof PsiClassType ? ((PsiClassType)rType1).rawType() : rType1;
-    boolean assignable = TypeConversionUtil.isAssignable(lRawType, rRawType);
+    boolean assignable = lRawType == null || rRawType == null ? true : TypeConversionUtil.isAssignable(lRawType, rRawType);
     toolTip += "<td>Required:</td>" +
                "<td>" + redIfNotMatch(lRawType, assignable) + "</td>" +
                requredRow;
