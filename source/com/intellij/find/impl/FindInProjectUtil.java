@@ -189,6 +189,7 @@ public class FindInProjectUtil {
         if (virtualFile == null) continue;
 
         long fileLength = getFileLength(virtualFile);
+        if (fileLength == -1) continue; // Binary or invalid
 
         if (fileLength > SINGLE_FILE_SIZE_LIMIT) {
           int retCode = showMessage(project, "IDEA is about to scan for occurences in\n" + getPresentablePath(virtualFile) + "\n" +
@@ -201,6 +202,7 @@ public class FindInProjectUtil {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
             if (virtualFile.isValid()) {
+              // Check once more if valid and text since we're in new read action and things might have been changed.
               if (FileTypeManager.getInstance().getFileTypeByFile(virtualFile).isBinary()) return; // do not decompile .class files
               final Document document = manager.getDocument(virtualFile);
               if (document != null) {
@@ -260,9 +262,11 @@ public class FindInProjectUtil {
   }
 
   private static long getFileLength(final VirtualFile virtualFile) {
-    final long[] length = new long[1];
+    final long[] length = new long[] {-1L};
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
+        if (!virtualFile.isValid()) return;
+        if (FileTypeManager.getInstance().getFileTypeByFile(virtualFile).isBinary()) return;
         length[0] = virtualFile.getLength();
       }
     });
