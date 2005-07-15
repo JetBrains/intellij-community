@@ -1,8 +1,5 @@
 package com.intellij.formatting;
 
-import com.intellij.formatting.Spacing;
-import com.intellij.formatting.FormatProcessor;
-
 class SpacingImpl extends Spacing {
   private final int myMinSpaces;
   private int myKeepBlankLines;
@@ -24,6 +21,9 @@ class SpacingImpl extends Spacing {
     myKeepBlankLines = keepBlankLines;
     myMaxSpaces = Math.max(minSpaces, maxSpaces);
     myMinLineFeeds = minLineFeeds;
+    if (minLineFeeds > 0 && minLineFeeds > keepBlankLines) {
+      myKeepBlankLines = minLineFeeds;
+    }
     myIsReadOnly = isReadOnly;
     myIsSafe = safe;
     myShouldKeepLineBreaks = shouldKeepLineBreaks;
