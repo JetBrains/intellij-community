@@ -3,6 +3,7 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.VariableInspection;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
@@ -30,7 +31,7 @@ public class MismatchedArrayReadWriteInspection extends VariableInspection{
         assert variable!=null;
         final PsiElement context;
         if(variable instanceof PsiField){
-            context = ((PsiMember) variable).getContainingClass();
+            context = PsiUtil.getTopLevelClass(variable);
         } else{
             context = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
         }
@@ -54,7 +55,7 @@ public class MismatchedArrayReadWriteInspection extends VariableInspection{
             if(!field.hasModifierProperty(PsiModifier.PRIVATE)){
                 return;
             }
-            final PsiClass containingClass = field.getContainingClass();
+            final PsiClass containingClass = PsiUtil.getTopLevelClass(field);
             if(containingClass == null){
                 return;
             }
