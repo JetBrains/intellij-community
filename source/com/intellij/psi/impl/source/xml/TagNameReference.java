@@ -9,13 +9,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlChildRole;
-import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -63,6 +61,7 @@ class TagNameReference implements PsiReference {
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     final XmlTag element = getElement();
+    boolean myFileChange = false;
     
     if (element != null &&
         (newElementName.endsWith(".tag") || newElementName.endsWith(".tagx")) &&
@@ -74,9 +73,15 @@ class TagNameReference implements PsiReference {
       if (namespacePrefix != null && namespacePrefix.length() > 0) {
         newElementName = namespacePrefix + ":" + newElementName;
       }
+      
+      myFileChange = true;
     }
     
     if(element!=null) element.setName(newElementName);
+    
+    if (myFileChange) {
+      ((CompositeElement)((XmlFile)element.getContainingFile()).getDocument().getRootTag().getNode()). clearCaches();
+    }
     return element;
   }
 

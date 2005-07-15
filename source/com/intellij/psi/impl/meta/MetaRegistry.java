@@ -112,11 +112,20 @@ public class MetaRegistry {
     
     {
       addMetadataBinding(
+        new OrFilter(
           new AndFilter(
               new NamespaceFilter(TAGLIB_URIS),
               new TextFilter("variable")
           ),
-          TldVariableDescriptor.class
+          new OrFilter(
+            new TextFilter("directive.variable"),
+            new AndFilter(
+              new ClassFilter(JspDirective.class),
+              new TextFilter("variable")
+            )
+          )
+        ),
+        TldVariableDescriptor.class
       );
     }
 

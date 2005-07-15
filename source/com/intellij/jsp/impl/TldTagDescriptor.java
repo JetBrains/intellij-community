@@ -10,7 +10,6 @@ import com.intellij.psi.impl.source.jsp.JspImplUtil;
 import com.intellij.j2ee.openapi.impl.ExternalResourceManagerImpl;
 import com.intellij.j2ee.j2eeDom.web.WebModuleProperties;
 import com.intellij.j2ee.jsp.MyTEI;
-import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.servlet.jsp.tagext.*;
@@ -161,7 +160,15 @@ public class TldTagDescriptor extends CustomTagDescriptorBase  {
       return castedTei;
     }
 
-    return new MyTEI(myTLDVars);
+    return new MyTEI(myTLDVars,this);
+  }
+
+  public XmlTag findVariableWithName(String name) {
+    return findVariableWithName(
+      myTag.findSubTags("variable"),
+      name, 
+      CustomTagSupportUtil.ValueAccessor.SUB_TAG_ACCESSOR
+    );
   }
 
   public PsiElement getDeclaration() {

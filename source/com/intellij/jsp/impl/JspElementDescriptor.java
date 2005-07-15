@@ -16,4 +16,5 @@ import javax.servlet.jsp.tagext.TagExtraInfo;
 public interface JspElementDescriptor extends XmlElementDescriptor {
   TagExtraInfo getExtraInfo(WebModuleProperties moduleProperties);
   boolean isRequiredAttributeImplicitlyPresent(XmlTag tag,String attributeName);
+  XmlTag findVariableWithName(String name);
 }
