@@ -1109,9 +1109,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       if (result == null) {
         return loadClass((EvaluationContextImpl)evaluationContext, className, classLoader);
       }
-      else {
-        return result;
-      }
+      return result;
     }
     catch (InvocationException e) {
       throw EvaluateExceptionUtil.createEvaluateException(e);
@@ -1188,12 +1186,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
     return buffer.toString();
   }
 
-  public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String qName,
-                                 ClassLoaderReference classLoader) throws InvocationException,
-                                                                          ClassNotLoadedException,
-                                                                          IncompatibleThreadStateException,
-                                                                          InvalidTypeException,
-                                                                          EvaluateException {
+  public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String qName, ClassLoaderReference classLoader)
+    throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException, EvaluateException {
+
     DebuggerManagerThreadImpl.assertIsManagerThread();
     qName = reformatArrayName(qName);
     ReferenceType refType = null;
