@@ -38,6 +38,9 @@ public class MockApplication extends UserDataHolderBase implements ApplicationEx
     return false;
   }
 
+  public void exit(boolean force) {
+  }
+
   public String getComponentsDescriptor() {
     return null;
   }

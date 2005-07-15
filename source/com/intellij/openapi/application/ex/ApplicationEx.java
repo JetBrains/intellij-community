@@ -1,11 +1,9 @@
 package com.intellij.openapi.application.ex;
 
-import com.intellij.ide.plugins.PluginDescriptor;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 
-import java.awt.*;
 import java.io.IOException;
 
 /**
@@ -43,4 +41,7 @@ public interface ApplicationEx extends Application {
 
   //used in Fabrique 
   boolean isExceptionalThreadWithReadAccess(Thread thread);
+
+  //force exit
+  void exit(boolean force);
 }

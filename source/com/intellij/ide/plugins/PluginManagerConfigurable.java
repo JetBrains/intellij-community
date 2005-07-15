@@ -81,7 +81,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements JDOME
   public void apply() throws ConfigurationException {
     if (myPluginManagerMain.isRequireShutdown()) {
       if (Messages.showYesNoDialog("You need to shut down IDEA to activate changes in plugins. Would you like do it now?", "Plugins", Messages.getQuestionIcon()) == 0) {
-        ApplicationManagerEx.getApplicationEx().exit();
+        ApplicationManagerEx.getApplicationEx().exit(true);        
       }
       else {
         myPluginManagerMain.ignoreChages ();

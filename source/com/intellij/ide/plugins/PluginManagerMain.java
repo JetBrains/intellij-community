@@ -9,9 +9,11 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.ActionToolbarEx;
+import com.intellij.ui.OrderPanel;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.TableUtil;
@@ -28,7 +30,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 import java.util.zip.ZipException;
 
@@ -615,26 +617,30 @@ public class PluginManagerMain {
 
                 if (updateList.size() == 0) {
                   Messages.showMessageDialog(main,
-                                                "Nothing to update", "Plugin Manager", Messages.getInformationIcon());
+                                             "Nothing to update", "Plugin Manager", Messages.getInformationIcon());
                   break;
                 }
                 else {
-                  String list = "";
-                  for (int i = 0; i < updateList.size(); i++) {
-                    PluginNode pluginNode = updateList.get(i);
-                    list += pluginNode.getName() + "\n";
+                  Set<PluginNode> pluginsToUpdate = new HashSet<PluginNode>();
+                  final PluginDescriptor[] installedPlugins = PluginManager.getPlugins();
+                  for (PluginNode pluginNode : updateList) {
+                    for (PluginDescriptor descriptor : installedPlugins) {
+                      if (descriptor.getPluginId().equals(pluginNode.getId())) {
+                        pluginsToUpdate.add(pluginNode);
+                      }
+                    }
                   }
 
-                  if (Messages.showYesNoDialog(main,
-                                                    "Plugin(s) can be updated: \n" + list +
-                                                    "Would you like to update them?",
-                                                    "Update Installed Plugins", Messages.getQuestionIcon()) == 0) {
-                    if (downloadPlugins(updateList)) {
+                  DialogWrapper dlg = new PluginsToUpdateChooser(pluginsToUpdate);
+                  dlg.show();
+                  if (dlg.isOK()){
+                    if (downloadPlugins(new ArrayList<PluginNode>(pluginsToUpdate))) {
                       availablePluginTable.updateUI();
 
                       requireShutdown = true;
                     }
                   }
+
                   break;
                 }
               }
@@ -682,24 +688,32 @@ public class PluginManagerMain {
       //  new CustomShortcutSet (KeymapManager.getInstance().getActiveKeymap().getShortcuts("Find")), main);
       //actionGroup.add(findPluginsAction);
 
-      installPluginAction = new AnAction("Download and Install Plugin",
-                                         "Download and Install Plugin",
+      final String downloadMessage = "Download and Install Plugin";
+      final String updateMessage = "Update Plugin";
+      installPluginAction = new AnAction(downloadMessage,
+                                         downloadMessage,
                                          IconLoader.getIcon("/actions/install.png")) {
         public void update(AnActionEvent e) {
           Presentation presentation = e.getPresentation();
           boolean enabled = false;
+          PluginTable table = tabs.getSelectedIndex() == AVAILABLE_TAB ? availablePluginTable : installedPluginTable;
+          if ((tabs.getSelectedIndex() == AVAILABLE_TAB && availablePluginTable != null) ||
+              (tabs.getSelectedIndex() == INSTALLED_TAB && installedPluginTable != null)) {
+            Object pluginObject = table.getSelectedObject();
 
-          if (tabs.getSelectedIndex() == AVAILABLE_TAB && availablePluginTable != null) {
-            PluginNode pluginNode = availablePluginTable.getSelectedObject();
-
-            if (pluginNode != null) {
-              int status = PluginManagerColumnInfo.getRealNodeState(pluginNode);
+            if (pluginObject instanceof PluginNode) {
+              int status = PluginManagerColumnInfo.getRealNodeState((PluginNode)pluginObject);
               if (status == PluginNode.STATUS_MISSING ||
                   status == PluginNode.STATUS_NEWEST ||
                   status == PluginNode.STATUS_OUT_OF_DATE ||
                   status == PluginNode.STATUS_UNKNOWN) {
                 enabled = true;
               }
+              presentation.setText(downloadMessage);
+            } else if (pluginObject instanceof PluginDescriptor){
+              presentation.setText(updateMessage);
+              presentation.setDescription(updateMessage);
+              enabled = true;
             }
           }
 
@@ -709,20 +723,59 @@ public class PluginManagerMain {
         public void actionPerformed(AnActionEvent e) {
           do {
             try {
-              PluginNode pluginNode = availablePluginTable.getSelectedObject();
+              if (root == null){
+                loadAvailablePlugins();
+              }
+              final boolean isUpdate = tabs.getSelectedIndex() == INSTALLED_TAB;
+              PluginTable pluginTable = isUpdate ? installedPluginTable : availablePluginTable;
+              if (pluginTable == null) return;
+              final Object selectedObject = pluginTable.getSelectedObject();
+              PluginNode pluginNode;
+              if (selectedObject instanceof PluginNode){
+                pluginNode = (PluginNode)selectedObject;
+              } else if (selectedObject instanceof PluginDescriptor) {
+                final PluginDescriptor pluginDescriptor = (PluginDescriptor)selectedObject;
+                pluginNode = new PluginNode(pluginDescriptor.getPluginId());
+                pluginNode.setName(pluginDescriptor.getName());
+                pluginNode.setDepends(Arrays.asList(pluginDescriptor.getDependentPluginIds()));
+                pluginNode.setSize("-1");
+                boolean smthFoundToUpdate = false;
+                ArrayList<PluginNode> toUpdate = new ArrayList<PluginNode>();
+                try {
+                  checkForUpdate(toUpdate, root);
+                  for (PluginNode node : toUpdate) {
+                    if (node.getId().equals(pluginDescriptor.getPluginId())){
+                      smthFoundToUpdate = true;
+                    }
+                  }
+                  if (!smthFoundToUpdate){
+                    Messages.showMessageDialog(main, "Nothing to update", "Plugin Manager", Messages.getInformationIcon());
+                    return;
+                  }
+                }
+                catch (IOException e1) {
+                  LOG.error(e1);
+                }
+              } else {
+                //can't be
+                return;
+              }
 
+              final String message = isUpdate ? updateMessage : downloadMessage;
               if (Messages.showYesNoDialog(main,
-                                                "Would you like to download and install plugin \"" + pluginNode.getName() + "\"?",
-                                                "Download and Install Plugin", Messages.getQuestionIcon()) == 0) {
+                                           "Would you like to " + message.toLowerCase() + "\"" + pluginNode.getName() + "\"?",
+                                           message, Messages.getQuestionIcon()) == 0) {
                 if (downloadPlugin(pluginNode)) {
                   requireShutdown = true;
-                  availablePluginTable.updateUI();
+                  if (availablePluginTable != null){
+                    availablePluginTable.updateUI();
+                  }
                 }
               }
               break;
             }
             catch (IOException e1) {
-              if (!IOExceptionDialog.showErrorDialog(e1, "Download and Install Plugin", "Plugin download failed")) {
+              if (!IOExceptionDialog.showErrorDialog(e1, downloadMessage, "Plugin download failed")) {
                 break;
               }
               else {
@@ -832,15 +885,11 @@ public class PluginManagerMain {
       } else {
         break;
       }
+      statusProcess.removeOldException();
     }
     while (true);
 
-    if (statusProcess != null) {
-      return statusProcess.getRoot();
-    }
-    else {
-      return null;
-    }
+    return statusProcess.getRoot();
   }
 
   public Object getSelectedPlugin () {
@@ -934,5 +983,51 @@ public class PluginManagerMain {
 
   public void ignoreChages() {
     requireShutdown = false;
+  }
+
+
+  private class PluginsToUpdateChooser extends DialogWrapper{
+    private Set<PluginNode> myPluginsToUpdate;
+    private SortedSet<PluginNode> myModel;
+    protected PluginsToUpdateChooser(Set<PluginNode> pluginsToUpdate) {
+      super(false);
+      myPluginsToUpdate = pluginsToUpdate;
+      myModel = new TreeSet<PluginNode>(new Comparator<PluginNode>() {
+        public int compare(final PluginNode o1, final PluginNode o2) {
+          if (o1 == null) return 1;
+          if (o2 == null) return -1;
+          return o1.getName().compareToIgnoreCase(o2.getName());  
+        }
+      });
+      myModel.addAll(myPluginsToUpdate);
+      init();
+      setTitle("Choose Plugins To Update");
+    }
+
+    protected JComponent createCenterPanel() {
+      OrderPanel<PluginNode> panel = new OrderPanel<PluginNode>(PluginNode.class){
+        public boolean isCheckable(final PluginNode entry) {
+          return true;
+        }
+
+        public boolean isChecked(final PluginNode entry) {
+          return myPluginsToUpdate.contains(entry);
+        }
+
+        public void setChecked(final PluginNode entry, final boolean checked) {
+          if (checked){
+            myPluginsToUpdate.add(entry);
+          } else {
+            myPluginsToUpdate.remove(entry);
+          }
+        }
+      };
+      for (PluginNode pluginNode : myModel) {
+        panel.add(pluginNode);
+      }
+      panel.setCheckboxColumnName("");
+      panel.getEntryTable().setTableHeader(null);
+      return panel;
+    }
   }
 }

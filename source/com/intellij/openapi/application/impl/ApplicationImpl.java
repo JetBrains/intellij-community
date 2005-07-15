@@ -1,8 +1,8 @@
 package com.intellij.openapi.application.impl;
 
 import com.intellij.Patches;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.PluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationListener;
@@ -551,7 +551,14 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public void exit() {
+    exit(false);
+  }
+
+  public void exit(final boolean force) {
     if (SystemInfo.isMac) {
+      if (!force) {
+        if (!showConfirmation()) return;
+      }
       if (!canExit()) return;
       new Thread(new Runnable() {
         public void run() {
@@ -562,8 +569,13 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     else {
       Runnable runnable = new Runnable() {
         public void run() {
+          if (!force) {
+            if (!showConfirmation()){
+              saveAll();
+              return;
+            }
+          }
           saveAll();
-
           if (!canExit()) return;
 
           dispose();
@@ -580,8 +592,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
-  private boolean canExit() {
-
+  private boolean showConfirmation(){
     if (GeneralSettings.getInstance().isConfirmExit()) {
       final ConfirmExitDialog confirmExitDialog = new ConfirmExitDialog();
       confirmExitDialog.show();
@@ -589,7 +600,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         return false;
       }
     }
+    return true;
+  }
 
+  private boolean canExit() {
     ApplicationListener[] listeners = getListeners();
 
     for (ApplicationListener applicationListener : listeners) {
