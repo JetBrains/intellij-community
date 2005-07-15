@@ -150,7 +150,11 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
         }
       }
       else if (tokenType == XmlTokenType.XML_WHITE_SPACE) {
-        tokenType = (getState()!=0)?XmlTokenType.TAG_WHITE_SPACE:XmlTokenType.XML_REAL_WHITE_SPACE;
+        if (hasSeenTag() && (hasSeenStyle() || hasSeenScript())) {
+          int a = 1; 
+        } else {
+          tokenType = (getState()!=0)?XmlTokenType.TAG_WHITE_SPACE:XmlTokenType.XML_REAL_WHITE_SPACE;
+        }
       }
       return tokenType;
     }
