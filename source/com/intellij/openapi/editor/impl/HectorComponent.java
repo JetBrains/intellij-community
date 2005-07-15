@@ -268,7 +268,7 @@ public class HectorComponent extends JPanel {
         HighlightUtil.forceRootInspection(root, true);
       }
     }
-    if (myUseProfile) {
+    if (myUsePerFileProfile.isSelected()) {
       HighlightingSettingsPerFile.getInstance(myFile.getProject())
         .setInspectionProfile((String)myProfilesCombo.getComboBox().getSelectedItem(), myFile);
     }
