@@ -698,18 +698,23 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     if (!toContinue) return false;
 
     if (PropertyUtil.isSimplePropertyAccessor(method)) {
-      String propertyName = PropertyUtil.getPropertyName(method);
-      if (myManager.getNameHelper().isIdentifier(propertyName)) {
+      final String propertyName = PropertyUtil.getPropertyName(method);
+      
+      //if (myManager.getNameHelper().isIdentifier(propertyName)) {
         if (searchScope instanceof GlobalSearchScope) {
-          searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)searchScope,
-                                                                        StdFileTypes.JSP, StdFileTypes.JSPX);
+          searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes(
+            (GlobalSearchScope)searchScope,
+            StdFileTypes.JSP, 
+            StdFileTypes.JSPX,
+            StdFileTypes.XML
+          );
         }
         toContinue = processElementsWithWord(processor1,
                                              searchScope,
                                              propertyName,
                                              UsageSearchContext.IN_FOREIGN_LANGUAGES, true);
         if (!toContinue) return false;
-      }
+      //}
     }
 
     return true;
