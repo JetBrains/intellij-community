@@ -6,8 +6,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.Nullable;
+
 public class SimpleActionGroup extends ActionGroup {
-  private final ArrayList myChildren = new ArrayList();
+  private final ArrayList<AnAction> myChildren = new ArrayList<AnAction>();
 
   public SimpleActionGroup() {
     super(null, false);
@@ -17,8 +19,8 @@ public class SimpleActionGroup extends ActionGroup {
     myChildren.add(action);
   }
 
-  public AnAction[] getChildren(AnActionEvent e) {
-    return (AnAction[])myChildren.toArray(new AnAction[myChildren.size()]);
+  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    return myChildren.toArray(new AnAction[myChildren.size()]);
   }
 
   public int getChildrenCount() {

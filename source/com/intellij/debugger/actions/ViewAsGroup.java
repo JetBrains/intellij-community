@@ -15,6 +15,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * User: lex
  * Date: Sep 26, 2003
@@ -73,7 +76,7 @@ public class ViewAsGroup extends ActionGroup{
     }
   }
 
-  public AnAction[] getChildren(final AnActionEvent e) {
+  public AnAction[] getChildren(@Nullable final AnActionEvent e) {
     return myChildren;
   }
 

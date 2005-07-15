@@ -11,6 +11,8 @@ import com.intellij.openapi.project.Project;
 
 import java.util.*;
 
+import org.jetbrains.annotations.Nullable;
+
 public class MoveModuleToGroupTopLevel extends ActionGroup {
   public void update(AnActionEvent e){
     final DataContext dataContext = e.getDataContext();
@@ -20,14 +22,14 @@ public class MoveModuleToGroupTopLevel extends ActionGroup {
     e.getPresentation().setVisible(active);
   }
 
-  public AnAction[] getChildren(AnActionEvent e) {
+  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    if (e == null) return AnAction.EMPTY_ARRAY;
     final DataContext dataContext = e.getDataContext();
     final Project project = (Project)dataContext.getData(DataConstantsEx.PROJECT);
 
     Module[] allModules = ModuleManager.getInstance(project).getModules();
     Set<String> topLevelGroupNames = new HashSet<String>();
-    for (int i = 0; i < allModules.length; i++) {
-      final Module child = allModules[i];
+    for (final Module child : allModules) {
       String[] group = ModuleManager.getInstance(project).getModuleGroupPath(child);
       if (group != null) {
         topLevelGroupNames.add(group[0]);
@@ -37,8 +39,7 @@ public class MoveModuleToGroupTopLevel extends ActionGroup {
     result.add(new MoveModulesOutsideGroupAction());
     result.add(new MoveModulesToSubGroupAction(null));
     result.add(Separator.getInstance());
-    for (Iterator iterator = topLevelGroupNames.iterator(); iterator.hasNext();) {
-      String name = (String)iterator.next();
+    for (String name : topLevelGroupNames) {
       result.add(new MoveModuleToGroup(new ModuleGroup(new String[]{name})));
     }
     return result.toArray(new AnAction[result.size()]);

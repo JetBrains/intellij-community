@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Collection;
 import java.util.Iterator;
 
+import org.jetbrains.annotations.Nullable;
+
 public class MoveModuleToGroup extends ActionGroup {
   private final ModuleGroup myModuleGroup;
 
@@ -31,7 +33,8 @@ public class MoveModuleToGroup extends ActionGroup {
     presentation.setText(myModuleGroup.presentableText());
   }
 
-  public AnAction[] getChildren(AnActionEvent e) {
+  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    if (e == null) return AnAction.EMPTY_ARRAY;
     final DataContext dataContext = e.getDataContext();
     final Project project = (Project)dataContext.getData(DataConstantsEx.PROJECT);
 

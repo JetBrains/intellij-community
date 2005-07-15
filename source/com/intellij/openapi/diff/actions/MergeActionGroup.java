@@ -7,6 +7,8 @@ import com.intellij.openapi.project.Project;
 
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.Nullable;
+
 public class MergeActionGroup extends ActionGroup {
   private final MergeOperations myOperations;
 
@@ -14,7 +16,7 @@ public class MergeActionGroup extends ActionGroup {
     myOperations = new MergeOperations(diffPanel, side);
   }
 
-  public AnAction[] getChildren(AnActionEvent e) {
+  public AnAction[] getChildren(@Nullable AnActionEvent e) {
     ArrayList<MergeOperations.Operation> operations = myOperations.getOperations();
     AnAction[] actions = new AnAction[operations.size() + 2];
     actions[0] = new SelectSuggestionAction(myOperations);

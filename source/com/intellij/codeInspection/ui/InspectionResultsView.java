@@ -560,15 +560,13 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     ArrayList<String> packageNames = new ArrayList<String>(content.keySet());
 
     Collections.sort(packageNames, RefEntityAlphabeticalComparator.getInstance());
-    for (int i = 0; i < packageNames.size(); i++) {
-      String packageName = packageNames.get(i);
+    for (String packageName : packageNames) {
       appendPackageReference(packageIndex, packageName);
       final ArrayList<RefElement> packageContent = new ArrayList<RefElement>(content.get(packageName));
       Collections.sort(packageContent, RefEntityAlphabeticalComparator.getInstance());
       StringBuffer contentIndex = new StringBuffer();
       contentIndex.append("<html><body>");
-      for (int j = 0; j < packageContent.size(); j++) {
-        RefElement refElement = packageContent.get(j);
+      for (RefElement refElement : packageContent) {
         if (refElement instanceof RefImplicitConstructor) {
           refElement = ((RefImplicitConstructor)refElement).getOwnerClass();
         }
@@ -702,7 +700,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       }
 
       ActionGroup fixes = new ActionGroup() {
-        public AnAction[] getChildren(AnActionEvent e) {
+        public AnAction[] getChildren(@Nullable AnActionEvent e) {
           List<QuickFixAction> children = new ArrayList<QuickFixAction>();
           for (QuickFixAction fix : quickFixes) {
             if (fix != null){
@@ -721,7 +719,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       if (tool == null) return;
       final QuickFixAction[] quickFixes = tool.getQuickFixes(getSelectedElements());
       ActionGroup fixes = new ActionGroup() {
-        public AnAction[] getChildren(AnActionEvent e) {
+        public AnAction[] getChildren(@Nullable AnActionEvent e) {
           List<QuickFixAction> children = new ArrayList<QuickFixAction>();
           for (QuickFixAction fix : quickFixes) {
             if (fix != null){

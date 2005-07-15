@@ -19,6 +19,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author Vladimir Kondratyev
  */
@@ -51,7 +53,7 @@ public final class ToolWindowsGroup extends ActionGroup{
     projectManager.addProjectManagerListener(new MyProjectManagerListener());
   }
 
-  public AnAction[] getChildren(AnActionEvent e){
+  public AnAction[] getChildren(@Nullable AnActionEvent e){
     return myChildren.toArray(new AnAction[myChildren.size()]);
   }
 

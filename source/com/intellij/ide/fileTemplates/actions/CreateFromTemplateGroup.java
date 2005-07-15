@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import org.apache.velocity.runtime.parser.ParseException;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -27,9 +28,8 @@ public class CreateFromTemplateGroup extends ActionGroup{
     super.update(event);
     Presentation presentation = event.getPresentation();
     FileTemplate[] allTemplates = FileTemplateManager.getInstance().getAllTemplates();
-    for (int i = 0; i < allTemplates.length; i++){
-      FileTemplate template = allTemplates[i];
-      if(canCreateFromTemplate(event, template)){
+    for (FileTemplate template : allTemplates) {
+      if (canCreateFromTemplate(event, template)) {
         presentation.setEnabled(true);
         return;
       }
@@ -37,7 +37,7 @@ public class CreateFromTemplateGroup extends ActionGroup{
     presentation.setEnabled(false);
   }
 
-  public AnAction[] getChildren(AnActionEvent e){
+  public AnAction[] getChildren(@Nullable AnActionEvent e){
     FileTemplateManager manager = FileTemplateManager.getInstance();
     FileTemplate[] templates;
     templates = manager.getAllTemplates();
@@ -75,9 +75,8 @@ public class CreateFromTemplateGroup extends ActionGroup{
       }
     });
 
-    for (int i = 0; i < templates.length; i++){
-      FileTemplate template = templates[i];
-      if(canCreateFromTemplate(e, template)){
+    for (FileTemplate template : templates) {
+      if (canCreateFromTemplate(e, template)) {
         CreateFromTemplateAction action = new CreateFromTemplateAction(template);
         result.add(action);
       }
@@ -96,6 +95,7 @@ public class CreateFromTemplateGroup extends ActionGroup{
 }
 
   private boolean canCreateFromTemplate(AnActionEvent e, FileTemplate template){
+    if (e == null) return false;
     DataContext dataContext = e.getDataContext();
     IdeView view = (IdeView)dataContext.getData(DataConstantsEx.IDE_VIEW);
     if (view == null) return false;
@@ -126,8 +126,7 @@ public class CreateFromTemplateGroup extends ActionGroup{
 
       FileTemplate[] allTemplates = FileTemplateManager.getInstance().getAllTemplates();
       List<FileTemplate> available = new ArrayList<FileTemplate>();
-      for (int i = 0; i < allTemplates.length; i++) {
-        FileTemplate template = allTemplates[i];
+      for (FileTemplate template : allTemplates) {
         if (canCreateFromTemplate(e, template)) {
           available.add(template);
         }

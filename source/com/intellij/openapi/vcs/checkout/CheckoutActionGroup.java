@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vcs.CheckoutProvider;
+import org.jetbrains.annotations.Nullable;
 
 public class CheckoutActionGroup extends ActionGroup {
   private AnAction[] myChildren;
@@ -17,7 +18,7 @@ public class CheckoutActionGroup extends ActionGroup {
     }
   }
 
-  public AnAction[] getChildren(AnActionEvent e) {
+  public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (myChildren == null) {
       final CheckoutProvider[] providers = ApplicationManager.getApplication().getComponents(CheckoutProvider.class);
       myChildren = new AnAction[providers.length];

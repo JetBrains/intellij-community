@@ -8,6 +8,8 @@ import com.intellij.openapi.util.Pair;
 
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * A default implementation of {@link ActionGroup}. Provides the ability
  * to add children actions and separators between them. In most of the
@@ -86,9 +88,8 @@ public class DefaultActionGroup extends ActionGroup {
       if (mySortedChildren.contains(action)){
         throw new IllegalArgumentException("cannot add an action twice");
       }
-      for(int i = 0; i < myPairs.size(); i++){
-        Pair<AnAction, Constraints> pair = myPairs.get(i);
-        if (action.equals(pair.first)){
+      for (Pair<AnAction, Constraints> pair : myPairs) {
+        if (action.equals(pair.first)) {
           throw new IllegalArgumentException("cannot add an action twice");
         }
       }
@@ -194,7 +195,7 @@ public class DefaultActionGroup extends ActionGroup {
    *
    * @return An array of children actions
    */
-  public final AnAction[] getChildren(AnActionEvent e){
+  public final AnAction[] getChildren(@Nullable AnActionEvent e){
     // Mix sorted actions and pairs
     int sortedSize = mySortedChildren.size();
     AnAction[] children = new AnAction[sortedSize + myPairs.size()];

@@ -4,6 +4,8 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
@@ -85,5 +87,5 @@ public abstract class ActionGroup extends AnAction {
    *
    * @return An array represting children of this group. All returned children must be not <code>null</code>.
    */
-  public abstract AnAction[] getChildren(AnActionEvent e);
+  public abstract AnAction[] getChildren(@NotNull AnActionEvent e);
 }

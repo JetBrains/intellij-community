@@ -136,13 +136,8 @@ public class ActionsTreeUtil {
   public static Group createGroup(ActionGroup actionGroup, String groupName, Icon icon, Icon openIcon, boolean ignore) {
     ActionManager actionManager = ActionManager.getInstance();
     Group group = new Group(groupName, actionManager.getId(actionGroup), icon, openIcon);
-    AnAction[] children;
-    try {
-      children = actionGroup.getChildren(null);
-    }
-    catch (NullPointerException e) {
-      return group; //without children
-    }
+    AnAction[] children = actionGroup.getChildren(null);
+
     for (int i = 0; i < children.length; i++) {
       AnAction action = children[i];
 

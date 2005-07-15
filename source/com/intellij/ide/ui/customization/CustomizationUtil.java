@@ -1,11 +1,11 @@
 package com.intellij.ide.ui.customization;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -98,7 +98,7 @@ public class CustomizationUtil {
       myForceUpdate = true;
     }
 
-    public AnAction[] getChildren(final AnActionEvent e) {
+    public AnAction[] getChildren(@Nullable final AnActionEvent e) {
       if (myForceUpdate){
         myChildren = getReordableChildren(myGroup, mySchema, myDefaultGroupName, e);
         myForceUpdate = false;

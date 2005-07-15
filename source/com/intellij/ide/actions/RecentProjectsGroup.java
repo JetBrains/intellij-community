@@ -5,9 +5,10 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import org.jetbrains.annotations.Nullable;
 
 public class RecentProjectsGroup extends ActionGroup {
-  public AnAction[] getChildren(AnActionEvent e) {
+  public AnAction[] getChildren(@Nullable AnActionEvent e) {
     return RecentProjectsManager.getInstance().getRecentProjectsActions(true);
   }
 

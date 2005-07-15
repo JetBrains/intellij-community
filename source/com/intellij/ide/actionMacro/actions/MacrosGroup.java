@@ -6,6 +6,9 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Created by IntelliJ IDEA.
  * User: max
@@ -14,7 +17,7 @@ import java.util.ArrayList;
  * To change this template use Options | File Templates.
  */
 public class MacrosGroup extends ActionGroup {
-  public AnAction[] getChildren(AnActionEvent e) {
+  public AnAction[] getChildren(@Nullable AnActionEvent e) {
     ArrayList<AnAction> actions = new ArrayList<AnAction>();
     final ActionManagerEx actionManager = ((ActionManagerEx) ActionManager.getInstance());
     String[] ids = actionManager.getActionIds(ActionMacro.MACRO_ACTION_PREFIX);
