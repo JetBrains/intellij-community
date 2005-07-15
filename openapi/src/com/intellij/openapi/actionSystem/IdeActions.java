@@ -183,4 +183,5 @@ public interface IdeActions {
 
   String GROUP_WELCOME_SCREEN_QUICKSTART = "WelcomeScreen.QuickStart";
   String GROUP_WELCOME_SCREEN_DOC = "WelcomeScreen.Documentation";
+  String ACTION_KEYMAP_REFERENCE="Help.KeymapReference";
 }

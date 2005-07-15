@@ -28,10 +28,10 @@ import java.awt.event.MouseMotionListener;
 import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.io.File;
 
 /**
  * Created by IntelliJ IDEA.
@@ -82,11 +82,9 @@ public class WelcomeScreen {
   private static final Icon FROM_VCS_ICON = IconLoader.getIcon("/general/getProjectfromVCS.png");
   private static final Icon CHECK_FOR_UPDATE_ICON = IconLoader.getIcon("/general/checkForUpdate.png");
   private static final Icon READ_HELP_ICON = IconLoader.getIcon("/general/readHelp.png");
-  private static final Icon KEYMAP_ICON = IconLoader.getIcon("/general/defaultKeymap.png");
   private static final Icon PLUGIN_ICON = IconLoader.getIcon("/general/pluginManager.png");
   private static final Icon DEFAULT_ICON = IconLoader.getIcon("/general/configurableDefault.png");
 
-  private static final String KEYMAP_URL = PathManager.getHomePath() + "/help/ReferenceCard.pdf";
   private static final String PLUGIN_URL = PathManager.getHomePath() + "/Plugin Development Readme.html";
 
   private static final Font TEXT_FONT = new Font("Tahoma", Font.PLAIN, 11);
@@ -168,29 +166,33 @@ public class WelcomeScreen {
     private void appendActionsFromGroup(final DefaultActionGroup group) {
       final AnAction[] actions = group.getChildren(null);
       for (final AnAction action : actions) {
-        final Presentation presentation = action.getTemplatePresentation();
-        final Icon icon = presentation.getIcon();
-        final String text = presentation.getText();
-        MyActionButton button = new ButtonWithExtension(icon, "") {
-          protected void onPress(InputEvent e, MyActionButton button) {
-            final ActionManager actionManager = ActionManager.getInstance();
-            AnActionEvent evt = new AnActionEvent(
-              null,
-              DataManager.getInstance().getDataContext(this),
-              ActionPlaces.WELCOME_SCREEN,
-              action.getTemplatePresentation(),
-              actionManager,
-              0
-            );
-            action.update(evt);
-            if (evt.getPresentation().isEnabled()) {
-              action.actionPerformed(evt);
-            }
-          }
-        };
-
-        addButton(button, text, presentation.getDescription());
+        appendButtonForAction(action);
       }
+    }
+
+    public void appendButtonForAction(final AnAction action) {
+      final Presentation presentation = action.getTemplatePresentation();
+      final Icon icon = presentation.getIcon();
+      final String text = presentation.getText();
+      MyActionButton button = new ButtonWithExtension(icon, "") {
+        protected void onPress(InputEvent e, MyActionButton button) {
+          final ActionManager actionManager = ActionManager.getInstance();
+          AnActionEvent evt = new AnActionEvent(
+            null,
+            DataManager.getInstance().getDataContext(this),
+            ActionPlaces.WELCOME_SCREEN,
+            action.getTemplatePresentation(),
+            actionManager,
+            0
+          );
+          action.update(evt);
+          if (evt.getPresentation().isEnabled()) {
+            action.actionPerformed(evt);
+          }
+        }
+      };
+
+      addButton(button, text, presentation.getDescription());
     }
 
     public JPanel getPanel() {
@@ -226,7 +228,7 @@ public class WelcomeScreen {
 
     // Create Documentation group of actions
     ActionGroupDescriptor docsGroup = new ActionGroupDescriptor("Documentation", 1);
-    addDefaultDocsActions(docsGroup);
+    addDefaultDocsActions(docsGroup, actionManager);
     // Append plug-in actions to the end of the QuickStart list
     docsGroup.appendActionsFromGroup((DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_DOC));
     final JPanel docsPanel = docsGroup.getPanel();
@@ -286,7 +288,7 @@ public class WelcomeScreen {
     return topPanel;
   }
 
-  private void addDefaultDocsActions(final ActionGroupDescriptor docsGroup) {
+  private void addDefaultDocsActions(final ActionGroupDescriptor docsGroup, final ActionManager actionManager) {
     MyActionButton readHelp = new MyActionButton(READ_HELP_ICON, null) {
       protected void onPress(InputEvent e) {
         HelpManagerImpl.getInstance().invokeHelp("");
@@ -294,17 +296,7 @@ public class WelcomeScreen {
     };
     docsGroup.addButton(readHelp, "Read Help", "Open IntelliJ IDEA \"Help Topics\" in a new window.");
 
-    MyActionButton defaultKeymap = new MyActionButton(KEYMAP_ICON, null) {
-      protected void onPress(InputEvent e) {
-        try {
-          BrowserUtil.launchBrowser(KEYMAP_URL);
-        }
-        catch (IllegalThreadStateException ex) {
-          // it's not a problem
-        }
-      }
-    };
-    docsGroup.addButton(defaultKeymap, "Default Keymap", "Open PDF file with the default keymap reference card.");
+    docsGroup.appendButtonForAction(actionManager.getAction(IdeActions.ACTION_KEYMAP_REFERENCE));
 
     if (new File(PLUGIN_URL).isFile()) {
       MyActionButton pluginDev = new MyActionButton(PLUGIN_ICON, null) {
