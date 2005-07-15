@@ -12,6 +12,7 @@ import com.intellij.pom.xml.impl.events.XmlDocumentChangedImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.impl.meta.MetaRegistry;
@@ -144,10 +145,13 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     }
 
     try{
-      return (XmlNSDescriptor)((XmlFile)getManager().getElementFactory().createFileFromText(
+      final PsiFile fileFromText = getManager().getElementFactory().createFileFromText(
         containingFile.getName() + ".dtd",
         XmlUtil.generateDocumentDTD(this)
-      )).getDocument().getMetaData();
+      );
+      if (fileFromText instanceof XmlFile) {
+        return (XmlNSDescriptor)((XmlFile)fileFromText).getDocument().getMetaData();
+      }
     }
     catch(IncorrectOperationException e){
       LOG.error(e);
