@@ -358,7 +358,7 @@
         <action id="GotoLine" class="com.intellij.ide.actions.GotoLineAction" text="_Line..." description="Navigate to a line in editor by its number"/>
         <separator/>
         <action id="GotoDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoDeclarationAction" text="_Declaration" description="Navigate to the declaration of the symbol at caret"/>
-        <action id="GotoDefinition" class="com.intellij.codeInsight.navigation.actions.GotoDefinitionAction" text="_Definition" description="Navigate to the definitions of the current value"/>
+        <action id="GotoDefinition" internal="true" class="com.intellij.codeInsight.navigation.actions.GotoDefinitionAction" text="_Definition" description="Navigate to the definitions of the current value"/>
         <action id="GotoUsage" internal="true" class="com.intellij.codeInsight.navigation.actions.GotoUsageAction" text="_Usage" description="Navigate to the usages of the current value"/>
         <action id="GotoImplementation" class="com.intellij.codeInsight.navigation.actions.GotoImplementationAction" text="I_mplementation(s)" description="Navigate to the implementation(s) of the selected class or method"/>
         <action id="SmartGotoImplementation" internal="true" class="com.intellij.codeInsight.navigation.actions.SmartGotoImplementationAction" text="_Called Implementation(s)" description="Navigate to the implementation(s) of the selected method"/>

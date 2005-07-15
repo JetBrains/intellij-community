@@ -1114,6 +1114,13 @@
     <action id="Rerun">
       <keyboard-shortcut first-keystroke="control F5"/>
     </action>
+    <action id="RunClass">
+      <keyboard-shortcut first-keystroke="control shift F10"/>
+    </action>
+    <action id="DebugClass">
+      <keyboard-shortcut first-keystroke="control shift F9"/>
+    </action>
+
   </keymap>
 
   <!-- ############################################################################## -->
