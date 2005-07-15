@@ -45,6 +45,8 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 
+import org.jetbrains.annotations.NotNull;
+
 public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor");
 
@@ -114,6 +116,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     myReplaceFieldsWithGetters = replaceFieldsWithGetters;
   }
 
+  @NotNull
   protected UsageInfo[] findUsages() {
     ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
     PsiSearchHelper helper = myManager.getSearchHelper();
@@ -314,7 +317,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
   protected void performRefactoring(UsageInfo[] usages) {
     try {
-      PsiElementFactory factory = myMethodToReplaceIn.getManager().getElementFactory();
+      PsiElementFactory factory = myManager.getElementFactory();
 
       PsiType initializerType = getInitializerType(myForcedType, myParameterInitializer, myLocalVariable);
 
@@ -566,7 +569,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
       PsiManager manager = myParameterInitializer.getManager();
       PsiElementFactory factory = manager.getElementFactory();
       PsiElement newExpr = expr;  // references continue being resolved in the children of newExpr
-      
+
       if (oldExpr instanceof PsiReferenceExpression) {
         final PsiReferenceExpression oldRef = (PsiReferenceExpression) oldExpr;
         final JavaResolveResult adv = oldRef.advancedResolve(false);
