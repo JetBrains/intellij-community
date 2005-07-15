@@ -112,17 +112,18 @@ outer:
   }
 
   private void checkParametersNumber(final List<CandidateInfo> conflicts, final int argumentsCount) {
-    boolean found = false;
+    boolean parametersNumberMatch = false;
     for (CandidateInfo info : conflicts) {
       if (info instanceof MethodCandidateInfo) {
         final PsiMethod method = ((MethodCandidateInfo)info).getElement();
-        if (!method.isVarArgs() && method.getParameterList().getParameters().length == argumentsCount) {
-          found = true;
+        if (method.isVarArgs()) return; //Do not filter if there is at least one varargs method
+        if (method.getParameterList().getParameters().length == argumentsCount) {
+          parametersNumberMatch = true;
         }
       }
     }
 
-    if (found) {
+    if (parametersNumberMatch) {
       for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext();) {
         CandidateInfo info = iterator.next();
         if (info instanceof MethodCandidateInfo) {
@@ -246,7 +247,6 @@ outer:
           if (isMoreSpecific == Boolean.FALSE) return Specifics.CONFLICT;
           isMoreSpecific = Boolean.TRUE;
         }
-        continue;
       }
       else if (assignable1From2){
         if (isMoreSpecific == Boolean.TRUE) return Specifics.CONFLICT;
