@@ -15,12 +15,18 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 
 public class VcsUtil {
@@ -147,4 +153,78 @@ public class VcsUtil {
       return null;
     }
   }
+
+  public static void refreshFiles(final FilePath[] roots, final Runnable runnable) {
+
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    refreshFiles(collectFilesToRefresh(roots), runnable);
+  }
+
+  private static File[] collectFilesToRefresh(final FilePath[] roots) {
+    final File[] result = new File[roots.length];
+    for (int i = 0; i < roots.length; i++) {
+      result[i] = roots[i].getIOFile();
+    }
+    return result;
+  }
+
+  public static void refreshFiles(final File[] roots, final Runnable runnable) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    refreshFiles(collectFilesToRefresh(roots), runnable);
+  }
+
+  private static void refreshFiles(final List<VirtualFile> filesToRefresh, final Runnable runnable) {
+    if (filesToRefresh.size() == 0) {
+      runnable.run();
+      return;
+    }
+    final int[] refreshed = new int[]{0};
+    final Runnable afterRefresh = new Runnable() {
+      public void run() {
+        synchronized (refreshed) {
+          refreshed[0] += 1;
+          if (refreshed[0] == filesToRefresh.size()) {
+            runnable.run();
+          }
+        }
+      }
+    };
+
+
+    for (VirtualFile file : filesToRefresh) {
+      file.refresh(true, true, afterRefresh);
+    }
+  }
+
+  private static List<VirtualFile> collectFilesToRefresh(final File[] roots) {
+    final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
+    for (File root : roots) {
+      VirtualFile vFile = findFileFor(root);
+      if (vFile != null) {
+        for (Iterator<VirtualFile> iterator = result.iterator(); iterator.hasNext();) {
+          VirtualFile existing = iterator.next();
+          if (VfsUtil.isAncestor(existing, vFile, false)) break;
+          if (VfsUtil.isAncestor(vFile, existing, false)) {
+            iterator.remove();
+          }
+        }
+        result.add(vFile);
+      }
+    }
+    return result;
+  }
+
+  private static VirtualFile findFileFor(final File root) {
+    File current = root;
+    while (current != null) {
+      final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(root);
+      if (vFile != null) return vFile;
+      current = current.getParentFile();
+    }
+
+    return null;
+  }
+
 }

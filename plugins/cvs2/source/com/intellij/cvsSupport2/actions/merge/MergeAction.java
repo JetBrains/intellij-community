@@ -3,7 +3,6 @@ package com.intellij.cvsSupport2.actions.merge;
 import com.intellij.cvsSupport2.actions.actionVisibility.CvsActionVisibility;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContextWrapper;
-import com.intellij.cvsSupport2.cvsstatuses.CvsFileStatus;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -30,7 +29,7 @@ public class MergeAction extends AnAction {
       public boolean isPerformedOn(CvsContext context) {
         VirtualFile file = context.getSelectedFile();
         FileStatus status = FileStatusManager.getInstance(context.getProject()).getStatus(file);
-        return status == FileStatus.MERGE || status == CvsFileStatus.MERGED_WITH_CONFLICTS;
+        return status == FileStatus.MERGE || status == FileStatus.MERGED_WITH_CONFLICTS;
       }
     });
   }

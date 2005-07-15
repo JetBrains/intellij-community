@@ -197,4 +197,8 @@ public abstract class AbstractVcs {
     }
   }
 
+  public FileStatus[] getProvidedStatuses(){
+    return null;
+  }
+
 }

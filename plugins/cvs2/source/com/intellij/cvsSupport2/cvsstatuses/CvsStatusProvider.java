@@ -61,7 +61,7 @@ public class CvsStatusProvider {
 
     if (entry.isResultOfMerge()) {
       if (entry.isConflict()) {
-        return CvsFileStatus.MERGED_WITH_CONFLICTS;
+        return FileStatus.MERGED_WITH_CONFLICTS;
       }
       else {
         return FileStatus.MERGE;
@@ -99,7 +99,7 @@ public class CvsStatusProvider {
     }
 
     if (CvsEntriesManager.getInstance().fileIsIgnored(file)) {
-      return CvsFileStatus.IGNORED;
+      return FileStatus.IGNORED;
     }
 
     if (file.isDirectory() && CvsUtil.fileIsUnderCvs(file)) {

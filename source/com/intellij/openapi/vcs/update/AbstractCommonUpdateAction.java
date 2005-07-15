@@ -47,15 +47,14 @@ import com.intellij.openapi.vcs.actions.AbstractVcsAction;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.util.ContentsUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.OptionsDialog;
-import com.intellij.util.ContentsUtil;
 import com.intellij.vcsUtil.VcsUtil;
 
 import java.util.*;
@@ -127,11 +126,11 @@ public class AbstractCommonUpdateAction extends AbstractVcsAction {
 
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
-                VirtualFileManager.getInstance().refresh(true, new Runnable() {
+                VcsUtil.refreshFiles(roots, new Runnable() {
                   public void run() {
                     semaphore.up();
                   }
-                });
+                });                  
               }
             });
             semaphore.waitFor();

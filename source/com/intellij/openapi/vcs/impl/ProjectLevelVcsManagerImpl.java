@@ -171,6 +171,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     if (!myVcss.contains(vcs)) {
       myVcss.add(vcs);
     }
+    vcs.getProvidedStatuses();
     myCachedVCSs = null;
   }
 

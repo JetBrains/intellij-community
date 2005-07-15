@@ -24,6 +24,12 @@ public interface FileStatus extends NamedComponent {
   FileStatus ADDED = PeerFactory.getInstance().getFileStatusFactory().createFileStatus("ADDED", "Added", COLOR_ADDED);
   FileStatus MERGE = PeerFactory.getInstance().getFileStatusFactory().createFileStatus("MERGED", "Merged", COLOR_MERGE);
   FileStatus UNKNOWN = PeerFactory.getInstance().getFileStatusFactory().createFileStatus("UNKNOWN", "Unknown", COLOR_UNKNOWN);
+  FileStatus IGNORED = PeerFactory.getInstance().getFileStatusFactory().createFileStatus("IDEA_FILESTATUS_IGNORED", "Ignored", new Color(114, 114, 56));
+  FileStatus MERGED_WITH_CONFLICTS = PeerFactory.getInstance().getFileStatusFactory()
+   .createFileStatus("IDEA_FILESTATUS_MERGED_WITH_CONFLICTS", "Merged with conflicts", Color.red);
+  FileStatus DELETED_FROM_FS = PeerFactory.getInstance().getFileStatusFactory()
+   .createFileStatus("IDEA_FILESTATUS_DELETED_FROM_FILE_SYSTEM", "Deleted from file system",
+                     new Color(119, 56, 149));
 
   Color getColor();
 

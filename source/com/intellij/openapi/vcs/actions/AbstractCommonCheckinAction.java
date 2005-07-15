@@ -111,7 +111,6 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
   }
 
   private List<VcsException> checkinFiles(final Project project, final VcsContext context, FilePath[] roots, CheckinEnvironment checkinEnvironment) {
-    VcsConfiguration configuration = VcsConfiguration.getInstance(project);
     List<VcsException> vcsExceptions = new ArrayList<VcsException>();
     if (ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.CHECKIN).getValue() 
         || OptionsDialog.shiftIsPressed(context.getModifiers())) {
@@ -137,7 +136,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     }
 
     final LvcsAction lvcsAction = LocalVcs.getInstance(project).startAction(getActionName(context), "", true);
-    VirtualFileManager.getInstance().refresh(true, new Runnable() {
+    VcsUtil.refreshFiles(roots, new Runnable(){
       public void run() {
         lvcsAction.finish();
         FileStatusManager.getInstance(project).fileStatusesChanged();
@@ -174,8 +173,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
               Runnable checkinAction = new Runnable() {
                 public void run() {
 
-                  for (Iterator<CheckinEnvironment> iterator = checkinOperations.keySet().iterator(); iterator.hasNext();) {
-                    CheckinEnvironment checkinEnvironment = iterator.next();
+                  for (CheckinEnvironment checkinEnvironment : checkinOperations.keySet()) {
                     vcsExceptions.addAll(checkinEnvironment.commit(dialog, project));
                   }
 
