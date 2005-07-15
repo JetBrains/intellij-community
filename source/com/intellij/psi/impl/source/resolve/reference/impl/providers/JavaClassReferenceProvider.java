@@ -135,7 +135,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider{
 
     private ReferenceType getType(int index){
       if(index != myReferences.length - 1){
-        return new ReferenceType(myType, ReferenceType.JAVA_PACKAGE);
+        return new ReferenceType(ReferenceType.JAVA_CLASS, ReferenceType.JAVA_PACKAGE);
       }
       return myType;
     }
@@ -236,7 +236,10 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider{
           final PsiClass aClass = myElement.getManager().findClass(qName, GlobalSearchScope.allScope(myElement.getProject()));
           if (aClass != null) return aClass;
         }
-        return myElement.getManager().findPackage(qName);
+        PsiElement resolveResult = myElement.getManager().findPackage(qName);
+        if(resolveResult == null)
+          resolveResult = myElement.getManager().findClass(qName, GlobalSearchScope.allScope(myElement.getProject()));
+        return resolveResult;
       }
 
       public Object[] getVariants() {
