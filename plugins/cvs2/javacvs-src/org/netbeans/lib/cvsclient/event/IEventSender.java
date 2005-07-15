@@ -23,7 +23,7 @@ public interface IEventSender {
 
 	void notifyTerminationListeners(boolean error);
 
-	void notifyMessageListeners(String message, boolean error, boolean tagged);
+	void notifyMessageListeners(byte[] message, boolean error, boolean tagged);
 
 	void notifyFileInfoListeners(Object fileInfoContainer);
 

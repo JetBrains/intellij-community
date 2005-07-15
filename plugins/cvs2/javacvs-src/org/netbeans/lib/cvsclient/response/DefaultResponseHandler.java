@@ -33,15 +33,15 @@ public final class DefaultResponseHandler extends AbstractResponseHandler {
 
     // Implemented ============================================================
 
-    public void processErrorMessageResponse(String message, IResponseServices responseServices) {
+    public void processErrorMessageResponse(byte[] message, IResponseServices responseServices) {
         responseServices.getEventSender().notifyMessageListeners(message, true, false);
     }
 
-    public void processMessageResponse(String message, IResponseServices responseServices) {
+    public void processMessageResponse(byte[] message, IResponseServices responseServices) {
         responseServices.getEventSender().notifyMessageListeners(message, false, false);
     }
 
-    public void processMessageTaggedResponse(String message, IResponseServices responseServices) {
+    public void processMessageTaggedResponse(byte[] message, IResponseServices responseServices) {
         responseServices.getEventSender().notifyMessageListeners(message, false, true);
     }
 

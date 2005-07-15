@@ -11,11 +11,11 @@ import java.util.Date;
  */
 public interface IResponseHandler {
 
-	void processErrorMessageResponse(String message, IResponseServices responseServices);
+	void processErrorMessageResponse(byte[] message, IResponseServices responseServices);
 
-	void processMessageResponse(String message, IResponseServices responseServices);
+	void processMessageResponse(byte[] message, IResponseServices responseServices);
 
-	void processMessageTaggedResponse(String message, IResponseServices responseServices);
+	void processMessageTaggedResponse(byte[] message, IResponseServices responseServices);
 
 	void processCheckedInResponse(String relativeLocalDirectory, String repositoryFilePath, String entryLine, IResponseServices responseServices, IClientEnvironment clientEnvironment) throws IOException;
 
@@ -47,7 +47,7 @@ public interface IResponseHandler {
 
 	void processOkResponse(IResponseServices responseServices);
 
-	void processErrorResponse(String message, IResponseServices responseServices);
+	void processErrorResponse(byte[] message, IResponseServices responseServices);
 
 	void processUpdatedResponse(String relativeLocalDirectory, String repositoryFilePath, String entryLine, String mode, int fileLength, IClientEnvironment clientEnvironment, IResponseServices responseServices, IConnectionStreams connectionStreams) throws IOException;
 

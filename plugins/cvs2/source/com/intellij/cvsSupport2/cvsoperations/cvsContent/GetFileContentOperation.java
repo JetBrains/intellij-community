@@ -17,6 +17,7 @@ import org.netbeans.lib.cvsclient.command.checkout.CheckoutCommand;
 import org.netbeans.lib.cvsclient.file.FileObject;
 
 import java.io.File;
+import java.io.ByteArrayOutputStream;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -30,7 +31,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
 
   private byte myState = NOT_LOADED;
 
-  private StringBuffer myContent = null;
+  private ByteArrayOutputStream myContent = null;
   private byte[] myBinaryContent = null;
 
   private byte[] myFileBytes = null;
@@ -120,7 +121,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
       if (myBinaryContent != null) {
         return myBinaryContent;
       } else {
-        return myContent.toString().getBytes();
+        return myContent.toByteArray();
       }
     }
   }
@@ -154,22 +155,21 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
     return "checkout";
   }
 
-  public void messageSent(String message, boolean error, boolean tagged) {
+  public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
     if (!error) {
-      if (myContent == null) myContent = new StringBuffer();
+      if (myContent == null) myContent = new ByteArrayOutputStream();
       if (tagged) {
-        final int separatorIndex = message.indexOf(" ");
-        if (separatorIndex >= 0) {
-          String tagType = message.substring(0, separatorIndex);
+        String tagType = readTagTypeFrom(byteMessage);
+        if (tagType != null) {
           if ("text".equals(tagType)) {
-            message = message.substring(separatorIndex + 1);
-            myContent.append(message);
-            myContent.append("\n");
+            final int textStartPosition = tagType.length();
+            myContent.write(byteMessage, textStartPosition + 1, byteMessage.length - textStartPosition);
+            myContent.write('\n');
           }
         }
       } else {
-        myContent.append(message);
-        myContent.append("\n");
+        myContent.write(byteMessage, 0, byteMessage.length);
+        myContent.write('\n');
       }
 
     } else if (message.startsWith("VERS:")) {
@@ -177,6 +177,15 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
       myRevision = version;
       myCvsRevisionNumber = new CvsRevisionNumber(version);
     }
+  }
+
+  private String readTagTypeFrom(final byte[] byteMessage) {
+    final StringBuffer result = new StringBuffer();
+    for (byte b : byteMessage) {
+      if (b == ' ') return result.toString();
+      result.append(b);
+    }
+    return null;
   }
 
   public void binaryMessageSent(final byte[] bytes) {

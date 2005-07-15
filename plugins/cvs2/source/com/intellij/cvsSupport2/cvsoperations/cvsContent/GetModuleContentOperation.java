@@ -8,7 +8,6 @@ import com.intellij.cvsSupport2.cvsoperations.cvsContent.DirectoryContent;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.DirectoryContentListener;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.DirectoryContentProvider;
 import com.intellij.cvsSupport2.cvsoperations.common.UpdatedFilesManager;
-import com.intellij.cvsSupport2.cvsoperations.common.UpdatedFilesManager;
 import com.intellij.cvsSupport2.javacvsImpl.io.DeafLocalFileWriter;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.GlobalOptions;
@@ -57,8 +56,8 @@ public class GetModuleContentOperation extends CompositeOperaton implements Dire
         return DeafLocalFileWriter.INSTANCE;
       }
 
-      public void messageSent(String message, boolean error, boolean tagged) {
-        super.messageSent(message, error, tagged);
+      public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
+        super.messageSent(message, byteMessage, error, tagged);
         myDirectoryContentListener.setModulePath(myAdminWriterStoringRepositoryPath.getModulePath());
         if (message.startsWith("cvs server: Updating ")) {
           if ((myModuleLocation != null) && message.equals("cvs server: Updating " + myModuleLocation)) {

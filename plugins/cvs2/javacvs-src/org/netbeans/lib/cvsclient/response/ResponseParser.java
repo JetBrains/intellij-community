@@ -19,8 +19,9 @@ public final class ResponseParser {
 	// Fields =================================================================
 
 	private final IResponseHandler responseProcessor;
+  public static final String PREFIX_TO_REMOVE = "-f ";
 
-	// Setup ==================================================================
+  // Setup ==================================================================
 
 	public ResponseParser(IResponseHandler responseProcessor) {
 		BugLog.getInstance().assertNotNull(responseProcessor);
@@ -32,14 +33,14 @@ public final class ResponseParser {
 
 	public Boolean processResponse(String responseName, IConnectionStreams connectionStreams, IResponseServices responseServices, IClientEnvironment clientEnvironment) throws IOException {
 		if (responseName.equalsIgnoreCase("E")) {
-			final String line = StreamUtilities.readLine(connectionStreams.getLoggedReader());
-            responseProcessor.processErrorMessageResponse(prepareMessageAccordingToSrc39148(line), responseServices);
+			final byte[] line = StreamUtilities.readLineBytes(connectionStreams.getLoggedReader(), false);
+            responseProcessor.processErrorMessageResponse(prepareMessageAccordingToScr39148(line), responseServices);
 			return null;
 		}
 		else if (responseName.equalsIgnoreCase("M")) {
 			final Reader reader = connectionStreams.getLoggedReader();
-			final String line = StreamUtilities.readLine(reader);
-			responseProcessor.processMessageResponse(prepareMessageAccordingToSrc39148(line), responseServices);
+			final byte[] line = StreamUtilities.readLineBytes(reader, false);
+			responseProcessor.processMessageResponse(prepareMessageAccordingToScr39148(line), responseServices);
 			return null;
 		}
 
@@ -59,7 +60,7 @@ public final class ResponseParser {
 
 		else if (responseName.equalsIgnoreCase("MT")) {
 			final Reader reader = connectionStreams.getLoggedReader();
-			final String text = StreamUtilities.readLine(reader);
+			final byte[] text = StreamUtilities.readLineBytes(reader, false);
 			responseProcessor.processMessageTaggedResponse(text, responseServices);
 			return null;
 		}
@@ -218,7 +219,7 @@ public final class ResponseParser {
 			return Boolean.TRUE;
 		}
 		else if (responseName.equalsIgnoreCase("error")) {
-			final String message = StreamUtilities.readLine(connectionStreams.getLoggedReader());
+			final byte[] message = StreamUtilities.readLineBytes(connectionStreams.getLoggedReader(), false);
 			responseProcessor.processErrorResponse(message, responseServices);
 			return Boolean.FALSE;
 		}
@@ -244,11 +245,22 @@ public final class ResponseParser {
     return bufferStream.toByteArray();
   }
 
-  private String prepareMessageAccordingToSrc39148(String line) {
-        if (line.startsWith("-f ")) {
-            line = line.substring(3);
-        }
-        return line;
+  private byte[] prepareMessageAccordingToScr39148(byte[] line) {
+    if (line.length < 3) return line;
+    if (startsWith(PREFIX_TO_REMOVE, line)) {
+      final byte[] result = new byte[line.length - 3];
+      System.arraycopy(line, 3, result, 0, result.length);
+      return result;
     }
+    return line;
+    }
+
+  private boolean startsWith(final String s, final byte[] line) {
+    for (int i = 0; i < s.length(); i++) {
+      if (line[i] == s.charAt(i)) continue;
+      return false;
+    }
+    return true;
+  }
 
 }

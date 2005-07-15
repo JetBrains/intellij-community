@@ -28,8 +28,8 @@ public class WatchersOperation extends CvsOperationOnFiles{
     return result;
   }
 
-  public void messageSent(String message, boolean error, boolean tagged) {
-    super.messageSent(message, error, tagged);
+  public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
+    super.messageSent(message, byteMessage, error, tagged);
     if (!error && !tagged){
       WatcherInfo info = WatcherInfo.createOn(message);
       if (info != null) myWatchers.add(info);

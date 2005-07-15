@@ -371,7 +371,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
   public void gotEntry(FileObject fileObject, Entry entry) {
   }
 
-  public void messageSent(String message, boolean error, boolean tagged) {
+  public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
   }
 
   public void moduleExpanded(String module) {

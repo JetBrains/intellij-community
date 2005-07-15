@@ -6,7 +6,6 @@ import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperati
 import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.common.RepositoryPathProvider;
 import com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls.AdminReaderOnStoredRepositoryPath;
-import com.intellij.cvsSupport2.cvsoperations.common.RepositoryPathProvider;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.DirectoryContent;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.DirectoryContentListener;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.DirectoryContentProvider;
@@ -48,7 +47,7 @@ public class GetDirectoriesListViaUpdateOperation extends LocalPathIndifferentOp
     return command;
   }
 
-  public void messageSent(String message, boolean error, boolean tagged) {
+  public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
     myDirectoryContentListener.messageSent(message);
   }
 

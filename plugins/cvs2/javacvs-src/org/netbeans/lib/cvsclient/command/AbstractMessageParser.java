@@ -42,7 +42,7 @@ public abstract class AbstractMessageParser extends AbstractParser
 		listenerRegistry.removeMessageListener(this);
 	}
 
-	public final void messageSent(String message, boolean error, boolean tagged) {
+	public final void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
 		if (tagged) {
 			final String parsedMessage = taggedMessageParser.parseTaggedMessage(message);
 			if (parsedMessage != null) {

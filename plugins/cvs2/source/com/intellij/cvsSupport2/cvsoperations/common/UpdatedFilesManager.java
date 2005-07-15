@@ -71,7 +71,7 @@ public class UpdatedFilesManager implements IMessageListener {
     myCvsFileSystem = cvsFileSystem;
   }
 
-  public void messageSent(String message, boolean error, boolean tagged) {
+  public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
     if (message.startsWith(MERGED_FILE_MESSAGE_PREFIX)) {
       String pathInRepository = message.substring(MERGED_FILE_MESSAGE_PREFIX.length(),
                                                   message.length()

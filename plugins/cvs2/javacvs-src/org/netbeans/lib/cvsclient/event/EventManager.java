@@ -114,7 +114,7 @@ public final class EventManager
 		}
 	}
 
-	public void notifyMessageListeners(String message, boolean error, boolean tagged) {
+	public void notifyMessageListeners(byte[] message, boolean error, boolean tagged) {
 		final IMessageListener[] copiedListeners;
 		synchronized (this) {
 			if (messageListener.size() == 0) {
@@ -126,7 +126,7 @@ public final class EventManager
 		}
 
 		for (int i = 0; i < copiedListeners.length; i++) {
-			copiedListeners[i].messageSent(message, error, tagged);
+			copiedListeners[i].messageSent(new String(message), message, error, tagged);
 		}
 	}
 

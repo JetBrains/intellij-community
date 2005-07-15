@@ -12,7 +12,7 @@ abstract class AbstractResponseHandler
 		responseServices.getEventSender().notifyTerminationListeners(false);
 	}
 
-	public final void processErrorResponse(String message, IResponseServices responseServices) {
+	public final void processErrorResponse(byte[] message, IResponseServices responseServices) {
 		responseServices.getEventSender().notifyMessageListeners(message, true, false);
 		responseServices.getEventSender().notifyTerminationListeners(true);
 	}

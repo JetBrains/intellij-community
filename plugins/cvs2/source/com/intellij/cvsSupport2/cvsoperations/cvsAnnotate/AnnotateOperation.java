@@ -6,7 +6,6 @@ import com.intellij.cvsSupport2.connections.CvsRootProvider;
 import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperationHelper;
 import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperation;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
-import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperationHelper;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import org.netbeans.lib.cvsclient.command.Command;
@@ -64,8 +63,8 @@ public class AnnotateOperation extends LocalPathIndifferentOperation {
     return myBuffer.toString();
   }
 
-  public void messageSent(String message, boolean error, boolean tagged) {
-    super.messageSent(message, error, tagged);
+  public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
+    super.messageSent(message, byteMessage, error, tagged);
     if (!error) {
       try {
         myAnnotations.add(Annotation.createOnMessage(message));

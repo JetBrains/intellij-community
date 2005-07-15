@@ -111,7 +111,7 @@ public class CvsMessagesTranslator implements
 
   }
 
-  public void messageSent(String message, boolean error, boolean tagged) {
+  public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
     myListener.addMessage(new MessageEvent(message, error, tagged));
     if (message.length() == 0) return;
 

@@ -5,7 +5,6 @@ import com.intellij.cvsSupport2.connections.CvsRootProvider;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperation;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
-import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.cvsLog.RlogCommand;
 import com.intellij.util.containers.HashSet;
 import org.netbeans.lib.cvsclient.command.Command;
@@ -28,7 +27,7 @@ public class GetAllBranchesOperation extends LocalPathIndifferentOperation
     return new RlogCommand();
   }
 
-  public void messageSent(String message, boolean error, boolean tagged) {
+  public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
     if (error) return;
     if (tagged) return;
     if (message.startsWith(START)) {

@@ -43,7 +43,7 @@ public final class FileInfoAndMessageResponseProgressHandler extends AbstractRes
 		listenerRegistry.removeFileInfoListener(this);
 	}
 
-	public void messageSent(String message, boolean error, boolean tagged) {
+	public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
 		if (!error || tagged) {
 			return;
 		}

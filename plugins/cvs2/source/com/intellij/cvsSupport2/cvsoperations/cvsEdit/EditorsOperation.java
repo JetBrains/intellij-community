@@ -3,7 +3,6 @@ package com.intellij.cvsSupport2.cvsoperations.cvsEdit;
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsOperationOnFiles;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
-import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.reservedcheckout.EditorsCommand;
@@ -30,8 +29,8 @@ public class EditorsOperation extends CvsOperationOnFiles{
     return result;
   }
 
-  public void messageSent(String message, boolean error, boolean tagged) {
-    super.messageSent(message, error, tagged);
+  public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
+    super.messageSent(message, byteMessage, error, tagged);
     if (!error && !tagged){
       EditorInfo info = EditorInfo.createOn(message);
       if (info != null) myEditorInfos.add(info);

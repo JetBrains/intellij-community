@@ -17,7 +17,7 @@ package org.netbeans.lib.cvsclient.event;
  */
 public interface IMessageListener {
 
-	void messageSent(String message, boolean error, boolean tagged);
+	void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged);
 
         void binaryMessageSent(final byte[] bytes);
 }

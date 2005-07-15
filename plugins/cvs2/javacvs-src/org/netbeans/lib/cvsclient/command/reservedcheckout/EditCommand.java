@@ -74,7 +74,8 @@ public final class EditCommand extends AbstractCommand {
 			}
 
 			if (parser.isFilesEdited()) {
-				eventSender.notifyMessageListeners("Cannot edit files, because they already are edited!", true, false);
+                          final String message = "Cannot edit files, because they already are edited!";
+                          eventSender.notifyMessageListeners(message.getBytes(),true, false);
 				return false;
 			}
 

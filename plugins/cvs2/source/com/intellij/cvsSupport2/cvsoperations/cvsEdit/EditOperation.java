@@ -111,8 +111,8 @@ public class EditOperation extends CvsOperationOnFiles {
 
   }
 
-  public void messageSent(String message, boolean error, boolean tagged) {
-    super.messageSent(message, error, tagged);
+  public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
+    super.messageSent(message, byteMessage, error, tagged);
     EditedFileInfo editedFileInfo = EditedFileInfo.createOn(message);
     if (editedFileInfo != null)
       myEditFileInfos.add(editedFileInfo);

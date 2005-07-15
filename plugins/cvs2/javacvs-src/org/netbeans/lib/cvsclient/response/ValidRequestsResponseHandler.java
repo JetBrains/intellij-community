@@ -26,13 +26,13 @@ public final class ValidRequestsResponseHandler extends AbstractResponseHandler 
 
 	// Implemented ============================================================
 
-	public void processErrorMessageResponse(String message, IResponseServices responseServices) {
+	public void processErrorMessageResponse(byte[] message, IResponseServices responseServices) {
 	}
 
-	public void processMessageResponse(String message, IResponseServices responseServices) {
+	public void processMessageResponse(byte[] message, IResponseServices responseServices) {
 	}
 
-	public void processMessageTaggedResponse(String message, IResponseServices responseServices) {
+	public void processMessageTaggedResponse(byte[] message, IResponseServices responseServices) {
 	}
 
 	public void processCheckedInResponse(String relativeLocalDirectory, String repositoryFilePath, String entryLine, IResponseServices responseServices, IClientEnvironment clientEnvironment) {
