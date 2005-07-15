@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -241,6 +242,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   }
 
   public void removeRedundantImports(PsiJavaFile file) throws IncorrectOperationException {
+    if(file instanceof JspFile) return;
     final PsiImportStatementBase[] imports = file.getImportList().getAllImportStatements();
     if( imports.length == 0 )
     {
