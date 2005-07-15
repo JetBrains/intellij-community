@@ -37,8 +37,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
   private final List<ProviderBinding> myBindings = new ArrayList<ProviderBinding>();
   private final List<Pair<Class, ElementManipulator>> myManipulators = new ArrayList<Pair<Class, ElementManipulator>>();
   private final Map<ReferenceProviderType,PsiReferenceProvider> myReferenceTypeToProviderMap = new HashMap<ReferenceProviderType, PsiReferenceProvider>(5);
-  public static ReferenceProviderType CSS_CLASS_OR_ID_KEY_PROVIDER =
-    new ReferenceProviderType("Css Class or ID Provider");
+  
 
   static public class ReferenceProviderType {
     private String myId;
@@ -49,6 +48,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
   public static ReferenceProviderType PROPERTY_FILE_KEY_PROVIDER = new ReferenceProviderType("Property File Key Provider");
   public static ReferenceProviderType CLASS_REFERENCE_PROVIDER = new ReferenceProviderType("Class Reference Provider");
   public static ReferenceProviderType PATH_REFERENCES_PROVIDER = new ReferenceProviderType("Path References Provider");
+  public static ReferenceProviderType CSS_CLASS_OR_ID_KEY_PROVIDER = new ReferenceProviderType("Css Class or ID Provider");
 
   public static final ReferenceProvidersRegistry getInstance(Project project) {
     return project.getComponent(ReferenceProvidersRegistry.class);
@@ -423,12 +423,25 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     final JspReferencesProvider jspReferencesProvider = new JspReferencesProvider();
     
     registerXmlAttributeValueReferenceProvider(
-      new String[] {"fragment","name","property","id"},
+      new String[] {"fragment","name","property","id","name-given"},
       new ScopeFilter(
         new ParentElementFilter(
           new AndFilter(
             new ClassFilter(XmlTag.class),
             new NamespaceFilter(XmlUtil.JSP_URI)
+          ), 2
+        )
+      ),
+      jspReferencesProvider
+    );
+    
+    registerXmlAttributeValueReferenceProvider(
+      new String[] {"var"},
+      new ScopeFilter(
+        new ParentElementFilter(
+          new AndFilter(
+            new ClassFilter(XmlTag.class),
+            new NamespaceFilter(XmlUtil.JSTL_CORE_URI)
           ), 2
         )
       ),
