@@ -1,9 +1,8 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.tree.TokenSet;
 
 public interface Constants extends ElementType {
   public static interface PsiElementArrayConstructor {
@@ -109,13 +108,13 @@ public interface Constants extends ElementType {
     }
   };
 
-  TokenSet CLASS_BIT_SET = TokenSet.create(new IElementType[]{CLASS});
-  TokenSet FIELD_BIT_SET = TokenSet.create(new IElementType[]{FIELD, ENUM_CONSTANT});
-  TokenSet METHOD_BIT_SET = TokenSet.create(new IElementType[]{METHOD, ANNOTATION_METHOD});
-  TokenSet CLASS_INITIALIZER_BIT_SET = TokenSet.create(new IElementType[]{CLASS_INITIALIZER});
-  TokenSet PARAMETER_BIT_SET = TokenSet.create(new IElementType[]{PARAMETER});
-  TokenSet CATCH_SECTION_BIT_SET = TokenSet.create(new IElementType[]{CATCH_SECTION});
-  TokenSet JAVA_CODE_REFERENCE_BIT_SET = TokenSet.create(new IElementType[]{JAVA_CODE_REFERENCE});
-  TokenSet NAME_VALUE_PAIR_BIT_SET = TokenSet.create(new IElementType[]{NAME_VALUE_PAIR});
-  TokenSet ANNOTATION_BIT_SET = TokenSet.create(new IElementType[]{ANNOTATION});
+  TokenSet CLASS_BIT_SET = TokenSet.create(CLASS);
+  TokenSet FIELD_BIT_SET = TokenSet.create(FIELD, ENUM_CONSTANT);
+  TokenSet METHOD_BIT_SET = TokenSet.create(METHOD, ANNOTATION_METHOD);
+  TokenSet CLASS_INITIALIZER_BIT_SET = TokenSet.create(CLASS_INITIALIZER);
+  TokenSet PARAMETER_BIT_SET = TokenSet.create(PARAMETER);
+  TokenSet CATCH_SECTION_BIT_SET = TokenSet.create(CATCH_SECTION);
+  TokenSet JAVA_CODE_REFERENCE_BIT_SET = TokenSet.create(JAVA_CODE_REFERENCE);
+  TokenSet NAME_VALUE_PAIR_BIT_SET = TokenSet.create(NAME_VALUE_PAIR);
+  TokenSet ANNOTATION_BIT_SET = TokenSet.create(ANNOTATION);
 }
