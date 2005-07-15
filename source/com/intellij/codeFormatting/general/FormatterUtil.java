@@ -323,7 +323,7 @@ public class FormatterUtil {
     }
     LeafElement whiteSpaceElement = Factory.createSingleLeafElement(ElementType.WHITE_SPACE,
                                                                     whiteSpace.toCharArray(), 0, whiteSpace.length(),
-                                                                    SharedImplUtil.findCharTableByTree(lastWS), SharedImplUtil.getManagerByTree(lastWS));
+                                                                    SharedImplUtil.findCharTableByTree(astNode), SharedImplUtil.getManagerByTree(astNode));
 
     if (lastWS == null) {
       astNode.addChild(whiteSpaceElement, null);
