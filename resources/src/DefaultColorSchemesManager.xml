@@ -877,6 +877,170 @@
         </value>
       </option>
 
+      <!--CSS-->
+      <option name="CSS.COMMENT">
+        <value>
+          <option name="FOREGROUND" value="808080" />
+          <option name="BACKGROUND" />
+          <option name="FONT_TYPE" value="2" />
+          <option name="EFFECT_COLOR" />
+          <option name="EFFECT_TYPE" value="0" />
+          <option name="ERROR_STRIPE_COLOR" />
+        </value>
+      </option>
+      <option name="CSS.FUNCTION">
+        <value>
+          <option name="FOREGROUND" value="80" />
+          <option name="BACKGROUND" />
+          <option name="FONT_TYPE" value="1" />
+          <option name="EFFECT_COLOR" />
+          <option name="EFFECT_TYPE" value="0" />
+          <option name="ERROR_STRIPE_COLOR" />
+        </value>
+      </option>
+      <option name="CSS.IDENT">
+        <value>
+          <option name="FOREGROUND" value="80" />
+          <option name="BACKGROUND" />
+          <option name="FONT_TYPE" value="1" />
+          <option name="EFFECT_COLOR" />
+          <option name="EFFECT_TYPE" value="0" />
+          <option name="ERROR_STRIPE_COLOR" />
+        </value>
+      </option>
+      <option name="CSS.KEYWORD">
+        <value>
+          <option name="FOREGROUND" value="80" />
+          <option name="BACKGROUND" />
+          <option name="FONT_TYPE" value="1" />
+          <option name="EFFECT_COLOR" />
+          <option name="EFFECT_TYPE" value="1" />
+          <option name="ERROR_STRIPE_COLOR" />
+        </value>
+      </option>
+      <option name="CSS.NUMBER">
+        <value>
+          <option name="FOREGROUND" value="ff" />
+          <option name="BACKGROUND" />
+          <option name="FONT_TYPE" value="0" />
+          <option name="EFFECT_COLOR" />
+          <option name="EFFECT_TYPE" value="0" />
+          <option name="ERROR_STRIPE_COLOR" />
+        </value>
+      </option>
+      <option name="CSS.PROPERTY_NAME">
+        <value>
+          <option name="FOREGROUND" value="ff" />
+          <option name="BACKGROUND" />
+          <option name="FONT_TYPE" value="1" />
+          <option name="EFFECT_COLOR" />
+          <option name="EFFECT_TYPE" value="0" />
+          <option name="ERROR_STRIPE_COLOR" />
+        </value>
+      </option>
+      <option name="CSS.PROPERTY_VALUE">
+        <value>
+          <option name="FOREGROUND" value="8000" />
+          <option name="BACKGROUND" />
+          <option name="FONT_TYPE" value="1" />
+          <option name="EFFECT_COLOR" />
+          <option name="EFFECT_TYPE" value="0" />
+          <option name="ERROR_STRIPE_COLOR" />
+        </value>
+      </option>
+      <option name="CSS.STRING">
+        <value>
+          <option name="FOREGROUND" value="8000" />
+          <option name="BACKGROUND" />
+          <option name="FONT_TYPE" value="1" />
+          <option name="EFFECT_COLOR" />
+          <option name="EFFECT_TYPE" value="0" />
+          <option name="ERROR_STRIPE_COLOR" />
+        </value>
+      </option>
+      <option name="CSS.TAG_NAME">
+        <value>
+          <option name="FOREGROUND" value="80" />
+          <option name="BACKGROUND" />
+          <option name="FONT_TYPE" value="1" />
+          <option name="EFFECT_COLOR" />
+          <option name="EFFECT_TYPE" value="0" />
+          <option name="ERROR_STRIPE_COLOR" />
+        </value>
+      </option>
+      <option name="CSS.URL">
+        <value>
+          <option name="FOREGROUND" value="8000" />
+          <option name="BACKGROUND" />
+          <option name="FONT_TYPE" value="1" />
+          <option name="EFFECT_COLOR" />
+          <option name="EFFECT_TYPE" value="0" />
+          <option name="ERROR_STRIPE_COLOR" />
+        </value>
+      </option>
+
+      <!--Properties Files-->
+      <option name="PROPERTIES.INVALID_STRING_ESCAPE">
+        <value>
+          <option name="FOREGROUND" value="8000" />
+          <option name="BACKGROUND" value="ffcccc" />
+          <option name="FONT_TYPE" value="0" />
+          <option name="EFFECT_COLOR" />
+          <option name="EFFECT_TYPE" value="0" />
+          <option name="ERROR_STRIPE_COLOR" />
+        </value>
+      </option>
+      <option name="PROPERTIES.KEY">
+        <value>
+          <option name="FOREGROUND" value="80" />
+          <option name="BACKGROUND" />
+          <option name="FONT_TYPE" value="1" />
+          <option name="EFFECT_COLOR" />
+          <option name="EFFECT_TYPE" value="1" />
+          <option name="ERROR_STRIPE_COLOR" />
+        </value>
+      </option>
+      <option name="PROPERTIES.KEY_VALUE_SEPARATOR">
+        <value>
+          <option name="FOREGROUND" />
+          <option name="BACKGROUND" />
+          <option name="FONT_TYPE" value="0" />
+          <option name="EFFECT_COLOR" />
+          <option name="EFFECT_TYPE" value="0" />
+          <option name="ERROR_STRIPE_COLOR" />
+        </value>
+      </option>
+      <option name="PROPERTIES.LINE_COMMENT">
+        <value>
+          <option name="FOREGROUND" value="808080" />
+          <option name="BACKGROUND" />
+          <option name="FONT_TYPE" value="2" />
+          <option name="EFFECT_COLOR" />
+          <option name="EFFECT_TYPE" value="0" />
+          <option name="ERROR_STRIPE_COLOR" />
+        </value>
+      </option>
+      <option name="PROPERTIES.VALID_STRING_ESCAPE">
+        <value>
+          <option name="FOREGROUND" value="80" />
+          <option name="BACKGROUND" />
+          <option name="FONT_TYPE" value="1" />
+          <option name="EFFECT_COLOR" />
+          <option name="EFFECT_TYPE" value="0" />
+          <option name="ERROR_STRIPE_COLOR" />
+        </value>
+      </option>
+      <option name="PROPERTIES.VALUE">
+        <value>
+          <option name="FOREGROUND" value="8000" />
+          <option name="BACKGROUND" />
+          <option name="FONT_TYPE" value="1" />
+          <option name="EFFECT_COLOR" />
+          <option name="EFFECT_TYPE" value="0" />
+          <option name="ERROR_STRIPE_COLOR" />
+        </value>
+      </option>
+
     </attributes>
 
   </scheme>

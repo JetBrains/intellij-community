@@ -279,9 +279,9 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     parentNode.addContent(attrElements);
   }
 
-  private boolean haveToWrite(final TextAttributesKey key, final TextAttributes value, final TextAttributes defaultAttr) {
-    if (value.equals(defaultAttr)) return false;
-    if (myParentScheme == null) return true;
+  private boolean haveToWrite(final TextAttributesKey key, final TextAttributes value, final TextAttributes defaultAttribute) {
+    boolean hasDefaultValue = value.equals(defaultAttribute);
+    if (myParentScheme == null) return !hasDefaultValue;
     if (EditorColorsManager.getInstance().getGlobalScheme() == this
         && myParentScheme instanceof AbstractColorsScheme
         && !((AbstractColorsScheme)myParentScheme).myAttributesMap.containsKey(key)) return true;
