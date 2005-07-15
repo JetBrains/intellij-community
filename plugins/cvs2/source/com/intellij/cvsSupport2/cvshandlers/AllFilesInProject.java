@@ -12,9 +12,5 @@ class AllFilesInProject extends FileSetToBeUpdated{
 
   public void refreshFilesAsync(Runnable postRunnable) {
     VirtualFileManager.getInstance().refresh(true, postRunnable);
-    /*
-    if(project != null)
-      FileStatusManager.getInstance(project).fileStatusesChanged();
-    */
   }
 }
