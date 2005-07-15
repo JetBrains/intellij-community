@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -417,6 +418,9 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     if(parent instanceof XmlTag){
       if(known.isEmpty()) return ((XmlTag)parent).knownNamespaces();
       known.addAll(Arrays.asList(((XmlTag)parent).knownNamespaces()));
+    }
+    else if(getContainingFile() instanceof JspFile) {
+      known.addAll(Arrays.asList((((JspFile)getContainingFile()).getDocument().getRootTag().knownNamespaces())));
     }
     return known.toArray(new String[known.size()]);
   }

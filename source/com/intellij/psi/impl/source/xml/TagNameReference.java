@@ -167,11 +167,13 @@ class TagNameReference implements PsiReference {
         // their element descriptors (prev if section)
         if (namespace == null) continue;
         if(namespace.length() == 0 && !visited.isEmpty()) continue;
-        final XmlNSDescriptor NSDescriptor = element.getNSDescriptor(namespace, false);
+        XmlNSDescriptor nsDescriptor = element.getNSDescriptor(namespace, false);
+        if(nsDescriptor == null && element.getContainingFile() instanceof JspFile)
+          nsDescriptor = ((JspFile)element.getContainingFile()).getDocument().getRootTag().getNSDescriptor(namespace, false);
 
-        if(NSDescriptor != null && !visited.contains(NSDescriptor)){
-          visited.add(NSDescriptor);
-          variants.addAll(Arrays.asList(NSDescriptor.getRootElementsDescriptors(PsiTreeUtil.getParentOfType(element, XmlDocument.class))));
+        if(nsDescriptor != null && !visited.contains(nsDescriptor)){
+          visited.add(nsDescriptor);
+          variants.addAll(Arrays.asList(nsDescriptor.getRootElementsDescriptors(PsiTreeUtil.getParentOfType(element, XmlDocument.class))));
         }
       }
     }
