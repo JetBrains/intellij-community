@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by IntelliJ IDEA.
@@ -80,11 +82,15 @@ public abstract class JSR45PositionManager implements PositionManager {
 
     List<ReferenceType> result = new ArrayList<ReferenceType>();
 
-    String pattern = JSP_PATTERN.replaceAll("\\*", ".*");
+    final String regex = JSP_PATTERN.replaceAll("\\*", ".*");
+    final Matcher matcher = Pattern.compile(regex).matcher("");
 
     for (Iterator<ReferenceType> iterator = referenceTypes.iterator(); iterator.hasNext();) {
       ReferenceType referenceType = iterator.next();
-      if(!referenceType.name().matches(pattern)) continue;
+      matcher.reset(referenceType.name());
+      if(!matcher.matches()) {
+        continue;
+      }
 
       List<Location> locations = locationsOfClassAt(referenceType, classPosition);
       if(locations != null) {
