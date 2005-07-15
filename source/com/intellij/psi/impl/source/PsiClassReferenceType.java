@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -85,11 +86,13 @@ public class PsiClassReferenceType extends PsiClassType {
     return new DelegatingClassResolveResult(result);
   }
 
+  @NotNull
   public ClassResolveResult resolveGenerics() {
     final JavaResolveResult result = myReference.advancedResolve(false);
     return createClassResolveResult(result);
   }
 
+  @NotNull
   public PsiClassType rawType() {
     PsiElement resolved = myReference.resolve();
     PsiManager manager = myReference.getManager();
@@ -106,6 +109,7 @@ public class PsiClassReferenceType extends PsiClassType {
     return myReference.getReferenceName();
   }
 
+  @NotNull
   public PsiType[] getParameters() {
     return myReference.getTypeParameters();
   }

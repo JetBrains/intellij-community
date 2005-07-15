@@ -114,9 +114,9 @@ public abstract class PsiClassType extends PsiType {
     return isRaw(resolveGenerics());
   }
 
-  public abstract ClassResolveResult resolveGenerics();
+  @NotNull public abstract ClassResolveResult resolveGenerics();
 
-  public abstract PsiClassType rawType();
+  @NotNull public abstract PsiClassType rawType();
 
   public <A> A accept(PsiTypeVisitor<A> visitor) {
     return visitor.visitClassType(this);

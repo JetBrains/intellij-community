@@ -1838,19 +1838,18 @@ public class HighlightUtil {
     }
     PsiType lRawType = lType1 instanceof PsiClassType ? ((PsiClassType)lType1).rawType() : lType1;
     PsiType rRawType = rType1 instanceof PsiClassType ? ((PsiClassType)rType1).rawType() : rType1;
-    boolean assignable = lRawType == null || rRawType == null ? true : TypeConversionUtil.isAssignable(lRawType, rRawType);
+    boolean assignable = TypeConversionUtil.isAssignable(lRawType, rRawType);
     toolTip += "<td>Required:</td>" +
-               "<td>" + redIfNotMatch(TypeConversionUtil.erasure(lType1), assignable) + "</td>" +
+               "<td>" + redIfNotMatch(lRawType, assignable) + "</td>" +
                requredRow;
     toolTip += "</tr><tr>";
     toolTip += "<td>Found:</td>" +
-               "<td>" + redIfNotMatch(TypeConversionUtil.erasure(rType1), assignable) + "</td>"
+               "<td>" + redIfNotMatch(rRawType, assignable) + "</td>"
                + foundRow;
 
     toolTip += "</tr></table></body></html>";
     return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, description, toolTip);
   }
-
 
   @Nullable
   public static HighlightInfo checkSingleImportClassConflict(PsiImportStatement statement, Map<String, PsiClass> singleImportedClasses) {

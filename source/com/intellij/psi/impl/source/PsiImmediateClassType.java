@@ -9,6 +9,8 @@ import com.intellij.util.IncorrectOperationException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  *  @author dsl
  */
@@ -69,6 +71,7 @@ public class PsiImmediateClassType extends PsiClassType {
   public String getClassName() {
     return myClass.getName();
   }
+  @NotNull
   public PsiType[] getParameters() {
     List<PsiType> lst = new ArrayList<PsiType>();
     final PsiTypeParameter[] parameters = myClass.getTypeParameters();
@@ -78,10 +81,12 @@ public class PsiImmediateClassType extends PsiClassType {
     return lst.toArray(PsiType.EMPTY_ARRAY);
   }
 
+  @NotNull
   public PsiClassType.ClassResolveResult resolveGenerics() {
     return myClassResolveResult;
   }
 
+  @NotNull
   public PsiClassType rawType() {
     return myClass.getManager().getElementFactory().createType(myClass);
   }
