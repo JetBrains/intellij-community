@@ -279,7 +279,7 @@ public class TypedHandler implements TypedActionHandler {
         if (!iterator.atEnd()) {
           iterator.retreat();
 
-          if (StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.isInSet( iterator.getTokenType() )) {
+          if (!iterator.atEnd() && StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.isInSet( iterator.getTokenType() )) {
             openingQuote = false;
           }
           iterator.advance();
