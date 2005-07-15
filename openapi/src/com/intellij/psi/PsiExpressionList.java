@@ -4,9 +4,11 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  *
  */
 public interface PsiExpressionList extends PsiElement {
-  PsiExpression[] getExpressions();
+  @NotNull PsiExpression[] getExpressions();
 }

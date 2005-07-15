@@ -20,7 +20,7 @@ public interface PsiMethod extends PsiMember, PsiNamedElement, PsiModifierListOw
 
   PsiTypeElement getReturnTypeElement();
 
-  PsiParameterList getParameterList();
+  @NotNull PsiParameterList getParameterList();
 
   PsiReferenceList getThrowsList();
 

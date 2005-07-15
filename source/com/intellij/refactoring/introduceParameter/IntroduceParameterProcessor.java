@@ -40,12 +40,11 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
-
-import org.jetbrains.annotations.NotNull;
 
 public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor");
@@ -535,14 +534,29 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     public OldReferencesResolver(PsiCallExpression context, PsiExpression expr, int replaceFieldsWithGetters) {
       myContext = context;
       myExpr = expr;
-      myTempVars = new com.intellij.util.containers.HashMap<PsiExpression, String>();
+      myTempVars = new HashMap<PsiExpression, String>();
       myActualArgs = myContext.getArgumentList().getExpressions();
+      PsiElementFactory factory = myManager.getElementFactory();
       if(myContext instanceof PsiMethodCallExpression) {
-        myInstanceRef = ((PsiMethodCallExpression)myContext).getMethodExpression().getQualifierExpression();
+        final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)myContext;
+        final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
+        myInstanceRef = methodExpression.getQualifierExpression();
+        if (myInstanceRef == null) {
+          final PsiMethod method = methodCall.resolveMethod();
+          if (method != null) {
+            final PsiClass aClass = method.getContainingClass();
+            if (!aClass.equals(PsiTreeUtil.getParentOfType(methodExpression, PsiClass.class))) {
+              try {
+               myInstanceRef = factory.createExpressionFromText(aClass.getName() + ".this", null);
+              }
+              catch (IncorrectOperationException e) {
+                LOG.error(e);
+              }
+            }
+          }
+        }
       }
       else {
-        // todo: distinguish between 'null' instance ref (when instance ref is "this")
-        // and unavailable instance ref (as in 'new A()')
         myInstanceRef = null;
       }
       myReplaceFieldsWithGetters = replaceFieldsWithGetters;
@@ -566,8 +580,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     private void resolveOldReferences(PsiElement expr, PsiElement oldExpr)
             throws IncorrectOperationException {
       if (expr == null || oldExpr == null) return;
-      PsiManager manager = myParameterInitializer.getManager();
-      PsiElementFactory factory = manager.getElementFactory();
+      PsiElementFactory factory = myManager.getElementFactory();
       PsiElement newExpr = expr;  // references continue being resolved in the children of newExpr
 
       if (oldExpr instanceof PsiReferenceExpression) {
@@ -582,31 +595,18 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
           // Parameters
           if (subj instanceof PsiParameter) {
-            PsiParameterList formalArgList = myMethodToReplaceIn.getParameterList();
-            if (formalArgList != null) {
-              PsiParameter[] formalArgs = formalArgList.getParameters();
+            PsiParameterList parameterList = myMethodToReplaceIn.getParameterList();
+            PsiParameter[] parameters = parameterList.getParameters();
 
-              int index;
-              for (index = 0; index < formalArgs.length; index++) {
-                if (subj.equals(formalArgs[index])) break;
+            int index = parameterList.getParameterIndex((PsiParameter)subj);
+            if (index < 0) return;
+            if (index < parameters.length) {
+              PsiExpression actualArg = myActualArgs[index];
+              int copyingSafetyLevel = RefactoringUtil.verifySafeCopyExpression(actualArg);
+              if(copyingSafetyLevel == RefactoringUtil.EXPR_COPY_PROHIBITED) {
+                actualArg = factory.createExpressionFromText(getTempVar(actualArg), null);
               }
-              if (index < formalArgs.length) {
-                PsiExpression actualArg;
-                try {
-                  actualArg = myActualArgs[index];
-                }
-                catch (NullPointerException $ex) {
-                  return;
-                }
-                catch (ArrayIndexOutOfBoundsException $ex) {
-                  return;
-                }
-                int copyingSafetyLevel = RefactoringUtil.verifySafeCopyExpression(actualArg);
-                if(copyingSafetyLevel == RefactoringUtil.EXPR_COPY_PROHIBITED) {
-                  actualArg = factory.createExpressionFromText(getTempVar(actualArg), null);
-                }
-                newExpr = newExpr.replace(actualArg);
-              }
+              newExpr = newExpr.replace(actualArg);
             }
           }
           // "naked" field and methods  (should become qualified)
@@ -637,20 +637,20 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
             if (myReplaceFieldsWithGetters != IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE) {
               if (myReplaceFieldsWithGetters == IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL ||
                   (myReplaceFieldsWithGetters == IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE &&
-                   !manager.getResolveHelper().isAccessible((PsiMember)subj, newExpr, null))) {
+                   !myManager.getResolveHelper().isAccessible((PsiMember)subj, newExpr, null))) {
                 newExpr = replaceFieldWithGetter(newExpr, (PsiField) subj);
               }
             }
           }
         }
       }
-      else if (oldExpr instanceof PsiThisExpression) {
+      else if (oldExpr instanceof PsiThisExpression && ((PsiThisExpression)oldExpr).getQualifier() == null) {
         if (myInstanceRef != null) {
           expr.replace(getInstanceRef(factory));
         }
         return;
       }
-      else if (oldExpr instanceof PsiSuperExpression) {
+      else if (oldExpr instanceof PsiSuperExpression && ((PsiSuperExpression)oldExpr).getQualifier() == null) {
         if (myInstanceRef != null) {
           expr.replace(getInstanceRef(factory));
         }
@@ -662,10 +662,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
       if (oldChildren != null && newChildren != null & oldChildren.length == newChildren.length) {
         for (int i = 0; i < oldChildren.length; i++) {
-          PsiElement oldChild = oldChildren[i];
-          PsiElement newChild = newChildren[i];
-
-          resolveOldReferences(newChild, oldChild);
+          resolveOldReferences(newChildren[i], oldChildren[i]);
         }
       }
     }
