@@ -3,6 +3,7 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.actionSystem.impl.EmptyIcon;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -37,6 +38,8 @@ public class EditorWindow {
   protected EditorWindow(final EditorsSplitters owner) {
     myOwner = owner;
     myPanel = new JPanel(new BorderLayout());
+    myPanel.setOpaque(false);
+
     myTabbedPane = null;
 
     final int tabPlacement = UISettings.getInstance().EDITOR_TAB_PLACEMENT;
@@ -101,14 +104,18 @@ public class EditorWindow {
         }
         myTabbedPane.removeTabAt(componentIndex);
       }
-      if (unsplit && getTabCount() == 0) {
-        unsplit ();
-      }
     }
     else {
       myPanel.removeAll ();
     }
+    if (unsplit && getTabCount() == 0) {
+      unsplit ();
+    }
     myPanel.revalidate ();
+    if (myTabbedPane == null) {
+      // in tabless mode
+      myPanel.repaint();
+    }
     if (editors.length == 1) {
       getManager().closeFile(file);
     }
@@ -225,7 +232,12 @@ public class EditorWindow {
           closeFile(file, false);
         }
         disposeTabs();
-        getManager().openFileImpl2(this, currentFile, focusEditor && myOwner.getCurrentWindow() == this, null);
+        if (currentFile != null) {
+          getManager().openFileImpl2(this, currentFile, focusEditor && myOwner.getCurrentWindow() == this, null);
+        }
+        else {
+          myPanel.repaint();
+        }
       }
     }
     finally {
@@ -254,6 +266,23 @@ public class EditorWindow {
     }
   }
 
+  protected static class TCompForTablessMode extends TComp{
+    private final EditorWindow myWindow;
+
+    TCompForTablessMode(final EditorWindow window, final EditorWithProviderComposite editor) {
+      super(editor);
+      myWindow = window;
+    }
+
+    public Object getData(String dataId) {
+      if (dataId.equals(DataConstantsEx.EDITOR_WINDOW)){
+        // this is essintial for ability to close opened file
+        return myWindow;
+      }
+      return super.getData(dataId);
+    }
+  }
+
   private void checkConsistency() {
     LOG.assertTrue(getWindows().contains(this), "EditorWindow not in collection");
   }
@@ -264,7 +293,8 @@ public class EditorWindow {
       comp = (TComp)myTabbedPane.getSelectedComponent();
     }
     else if (myPanel.getComponentCount() != 0) {
-      comp = (TComp)myPanel.getComponent(0);
+      final Component component = myPanel.getComponent(0);
+      comp = (component instanceof TComp) ? (TComp)component : null;
     }
     else {
       return null;
@@ -316,7 +346,7 @@ public class EditorWindow {
     if (editor != null) {
       if (myTabbedPane == null) {
         myPanel.removeAll ();
-        myPanel.add (new TComp(editor), BorderLayout.CENTER);
+        myPanel.add (new TCompForTablessMode(this, editor), BorderLayout.CENTER);
         myPanel.revalidate ();
         return;
       }
@@ -536,6 +566,9 @@ public class EditorWindow {
 
   private void processSiblingEditor(final EditorWithProviderComposite siblingEditor) {
     if (myTabbedPane != null && getTabCount() < UISettings.getInstance().EDITOR_TAB_LIMIT && findFileComposite(siblingEditor.getFile()) == null) {
+      setEditor(siblingEditor);
+    }
+    else if (myTabbedPane == null && getTabCount() == 0) { // tabless mode and no file opened
       setEditor(siblingEditor);
     }
     else {
