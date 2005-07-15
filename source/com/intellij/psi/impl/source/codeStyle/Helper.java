@@ -14,6 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.jsp.jspJava.JspText;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
@@ -647,11 +648,20 @@ public class Helper {
   }
 
   public static boolean mayShiftIndentInside(final ASTNode leaf) {
-    return isComment(leaf)
+    return (isComment(leaf) && !checkJspTexts(leaf))
            || leaf.getElementType() == ElementType.WHITE_SPACE
            || leaf.getElementType() == ElementType.JSP_TEMPLATE_DATA
            || leaf.getElementType() == ElementType.XML_DATA_CHARACTERS
            || leaf.getElementType() == ElementType.XML_ATTRIBUTE_VALUE_TOKEN;
+  }
+
+  private static boolean checkJspTexts(final ASTNode leaf) {
+    ASTNode child = leaf.getFirstChildNode();
+    while(child != null){
+      if(child instanceof JspText) return true;
+      child = child.getTreeNext();
+    }
+    return false;
   }
 
   private static  boolean isComment(final ASTNode node) {
