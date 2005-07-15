@@ -428,8 +428,8 @@ public class StringUtil {
     if (chars instanceof CharSequenceWithStringHash) return chars.hashCode();
     int h = 0;
     int to = chars.length();
-    for( int off = 0; off < to; ) {
-      h = 31*h + chars.charAt(off++);
+    for( int off = 0; off < to; off++) {
+      h = 31*h + chars.charAt(off);
     }
     return h;
   }
@@ -437,8 +437,8 @@ public class StringUtil {
   public static int stringHashCode( char chars[], int from, int len ) {
     int h = 0;
     int to = from + len;
-    for( int off = from; off < to; ) {
-      h = 31*h + chars[off++];
+    for( int off = from; off < to; off++) {
+      h = 31*h + chars[off];
     }
     return h;
   }
@@ -446,8 +446,8 @@ public class StringUtil {
   public static int stringHashCodeInsensitive( char chars[], int from, int len ) {
     int h = 0;
     int to = from + len;
-    for( int off = from; off < to; ) {
-      h = 31*h + Character.toLowerCase(chars[off++]);
+    for( int off = from; off < to; off++) {
+      h = 31*h + Character.toLowerCase(chars[off]);
     }
     return h;
   }
@@ -548,7 +548,10 @@ public class StringUtil {
     while (true) {
       int index = s.indexOf(separator, pos);
       if (index == -1) break;
-      result.add(s.substring(pos, index));
+      String token = s.substring(pos, index);
+      if (token.length() != 0) {
+        result.add(token);
+      }
       pos = index + separator.length();
     }
     if (pos < s.length()) {
