@@ -240,7 +240,7 @@ public class CommanderPanel extends JPanel {
   }
 
   protected boolean shouldDrillDownOnEmptyElement(final Object value) {
-    return true;
+    return !(value instanceof PsiMethod || value instanceof PsiField);
   }
 
   private boolean topElementIsSelected() {
