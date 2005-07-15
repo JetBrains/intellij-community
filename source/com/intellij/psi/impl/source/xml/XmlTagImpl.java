@@ -420,7 +420,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
       known.addAll(Arrays.asList(((XmlTag)parent).knownNamespaces()));
     }
     else if(getContainingFile() instanceof JspFile) {
-      known.addAll(Arrays.asList((((JspFile)getContainingFile()).getDocument().getRootTag().knownNamespaces())));
+      final XmlTag rootTag = ((JspFile)getContainingFile()).getDocument().getRootTag();
+      if (rootTag != this) known.addAll(Arrays.asList((rootTag.knownNamespaces())));
     }
     return known.toArray(new String[known.size()]);
   }
