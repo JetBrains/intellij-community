@@ -9,16 +9,18 @@ import org.jetbrains.annotations.Nullable;
 
 public class AnotherLanguageBlockWrapper extends AbstractXmlBlock{
   private final Block myOriginal;
+  private final Indent myIndent;
 
   public AnotherLanguageBlockWrapper(final ASTNode node,
                                      final XmlFormattingPolicy policy,
-                                     final Block original) {
+                                     final Block original, final Indent indent) {
     super(node, original.getWrap(), original.getAlignment(), policy);
     myOriginal = original;
+    myIndent = indent;
   }
 
   public Indent getIndent() {
-    return myOriginal.getIndent();
+    return myIndent;
   }
 
   public boolean insertLineBreakBeforeTag() {
