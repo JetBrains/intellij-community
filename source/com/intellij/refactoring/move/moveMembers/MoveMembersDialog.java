@@ -343,7 +343,16 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
           return aClass.getParent() instanceof PsiJavaFile || aClass.hasModifierProperty(PsiModifier.STATIC);
         }
       }, null);
-      chooser.selectDirectory(mySourceClass.getContainingFile().getContainingDirectory());
+      final String targetClassName = getTargetClassName();
+      if (targetClassName != null) {
+        final PsiClass aClass = PsiManager.getInstance(myProject).findClass(targetClassName, GlobalSearchScope.allScope(myProject));
+        if (aClass != null) {
+          chooser.selectDirectory(aClass.getContainingFile().getContainingDirectory());
+        } else {
+          chooser.selectDirectory(mySourceClass.getContainingFile().getContainingDirectory());
+        }
+      }
+
       chooser.showDialog();
       PsiClass aClass = chooser.getSelectedClass();
       if (aClass != null) {

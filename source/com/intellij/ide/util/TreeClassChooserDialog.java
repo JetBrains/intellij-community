@@ -5,6 +5,7 @@ import com.intellij.ide.projectView.PsiClassChildrenSource;
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
 import com.intellij.ide.projectView.impl.ProjectTreeBuilder;
+import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.ide.util.gotoByName.ChooseByNamePanel;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
@@ -18,6 +19,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -26,7 +28,6 @@ import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.containers.FilteringIterator;
 import com.intellij.util.ui.Tree;
-import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -43,11 +44,9 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 public class TreeClassChooserDialog extends DialogWrapper implements TreeClassChooser{
   private Tree myTree;
-  private DefaultTreeModel myModel;
   private PsiClass mySelectedClass = null;
   private Project myProject;
   private BaseProjectTreeBuilder myBuilder;
@@ -107,8 +106,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
       public void addChildren(PsiClass psiClass, java.util.List<PsiElement> children) {
         ArrayList<PsiElement> innerClasses = new ArrayList<PsiElement>();
         PsiClassChildrenSource.CLASSES.addChildren(psiClass, innerClasses);
-        for (Iterator<PsiElement> iterator = innerClasses.iterator(); iterator.hasNext();) {
-          PsiElement innerClass = iterator.next();
+        for (PsiElement innerClass : innerClasses) {
           if (classFilter.isAccepted((PsiClass)innerClass)) children.add(innerClass);
         }
       }
@@ -116,8 +114,8 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
   }
 
   protected JComponent createCenterPanel() {
-    myModel = new DefaultTreeModel(new DefaultMutableTreeNode());
-    myTree = new Tree(myModel);
+    final DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode());
+    myTree = new Tree(model);
 
     ProjectAbstractTreeStructureBase treeStructure = new AbstractProjectTreeStructure(
       myProject) {
@@ -146,7 +144,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
         return false;
       }
     };
-    myBuilder = new ProjectTreeBuilder(myProject, myTree, myModel, AlphaComparator.INSTANCE, treeStructure);
+    myBuilder = new ProjectTreeBuilder(myProject, myTree, model, AlphaComparator.INSTANCE, treeStructure);
 
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
@@ -281,13 +279,8 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (myBuilder == null) return;
-        myBuilder.buildNodeForElement(element);
-        DefaultMutableTreeNode node = myBuilder.getNodeForElement(element);
-        if (node != null) {
-          final TreePath treePath = new TreePath(node.getPath());
-          myTree.expandPath(treePath);
-          TreeUtil.selectPath(myTree, treePath);
-        }
+        final VirtualFile vFile = BasePsiNode.getVirtualFile(element);
+        myBuilder.select(element, vFile, false);
       }
     }, getModalityState());
   }
@@ -338,8 +331,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
       PsiClass[] classes = manager.getShortNamesCache().getClassesByName(name, myScope);
 
       ArrayList<PsiClass> list = new ArrayList<PsiClass>();
-      for (int i = 0; i < classes.length; i++) {
-        PsiClass aClass = classes[i];
+      for (PsiClass aClass : classes) {
         if (myClassFilter != null && !myClassFilter.isAccepted(aClass)) continue;
         list.add(aClass);
       }
