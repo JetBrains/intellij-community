@@ -35,6 +35,8 @@ public class BatchEvaluator {
   private Method myBatchEvaluatorMethod;
 
   private static final Key<BatchEvaluator> BATCH_EVALUATOR_KEY = new Key<BatchEvaluator>("BatchEvaluator");
+  public static final Key<Boolean> REMOTE_SESSION_KEY = new Key<Boolean>("is_remote_session_key");
+
   private final HashMap<SuspendContext, List<ToStringCommand>> myBuffer = new HashMap<SuspendContext, List<ToStringCommand>>();
 
   private BatchEvaluator(DebugProcess process) {
@@ -51,6 +53,12 @@ public class BatchEvaluator {
   public boolean hasBatchEvaluator(EvaluationContext evaluationContext) {
     if (!myBatchEvaluatorChecked) {
       myBatchEvaluatorChecked = true;
+
+      final Boolean isRemote = myDebugProcess.getUserData(REMOTE_SESSION_KEY);
+      if (isRemote != null && isRemote.booleanValue()) {
+        // optimization: for remote sessions the BatchEvaluator is not there for sure
+        return false;
+      }
 
       ThreadReferenceProxy thread = evaluationContext.getSuspendContext().getThread();
 
@@ -90,10 +98,9 @@ public class BatchEvaluator {
       }
     }
     return myBatchEvaluatorMethod != null;
-    //return false;
   }
 
-        public void invoke(ToStringCommand command) {
+  public void invoke(ToStringCommand command) {
     LOG.assertTrue(DebuggerManager.getInstance(myDebugProcess.getProject()).isDebuggerManagerThread());
 
     final EvaluationContext evaluationContext = command.getEvaluationContext();

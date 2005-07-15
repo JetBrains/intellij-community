@@ -74,10 +74,12 @@ public class GenericDebuggerRunner implements JavaProgramRunner<GenericDebuggerR
     }
     else if (state instanceof RemoteState) {
       FileDocumentManager.getInstance().saveAllDocuments();
-      if (addLvcsLabel) localVcs.addLabel("Starting remote debugging " + runProfile.getName(), "");
+      if (addLvcsLabel) {
+        localVcs.addLabel("Starting remote debugging " + runProfile.getName(), "");
+      }
       RemoteState remoteState = (RemoteState)state;
-      contentDescriptor = manager.attachVirtualMachine(runProfile, this, remoteState, reuseContent,
-                                             createRemoteDebugConnection(remoteState, state.getRunnerSettings()), false);
+      final RemoteConnection connection = createRemoteDebugConnection(remoteState, state.getRunnerSettings());
+      contentDescriptor = manager.attachVirtualMachine(runProfile, this, remoteState, reuseContent, connection, false);
     }
 
     return contentDescriptor != null ? contentDescriptor : null;

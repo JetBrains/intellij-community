@@ -4,11 +4,13 @@ import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.ui.impl.MainWatchPanel;
+import com.intellij.debugger.ui.tree.render.BatchEvaluator;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.RemoteState;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -17,7 +19,6 @@ import com.intellij.execution.ui.RunContentManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.actionSystem.DataContext;
 
 import java.util.HashMap;
 
@@ -70,6 +71,12 @@ public class DebuggerPanelsManager implements ProjectComponent{
                                                    RemoteConnection remoteConnection,
                                                    boolean pollConnection) throws ExecutionException {
     DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(runProfile.getName(), state, remoteConnection, pollConnection);
+
+    if (state instanceof RemoteState) {
+      // optimization: that way BatchEvaluator will not try to lookup the class file in remote VM
+      // which is an expensive oparation when executed first time
+      debuggerSession.getProcess().putUserData(BatchEvaluator.REMOTE_SESSION_KEY, Boolean.TRUE);
+    }
 
     final DebuggerSessionTab sessionTab = new DebuggerSessionTab(myProject);
     RunContentDescriptor runContentDescriptor = sessionTab.attachToSession(
