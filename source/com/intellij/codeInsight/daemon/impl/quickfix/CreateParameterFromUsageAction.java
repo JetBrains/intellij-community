@@ -53,7 +53,7 @@ public class CreateParameterFromUsageAction extends CreateVarFromUsageAction {
     PsiParameter param;
     try {
       param = factory.createParameter(varName, type);
-      param.getModifierList().setModifierProperty(PsiModifier.FINAL, CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS &&
+      param.getModifierList().setModifierProperty(PsiModifier.FINAL, CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_PARAMETERS &&
                                                                    !PsiUtil.isAccessedForWriting(myReferenceExpression));
 
       PsiParameter[] parameters = method.getParameterList().getParameters();
