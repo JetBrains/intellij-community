@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.application.PathManager;
 import org.jdom.Element;
 
 import javax.swing.*;
@@ -49,7 +50,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   }
 
   public String suggestHomePath() {
-    return null;
+    return PathManager.getHomePath().replace(File.separatorChar, '/');
   }
 
   public boolean isValidSdkHome(String path) {
