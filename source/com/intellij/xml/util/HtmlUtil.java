@@ -10,6 +10,8 @@ import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.DynamicFileReferenceSet;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.JspReferencesProvider;
+import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.xml.XmlAttribute;
@@ -171,7 +173,7 @@ public class HtmlUtil {
               final String attrName = xmlAttribute.getName();
               XmlTag tag = xmlAttribute.getParent();
               final String tagName = tag.getName();
-
+              
               return
                ( attrName.equalsIgnoreCase("src") &&
                                                   (tagName.equalsIgnoreCase("img") ||
@@ -188,6 +190,12 @@ public class HtmlUtil {
                ) ||
               ( attrName.equalsIgnoreCase("action") &&
                 tagName.equalsIgnoreCase("form")
+              ) ||
+              attrName.equalsIgnoreCase("background") ||
+              ( (attrName.equals("id") ||
+                attrName.equals("name")) &&
+                tag.getNamespacePrefix().length() == 0 &&
+                !(tag instanceof JspDirective)
               );
             }
           }
@@ -209,41 +217,47 @@ public class HtmlUtil {
         if (text.equals(originalText)) return refs;
       }
 
+      final XmlAttribute attribute = (XmlAttribute)element.getParent();
+      final String localName = attribute.getLocalName();
       
-      String text = originalText;
-      int offset = 0;
-      if (text.length() > 0 &&
-          (text.charAt(0) == '"' || text.charAt(0) == '\'')
-         ) {
-        ++offset;
-      }
-
-      text = text.substring(offset,text.length() - offset);
-      int ind = text.lastIndexOf('#');
-      String anchor = null;
-      if (ind != -1) {
-        anchor = text.substring(ind+1);
-        text = text.substring(0,ind);
-      }
-
-      ind = text.lastIndexOf('?');
-      if (ind!=-1) text = text.substring(0,ind);
-
-      if (text.length() > 0 && text.indexOf("://") == -1 && !text.startsWith("mailto:") &&
-          !text.startsWith("javascript:")
-         ) {
-        refs = new DynamicFileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, this, false).getAllReferences();
+      if ("id".equals(localName) || "name".equals(localName)) {
+        refs = new PsiReference[] { new JspReferencesProvider.SelfReference(element)};
       } else {
-        refs = PsiReference.EMPTY_ARRAY;
-      }
-
-      if (anchor != null &&
-          (refs.length > 0 || originalText.regionMatches(1+offset,anchor,0,anchor.length()))
-          ) {
-        PsiReference[] newrefs = new PsiReference[refs.length+1];
-        System.arraycopy(refs,0,newrefs,0,refs.length);
-        newrefs[refs.length] = new AnchorReference(anchor, refs.length > 0 ? refs[refs.length-1]:null,element);
-        refs = newrefs;
+        String text = originalText;
+        int offset = 0;
+        if (text.length() > 0 &&
+            (text.charAt(0) == '"' || text.charAt(0) == '\'')
+           ) {
+          ++offset;
+        }
+  
+        text = text.substring(offset,text.length() - offset);
+        int ind = text.lastIndexOf('#');
+        String anchor = null;
+        if (ind != -1) {
+          anchor = text.substring(ind+1);
+          text = text.substring(0,ind);
+        }
+  
+        ind = text.lastIndexOf('?');
+        if (ind!=-1) text = text.substring(0,ind);
+  
+        if (text.length() > 0 && text.indexOf("://") == -1 && !text.startsWith("mailto:") &&
+            !text.startsWith("javascript:")
+           ) {
+          refs = new DynamicFileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, this, false).getAllReferences();
+        } else {
+          refs = PsiReference.EMPTY_ARRAY;
+        }
+  
+        if (anchor != null &&
+            (refs.length > 0 || originalText.regionMatches(1+offset,anchor,0,anchor.length()))
+            ) {
+          PsiReference[] newrefs = new PsiReference[refs.length+1];
+          System.arraycopy(refs,0,newrefs,0,refs.length);
+          newrefs[refs.length] = new AnchorReference(anchor, refs.length > 0 ? refs[refs.length-1]:null,element);
+          refs = newrefs;
+        }
       }
       
       element.putUserData(cachedReferencesKey,refs);
