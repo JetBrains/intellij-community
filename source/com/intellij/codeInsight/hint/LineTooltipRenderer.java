@@ -70,7 +70,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
 
     int widthLimit = layeredPane.getWidth() - 10;
     int heightLimit = layeredPane.getHeight() - 5;
-    if (text.indexOf("<html>") < 0 && width > widthLimit / 3) {
+    if (!richHtml(text) && width > widthLimit / 3) {
       label.setUI(new MultiLineLabelUI());
       text = splitText(label, text, widthLimit);
       label.setText(text);
@@ -100,6 +100,19 @@ public class LineTooltipRenderer implements TooltipRenderer {
                                HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_OTHER_HINT |
                                HintManager.HIDE_BY_SCROLLING, 0, false);
     return hint;
+  }
+
+  private boolean richHtml(final String text) {
+    if (!text.startsWith("<html>") || !text.endsWith("</html>")) return false;
+    int idx = "<html>".length();
+    idx = text.indexOf("<body>", idx);
+    if (idx == -1) return false;
+    idx += "<body>".length();
+
+    int endIdx = text.lastIndexOf("</body>", text.length() - "</html>".length());
+    if (endIdx == -1) return false;
+
+    return text.substring(idx, endIdx - 1).indexOf("<") != -1;
   }
 
   /**
