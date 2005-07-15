@@ -117,5 +117,5 @@ public interface Constants extends ElementType {
   TokenSet CATCH_SECTION_BIT_SET = TokenSet.create(new IElementType[]{CATCH_SECTION});
   TokenSet JAVA_CODE_REFERENCE_BIT_SET = TokenSet.create(new IElementType[]{JAVA_CODE_REFERENCE});
   TokenSet NAME_VALUE_PAIR_BIT_SET = TokenSet.create(new IElementType[]{NAME_VALUE_PAIR});
-  public static final TokenSet ANNOTATION_BIT_SET = TokenSet.create(new IElementType[]{ANNOTATION});
+  TokenSet ANNOTATION_BIT_SET = TokenSet.create(new IElementType[]{ANNOTATION});
 }
