@@ -1037,7 +1037,7 @@ public class HighlightUtil {
     if (type == null) return null;
     PsiClass referencedClass = PsiUtil.resolveClassInType(type);
     if (referencedClass == null) return null;
-    if (HighlightClassUtil.hasEnclosingInstanceInScope(referencedClass, expr)) return null;
+    if (HighlightClassUtil.hasEnclosingInstanceInScope(referencedClass, expr, expr instanceof PsiSuperExpression)) return null;
 
     return HighlightClassUtil.reportIllegalEnclosingUsage(expr, null, aClass, expr);
   }

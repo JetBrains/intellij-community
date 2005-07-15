@@ -730,7 +730,7 @@ public class HighlightClassUtil {
     PsiClass baseClass = (PsiClass)base.getParent();
 
     PsiClass aClass = (PsiClass)parent.getParent();
-    if (!hasEnclosingInstanceInScope(baseClass, extendRef) && !qualifiedNewCalledInConstructors(aClass, baseClass)) {
+    if (!hasEnclosingInstanceInScope(baseClass, extendRef, true) && !qualifiedNewCalledInConstructors(aClass, baseClass)) {
       String description = MessageFormat.format("No enclosing instance of type ''{0}'' is in scope",
                                                 new Object[]{HighlightUtil.formatClass(baseClass)});
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, extendRef, description);
@@ -795,11 +795,17 @@ public class HighlightClassUtil {
   }
 
   //todo topdown
-  public static boolean hasEnclosingInstanceInScope(PsiClass aClass, PsiElement scope) {
+  public static boolean hasEnclosingInstanceInScope(PsiClass aClass, PsiElement scope, final boolean isSuperClassAccepted) {
+    PsiManager manager = aClass.getManager();
     PsiElement place = scope;
     while (place != null && place != aClass && !(place instanceof PsiFile)) {
-      if (place instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)place, aClass, true)) {
-        return true;
+      if (place instanceof PsiClass) {
+        if (isSuperClassAccepted) {
+          if (InheritanceUtil.isInheritorOrSelf((PsiClass)place, aClass, true)) return true;
+        }
+        else {
+          if (manager.areElementsEquivalent(place, aClass)) return true;
+        }
       }
       if (place instanceof PsiModifierListOwner && ((PsiModifierListOwner)place).hasModifierProperty(PsiModifier.STATIC)) {
         return false;
@@ -840,7 +846,7 @@ public class HighlightClassUtil {
     else {
       placeToSearchEnclosingFrom = expression;
     }
-    if (hasEnclosingInstanceInScope(outerClass, placeToSearchEnclosingFrom)) return null;
+    if (hasEnclosingInstanceInScope(outerClass, placeToSearchEnclosingFrom, true)) return null;
     return reportIllegalEnclosingUsage(placeToSearchEnclosingFrom, aClass, outerClass, expression);
   }
 
