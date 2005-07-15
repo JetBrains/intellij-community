@@ -197,7 +197,7 @@ public class LineStatusTracker implements EditorColorsListener {
 
       public void doAction(Editor editor, MouseEvent e) {
         e.consume();
-        JComponent editorComponent = editor.getContentComponent();
+        JComponent editorComponent = editor.getComponent();
         JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
         Point point = SwingUtilities.convertPoint(editorComponent, 0, e.getY(), layeredPane);
         showActiveHint(range, editor, point);
