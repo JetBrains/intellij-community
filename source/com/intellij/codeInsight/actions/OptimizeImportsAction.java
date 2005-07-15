@@ -61,7 +61,10 @@ public class OptimizeImportsAction extends AnAction {
 
       PsiElement element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
       if (element == null) return;
-      if (element instanceof PsiDirectory){
+      if (element instanceof PsiPackage) {
+        dir = ((PsiPackage)element).getDirectories()[0];
+      }
+      else if (element instanceof PsiDirectory) {
         dir = (PsiDirectory)element;
       }
       else{
@@ -110,6 +113,9 @@ public class OptimizeImportsAction extends AnAction {
           return;
         }
       }
+    }
+    else if (files != null && files.length == 1) {
+      // skip. Both directories and single files are supported.
     }
     else if (dataContext.getData(DataConstantsEx.MODULE_CONTEXT) == null &&
              dataContext.getData(DataConstantsEx.PROJECT_CONTEXT) == null) {
