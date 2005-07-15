@@ -192,8 +192,7 @@ public class HtmlUtil {
                 tagName.equalsIgnoreCase("form")
               ) ||
               attrName.equalsIgnoreCase("background") ||
-              ( (attrName.equals("id") ||
-                attrName.equals("name")) &&
+              ( attrName.equals("name") &&
                 tag.getNamespacePrefix().length() == 0 &&
                 !(tag instanceof JspDirective)
               );
@@ -220,7 +219,8 @@ public class HtmlUtil {
       final XmlAttribute attribute = (XmlAttribute)element.getParent();
       final String localName = attribute.getLocalName();
       
-      if ("id".equals(localName) || "name".equals(localName)) {
+      if (//"id".equals(localName) || 
+          "name".equals(localName)) {
         refs = new PsiReference[] { new JspReferencesProvider.SelfReference(element)};
       } else {
         String text = originalText;
