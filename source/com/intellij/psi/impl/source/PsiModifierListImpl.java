@@ -243,7 +243,7 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
   public PsiAnnotation[] getAnnotations() {
     if (myCachedAnnotations == null) {
       if (getTreeElement() != null) {
-        myCachedAnnotations = (PsiAnnotation[])calcTreeElement().getChildrenAsPsiElements(ANNOTATION_BIT_SET, PSI_ANNOTATION_ARRAY_CONSTRUCTOR);
+        myCachedAnnotations = calcTreeElement().getChildrenAsPsiElements(ANNOTATION_BIT_SET, PSI_ANNOTATION_ARRAY_CONSTRUCTOR);
       }
       else {
         long parentId = ((SrcRepositoryPsiElement)getParent()).getRepositoryId();

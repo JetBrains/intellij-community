@@ -264,7 +264,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
   }
 
 
-  public PsiElement[] getChildrenAsPsiElements(TokenSet filter, PsiElementArrayConstructor constructor) {
+  public <T extends PsiElement> T[] getChildrenAsPsiElements(TokenSet filter, PsiElementArrayConstructor<T> constructor) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     int count = countChildren(filter);
@@ -273,11 +273,11 @@ public class CompositeElement extends TreeElement implements Cloneable {
       return constructor.newPsiElementArray(0);
     }
 
-    PsiElement[] result = constructor.newPsiElementArray(count);
+    T[] result = constructor.newPsiElementArray(count);
     count = 0;
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
       if (filter == null || filter.isInSet(child.getElementType())) {
-        result[count++] = SourceTreeToPsiMap.treeElementToPsi(child);
+        result[count++] = (T)SourceTreeToPsiMap.treeElementToPsi(child);
       }
     }
     return result;

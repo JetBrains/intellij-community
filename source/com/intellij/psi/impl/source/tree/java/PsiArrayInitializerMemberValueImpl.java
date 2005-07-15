@@ -18,8 +18,7 @@ public class PsiArrayInitializerMemberValueImpl extends CompositePsiElement impl
   }
 
   public PsiAnnotationMemberValue[] getInitializers() {
-    return (PsiAnnotationMemberValue[])getChildrenAsPsiElements(ANNOTATION_MEMBER_VALUE_BIT_SET,
-                                                                PSI_ANNOTATION_MEMBER_VALUE_ARRAY_CONSTRUCTOR);
+    return getChildrenAsPsiElements(ANNOTATION_MEMBER_VALUE_BIT_SET, PSI_ANNOTATION_MEMBER_VALUE_ARRAY_CONSTRUCTOR);
   }
 
   public ASTNode findChildByRole(int role) {

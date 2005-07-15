@@ -23,7 +23,7 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
   }
 
   public PsiTypeElement[] getTypeParameterElements() {
-    return (PsiTypeElement[]) getChildrenAsPsiElements(TYPES_BIT_SET, PSI_TYPE_ELEMENT_ARRAY_CONSTRUCTOR);
+    return getChildrenAsPsiElements(TYPES_BIT_SET, PSI_TYPE_ELEMENT_ARRAY_CONSTRUCTOR);
   }
 
   public PsiType[] getTypeArguments() {

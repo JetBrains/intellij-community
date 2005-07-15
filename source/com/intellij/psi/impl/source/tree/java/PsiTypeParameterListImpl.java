@@ -2,18 +2,17 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.RepositoryManager;
-import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SlaveRepositoryPsiElement;
 import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 
 /**
  *  @author dsl
@@ -22,8 +21,8 @@ public class PsiTypeParameterListImpl extends SlaveRepositoryPsiElement implemen
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiTypeParameterListImpl");
 
   private static final TokenSet CLASS_PARAMETER_BIT_SET = TokenSet.create(new IElementType[]{TYPE_PARAMETER});
-  private static final PsiElementArrayConstructor CLASS_PARAMETER_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor() {
-    public PsiElement[] newPsiElementArray(int length) {
+  private static final PsiElementArrayConstructor<PsiTypeParameter> CLASS_PARAMETER_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiTypeParameter>() {
+    public PsiTypeParameter[] newPsiElementArray(int length) {
       return length > 0 ? new PsiTypeParameter[length] : PsiTypeParameter.EMPTY_ARRAY;
     }
   };
@@ -94,7 +93,7 @@ public class PsiTypeParameterListImpl extends SlaveRepositoryPsiElement implemen
       return myRepositoryClassParameters;
     }
     else {
-      return (PsiTypeParameter[])calcTreeElement().getChildrenAsPsiElements(CLASS_PARAMETER_BIT_SET, CLASS_PARAMETER_ARRAY_CONSTRUCTOR);
+      return calcTreeElement().getChildrenAsPsiElements(CLASS_PARAMETER_BIT_SET, CLASS_PARAMETER_ARRAY_CONSTRUCTOR);
     }
   }
 

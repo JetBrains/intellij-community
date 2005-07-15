@@ -321,7 +321,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
   public PsiField[] getFields() {
     if (myCachedFields == null){
       if (getTreeElement() != null){
-        myCachedFields = (PsiField[])calcTreeElement().getChildrenAsPsiElements(FIELD_BIT_SET, PSI_FIELD_ARRAY_CONSTRUCTOR);
+        myCachedFields = calcTreeElement().getChildrenAsPsiElements(FIELD_BIT_SET, PSI_FIELD_ARRAY_CONSTRUCTOR);
       }
       else{
         long[] fieldIds = getRepositoryManager().getClassView().getFields(getRepositoryId());
@@ -339,7 +339,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
   public PsiMethod[] getMethods() {
     if (myCachedMethods == null){
       if (getTreeElement() != null){
-        myCachedMethods = (PsiMethod[])calcTreeElement().getChildrenAsPsiElements(METHOD_BIT_SET, PSI_METHOD_ARRAY_CONSTRUCTOR);
+        myCachedMethods = calcTreeElement().getChildrenAsPsiElements(METHOD_BIT_SET, PSI_METHOD_ARRAY_CONSTRUCTOR);
       }
       else{
         long[] methodIds = getRepositoryManager().getClassView().getMethods(getRepositoryId());
@@ -364,7 +364,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
   public PsiClass[] getInnerClasses() {
     if (myCachedInners == null){
       if (getTreeElement() != null){
-        myCachedInners = (PsiClass[])calcTreeElement().getChildrenAsPsiElements(CLASS_BIT_SET, PSI_CLASS_ARRAY_CONSTRUCTOR);
+        myCachedInners = calcTreeElement().getChildrenAsPsiElements(CLASS_BIT_SET, PSI_CLASS_ARRAY_CONSTRUCTOR);
       }
       else{
         long[] classIds = getRepositoryManager().getClassView().getInnerClasses(getRepositoryId());
@@ -381,7 +381,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
 
   public PsiClassInitializer[] getInitializers(){
     if (getTreeElement() != null){
-      return (PsiClassInitializer[])calcTreeElement().getChildrenAsPsiElements(CLASS_INITIALIZER_BIT_SET, PSI_CLASS_INITIALIZER_ARRAY_CONSTRUCTOR);
+      return calcTreeElement().getChildrenAsPsiElements(CLASS_INITIALIZER_BIT_SET, PSI_CLASS_INITIALIZER_ARRAY_CONSTRUCTOR);
     }
     else{
       long[] initializerIds = getRepositoryManager().getClassView().getInitializers(getRepositoryId());

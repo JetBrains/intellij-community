@@ -2,7 +2,6 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.Language;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.TokenTypeEx;
 import com.intellij.psi.impl.source.Constants;
@@ -92,8 +91,8 @@ public interface ElementType extends
   TokenSet STATEMENT_BIT_SET = TokenSet.orSet(JAVA_STATEMENT_BIT_SET, JSP_SYNTHETIC_STATEMENTS);
 
   TokenSet TYPES_BIT_SET = TokenSet.create(new IElementType[]{TYPE});
-  Constants.PsiElementArrayConstructor PSI_TYPE_ELEMENT_ARRAY_CONSTRUCTOR = new Constants.PsiElementArrayConstructor() {
-    public PsiElement[] newPsiElementArray(int length) {
+  Constants.PsiElementArrayConstructor<PsiTypeElement> PSI_TYPE_ELEMENT_ARRAY_CONSTRUCTOR = new Constants.PsiElementArrayConstructor<PsiTypeElement>() {
+    public PsiTypeElement[] newPsiElementArray(int length) {
       return length > 0 ? new PsiTypeElement[length] : PsiTypeElement.EMPTY_ARRAY;
     }
   };

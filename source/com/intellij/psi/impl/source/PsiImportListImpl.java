@@ -92,8 +92,7 @@ public class PsiImportListImpl extends SlaveRepositoryPsiElement implements PsiI
       return myRepositoryClassImports;
     }
     else {
-      return (PsiImportStatement[])calcTreeElement()
-        .getChildrenAsPsiElements(IMPORT_STATEMENT_BIT_SET, PSI_IMPORT_STATEMENT_ARRAY_CONSTRUCTOR);
+      return calcTreeElement().getChildrenAsPsiElements(IMPORT_STATEMENT_BIT_SET, PSI_IMPORT_STATEMENT_ARRAY_CONSTRUCTOR);
     }
   }
 
@@ -113,8 +112,7 @@ public class PsiImportListImpl extends SlaveRepositoryPsiElement implements PsiI
       return myRepositoryStaticImports;
     }
     else {
-      return (PsiImportStaticStatement[])calcTreeElement()
-        .getChildrenAsPsiElements(IMPORT_STATIC_STATEMENT_BIT_SET, PSI_IMPORT_STATIC_STATEMENT_ARRAY_CONSTRUCTOR);
+      return calcTreeElement().getChildrenAsPsiElements(IMPORT_STATIC_STATEMENT_BIT_SET, PSI_IMPORT_STATIC_STATEMENT_ARRAY_CONSTRUCTOR);
     }
 
   }
@@ -126,8 +124,7 @@ public class PsiImportListImpl extends SlaveRepositoryPsiElement implements PsiI
       return myRepositoryImports;
     }
     else {
-      return (PsiImportStatementBase[])calcTreeElement()
-        .getChildrenAsPsiElements(IMPORT_STATEMENT_BASE_BIT_SET, PSI_IMPORT_STATEMENT_BASE_ARRAY_CONSTRUCTOR);
+      return calcTreeElement().getChildrenAsPsiElements(IMPORT_STATEMENT_BASE_BIT_SET, PSI_IMPORT_STATEMENT_BASE_ARRAY_CONSTRUCTOR);
     }
   }
 

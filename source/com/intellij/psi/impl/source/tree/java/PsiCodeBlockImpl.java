@@ -32,7 +32,7 @@ public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBloc
   }
 
   public PsiStatement[] getStatements() {
-    return (PsiStatement[])getChildrenAsPsiElements(STATEMENT_BIT_SET, PSI_STATEMENT_ARRAY_CONSTRUCTOR);
+    return getChildrenAsPsiElements(STATEMENT_BIT_SET, PSI_STATEMENT_ARRAY_CONSTRUCTOR);
   }
 
   public PsiElement getFirstBodyElement() {

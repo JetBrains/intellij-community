@@ -18,7 +18,7 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
   }
 
   public PsiExpression[] getExpressions() {
-    return (PsiExpression[])getChildrenAsPsiElements(EXPRESSION_BIT_SET, PSI_EXPRESSION_ARRAY_CONSTRUCTOR);
+    return getChildrenAsPsiElements(EXPRESSION_BIT_SET, PSI_EXPRESSION_ARRAY_CONSTRUCTOR);
   }
 
   public ASTNode findChildByRole(int role) {

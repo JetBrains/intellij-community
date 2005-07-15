@@ -5,5 +5,6 @@
 package com.intellij.psi;
 
 public interface PsiImportStatement extends PsiImportStatementBase {
+  PsiImportStatement[] EMPTY_ARRAY = new PsiImportStatement[0];
   String getQualifiedName();
 }

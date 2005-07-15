@@ -71,7 +71,7 @@ public class PsiParameterListImpl extends SlaveRepositoryPsiElement implements P
       }
     }
     else{
-      return (PsiParameter[])calcTreeElement().getChildrenAsPsiElements(PARAMETER_BIT_SET, PSI_PARAMETER_ARRAY_CONSTRUCTOR);
+      return calcTreeElement().getChildrenAsPsiElements(PARAMETER_BIT_SET, PSI_PARAMETER_ARRAY_CONSTRUCTOR);
     }
   }
 

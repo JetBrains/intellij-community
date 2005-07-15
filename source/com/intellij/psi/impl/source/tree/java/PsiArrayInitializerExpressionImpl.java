@@ -1,13 +1,12 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.lang.ASTNode;
+import com.intellij.psi.tree.IElementType;
 
 public class PsiArrayInitializerExpressionImpl extends CompositePsiElement implements PsiArrayInitializerExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiArrayInitializerExpressionImpl");
@@ -17,7 +16,7 @@ public class PsiArrayInitializerExpressionImpl extends CompositePsiElement imple
   }
 
   public PsiExpression[] getInitializers(){
-    return (PsiExpression[])getChildrenAsPsiElements(EXPRESSION_BIT_SET, PSI_EXPRESSION_ARRAY_CONSTRUCTOR);
+    return getChildrenAsPsiElements(EXPRESSION_BIT_SET, PSI_EXPRESSION_ARRAY_CONSTRUCTOR);
   }
 
   public PsiType getType(){

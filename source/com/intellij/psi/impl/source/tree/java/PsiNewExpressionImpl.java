@@ -49,7 +49,7 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
   }
 
   public PsiExpression[] getArrayDimensions() {
-    PsiExpression[] expressions = (PsiExpression[])getChildrenAsPsiElements(ARRAY_DIMENSION_BIT_SET, PSI_EXPRESSION_ARRAY_CONSTRUCTOR);
+    PsiExpression[] expressions = getChildrenAsPsiElements(ARRAY_DIMENSION_BIT_SET, PSI_EXPRESSION_ARRAY_CONSTRUCTOR);
     PsiExpression qualifier = getQualifier();
     if (qualifier == null){
       return expressions;

@@ -25,8 +25,8 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.javadoc.PsiDocCommentImpl");
 
   private static final TokenSet TAG_BIT_SET = TokenSet.create(new IElementType[]{DOC_TAG});
-  private static final PsiElementArrayConstructor PSI_TAG_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor() {
-    public PsiElement[] newPsiElementArray(int length) {
+  private static final PsiElementArrayConstructor<PsiDocTag> PSI_TAG_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiDocTag>() {
+    public PsiDocTag[] newPsiElementArray(int length) {
       return length != 0 ? new PsiDocTag[length] : PsiDocTag.EMPTY_ARRAY;
     }
   };
@@ -51,7 +51,7 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
   }
 
   public PsiDocTag[] getTags() {
-    return (PsiDocTag[])getChildrenAsPsiElements(TAG_BIT_SET, PSI_TAG_ARRAY_CONSTRUCTOR);
+    return getChildrenAsPsiElements(TAG_BIT_SET, PSI_TAG_ARRAY_CONSTRUCTOR);
   }
 
   public PsiDocTag findTagByName(String name) {

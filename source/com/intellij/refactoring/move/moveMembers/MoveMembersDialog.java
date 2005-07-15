@@ -47,7 +47,6 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
   private MemberInfo[] myMemberInfos;
   private final ReferenceEditorComboWithBrowseButton myTfTargetClassName;
   private MemberSelectionTable myTable;
-  private Set<PsiMember> myPreselectMembers;
   private final MoveCallback myMoveCallback;
 
   VisibilityPanel myVisibilityPanel;
@@ -60,7 +59,6 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     super(project, true);
     myProject = project;
     mySourceClass = sourceClass;
-    myPreselectMembers = preselectMembers;
     myMoveCallback = moveCallback;
     setTitle(MoveMembersImpl.REFACTORING_NAME);
 
@@ -74,7 +72,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     for (PsiClass innerClass : innerClasses) {
       if (!innerClass.hasModifierProperty(PsiModifier.STATIC)) continue;
       MemberInfo info = new MemberInfo(innerClass);
-      if (myPreselectMembers.contains(innerClass)) {
+      if (preselectMembers.contains(innerClass)) {
         info.setChecked(true);
       }
       memberList.add(info);
@@ -82,7 +80,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     for (PsiField field : fields) {
       if (field.hasModifierProperty(PsiModifier.STATIC)) {
         MemberInfo info = new MemberInfo(field);
-        if (myPreselectMembers.contains(field)) {
+        if (preselectMembers.contains(field)) {
           info.setChecked(true);
         }
         memberList.add(info);
@@ -91,7 +89,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     for (PsiMethod method : methods) {
       if (method.hasModifierProperty(PsiModifier.STATIC)) {
         MemberInfo info = new MemberInfo(method);
-        if (myPreselectMembers.contains(method)) {
+        if (preselectMembers.contains(method)) {
           info.setChecked(true);
         }
         memberList.add(info);

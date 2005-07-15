@@ -29,7 +29,7 @@ public class PsiAnnotationParameterListImpl extends CompositePsiElement implemen
 
   public PsiNameValuePair[] getAttributes() {
     if (myCachedMembers == null) {
-      myCachedMembers = (PsiNameValuePair[])getChildrenAsPsiElements(NAME_VALUE_PAIR_BIT_SET, PSI_NAME_VALUE_PAIR_ARRAY_CONSTRUCTOR);
+      myCachedMembers = getChildrenAsPsiElements(NAME_VALUE_PAIR_BIT_SET, PSI_NAME_VALUE_PAIR_ARRAY_CONSTRUCTOR);
     }
 
     return myCachedMembers;

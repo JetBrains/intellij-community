@@ -60,7 +60,7 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
   }
 
   public PsiCatchSection[] getCatchSections() {
-    return (PsiCatchSection[])getChildrenAsPsiElements(CATCH_SECTION_BIT_SET, PSI_CATCH_SECTION_ARRAYS_CONSTRUCTOR);
+    return getChildrenAsPsiElements(CATCH_SECTION_BIT_SET, PSI_CATCH_SECTION_ARRAYS_CONSTRUCTOR);
   }
 
   public PsiCodeBlock getFinallyBlock() {
