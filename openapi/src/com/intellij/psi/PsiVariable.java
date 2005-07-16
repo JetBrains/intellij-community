@@ -5,6 +5,7 @@
 package com.intellij.psi;
 
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public interface PsiVariable extends PsiElement, PsiModifierListOwner, PsiNamedElement {
   PsiType getType();
@@ -19,5 +20,5 @@ public interface PsiVariable extends PsiElement, PsiModifierListOwner, PsiNamedE
 
   Object computeConstantValue();
 
-  PsiIdentifier getNameIdentifier();
+  @NotNull PsiIdentifier getNameIdentifier();
 }

@@ -83,9 +83,9 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
         if (body != null) {
           try {
             final ControlFlow controlFlow = ControlFlowFactory.getControlFlow(body, AllVariablesControlFlowPolicy.getInstance());
-            final List<PsiReferenceExpression> readBeforeWrite = ControlFlowUtil.getReadBeforeWrite(controlFlow);
-            for (Iterator<PsiReferenceExpression> iterator = readBeforeWrite.iterator(); iterator.hasNext();) {
-              final PsiElement resolved = iterator.next().resolve();
+            final List<PsiReferenceExpression> readBeforeWrites = ControlFlowUtil.getReadBeforeWrite(controlFlow);
+            for (final PsiReferenceExpression readBeforeWrite : readBeforeWrites) {
+              final PsiElement resolved = readBeforeWrite.resolve();
               if (resolved instanceof PsiField) {
                 final PsiField field = (PsiField)resolved;
                 candidates.remove(field);
@@ -105,7 +105,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
     for (Iterator<PsiField> iterator = candidates.iterator(); iterator.hasNext(); i++) {
       PsiField field = iterator.next();
       final String message = "Field can be converted to one or more local variables.";
-      result[i] = manager.createProblemDescriptor(field, message, new MyQuickFix(field), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+      result[i] = manager.createProblemDescriptor(field.getNameIdentifier(), message, new MyQuickFix(field), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
     }
     return result;
   }

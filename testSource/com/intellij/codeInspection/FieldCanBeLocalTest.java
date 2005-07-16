@@ -7,13 +7,11 @@ import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspecti
  * @author ven
  */
 public class FieldCanBeLocalTest extends InspectionTestCase {
-  private LocalInspectionTool myTool;
   private LocalInspectionToolWrapper myWrapper;
 
   protected void setUp() throws Exception {
     super.setUp();
     myWrapper = new LocalInspectionToolWrapper( new FieldCanBeLocalInspection());
-    myTool = myWrapper.getTool();
     myWrapper.initialize(getManager());
   }
 
