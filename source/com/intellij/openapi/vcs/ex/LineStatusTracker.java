@@ -43,6 +43,8 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * author: lesya
  */
@@ -82,8 +84,7 @@ public class LineStatusTracker implements EditorColorsListener {
   }
 
   private void addHighlighters() {
-    for (Iterator<Range> each = myRanges.iterator(); each.hasNext();) {
-      Range range = each.next();
+    for (Range range : myRanges) {
       if (!range.hasHighlighter()) range.setHighlighter(createHighlighter(range));
     }
   }
@@ -118,8 +119,7 @@ public class LineStatusTracker implements EditorColorsListener {
 
 
   private void removeHighlighters(Collection<Range> newRanges) {
-    for (Iterator<Range> each = myRanges.iterator(); each.hasNext();) {
-      Range oldRange = each.next();
+    for (Range oldRange : myRanges) {
       if (!newRanges.contains(oldRange)) {
         removeHighlighter(oldRange.getHighlighter());
         oldRange.setHighlighter(null);
@@ -144,6 +144,7 @@ public class LineStatusTracker implements EditorColorsListener {
       case Range.MODIFIED:
         return DiffColors.DIFF_MODIFIED;
       default:
+        assert false;
         return null;
     }
   }
@@ -197,9 +198,12 @@ public class LineStatusTracker implements EditorColorsListener {
 
       public void doAction(Editor editor, MouseEvent e) {
         e.consume();
-        JComponent editorComponent = editor.getComponent();
-        JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
-        Point point = SwingUtilities.convertPoint(editorComponent, 0, e.getY(), layeredPane);
+        JComponent comp = (JComponent)e.getComponent(); // shall be EditorGutterComponent, cast is safe.
+        JLayeredPane layeredPane = comp.getRootPane().getLayeredPane();
+        Point point = SwingUtilities.convertPoint(comp,
+                                                  ((EditorEx)editor).getGutterComponentEx().getWidth(),
+                                                  e.getY(),
+                                                  layeredPane);
         showActiveHint(range, editor, point);
       }
     };
@@ -283,8 +287,7 @@ public class LineStatusTracker implements EditorColorsListener {
 
     private Range getLastRangeBeforeLine(int line) {
       Range result = null;
-      for (Iterator<Range> iterator = myRanges.iterator(); iterator.hasNext();) {
-        Range range = iterator.next();
+      for (Range range : myRanges) {
         if (range.isMoreThen(line)) return result;
         result = range;
       }
@@ -330,8 +333,7 @@ public class LineStatusTracker implements EditorColorsListener {
 
       myRanges = mergeRanges(myRanges);
 
-      for (Iterator<Range> each = myRanges.iterator(); each.hasNext();) {
-        Range range = each.next();
+      for (Range range : myRanges) {
         if (!range.hasHighlighter()) range.setHighlighter(createHighlighter(range));
 
       }
@@ -368,20 +370,18 @@ public class LineStatusTracker implements EditorColorsListener {
     }
 
     private void replaceRanges(List<Range> rangesInChange, List<Range> newRangesInChange) {
-      for (Iterator<Range> each = rangesInChange.iterator(); each.hasNext();) {
-        Range range = each.next();
+      for (Range range : rangesInChange) {
         removeHighlighter(range.getHighlighter());
         range.setHighlighter(null);
       }
-      for (Iterator<Range> each = newRangesInChange.iterator(); each.hasNext();) {
-        Range range = each.next();
+      for (Range range : newRangesInChange) {
         range.setHighlighter(createHighlighter(range));
       }
     }
 
     private void shiftRanges(List<Range> rangesAfterChange, int shift) {
-      for (Iterator<Range> each = rangesAfterChange.iterator(); each.hasNext();) {
-        (each.next()).shift(shift);
+      for (final Range aRangesAfterChange : rangesAfterChange) {
+        aRangesAfterChange.shift(shift);
       }
     }
 
@@ -393,8 +393,7 @@ public class LineStatusTracker implements EditorColorsListener {
 
   public static List<Range> getChangedRanges(List<Range> ranges, int from, int to) {
     ArrayList<Range> result = new ArrayList<Range>();
-    for (Iterator<Range> iterator = ranges.iterator(); iterator.hasNext();) {
-      Range range = iterator.next();
+    for (Range range : ranges) {
       if (range.getOffset1() <= to && range.getOffset2() >= from) result.add(range);
 //      if (range.getOffset1() > to) break;
     }
@@ -409,8 +408,7 @@ public class LineStatusTracker implements EditorColorsListener {
   public static List<Range> getRangesBefore(List<Range> ranges, int line) {
     ArrayList<Range> result = new ArrayList<Range>();
 
-    for (Iterator<Range> iterator = ranges.iterator(); iterator.hasNext();) {
-      Range range = iterator.next();
+    for (Range range : ranges) {
       if (range.getOffset2() < line) result.add(range);
       //if (range.getOffset2() > line) break;
     }
@@ -423,8 +421,7 @@ public class LineStatusTracker implements EditorColorsListener {
 
   public static List<Range> getRangesAfter(List<Range> ranges, int line) {
     ArrayList<Range> result = new ArrayList<Range>();
-    for (Iterator<Range> iterator = ranges.iterator(); iterator.hasNext();) {
-      Range range = iterator.next();
+    for (Range range : ranges) {
       if (range.getOffset1() > line) result.add(range);
     }
     return result;
@@ -446,27 +443,30 @@ public class LineStatusTracker implements EditorColorsListener {
     });
   }
 
+  @Nullable
   private Range getNextRange(Range range) {
     int index = myRanges.indexOf(range);
     if (index == myRanges.size() - 1) return null;
     return myRanges.get(index + 1);
   }
 
+  @Nullable
   private Range getPrevRange(Range range) {
     int index = myRanges.indexOf(range);
     if (index == 0) return null;
     return myRanges.get(index - 1);
   }
 
+  @Nullable
   public Range getNextRange(int line) {
-    for (Iterator<Range> iterator = myRanges.iterator(); iterator.hasNext();) {
-      Range range = iterator.next();
+    for (Range range : myRanges) {
       if (range.getOffset2() < line) continue;
       return range;
     }
     return null;
   }
 
+  @Nullable
   public Range getPrevRange(int line) {
     for (ListIterator<Range> iterator = myRanges.listIterator(myRanges.size()); iterator.hasPrevious();) {
       Range range = iterator.previous();
@@ -558,7 +558,7 @@ public class LineStatusTracker implements EditorColorsListener {
     TextRange textRange = getUpToDateRange(range);
     final int startOffset = textRange.getStartOffset();
     final int endOffset = Math.min(textRange.getEndOffset() + 1,
-                                myUpToDateDocument.getTextLength());
+                                   myUpToDateDocument.getTextLength());
     return myUpToDateDocument.getCharsSequence().subSequence(startOffset, endOffset).toString();
   }
 
@@ -672,7 +672,7 @@ public class LineStatusTracker implements EditorColorsListener {
     group.add(new LineStatusTracker.RollbackAction(this, range, editor));
     group.add(new LineStatusTracker.ShowDiffAction(this, range, editor));
 
-    final List actionList = (List)editorComponent.getClientProperty(AnAction.ourClientProperty);
+    final List<AnAction> actionList = (List<AnAction>)editorComponent.getClientProperty(AnAction.ourClientProperty);
 
     actionList.remove(globalShowPrevAction);
     actionList.remove(globalShowNextAction);
