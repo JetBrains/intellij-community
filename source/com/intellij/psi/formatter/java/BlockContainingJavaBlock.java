@@ -1,18 +1,16 @@
 package com.intellij.psi.formatter.java;
 
-import com.intellij.lang.ASTNode;
+import com.intellij.codeFormatting.general.FormatterUtil;
 import com.intellij.formatting.*;
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
-import com.intellij.codeFormatting.general.FormatterUtil;
-import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
 
 public class BlockContainingJavaBlock extends AbstractJavaBlock{
 
@@ -25,7 +23,6 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
   public BlockContainingJavaBlock(final ASTNode node, final Wrap wrap, final Alignment alignment, final Indent indent, CodeStyleSettings settings) {
     super(node, wrap, alignment, indent, settings);
   }
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.java.BlockContainingJavaBlock");
   protected List<Block> buildChildren() {
     final ArrayList<Block> result = new ArrayList<Block>();
     Alignment childAlignment = createChildAlignment();
@@ -149,8 +146,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
 
     if (FormatterUtil.containsWhiteSpacesOnly(child)) return isPartOfCodeBlock(child.getTreeNext());
     if (child.getElementType() == ElementType.END_OF_LINE_COMMENT) return isPartOfCodeBlock(child.getTreeNext());
-    if (child.getElementType() == JavaDocElementType.DOC_COMMENT) return true;
-    return false;
+    return child.getElementType() == JavaDocElementType.DOC_COMMENT;
   }
 
   protected Wrap getReservedWrap() {
@@ -164,11 +160,46 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
   public ChildAttributes getChildAttributes(final int newChildIndex) {
     if (isAfterJavaDoc(newChildIndex)) {
       return new ChildAttributes(Indent.getNoneIndent(), null);
-    } else if (newChildIndex == 0 || newChildIndex == getSubBlocks().size()) {
-      return new ChildAttributes(getCodeBlockExternalIndent(), null);
-    } else {
-      return new ChildAttributes(myIndentsBefore.get(newChildIndex), null);
     }
+
+    if (myNode.getElementType() == ElementType.FOR_STATEMENT && mySettings.ALIGN_MULTILINE_FOR && isInsideForParens(newChildIndex)) {
+      Alignment prev = getUsedAlignment(newChildIndex);
+      if (prev != null) {
+        return new ChildAttributes(null, prev);
+      }
+    }
+
+    if (newChildIndex == 0 || newChildIndex == getSubBlocks().size()) {
+      return new ChildAttributes(getCodeBlockExternalIndent(), null);
+    }
+
+    return new ChildAttributes(myIndentsBefore.get(newChildIndex), null);
+
   }
+
+  private Alignment getUsedAlignment(final int newChildIndex) {
+    final List<Block> subBlocks = getSubBlocks();
+    for (int i = 0; i < newChildIndex; i++) {
+      if (i >= subBlocks.size()) return null;
+      final Block block = subBlocks.get(i);
+      final Alignment alignment = block.getAlignment();
+      if (alignment != null) return alignment;
+    }
+    return null;
+  }
+
+  private boolean isInsideForParens(final int newChildIndex) {
+    final List<Block> subBlocks = getSubBlocks();
+    for (int i = 0; i < newChildIndex; i++) {
+      if (i >= subBlocks.size()) return false;
+      final Block block = subBlocks.get(i);
+      if (block instanceof LeafBlock) {
+        if (((LeafBlock)block).getTreeNode().getElementType() == ElementType.RPARENTH) return false;
+      }
+    }
+    return true;
+  }
+
+
 
 }

@@ -59,8 +59,10 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
       case ChildRole.FOR_INITIALIZATION:
         final ASTNode initialization = TreeUtil.findChild(this, STATEMENT_BIT_SET);
         // should be inside parens
-        for(ASTNode child = initialization; child != null; child = child.getTreeNext()){
-          if (child.getElementType() == RPARENTH) return initialization;
+        ASTNode paren = findChildByRole(ChildRole.LPARENTH);
+        for(ASTNode child = paren; child != null; child = child.getTreeNext()){
+          if (child == initialization) return initialization;
+          if (child.getElementType() == RPARENTH) return null;
         }
         return null;
 
