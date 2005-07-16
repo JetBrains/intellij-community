@@ -10,6 +10,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.Nullable;
 
 public class ClassElement extends RepositoryTreeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.ClassElement");
@@ -58,7 +59,7 @@ public class ClassElement extends RepositoryTreeElement {
     if (isEnum()) {
       if (!ENUM_CONSTANT_LIST_ELEMENTS_BIT_SET.isInSet(first.getElementType())) {
         ASTNode semicolonPlace = findEnumConstantListDelimiterPlace();
-        if (semicolonPlace.getElementType() != SEMICOLON) {
+        if (semicolonPlace == null || semicolonPlace.getElementType() != SEMICOLON) {
             final LeafElement semicolon = Factory.createSingleLeafElement(SEMICOLON, new char[]{';'}, 0, 1,
                                                                           SharedImplUtil.findCharTableByTree(this), getManager());
             addInternal(semicolon, semicolon, semicolonPlace, Boolean.FALSE);
@@ -196,13 +197,14 @@ public class ClassElement extends RepositoryTreeElement {
 
   private ASTNode findEnumConstantListDelimiter() {
     ASTNode candidate = findEnumConstantListDelimiterPlace();
-    return candidate.getElementType() == SEMICOLON ? candidate : null;
+    return candidate != null && candidate.getElementType() == SEMICOLON ? candidate : null;
   }
 
+  @Nullable
   public ASTNode findEnumConstantListDelimiterPlace() {
     final ASTNode first = findChildByRole(ChildRole.LBRACE);
     if (first == null) return null;
-    for (ASTNode child = first.getTreeNext(); ; child = child.getTreeNext()) {
+    for (ASTNode child = first.getTreeNext(); child != null; child = child.getTreeNext()) {
       final IElementType childType = child.getElementType();
       if (WHITE_SPACE_OR_COMMENT_BIT_SET.isInSet(childType) ||
           childType == ERROR_ELEMENT || childType == ENUM_CONSTANT) continue;
@@ -212,6 +214,8 @@ public class ClassElement extends RepositoryTreeElement {
         return TreeUtil.skipElementsBack(child.getTreePrev(), WHITE_SPACE_OR_COMMENT_BIT_SET);
       }
     }
+
+    return null;
   }
 
   public int getChildRole(ASTNode child) {
