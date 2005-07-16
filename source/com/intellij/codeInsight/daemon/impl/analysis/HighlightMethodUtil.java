@@ -502,7 +502,7 @@ public class HighlightMethodUtil {
     }
     else {
       if (element != null && !resolveResult.isAccessible()) {
-        description = HighlightUtil.buildProblemWithAccessDescription(element, referenceToMethod, resolveResult);
+        description = HighlightUtil.buildProblemWithAccessDescription(referenceToMethod, resolveResult);
         elementToHighlight = referenceToMethod.getReferenceNameElement();
       }
       else if (element != null && !resolveResult.isStaticsScopeCorrect()) {
@@ -1238,18 +1238,33 @@ public class HighlightMethodUtil {
       if (aClass == null) return null;
     }
 
-    return checkConstructorCall(aClass, expression, type, settings, expression.getClassReference());
+    return checkConstructorCall(typeResult, expression, type, settings, expression.getClassReference());
   }
 
   //@top
-  public static HighlightInfo checkConstructorCall(PsiClass aClass,
+  public static HighlightInfo checkConstructorCall(PsiClassType.ClassResolveResult typeResolveResult,
                                                    PsiConstructorCall constructorCall,
                                                    PsiType type,
                                                    DaemonCodeAnalyzerSettings settings,
                                                    PsiJavaCodeReferenceElement classReference) {
     PsiExpressionList list = constructorCall.getArgumentList();
     if (list == null) return null;
+    PsiClass aClass = typeResolveResult.getElement();
+    if (aClass == null) return null;
+    final PsiResolveHelper resolveHelper = constructorCall.getManager().getResolveHelper();
+    PsiClass accessObjectClass = null;
+    if (constructorCall instanceof PsiExpression) {
+      accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass(((PsiExpression)constructorCall)).getElement();
+    }
+    if (!resolveHelper.isAccessible(aClass, constructorCall, accessObjectClass)) {
+      String description = HighlightUtil.buildProblemWithAccessDescription(classReference, typeResolveResult);
+      HighlightInfo info = HighlightInfo
+        .createHighlightInfo(HighlightInfoType.ERROR, classReference.getReferenceNameElement(), description);
+      HighlightUtil.registerAccessQuickFixAction(aClass, classReference, info, null);
+      return info;
+    }
     PsiMethod[] constructors = aClass.getConstructors();
+
     if (constructors.length == 0) {
       if (list.getExpressions().length != 0) {
         String constructorName = aClass.getName();
@@ -1264,7 +1279,7 @@ public class HighlightMethodUtil {
       }
     }
     else {
-      JavaResolveResult[] results = constructorCall.getManager().getResolveHelper().multiResolveConstructor((PsiClassType)type, list, list);
+      JavaResolveResult[] results = resolveHelper.multiResolveConstructor((PsiClassType)type, list, list);
       MethodCandidateInfo result = null;
       if (results.length == 1) result = (MethodCandidateInfo)results[0];
 
@@ -1284,7 +1299,7 @@ public class HighlightMethodUtil {
       }
       else {
         if (!result.isAccessible() || callingProtectedConstructorFromDerivedClass(constructor, constructorCall)) {
-          String description = HighlightUtil.buildProblemWithAccessDescription(constructor, classReference, result);
+          String description = HighlightUtil.buildProblemWithAccessDescription(classReference, result);
           HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, description);
           info.navigationShift = +1;
           if (classReference != null && result.isStaticsScopeCorrect()) {

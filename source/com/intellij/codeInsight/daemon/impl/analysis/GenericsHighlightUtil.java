@@ -522,8 +522,8 @@ public abstract class GenericsHighlightUtil {
             return substitutor.substitute((PsiTypeParameter)psiClass) == null ? Boolean.TRUE : Boolean.FALSE;
           }
           PsiType[] parameters = classType.getParameters();
-          for (int i = 0; i < parameters.length; i++) {
-            if (parameters[i].accept(this).booleanValue()) return Boolean.TRUE;
+          for (PsiType parameter : parameters) {
+            if (parameter.accept(this).booleanValue()) return Boolean.TRUE;
 
           }
           return Boolean.FALSE;
@@ -795,7 +795,8 @@ public abstract class GenericsHighlightUtil {
       if (highlightInfo != null) return highlightInfo;
     }
     PsiClassType type = enumConstant.getManager().getElementFactory().createType(containingClass);
-    return HighlightMethodUtil.checkConstructorCall(containingClass, enumConstant, type, settings, null);
+
+    return HighlightMethodUtil.checkConstructorCall(type.resolveGenerics(), enumConstant, type, settings, null);
   }
 
   public static HighlightInfo checkEnumSuperConstructorCall(PsiMethodCallExpression expr) {
@@ -922,10 +923,9 @@ public abstract class GenericsHighlightUtil {
     if (!aClass.isEnum()) return null;
     PsiElement parent = aClass.getParent();
     if (!(parent instanceof PsiClass || parent instanceof PsiFile)) {
-      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                                      ClassUtil.getClassDeclarationTextRange(aClass),
-                                                                      "Enum must not be local");
-      return highlightInfo;
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
+                                               ClassUtil.getClassDeclarationTextRange(aClass),
+                                               "Enum must not be local");
     }
     return null;
   }

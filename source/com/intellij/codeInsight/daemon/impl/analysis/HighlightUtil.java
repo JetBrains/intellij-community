@@ -1076,15 +1076,16 @@ public class HighlightUtil {
     }
   }
 
-  static String buildProblemWithAccessDescription(PsiElement refElement, PsiJavaCodeReferenceElement reference, JavaResolveResult result) {
+  static String buildProblemWithAccessDescription(PsiJavaCodeReferenceElement reference, JavaResolveResult result) {
+    PsiModifierListOwner refElement = (PsiModifierListOwner)result.getElement();
     String symbolName = HighlightMessageUtil.getSymbolName(refElement, result.getSubstitutor());
 
-    if (((PsiModifierListOwner)refElement).hasModifierProperty(PsiModifier.PRIVATE)) {
+    if (refElement.hasModifierProperty(PsiModifier.PRIVATE)) {
       String containerName = HighlightMessageUtil.getSymbolName(refElement.getParent(), result.getSubstitutor());
       return MessageFormat.format(SYMBOL_IS_PRIVATE, new Object[]{symbolName, containerName});
     }
     else {
-      if (((PsiModifierListOwner)refElement).hasModifierProperty(PsiModifier.PROTECTED)) {
+      if (refElement.hasModifierProperty(PsiModifier.PROTECTED)) {
         String containerName = HighlightMessageUtil.getSymbolName(refElement.getParent(), result.getSubstitutor());
         return MessageFormat.format(SYMBOL_IS_PROTECTED, new Object[]{symbolName, containerName});
       }
@@ -1094,7 +1095,7 @@ public class HighlightUtil {
           refElement = packageLocalClass;
           symbolName = HighlightMessageUtil.getSymbolName(refElement, result.getSubstitutor());
         }
-        if (((PsiModifierListOwner)refElement).hasModifierProperty(PsiModifier.PACKAGE_LOCAL) || packageLocalClass != null) {
+        if (refElement.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) || packageLocalClass != null) {
           String containerName = HighlightMessageUtil.getSymbolName(refElement.getParent(), result.getSubstitutor());
           return MessageFormat.format(SYMBOL_IS_PACKAGE_LOCAL, new Object[]{symbolName, containerName});
         }
@@ -2044,7 +2045,7 @@ public class HighlightUtil {
 
       if (!result.isValidResult()) {
         if (!result.isAccessible()) {
-          String description = buildProblemWithAccessDescription(resolved, ref, result);
+          String description = buildProblemWithAccessDescription(ref, result);
           HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, ref.getReferenceNameElement(),
                                                                  description);
           if (result.isStaticsScopeCorrect()) {
