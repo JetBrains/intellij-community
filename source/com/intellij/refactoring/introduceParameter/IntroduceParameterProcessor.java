@@ -304,8 +304,9 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
   private boolean insideMethodToBeReplaced(PsiElement methodUsage) {
     PsiElement parent = methodUsage.getParent();
     while(parent != null) {
-      if(parent.equals(myMethodToReplaceIn))
+      if (parent.equals(myMethodToReplaceIn)) {
         return true;
+      }
       parent = parent.getParent();
     }
     return false;
@@ -467,8 +468,9 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
   }
 
   private void changeExternalUsage(UsageInfo usage) throws IncorrectOperationException {
-    if(!RefactoringUtil.isMethodUsage(usage.getElement()))
+    if (!RefactoringUtil.isMethodUsage(usage.getElement())) {
       return;
+    }
 
     PsiCallExpression callExpression =
             RefactoringUtil.getCallExpressionByMethodReference((PsiJavaCodeReferenceElement) usage.getElement());
@@ -542,17 +544,14 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
         final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
         myInstanceRef = methodExpression.getQualifierExpression();
         if (myInstanceRef == null) {
-          final PsiElement resolveContext = methodCall.resolveMethodGenerics().getCurrentFileResolveScope();
-          if (resolveContext instanceof PsiClass) {
-            final PsiClass aClass = ((PsiClass)resolveContext);
-            if (!aClass.equals(PsiTreeUtil.getParentOfType(methodExpression, PsiClass.class))) {
-              //Qualified this needed
-              try {
-               myInstanceRef = factory.createExpressionFromText(aClass.getName() + ".this", null);
-              }
-              catch (IncorrectOperationException e) {
-                LOG.error(e);
-              }
+          final PsiClass thisResolveClass = RefactoringUtil.getThisResolveClass(methodExpression);
+          if (thisResolveClass != null && !thisResolveClass.equals(PsiTreeUtil.getParentOfType(methodExpression, PsiClass.class))) {
+            //Qualified this needed
+            try {
+              myInstanceRef = factory.createExpressionFromText(thisResolveClass.getName() + ".this", null);
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
             }
           }
         }
