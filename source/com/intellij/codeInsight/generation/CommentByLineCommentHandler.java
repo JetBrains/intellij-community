@@ -4,8 +4,10 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.editor.*;
@@ -20,7 +22,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.Indent;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class CommentByLineCommentHandler implements CodeInsightActionHandler {
   private Project myProject;
@@ -71,8 +76,8 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     }
 
     boolean wholeLinesSelected = !hasSelection ||
-        (myStartOffset == myDocument.getLineStartOffset(myDocument.getLineNumber(myStartOffset)) &&
-        myEndOffset == myDocument.getLineEndOffset(myDocument.getLineNumber(myEndOffset - 1)) + 1);
+                                 (myStartOffset == myDocument.getLineStartOffset(myDocument.getLineNumber(myStartOffset)) &&
+                                  myEndOffset == myDocument.getLineEndOffset(myDocument.getLineNumber(myEndOffset - 1)) + 1);
 
     boolean startingNewLineComment = !hasSelection && isLineEmpty(myDocument.getLineNumber(myStartOffset)) &&
                                      !Comparing.equal(IdeActions.ACTION_COMMENT_LINE, ActionManagerEx.getInstanceEx().getPrevPreformedActionId());
@@ -192,6 +197,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     return commented;
   }
 
+  @Nullable
   private Commenter findCommenter(final int line) {
     final FileType fileType = myFile.getFileType();
     if (fileType instanceof CustomFileType) {
@@ -201,9 +207,23 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     int offset = myDocument.getLineStartOffset(line);
     final PsiElement elt = myFile.findElementAt(offset);
     if (elt == null) return null;
-    final Language lang = elt.getLanguage();
-    if (lang == null) return null;
+    Language lang = elt.getLanguage();
+    if (myFile instanceof JspFile && lang == StdLanguages.XML) {
+      ASTNode root = getRoot(elt.getNode());
+      lang = root.getPsi().getLanguage();
+    }
+
     return lang.getCommenter();
+  }
+
+  private @NotNull ASTNode getRoot(@NotNull ASTNode node) {
+    ASTNode child = node;
+    do {
+      final ASTNode parent = child.getTreeParent();
+      if (parent == null) return child;
+      child = parent;
+    }
+    while (true);
   }
 
   private Indent computeMinIndent(int line1, int line2, CharSequence chars, CodeStyleManager codeStyleManager, FileType fileType) {
