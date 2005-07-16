@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
@@ -39,6 +40,14 @@ public class NestedTryStatementInspection extends StatementInspection {
             }
             final PsiCodeBlock tryBlock = parentTry.getTryBlock();
             if (!PsiTreeUtil.isAncestor(tryBlock, statement, true)) {
+                return;
+            }
+            final PsiMethod containingMethod =
+                    PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
+            final PsiMethod containingContainingMethod =
+                    PsiTreeUtil.getParentOfType(parentTry, PsiMethod.class);
+            if (containingMethod == null || containingContainingMethod == null ||
+               !containingMethod.equals(containingContainingMethod)){
                 return;
             }
             registerStatementError(statement);

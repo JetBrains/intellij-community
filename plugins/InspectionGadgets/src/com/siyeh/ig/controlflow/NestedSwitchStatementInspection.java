@@ -42,7 +42,7 @@ public class NestedSwitchStatementInspection extends StatementInspection {
             final PsiMethod containingContainingMethod = PsiTreeUtil.getParentOfType(containingSwitchStatement,
                                                                  PsiMethod.class);
             if(containingMethod == null || containingContainingMethod == null||
-                    containingMethod.equals(containingContainingMethod))
+                    !containingMethod.equals(containingContainingMethod))
             {
                 return;
             }
