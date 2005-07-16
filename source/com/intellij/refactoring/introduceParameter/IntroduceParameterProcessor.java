@@ -542,10 +542,11 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
         final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
         myInstanceRef = methodExpression.getQualifierExpression();
         if (myInstanceRef == null) {
-          final PsiMethod method = methodCall.resolveMethod();
-          if (method != null) {
-            final PsiClass aClass = method.getContainingClass();
+          final PsiElement resolveContext = methodCall.resolveMethodGenerics().getCurrentFileResolveScope();
+          if (resolveContext instanceof PsiClass) {
+            final PsiClass aClass = ((PsiClass)resolveContext);
             if (!aClass.equals(PsiTreeUtil.getParentOfType(methodExpression, PsiClass.class))) {
+              //Qualified this needed
               try {
                myInstanceRef = factory.createExpressionFromText(aClass.getName() + ".this", null);
               }
