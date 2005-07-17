@@ -4,8 +4,10 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 public interface PsiTypeElement extends PsiElement {
   PsiTypeElement[] EMPTY_ARRAY = new PsiTypeElement[0];
-  PsiType getType();
+  @NotNull PsiType getType();
   PsiJavaCodeReferenceElement getInnermostComponentReferenceElement();
 }

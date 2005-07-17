@@ -4,10 +4,12 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  *
  */
 public interface PsiTypeCastExpression extends PsiExpression {
-  PsiTypeElement getCastType();
+  @Nullable PsiTypeElement getCastType();
   PsiExpression getOperand();
 }
