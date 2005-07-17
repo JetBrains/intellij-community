@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.cache.impl.idCache;
 
 import com.intellij.aspects.lexer.AspectjLexer;
+import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.Language;
@@ -257,6 +258,10 @@ public class IdTableBuilding {
           return new WordsScannerIdCacheBuilderAdapter(scanner);
         }
       }
+    }
+
+    if (fileType instanceof CustomFileType) {
+      return new WordsScannerIdCacheBuilderAdapter(((CustomFileType)fileType).getWordsScanner());
     }
 
     return null;

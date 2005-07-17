@@ -5,6 +5,7 @@ import com.intellij.aspects.psi.PsiAspect;
 import com.intellij.aspects.psi.PsiPointcut;
 import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.codeHighlighting.CopyCreatorLexer;
+import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.j2ee.J2EERolesUtil;
 import com.intellij.j2ee.ejb.role.EjbClassRole;
@@ -17,6 +18,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
@@ -26,8 +28,8 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.RepositoryElementsManager;
@@ -324,8 +326,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         //if (myManager.getNameHelper().isIdentifier(propertyName)) {
           if (searchScope instanceof GlobalSearchScope) {
             searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes(
-              (GlobalSearchScope)searchScope, 
-              StdFileTypes.JSP, 
+              (GlobalSearchScope)searchScope,
+              StdFileTypes.JSP,
               StdFileTypes.JSPX,
               StdFileTypes.XML
             );
@@ -699,12 +701,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     if (PropertyUtil.isSimplePropertyAccessor(method)) {
       final String propertyName = PropertyUtil.getPropertyName(method);
-      
+
       //if (myManager.getNameHelper().isIdentifier(propertyName)) {
         if (searchScope instanceof GlobalSearchScope) {
           searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes(
             (GlobalSearchScope)searchScope,
-            StdFileTypes.JSP, 
+            StdFileTypes.JSP,
             StdFileTypes.JSPX,
             StdFileTypes.XML
           );
@@ -894,8 +896,18 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     TIntArrayList commentEnds = new TIntArrayList();
     char[] chars = file.textToCharArray();
     if (file instanceof PsiPlainTextFile) {
-      commentStarts.add(0);
-      commentEnds.add(file.getTextLength());
+      FileType fType = file.getFileType();
+      synchronized (PsiLock.LOCK) {
+        if (fType instanceof CustomFileType) {
+          TokenSet commentTokens = TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);
+          Lexer lexer = ((CustomFileType)fType).getHighlighter(myManager.getProject()).getHighlightingLexer();
+          findComments(lexer, chars, range, commentTokens, commentStarts, commentEnds);
+        }
+        else {
+          commentStarts.add(0);
+          commentEnds.add(file.getTextLength());
+        }
+      }
     }
     else {
       // collect comment offsets to prevent long locks by PsiManagerImpl.LOCK
@@ -926,33 +938,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
         if (commentTokens == null) return EMPTY_TODO_ITEMS;
 
-        for (lexer.start(chars); ; lexer.advance()) {
-          IElementType tokenType = lexer.getTokenType();
-          if (tokenType instanceof CopyCreatorLexer.HighlightingCopyElementType) {
-            tokenType = ((CopyCreatorLexer.HighlightingCopyElementType)tokenType).getBase();
-          }
-          if (tokenType == null) break;
-
-          if (range != null) {
-            if (lexer.getTokenEnd() <= range.getStartOffset()) continue;
-            if (lexer.getTokenStart() >= range.getEndOffset()) break;
-          }
-
-          boolean isComment = commentTokens.isInSet(tokenType);
-          if (!isComment) {
-            final Language commentLang = tokenType.getLanguage();
-            final ParserDefinition parserDefinition = commentLang.getParserDefinition();
-            if (parserDefinition != null) {
-              final TokenSet langCommentTokens = parserDefinition.getCommentTokens();
-              isComment = langCommentTokens.isInSet(tokenType);
-            }
-          }
-
-          if (isComment) {
-            commentStarts.add(lexer.getTokenStart());
-            commentEnds.add(lexer.getTokenEnd());
-          }
-        }
+        findComments(lexer, chars, range, commentTokens, commentStarts, commentEnds);
       }
     }
 
@@ -992,6 +978,40 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
 
     return list.toArray(new TodoItem[list.size()]);
+  }
+
+  private void findComments(final Lexer lexer,
+                            final char[] chars,
+                            final TextRange range,
+                            final TokenSet commentTokens,
+                            final TIntArrayList commentStarts, final TIntArrayList commentEnds) {
+    for (lexer.start(chars); ; lexer.advance()) {
+      IElementType tokenType = lexer.getTokenType();
+      if (tokenType instanceof CopyCreatorLexer.HighlightingCopyElementType) {
+        tokenType = ((CopyCreatorLexer.HighlightingCopyElementType)tokenType).getBase();
+      }
+      if (tokenType == null) break;
+
+      if (range != null) {
+        if (lexer.getTokenEnd() <= range.getStartOffset()) continue;
+        if (lexer.getTokenStart() >= range.getEndOffset()) break;
+      }
+
+      boolean isComment = commentTokens.isInSet(tokenType);
+      if (!isComment) {
+        final Language commentLang = tokenType.getLanguage();
+        final ParserDefinition parserDefinition = commentLang.getParserDefinition();
+        if (parserDefinition != null) {
+          final TokenSet langCommentTokens = parserDefinition.getCommentTokens();
+          isComment = langCommentTokens.isInSet(tokenType);
+        }
+      }
+
+      if (isComment) {
+        commentStarts.add(lexer.getTokenStart());
+        commentEnds.add(lexer.getTokenEnd());
+      }
+    }
   }
 
   public int getTodoItemsCount(PsiFile file) {

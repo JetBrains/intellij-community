@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
+import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.j2ee.extResources.ExternalResourceListener;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
@@ -42,6 +43,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
@@ -344,8 +346,12 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     if (myDisabledHighlightingFiles.contains(file)) return false;
 
     if (!file.isPhysical()) return false;
-
-    return !(file instanceof PsiPlainTextFile || file instanceof PsiCompiledElement);
+    if (file instanceof PsiCompiledElement) return false;
+    if (file instanceof PsiPlainTextFile) {
+      final FileType fileType = file.getFileType();
+      return fileType instanceof CustomFileType; // To enable T.O.D.O. highlighting
+    }
+    return true;
   }
 
   public boolean isImportHintsEnabled(PsiFile file) {
