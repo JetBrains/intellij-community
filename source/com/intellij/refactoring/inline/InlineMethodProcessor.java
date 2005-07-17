@@ -643,8 +643,16 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         declareUsedLocalsFinal(initializer, strictlyFinal);
       }
       for (PsiReference ref : refs) {
+        final PsiJavaCodeReferenceElement javaRef = (PsiJavaCodeReferenceElement)ref;
+        if (initializer instanceof PsiThisExpression && ((PsiThisExpression)initializer).getQualifier() == null) {
+          final PsiClass varThisClass = RefactoringUtil.getThisClass(variable);
+          if (RefactoringUtil.getThisClass(javaRef) != varThisClass) {
+            initializer = myManager.getElementFactory().createExpressionFromText(varThisClass.getName() + ".this", variable);
+          }
+        }
+
         PsiExpression expr = RefactoringUtil.inlineVariable(variable, initializer,
-                                                            (PsiJavaCodeReferenceElement)ref);
+                                                            javaRef);
 
         //Q: move the following code to some util? (addition to inline?)
         if (expr instanceof PsiThisExpression) {
