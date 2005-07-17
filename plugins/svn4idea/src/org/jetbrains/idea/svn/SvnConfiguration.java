@@ -1,0 +1,262 @@
+/**
+ * @copyright
+ * ====================================================================
+ * Copyright (c) 2003-2004 QintSoft.  All rights reserved.
+ *
+ * This software is licensed as described in the file COPYING, which
+ * you should have received as part of this distribution.  The terms
+ * are also available at http://subversion.tigris.org/license-1.html.
+ * If newer versions of this license are posted there, you may use a
+ * newer version instead, at your option.
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals.  For exact contribution history, see the revision
+ * history and logs, available at http://svnup.tigris.org/.
+ * ====================================================================
+ * @endcopyright
+ */
+package org.jetbrains.idea.svn;
+
+import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
+import org.jetbrains.idea.svn.dialogs.SvnAuthenticationProvider;
+import org.jdom.Attribute;
+import org.jdom.DataConversionException;
+import org.jdom.Element;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationStorage;
+import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
+
+import java.io.File;
+import java.util.*;
+
+public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.SvnConfiguration");
+
+  public String USER = "";
+  public String PASSWORD = "";
+  public String[] ADD_PATHS = null;
+
+  private String myConfigurationDirectory;
+  private boolean myIsUseDefaultConfiguration;
+  private ISVNOptions myOptions;
+  private List myCheckoutURLs;
+  private boolean myIsKeepLocks;
+  private String myLastSelectedCheckoutURL;
+  private boolean myRemoteStatus;
+  private ISVNAuthenticationManager myAuthManager;
+
+  public static final AuthStorage RUNTIME_AUTH_CACHE = new AuthStorage();
+
+  public static SvnConfiguration getInstance(Project project) {
+    return project.getComponent(SvnConfiguration.class);
+  }
+
+  public String getConfigurationDirectory() {
+    if (myConfigurationDirectory == null || isUseDefaultConfiguation()) {
+      myConfigurationDirectory = SVNWCUtil.getDefaultConfigurationDirectory().getAbsolutePath();
+    }
+    return myConfigurationDirectory;
+  }
+
+  public boolean isUseDefaultConfiguation() {
+    return myIsUseDefaultConfiguration;
+  }
+
+  public void setConfigurationDirectory(String path) {
+    myConfigurationDirectory = path;
+    File dir = path == null ? SVNWCUtil.getDefaultConfigurationDirectory() : new File(path);
+    SVNConfigFile.createDefaultConfiguration(dir);
+
+    myOptions = null;
+    myAuthManager = null;
+    RUNTIME_AUTH_CACHE.clear();
+  }
+
+  public void setUseDefaultConfiguation(boolean useDefault) {
+    myIsUseDefaultConfiguration = useDefault;
+    myOptions = null;
+    myAuthManager = null;
+    RUNTIME_AUTH_CACHE.clear();
+  }
+
+  public ISVNOptions getOptions(Project project) {
+    if (myOptions == null) {
+      File path = new File(getConfigurationDirectory());
+      myOptions = SVNWCUtil.createDefaultOptions(path.getAbsoluteFile(), true);
+    }
+    return myOptions;
+  }
+
+  public ISVNAuthenticationManager getAuthenticationManager(Project project) {
+    if (myAuthManager == null) {
+      File path = new File(getConfigurationDirectory());
+      myAuthManager = SVNWCUtil.createDefaultAuthenticationManager(path, null, null, getOptions(project).isAuthStorageEnabled());
+      myAuthManager.setAuthenticationProvider(new SvnAuthenticationProvider(project));
+      myAuthManager.setRuntimeStorage(RUNTIME_AUTH_CACHE);
+    }
+    return myAuthManager;
+  }
+
+  public void readExternal(org.jdom.Element element) throws InvalidDataException {
+    DefaultJDOMExternalizer.readExternal(this, element);
+    List elems = element.getChildren("addpath");
+    LOG.debug(elems.toString());
+    ADD_PATHS = new String[elems.size()];
+    for (int i = 0; i < elems.size(); i++) {
+      Element elem = (Element)elems.get(i);
+      ADD_PATHS[i] = elem.getAttributeValue("path");
+    }
+    Element configurationDirectory = element.getChild("configuration");
+    if (configurationDirectory != null) {
+      myConfigurationDirectory = configurationDirectory.getText();
+      Attribute defaultAttr = configurationDirectory.getAttribute("useDefault");
+      try {
+        myIsUseDefaultConfiguration = defaultAttr != null && defaultAttr.getBooleanValue();
+      }
+      catch (DataConversionException e) {
+        myIsUseDefaultConfiguration = false;
+      }
+    }
+    else {
+      myIsUseDefaultConfiguration = true;
+    }
+    List urls = element.getChildren("checkoutURL");
+    myCheckoutURLs = new LinkedList();
+    for (int i = 0; i < urls.size(); i++) {
+      Element child = (Element)urls.get(i);
+      String url = child.getText();
+      if (url != null) {
+        if ("true".equals(child.getAttributeValue("active"))) {
+          myLastSelectedCheckoutURL = url;
+        }
+        myCheckoutURLs.add(url);
+      }
+    }
+    myIsKeepLocks = element.getChild("keepLocks") != null;
+    myRemoteStatus = element.getChild("remoteStatus") != null;
+  }
+
+  public void writeExternal(org.jdom.Element element) throws WriteExternalException {
+    DefaultJDOMExternalizer.writeExternal(this, element);
+    if (ADD_PATHS != null) {
+      for (int i = 0; i < ADD_PATHS.length; i++) {
+        Element elem = new Element("addpath");
+        elem.setAttribute("path", ADD_PATHS[i]);
+        element.addContent(elem);
+      }
+    }
+    if (myConfigurationDirectory != null) {
+      Element configurationDirectory = new Element("configuration");
+      configurationDirectory.setText(myConfigurationDirectory);
+      configurationDirectory.setAttribute("useDefault", myIsUseDefaultConfiguration ? "true" : "false");
+      element.addContent(configurationDirectory);
+    }
+    if (myCheckoutURLs != null) {
+      for (Iterator iterator = myCheckoutURLs.iterator(); iterator.hasNext();) {
+        String url = (String)iterator.next();
+        Element urlElement = new Element("checkoutURL");
+        urlElement.setText(url);
+        if (url.equals(myLastSelectedCheckoutURL)) {
+          urlElement.setAttribute("active", "true");
+        }
+        element.addContent(urlElement);
+      }
+    }
+    if (myIsKeepLocks) {
+      element.addContent(new Element("keepLocks"));
+    }
+    if (myRemoteStatus) {
+      element.addContent(new Element("remoteStatus"));
+    }
+  }
+
+  public Collection getCheckoutURLs() {
+    if (myCheckoutURLs == null) {
+      myCheckoutURLs = new LinkedList();
+    }
+    return myCheckoutURLs;
+  }
+
+  public void addCheckoutURL(String url) {
+    if (myCheckoutURLs == null) {
+      myCheckoutURLs = new LinkedList();
+    }
+    if (myCheckoutURLs.contains(url)) {
+      return;
+    }
+    myCheckoutURLs.add(0, url);
+    if (myCheckoutURLs.size() > 5) {
+      myCheckoutURLs.remove(myCheckoutURLs.size() - 1);
+    }
+  }
+
+  public void projectOpened() {
+  }
+
+  public void projectClosed() {
+  }
+
+  public String getComponentName() {
+    return "SvnConfiguration";
+  }
+
+  public void initComponent() {
+  }
+
+  public void disposeComponent() {
+  }
+
+  public boolean isKeepLocks() {
+    return myIsKeepLocks;
+  }
+
+  public void setKeepLocks(boolean keepLocks) {
+    myIsKeepLocks = keepLocks;
+  }
+
+  public void setLastSelectedCheckoutURL(String url) {
+    addCheckoutURL(url);
+    myLastSelectedCheckoutURL = url;
+  }
+
+  public String getLastSelectedCheckoutURL() {
+    return myLastSelectedCheckoutURL;
+  }
+
+  public boolean isRemoteStatus() {
+    return myRemoteStatus;
+  }
+
+  public void setRemoteStatus(boolean remote) {
+    myRemoteStatus = remote;
+  }
+
+  public static class AuthStorage implements ISVNAuthenticationStorage {
+
+    private Map myStorage = new Hashtable();
+
+    public void clear() {
+      myStorage.clear();
+    }
+
+    public void putData(String kind, String realm, Object data) {
+      if (data == null) {
+        myStorage.remove(kind + "$" + realm);
+      } else {
+        myStorage.put(kind + "$" + realm, data);
+      }
+    }
+
+    public Object getData(String kind, String realm) {
+      return myStorage.get(kind + "$" + realm);
+    }
+  }
+}

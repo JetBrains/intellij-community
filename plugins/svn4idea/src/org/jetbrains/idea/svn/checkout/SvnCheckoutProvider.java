@@ -1,0 +1,131 @@
+package org.jetbrains.idea.svn.checkout;
+
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.vcs.CheckoutProvider;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.StatusBar;
+import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
+import org.jetbrains.idea.svn.SvnVcs;
+import org.tmatesoft.svn.core.wc.SVNUpdateClient;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNCancelException;
+
+import java.io.File;
+
+public class SvnCheckoutProvider implements CheckoutProvider {
+  public void doCheckout() {
+    Project p;
+    if (ProjectManager.getInstance().getOpenProjects().length > 0) {
+      p = ProjectManager.getInstance().getOpenProjects()[0];
+    }
+    else {
+      p = ProjectManager.getInstance().getDefaultProject();
+    }
+    final Project project = p;
+    CheckoutDialog dialog = new CheckoutDialog(project);
+    dialog.show();
+    if (!dialog.isOK() || dialog.getSelectedURL() == null || dialog.getSelectedFile() == null) {
+      return;
+    }
+
+    try {
+      final SVNException[] exception = new SVNException[1];
+      final SVNUpdateClient client = SvnVcs.getInstance(project).createUpdateClient();
+      final String url = dialog.getSelectedURL();
+      final File target = new File(dialog.getSelectedFile());
+
+      ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable() {
+        public void run() {
+          ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+          client.setEventHandler(new CheckoutEventHandler(SvnVcs.getInstance(project), progressIndicator));
+          try {
+            progressIndicator.setText("Checking out files to '" + target.getAbsolutePath() + "'");
+            client.doCheckout(url, target, SVNRevision.UNDEFINED, SVNRevision.HEAD, true);
+          }
+          catch (SVNException e) {
+            exception[0] = e;
+          }
+          finally {
+            client.setEventHandler(null);
+          }
+        }
+      }, "Check Out from Subversion", false, null);
+      if (exception[0] != null) {
+        throw exception[0];
+      }
+    }
+    catch (SVNException e1) {
+      Messages.showErrorDialog("Cannot checkout from svn: " + e1.getMessage(), "Check Out from Subversion");
+    }
+  }
+
+  public String getVcsName() {
+    return "_SVN";
+  }
+
+  public String getComponentName() {
+    return "SvnCheckoutProvider";
+  }
+
+  public void initComponent() {
+  }
+
+  public void disposeComponent() {
+  }
+
+  private static class CheckoutEventHandler implements ISVNEventHandler {
+    private ProgressIndicator myIndicator;
+    private int myExternalsCount;
+    private SvnVcs myVCS;
+
+    public CheckoutEventHandler(SvnVcs vcs, ProgressIndicator indicator) {
+      myIndicator = indicator;
+      myVCS = vcs;
+      myExternalsCount = 1;
+    }
+
+    public void handleEvent(SVNEvent event, double progress) {
+      if (event.getAction() == SVNEventAction.UPDATE_EXTERNAL) {
+        myExternalsCount++;
+        myIndicator.setText("Fetching external location to '" + event.getFile().getAbsolutePath() + "'");
+        myIndicator.setText2("");
+      }
+      else if (event.getAction() == SVNEventAction.UPDATE_ADD) {
+        myIndicator.setText2("Checked out " + event.getFile().getName());
+      }
+      else if (event.getAction() == SVNEventAction.UPDATE_COMPLETED) {
+        myExternalsCount--;
+        myIndicator.setText2("Checked out revision " + event.getRevision() + ".");
+        if (myExternalsCount == 0 && event.getRevision() >= 0 && myVCS != null) {
+          myExternalsCount = 1;
+          Project project = myVCS.getProject();
+          if (project != null) {
+            StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
+            if (statusBar != null) {
+              statusBar.setInfo("Checked out revision " + event.getRevision() + ".");
+            }
+          }
+        }
+
+      }
+    }
+
+    public void checkCancelled() throws SVNCancelException {
+      myIndicator.checkCanceled();
+      if (myIndicator.isCanceled()) {
+        throw new SVNCancelException("");
+      }
+    }
+  }
+}
+
+

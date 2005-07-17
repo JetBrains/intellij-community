@@ -12,25 +12,25 @@
 
   <application-components>
     <component>
-      <implementation-class>com.qintsoft.svn4idea.SvnApplicationSettings</implementation-class>
+      <implementation-class>org.jetbrains.idea.svn.SvnApplicationSettings</implementation-class>
       <option name="workspace" value="true"/>
     </component>
     <component>
-      <implementation-class>com.qintsoft.svn4idea.checkout.SvnCheckoutProvider</implementation-class>
+      <implementation-class>org.jetbrains.idea.svn.checkout.SvnCheckoutProvider</implementation-class>
     </component>
   </application-components>
 
   <project-components>
     <component>
-      <implementation-class>com.qintsoft.svn4idea.SvnVcs</implementation-class>
+      <implementation-class>org.jetbrains.idea.svn.SvnVcs</implementation-class>
       <option name="workspace" value="true"/>
     </component>
     <component>
-      <implementation-class>com.qintsoft.svn4idea.SvnConfiguration</implementation-class>
+      <implementation-class>org.jetbrains.idea.svn.SvnConfiguration</implementation-class>
       <option name="workspace" value="true"/>
     </component>
     <component>
-      <implementation-class>com.qintsoft.svn4idea.history.SvnChangesBrowserSettings</implementation-class>
+      <implementation-class>org.jetbrains.idea.svn.history.SvnChangesBrowserSettings</implementation-class>
       <option name="workspace" value="true"/>
     </component>
   </project-components>
@@ -39,41 +39,41 @@
 
     <group id="SubversionFileGroup" text="SVN">
       <separator/>
-      <action id="Subversion.BrowseSVNRepository" class="com.qintsoft.svn4idea.actions.BrowseRepositoryAction" text="Browse S_VN Repository..."
+      <action id="Subversion.BrowseSVNRepository" class="org.jetbrains.idea.svn.actions.BrowseRepositoryAction" text="Browse S_VN Repository..."
         description="Browse a Subversion repository"/>
       <separator/>
       <add-to-group group-id="FileMenu" anchor="before" relative-to-action="ExportToHTML"/>
     </group>
 
-    <group id="SubversionFilePopupGroup" popup="true" text="_Subversion" class="com.qintsoft.svn4idea.actions.SubversionGroup">
+    <group id="SubversionFilePopupGroup" popup="true" text="_Subversion" class="org.jetbrains.idea.svn.actions.SubversionGroup">
       <add-to-group group-id="VcsGroup" anchor="last"/>
       <add-to-group group-id="VcsGroups" anchor="last"/>      
     </group>
 
     <group id="SubversionGroup">
       <separator/>
-      <action id="Subversion.Add" class="com.qintsoft.svn4idea.actions.AddAction" text="Add" description="Add the file to Subversion"/>
+      <action id="Subversion.Add" class="org.jetbrains.idea.svn.actions.AddAction" text="Add" description="Add the file to Subversion"/>
       <reference id="CheckinFiles"/>
       <reference id="UpdateFiles"/>
       <reference id="CheckStatusForFiles"/>
       <reference id="Vcs.ShowTabbedFileHistory"/>
       <separator/>
-      <action id="Subversion.SetProperty" class="com.qintsoft.svn4idea.actions.SetPropertyAction" text="Set Property..." description="Set versioned property on file or directory"/>
-      <action id="Subversion.Revert" class="com.qintsoft.svn4idea.actions.RevertAction" text="Revert..." description="Revert file to pristine state"/>
-      <action id="Subversion.Resolve" class="com.qintsoft.svn4idea.actions.ResolveAction" text="Resolve Text Conflict..." description="Resolve text conflict on file"/>
-      <action id="Subversion.MarkResolved" class="com.qintsoft.svn4idea.actions.MarkResolvedAction" text="Mark Resolved..." description="Mark text and properties conflicts as resolved"/>
-      <action id="Subversion.Clenaup" class="com.qintsoft.svn4idea.actions.CleanupAction" text="Cleanup" description="Unlock locked directories and run all remaining incompleted operations"/>
+      <action id="Subversion.SetProperty" class="org.jetbrains.idea.svn.actions.SetPropertyAction" text="Set Property..." description="Set versioned property on file or directory"/>
+      <action id="Subversion.Revert" class="org.jetbrains.idea.svn.actions.RevertAction" text="Revert..." description="Revert file to pristine state"/>
+      <action id="Subversion.Resolve" class="org.jetbrains.idea.svn.actions.ResolveAction" text="Resolve Text Conflict..." description="Resolve text conflict on file"/>
+      <action id="Subversion.MarkResolved" class="org.jetbrains.idea.svn.actions.MarkResolvedAction" text="Mark Resolved..." description="Mark text and properties conflicts as resolved"/>
+      <action id="Subversion.Clenaup" class="org.jetbrains.idea.svn.actions.CleanupAction" text="Cleanup" description="Unlock locked directories and run all remaining incompleted operations"/>
       <separator/>
       <reference id="Compare.SameVersion" text="Compare with BASE revision"/>
       <reference id="Compare.LastVersion" text="Comparet with revision at HEAD"/>
       <reference id="Compare.Selected"/>
       <reference id="Annotate"/>
-      <action id="Subversion.Copy" class="com.qintsoft.svn4idea.actions.CopyAction" text="Branch or Tag..." description="Copy selected file or directory to the new repository location"/>
+      <action id="Subversion.Copy" class="org.jetbrains.idea.svn.actions.CopyAction" text="Branch or Tag..." description="Copy selected file or directory to the new repository location"/>
       <separator/>
-      <action id="Subversion.Lock" class="com.qintsoft.svn4idea.actions.LockAction" text="Lock..." description="Lock files"/>
-      <action id="Subversion.Unlock" class="com.qintsoft.svn4idea.actions.UnlockAction" text="Unlock" description="Unlock files"/>
+      <action id="Subversion.Lock" class="org.jetbrains.idea.svn.actions.LockAction" text="Lock..." description="Lock files"/>
+      <action id="Subversion.Unlock" class="org.jetbrains.idea.svn.actions.UnlockAction" text="Unlock" description="Unlock files"/>
       <separator/>
-      <action id="SvnChangesBrowser" class="com.qintsoft.svn4idea.actions.BrowseChangesAction" text="Browse Changes..."/>
+      <action id="SvnChangesBrowser" class="org.jetbrains.idea.svn.actions.BrowseChangesAction" text="Browse Changes..."/>
       <add-to-group group-id="SubversionFilePopupGroup" anchor="last"/>
     </group>
   </actions>
