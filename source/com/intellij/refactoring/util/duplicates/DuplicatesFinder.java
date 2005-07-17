@@ -168,7 +168,7 @@ public class DuplicatesFinder {
     } else if (pattern instanceof PsiNewExpression) {
       final PsiJavaCodeReferenceElement classReference1 = ((PsiNewExpression)pattern).getClassReference();
       final PsiJavaCodeReferenceElement classReference2 = ((PsiNewExpression)candidate).getClassReference();
-      if ((classReference1 == null) != (classReference2 != null)) return false;
+      if ((classReference1 == null) != (classReference2 == null)) return false;
       if (classReference1 != null && classReference2 != null) {
         final PsiElement resolved1 = classReference1.resolve();
         final PsiElement resolved2 = classReference2.resolve();
