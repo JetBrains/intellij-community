@@ -7,6 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.lang.ASTNode;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -130,7 +131,10 @@ public class DuplicatesFinder {
   private boolean canBeEquivalent(final PsiElement pattern, PsiElement candidate) {
     if (pattern instanceof PsiReturnStatement && candidate instanceof PsiExpressionStatement) return true;
     if (pattern instanceof PsiReturnStatement && candidate instanceof PsiDeclarationStatement) return true;
-    return pattern.getNode().getElementType() == candidate.getNode().getElementType();
+    final ASTNode node1 = pattern.getNode();
+    final ASTNode node2 = candidate.getNode();
+    if (node1 == null || node2 == null) return false;
+    return node1.getElementType() == node2.getElementType();
   }
 
   private boolean matchPattern(PsiElement pattern,
