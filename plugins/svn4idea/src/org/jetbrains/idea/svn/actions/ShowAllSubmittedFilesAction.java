@@ -32,7 +32,7 @@ import java.util.Map;
 
 public class ShowAllSubmittedFilesAction extends AnAction {
   public ShowAllSubmittedFilesAction() {
-    super("Show All Revisions Submitted In Selected Change List", null, IconLoader.findIcon("/icons/allRevisions.png"));
+    super("Show all paths affected in selected transaction", null, IconLoader.findIcon("/icons/allRevisions.png"));
   }
 
   public void update(AnActionEvent e) {
@@ -64,7 +64,7 @@ public class ShowAllSubmittedFilesAction extends AnAction {
   }
 
   private static String getTitle(long revisionNumber) {
-    return "Show All Revision Submitted in ChangeList " + revisionNumber;
+    return "Paths Affected in Transaction '" + revisionNumber + "'";
   }
 
   private ArrayList<AbstractRevisions> loadRevisions(final Project project, final SvnFileRevision svnRevision) {
@@ -105,7 +105,7 @@ public class ShowAllSubmittedFilesAction extends AnAction {
     }
     catch (Exception e1) {
       Messages.showErrorDialog("Cannot load repository version " + number + " :" + e1.getLocalizedMessage(),
-                               getTitle(targetRevision.getNumber()));
+                               "Error Fetching Affected Paths");
       return null;
     }
 

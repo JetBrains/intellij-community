@@ -291,7 +291,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         return false;
       case SHOW_CONFIRMATION: {
         final boolean confirmed =
-          Messages.showYesNoDialog(vcs.getProject(), "Do you want to add " + new File(name).getName() + " to svn?", "File Created",
+          Messages.showYesNoDialog(vcs.getProject(), "Do you want to schedule newly created file(s) for addition to Subversion?", "Schedule for Addition",
                                    Messages.getQuestionIcon())
           == JOptionPane.YES_OPTION;
         myCachedConfirmation = Boolean.valueOf(confirmed);
