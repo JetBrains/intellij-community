@@ -84,7 +84,7 @@ public class FocusTrackback {
     if (myFocusOwner != null) {
       final ArrayList<FocusTrackback> stack = getStackForRoot(myRoot);
 
-      final boolean isLastInFocusChain = stack.contains(this) && stack.indexOf(this) == stack.size() - 1;
+      final boolean isLastInFocusChain = stack.contains(this) && stack.indexOf(this) == 0;
       if (isLastInFocusChain) {
         stack.clear();
         myFocusOwner.requestFocus();
