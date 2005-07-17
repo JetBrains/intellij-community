@@ -11,6 +11,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 
 public class ShowErrorDescriptionAction extends BaseCodeInsightAction{
+  public ShowErrorDescriptionAction() {
+    setEnabledInModalContext(true);
+  }
+
   protected CodeInsightActionHandler getHandler() {
     return new ShowErrorDescriptionHandler();
   }
