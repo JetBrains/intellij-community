@@ -167,7 +167,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     SVNStatus status = getFileStatus(targetFile);
 
     if (status == null) {
-      if (confirmAdd(getVCS(dir), name)) {
+      if (confirmAdd(getVCS(dir))) {
         createNewFile(targetFile, directory);
         try {
           wcClient.doAdd(targetFile, false, false, false, false);
@@ -192,7 +192,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         if (isUndo(vcs)) {
           wcClient.doRevert(targetFile, false);
         }
-        else if (confirmAdd(getVCS(dir), name)) {
+        else if (confirmAdd(getVCS(dir))) {
           createNewFile(targetFile, directory);
           wcClient.doAdd(targetFile, false, false, false, false);
         }
@@ -277,7 +277,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     return UndoManager.getInstance(p).isUndoInProgress();
   }
 
-  private static boolean confirmAdd(SvnVcs vcs, String name) {
+  private static boolean confirmAdd(SvnVcs vcs) {
     if (vcs == null) {
       // file outside of the project
       return true;
