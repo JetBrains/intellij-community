@@ -76,7 +76,8 @@ public class RefParameter extends RefElement {
       if (resolved instanceof PsiField) {
         PsiField psiField = (PsiField) resolved;
         if (psiField.hasModifierProperty(PsiModifier.STATIC) &&
-            psiField.hasModifierProperty(PsiModifier.FINAL)) {
+            psiField.hasModifierProperty(PsiModifier.FINAL) &&
+            psiField.getContainingClass().getQualifiedName() != null) {
           newTemplate = PsiFormatUtil.formatVariable(psiField, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_FQ_NAME, PsiSubstitutor.EMPTY);
         }
       }
