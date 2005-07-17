@@ -265,7 +265,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
     IdeFrame frame = ((WindowManagerEx)WindowManager.getInstance()).getFrame(myProject);
     if (frame != null) {
-      frame.addWindowFocusListener(myIdeFrameFocusListener);
+      frame.removeWindowFocusListener(myIdeFrameFocusListener);
     }
   }
 
