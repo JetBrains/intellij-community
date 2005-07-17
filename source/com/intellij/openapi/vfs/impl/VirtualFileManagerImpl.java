@@ -115,8 +115,6 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
         );
       }
 
-      LOG.info("refresh(), modalityState=" + modalityState);
-
       for (VirtualFileSystem fileSystem : myFileSystems) {
         fileSystem.refresh(asynchronous);
       }
@@ -206,7 +204,6 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     }
 
     public void run() {
-      LOG.info("beforeRefreshStart()");
       myVirtualFileManagerListenerMulticaster.getMulticaster().beforeRefreshStart(myAsynchonous);
     }
   }
@@ -247,7 +244,6 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
                   synchronizer = null;
                 }
 
-                LOG.info("afterRefreshFinish()");
                 myVirtualFileManagerListenerMulticaster.getMulticaster().afterRefreshFinish(asynchronous);
 
                 if (asynchronous) {
