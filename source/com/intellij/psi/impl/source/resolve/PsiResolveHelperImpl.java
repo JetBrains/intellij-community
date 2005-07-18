@@ -125,7 +125,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
         if (j >= parameters.length && !parameter.isVarArgs()) break;
         PsiType parameterType = parameter.getType();
         PsiType argumentType = argument.getType();
-        if (forCompletion && argumentType == null) continue;
+        if (argumentType == null) continue;
 
         if (parameterType instanceof PsiEllipsisType) {
           parameterType = ((PsiEllipsisType)parameterType).getComponentType();
