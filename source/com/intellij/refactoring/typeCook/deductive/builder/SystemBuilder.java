@@ -2,8 +2,11 @@ package com.intellij.refactoring.typeCook.deductive.builder;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -626,7 +629,12 @@ public class SystemBuilder {
 
         if (method != null) {
           final PsiSearchHelper helper = myManager.getSearchHelper();
-          final PsiReference[] refs = helper.findReferences(method, helper.getUseScope(method), true);
+          SearchScope scope = helper.getUseScope(method);
+          if (scope instanceof GlobalSearchScope) {
+            scope = GlobalSearchScope.getScopeRestrictedByFileTypes(((GlobalSearchScope)scope), StdFileTypes.JAVA);
+          }
+
+          final PsiReference[] refs = helper.findReferences(method, scope, true);
 
           for (PsiReference ref : refs) {
             final PsiElement elt = ref.getElement();
