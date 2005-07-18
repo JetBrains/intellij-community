@@ -4,6 +4,7 @@ import com.intellij.ide.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -472,14 +473,18 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   public void appendUsageLater(final Usage usage) {
     myUsages.add(usage);
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator != null) {
-      myFlushAlarm.cancelAllRequests();
-      myFlushAlarm.addRequest(new Runnable() {
+    
+    myFlushAlarm.cancelAllRequests();
+    myFlushAlarm.addRequest(
+      new Runnable() {
         public void run() {
           flush();
         }
-      }, 300, indicator.getModalityState());
-    }
+      }, 
+      300, 
+      (indicator != null)?indicator.getModalityState(): ModalityState.defaultModalityState()
+    );
+    
 
     synchronized (myUsagesToFlush) {
       myUsagesToFlush.add(usage);
