@@ -13,13 +13,13 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -32,7 +32,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -69,8 +68,7 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
           public void run() {
             boolean replaceAll = false;
-            for (Iterator<Pair<PsiElement, PsiElement>> it = duplicates.iterator(); it.hasNext();) {
-              Pair<PsiElement, PsiElement> pair = it.next();
+            for (Pair<PsiElement, PsiElement> pair : duplicates) {
               if (!replaceAll) {
 
                 highlightInEditor(project, pair, editor);
@@ -147,7 +145,7 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
       return;
     }
 
-    Language language = myIncludingFile.getLanguage();
+    Language language = children.getFirst().getLanguage();
     if (language == null) {
       String message = "Cannot determine the language for selected elements";
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_INCLUDE, project);
