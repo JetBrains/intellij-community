@@ -699,7 +699,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
 
     public void customizeCellRenderer(JTable table, Object value,
                                       boolean isSelected, boolean hasFocus, int row, int column) {
-      //setFont(myTableFont);
+      if (value == null) return;
       if (!myParametersTableModel.isCellEditable(row, myParametersTable.convertColumnIndexToModel(column))) {
         setBackground(getBackground().darker());
       }
