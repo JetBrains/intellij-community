@@ -447,6 +447,22 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       ),
       jspReferencesProvider
     );
+    
+    registerXmlAttributeValueReferenceProvider(
+      new String[] {"name"},
+      new ScopeFilter(
+        new ParentElementFilter(
+          new AndFilter(
+            new ClassFilter(XmlTag.class),
+            new AndFilter(
+              new TextFilter("property"),
+              new NamespaceFilter(XmlUtil.SPRING_CORE_URI)
+            )
+          ), 2
+        )
+      ),
+      new SpringReferencesProvider()
+    );
   }
 
   public void registerReferenceProvider(ElementFilter elementFilter, Class scope, PsiReferenceProvider provider) {

@@ -64,6 +64,7 @@ public class XmlUtil {
   public static final String SPRING_URI = "http://www.springframework.org/tags";
   public static final String STRUTS_BEAN_URI = "http://struts.apache.org/tags-bean";
   public static final String STRUTS_HTML_URI = "http://struts.apache.org/tags-html";
+  public static final String SPRING_CORE_URI = "http://www.springframework.org/dtd/spring-beans.dtd";
 
   public static String getSchemaLocation(XmlTag tag, String namespace) {
     final String uri = ExternalResourceManagerEx.getInstanceEx().getResourceLocation(namespace);
