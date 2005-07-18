@@ -48,6 +48,13 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
 
   private DebuggerContextListener mySessionListener = new DebuggerContextListener() {
     public void changeEvent(DebuggerContextImpl newContext, int event) {
+
+      if (event == DebuggerSession.EVENT_PAUSE && myDebuggerStateManager.myDebuggerSession != newContext.getDebuggerSession()) {
+        // if paused in non-active session; switch current session
+        myDebuggerStateManager.setState(newContext, newContext.getDebuggerSession().getState(), event, null);
+        return;
+      }
+
       if(myDebuggerStateManager.myDebuggerSession == newContext.getDebuggerSession()) {
         myDebuggerStateManager.fireStateChanged(newContext, event);
       }
@@ -55,7 +62,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
       if(event == DebuggerSession.EVENT_DISPOSE) {
         dispose(newContext.getDebuggerSession());
         if(myDebuggerStateManager.myDebuggerSession == newContext.getDebuggerSession()) {
-          getContextManager().setState(DebuggerContextImpl.EMPTY_CONTEXT, DebuggerSession.STATE_DISPOSED, DebuggerSession.EVENT_DISPOSE, null);          
+          myDebuggerStateManager.setState(DebuggerContextImpl.EMPTY_CONTEXT, DebuggerSession.STATE_DISPOSED, DebuggerSession.EVENT_DISPOSE, null);
         }
       }
     }
@@ -374,7 +381,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
       return myDebuggerSession == null ? DebuggerContextImpl.EMPTY_CONTEXT : myDebuggerSession.getContextManager().getContext();
     }
 
-    public void setState(DebuggerContextImpl context, int state, int event, String description) {
+    public void setState(final DebuggerContextImpl context, int state, int event, String description) {
       LOG.assertTrue(SwingUtilities.isEventDispatchThread());
       myDebuggerSession = context.getDebuggerSession();
       if (myDebuggerSession != null) {
