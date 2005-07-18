@@ -19,7 +19,7 @@ public class BreakStatementInspection extends StatementInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "#ref statement #loc";
+        return "'#ref' statement #loc";
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -33,27 +33,30 @@ public class BreakStatementInspection extends StatementInspection {
 
             final PsiSwitchStatement switchStatement =
                     PsiTreeUtil.getParentOfType(statement, PsiSwitchStatement.class);
-            if (switchStatement != null &&
-                    isBreakAtTopLevel(switchStatement, statement)) {
+            if (switchStatement != null && isTopLevelBreakInSwitch(statement)) {
                 return;
             }
             registerStatementError(statement);
         }
 
-        private static boolean isBreakAtTopLevel(PsiSwitchStatement switchStatement, PsiBreakStatement statement) {
-            final PsiCodeBlock body = switchStatement.getBody();
-            if (body == null) {
+        private static boolean isTopLevelBreakInSwitch(PsiBreakStatement statement) {
+            final PsiElement parent = statement.getParent();
+            if (!(parent instanceof PsiCodeBlock)) {
                 return false;
             }
-            final PsiStatement[] statements = body.getStatements();
-            for(final PsiStatement child : statements){
-                if(child.equals(statement)){
-                    return true;
-                }
+            final PsiElement parentsParent = parent.getParent();
+            if (parentsParent instanceof PsiSwitchStatement) {
+                return true;
             }
-            return false;
+            if (!(parentsParent instanceof PsiBlockStatement)) {
+                return false;
+            }
+            final PsiElement blocksParent = parentsParent.getParent();
+            if (!(blocksParent instanceof PsiCodeBlock)) {
+                return false;
+            }
+            final PsiElement blocksParentsParent = blocksParent.getParent();
+            return blocksParentsParent instanceof PsiSwitchStatement;
         }
-
     }
-
 }
