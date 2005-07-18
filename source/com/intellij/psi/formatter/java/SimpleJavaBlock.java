@@ -12,6 +12,8 @@ import com.intellij.codeFormatting.general.FormatterUtil;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 
 public class SimpleJavaBlock extends AbstractJavaBlock {
   private Wrap myReservedWrap;
@@ -36,7 +38,7 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
       }
       child = child.getTreeNext();
     }
-    
+
     Alignment childAlignment = createChildAlignment();
     Wrap childWrap = createChildWrap();
     while (child != null) {
@@ -51,8 +53,23 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
         child = child.getTreeNext();
       }
     }
-     
+
     return result;
+  }
+
+  @Override
+  @NotNull
+  public ChildAttributes getChildAttributes(final int newChildIndex) {
+    if (myNode.getElementType() == ElementType.CONDITIONAL_EXPRESSION && mySettings.ALIGN_MULTILINE_TERNARY_OPERATION) {
+      final Alignment usedAlignment = getUsedAlignment(newChildIndex);
+      if (usedAlignment != null) {
+        return new ChildAttributes(null, usedAlignment);        
+      } else {
+        return super.getChildAttributes(newChildIndex);
+      }
+    } else {
+      return super.getChildAttributes(newChildIndex);
+    }
   }
 
   protected Wrap getReservedWrap() {

@@ -890,4 +890,15 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     final IElementType previousElementType = ((AbstractBlock)previousBlock).getNode().getElementType();
     return previousElementType == JavaDocElementType.DOC_COMMENT;
   }
+
+  protected Alignment getUsedAlignment(final int newChildIndex) {
+    final List<Block> subBlocks = getSubBlocks();
+    for (int i = 0; i < newChildIndex; i++) {
+      if (i >= subBlocks.size()) return null;
+      final Block block = subBlocks.get(i);
+      final Alignment alignment = block.getAlignment();
+      if (alignment != null) return alignment;
+    }
+    return null;
+  }
 }
