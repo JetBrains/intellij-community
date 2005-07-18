@@ -369,7 +369,7 @@ public class XmlCompletionData extends CompletionData {
           final XmlFile descriptorFile = descriptor.getNSDescriptor().getDescriptorFile();
 
           // skip content of embedded dtd, its content will be inserted by word completion
-          if (!descriptorFile.equals(parentOfType.getContainingFile())) {
+          if (descriptorFile != null && !descriptorFile.equals(parentOfType.getContainingFile())) {
             final PsiElementProcessor processor = new PsiElementProcessor() {
               public boolean execute(final PsiElement element) {
                 if (element instanceof XmlEntityDecl) {
