@@ -78,16 +78,12 @@ public class XmlTagBlock extends AbstractXmlBlock{
 
           if (localResult.size() == 1 && localResult.get(0) instanceof JspTextBlock) {
             //indent = FormatterEx.getInstance().getNoneIndent();
-            indent = myXmlFormattingPolicy.indentChildrenOf(getTag())
-                     ? Indent.getNormalIndent()
-                     : Indent.getNoneIndent();
+            indent = getChildrenIndent();
           } else if (!insideTag) {
             indent = null;
           }
           else {
-            indent = myXmlFormattingPolicy.indentChildrenOf(getTag())
-                     ? Indent.getNormalIndent()
-                     : Indent.getNoneIndent();
+            indent = getChildrenIndent();
           }
 
           child = processChild(localResult,child, wrap, alignment, indent);
@@ -106,6 +102,12 @@ public class XmlTagBlock extends AbstractXmlBlock{
 
   }
 
+  private Indent getChildrenIndent() {
+    return myXmlFormattingPolicy.indentChildrenOf(getTag())
+           ? Indent.getNormalIndent()
+           : Indent.getNoneIndent();
+  }
+
   public Indent getIndent() {
     return myIndent;
   }
@@ -122,9 +124,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
   ) {
     while (child != null) {
       if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
-        final Indent indent = myXmlFormattingPolicy.indentChildrenOf(getTag())
-                              ? Indent.getNormalIndent()
-                              : Indent.getNoneIndent();
+        final Indent indent = getChildrenIndent();
         child = processChild(list,child,  wrap, alignment, indent);
         if (child == null) return child;
         if (child.getTreeParent() != textNode) {
@@ -144,7 +144,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
     return AbstractSyntheticBlock.createSynteticBlock(
       localResult, this, Indent.getNoneIndent(),
       myXmlFormattingPolicy,
-      Indent.getNoneIndent());
+     getChildrenIndent());
   }
 
   private Block createTagDescriptionNode(final ArrayList<Block> localResult) {
