@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.PackageWrapper;
@@ -39,6 +40,7 @@ public class MoveClassesOrPackagesImpl {
                             final MoveCallback moveCallback) {
     final PsiElement[] psiElements = new PsiElement[elements.length];
     List<VirtualFile> readOnly = new ArrayList<VirtualFile>();
+    List<String> names = new ArrayList<String>();
     for (int idx = 0; idx < elements.length; idx++) {
       PsiElement element = elements[idx];
       if (element instanceof PsiDirectory) {
@@ -63,14 +65,27 @@ public class MoveClassesOrPackagesImpl {
           RefactoringMessageUtil.showErrorMessage("Move", message, HelpID.getMoveHelpID(element), project);
           return;
         }
-        boolean condition = aClass.getParent() instanceof PsiFile;
-        if (!condition) {
+        if (!(aClass.getParent() instanceof PsiFile)) {
           String message =
             "Cannot perform the refactoring.\n" +
             "Moving local classes is not supported.";
           RefactoringMessageUtil.showErrorMessage("Move", message, HelpID.getMoveHelpID(element), project);
           return;
         }
+
+        final PsiFile file = aClass.getContainingFile();
+        String name = file instanceof PsiJavaFile && ((PsiJavaFile)file).getClasses().length > 1 ?
+                      aClass.getName() + "." + StdFileTypes.JAVA.getDefaultExtension() :
+                      file.getName();
+        if (names.contains(name)) {
+           String message =
+            "Cannot perform the refactoring.\n" +
+            "There are going to be multiple destination files with the same name.";
+          RefactoringMessageUtil.showErrorMessage("Move", message, HelpID.getMoveHelpID(element), project);
+          return;
+        }
+        names.add(name);
+
         if (!aClass.isWritable()) {
           readOnly.add(aClass.getContainingFile().getVirtualFile());
         }
