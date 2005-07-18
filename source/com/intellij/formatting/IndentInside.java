@@ -2,10 +2,11 @@ package com.intellij.formatting;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.StringReader;
-import java.io.IOException;
 
 class IndentInside {
   public int whiteSpaces = 0;
@@ -44,8 +45,11 @@ class IndentInside {
     return createIndentOn(lastLine);
   }
 
-  static IndentInside createIndentOn(final String lastLine) {
+  static IndentInside createIndentOn(@Nullable final String lastLine) {
     final IndentInside result = new IndentInside();
+    if (lastLine == null) {
+      return result;
+    }
     for (int i = 0; i < lastLine.length(); i++) {
       if (lastLine.charAt(i) == ' ') result.whiteSpaces += 1;
       if (lastLine.charAt(i) == '\t') result.tabs += 1;
@@ -53,7 +57,7 @@ class IndentInside {
     return result;
   }
 
-  static String getLastLine(final String text) {
+  @Nullable static String getLastLine(final String text) {
     if (text.endsWith("\n")) return "";
     final LineNumberReader lineNumberReader = new LineNumberReader(new StringReader(text));
     String line;
