@@ -629,10 +629,7 @@ public class SystemBuilder {
 
         if (method != null) {
           final PsiSearchHelper helper = myManager.getSearchHelper();
-          SearchScope scope = helper.getUseScope(method);
-          if (scope instanceof GlobalSearchScope) {
-            scope = GlobalSearchScope.getScopeRestrictedByFileTypes(((GlobalSearchScope)scope), StdFileTypes.JAVA);
-          }
+          SearchScope scope = getScope(helper, method);
 
           final PsiReference[] refs = helper.findReferences(method, scope, true);
 
@@ -776,6 +773,14 @@ public class SystemBuilder {
         myVisitedConstructions.add(anchor);
       }
     }
+  }
+
+  private SearchScope getScope(final PsiSearchHelper helper, final PsiElement element) {
+    SearchScope scope = helper.getUseScope(element);
+    if (scope instanceof GlobalSearchScope) {
+      scope = GlobalSearchScope.getScopeRestrictedByFileTypes(((GlobalSearchScope)scope), StdFileTypes.JAVA, StdFileTypes.JSP, StdFileTypes.JSPX);
+    }
+    return scope;
   }
 
   private PsiExpression deparenthesizeExpression(PsiExpression rExpression) {
@@ -931,7 +936,7 @@ public class SystemBuilder {
       addUsage(system, element);
 
       if (!(element instanceof PsiExpression)) {
-        final PsiReference[] refs = helper.findReferences(element, helper.getUseScope(element), true);
+        final PsiReference[] refs = helper.findReferences(element, getScope(helper, element), true);
 
         for (PsiReference ref : refs) {
           final PsiElement elt = ref.getElement();
