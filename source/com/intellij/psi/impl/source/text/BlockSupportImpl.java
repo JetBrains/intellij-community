@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPlainTextFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.PsiElementFactoryImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
@@ -176,7 +175,10 @@ public class BlockSupportImpl extends BlockSupport implements Constants, Project
       if(repositoryManager != null) repositoryManager.beforeChildAddedOrRemoved(fileImpl, fileElement);
       if(fileElement.getFirstChildNode() != null)
         TreeUtil.removeRange((TreeElement)fileElement.getFirstChildNode(), null);
-      TreeUtil.addChildren((CompositeElement)fileElement, (TreeElement)newFileElement.getFirstChildNode());
+      final ASTNode firstChildNode = newFileElement.getFirstChildNode();
+      if (firstChildNode != null)
+        TreeUtil.addChildren(fileElement, (TreeElement)firstChildNode);
+
       if(repositoryManager != null) repositoryManager.beforeChildAddedOrRemoved(fileImpl, fileElement);
       manager.invalidateFile(fileImpl);
       fileElement.subtreeChanged();
