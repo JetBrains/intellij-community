@@ -5,7 +5,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.impl.FileIndexImplUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.projectRoots.ProjectRootType;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
@@ -113,12 +116,11 @@ public class MatcherImpl {
 
       SearchScope searchScope = compiledPattern.getScope();
       if (searchScope==null) searchScope = _options.getScope();
+      
       if (searchScope instanceof GlobalSearchScope) {
         final GlobalSearchScope scope = (GlobalSearchScope)searchScope;
         ContentIterator ci = new ContentIterator() {
           public boolean processFile(VirtualFile fileOrDir) {
-            if (!scope.contains(fileOrDir)) return true;
-
             if (!fileOrDir.isDirectory()) {
               final PsiFile file = PsiManager.getInstance(project).findFile(fileOrDir);
 
@@ -133,8 +135,34 @@ public class MatcherImpl {
           }
         };
 
-        ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-        projectFileIndex.iterateContent(ci);
+        final ProjectRootManager instance = ProjectRootManager.getInstance(project);
+        ProjectFileIndex projectFileIndex = instance.getFileIndex();
+        
+        final VirtualFile[] rootFiles = instance.getRootFiles(ProjectRootType.SOURCE);
+        HashSet<VirtualFile> visited = new HashSet<VirtualFile>(rootFiles.length);
+        final VirtualFileFilter filter = new VirtualFileFilter() {
+          public boolean accept(VirtualFile file) {
+            return scope.contains(file);
+          }
+        };
+        
+        for (int i = 0; i < rootFiles.length; i++) {
+          final VirtualFile rootFile = rootFiles[i];
+          
+          if (visited.contains(rootFile)) continue;
+          if (projectFileIndex.isInLibrarySource(rootFile) && !scope.isSearchInLibraries()) {
+            continue;
+          }
+           
+          FileIndexImplUtil.iterateRecursively(
+            rootFile,
+            filter,
+            ci
+          );
+          
+          visited.add(rootFile);
+        }
+        
         /* @ todo factor out handlers and scheduling system, etc*/
       } else {
         final PsiElement[] elementsToScan = ((LocalSearchScope)searchScope).getScope();
