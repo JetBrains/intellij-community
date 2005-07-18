@@ -280,9 +280,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   }
 
   protected void createUsageView(final SearchContext searchContext, final Configuration config) {
-    com.intellij.usages.UsageViewManager manager = searchContext.getProject().getComponent(com.intellij.usages.UsageViewManager.class);
-
-    assert manager!=null;
+    UsageViewManager manager = searchContext.getProject().getComponent(UsageViewManager.class);
 
     final UsageViewContext context = createUsageViewContext(config);
     final UsageViewPresentation presentation = new UsageViewPresentation();
@@ -326,8 +324,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
         public UsageSearcher create() {
           return new UsageSearcher() {
             public void generate(final Processor<Usage> processor) {
-              context.getCommand().findUsages(processor
-              );
+              context.getCommand().findUsages(processor);
             }
           };
         }
