@@ -101,7 +101,7 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
   }
 
   public String[] getNameSuggestions(PsiType type, NameContext context, String prefix) {
-    final List<String> suggestions = new ArrayList<String>(MAX_NAME_SUGGESTIONS_COUNT);
+    final List<String> suggestions = new ArrayList<String>();
     final String key1 = getMemberUseKey1(type);
     if(key1 == null) return ArrayUtil.EMPTY_STRING_ARRAY;
     final StatisticsUnit unit = getUnit(getUnitNumber(key1));
