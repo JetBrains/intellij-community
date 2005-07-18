@@ -21,7 +21,6 @@
             <constraints/>
             <properties>
               <autoResizeMode value="4"/>
-              <inheritsPopupMenu value="false"/>
               <preferredScrollableViewportSize width="450" height="300"/>
             </properties>
           </component>
