@@ -103,7 +103,9 @@ public class PsiElement2UsageTargetAdapter implements UsageTarget {
   }
 
   public void update() {
-    myPresentation.update();
+    if (isValid()) {
+      myPresentation.update();
+    }
   }
 
   public static UsageTarget[] convert(PsiElement[] psiElements) {
