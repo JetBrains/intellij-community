@@ -73,7 +73,7 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
           public void run() {
             dialog.close(SafeDeleteDialog.CANCEL_EXIT_CODE);
           }
-        }, elementsToDelete, dialog.isSearchInComments(), dialog.isSearchInNonJava(), true).run();
+        }, elementsToDelete, dialog.isSearchInComments(), dialog.isSearchForTextOccurences(), true).run();
       }
 
     });

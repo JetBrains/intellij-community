@@ -1,12 +1,11 @@
 package com.intellij.ide.util;
 
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.lang.properties.psi.Property;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * @author dsl
@@ -31,27 +30,24 @@ public class DeleteUtil {
 
   public static PsiElement[] filterElements(PsiElement[] elements) {
     if (LOG.isDebugEnabled()) {
-      for (int i = 0; i < elements.length; i++) {
-        PsiElement element = elements[i];
-        LOG.debug("element = "+element);
+      for (PsiElement element : elements) {
+        LOG.debug("element = " + element);
       }
     }
 
     ArrayList<PsiElement> filteredElements = new ArrayList<PsiElement>();
-    for (int i = 0; i < elements.length; i++) {
-      PsiElement element = elements[i];
+    for (PsiElement element : elements) {
       filteredElements.add(element);
     }
 
     int previousSize;
     do {
       previousSize = filteredElements.size();
-      outer: for (Iterator<PsiElement> iterator1 = filteredElements.iterator(); iterator1.hasNext();) {
-        PsiElement element1 = iterator1.next();
-        for (Iterator<PsiElement> iterator2 = filteredElements.iterator(); iterator2.hasNext();) {
-          PsiElement element2 = iterator2.next();
-          if (element1 == element2) continue;
-          if (PsiTreeUtil.isAncestor(element1, element2, false)) {
+      outer:
+      for (PsiElement element : filteredElements) {
+        for (PsiElement element2 : filteredElements) {
+          if (element == element2) continue;
+          if (PsiTreeUtil.isAncestor(element, element2, false)) {
             if (LOG.isDebugEnabled()) {
               LOG.debug("removing " + element2);
             }
@@ -63,9 +59,8 @@ public class DeleteUtil {
     } while (filteredElements.size() != previousSize);
 
     if (LOG.isDebugEnabled()) {
-      for (Iterator<PsiElement> iterator = filteredElements.iterator(); iterator.hasNext();) {
-        PsiElement element = iterator.next();
-        LOG.debug("filtered element = "+element);
+      for (PsiElement element : filteredElements) {
+        LOG.debug("filtered element = " + element);
       }
     }
 
@@ -83,9 +78,7 @@ public class DeleteUtil {
     int packageDirectories = 0;
     String[] objName = new String[] { "", "", "" };
 
-    for (int i = 0; i < elements.length; i++) {
-      final PsiElement elementToDelete = elements[i];
-
+    for (final PsiElement elementToDelete : elements) {
       if (elementToDelete instanceof Property) {
         objName[0] = ((Property)elementToDelete).getName();
         objName[1] = "property";
@@ -107,7 +100,7 @@ public class DeleteUtil {
           interfaces++;
         }
         else {
-          objName[1] = "class";
+          objName[1] = elementToDelete instanceof PsiTypeParameter ? "type parameter" : "class";
           classes++;
         }
       }

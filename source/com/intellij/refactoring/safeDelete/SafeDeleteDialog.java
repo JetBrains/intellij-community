@@ -39,12 +39,11 @@ public class SafeDeleteDialog extends DialogWrapper {
     return myCbSearchInComments.isSelected();
   }
 
-  public boolean isSearchInNonJava() {
+  public boolean isSearchForTextOccurences() {
     if (myCbSearchTextOccurences != null) {
       return myCbSearchTextOccurences.isSelected();
-    } else {
-      return false;
     }
+    return false;
   }
 
   protected Action[] createActions() {
@@ -59,7 +58,7 @@ public class SafeDeleteDialog extends DialogWrapper {
     final JPanel panel = new JPanel(new GridBagLayout());
     final GridBagConstraints gbc = new GridBagConstraints();
 
-    final String warningMessage = DeleteUtil.generateWarningMessage("Search for usages of and delete", myElements);
+    final String warningMessage = DeleteUtil.generateWarningMessage("Search for usages and delete", myElements);
 
     gbc.insets = new Insets(4, 8, 4, 8);
     gbc.weighty = 1;
@@ -117,7 +116,7 @@ public class SafeDeleteDialog extends DialogWrapper {
     final RefactoringSettings refactoringSettings = RefactoringSettings.getInstance();
     refactoringSettings.SAFE_DELETE_SEARCH_IN_COMMENTS = isSearchInComments();
     if (myCbSearchTextOccurences != null) {
-      refactoringSettings.SAFE_DELETE_SEARCH_IN_NON_JAVA = isSearchInNonJava();
+      refactoringSettings.SAFE_DELETE_SEARCH_IN_NON_JAVA = isSearchForTextOccurences();
     }
   }
 }
