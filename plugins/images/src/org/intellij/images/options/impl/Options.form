@@ -214,9 +214,7 @@
               <xy x="318" y="198" width="235" height="38"/>
               <grid row="6" column="2" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
             </constraints>
-            <properties>
-              <inheritsPopupMenu value="false"/>
-            </properties>
+            <properties/>
           </component>
           <component id="e12c2" class="com.intellij.ui.ColorPanel" binding="chessboardBlackColor">
             <constraints>
