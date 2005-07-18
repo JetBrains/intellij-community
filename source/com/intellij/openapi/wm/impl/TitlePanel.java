@@ -61,6 +61,10 @@ final class TitlePanel extends JPanel {
     if (animate) {
       myFrameTicker.addRequest(myAnimator, DELAY);
     }
+    else {
+      myCurrentFrame = TOTAL_FRAME_COUNT;
+      updateColor();
+    }
   }
 
   private void setupColors(final boolean active) {
