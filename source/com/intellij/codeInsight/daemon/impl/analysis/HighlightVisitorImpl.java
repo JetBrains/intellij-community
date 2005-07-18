@@ -34,10 +34,7 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlToken;
-import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.xml.*;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 
@@ -343,6 +340,12 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
         nextSibling instanceof JspExpression ||
         nextSibling instanceof ELExpressionHolder  
        ) {
+      return true;
+    }
+
+    final XmlAttributeValue parentOfType = PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class);
+    if (parentOfType != null && 
+        parentOfType.getUserData(XmlHighlightVisitor.DO_NOT_VALIDATE_KEY) != null) {
       return true;
     }
     
