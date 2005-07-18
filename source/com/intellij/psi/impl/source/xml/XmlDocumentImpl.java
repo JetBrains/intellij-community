@@ -109,9 +109,10 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
       antDOMNSDescriptor.init(this);
       return antDOMNSDescriptor;
     }
-    else if(XmlUtil.HTML_URI.equals(namespace) && doctype == null){
-      final XmlNSDescriptor xhtmlNSDescriptor = getDefaultNSDescriptor(XmlUtil.XHTML_URI, false);
-      final XmlNSDescriptor htmlDescriptor = new HtmlNSDescriptorImpl(xhtmlNSDescriptor);
+    else if(XmlUtil.HTML_URI.equals(namespace)){
+      XmlNSDescriptor nsDescriptor = (doctype != null)?getNsDescriptorFormDocType(doctype, containingFile):null;
+      if (nsDescriptor == null) nsDescriptor = getDefaultNSDescriptor(XmlUtil.XHTML_URI, false);
+      final XmlNSDescriptor htmlDescriptor = new HtmlNSDescriptorImpl(nsDescriptor);
       return htmlDescriptor;
     }
     else if(namespace != null && namespace != XmlUtil.EMPTY_URI
@@ -126,22 +127,11 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     if(strict) return null;
 
     if (doctype != null){
-      XmlNSDescriptor descr = null;
-      if (doctype.getMarkupDecl() != null){
-        descr = (XmlNSDescriptor)doctype.getMarkupDecl().getMetaData();
-      }
-      if (doctype.getDtdUri() != null){
-        final XmlFile xmlFile = XmlUtil.findXmlFile(containingFile, doctype.getDtdUri());
-        final XmlNSDescriptor descr1 = xmlFile == null ? null : (XmlNSDescriptor)xmlFile.getDocument().getMetaData();
-        if (descr != null && descr1 != null){
-          descr = new XmlNSDescriptorSequence(new XmlNSDescriptor[]{descr, descr1});
-        }
-        else if (descr1 != null) {
-          descr = descr1;
-        }
-      }
+      final XmlNSDescriptor descr = getNsDescriptorFormDocType(doctype, containingFile);
 
-      if(descr != null) return descr;
+      if(descr != null) {
+        return descr;
+      }
     }
 
     try{
@@ -157,6 +147,24 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
       LOG.error(e);
     }
     return null;
+  }
+
+  private XmlNSDescriptor getNsDescriptorFormDocType(final XmlDoctype doctype, final XmlFile containingFile) {
+    XmlNSDescriptor descr = null;
+    if (doctype.getMarkupDecl() != null){
+      descr = (XmlNSDescriptor)doctype.getMarkupDecl().getMetaData();
+    }
+    if (doctype.getDtdUri() != null){
+      final XmlFile xmlFile = XmlUtil.findXmlFile(containingFile, doctype.getDtdUri());
+      final XmlNSDescriptor descr1 = xmlFile == null ? null : (XmlNSDescriptor)xmlFile.getDocument().getMetaData();
+      if (descr != null && descr1 != null){
+        descr = new XmlNSDescriptorSequence(new XmlNSDescriptor[]{descr, descr1});
+      }
+      else if (descr1 != null) {
+        descr = descr1;
+      }
+    }
+    return descr;
   }
 
   public PsiElement copy() {
