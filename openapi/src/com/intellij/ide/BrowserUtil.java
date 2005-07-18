@@ -7,6 +7,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VfsUtil;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
 import java.util.regex.Matcher;
@@ -59,7 +61,7 @@ public class BrowserUtil {
           commandLine = new String[command.length + 2];
           System.arraycopy(command, 0, commandLine, 0, command.length);
           commandLine[commandLine.length - 2] = "\"\"";
-          commandLine[commandLine.length - 1] = "\"" + urlString + "\"";
+          commandLine[commandLine.length - 1] = "\"" + redirectUrl(url, urlString) + "\"";
         }
         else {
           commandLine = new String[command.length + 1];
@@ -75,6 +77,20 @@ public class BrowserUtil {
     catch (final IOException e) {
       showErrorMessage("Cannot start browser: " + e.getMessage(), "Error");
     }
+  }
+
+  /**
+   * This method works around Windows 'start' command behaivor of dropping anchors from the url for local urls.
+   */
+  private static String redirectUrl(String url, String urlString) throws IOException {
+    if (!urlString.startsWith("file:") || urlString.indexOf("#") == -1) return urlString;
+
+    File redirect = File.createTempFile("redirect", ".html");
+    redirect.deleteOnExit();
+    FileWriter writer = new FileWriter(redirect);
+    writer.write("<html><head><meta http-equiv=\"Refresh\" content=\"0; " + url + "\"></head><body></body></html>");
+    writer.close();
+    return VfsUtil.pathToUrl(redirect.getAbsolutePath());
   }
 
   private static boolean isUseDefaultBrowser() {
