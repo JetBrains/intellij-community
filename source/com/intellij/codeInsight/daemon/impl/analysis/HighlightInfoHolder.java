@@ -11,9 +11,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
 
 import java.util.Collection;
+import java.util.ArrayList;
 
 /** @fabrique **/
-public class HighlightInfoHolder extends SmartList<HighlightInfo>{
+public class HighlightInfoHolder extends ArrayList<HighlightInfo> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder");
 
   private PsiFile myContextFile;
@@ -23,6 +24,7 @@ public class HighlightInfoHolder extends SmartList<HighlightInfo>{
   private int myInfoCount;
 
   public HighlightInfoHolder(PsiFile contextFile, HighlightInfoFilter[] filters) {
+    super(5);
     myContextFile = contextFile;
     myFilters = filters;
   }
