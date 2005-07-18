@@ -524,8 +524,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           next.setSelected(!isErrorsFirst);
           hLevel.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-              final HectorComponent component = new HectorComponent(
-                (PsiFile)myEditor.getDataContext().getData(DataConstants.PSI_FILE));
+              final PsiFile psiFile = (PsiFile)myEditor.getDataContext().getData(DataConstants.PSI_FILE);
+              if (psiFile == null) return;
+              final HectorComponent component = new HectorComponent(psiFile);
               final Dimension dimension = component.getPreferredSize();
               Point point = new Point(x, y);
               point = SwingUtilities.convertPoint(comp, point, myEditor.getComponent().getRootPane().getLayeredPane());
