@@ -7,6 +7,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 
 import javax.swing.*;
@@ -57,6 +59,30 @@ class EditVarConstraintsDialog extends DialogWrapper {
   EditVarConstraintsDialog(Project project,SearchModel _model,List<Variable> _variables, boolean replaceContext, FileType fileType) {
     super(project,false);
 
+    regexp.getDocument().addDocumentListener(
+      new DocumentAdapter() {
+        public void documentChanged(DocumentEvent event) {
+          doProcessing(applyWithinTypeHierarchy, regexp);
+        }
+      }
+    );
+    
+    regexprForExprType.getDocument().addDocumentListener(
+      new DocumentAdapter() {
+        public void documentChanged(DocumentEvent event) {
+          doProcessing(exprTypeWithinHierarchy, regexprForExprType);
+        }
+      }
+    );
+    
+    formalArgType.getDocument().addDocumentListener(
+      new DocumentAdapter() {
+        public void documentChanged(DocumentEvent event) {
+          doProcessing(formalArgTypeWithinHierarchy, formalArgType);
+        }
+      }
+    );
+      
     variables = _variables;
     model = _model;
 
@@ -152,6 +178,11 @@ class EditVarConstraintsDialog extends DialogWrapper {
     if (variables.size() > 0) parameterList.setSelectedIndex(0);
   }
 
+  private static void doProcessing(JCheckBox checkBox, CompletionTextField textField) {
+    checkBox.setEnabled( textField.getText().length() > 0);
+    if (!checkBox.isEnabled()) checkBox.setSelected(false);
+  }
+
   private boolean validateParameters() {
     return validateRegExp(regexp) && validateRegExp(regexprForExprType) &&
            validateIntOccurence(minoccurs) &&
@@ -240,9 +271,11 @@ class EditVarConstraintsDialog extends DialogWrapper {
       notWrite.setSelected(varInfo.isInvertWriteAccess());
       write.setSelected(varInfo.isWriteAccess());
       
+      applyWithinTypeHierarchy.setSelected(varInfo.isWithinHierarchy());
       regexp.setText(varInfo.getRegExp());
+      doProcessing(applyWithinTypeHierarchy,regexp);
+      
       notRegexp.setSelected(varInfo.isInvertRegExp());
-
       minoccurs.setText(Integer.toString(varInfo.getMinCount()));
 
       if(varInfo.getMaxCount() == Integer.MAX_VALUE) {
@@ -253,19 +286,19 @@ class EditVarConstraintsDialog extends DialogWrapper {
         maxoccurs.setText(Integer.toString(varInfo.getMaxCount()));
       }
 
-      applyWithinTypeHierarchy.setSelected(varInfo.isWithinHierarchy());
-      notRegexp.setSelected( varInfo.isInvertRegExp() );
-
       partOfSearchResults.setSelected( partOfSearchResults.isEnabled() && varInfo.isPartOfSearchResults() );
 
-      regexprForExprType.setText( varInfo.getNameOfExprType() );
-      notExprType.setSelected( varInfo.isInvertExprType() );
       exprTypeWithinHierarchy.setSelected( varInfo.isExprTypeWithinHierarchy() );
+      regexprForExprType.setText( varInfo.getNameOfExprType() );
+      doProcessing(exprTypeWithinHierarchy, regexprForExprType);
+      
+      notExprType.setSelected( varInfo.isInvertExprType() );
       wholeWordsOnly.setSelected( varInfo.isWholeWordsOnly() );
 
       invertFormalArgType.setSelected( varInfo.isInvertFormalType() );
       formalArgTypeWithinHierarchy.setSelected( varInfo.isFormalArgTypeWithinHierarchy() );
       formalArgType.setText( varInfo.getNameOfFormalArgType() );
+      doProcessing(formalArgTypeWithinHierarchy,formalArgType);
       customScriptCode.setText( varInfo.getScriptCodeConstraint() );
     }
   }
