@@ -431,7 +431,10 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     final VirtualFile firstDir = directories[0].getVirtualFile();
     final boolean isLibraryRoot = PackageUtil.isLibraryRoot(firstDir, getProject());
 
-    final PackageElement packageElement = new PackageElement(null, this, isLibraryRoot);
+    final Module module = ProjectRootManager.getInstance(getProject()).getFileIndex().getModuleForFile(firstDir);
+    final PackageElement packageElement = new PackageElement(module,
+                                                             this,
+                                                             isLibraryRoot);
     projectView.getProjectViewPaneById(PackageViewPane.ID).select(packageElement, firstDir, requestFocus);
     ToolWindowManager.getInstance(getProject()).getToolWindow(ToolWindowId.PROJECT_VIEW).activate(null);
   }
