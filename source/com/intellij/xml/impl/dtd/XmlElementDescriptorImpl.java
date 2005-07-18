@@ -88,7 +88,11 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor {
   }
 
   public XmlNSDescriptor getNSDescriptor() {
-    final PsiFile file = myElementDecl.getContainingFile();
+    return getNsDescriptorFrom(myElementDecl);
+  }
+
+  private static XmlNSDescriptor getNsDescriptorFrom(final PsiElement elementDecl) {
+    final PsiFile file = elementDecl.getContainingFile();
     if(!(file instanceof XmlFile)) return null;
     final XmlDocument document = ((XmlFile)file).getDocument();
     XmlNSDescriptor descriptor = (XmlNSDescriptor) document.getMetaData();
@@ -102,7 +106,9 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor {
     final List<XmlElementDescriptor> result = new ArrayList<XmlElementDescriptor>();
 
     final XmlElementContentSpec contentSpecElement = myElementDecl.getContentSpecElement();
-    final XmlNSDescriptor NSDescriptor = getNSDescriptor();
+    final XmlNSDescriptor nsDescriptor = getNSDescriptor();
+    final XmlNSDescriptor NSDescriptor = nsDescriptor != null? nsDescriptor:getNsDescriptorFrom(context);
+    
     contentSpecElement.processElements(new PsiElementProcessor(){
       public boolean execute(PsiElement child){
         if (child instanceof XmlToken) {
