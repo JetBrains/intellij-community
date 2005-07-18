@@ -3,6 +3,7 @@ package com.intellij.refactoring.typeCook.deductive.util;
 import com.intellij.refactoring.typeCook.Util;
 import com.intellij.refactoring.typeCook.Settings;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 
 import java.util.HashSet;
 
@@ -48,8 +49,8 @@ public class VictimCollector extends Visitor {
   public void visitMethod(final PsiMethod method) {
     final PsiParameter[] parms = method.getParameterList().getParameters();
 
-    for (int i = 0; i < parms.length; i++) {
-      testNAdd(parms[i], parms[i].getType());
+    for (PsiParameter parm : parms) {
+      testNAdd(parm, parm.getType());
     }
 
     if (Util.isRaw(method.getReturnType(), mySettings)) {
@@ -80,9 +81,15 @@ public class VictimCollector extends Visitor {
   public void visitReferenceExpression(final PsiReferenceExpression expression) {
   }
 
+  public void visitFile(PsiFile file) {
+    if (file instanceof PsiJavaFile || file instanceof JspFile) {
+      super.visitFile(file);
+    }
+  }
+
   public HashSet<PsiElement> getVictims() {
-    for (int i = 0; i < myElements.length; i++) {
-      myElements[i].accept(this);
+    for (PsiElement element : myElements) {
+      element.accept(this);
     }
 
     return myVictims;
