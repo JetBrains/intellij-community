@@ -27,6 +27,7 @@ import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.xml.XmlTokenImpl;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.el.ELExpressionHolder;
 import com.intellij.psi.jsp.el.ELTokenType;
@@ -587,6 +588,7 @@ public class TypedHandler implements TypedActionHandler {
     XmlTag tag = (XmlTag)element;
     if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_TAG_END) != null) return;
     if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_EMPTY_ELEMENT_END) != null) return;
+    if (tag instanceof JspXmlTagBase) return;
 
     final String name = tag.getName();
     if (tag instanceof HtmlTag && HtmlUtil.isSingleHtmlTag(name)) return;
