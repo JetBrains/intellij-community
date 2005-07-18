@@ -1253,8 +1253,11 @@ public class HighlightMethodUtil {
     if (aClass == null) return null;
     final PsiResolveHelper resolveHelper = constructorCall.getManager().getResolveHelper();
     PsiClass accessObjectClass = null;
-    if (constructorCall instanceof PsiExpression) {
-      accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass(((PsiExpression)constructorCall)).getElement();
+    if (constructorCall instanceof PsiNewExpression) {
+      PsiExpression qualifier = ((PsiNewExpression)constructorCall).getQualifier();
+      if (qualifier != null) {
+        accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass(qualifier).getElement();
+      }
     }
     if (!resolveHelper.isAccessible(aClass, constructorCall, accessObjectClass)) {
       String description = HighlightUtil.buildProblemWithAccessDescription(classReference, typeResolveResult);
