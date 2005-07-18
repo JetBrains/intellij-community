@@ -311,6 +311,7 @@ public class FileUtil {
       return;
     }
     File[] files = fromDir.listFiles();
+    if(!fromDir.canRead()) throw new IOException("Directory is not readable " + fromDir.getPath());
     if(files == null) throw new IOException("Directory is invalid " + fromDir.getPath());
     for (File file : files) {
       if (file.isDirectory()) {
