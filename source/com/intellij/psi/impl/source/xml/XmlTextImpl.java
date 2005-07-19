@@ -172,9 +172,9 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
     });
   }
 
-  public XmlElement insertAtOffset(final XmlElement element, final int physicalOffset) throws IncorrectOperationException{
+  public XmlElement insertAtOffset(final XmlElement element, final int displayOffset) throws IncorrectOperationException{
     if(element instanceof XmlText){
-      insertText(((XmlText)element).getValue(), displayToPhysical(physicalOffset));
+      insertText(((XmlText)element).getValue(), displayOffset);
     }
     else {
       final PomModel model = getProject().getModel();
@@ -182,7 +182,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
       model.runTransaction(new PomTransactionBase(getParent(), aspect) {
         public PomModelEvent runInner() throws IncorrectOperationException {
           final XmlTagImpl tag = (XmlTagImpl)getParentTag();
-          final XmlText rightPart = tag.splitText(XmlTextImpl.this, physicalOffset);
+          final XmlText rightPart = tag.splitText(XmlTextImpl.this, displayOffset);
           if(rightPart != null) tag.addBefore(element, rightPart);
           else tag.addAfter(element, XmlTextImpl.this);
           return null;
