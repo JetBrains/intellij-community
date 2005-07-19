@@ -87,17 +87,20 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block{
       }
     }
 
+    final boolean saveSpacesBetweenTagAndText =
+      myXmlFormattingPolicy.shouldSaveSpacesBetweenTagAndText() && child1.getTextRange().getEndOffset() < child2.getTextRange().getStartOffset();
 
     if (firstIsTag && secondIsText) {     //<tag/>-text
-      if (((AbstractXmlBlock)child1).isTextElement()) {
-        return Spacing.createSafeSpacing(myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
+
+      if (((AbstractXmlBlock)child1).isTextElement() || saveSpacesBetweenTagAndText) {
+        return Spacing.createSafeSpacing(true, myXmlFormattingPolicy.getKeepBlankLines());
       } else {
         return Spacing.createSpacing(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
       }
     }
 
     if ( firstIsText && secondIsTag) {     //text-<tag/>
-      if (((AbstractXmlBlock)child2).isTextElement()) {
+      if (((AbstractXmlBlock)child2).isTextElement() || saveSpacesBetweenTagAndText) {
         return Spacing.createSafeSpacing(true, myXmlFormattingPolicy.getKeepBlankLines());
       } else {
         return Spacing.createSpacing(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());

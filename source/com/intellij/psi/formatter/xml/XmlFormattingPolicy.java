@@ -107,4 +107,6 @@ public abstract class XmlFormattingPolicy {
   public FormattingDocumentModel getDocumentModel() {
     return myDocumentModel;
   }
+
+  public abstract boolean shouldSaveSpacesBetweenTagAndText();
 }

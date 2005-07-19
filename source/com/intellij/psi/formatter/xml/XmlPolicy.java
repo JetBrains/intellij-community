@@ -86,4 +86,8 @@ public class XmlPolicy extends XmlFormattingPolicy{
     return mySettings.XML_SPACE_INSIDE_EMPTY_TAG;
   }
 
+  public boolean shouldSaveSpacesBetweenTagAndText() {
+    return false;
+  }
+
 }

@@ -174,4 +174,8 @@ public class HtmlPolicy extends XmlFormattingPolicy{
     return mySettings.HTML_SPACE_INSIDE_EMPTY_TAG;
   }
 
+  public boolean shouldSaveSpacesBetweenTagAndText() {
+    return true;
+  }
+
 }
