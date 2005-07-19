@@ -35,9 +35,9 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -167,7 +167,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       });
     }
     //Q: here?
-    ErrorStripeRenderer renderer = new RefreshStatusRenderer(myProject, daemonCodeAnalyzer, myDocument, myFile);
+    ErrorStripeRenderer renderer = new RefreshStatusRenderer(myProject, daemonCodeAnalyzer, myDocument);
     Editor[] editors = EditorFactory.getInstance().getEditors(myDocument, myProject);
     for (Editor editor : editors) {
       ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeRenderer(renderer);
