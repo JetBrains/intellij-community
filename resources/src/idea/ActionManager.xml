@@ -607,6 +607,7 @@
         <action id="ShowTips" class="com.intellij.ide.actions.ShowTipsAction" text="Tip of the _Day" description="Show Tips of the Day"/>
         <action id="ProductivityGude" class="com.intellij.featureStatistics.actions.ShowFeatureUsageStatisticsAction" text="_Productivity Guide" description="Show productivity features usages statistics"/>
         <action id="OnlineDocAction" class="com.intellij.ide.actions.OnlineDocAction" text="_Online Documentation" description="Show online documentation"/>
+        <action id="WhatsNewAction" class="com.intellij.ide.actions.WhatsNewAction" text="What's _New in IDEA 5.0" description="Look what's new features in IntelliJ IDEA 5.0"/>
         <action id="Help.KeymapReference" class="com.intellij.ide.actions.RefCardAction"
                 text="Default _Keymap Reference"
                 description="Open PDF file with the default keymap reference card."
