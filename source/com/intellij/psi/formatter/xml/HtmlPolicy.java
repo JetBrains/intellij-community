@@ -5,6 +5,7 @@ import com.intellij.formatting.WrapType;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.jsp.JspUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
@@ -115,7 +116,14 @@ public class HtmlPolicy extends XmlFormattingPolicy{
   private boolean shouldBeWrapped(final XmlTag tag) {
     final String name = tag.getName();
     if (name == null) return false;
-    return name.toLowerCase().startsWith("jsp:");
+
+    if (isScriptletObject(name)) return true;
+    if (JspUtil.getDirectiveKindByTag(tag) != null) return true;
+    return false;
+  }
+
+  private boolean isScriptletObject(final String name) {
+    return name.equals("jsp:scriptlet") || name.equals("jsp:declaration") || name.equals("jsp:root");
   }
 
   public boolean isTextElement(XmlTag tag) {

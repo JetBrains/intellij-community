@@ -69,6 +69,8 @@ public class LineStatusTracker implements EditorColorsListener {
   }
 
   public synchronized void initialize(final String upToDateContent) {
+    if (myIsReleased) return;
+    LOG.assertTrue(!myIsItitialized);
     try {
       CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
         public void run() {
@@ -230,12 +232,17 @@ public class LineStatusTracker implements EditorColorsListener {
   }
 
   public synchronized void release() {
-    if (!myIsItitialized) return;
-    LOG.assertTrue(!myIsReleased);
-    myIsReleased = true;
-    removeHighlighters(new ArrayList<Range>());
-    myDocument.removeDocumentListener(myDocumentListener);
-    EditorColorsManager.getInstance().removeEditorColorsListener(myListener);
+    try {
+      if (!myIsItitialized) return;
+      LOG.assertTrue(!myIsReleased);
+
+      removeHighlighters(new ArrayList<Range>());
+      myDocument.removeDocumentListener(myDocumentListener);
+      EditorColorsManager.getInstance().removeEditorColorsListener(myListener);
+    }
+    finally {
+      myIsReleased = true;
+    }
   }
 
   public Document getDocument() {

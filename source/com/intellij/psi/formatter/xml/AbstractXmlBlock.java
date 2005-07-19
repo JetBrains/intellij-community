@@ -307,7 +307,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     final Language language = psiElement.getLanguage();
     final XmlFormattingPolicy result;
     if (language == StdLanguages.JSP || language == StdLanguages.XML) {
-      result = new XmlPolicy(getSettings(), myXmlFormattingPolicy.getDocumentModel());
+      result = new HtmlPolicy(getSettings(), myXmlFormattingPolicy.getDocumentModel());
     } else {
       result = new HtmlPolicy(getSettings(), myXmlFormattingPolicy.getDocumentModel());
     }
