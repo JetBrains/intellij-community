@@ -72,12 +72,13 @@ public class CodeInspectionAction extends BaseAnalysisAction {
   }
 
   private void reloadProfiles(JComboBox profiles, InspectionProfileManager inspectionProfilesManager, InspectionManagerEx inspectionManager){
+    final String selectedProfile = inspectionManager.getCurrentProfile().getName();
     final String[] avaliableProfileNames = inspectionProfilesManager.getAvaliableProfileNames();
     final DefaultComboBoxModel model = (DefaultComboBoxModel)profiles.getModel();
     model.removeAllElements();
     for (String profile : avaliableProfileNames) {
       model.addElement(profile);
     }
-    profiles.setSelectedItem(inspectionManager.getCurrentProfile().getName());
+    profiles.setSelectedItem(selectedProfile);
   }
 }
