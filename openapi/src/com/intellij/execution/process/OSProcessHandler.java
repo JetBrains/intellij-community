@@ -250,7 +250,7 @@ public class OSProcessHandler extends ProcessHandler {
         myReader.close();
       }
       catch (IOException e1) {
-        LOG.error(e1);
+        // supressed
       }
       checkTextAvailable();
     }
