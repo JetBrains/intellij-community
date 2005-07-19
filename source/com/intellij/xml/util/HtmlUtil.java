@@ -245,7 +245,7 @@ public class HtmlUtil {
         if (text.length() > 0 && text.indexOf("://") == -1 && !text.startsWith("mailto:") &&
             !text.startsWith("javascript:")
            ) {
-          refs = new DynamicFileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, this, false).getAllReferences();
+          refs = new DynamicFileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, this, true).getAllReferences();
         } else {
           refs = PsiReference.EMPTY_ARRAY;
         }

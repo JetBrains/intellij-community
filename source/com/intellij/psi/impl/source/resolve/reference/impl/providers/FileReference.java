@@ -12,6 +12,8 @@ import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.codeInsight.daemon.QuickFixProvider;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -21,7 +23,7 @@ import java.util.List;
 /**
  * @author cdr
  */
-public class FileReference implements PsiPolyVariantReference {
+public class FileReference implements PsiPolyVariantReference, QuickFixProvider {
   public static final FileReference[] EMPTY = new FileReference[0];
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference");
 
@@ -148,7 +150,7 @@ public class FileReference implements PsiPolyVariantReference {
     return myIndex > 0 ? myFileReferenceSet.getReference(myIndex - 1) : null;
   }
 
-  private ReferenceType getType(){
+  ReferenceType getType(){
     return myFileReferenceSet.getType(myIndex);
   }
 
@@ -217,4 +219,11 @@ public class FileReference implements PsiPolyVariantReference {
     return ReferenceProvidersRegistry.getInstance(currentElement.getProject()).getManipulator(currentElement);
   }
 
+  public void registerQuickfix(HighlightInfo info, PsiReference reference) {
+    FileReferenceQuickFixProvider.registerQuickFix(info, reference);
+  }
+
+  public FileReferenceSet getFileReferenceSet() {
+    return myFileReferenceSet;
+  }
 }

@@ -35,7 +35,7 @@ public class FileReferenceSet {
   private final int myStartInElement;
   private final ReferenceType myType;
   private final PsiReferenceProvider myProvider;
-  private final boolean myCaseSensitive;
+  private boolean myCaseSensitive;
   private String myPathString;
 
   public FileReferenceSet(String str,
@@ -64,6 +64,10 @@ public class FileReferenceSet {
 
   boolean isCaseSensitive() {
     return myCaseSensitive;
+  }
+
+  void setCaseSensitive(final boolean caseSensitive) {
+    myCaseSensitive = caseSensitive;
   }
 
   int getStartInElement() {
