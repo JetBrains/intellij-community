@@ -276,7 +276,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
         && myXmlFormattingPolicy.indentChildrenOf((XmlTag)tag.getParent())) {
       childIndent = Indent.getNormalIndent();
     }
-    result.add(new XmlTagBlock(tag.getNode(), null, null, createPolicyFor(tag), childIndent));
+    result.add(createAnotherTreeTagBlock(tag, childIndent));
     ASTNode currentChild = findChildAfter(child, tag.getTextRange().getEndOffset());
 
     while (currentChild != null && currentChild.getTextRange().getEndOffset() > tag.getTextRange().getEndOffset()) {
@@ -285,7 +285,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
         if (psiElement instanceof XmlTag &&
             psiElement.getTextRange().getStartOffset() >= currentChild.getTextRange().getStartOffset() &&
             containsTag(psiElement)) {
-          result.add(new XmlTagBlock(psiElement.getNode(), null, null, createPolicyFor(psiElement), childIndent));
+          result.add(createAnotherTreeTagBlock(psiElement, childIndent));
           currentChild = findChildAfter(currentChild, psiElement.getTextRange().getEndOffset());
           tag = psiElement;
         } else {
@@ -301,6 +301,15 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     }
 
     return currentChild;
+  }
+
+  private Block createAnotherTreeTagBlock(final PsiElement tag, final Indent childIndent) {
+    if (isXmlTag(tag)) {
+      return new XmlTagBlock(tag.getNode(), null, null, createPolicyFor(tag), childIndent);
+    } else {
+      return new XmlBlock(tag.getNode(), null, null, createPolicyFor(tag), childIndent, tag.getTextRange());
+    }
+
   }
 
   private XmlFormattingPolicy createPolicyFor(final PsiElement psiElement) {
@@ -327,7 +336,10 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   protected boolean isXmlTag(final ASTNode child) {
-    final PsiElement psi = child.getPsi();
+    return isXmlTag(child.getPsi());
+  }
+
+  protected boolean isXmlTag(final PsiElement psi) {
     return psi instanceof XmlTag && !(psi instanceof JspScriptlet) && !(psi instanceof JspDeclaration);
   }
 
