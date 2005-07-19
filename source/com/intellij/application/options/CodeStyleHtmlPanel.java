@@ -71,6 +71,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   private JCheckBox myShouldKeepBlankLines;
   private JCheckBox mySpaceInEmptyTag;
   private JCheckBox myWrapText;
+  private TextFieldWithBrowseButton myAlwaysWrapTags;
 
   public CodeStyleHtmlPanel(CodeStyleSettings settings) {
     super(settings);
@@ -85,6 +86,16 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
 
       public void setValue(final String value, final CodeStyleSettings dataHolder) {
         dataHolder.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE = value;
+      }
+    });
+
+    customizeField("Always Wrap Tags", myAlwaysWrapTags, new ValueHolder<String, CodeStyleSettings>() {
+      public String getValue(final CodeStyleSettings dataHolder) {
+        return dataHolder.HTML_PLACE_ON_NEW_LINE;
+      }
+
+      public void setValue(final String value, final CodeStyleSettings dataHolder) {
+        dataHolder.HTML_PLACE_ON_NEW_LINE = value;
       }
     });
 
@@ -182,6 +193,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     settings.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE = myInsertNewLineTagNames.getText();
     settings.HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE = myRemoveNewLineTagNames.getText();
     settings.HTML_DO_NOT_INDENT_CHILDREN_OF = myDoNotAlignChildrenTagNames.getText();
+    settings.HTML_PLACE_ON_NEW_LINE = myAlwaysWrapTags.getText();
     settings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES = getIntValue(myDoNotAlignChildrenMinSize);
     settings.HTML_TEXT_ELEMENTS = myTextElementsTagNames.getText();
     settings.HTML_KEEP_WHITESPACES_INSIDE = myKeepWhiteSpacesTagNames.getText();
@@ -209,6 +221,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     mySpacesAroundEquality.setSelected(settings.HTML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE);
     myShouldKeepBlankLines.setSelected(settings.HTML_KEEP_LINE_BREAKS);
 
+    myAlwaysWrapTags.setText(settings.HTML_PLACE_ON_NEW_LINE);
     myInsertNewLineTagNames.setText(settings.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE);
     myRemoveNewLineTagNames.setText(settings.HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE);
     myDoNotAlignChildrenTagNames.setText(settings.HTML_DO_NOT_INDENT_CHILDREN_OF);
@@ -255,6 +268,10 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     }
 
     if (!Comparing.equal(settings.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE, myInsertNewLineTagNames.getText().trim())){
+      return true;
+    }
+
+    if (!Comparing.equal(settings.HTML_PLACE_ON_NEW_LINE, myAlwaysWrapTags.getText().trim())) {
       return true;
     }
 

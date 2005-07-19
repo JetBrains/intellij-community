@@ -795,7 +795,6 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public String HTML_PLACE_ON_NEW_LINE = "html,table,form,frame,iframe";
 
 
-  public boolean HTML_WRAP_TAG_BEGIN = false;
   // ---------------------------------------------------------------------------------------
 
 

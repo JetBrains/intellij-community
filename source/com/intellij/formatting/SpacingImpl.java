@@ -21,8 +21,8 @@ class SpacingImpl extends Spacing {
     myKeepBlankLines = keepBlankLines;
     myMaxSpaces = Math.max(minSpaces, maxSpaces);
     myMinLineFeeds = minLineFeeds;
-    if (minLineFeeds > 0 && minLineFeeds > keepBlankLines) {
-      myKeepBlankLines = minLineFeeds;
+    if (minLineFeeds > 1 && (minLineFeeds - 1) > keepBlankLines) {
+      myKeepBlankLines = minLineFeeds - 1;
     }
     myIsReadOnly = isReadOnly;
     myIsSafe = safe;

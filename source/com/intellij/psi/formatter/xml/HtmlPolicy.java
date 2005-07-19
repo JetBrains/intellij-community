@@ -106,7 +106,7 @@ public class HtmlPolicy extends XmlFormattingPolicy{
   }
 
   public WrapType getWrappingTypeForTagBegin(final XmlTag tag) {
-    if (mySettings.HTML_WRAP_TAG_BEGIN || shouldBeWrapped(tag) || checkName(tag, mySettings.HTML_PLACE_ON_NEW_LINE)) {
+    if (shouldBeWrapped(tag) || checkName(tag, mySettings.HTML_PLACE_ON_NEW_LINE)) {
       return WrapType.ALWAYS;
     } else {
       return WrapType.NORMAL;
