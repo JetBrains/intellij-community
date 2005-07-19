@@ -107,6 +107,12 @@ public class RefCountHolder {
       PsiElement ref = iterator.next();
       if (!ref.isValid()) iterator.remove();
     }
+    
+    for(Iterator<PsiNamedElement> iterator = myDclsUsedMap.keySet().iterator(); iterator.hasNext();) {
+      PsiNamedElement element = iterator.next();
+      
+      if (!element.isValid()) iterator.remove();
+    }
   }
 
   public int getRefCount(PsiElement element) {
