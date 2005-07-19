@@ -338,6 +338,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     else if (child.getElementType() == ElementType.ENUM_CONSTANT && myNode instanceof ClassElement) {
       child = processEnumBlock(result, child, ((ClassElement)myNode).findEnumConstantListDelimiterPlace());
     }
+    else if (mySettings.TERNARY_OPERATION_SIGNS_ON_NEXT_LINE && isTernaryOperationSign(child)) {
+      child = processTernaryOperationRange(result, child,defaultAlignment,  defaultWrap,  childIndent);
+    }
     else {
       final Block block =
         createJavaBlock(child, mySettings, childIndent, arrangeChildWrap(child, defaultWrap),
@@ -372,6 +375,42 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
 
     return child;
+  }
+
+  private ASTNode processTernaryOperationRange(final ArrayList<Block> result,
+                                               final ASTNode child,
+                                               final Alignment defaultAlignment,
+                                               final Wrap defaultWrap, final Indent childIndent) {
+    final ArrayList<Block> localResult = new ArrayList<Block>();
+    final Wrap wrap = arrangeChildWrap(child, defaultWrap);
+    final Alignment alignment = arrangeChildAlignment(child, defaultAlignment);
+    localResult.add(new LeafBlock(child,  wrap, alignment, childIndent));
+
+    ASTNode current = child.getTreeNext();
+    while (current != null) {
+      if (!FormatterUtil.containsWhiteSpacesOnly(current) && current.getTextLength() > 0) {
+        if (isTernaryOperationSign(current)) break;
+        current = processChild(localResult, current, defaultAlignment, defaultWrap, childIndent);
+      }
+      if (current != null) {
+        current = current.getTreeNext();
+      }
+    }
+
+    result.add(new SyntheticCodeBlock(localResult, alignment, getSettings(), null, wrap));
+
+    if (current == null) {
+      return null;
+    }
+    else {
+      return current.getTreePrev();
+    }
+  }
+
+  private boolean isTernaryOperationSign(final ASTNode child) {
+    if (myNode.getElementType() != ElementType.CONDITIONAL_EXPRESSION) return false;
+    final int role = ((CompositeElement)child.getTreeParent()).getChildRole(child);
+    return role ==  ChildRole.OPERATION_SIGN || role == ChildRole.COLON;
   }
 
   private Block createMethodCallExpressiobBlock(final ASTNode node, final Wrap blockWrap, final Alignment alignment) {
