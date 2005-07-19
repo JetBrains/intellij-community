@@ -126,6 +126,14 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
       protected boolean isFlattenPackages() {
         return ((FavoritesTreeStructure)myTreeStructure).getFavoritesConfiguration().IS_FLATTEN_PACKAGES;
       }
+
+      protected void childrenChanged(PsiElement parent) {
+        if (findNodeByElement(parent) == null){
+          getUpdater().addSubtreeToUpdate(getRootNode());
+        } else {
+          super.childrenChanged(parent);
+        }
+      }
     };
     myModuleRootListener = new ModuleRootListener() {
       public void beforeRootsChange(ModuleRootEvent event) {
@@ -160,24 +168,10 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
   }
 
   public void select(Object element, VirtualFile file, boolean requestFocus) {
-    final Set<AbstractTreeNode> favorites = ((FavoritesTreeStructure)getTreeStructure()).getFavorites();
-    for (AbstractTreeNode favorite : favorites) {
-      Object currentValue = favorite.getValue();
-      if (favorite.getValue() instanceof SmartPsiElementPointer){
-        currentValue = ((SmartPsiElementPointer)favorite.getValue()).getElement();
-      } else if (currentValue instanceof PsiJavaFile) {
-        final PsiClass[] classes = ((PsiJavaFile)currentValue).getClasses();
-        if (classes.length > 0) {
-          currentValue = classes[0];
-        }
-      }
-      if (Comparing.equal(element, currentValue)){
-        final DefaultMutableTreeNode nodeWithObject = findFirstLevelNodeWithObject((DefaultMutableTreeNode)getTree().getModel().getRoot(), favorite);
-        if (nodeWithObject != null){
-          TreeUtil.selectInTree(nodeWithObject, requestFocus, getTree());
-          return;
-        }
-      }
+    final DefaultMutableTreeNode node = findSmartFirstLevelNodeByElement(element);
+    if (node != null){
+      TreeUtil.selectInTree(node, requestFocus, getTree());
+      return;
     }
     super.select(element, file, requestFocus);
   }
@@ -190,6 +184,35 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
       if (userObject instanceof FavoritesTreeNodeDescriptor) {
         if (Comparing.equal(((FavoritesTreeNodeDescriptor)userObject).getElement(), aObject)) {
           return child;
+        }
+      }
+    }
+    return null;
+  }
+
+  protected Object findNodeByElement(Object element) {
+    final Object node = findSmartFirstLevelNodeByElement(element);
+    if (node != null) return node;
+    return super.findNodeByElement(element);
+  }
+
+  @Nullable
+  private DefaultMutableTreeNode findSmartFirstLevelNodeByElement(final Object element) {
+    final Set<AbstractTreeNode> favorites = ((FavoritesTreeStructure)getTreeStructure()).getFavorites();
+    for (AbstractTreeNode favorite : favorites) {
+      Object currentValue = favorite.getValue();
+      if (currentValue instanceof SmartPsiElementPointer){
+        currentValue = ((SmartPsiElementPointer)favorite.getValue()).getElement();
+      } else if (currentValue instanceof PsiJavaFile) {
+        final PsiClass[] classes = ((PsiJavaFile)currentValue).getClasses();
+        if (classes.length > 0) {
+          currentValue = classes[0];
+        }
+      }
+      if (Comparing.equal(element, currentValue)){
+        final DefaultMutableTreeNode nodeWithObject = findFirstLevelNodeWithObject((DefaultMutableTreeNode)getTree().getModel().getRoot(), favorite);
+        if (nodeWithObject != null){
+          return nodeWithObject;
         }
       }
     }
