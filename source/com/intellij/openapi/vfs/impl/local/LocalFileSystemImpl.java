@@ -664,6 +664,8 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
           setUpFileWatcher();
         } else {
           for (FileWatcher.ChangeInfo info : infos) {
+            if (info == null) continue;
+
             String path = info.getFilePath();
             int changeType = info.getChangeType();
             if (changeType == FileWatcher.FILE_MODIFIED) {
