@@ -417,13 +417,16 @@ public class EditorOptionsPanel {
     }
 
     if (isModified(myScrollTabLayoutInEditorCheckBox, uiSettings.SCROLL_TAB_LAYOUT_IN_EDITOR)) uiSettingsChanged = true;
+    uiSettings.SCROLL_TAB_LAYOUT_IN_EDITOR = myScrollTabLayoutInEditorCheckBox.isSelected();
 
     final int tabPlacement = ((Integer)myEditorTabPlacement.getSelectedItem()).intValue();
     if (uiSettings.EDITOR_TAB_PLACEMENT != tabPlacement) uiSettingsChanged = true;
     uiSettings.EDITOR_TAB_PLACEMENT = tabPlacement;
+
     boolean hide = myHideKnownExtensions.isSelected();
     if (uiSettings.HIDE_KNOWN_EXTENSION_IN_TABS != hide) uiSettingsChanged = true;
     uiSettings.HIDE_KNOWN_EXTENSION_IN_TABS = hide;
+
     uiSettings.CLOSE_NON_MODIFIED_FILES_FIRST = myCloseNonModifiedFilesFirstRadio.isSelected();
     uiSettings.ACTIVATE_MRU_EDITOR_ON_CLOSE = myActivateMRUEditorOnCloseRadio.isSelected();
 
