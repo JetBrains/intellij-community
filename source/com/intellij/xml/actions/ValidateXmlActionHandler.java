@@ -52,7 +52,8 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
   private static final Key<NewErrorTreeViewPanel> KEY = Key.create("ValidateXmlAction.KEY");
   private static final String SCHEMA_FULL_CHECKING_FEATURE_ID = "http://apache.org/xml/features/validation/schema-full-checking";
   private static final String GRAMMAR_FEATURE_ID = Constants.XERCES_PROPERTY_PREFIX + Constants.XMLGRAMMAR_POOL_PROPERTY;
-  private static final Key<XMLGrammarPoolImpl> GRAMMARS_KEY = Key.create("ErrorTreeViewPanel.KEY");
+  private static final Key<XMLGrammarPoolImpl> GRAMMAR_POOL_KEY = Key.create("GrammarPoolKey");
+  private static final Key<Long> GRAMMAR_POOL_TIME_STAMP_KEY = Key.create("GrammarPoolTimeStampKey");
 
   private Project myProject;
   private XmlFile myFile;
@@ -379,13 +380,23 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
       SAXParser parser = factory.newSAXParser();
 
       parser.setProperty("http://apache.org/xml/properties/internal/entity-resolver", myXmlResourceResolver);
-      XMLGrammarPoolImpl myGrammarPool = myFile.getUserData(GRAMMARS_KEY);
-
-      if (myGrammarPool==null) {
-        myGrammarPool = new XMLGrammarPoolImpl();
-        myFile.putUserData(GRAMMARS_KEY,myGrammarPool);
+      XMLGrammarPoolImpl grammarPool = myFile.getUserData(GRAMMAR_POOL_KEY);
+      final Long grammarPoolTimeStamp = myFile.getUserData(GRAMMAR_POOL_TIME_STAMP_KEY);
+      
+      final long timeStamp = System.currentTimeMillis();
+     
+      if (forceChecking ||
+          grammarPool == null ||
+          ( grammarPoolTimeStamp != null &&
+            (timeStamp - grammarPoolTimeStamp.longValue()) > 60 * 1000L // update pool after one minute
+          )  
+         ) {
+        grammarPool = new XMLGrammarPoolImpl();
+        myFile.putUserData(GRAMMAR_POOL_KEY,grammarPool);
+        myFile.putUserData(GRAMMAR_POOL_TIME_STAMP_KEY, new Long(timeStamp));
       }
-      parser.getXMLReader().setProperty(GRAMMAR_FEATURE_ID, myGrammarPool);
+      
+      parser.getXMLReader().setProperty(GRAMMAR_FEATURE_ID, grammarPool);
 
       if (schemaChecking) {
         parser.setProperty(JAXPConstants.JAXP_SCHEMA_LANGUAGE,JAXPConstants.W3C_XML_SCHEMA);
