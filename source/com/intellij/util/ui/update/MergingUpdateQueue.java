@@ -10,30 +10,27 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
+import java.util.Timer;
 
-public class MergingUpdateQueue implements ActionListener, Disposable {
+public class MergingUpdateQueue implements Runnable, Disposable {
 
   private boolean myActive;
 
   private final Set<Update> mySheduledUpdates = new TreeSet<Update>();
 
-  private Timer myWaiterForMerge;
+  private java.util.Timer myWaiterForMerge;
 
   private boolean myFlushing;
 
   private String myName;
+  private int myMergingTimeSpan;
   private final JComponent myComponent;
   private boolean myPathThrough;
 
   public MergingUpdateQueue(String name, int mergingTimeSpan, boolean isActive, JComponent component) {
+    myMergingTimeSpan = mergingTimeSpan;
     myComponent = component;
-    myWaiterForMerge = new Timer(mergingTimeSpan, this);
     myName = name;
     myPathThrough = ApplicationManager.getApplication().isUnitTestMode();
 
@@ -43,9 +40,12 @@ public class MergingUpdateQueue implements ActionListener, Disposable {
   }
 
   public void setMergingTimeSpan(int timeSpan) {
-    myWaiterForMerge.setDelay(timeSpan);
+    myMergingTimeSpan = timeSpan;
+    if (myActive) {
+      restartTimer();
+    }
   }
-  
+
   public void cancelAllUpdates() {
     synchronized(mySheduledUpdates) {
       mySheduledUpdates.clear();
@@ -66,7 +66,8 @@ public class MergingUpdateQueue implements ActionListener, Disposable {
     }
 
     myActive = false;
-    myWaiterForMerge.stop();
+    myWaiterForMerge.cancel();
+    myWaiterForMerge = null;
   }
 
   public void showNotify() {
@@ -74,13 +75,25 @@ public class MergingUpdateQueue implements ActionListener, Disposable {
       return;
     }
 
-    myWaiterForMerge.start();
+    restartTimer();
     myActive = true;
     flush();
   }
 
+  private void restartTimer() {
+    if (myWaiterForMerge != null) {
+      myWaiterForMerge.cancel();
+    }
+    myWaiterForMerge = new Timer(true);
+    myWaiterForMerge.scheduleAtFixedRate(new TimerTask() {
+      public void run() {
+        ApplicationManager.getApplication().invokeLater(MergingUpdateQueue.this, getModalityState());
+      }
+    }, myMergingTimeSpan, myMergingTimeSpan);
+  }
 
-  public void actionPerformed(ActionEvent e) {
+
+  public void run() {
     flush();
   }
 
@@ -108,7 +121,7 @@ public class MergingUpdateQueue implements ActionListener, Disposable {
         try {
           List<Update> toUpdate;
           final Update[] all;
-          
+
           synchronized(mySheduledUpdates) {
             toUpdate = new ArrayList<Update>(mySheduledUpdates.size());
             all = mySheduledUpdates.toArray(new Update[mySheduledUpdates.size()]);
@@ -122,9 +135,9 @@ public class MergingUpdateQueue implements ActionListener, Disposable {
             }
             each.setProcessed();
           }
-          
+
           execute(toUpdate.toArray(new Update[toUpdate.size()]));
-        } 
+        }
         finally {
           myFlushing = false;
         }
@@ -170,7 +183,7 @@ public class MergingUpdateQueue implements ActionListener, Disposable {
       app.invokeLater(update);
       return;
     }
-    
+
     synchronized(mySheduledUpdates) {
       boolean updateWasEatenByQueue = eatThisOrOthers(update);
       if (updateWasEatenByQueue) {
@@ -179,10 +192,10 @@ public class MergingUpdateQueue implements ActionListener, Disposable {
 
       if (myActive) {
         if (mySheduledUpdates.isEmpty()) {
-          myWaiterForMerge.restart();
+          restartTimer();
         }
         put(update);
-      } 
+      }
       else {
         put(update);
       }
@@ -224,7 +237,8 @@ public class MergingUpdateQueue implements ActionListener, Disposable {
   }
 
   public void dispose() {
-    myWaiterForMerge.stop();
+    myWaiterForMerge.cancel();
+    myWaiterForMerge = null;
   }
 
   public String toString() {
