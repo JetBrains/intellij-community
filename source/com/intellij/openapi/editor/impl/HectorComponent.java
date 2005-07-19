@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -228,6 +229,7 @@ public class HectorComponent extends JPanel {
   }
 
   public void showComponent(Editor editor, Point point) {
+    ToolWindowManager.getInstance(myFile.getProject()).activateEditorComponent();
     myHint = new LightweightHint(this);
     myHint.addHintListener(new HintListener() {
       public void hintHidden(EventObject event) {
