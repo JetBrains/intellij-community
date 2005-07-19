@@ -757,7 +757,6 @@ public class LineStatusTracker implements EditorColorsListener {
 
   public static LineStatusTracker createOn(Document doc, String upToDateContent, Project project) {
     Document document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(upToDateContent, "\n"));
-    document.setReadOnly(true);
     final LineStatusTracker tracker = new LineStatusTracker(doc, document, project);
     tracker.initialize(upToDateContent);
     return tracker;
