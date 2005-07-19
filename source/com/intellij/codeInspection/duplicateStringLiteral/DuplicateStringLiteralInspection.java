@@ -41,7 +41,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     myMinStringLengthField.setText(Integer.toString(MIN_STRING_LENGTH));
   }
 
-  private List<ProblemDescriptor> visitExpressionsUnder(PsiElement element, final InspectionManager manager) {
+  private List<ProblemDescriptor> visitExpressionsUnder(PsiElement element, final InspectionManager manager, final boolean onTheFly) {
     if (element == null) return Collections.EMPTY_LIST;
     final List<ProblemDescriptor> allProblems = new ArrayList<ProblemDescriptor>();
     element.acceptChildren(new PsiRecursiveElementVisitor() {
@@ -57,7 +57,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
       }
 
       public void visitLiteralExpression(PsiLiteralExpression expression) {
-        checkStringLiteralExpression(expression, manager, allProblems);
+        checkStringLiteralExpression(expression, manager, allProblems, onTheFly);
       }
 
     });
@@ -65,7 +65,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   }
 
   public ProblemDescriptor[] checkClass(PsiClass aClass, InspectionManager manager, boolean isOnTheFly) {
-    final List<ProblemDescriptor> allProblems = visitExpressionsUnder(aClass, manager);
+    final List<ProblemDescriptor> allProblems = visitExpressionsUnder(aClass, manager, isOnTheFly);
     return allProblems.size() == 0 ? null : allProblems.toArray(new ProblemDescriptor[allProblems.size()]);
   }
 
@@ -82,8 +82,8 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   }
 
   private void checkStringLiteralExpression(final PsiLiteralExpression originalExpression,
-                                                   InspectionManager manager,
-                                                   final List<ProblemDescriptor> allProblems) {
+                                            InspectionManager manager,
+                                            final List<ProblemDescriptor> allProblems, final boolean isOnTheFly) {
     if (!(originalExpression.getValue() instanceof String)) return;
     final GlobalSearchScope scope = GlobalSearchScope.projectScope(originalExpression.getProject());
     final String stringToFind = (String)originalExpression.getValue();
@@ -134,26 +134,41 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
       do {
         aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
       }
-      while (aClass instanceof PsiAnonymousClass || (aClass != null && ((PsiClass)aClass).getQualifiedName() == null));
+      while (aClass != null && ((PsiClass)aClass).getQualifiedName() == null);
       if (aClass != null) {
         classes.add((PsiClass)aClass);
       }
     }
     if (classes.size() == 0) return;
-    String msg = "<html><body>Duplicate string literal found in ";
-    int i = 0;
-    for (final PsiClass aClass : classes) {
-      if (i > 10) {
-        msg += "<br>... (" + (classes.size() - i) + " more)";
-        break;
+    String msg;
+    if (isOnTheFly) {
+      msg = "<html><body>Duplicate string literal found in ";
+      int i = 0;
+      for (final PsiClass aClass : classes) {
+        if (i > 10) {
+          msg += "<br>... (" + (classes.size() - i) + " more)";
+          break;
+        }
+        msg += (i == 0 ? "" : ", ") + "<br>&nbsp;&nbsp;&nbsp;'<b>" + aClass.getQualifiedName() + "</b>'";
+        if (aClass.getContainingFile() == originalExpression.getContainingFile()) {
+          msg += " (in this file)";
+        }
+        i++;
       }
-      msg += (i == 0 ? "" : ", ") + "<br>&nbsp;&nbsp;&nbsp;'<b>" + aClass.getQualifiedName() + "</b>'";
-      if (aClass.getContainingFile() == originalExpression.getContainingFile()) {
-        msg += " (in this file)";
-      }
-      i++;
+      msg += "</body></html>";
     }
-    msg += "</body></html>";
+    else {
+      msg = "Duplicate string literal found in ";
+      int i = 0;
+      for (final PsiClass aClass : classes) {
+        if (i > 10) {
+          msg += "... (" + (classes.size() - i) + " more)";
+          break;
+        }
+        msg += (i == 0 ? "" : ", ") + "'" + aClass.getQualifiedName() + "'";
+        i++;
+      }
+    }
 
 
     Collection<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
