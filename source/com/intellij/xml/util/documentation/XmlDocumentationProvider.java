@@ -91,7 +91,10 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
 
   private XmlTag getComplexTypeDefinition(PsiElement element, PsiElement originalElement) {
     XmlElementDescriptor descriptor = element.getUserData(DESCRIPTOR_KEY);
-    if (descriptor == null && originalElement.getParent() instanceof XmlTag) {
+    
+    if (descriptor == null && 
+        originalElement != null && 
+        originalElement.getParent() instanceof XmlTag) {
       descriptor = ((XmlTag)originalElement.getParent()).getDescriptor();
     }
 
