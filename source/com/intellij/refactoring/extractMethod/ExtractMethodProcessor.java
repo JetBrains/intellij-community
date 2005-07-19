@@ -54,7 +54,6 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   private PsiExpression myExpression;
 
-  private PsiElement myCodeFragment; // "code fragment" (code block or expression) containing the code to extract
   private PsiElement myCodeFragementMember; // parent of myCodeFragment
 
   private String myMethodName; // name for extracted method
@@ -74,7 +73,6 @@ public class ExtractMethodProcessor implements MatchProvider {
   private PsiVariable[] myInputVariables; // input variables
   private PsiVariable[] myOutputVariables; // output variables
   private PsiVariable myOutputVariable; // the only output variable
-  private int myExitPoint;
   private List<PsiStatement> myExitStatements;
 
   private boolean myHasReturnStatement; // there is a return statement
@@ -85,7 +83,6 @@ public class ExtractMethodProcessor implements MatchProvider {
   private boolean myShowErrorDialogs = true;
   private boolean myCanBeStatic;
   private List<Match> myDuplicates;
-  private DuplicatesFinder myDuplicatesFinder;
   private String myMethodVisibility = PsiModifier.PRIVATE;
 
   public ExtractMethodProcessor(Project project, Editor editor, PsiElement[] elements,
@@ -159,10 +156,10 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
     }
 
-    myCodeFragment = ControlFlowUtil.findCodeFragment(myElements[0]);
-    myCodeFragementMember = myCodeFragment.getParent();
+    final PsiElement codeFragment = ControlFlowUtil.findCodeFragment(myElements[0]);
+    myCodeFragementMember = codeFragment.getParent();
 
-    ControlFlowAnalyzer analyzer = new ControlFlowAnalyzer(myCodeFragment, new LocalsControlFlowPolicy(myCodeFragment), false);
+    ControlFlowAnalyzer analyzer = new ControlFlowAnalyzer(codeFragment, new LocalsControlFlowPolicy(codeFragment), false);
     try {
       myControlFlow = analyzer.buildControlFlow();
     }
@@ -191,8 +188,8 @@ public class ExtractMethodProcessor implements MatchProvider {
         LOG.debug("  " + exitPoints.get(i));
       }
       LOG.debug("exit statements:");
-      for (int i = 0; i < myExitStatements.size(); i++) {
-        LOG.debug("  " + myExitStatements.get(i));
+      for (PsiStatement exitStatement : myExitStatements) {
+        LOG.debug("  " + exitStatement);
       }
     }
     if (exitPoints.size() == 0) {
@@ -203,13 +200,13 @@ public class ExtractMethodProcessor implements MatchProvider {
       showMultipleExitPointsMessage();
       return false;
     }
-    myExitPoint = exitPoints.get(0);
+    final int exitPoint = exitPoints.get(0);
 
     myHasReturnStatement = myExpression == null &&
                            ControlFlowUtil.returnPresentBetween(myControlFlow, myFlowStart, myFlowEnd);
 
     myInputVariables = ControlFlowUtil.getInputVariables(myControlFlow, myFlowStart, myFlowEnd);
-    myOutputVariables = ControlFlowUtil.getOutputVariables(myControlFlow, myFlowStart, myFlowEnd, myExitPoint);
+    myOutputVariables = ControlFlowUtil.getOutputVariables(myControlFlow, myFlowStart, myFlowEnd, exitPoint);
 
     chooseTargetClass();
 
@@ -275,13 +272,14 @@ public class ExtractMethodProcessor implements MatchProvider {
       myCanBeStatic = false;
     }
 
+    final DuplicatesFinder duplicatesFinder;
     if (myExpression != null) {
-      myDuplicatesFinder = new DuplicatesFinder(myElements, Arrays.asList(myInputVariables), new ArrayList<PsiVariable>(), false);
-      myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
+      duplicatesFinder = new DuplicatesFinder(myElements, Arrays.asList(myInputVariables), new ArrayList<PsiVariable>(), false);
+      myDuplicates = duplicatesFinder.findDuplicates(myTargetClass);
     }
     else {
-      myDuplicatesFinder = new DuplicatesFinder(myElements, Arrays.asList(myInputVariables), Arrays.asList(myOutputVariables), false);
-      myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
+      duplicatesFinder = new DuplicatesFinder(myElements, Arrays.asList(myInputVariables), Arrays.asList(myOutputVariables), false);
+      myDuplicates = duplicatesFinder.findDuplicates(myTargetClass);
     }
 
     return true;
@@ -387,8 +385,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
       PsiStatement exitStatementCopy = null;
       // replace all exit-statements such as break's or continue's with appropriate return
-      for (int i = 0; i < myExitStatements.size(); i++) {
-        PsiStatement exitStatement = myExitStatements.get(i);
+      for (PsiStatement exitStatement : myExitStatements) {
         if (exitStatement instanceof PsiReturnStatement) {
           continue;
         }
@@ -538,9 +535,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   private void deleteExtracted() throws IncorrectOperationException {
     if (myEnclosingBlockStatement == null) {
-      for (PsiElement element : myElements) {
-        element.delete();
-      }
+      myElements[0].getParent().deleteChildRange(myElements[0], myElements[myElements.length - 1]);
     }
     else {
       myEnclosingBlockStatement.delete();
@@ -840,7 +835,6 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   public boolean hasDuplicates() {
     final List<Match> duplicates = getDuplicates();
-    final boolean hasDuplicates = duplicates != null && !duplicates.isEmpty();
-    return hasDuplicates;
+    return duplicates != null && !duplicates.isEmpty();
   }
 }
