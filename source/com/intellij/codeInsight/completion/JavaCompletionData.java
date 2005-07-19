@@ -413,7 +413,10 @@ public class JavaCompletionData extends CompletionData{
         new TextFilter("}"),
         new ParentElementFilter(new AndFilter(
           new LeftNeighbour(new NotFilter(new TextFilter("try"))),
-          new ParentElementFilter(new ClassFilter(PsiTryStatement.class))))));
+          new OrFilter(
+            new ParentElementFilter(new ClassFilter(PsiTryStatement.class)),
+            new ParentElementFilter(new ClassFilter(PsiCatchSection.class)))
+          ))));
 
       final CompletionVariant variant = new CompletionVariant(position);
       variant.includeScopeClass(PsiCodeBlock.class, false);
