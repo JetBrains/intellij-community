@@ -264,6 +264,9 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     return panel;
   }
 
+  protected String getDimensionServiceKey() {
+    return "refactoring.ChangeSignatureDialog";
+  }
 
   private JPanel createParametersPanel() {
     myParametersTable = new Table(myParametersTableModel);
