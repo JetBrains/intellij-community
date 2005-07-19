@@ -126,7 +126,7 @@ public final class EditorsSplitters extends JPanel {
           final FileEditorProvider[] providers = composite.getProviders();
           final HistoryEntry entry = new HistoryEntry(file, providers, states, providers[selectedProviderIndex]); // TODO
           entry.writeExternal(fileElement, getManager().myProject);
-          fileElement.setAttribute("pinned",         Boolean.toString(window.isFilePinned(window.getSelectedFile())));
+          fileElement.setAttribute("pinned",         Boolean.toString(window.isFilePinned(file)));
           fileElement.setAttribute("current",        Boolean.toString(composite.equals (getManager ().getLastSelected ())));
           fileElement.setAttribute("current-in-tab", Boolean.toString(composite.equals (window.getSelectedEditor())));
           res.addContent(fileElement);
