@@ -282,8 +282,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
   private JPanel createExceptionsPanel() {
     myExceptionsTable = new Table(myExceptionsTableModel);
     configureExceptionTableEditors();
-    JPanel panel = createTablePanelImpl(myExceptionsTable, myExceptionsTableModel, "Exceptions", false);
-    return panel;
+    return createTablePanelImpl(myExceptionsTable, myExceptionsTableModel, "Exceptions", false);
   }
 
   private JPanel createTablePanelImpl (JTable table, RowEditableTableModel tableModel, String borderTitle, boolean addMnemonics) {
