@@ -53,6 +53,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   private JCheckBox mySpacesAroundTagName;
   private JCheckBox myKeepLineBreaks;
   private JCheckBox myInEmptyTag;
+  private JCheckBox myWrapText;
 
   public CodeStyleXmlPanel(CodeStyleSettings settings) {
     super(settings);
@@ -75,6 +76,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     settings.XML_KEEP_BLANK_LINES = getIntValue(myKeepBlankLines);
     settings.XML_KEEP_LINE_BREAKS = myKeepLineBreaks.isSelected();
     settings.XML_ATTRIBUTE_WRAP = ourWrappings[myWrapAttributes.getSelectedIndex()];
+    settings.XML_TEXT_WRAP = myWrapText.isSelected() ? CodeStyleSettings.WRAP_AS_NEEDED : CodeStyleSettings.DO_NOT_WRAP;
     settings.XML_ALIGN_ATTRIBUTES = myAlignAttributes.isSelected();
     settings.XML_KEEP_WHITESPACES = myKeepWhiteSpaces.isSelected();
     settings.XML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE = mySpacesAroundEquality.isSelected();
@@ -94,16 +96,20 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
 
   protected void resetImpl(final CodeStyleSettings settings) {
     myKeepBlankLines.setText(String.valueOf(settings.XML_KEEP_BLANK_LINES));
-    myWrapAttributes.setSelectedIndex(getIndexForWrapping(settings.XML_TEXT_WRAP));
+    myWrapAttributes.setSelectedIndex(getIndexForWrapping(settings.XML_ATTRIBUTE_WRAP));
     myAlignAttributes.setSelected(settings.XML_ALIGN_ATTRIBUTES);
     myKeepWhiteSpaces.setSelected(settings.XML_KEEP_WHITESPACES);
     mySpacesAroundTagName.setSelected(settings.XML_SPACE_AROUND_TAG_NAME);
     mySpacesAroundEquality.setSelected(settings.XML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE);
     myKeepLineBreaks.setSelected(settings.XML_KEEP_LINE_BREAKS);
     myInEmptyTag.setSelected(settings.XML_SPACE_INSIDE_EMPTY_TAG);
+    myWrapText.setSelected(wrapText(settings));
   }
 
   public boolean isModified(CodeStyleSettings settings) {
+    if (myWrapText.isSelected() != wrapText(settings)) {
+      return true;
+    }
     if (settings.XML_KEEP_BLANK_LINES != getIntValue(myKeepBlankLines)) {
       return true;
     }
@@ -134,6 +140,10 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     }
 
     return false;
+  }
+
+  private boolean wrapText(final CodeStyleSettings settings) {
+    return settings.XML_TEXT_WRAP == CodeStyleSettings.WRAP_AS_NEEDED;
   }
 
   public JComponent getPanel() {
