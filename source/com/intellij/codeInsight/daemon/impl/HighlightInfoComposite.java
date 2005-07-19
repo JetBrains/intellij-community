@@ -12,6 +12,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
 public class HighlightInfoComposite extends HighlightInfo {
   private static final String HTML_HEADER = "<html><body>";
   private static final String HTML_FOOTER = "</body></html>";
@@ -38,17 +40,27 @@ public class HighlightInfoComposite extends HighlightInfo {
     return infos.get(0).type;
   }
 
+  @Nullable
   private static String createCompositeDescription(List<HighlightInfo> infos) {
     StringBuffer description = new StringBuffer();
     boolean isNull = true;
     for (HighlightInfo info : infos) {
-      if (description.length() != 0) description.append(". ");
-      description.append(info.description);
-      isNull &= info.description == null;
+      String itemDescription = info.description;
+      if (itemDescription != null) {
+        itemDescription = itemDescription.trim();
+        description.append(itemDescription);
+        if (!itemDescription.endsWith(".")) {
+          description.append('.');
+        }
+        description.append(' ');
+
+        isNull = false;
+      }
     }
     return isNull ? null : description.toString();
   }
 
+  @Nullable
   private static String createCompositeTooltip(List<HighlightInfo> infos) {
     StringBuffer result = new StringBuffer();
     for (HighlightInfo info : infos) {
