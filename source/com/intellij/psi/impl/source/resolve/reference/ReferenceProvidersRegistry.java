@@ -428,7 +428,13 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
         new ParentElementFilter(
           new AndFilter(
             new ClassFilter(XmlTag.class),
-            new NamespaceFilter(XmlUtil.JSP_URI)
+            new NamespaceFilter(
+              new String[] {
+                XmlUtil.JSP_URI, 
+                XmlUtil.STRUTS_BEAN_URI, 
+                XmlUtil.STRUTS_LOGIC_URI
+              }
+            )
           ), 2
         )
       ),
