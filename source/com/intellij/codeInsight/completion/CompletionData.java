@@ -113,8 +113,8 @@ public class CompletionData {
 
   public LookupItemPreferencePolicy completeLocalVariableName(Set<LookupItem> set, CompletionContext context, PsiVariable var){
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.variable.name");
-    final VariableKind variableKind = CodeStyleManager.getInstance(var.getProject()).getVariableKind(var);
     final CodeStyleManagerEx codeStyleManager = (CodeStyleManagerEx) CodeStyleManager.getInstance(context.project);
+    final VariableKind variableKind = codeStyleManager.getVariableKind(var);
     SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(variableKind, null, null, var.getType());
     final String[] suggestedNames = suggestedNameInfo.names;
     LookupItemUtil.addLookupItems(set, suggestedNames, context.prefix);
@@ -139,7 +139,6 @@ public class CompletionData {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.variable.name");
     CodeStyleManagerEx codeStyleManager = (CodeStyleManagerEx) CodeStyleManager.getInstance(context.project);
     final String prefix = context.prefix;
-    if(var.getType() == PsiType.VOID || prefix.startsWith("is") || prefix.startsWith("get") || prefix.startsWith("set")) return null;
     final VariableKind variableKind = CodeStyleManager.getInstance(var.getProject()).getVariableKind(var);
     SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(variableKind, null, null, var.getType());
     final String[] suggestedNames = suggestedNameInfo.names;
@@ -161,6 +160,8 @@ public class CompletionData {
 
       LookupItemUtil.addLookupItems(set, suggestedNameInfo.names, prefix);
     }
+    if(var.getType() == PsiType.VOID || prefix.startsWith("is") || prefix.startsWith("get") || prefix.startsWith("set")) return null;
+    
     LookupItemUtil.addLookupItems(set, StatisticsManager.getInstance().getNameSuggestions(var.getType(), StatisticsManager.getContext(var), prefix), prefix);
     LookupItemUtil.addLookupItems(set, CompletionUtil.getUnserolvedReferences(var.getParent(), false), context.prefix);
 
