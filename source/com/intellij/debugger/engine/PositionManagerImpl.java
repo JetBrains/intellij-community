@@ -73,15 +73,22 @@ public class PositionManagerImpl implements PositionManager {
       }
 
       waitPrepareFor = JVMNameUtil.getNonAnonymousClassName(parent) + "$*";
-
       waitRequestor = new ClassPrepareRequestor() {
         public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
-          if (((DebugProcessImpl)debuggerProcess).getPositionManager().locationsOfLine(referenceType, position).size() > 0) {
+          final CompoundPositionManager positionManager = ((DebugProcessImpl)debuggerProcess).getPositionManager();
+          if (positionManager.locationsOfLine(referenceType, position).size() > 0) {
             requestor.processClassPrepare(debuggerProcess, referenceType);
+          }
+          else {
+            final List<ReferenceType> positionClasses = positionManager.getAllClasses(position);
+            if (positionClasses.contains(referenceType)) {
+              requestor.processClassPrepare(debuggerProcess, referenceType);
+            }
           }
         }
       };
-    } else {
+    }
+    else {
       waitPrepareFor = JVMNameUtil.getNonAnonymousClassName(psiClass);
       waitRequestor = requestor;
     }
@@ -195,6 +202,15 @@ public class PositionManagerImpl implements PositionManager {
           final List<ReferenceType> outer = myDebugProcess.getVirtualMachineProxy().classesByName(parentClassName);
           final List<ReferenceType> result = new ArrayList<ReferenceType>();
           findNested(outer, classPosition, result);
+          if (result.size() == 0) {
+            // no executable code found at this line in any class
+            for (ReferenceType refType : outer) {
+              final ReferenceType closest = findClosestClassAt(refType, classPosition);
+              if (closest != null) {
+                result.add(closest);
+              }
+            }
+          }
           return result;
         }
         else {
@@ -216,7 +232,8 @@ public class PositionManagerImpl implements PositionManager {
         findNested(nested, classPosition, result);
 
         try {
-          if(referenceType.locationsOfLine(classPosition.getLine() + 1).size() > 0) {
+          final int lineNumber = classPosition.getLine() + 1;
+          if(referenceType.locationsOfLine(lineNumber).size() > 0) {
             result.add(referenceType);
           }
         }
@@ -224,6 +241,35 @@ public class PositionManagerImpl implements PositionManager {
         }
       }
     }
+  }
+
+  private ReferenceType findClosestClassAt(final ReferenceType from, final SourcePosition classPosition) {
+    if(from.isPrepared()) {
+      final List<ReferenceType> nested = myDebugProcess.getVirtualMachineProxy().nestedTypes(from);
+      for (ReferenceType nestedType : nested) {
+        final ReferenceType foundType = findClosestClassAt(nestedType, classPosition);
+        if (foundType != null) {
+          return foundType;
+        }
+      }
+
+      try {
+        final int lineNumber = classPosition.getLine() + 1;
+        final List<Location> locations = from.allLineLocations();
+        boolean isGreater = false;
+        boolean isLess = false;
+        for (Location location : locations) {
+          isGreater |= location.lineNumber() <= lineNumber;
+          isLess |=  lineNumber <= location.lineNumber();
+          if (isGreater && isLess) {
+            return from;
+          }
+        }
+      }
+      catch (AbsentInformationException e) {
+      }
+    }
+    return null;
   }
 
   private class MethodFinder extends PsiRecursiveElementVisitor {

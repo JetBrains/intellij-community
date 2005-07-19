@@ -37,7 +37,7 @@ public class AnyExceptionBreakpoint extends ExceptionBreakpoint {
   }
 
   public void processClassPrepare(DebugProcess debugProcess, ReferenceType refType) {
-    // should be emty - does not make sence for this breakpoint
+    // should be emty - does not make sense for this breakpoint
   }
 
   public void readExternal(Element parentNode) throws InvalidDataException {
