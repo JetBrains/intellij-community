@@ -12,9 +12,11 @@ import com.intellij.j2ee.j2eeDom.J2EEModuleProperties;
 import com.intellij.j2ee.j2eeDom.VerificationException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -139,6 +141,10 @@ public class CachedValueImpl<T> implements CachedValue<T> {
       return ((ModificationTracker)dependency).getModificationCount();
     }
 
+    if (dependency instanceof PsiDirectory) {
+      return myManager.getModificationTracker().getOutOfCodeBlockModificationCount();
+    }
+    
     if (dependency instanceof PsiElement) {
       PsiElement element = (PsiElement)dependency;
       if (!element.isValid()) return -1;

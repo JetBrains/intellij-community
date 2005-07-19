@@ -61,7 +61,6 @@ class TagNameReference implements PsiReference {
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     final XmlTag element = getElement();
-    boolean myFileChange = false;
     
     if (element != null &&
         (newElementName.endsWith(".tag") || newElementName.endsWith(".tagx")) &&
@@ -73,15 +72,10 @@ class TagNameReference implements PsiReference {
       if (namespacePrefix != null && namespacePrefix.length() > 0) {
         newElementName = namespacePrefix + ":" + newElementName;
       }
-      
-      myFileChange = true;
     }
     
     if(element!=null) element.setName(newElementName);
     
-    if (myFileChange) {
-      ((CompositeElement)((XmlFile)element.getContainingFile()).getDocument().getRootTag().getNode()). clearCaches();
-    }
     return element;
   }
 

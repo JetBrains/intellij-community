@@ -281,6 +281,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
       return this; // not absolutely correct - might change type
     }
 
+    subtreeChanged();
     return PsiFileImplUtil.setName(this, name);
   }
 
