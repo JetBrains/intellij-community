@@ -330,6 +330,16 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     LineStatusTracker result = myLineStatusTrackers.get(document);
     if (result == null) {
       result = LineStatusTracker.createOn(document, lastUpToDateContent, getProject());
+      result.initialize(lastUpToDateContent);
+      myLineStatusTrackers.put(document, result);
+    }
+    return result;
+  }
+
+  public LineStatusTracker createTrackerForDocument(Document document) {
+    LineStatusTracker result = myLineStatusTrackers.get(document);
+    if (result == null) {
+      result = LineStatusTracker.createOn(document, getProject());
       myLineStatusTrackers.put(document, result);
     }
     return result;
@@ -454,6 +464,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       myLineStatusUpdateAlarms.put(document, alarm);
     }
 
+    createTrackerForDocument(document);
 
     alarm.addRequest(new Runnable(){
       public void run() {
@@ -466,7 +477,16 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
                 if (!myProject.isDisposed()) {
-                  setUpToDateContent(document, lastUpToDateContent);
+                  synchronized (this) {
+                    final LineStatusTracker tracker = myLineStatusTrackers.get(document);
+                    if (tracker != null) {
+                      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                        public void run() {
+                          tracker.initialize(lastUpToDateContent);                          
+                        }
+                      });
+                    }
+                  }
                 }
               }
             });

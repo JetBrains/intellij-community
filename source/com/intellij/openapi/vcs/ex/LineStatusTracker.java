@@ -60,17 +60,31 @@ public class LineStatusTracker implements EditorColorsListener {
   private final MyDocumentListener myDocumentListener = new MyDocumentListener();
 
   private boolean myIsReleased = false;
+  private boolean myIsItitialized = false;
 
   public LineStatusTracker(Document document, Document upToDateDocument, Project project) {
     myDocument = document;
     myUpToDateDocument = upToDateDocument;
     myProject = project;
-    reinstallRanges();
+  }
 
-    myListener = EventUtil.createWeakListener(EditorColorsListener.class, this);
-    EditorColorsManager.getInstance().addEditorColorsListener(myListener);
-    myDocument.addDocumentListener(myDocumentListener);
+  public synchronized void initialize(final String upToDateContent) {
+    try {
+      CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+        public void run() {
+          myUpToDateDocument.replaceString(0, myUpToDateDocument.getTextLength(), StringUtil.convertLineSeparators(upToDateContent));          
+        }
+      }, null, null);
+      myUpToDateDocument.setReadOnly(true);
+      reinstallRanges();
 
+      myListener = EventUtil.createWeakListener(EditorColorsListener.class, this);
+      EditorColorsManager.getInstance().addEditorColorsListener(myListener);
+      myDocument.addDocumentListener(myDocumentListener);
+    }
+    finally {
+      myIsItitialized = true;
+    }
   }
 
   private synchronized void reinstallRanges() {
@@ -216,6 +230,7 @@ public class LineStatusTracker implements EditorColorsListener {
   }
 
   public synchronized void release() {
+    if (!myIsItitialized) return;
     LOG.assertTrue(!myIsReleased);
     myIsReleased = true;
     removeHighlighters(new ArrayList<Range>());
@@ -736,6 +751,14 @@ public class LineStatusTracker implements EditorColorsListener {
   public static LineStatusTracker createOn(Document doc, String upToDateContent, Project project) {
     Document document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(upToDateContent, "\n"));
     document.setReadOnly(true);
+    final LineStatusTracker tracker = new LineStatusTracker(doc, document, project);
+    tracker.initialize(upToDateContent);
+    return tracker;
+  }
+
+  public static LineStatusTracker createOn(Document doc, Project project) {
+    Document document = EditorFactory.getInstance().createDocument("");
     return new LineStatusTracker(doc, document, project);
   }
+
 }
