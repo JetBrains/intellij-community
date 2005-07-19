@@ -41,7 +41,7 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
     childrenChanged(event.getParent());
   }
 
-  private void childrenChanged(PsiElement parent) {
+  protected void childrenChanged(PsiElement parent) {
     /*
     if (parent == null) return;
     if (parent.getContainingFile() == null) return;
