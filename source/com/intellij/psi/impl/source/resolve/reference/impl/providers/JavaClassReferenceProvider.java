@@ -6,6 +6,7 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.reference.ElementManipulator;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
+import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -239,6 +240,15 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider{
         PsiElement resolveResult = myElement.getManager().findPackage(qName);
         if(resolveResult == null)
           resolveResult = myElement.getManager().findClass(qName, GlobalSearchScope.allScope(myElement.getProject()));
+
+        if(resolveResult == null){
+          final PsiFile containingFile = myElement.getContainingFile();
+          if(containingFile instanceof PsiJavaFile) {
+            final ClassResolverProcessor processor = new ClassResolverProcessor(getCanonicalText(), myElement);
+            containingFile.processDeclarations(processor, PsiSubstitutor.EMPTY, null, myElement);
+            if(processor.getResult().length == 1) return processor.getResult()[0].getElement();
+          }
+        }
         return resolveResult;
       }
 
