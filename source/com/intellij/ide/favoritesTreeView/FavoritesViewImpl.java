@@ -3,9 +3,6 @@ package com.intellij.ide.favoritesTreeView;
 import com.intellij.ide.SelectInManager;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.impl.ContentManagerWatcher;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -124,13 +121,12 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
     myName2FavoritesListSet.put(name, favoritesContent);
     final AddToFavoritesAction addAction = new AddToFavoritesAction(name);
     myActions.put(name, addAction);
-    ((DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.ADD_TO_FAVORITES)).add(addAction);
     return panel;
   }
 
   public boolean removeContent(Content content){
     final String name = content.getComponent().getName();
-    ((DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.ADD_TO_FAVORITES)).remove(myActions.remove(name));
+    myActions.remove(name);
     myName2FavoritesListSet.remove(name);
     return super.removeContent(content);
   }

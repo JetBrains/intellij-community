@@ -1,29 +1,30 @@
 package com.intellij.ide.favoritesTreeView;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
  * Date: Mar 3, 2005
  */
-public class AddToFavoritesActionGroup extends DefaultActionGroup{
-  public void update(AnActionEvent e) {
-    removeAll();
+public class AddToFavoritesActionGroup extends ActionGroup {
+
+  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    if (e == null) return AnAction.EMPTY_ARRAY;
     final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
     if (project == null){
-      return;
+      return AnAction.EMPTY_ARRAY;
     }
     final String[] availableFavoritesLists = FavoritesViewImpl.getInstance(project).getAvailableFavoritesLists();
-    for (int i = 0; i < availableFavoritesLists.length; i++) {
-      String favoritesList = availableFavoritesLists[i];
-      add(new AddToFavoritesAction(favoritesList));
+    if (availableFavoritesLists == null) return AnAction.EMPTY_ARRAY;
+    AnAction[] actions = new AnAction[availableFavoritesLists.length + 2];
+    int idx = 0;
+    for (String favoritesList : availableFavoritesLists) {
+      actions[idx++] = new AddToFavoritesAction(favoritesList);
     }
-    addSeparator();
-    final AddToNewFavoritesListAction action = new AddToNewFavoritesListAction();
-    add(action);
-    action.update(e);    
+    actions[idx++] = Separator.getInstance();
+    actions[idx] = new AddToNewFavoritesListAction();
+    return actions;
   }
 }
