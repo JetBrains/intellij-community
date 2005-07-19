@@ -152,16 +152,19 @@ public class XmlFoldingBuilder implements FoldingBuilder {
     LOG.assertTrue(elementToFold.isValid());
     TextRange range = getRangeToFold(elementToFold);
     if (range == null) return false;
-    LOG.assertTrue(range.getStartOffset() >= 0 && range.getEndOffset() <= elementToFold.getContainingFile().getTextRange().getEndOffset());
+    
+    if(range.getStartOffset() >= 0 && 
+       range.getEndOffset() <= elementToFold.getContainingFile().getTextRange().getEndOffset()) {
 
-    int startLine = document.getLineNumber(range.getStartOffset());
-    int endLine = document.getLineNumber(range.getEndOffset() - 1);
-    if (startLine < endLine) {
-      foldings.add(new FoldingDescriptor(elementToFold.getNode(), range));
-      return true;
-    } else {
-      return false;
+      int startLine = document.getLineNumber(range.getStartOffset());
+      int endLine = document.getLineNumber(range.getEndOffset() - 1);
+      if (startLine < endLine) {
+        foldings.add(new FoldingDescriptor(elementToFold.getNode(), range));
+        return true;
+      } 
     }
+    
+    return false;
   }
 
   public String getPlaceholderText(ASTNode node) {
