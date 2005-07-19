@@ -4,6 +4,7 @@ package com.intellij.openapi.command.impl;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceByDocument;
 import com.intellij.openapi.command.undo.UndoableAction;
+import com.intellij.openapi.command.undo.DocumentReferenceByVirtualFile;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -51,7 +52,7 @@ class EditorChangeAction implements UndoableAction {
 
   private void fileFileStatusChanged() {
     if (myProject == null) return;
-    VirtualFile file = FileDocumentManager.getInstance().getFile(getDocument());
+    VirtualFile file = myDocumentFile != null ? myDocumentFile : FileDocumentManager.getInstance().getFile(getDocument());
     if (file == null) return;
     FileStatusManager.getInstance(myProject).fileStatusChanged(file);
   }
@@ -73,7 +74,10 @@ class EditorChangeAction implements UndoableAction {
   }
 
   public DocumentReference[] getAffectedDocuments() {
-    return new DocumentReference[]{DocumentReferenceByDocument.createDocumentReference(getDocument())};
+    final DocumentReference ref = myDocument != null
+                                  ? DocumentReferenceByDocument.createDocumentReference(myDocument)
+                                  : new DocumentReferenceByVirtualFile(myDocumentFile);
+    return new DocumentReference[]{ref};
   }
 
   public boolean isComplex() {
