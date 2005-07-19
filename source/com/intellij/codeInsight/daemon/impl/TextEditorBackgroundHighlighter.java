@@ -126,7 +126,7 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
                                                       int endOffset,
                                                       int pass) {
     LOG.assertTrue(endOffset <= myDocument.getTextLength());
-    if (startOffset >= endOffset) return null;
+    if (startOffset > endOffset) return null;
 
     switch (pass) {
       case Pass.UPDATE_FOLDING:
