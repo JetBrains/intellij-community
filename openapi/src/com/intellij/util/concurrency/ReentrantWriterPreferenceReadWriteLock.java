@@ -1,21 +1,18 @@
 /*
-  File: ReentrantWriterPreferenceReadWriteLock.java
-
-  Originally written by Doug Lea and released into the public domain.
-  This may be used for any purposes whatsoever without acknowledgment.
-  Thanks for the assistance and support of Sun Microsystems Labs,
-  and everyone contributing, testing, and using this code.
-
-  History:
-  Date       Who                What
-  26aug1998  dl                 Create public version
-   7sep2000  dl                 Readers are now also reentrant
-  19jan2001  dl                 Allow read->write upgrades if the only reader
-
-  30jan20002 Valentin           Added isReadLockAcquired and isWriteLockAcquired methods
-  27feb20002 Valentin           Fixed bug with reader-->writer upgrade. See com.intellij.util.concurrency.test.TestReadWriteUpgrade.
-   4mar20002 Valentin           Changed policy so that readers are allowed while there are waiting writers. See com.intellij.util.concurrency.test.TestReaderJoin.
-*/
+ * Copyright 2000-2005 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package com.intellij.util.concurrency;
 

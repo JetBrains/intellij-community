@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2005 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.uiDesigner.lw;
 
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -6,13 +21,11 @@ import org.jdom.Element;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;  // [stathik] moved back
-
-/**
+import java.util.List;/**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public abstract class LwComponent implements IComponent{
+                      public abstract class LwComponent implements IComponent{
   /**
    *  Component's ID. Cannot be null.
    */
@@ -35,7 +48,7 @@ public abstract class LwComponent implements IComponent{
    * never <code>null</code>
    */
   private final GridConstraints myConstraints;
-  
+
   private Object myCustomLayoutConstraints;
   /**
    * Bounds in XY layout
@@ -45,7 +58,7 @@ public abstract class LwComponent implements IComponent{
   private final HashMap myIntrospectedProperty2Value;
   /**
    * if class is unknown (cannot be loaded), properties tag is stored as is
-   */ 
+   */
   private Element myErrorComponentProperties;
   protected final HashMap myClientProperties;
 
@@ -172,7 +185,7 @@ public abstract class LwComponent implements IComponent{
       // do not read properties 
       return;
     }
-    
+
     Element propertiesElement = LwXmlReader.getChild(element, "properties");
     if(propertiesElement == null){
       propertiesElement = new Element("properties", element.getNamespace());
@@ -212,10 +225,10 @@ public abstract class LwComponent implements IComponent{
     }
     parent.readConstraintsForChild(element, this);
   }
-  
+
   /**
    * @param provider can be null if no component classes should not be created
-   */ 
+   */
   public abstract void read(Element element, PropertiesProvider provider) throws Exception;
 
   /**

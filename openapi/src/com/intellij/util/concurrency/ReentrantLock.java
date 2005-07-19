@@ -1,16 +1,18 @@
 /*
-  File: ReentrantLock.java
-
-  Originally written by Doug Lea and released into the public domain.
-  This may be used for any purposes whatsoever without acknowledgment.
-  Thanks for the assistance and support of Sun Microsystems Labs,
-  and everyone contributing, testing, and using this code.
-
-  History:
-  Date       Who                What
-  11Jun1998  dl               Create public version
-   5Aug1998  dl               replaced int counters with longs
-*/
+ * Copyright 2000-2005 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package com.intellij.util.concurrency;
 
