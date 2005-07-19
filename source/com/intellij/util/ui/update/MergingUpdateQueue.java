@@ -237,8 +237,10 @@ public class MergingUpdateQueue implements Runnable, Disposable {
   }
 
   public void dispose() {
-    myWaiterForMerge.cancel();
-    myWaiterForMerge = null;
+    if (myWaiterForMerge != null) {
+      myWaiterForMerge.cancel();
+      myWaiterForMerge = null;
+    }
   }
 
   public String toString() {
