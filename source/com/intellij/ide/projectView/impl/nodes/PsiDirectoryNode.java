@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 
 import java.util.Collection;
+import java.util.Arrays;
 
 public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
   public PsiDirectoryNode(Project project, PsiDirectory value, ViewSettings viewSettings) {
@@ -51,5 +52,15 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
     else {
       return VfsUtil.isAncestor(value.getVirtualFile(), file, false);
     }
+  }
+
+  public boolean canRepresent(final Object element) {
+    if (super.canRepresent(element)) return true;
+    if (getValue() == null) return false;
+    if (element instanceof PackageElement) {
+      final PackageElement packageElement = ((PackageElement)element);
+      return (Arrays.asList(packageElement.getPackage().getDirectories()).contains(getValue()));
+    }
+    return false;
   }
 }

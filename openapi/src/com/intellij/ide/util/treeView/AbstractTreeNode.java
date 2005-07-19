@@ -166,4 +166,8 @@ public abstract class AbstractTreeNode<Value> extends NodeDescriptor implements 
   protected String getToolTip() {
     return null;
   }
+
+  public boolean canRepresent(final Object element) {
+    return Comparing.equal(getValue(), element);
+  }
 }

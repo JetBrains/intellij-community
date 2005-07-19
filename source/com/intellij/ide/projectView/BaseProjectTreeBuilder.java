@@ -105,7 +105,8 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   }
 
   private AbstractTreeNode select(AbstractTreeNode current, VirtualFile file, Object element) {
-    if (Comparing.equal(current.getValue(), element)) return current;
+
+    if (current.canRepresent(element)) return current;
 
     if (current instanceof ProjectViewNode && !(((ProjectViewNode)current).contains(file))) return null;
 
@@ -114,8 +115,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     boolean expanded = currentNode == null ? false : getTree().isExpanded(new TreePath(currentNode.getPath()));
 
     List<AbstractTreeNode> kids = getOrBuildChildren(current);
-    for (int i = 0; i < kids.size(); i++) {
-      AbstractTreeNode node = kids.get(i);
+    for (AbstractTreeNode node : kids) {
       AbstractTreeNode result = select(node, file, element);
       if (result != null) {
         currentNode = getNodeForElement(current);

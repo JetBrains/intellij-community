@@ -49,17 +49,18 @@ import com.intellij.util.Icons;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Arrays;
 
 public class PackageElementNode extends ProjectViewNode<PackageElement> {
   public PackageElementNode(final Project project,
-                          final PackageElement value,
-                          final ViewSettings viewSettings) {
+                            final PackageElement value,
+                            final ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 
   public PackageElementNode(final Project project,
-                          final Object value,
-                          final ViewSettings viewSettings) {
+                            final Object value,
+                            final ViewSettings viewSettings) {
     this(project, (PackageElement)value, viewSettings);
   }
   public boolean contains(final VirtualFile file) {
@@ -137,8 +138,8 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
 
     if (showFwName(aPackage)) {
       presentation.setPresentableText(getSettings().isAbbreviatePackageNames()
-                                ? TreeViewUtil.calcAbbreviatedPackageFQName(aPackage)
-                                : aPackage.getQualifiedName());
+                                      ? TreeViewUtil.calcAbbreviatedPackageFQName(aPackage)
+                                      : aPackage.getQualifiedName());
     }
     else {
       if (!(getParentValue() instanceof PackageElement)) {
@@ -195,5 +196,14 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
       result[i] = directory.getVirtualFile();
     }
     return result;
+  }
+
+  public boolean canRepresent(final Object element) {
+    if (super.canRepresent(element)) return true;
+    if (getValue() == null) return true;
+    if (element instanceof PsiDirectory) {
+      return Arrays.asList(getValue().getPackage().getDirectories()).contains((PsiDirectory)element);
+    }
+    return false;
   }
 }
