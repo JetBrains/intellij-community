@@ -9,6 +9,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
     return myChildren;
   }
 
+  @Nullable
   private PsiClass getSuperClass() {
     return (PsiClass)mySuperClassPointer.getElement();
   }
@@ -55,7 +57,8 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
   }
 
   public String toString() {
-    return getSuperClass().getName();
+    final PsiClass superClass = getSuperClass();
+    return superClass != null ? superClass.getName() : "<invalid>";
   }
 
   public boolean equals(Object o) {
@@ -65,14 +68,16 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
     final SuperTypeGroup superTypeGroup = (SuperTypeGroup)o;
 
     if (myOverrides != superTypeGroup.myOverrides) return false;
-    if (getSuperClass() != null ? !getSuperClass() .equals(superTypeGroup.getSuperClass() ) : superTypeGroup.getSuperClass()  != null) return false;
+    final PsiClass superClass = getSuperClass();
+    if (superClass != null ? !superClass .equals(superTypeGroup.getSuperClass() ) : superTypeGroup.getSuperClass()  != null) return false;
 
     return true;
   }
 
   public int hashCode() {
     int result;
-    result = (getSuperClass()  != null ? getSuperClass() .hashCode() : 0);
+    final PsiClass superClass = getSuperClass();
+    result = (superClass  != null ? superClass .hashCode() : 0);
     result = 29 * result + (myOverrides ? 1 : 0);
     return result;
   }
@@ -82,7 +87,8 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
   }
 
   public int getAccessLevel() {
-    return PsiUtil.getAccessLevel(getSuperClass() .getModifierList());
+    final PsiClass superClass = getSuperClass();
+    return superClass != null ? PsiUtil.getAccessLevel(superClass.getModifierList()) : PsiUtil.ACCESS_LEVEL_PUBLIC;
   }
 
   public int getSubLevel() {

@@ -29,6 +29,7 @@ public interface ItemPresentation {
   /**
    * @return location info to be used by some renderers to present additional info on item's location. Usually displayed as grayed text next to item name (like class's package)
    */
+  @Nullable
   String getLocationString();
 
   /**
