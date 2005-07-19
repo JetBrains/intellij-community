@@ -22,7 +22,10 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -272,12 +275,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     myCountOfProjectsBeingOpen++;
     myOpenProjects.add(project);
     fireProjectOpened(project);
-
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        VirtualFileManager.getInstance().refresh(false);
-      }
-    });
 
     ApplicationManager.getApplication().runProcessWithProgressSynchronously(
       new Runnable() {

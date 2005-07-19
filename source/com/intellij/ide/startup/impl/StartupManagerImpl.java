@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFileManager;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -90,6 +91,7 @@ public class StartupManagerImpl extends StartupManagerEx implements ProjectCompo
   public void runPostStartupActivities() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     runActivities(myPostStartupActivities);
+    VirtualFileManager.getInstance().refresh(true);
   }
 
   private void runActivities(final List<Runnable> activities) {
