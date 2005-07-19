@@ -186,8 +186,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     }
 
     synchronized (LOCK) {
-      for (int i = 0; i < myRoots.size(); i++) {
-        VirtualFile root = myRoots.get(i);
+      for (VirtualFile root : myRoots) {
         String rootPath = root.getPath();
         if (!FileUtil.startsWith(path, rootPath)) continue;
         if (path.length() == rootPath.length()) return root;
@@ -385,8 +384,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
           requests = normalizeRootsForRefresh();
         }
 
-        for (int i = 0; i < requests.length; i++) {
-          final WatchRequest request = requests[i];
+        for (final WatchRequest request : requests) {
           final VirtualFileImpl rootFile = (VirtualFileImpl)request.getRoot();
           final boolean recursively = request.isToWatchRecursively();
 
@@ -487,11 +485,16 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
                boolean asynchronous, final boolean isRoot) {
     if (!FileWatcher.isAvailable() || !recursive && !asynchronous) { // We're unable to definitely refresh syncronously by means of file watcher.
       ((VirtualFileImpl)file).refreshInternal(recursive, worker, modalityState, false);
+      if (!recursive && isRoot && ((VirtualFileImpl)file).areChildrenCached()) {
+        final VirtualFile[] children = file.getChildren();
+        for (VirtualFile child : children) {
+          ((VirtualFileImpl)child).refreshInternal(false, worker, modalityState, false);
+        }
+      }
     }
     else {
       synchronized (LOCK) {
-        for (int i = 0; i < myFilesToWatchManual.size(); i++) {
-          VirtualFile fileToWatch = myFilesToWatchManual.get(i);
+        for (VirtualFile fileToWatch : myFilesToWatchManual) {
           if (VfsUtil.isAncestor(fileToWatch, file, false)) {
             ((VirtualFileImpl)file).refreshInternal(recursive, worker, modalityState, false);
             return;
@@ -539,8 +542,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
       }
       Runnable action = new Runnable() {
         public void run() {
-          for (int i = 0; i < dirtyFiles.length; i++) {
-            String path = dirtyFiles[i];
+          for (String path : dirtyFiles) {
             path = path.replace(File.separatorChar, '/');
             VirtualFile file = findFileByPath(path, false);
             if (file != null) {
@@ -562,8 +564,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
       }
       Runnable action1 = new Runnable() {
         public void run() {
-          for (int i = 0; i < deletedFiles.length; i++) {
-            String path = deletedFiles[i];
+          for (String path : deletedFiles) {
             path = path.replace(File.separatorChar, '/');
             VirtualFile file = findFileByPath(path, false);
             if (file != null) {
