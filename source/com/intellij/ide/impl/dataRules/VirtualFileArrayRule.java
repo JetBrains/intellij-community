@@ -27,50 +27,49 @@ public class VirtualFileArrayRule implements GetDataRule {
   public Object getData(final DataProvider dataProvider) {
     // Try to detect multiselection.
 
-    Project project = (Project)dataProvider.getData(DataConstants.PROJECT_CONTEXT);
+    final Project project = (Project)dataProvider.getData(DataConstants.PROJECT_CONTEXT);
     if (project != null) {
       return ProjectRootManager.getInstance(project).getContentRoots();
     }
 
-    Module[] selectedModules = (Module[])dataProvider.getData(DataConstants.MODULE_CONTEXT_ARRAY);
+    final Module[] selectedModules = (Module[])dataProvider.getData(DataConstants.MODULE_CONTEXT_ARRAY);
     if ((selectedModules != null) && (selectedModules.length > 0)) {
       return getFilesFromModules(selectedModules);
     }
 
-    Module selectedModule = (Module)dataProvider.getData(DataConstants.MODULE_CONTEXT);
+    final Module selectedModule = (Module)dataProvider.getData(DataConstants.MODULE_CONTEXT);
     if ((selectedModule != null)) {
       return ModuleRootManager.getInstance(selectedModule).getContentRoots();
     }
 
-    PsiElement[] psiElements = (PsiElement[])dataProvider.getData(DataConstantsEx.PSI_ELEMENT_ARRAY);
+    final PsiElement[] psiElements = (PsiElement[])dataProvider.getData(DataConstantsEx.PSI_ELEMENT_ARRAY);
     if (psiElements != null && psiElements.length != 0) {
       return getFilesFromPsiElements(psiElements);
     }
 
+    final Usage[] usages = (Usage[])dataProvider.getData(UsageView.USAGES);
+    final UsageTarget[] usageTargets = (UsageTarget[])dataProvider.getData(UsageView.USAGE_TARGETS);
+    if (usages != null || usageTargets != null)  {
+      return getFilesFromUsages(usages, usageTargets);
+    }
+
     // VirtualFile -> VirtualFile[]
-    VirtualFile vFile = (VirtualFile)dataProvider.getData(DataConstants.VIRTUAL_FILE);
+    final VirtualFile vFile = (VirtualFile)dataProvider.getData(DataConstants.VIRTUAL_FILE);
     if (vFile != null) {
       return new VirtualFile[]{vFile};
     }
 
     //
 
-    PsiFile psiFile = (PsiFile)dataProvider.getData(DataConstants.PSI_FILE);
+    final PsiFile psiFile = (PsiFile)dataProvider.getData(DataConstants.PSI_FILE);
     if (psiFile != null && psiFile.getVirtualFile() != null) {
       return new VirtualFile[]{psiFile.getVirtualFile()};
     }
 
-    PsiElement elem = (PsiElement)dataProvider.getData(DataConstants.PSI_ELEMENT);
+    final PsiElement elem = (PsiElement)dataProvider.getData(DataConstants.PSI_ELEMENT);
     if (elem != null) {
       return getFilesFromPsiElement(elem);
     }
-
-    Usage[] usages = (Usage[])dataProvider.getData(UsageView.USAGES);
-    UsageTarget[] usageTargets = (UsageTarget[])dataProvider.getData(UsageView.USAGE_TARGETS);
-    if (usages != null || usageTargets != null)  {
-      return getFilesFromUsages(usages, usageTargets);
-    }
-
 
     return null;
   }
