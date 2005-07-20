@@ -12,10 +12,8 @@ import com.intellij.ui.*;
 import com.intellij.ui.dualView.TreeTableView;
 import com.intellij.util.ui.treetable.TreeTable;
 import com.intellij.util.ui.treetable.TreeTableModel;
-import com.intellij.util.ui.treetable.TreeTable;
 import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.ColumnInfo;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -29,18 +27,14 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
-/**
- *
- */
 class TemplateListPanel extends JPanel {
 
   private TreeTable myTreeTable;
-  private JButton myAddButton;
   private JButton myCopyButton;
   private JButton myEditButton;
   private JButton myRemoveButton;
   private Editor myEditor;
-  private SortedMap myTemplates = new TreeMap();
+  private SortedMap<TemplateKey,TemplateImpl> myTemplates = new TreeMap<TemplateKey, TemplateImpl>();
   private JComboBox myExpandByCombo;
   private boolean isModified = false;
   private static final String SPACE = "Space";
@@ -112,10 +106,10 @@ class TemplateListPanel extends JPanel {
 
   private TemplateImpl[] getTemplates() {
     TemplateImpl[] newTemplates = new TemplateImpl[myTemplates.size()];
-    Iterator iterator = myTemplates.keySet().iterator();
+    Iterator<TemplateKey> iterator = myTemplates.keySet().iterator();
     int i = 0;
     while (iterator.hasNext()) {
-      newTemplates[i] = (TemplateImpl)myTemplates.get(iterator.next());
+      newTemplates[i] = myTemplates.get(iterator.next());
       i++;
     }
     return newTemplates;
@@ -136,10 +130,10 @@ class TemplateListPanel extends JPanel {
     gbConstraints.fill = GridBagConstraints.HORIZONTAL;
     gbConstraints.insets = new Insets(0, 0, 4, 0);
 
-    myAddButton = new JButton("Add...");
-    myAddButton.setMnemonic('A');
-    myAddButton.setMargin(new Insets(2, 4, 2, 4));
-    tableButtonsPanel.add(myAddButton, gbConstraints);
+    final JButton addButton = new JButton("Add...");
+    addButton.setMnemonic('A');
+    addButton.setMargin(new Insets(2, 4, 2, 4));
+    tableButtonsPanel.add(addButton, gbConstraints);
     myCopyButton = new JButton("Copy...");
     myCopyButton.setEnabled(false);
     myCopyButton.setMnemonic('C');
@@ -171,7 +165,7 @@ class TemplateListPanel extends JPanel {
 
     optionsPanel.add(textPanel, BorderLayout.SOUTH);
 
-    myAddButton.addActionListener(
+    addButton.addActionListener(
       new ActionListener() {
         public void actionPerformed(ActionEvent event) {
           addRow();
@@ -248,7 +242,7 @@ class TemplateListPanel extends JPanel {
     TemplateKey templateKey = getTemplateKey(selected);
     if (templateKey == null) return;
 
-    TemplateImpl template = (TemplateImpl)myTemplates.get(templateKey);
+    TemplateImpl template = myTemplates.get(templateKey);
     EditTemplateDialog dialog = new EditTemplateDialog(this, "Edit Live Template", template, getTemplates(),
                                                        (String)myExpandByCombo.getSelectedItem());
     dialog.show();
@@ -285,7 +279,7 @@ class TemplateListPanel extends JPanel {
 
     TemplateKey templateKey = getTemplateKey(selected);
     LOG.assertTrue(templateKey != null);
-    TemplateImpl template = ((TemplateImpl)myTemplates.get(templateKey)).copy();
+    TemplateImpl template = (myTemplates.get(templateKey)).copy();
     EditTemplateDialog dialog = new EditTemplateDialog(this, "Copy Live Template", template, getTemplates(),
                                                        (String)myExpandByCombo.getSelectedItem());
     dialog.show();
@@ -416,7 +410,7 @@ class TemplateListPanel extends JPanel {
             else {
               TemplateKey templateKey = getTemplateKey(selected);
               if (templateKey != null) {
-                TemplateImpl template = (TemplateImpl)myTemplates.get(templateKey);
+                TemplateImpl template = myTemplates.get(templateKey);
                 String text = template.getString();
                 myEditor.getDocument().replaceString(0, myEditor.getDocument().getTextLength(), text);
                 TemplateEditorUtil.setHighlighter(myEditor, template.getTemplateContext());
@@ -529,8 +523,8 @@ class TemplateListPanel extends JPanel {
 
     DefaultMutableTreeNode nodeToSelect = null;
     for (Map.Entry<String, List<TemplateImpl>> entry : groups.entrySet()) {
-      String group = (String)entry.getKey();
-      List groupTemplates = (List)entry.getValue();
+      String group = entry.getKey();
+      List<TemplateImpl> groupTemplates = entry.getValue();
       DefaultMutableTreeNode groupNode = new DefaultMutableTreeNode(group);
       for (final Object groupTemplate : groupTemplates) {
         TemplateImpl template = (TemplateImpl)groupTemplate;
@@ -576,7 +570,7 @@ class TemplateListPanel extends JPanel {
         TemplateSettings templateSettings = TemplateSettings.getInstance();
         TemplateKey templateKey = getTemplateKey(selected);
         if (templateKey != null) {
-          TemplateImpl template = (TemplateImpl)myTemplates.get(templateKey);
+          TemplateImpl template = myTemplates.get(templateKey);
           if (template != null) {
             templateSettings.setLastSelectedTemplateKey(template.getKey());
           }

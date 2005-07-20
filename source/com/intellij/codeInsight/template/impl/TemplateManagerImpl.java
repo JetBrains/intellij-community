@@ -19,12 +19,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.Nullable;
 
 public class TemplateManagerImpl extends TemplateManager implements ProjectComponent {
   protected Project myProject;
   private EditorFactoryListener myEditorFactoryListener;
 
-  private static final Key TEMPLATE_STATE_KEY = Key.create("TEMPLATE_STATE_KEY");
+  private static final Key<TemplateState> TEMPLATE_STATE_KEY = Key.create("TEMPLATE_STATE_KEY");
 
   public TemplateManagerImpl(Project project) {
     myProject = project;
@@ -62,7 +63,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   }
 
   public static TemplateState getTemplateState(Editor editor) {
-    return (TemplateState) editor.getUserData(TEMPLATE_STATE_KEY);
+    return editor.getUserData(TEMPLATE_STATE_KEY);
   }
 
   private TemplateState initTemplateState(final Editor editor) {
@@ -228,19 +229,25 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     if (fileType == StdFileTypes.HTML) {
       return TemplateContext.HTML_CONTEXT;
     }
-    if (fileType == StdFileTypes.PLAIN_TEXT) {
-      return TemplateContext.OTHER_CONTEXT;
+
+    if (fileType == StdFileTypes.JSP || fileType == StdFileTypes.JSPX) {
+      return TemplateContext.JSP_CONTEXT;
     }
-    PsiElement element = file.findElementAt(offset);
-    if (isInComment(element)) {
-      return TemplateContext.JAVA_COMMENT_CONTEXT;
-    }
-    if (element instanceof PsiJavaToken) {
-      if (((PsiJavaToken)element).getTokenType() == JavaTokenType.STRING_LITERAL) {
-        return TemplateContext.JAVA_STRING_CONTEXT;
+
+    if (fileType == StdFileTypes.JAVA) {
+      PsiElement element = file.findElementAt(offset);
+      if (isInComment(element)) {
+        return TemplateContext.JAVA_COMMENT_CONTEXT;
       }
+      if (element instanceof PsiJavaToken) {
+        if (((PsiJavaToken)element).getTokenType() == JavaTokenType.STRING_LITERAL) {
+          return TemplateContext.JAVA_STRING_CONTEXT;
+        }
+      }
+      return TemplateContext.JAVA_CODE_CONTEXT;
     }
-    return TemplateContext.JAVA_CODE_CONTEXT;
+
+    return TemplateContext.OTHER_CONTEXT;
   }
 
   private boolean isInComment(PsiElement element) {
@@ -257,6 +264,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     return "TemplateManager";
   }
 
+  @Nullable
   public Template getActiveTemplate(Editor editor) {
     final TemplateState templateState = getTemplateState(editor);
     return templateState != null ? templateState.getTemplate() : null;

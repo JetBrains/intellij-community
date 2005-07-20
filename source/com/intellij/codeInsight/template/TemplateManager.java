@@ -4,6 +4,7 @@ package com.intellij.codeInsight.template;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class TemplateManager {
   public static TemplateManager getInstance(Project project) {
@@ -24,5 +25,6 @@ public abstract class TemplateManager {
 
   public abstract Template createTemplate(String key, String group, String text);
 
+  @Nullable
   public abstract Template getActiveTemplate(Editor editor);
 }

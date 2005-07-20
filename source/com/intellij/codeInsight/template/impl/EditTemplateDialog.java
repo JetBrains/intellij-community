@@ -31,7 +31,7 @@ public class EditTemplateDialog extends DialogWrapper {
   private final JTextField myDescription;
   private final ComboBox myGroupCombo;
   private final Editor myTemplateEditor;
-  private ArrayList myVariables = new ArrayList();
+  private ArrayList<Variable> myVariables = new ArrayList<Variable>();
 
   private JComboBox myExpandByCombo;
   private String myDefaultShortcutItem;
@@ -103,15 +103,14 @@ public class EditTemplateDialog extends DialogWrapper {
 
     JPanel panel1 = new JPanel();
     panel1.setBorder(IdeBorderFactory.createTitledBorder("Template text"));
-    JPanel textPanel = panel1;
-    textPanel.setPreferredSize(new Dimension(500, 160));
-    textPanel.setMinimumSize(new Dimension(500, 160));
-    textPanel.setLayout(new BorderLayout());
+    panel1.setPreferredSize(new Dimension(500, 160));
+    panel1.setMinimumSize(new Dimension(500, 160));
+    panel1.setLayout(new BorderLayout());
     gbConstraints.weightx = 1;
     gbConstraints.weighty = 1;
     gbConstraints.gridy++;
-    textPanel.add(myTemplateEditor.getComponent(), BorderLayout.CENTER);
-    panel.add(textPanel, gbConstraints);
+    panel1.add(myTemplateEditor.getComponent(), BorderLayout.CENTER);
+    panel.add(panel1, gbConstraints);
 
     gbConstraints.weighty = 0;
     gbConstraints.gridy++;
@@ -202,9 +201,8 @@ public class EditTemplateDialog extends DialogWrapper {
   }
 
   private JPanel createTemplateOptionsPanel() {
-    JPanel panel1 = new JPanel();
-    panel1.setBorder(IdeBorderFactory.createTitledBorder("Options"));
-    JPanel panel = panel1;
+    JPanel panel = new JPanel();
+    panel.setBorder(IdeBorderFactory.createTitledBorder("Options"));
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.fill = GridBagConstraints.BOTH;
@@ -252,9 +250,8 @@ public class EditTemplateDialog extends DialogWrapper {
 
     };
 
-    JPanel panel1 = new JPanel();
-    panel1.setBorder(IdeBorderFactory.createTitledBorder("Context"));
-    JPanel panel = panel1;
+    JPanel panel = new JPanel();
+    panel.setBorder(IdeBorderFactory.createTitledBorder("Context"));
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.fill = GridBagConstraints.BOTH;
@@ -412,7 +409,7 @@ public class EditTemplateDialog extends DialogWrapper {
 
     UndoManager.getGlobalInstance().clearUndoRedoQueue(TextEditorProvider.getInstance().getTextEditor(myTemplateEditor));
 
-    Set groups = new TreeSet();
+    Set<String> groups = new TreeSet<String>();
     for (TemplateImpl template : myTemplates) {
       groups.add(template.getGroupName());
     }
@@ -503,12 +500,12 @@ public class EditTemplateDialog extends DialogWrapper {
 
   private void editVariables() {
     updateVariablesByTemplateText();
-    ArrayList newVariables = new ArrayList();
+    ArrayList<Variable> newVariables = new ArrayList<Variable>();
 
     for (Object myVariable : myVariables) {
       Variable variable = (Variable)myVariable;
       if (!TemplateImpl.INTERNAL_VARS_SET.contains(variable.getName())) {
-        newVariables.add(variable.clone());
+        newVariables.add((Variable)variable.clone());
       }
     }
 
@@ -520,17 +517,17 @@ public class EditTemplateDialog extends DialogWrapper {
 
   private void updateVariablesByTemplateText() {
 
-    ArrayList parsedVariables = new ArrayList();
+    ArrayList<Variable> parsedVariables = new ArrayList<Variable>();
     parseVariables(myTemplateEditor.getDocument().getCharsSequence(), parsedVariables);
 
-    Hashtable oldVariableNames = new Hashtable();
+    Hashtable<String,String> oldVariableNames = new Hashtable<String, String>();
     for (Object myVariable : myVariables) {
       Variable oldVariable = (Variable)myVariable;
       String name = oldVariable.getName();
       oldVariableNames.put(name, name);
     }
 
-    Hashtable newVariableNames = new Hashtable();
+    Hashtable<String,String> newVariableNames = new Hashtable<String, String>();
     for (Object parsedVariable : parsedVariables) {
       Variable newVariable = (Variable)parsedVariable;
       String name = newVariable.getName();
@@ -539,12 +536,12 @@ public class EditTemplateDialog extends DialogWrapper {
 
     int oldVariableNumber = 0;
     for(int i = 0; i < parsedVariables.size(); i++){
-      Variable variable = (Variable)parsedVariables.get(i);
+      Variable variable = parsedVariables.get(i);
       String name = variable.getName();
       if(oldVariableNames.get(name) != null) {
         Variable oldVariable = null;
         for(;oldVariableNumber<myVariables.size(); oldVariableNumber++) {
-          oldVariable = (Variable)myVariables.get(oldVariableNumber);
+          oldVariable = myVariables.get(oldVariableNumber);
           if(newVariableNames.get(oldVariable.getName()) != null) {
             break;
           }
