@@ -149,7 +149,7 @@ public class EditorOptionsPanel {
     }));
     myEditorTabPlacement.setRenderer(new MyTabsPlacementComboBoxRenderer());
     myTabbedPaneWrapper = new TabbedPaneWrapper();
-    myTabbedPaneWrapper.addTab("Behaviour", myBehaviourPanel);
+    myTabbedPaneWrapper.addTab("Behavior", myBehaviourPanel);
     myTabbedPaneWrapper.addTab("Appearance", myAppearancePanel);
   }
 

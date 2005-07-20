@@ -13,7 +13,7 @@
       <grid id="b689b" binding="myBehaviourPanel" row-count="6" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <tabbedpane title="Behaviour"/>
+          <tabbedpane title="Behavior"/>
         </constraints>
         <properties/>
         <border type="none"/>
@@ -650,7 +650,7 @@
               </component>
               <component id="af43a" class="javax.swing.JCheckBox" binding="myCbCollapseFileHeader">
                 <constraints>
-                  <xy x="11" y="79" width="90" height="22"/>
+                  <xy x="11" y="72" width="90" height="22"/>
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
@@ -661,7 +661,7 @@
               </component>
               <component id="ba41d" class="javax.swing.JCheckBox" binding="myCbCollapseImports">
                 <constraints>
-                  <xy x="11" y="113" width="74" height="22"/>
+                  <xy x="11" y="99" width="74" height="22"/>
                   <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
@@ -672,7 +672,7 @@
               </component>
               <component id="820d5" class="javax.swing.JCheckBox" binding="myCbCollapseJavadocComments">
                 <constraints>
-                  <xy x="11" y="140" width="129" height="22"/>
+                  <xy x="11" y="126" width="129" height="22"/>
                   <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
@@ -682,7 +682,7 @@
               </component>
               <component id="827c7" class="javax.swing.JCheckBox" binding="myCbCollapseMethodBodies">
                 <constraints>
-                  <xy x="11" y="167" width="107" height="22"/>
+                  <xy x="11" y="153" width="107" height="22"/>
                   <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
@@ -692,7 +692,7 @@
               </component>
               <component id="44b56" class="javax.swing.JCheckBox" binding="myCbCollapseAccessors">
                 <constraints>
-                  <xy x="163" y="72" width="120" height="36"/>
+                  <xy x="163" y="72" width="120" height="22"/>
                   <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
@@ -702,7 +702,7 @@
               </component>
               <component id="41ff8" class="javax.swing.JCheckBox" binding="myCbCollapseInnerClasses">
                 <constraints>
-                  <xy x="163" y="113" width="85" height="22"/>
+                  <xy x="163" y="99" width="85" height="22"/>
                   <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
@@ -712,7 +712,7 @@
               </component>
               <component id="16c6f" class="javax.swing.JCheckBox" binding="myCbCollapseAnonymousClasses">
                 <constraints>
-                  <xy x="163" y="140" width="115" height="22"/>
+                  <xy x="163" y="126" width="115" height="22"/>
                   <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
@@ -722,7 +722,7 @@
               </component>
               <component id="1f32f" class="javax.swing.JCheckBox" binding="myCbCollapseXMLTags">
                 <constraints>
-                  <xy x="163" y="167" width="65" height="22"/>
+                  <xy x="163" y="153" width="65" height="22"/>
                   <grid row="5" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
@@ -732,7 +732,7 @@
               </component>
               <vspacer id="d4905">
                 <constraints>
-                  <xy x="76" y="189" width="11" height="37"/>
+                  <xy x="76" y="175" width="11" height="51"/>
                   <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
                 </constraints>
               </vspacer>
@@ -741,7 +741,7 @@
           <grid id="58a7a" row-count="8" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="123" y="119" width="264" height="237"/>
+              <xy x="0" y="0" width="264" height="237"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3"/>
             </constraints>
             <properties/>
