@@ -53,7 +53,7 @@ public class XMLLanguage extends Language {
     this("XML", "text/xml");
   }
 
-  protected XMLLanguage(String name, String mime) {
+  protected XMLLanguage(String name, String... mime) {
     super(name, mime);
     myFormattingModelBuilder = new FormattingModelBuilder() {
       @NotNull

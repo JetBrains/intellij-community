@@ -21,7 +21,7 @@ import com.intellij.psi.tree.IElementType;
  */
 public class DTDLanguage extends Language {
   public DTDLanguage() {
-    super("DTD", "text/dtd");
+    super("DTD", "text/dtd", "text/x-dtd");
   }
 
   public SyntaxHighlighter getSyntaxHighlighter(Project project) {

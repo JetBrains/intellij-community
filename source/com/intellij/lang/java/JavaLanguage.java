@@ -44,7 +44,7 @@ public class JavaLanguage extends Language {
   };
 
   public JavaLanguage() {
-    super("JAVA", "text/java");
+    super("JAVA", "text/java", "application/x-java", "text/x-java");
     myFormattingModelBuilder = new FormattingModelBuilder() {
       @NotNull
       public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
