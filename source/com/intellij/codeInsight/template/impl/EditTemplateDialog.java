@@ -2,13 +2,16 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.undo.DocumentReference;
+import com.intellij.openapi.command.undo.DocumentReferenceByDocument;
+import com.intellij.openapi.command.undo.NonUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -21,7 +24,10 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Hashtable;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class EditTemplateDialog extends DialogWrapper {
   private TemplateImpl[] myTemplates;
@@ -398,7 +404,17 @@ public class EditTemplateDialog extends DialogWrapper {
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
-              myTemplateEditor.getDocument().replaceString(0, myTemplateEditor.getDocument().getTextLength(), myTemplate.getString());
+              final Document document = myTemplateEditor.getDocument();
+              document.replaceString(0, document.getTextLength(), myTemplate.getString());
+              UndoManager.getGlobalInstance().undoableActionPerformed(new NonUndoableAction() {
+                public DocumentReference[] getAffectedDocuments() {
+                  return new DocumentReference[] {DocumentReferenceByDocument.createDocumentReference(document)};
+                }
+
+                public boolean isComplex() {
+                  return false;
+                }
+              });
             }
           });
         }
@@ -406,8 +422,6 @@ public class EditTemplateDialog extends DialogWrapper {
       "",
       null
     );
-
-    UndoManager.getGlobalInstance().clearUndoRedoQueue(TextEditorProvider.getInstance().getTextEditor(myTemplateEditor));
 
     Set<String> groups = new TreeSet<String>();
     for (TemplateImpl template : myTemplates) {

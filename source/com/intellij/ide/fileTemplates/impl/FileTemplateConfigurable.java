@@ -2,9 +2,15 @@ package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.codeInsight.template.impl.TemplateColors;
 import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.lexer.*;
+import com.intellij.lexer.CompositeLexer;
+import com.intellij.lexer.FlexAdapter;
+import com.intellij.lexer.Lexer;
+import com.intellij.lexer.MergingLexerAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.undo.DocumentReference;
+import com.intellij.openapi.command.undo.DocumentReferenceByDocument;
+import com.intellij.openapi.command.undo.NonUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -19,7 +25,6 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -296,14 +301,22 @@ public class FileTemplateConfigurable implements Configurable {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            myTemplateEditor.getDocument().replaceString(0, myTemplateEditor.getDocument().getTextLength(), text);
+            final Document document = myTemplateEditor.getDocument();
+            document.replaceString(0, document.getTextLength(), text);
+            UndoManager.getGlobalInstance().undoableActionPerformed(new NonUndoableAction() {
+              public DocumentReference[] getAffectedDocuments() {
+                return new DocumentReference[] {DocumentReferenceByDocument.createDocumentReference(document)};
+              }
+
+              public boolean isComplex() {
+                return false;
+              }
+            });
           }
         });
       }
-    },
-                                                  "",
-                                                  null);
-    UndoManager.getGlobalInstance().clearUndoRedoQueue(TextEditorProvider.getInstance().getTextEditor(myTemplateEditor));
+    }, "", null);
+
     myNameField.setEditable((myTemplate != null) && (!myTemplate.isDefault()));
     myExtensionField.setEditable((myTemplate != null) && (!myTemplate.isDefault()));
     myModified = false;
