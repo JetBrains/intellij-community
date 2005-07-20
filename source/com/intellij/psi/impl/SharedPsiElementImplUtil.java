@@ -106,7 +106,7 @@ public class SharedPsiElementImplUtil {
   //Hack, but no better idea comes to my mind
   public static PsiElement findAndDecodeFirstChildAfterAddition(TreeElement firstAdded, final TreeElement toFind) {
     final PsiElement psi = toFind.getPsi();
-    if(psi.isValid()) return ChangeUtil.decodeInformation(toFind).getPsi();
+    if(psi.isValid() && psi.getContainingFile() == firstAdded.getPsi().getContainingFile()) return ChangeUtil.decodeInformation(toFind).getPsi();
 
     final IElementType elementType = toFind.getElementType();
     while(firstAdded != null) {
