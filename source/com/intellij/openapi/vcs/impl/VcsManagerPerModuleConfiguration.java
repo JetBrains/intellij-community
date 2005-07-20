@@ -35,7 +35,6 @@ public class VcsManagerPerModuleConfiguration implements JDOMExternalizable, Mod
   public void initComponent() { }
 
   public String getComponentName() {
-    //return "VcsManagerPerModuleConfiguration";
     return "VcsManagerConfiguration";
   }
 
@@ -44,9 +43,10 @@ public class VcsManagerPerModuleConfiguration implements JDOMExternalizable, Mod
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    if ("".equals(ACTIVE_VCS_NAME) && USE_PROJECT_VCS) {
+    if (!USE_PROJECT_VCS) {
+      DefaultJDOMExternalizer.writeExternal(this, element);
+    } else {
       throw new WriteExternalException();
     }
-    DefaultJDOMExternalizer.writeExternal(this, element);
   }
 }

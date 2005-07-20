@@ -136,6 +136,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
                                                    final Wrap childWrap) {
     final SyntheticCodeBlock result = new SyntheticCodeBlock(localResult, childAlignment, getSettings(), indent, childWrap);
     result.setChildAttributes(new ChildAttributes(Indent.getNormalIndent(), null));
+    result.setIsIncomplete(true);
     return result;
   }
 

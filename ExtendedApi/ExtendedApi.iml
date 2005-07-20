@@ -16,10 +16,6 @@
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntryProperties />
   </component>
-  <component name="VcsManagerConfiguration">
-    <option name="ACTIVE_VCS_NAME" value="Perforce" />
-    <option name="USE_PROJECT_VCS" value="true" />
-  </component>
   <component name="copyright">
     <option name="body" value="/*&#10; * Copyright (c) $today.year JetBrains s.r.o. All Rights Reserved.&#10; */" />
     <option name="location" value="1" />

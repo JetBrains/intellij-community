@@ -24,6 +24,7 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
   private final TextRange myTextRange;
 
   private ChildAttributes myChildAttributes;
+  private boolean myIsIncomplete = false;
 
   public SyntheticCodeBlock(final List<Block> subBlocks,
                             final Alignment alignment,
@@ -42,10 +43,12 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
                                 mySubBlocks.get(mySubBlocks.size() - 1).getTextRange().getEndOffset());
   }
 
+  @NotNull
   public TextRange getTextRange() {
     return myTextRange;
   }
 
+  @NotNull
   public List<Block> getSubBlocks() {
     return mySubBlocks;
   }
@@ -90,10 +93,15 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
   }
 
   public boolean isIncomplete() {
+    if (myIsIncomplete) return true;
     return getSubBlocks().get(getSubBlocks().size() - 1).isIncomplete();
   }
 
   public boolean isLeaf() {
     return false;
+  }
+
+  public void setIsIncomplete(final boolean isIncomplete) {
+    myIsIncomplete = isIncomplete;
   }
 }
