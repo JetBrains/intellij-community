@@ -92,7 +92,9 @@ public class CodeBlockBlock extends AbstractJavaBlock {
           return child;
         }
       }
-      child = child.getTreeNext();
+      if (child != null) {
+        child = child.getTreeNext();
+      }
     }
     result.add(createCodeBlockBlock(localResult, indent));
     return null;
