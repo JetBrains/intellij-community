@@ -109,7 +109,8 @@ public class ThreadDescriptorImpl extends NodeDescriptorImpl implements ThreadDe
     }
     return true;
     /*
-    [jeka] with lots of threads calling threadProxy.frameCount() in advance while setting context can be costly....
+    // [jeka] with lots of threads calling threadProxy.frameCount() in advance while setting context can be costly....
+    // see IDEADEV-2020
     try {
       return threadProxy.frameCount() > 0;
     }
