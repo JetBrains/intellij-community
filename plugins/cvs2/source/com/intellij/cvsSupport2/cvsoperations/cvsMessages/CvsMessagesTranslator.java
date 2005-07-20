@@ -17,6 +17,9 @@ import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
 
 import java.io.File;
 import java.util.Map;
+import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.regex.Pattern;
 
 /**
@@ -80,6 +83,8 @@ public class CvsMessagesTranslator implements
   private final String myCvsRoot;
   private final Map<File, Object> myFileToInfoMap = new HashMap<File, Object>();
 
+  private final Collection<String> myPreviousErrorMessages = new ArrayList<String>();
+
   public CvsMessagesTranslator(CvsMessagesListener listener,
                                ICvsFileSystem cvsFileSystem,
                                UpdatedFilesManager mergedFilesCollector,
@@ -127,12 +132,23 @@ public class CvsMessagesTranslator implements
 
     CvsMessagePattern errorMessagePattern = getErrorMessagePattern(message, ERRORS_PATTERNS);
     if (errorMessagePattern != null) {
+      if (message.indexOf("correct above errors first") >= 0) {
+        for (String s : myPreviousErrorMessages) {
+          myListener.addError(s, null, myCvsFileSystem, myCvsRoot);
+        }
+        myPreviousErrorMessages.clear();
+      }
       myListener.addError(message, errorMessagePattern.getRelativeFileName(message), myCvsFileSystem, myCvsRoot);
       return;
     }
     CvsMessagePattern warningMessagePattern = getErrorMessagePattern(message, WARNINGS_PATTERNS);
     if (warningMessagePattern != null) {
       myListener.addWarning(message, warningMessagePattern.getRelativeFileName(message), myCvsFileSystem, myCvsRoot);
+      return;
+    }
+
+    if (error) {
+      myPreviousErrorMessages.add(message);
     }
 
   }
