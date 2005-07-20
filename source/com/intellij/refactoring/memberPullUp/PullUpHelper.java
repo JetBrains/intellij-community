@@ -57,19 +57,18 @@ public class PullUpHelper {
     myMembersAfterMove = new HashSet<PsiMember>();
 
     // build aux sets
-    for (int idx = 0; idx < myMembersToMove.length; idx++) {
-      PsiMember member = myMembersToMove[idx].getMember();
-      movedMembers.add(member);
+    for (MemberInfo info : myMembersToMove) {
+      movedMembers.add(info.getMember());
     }
 
     // correct private member visibility
-    for (int idx = 0; idx < myMembersToMove.length; idx++) {
-      MemberInfo info = myMembersToMove[idx];
+    for (MemberInfo info : myMembersToMove) {
       if (info.getMember() instanceof PsiClass && info.getOverrides() != null) continue;
       PsiModifierListOwner modifierListOwner = info.getMember();
       if (myIsTargetInterface) {
         modifierListOwner.getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
-      } else if (modifierListOwner.hasModifierProperty(PsiModifier.PRIVATE)) {
+      }
+      else if (modifierListOwner.hasModifierProperty(PsiModifier.PRIVATE)) {
         if (info.isToAbstract() || willBeUsedInSubclass(modifierListOwner, movedMembers, myTargetSuperClass, mySourceClass)) {
           modifierListOwner.getModifierList().setModifierProperty(PsiModifier.PROTECTED, true);
         }
@@ -78,13 +77,12 @@ public class PullUpHelper {
     }
 
     // do actual move
-    for (int idx = 0; idx < myMembersToMove.length; idx++) {
-      MemberInfo info = myMembersToMove[idx];
+    for (MemberInfo info : myMembersToMove) {
       if (info.getMember() instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod) info.getMember();
+        PsiMethod method = (PsiMethod)info.getMember();
         final boolean isOriginalMethodAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
         if (myIsTargetInterface || info.isToAbstract()) {
-          PsiMethod methodCopy = (PsiMethod) method.copy();
+          PsiMethod methodCopy = (PsiMethod)method.copy();
           ChangeContextUtil.clearContextInfo(method);
           RefactoringUtil.abstractizeMethod(myTargetSuperClass, methodCopy);
 
@@ -95,7 +93,8 @@ public class PullUpHelper {
           if (isOriginalMethodAbstract) {
             method.delete();
           }
-        } else {
+        }
+        else {
           if (isOriginalMethodAbstract) {
             myTargetSuperClass.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, true);
           }
@@ -103,14 +102,16 @@ public class PullUpHelper {
           final PsiMethod superClassMethod = myTargetSuperClass.findMethodBySignature(method, false);
           if (superClassMethod != null && superClassMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
             superClassMethod.replace(method);
-          } else {
+          }
+          else {
             final PsiMember movedElement = (PsiMember)myTargetSuperClass.add(method);
             myMembersAfterMove.add(movedElement);
           }
           method.delete();
         }
-      } else if (info.getMember() instanceof PsiField) {
-        PsiField field = (PsiField) info.getMember();
+      }
+      else if (info.getMember() instanceof PsiField) {
+        PsiField field = (PsiField)info.getMember();
         field.normalizeDeclaration();
         fixReferencesToStatic(field, movedMembers);
         if (myIsTargetInterface) {
@@ -119,24 +120,27 @@ public class PullUpHelper {
         final PsiMember movedElement = (PsiMember)myTargetSuperClass.add(field);
         myMembersAfterMove.add(movedElement);
         field.delete();
-      } else if (info.getMember() instanceof PsiClass) {
-        PsiClass aClass = (PsiClass) info.getMember();
+      }
+      else if (info.getMember() instanceof PsiClass) {
+        PsiClass aClass = (PsiClass)info.getMember();
         if (Boolean.FALSE.equals(info.getOverrides())) {
           final PsiReferenceList sourceReferenceList = info.getSourceReferenceList();
           LOG.assertTrue(sourceReferenceList != null);
-          PsiJavaCodeReferenceElement ref = mySourceClass.equals(sourceReferenceList.getParent()) ? 
+          PsiJavaCodeReferenceElement ref = mySourceClass.equals(sourceReferenceList.getParent()) ?
                                             RefactoringUtil.removeFromReferenceList(sourceReferenceList, aClass) :
                                             RefactoringUtil.findReferenceToClass(sourceReferenceList, aClass);
           if (ref != null) {
             final PsiReferenceList referenceList;
             if (!myTargetSuperClass.isInterface()) {
               referenceList = myTargetSuperClass.getImplementsList();
-            } else {
+            }
+            else {
               referenceList = myTargetSuperClass.getExtendsList();
             }
             referenceList.add(ref);
           }
-        } else {
+        }
+        else {
           fixReferencesToStatic(aClass, movedMembers);
           final PsiMember movedElement = (PsiMember)myTargetSuperClass.add(aClass);
           myMembersAfterMove.add(movedElement);
@@ -146,8 +150,7 @@ public class PullUpHelper {
     }
 
     ExplicitSuperDeleter explicitSuperDeleter = new ExplicitSuperDeleter();
-    for (Iterator<PsiMember> iterator = myMembersAfterMove.iterator(); iterator.hasNext();) {
-      PsiMember element = iterator.next();
+    for (PsiMember element : myMembersAfterMove) {
       if (!(element instanceof PsiClass)) {
         element.accept(explicitSuperDeleter);
       }
@@ -161,8 +164,7 @@ public class PullUpHelper {
     LOG.assertTrue(myMembersAfterMove != null);
 
     final HashSet<PsiField> movedFields = new HashSet<PsiField>();
-    for (Iterator<PsiMember> iterator = myMembersAfterMove.iterator(); iterator.hasNext();) {
-      PsiMember member = iterator.next();
+    for (PsiMember member : myMembersAfterMove) {
       if (member instanceof PsiField) {
         movedFields.add((PsiField)member);
       }
@@ -176,8 +178,7 @@ public class PullUpHelper {
     }
 
     HashMap<PsiMethod,HashSet<PsiMethod>> constructorsToSubConstructors = buildConstructorsToSubConstructorsMap(constructors);
-    for (int i = 0; i < constructors.length; i++) {
-      PsiMethod constructor = constructors[i];
+    for (PsiMethod constructor : constructors) {
       HashSet<PsiMethod> subConstructors = constructorsToSubConstructors.get(constructor);
       tryToMoveInitializers(constructor, subConstructors, movedFields);
     }
@@ -200,12 +201,10 @@ public class PullUpHelper {
     final HashMap<PsiField, Initializer> fieldsToInitializers = new HashMap<PsiField, Initializer>();
     boolean anyFound = false;
 
-    for (Iterator<PsiField> iterator = movedFields.iterator(); iterator.hasNext();) {
-      PsiField field = iterator.next();
+    for (PsiField field : movedFields) {
       PsiExpression commonInitializer = null;
       final ArrayList<PsiElement> fieldInitializersToRemove = new ArrayList<PsiElement>();
-      for (Iterator<PsiMethod> subIterator = subConstructors.iterator(); subIterator.hasNext();) {
-        PsiMethod subConstructor = subIterator.next();
+      for (PsiMethod subConstructor : subConstructors) {
         commonInitializer = hasCommonInitializer(commonInitializer, subConstructor, field, fieldInitializersToRemove);
         if (commonInitializer == null) break;
       }
@@ -213,7 +212,7 @@ public class PullUpHelper {
         final MovedFieldsUsed visitor = new MovedFieldsUsed(movedFields);
         commonInitializer.accept(visitor);
         fieldsToInitializers.put(field, new Initializer(commonInitializer,
-                visitor.getUsedFields(), fieldInitializersToRemove));
+                                                        visitor.getUsedFields(), fieldInitializersToRemove));
         anyFound = true;
       }
     }
@@ -241,8 +240,7 @@ public class PullUpHelper {
               }
       );
 
-      for (Iterator<PsiField> iterator = unmovable.iterator(); iterator.hasNext();) {
-        PsiField psiField = iterator.next();
+      for (PsiField psiField : unmovable) {
         fieldsToInitializers.remove(psiField);
       }
     }
@@ -258,32 +256,31 @@ public class PullUpHelper {
 
     ArrayList<PsiField> initializedFields = new ArrayList<PsiField>(fieldsToInitializers.keySet());
 
-    Collections.sort(initializedFields, new Comparator() {
-      public int compare(Object o1, Object o2) {
-        Initializer i1 = fieldsToInitializers.get(o1);
-        Initializer i2 = fieldsToInitializers.get(o2);
-        if(i1.movedFieldsUsed.contains(o2)) return 1;
-        if(i2.movedFieldsUsed.contains(o1)) return -1;
+    Collections.sort(initializedFields, new Comparator<PsiField>() {
+      public int compare(PsiField field1, PsiField field2) {
+        Initializer i1 = fieldsToInitializers.get(field1);
+        Initializer i2 = fieldsToInitializers.get(field2);
+        if(i1.movedFieldsUsed.contains(field2)) return 1;
+        if(i2.movedFieldsUsed.contains(field1)) return -1;
         return 0;
       }
     });
 
-    for (Iterator iterator = initializedFields.iterator(); iterator.hasNext();) {
-      PsiField field = (PsiField) iterator.next();
-      Initializer initializer = fieldsToInitializers.get(field);
+    for (final PsiField initializedField : initializedFields) {
+      Initializer initializer = fieldsToInitializers.get(initializedField);
 
       // create assignment statement
       PsiExpressionStatement assignmentStatement =
-              (PsiExpressionStatement) factory.createStatementFromText(field.getName() + "=0;", constructor.getBody());
-      assignmentStatement = (PsiExpressionStatement) CodeStyleManager.getInstance(myManager.getProject()).reformat(assignmentStatement);
-      assignmentStatement = (PsiExpressionStatement) constructor.getBody().add(assignmentStatement);
-      PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression) assignmentStatement.getExpression();
+        (PsiExpressionStatement)factory.createStatementFromText(initializedField.getName() + "=0;", constructor.getBody());
+      assignmentStatement = (PsiExpressionStatement)CodeStyleManager.getInstance(myManager.getProject()).reformat(assignmentStatement);
+      assignmentStatement = (PsiExpressionStatement)constructor.getBody().add(assignmentStatement);
+      PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)assignmentStatement.getExpression();
 
       // check whether we really assign a new field
-      PsiReferenceExpression fieldRef = (PsiReferenceExpression) assignmentExpression.getLExpression();
+      PsiReferenceExpression fieldRef = (PsiReferenceExpression)assignmentExpression.getLExpression();
       PsiElement resolved = fieldRef.resolve();
-      if (resolved != field) {
-        PsiElement qualifiedRef = factory.createExpressionFromText("this." + field.getName(), fieldRef);
+      if (resolved != initializedField) {
+        PsiElement qualifiedRef = factory.createExpressionFromText("this." + initializedField.getName(), fieldRef);
         qualifiedRef = CodeStyleManager.getInstance(myManager.getProject()).reformat(qualifiedRef);
         fieldRef.replace(qualifiedRef);
       }
@@ -291,9 +288,8 @@ public class PullUpHelper {
       // add initializer
       final PsiElement newInitializer = assignmentExpression.getRExpression().replace(initializer.initializer);
       ChangeContextUtil.decodeContextInfo(newInitializer,
-              myTargetSuperClass, RefactoringUtil.createThisExpression(myManager, null));
-      for (int i = 0; i < initializer.statementsToRemove.size(); i++) {
-        PsiElement psiElement = initializer.statementsToRemove.get(i);
+                                          myTargetSuperClass, RefactoringUtil.createThisExpression(myManager, null));
+      for (PsiElement psiElement : initializer.statementsToRemove) {
         psiElement.delete();
       }
     }
@@ -313,16 +309,15 @@ public class PullUpHelper {
     //
     // There should be no usages before that initializer, and there should be
     // no write usages afterwards.
-    for (int i = 0; i < statements.length; i++) {
-      PsiStatement statement = statements[i];
+    for (PsiStatement statement : statements) {
       boolean doLookup = true;
       if (statement instanceof PsiExpressionStatement) {
-        final PsiExpression expression = ((PsiExpressionStatement) statement).getExpression();
+        final PsiExpression expression = ((PsiExpressionStatement)statement).getExpression();
         if (expression instanceof PsiAssignmentExpression) {
-          final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression) expression;
+          final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
           final PsiExpression lExpression = assignmentExpression.getLExpression();
           if (lExpression instanceof PsiReferenceExpression) {
-            final PsiReferenceExpression lRef = ((PsiReferenceExpression) lExpression);
+            final PsiReferenceExpression lRef = ((PsiReferenceExpression)lExpression);
             if (lRef.getQualifierExpression() == null || lRef.getQualifierExpression() instanceof PsiThisExpression) {
               final PsiElement resolved = lRef.resolve();
               if (resolved == field) {
@@ -334,22 +329,26 @@ public class PullUpHelper {
                     initializer.accept(visitor);
                     if (visitor.isMovable()) {
                       ChangeContextUtil.encodeContextInfo(initializer, true);
-                      PsiExpression initializerCopy = (PsiExpression) initializer.copy();
+                      PsiExpression initializerCopy = (PsiExpression)initializer.copy();
                       ChangeContextUtil.clearContextInfo(initializer);
                       statementsToRemove.add(statement);
                       commonInitializerCandidate = initializerCopy;
-                    } else {
-                      return null;
                     }
-                  } else {
-                    if (CodeInsightUtil.areExpressionsEquivalent(commonInitializer, initializer)) {
-                      statementsToRemove.add(statement);
-                      commonInitializerCandidate = commonInitializer;
-                    } else {
+                    else {
                       return null;
                     }
                   }
-                } else {
+                  else {
+                    if (CodeInsightUtil.areExpressionsEquivalent(commonInitializer, initializer)) {
+                      statementsToRemove.add(statement);
+                      commonInitializerCandidate = commonInitializer;
+                    }
+                    else {
+                      return null;
+                    }
+                  }
+                }
+                else {
                   return null;
                 }
               }
@@ -358,16 +357,15 @@ public class PullUpHelper {
         }
       }
 
-      if(doLookup) {
+      if (doLookup) {
         final PsiReference[] references =
-                myManager.getSearchHelper().findReferences(field, new LocalSearchScope(statement), false);
-        if(commonInitializerCandidate == null && references.length > 0) {
+          myManager.getSearchHelper().findReferences(field, new LocalSearchScope(statement), false);
+        if (commonInitializerCandidate == null && references.length > 0) {
           return null;
         }
 
-        for (int j = 0; j < references.length; j++) {
-          PsiReference reference = references[j];
-          if(RefactoringUtil.isAssignmentLHS(reference.getElement())) return null;
+        for (PsiReference reference : references) {
+          if (RefactoringUtil.isAssignmentLHS(reference.getElement())) return null;
         }
       }
     }
@@ -440,16 +438,14 @@ public class PullUpHelper {
 
   private HashMap<PsiMethod,HashSet<PsiMethod>> buildConstructorsToSubConstructorsMap(final PsiMethod[] constructors) {
     final com.intellij.util.containers.HashMap<PsiMethod,HashSet<PsiMethod>> constructorsToSubConstructors = new com.intellij.util.containers.HashMap<PsiMethod, HashSet<PsiMethod>>();
-    for (int i = 0; i < constructors.length; i++) {
-      PsiMethod constructor = constructors[i];
+    for (PsiMethod constructor : constructors) {
       final HashSet<PsiMethod> referencingSubConstructors = new HashSet<PsiMethod>();
       constructorsToSubConstructors.put(constructor, referencingSubConstructors);
       if (constructor != null) {
         final PsiReference[] references
-                = myManager.getSearchHelper().findReferences(constructor, new LocalSearchScope(mySourceClass), false);
+          = myManager.getSearchHelper().findReferences(constructor, new LocalSearchScope(mySourceClass), false);
         // find references
-        for (int j = 0; j < references.length; j++) {
-          PsiReference reference = references[j];
+        for (PsiReference reference : references) {
           final PsiElement element = reference.getElement();
           if (element != null && "super".equals(element.getText())) {
             PsiMethod parentMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
@@ -561,15 +557,14 @@ public class PullUpHelper {
     }
 
     private boolean shouldFixSuper(PsiMethod method) {
-      for (Iterator<PsiMember> iterator = myMembersAfterMove.iterator(); iterator.hasNext();) {
-        PsiMember element = iterator.next();
-        if(element instanceof PsiMethod) {
-          PsiMethod member = ((PsiMethod) element);
+      for (PsiMember element : myMembersAfterMove) {
+        if (element instanceof PsiMethod) {
+          PsiMethod member = ((PsiMethod)element);
           // if there is such member among moved members, super qualifier
           // should not be removed
           final PsiManager manager = method.getManager();
-          if(manager.areElementsEquivalent(member.getContainingClass(), method.getContainingClass()) &&
-             MethodSignatureUtil.areSignaturesEqual(member, method)) {
+          if (manager.areElementsEquivalent(member.getContainingClass(), method.getContainingClass()) &&
+              MethodSignatureUtil.areSignaturesEqual(member, method)) {
             return false;
           }
         }
@@ -585,13 +580,11 @@ public class PullUpHelper {
     public void fixSupers() throws IncorrectOperationException {
       final PsiElementFactory factory = myManager.getElementFactory();
       PsiThisExpression thisExpression = (PsiThisExpression) factory.createExpressionFromText("this", null);
-      for (int i = 0; i < mySupersToDelete.size(); i++) {
-        PsiExpression psiExpression = mySupersToDelete.get(i);
+      for (PsiExpression psiExpression : mySupersToDelete) {
         psiExpression.delete();
       }
 
-      for (int i = 0; i < mySupersToChangeToThis.size(); i++) {
-        PsiSuperExpression psiSuperExpression = mySupersToChangeToThis.get(i);
+      for (PsiSuperExpression psiSuperExpression : mySupersToChangeToThis) {
         psiSuperExpression.replace(thisExpression);
       }
     }
@@ -600,9 +593,9 @@ public class PullUpHelper {
   private static boolean willBeUsedInSubclass(PsiElement member, Set<PsiMember> movedMembers, PsiClass superclass, PsiClass subclass) {
     PsiSearchHelper helper = member.getManager().getSearchHelper();
     PsiReference[] refs = helper.findReferences(member, new LocalSearchScope(subclass), false);
-    for (int idx = 0; idx < refs.length; idx++) {
-      PsiElement ref = refs[idx].getElement();
-      if (!RefactoringHierarchyUtil.willBeInTargetClass(ref, movedMembers, superclass, false)) {
+    for (PsiReference ref : refs) {
+      PsiElement element = ref.getElement();
+      if (!RefactoringHierarchyUtil.willBeInTargetClass(element, movedMembers, superclass, false)) {
         return true;
       }
     }
@@ -610,12 +603,11 @@ public class PullUpHelper {
   }
 
   public static boolean checkedInterfacesContain(MemberInfo[] memberInfos, PsiMethod psiMethod) {
-    for (int i = 0; i < memberInfos.length; i++) {
-      MemberInfo memberInfo = memberInfos[i];
+    for (MemberInfo memberInfo : memberInfos) {
       if (memberInfo.isChecked() &&
           memberInfo.getMember() instanceof PsiClass &&
           Boolean.FALSE.equals(memberInfo.getOverrides())) {
-        if( ((PsiClass) memberInfo.getMember()).findMethodBySignature(psiMethod, true) != null) {
+        if (((PsiClass)memberInfo.getMember()).findMethodBySignature(psiMethod, true) != null) {
           return true;
         }
       }
