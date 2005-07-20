@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.openapi.diff.impl.external.DiffOptionsForm">
   <grid id="6e6fb" binding="myPanel" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="2">
-    <margin top="0" left="5" bottom="5" right="5"/>
+    <margin top="0" left="0" bottom="5" right="5"/>
     <constraints>
       <xy x="7" y="76" width="563" height="137"/>
       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
@@ -11,7 +11,7 @@
     <children>
       <component id="4eaba" class="javax.swing.JCheckBox" binding="myEnableFolders">
         <constraints>
-          <xy x="11" y="21" width="203" height="23"/>
+          <xy x="11" y="20" width="203" height="22"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
         </constraints>
         <properties>
@@ -21,7 +21,7 @@
       </component>
       <component id="7ecb6" class="javax.swing.JCheckBox" binding="myEnableFiles">
         <constraints>
-          <xy x="11" y="74" width="189" height="23"/>
+          <xy x="11" y="74" width="189" height="22"/>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
         </constraints>
         <properties>
@@ -32,7 +32,7 @@
       <grid id="9beaf" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="0" vgap="0">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="11" y="46" width="541" height="26"/>
+          <xy x="11" y="44" width="541" height="28"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
@@ -41,7 +41,7 @@
           <xy id="2fc3d" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="2" y="0" width="16" height="26"/>
+              <xy x="2" y="0" width="16" height="28"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3">
                 <minimum-size width="16" height="-1"/>
                 <maximum-size width="16" height="-1"/>
@@ -53,7 +53,7 @@
           </xy>
           <component id="89fa" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myFoldersTool">
             <constraints>
-              <xy x="20" y="3" width="521" height="20"/>
+              <xy x="20" y="4" width="521" height="20"/>
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="1"/>
             </constraints>
             <properties>
@@ -65,7 +65,7 @@
       <grid id="10020" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="0" vgap="0">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="11" y="99" width="541" height="27"/>
+          <xy x="11" y="98" width="541" height="28"/>
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
@@ -74,7 +74,7 @@
           <xy id="11371" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="2" y="0" width="16" height="27"/>
+              <xy x="2" y="0" width="16" height="28"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3">
                 <minimum-size width="16" height="-1"/>
                 <maximum-size width="16" height="-1"/>
@@ -86,7 +86,7 @@
           </xy>
           <component id="553c9" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myFilesTool">
             <constraints>
-              <xy x="20" y="3" width="521" height="20"/>
+              <xy x="20" y="4" width="521" height="20"/>
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="1"/>
             </constraints>
             <properties>
