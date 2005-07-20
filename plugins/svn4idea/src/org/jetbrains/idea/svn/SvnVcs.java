@@ -43,6 +43,7 @@ import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
@@ -67,7 +68,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 public class SvnVcs extends AbstractVcs implements ProjectComponent {
+
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.SvnVcs");
+  private static final Key STATUS_KEY = Key.create("svn.status");
+  private static final Key INFO_KEY = Key.create("svn.info");
 
   private SvnConfiguration myConfiguration;
   private SvnEntriesFileListener myEntriesFileListener;
@@ -264,20 +268,62 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     return mySvnDiffProvider;
   }
 
+  public SVNStatusHolder getCachedStatus(VirtualFile vFile) {
+    if (vFile == null) {
+      return null;
+    }
+    SVNStatusHolder value = (SVNStatusHolder) vFile.getUserData(STATUS_KEY);
+    File file = new File(vFile.getPath());
+    File entriesFile = getEntriesFile(file);
+    if (value != null && value.getEntriesTimestamp() == entriesFile.lastModified() &&
+      value.getFileTimestamp() == vFile.getTimeStamp()) {
+      return value;
+    }
+    return null;
+  }
+
+  public void cacheStatus(VirtualFile vFile, SVNStatus status) {
+    if (vFile == null) {
+      return;
+    }
+    File file = new File(vFile.getPath());
+    File entriesFile = getEntriesFile(file);
+    vFile.putUserData(STATUS_KEY, new SVNStatusHolder(entriesFile.lastModified(), vFile.getTimeStamp(), status));
+  }
+
+  public SVNInfoHolder getCachedInfo(VirtualFile vFile) {
+    if (vFile == null) {
+      return null;
+    }
+    SVNInfoHolder value = (SVNInfoHolder) vFile.getUserData(INFO_KEY);
+    File file = new File(vFile.getPath());
+    File entriesFile = getEntriesFile(file);
+    if (value != null && value.getEntriesTimestamp() == entriesFile.lastModified() &&
+      value.getFileTimestamp() == vFile.getTimeStamp()) {
+      return value;
+    }
+    return null;
+  }
+
+  public void cacheInfo(VirtualFile vFile, SVNInfo info) {
+    if (vFile == null) {
+      return;
+    }
+    File file = new File(vFile.getPath());
+    File entriesFile = getEntriesFile(file);
+    vFile.putUserData(INFO_KEY, new SVNInfoHolder(entriesFile.lastModified(), vFile.getTimeStamp(), info));
+  }
+
   public boolean fileExistsInVcs(FilePath path) {
     File file = path.getIOFile();
-    Key key = Key.create(file.getAbsolutePath());
-    File entriesFile = getEntriesFile(file);
     SVNStatus status;
     try {
-      StatusValue statusValue = (StatusValue) path.getVirtualFile().getUserData(key);
-      if (statusValue != null &&
-          statusValue.getEntriesTimestamp() == entriesFile.lastModified() &&
-          statusValue.getFileTimestamp() == file.lastModified()) {
-        status = statusValue.myValue;
+      SVNStatusHolder statusValue = getCachedStatus(path.getVirtualFile());
+      if (statusValue != null) {
+        status = statusValue.getStatus();
       } else {
         status = createStatusClient().doStatus(file, false);
-        path.getVirtualFile().putUserData(key, new StatusValue(entriesFile.lastModified(), file.lastModified(), status));
+        cacheStatus(path.getVirtualFile(), status);
       }
       return status != null && !(status.getContentsStatus() == SVNStatusType.STATUS_ADDED ||
                                  status.getContentsStatus() == SVNStatusType.STATUS_UNVERSIONED ||
@@ -292,18 +338,14 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
 
   public boolean fileIsUnderVcs(FilePath path) {
     File file = path.getIOFile();
-    Key key = Key.create(file.getAbsolutePath());
-    File entriesFile = getEntriesFile(file);
     SVNStatus status;
     try {
-      StatusValue statusValue = (StatusValue) path.getVirtualFile().getUserData(key);
-      if (statusValue != null &&
-          statusValue.getEntriesTimestamp() == entriesFile.lastModified() &&
-          statusValue.getFileTimestamp() == file.lastModified()) {
-        status = statusValue.myValue;
+      SVNStatusHolder statusValue = getCachedStatus(path.getVirtualFile());
+      if (statusValue != null) {
+        status = statusValue.getStatus();
       } else {
         status = createStatusClient().doStatus(file, false);
-        path.getVirtualFile().putUserData(key, new StatusValue(entriesFile.lastModified(), file.lastModified(), status));
+        cacheStatus(path.getVirtualFile(), status);
       }
       return status != null && !(status.getContentsStatus() == SVNStatusType.STATUS_UNVERSIONED ||
                                  status.getContentsStatus() == SVNStatusType.STATUS_IGNORED ||
@@ -319,13 +361,13 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     return file.isDirectory() ? new File(file, ".svn/entries") : new File(file.getParentFile(), ".svn/entries");
   }
 
-  private static class StatusValue {
+  public static class SVNStatusHolder {
 
     private SVNStatus myValue;
     private long myEntriesTimestamp;
     private long myFileTimestamp;
 
-    public StatusValue(long entriesStamp, long fileStamp, SVNStatus value) {
+    public SVNStatusHolder(long entriesStamp, long fileStamp, SVNStatus value) {
       myValue = value;
       myEntriesTimestamp = entriesStamp;
       myFileTimestamp = fileStamp;
@@ -337,6 +379,35 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
 
     public long getFileTimestamp() {
       return myFileTimestamp;
+    }
+
+    public SVNStatus getStatus() {
+      return myValue;
+    }
+  }
+
+  public static class SVNInfoHolder {
+
+    private SVNInfo myValue;
+    private long myEntriesTimestamp;
+    private long myFileTimestamp;
+
+    public SVNInfoHolder(long entriesStamp, long fileStamp, SVNInfo value) {
+      myValue = value;
+      myEntriesTimestamp = entriesStamp;
+      myFileTimestamp = fileStamp;
+    }
+
+    public long getEntriesTimestamp() {
+      return myEntriesTimestamp;
+    }
+
+    public long getFileTimestamp() {
+      return myFileTimestamp;
+    }
+
+    public SVNInfo getInfo() {
+      return myValue;
     }
   }
 

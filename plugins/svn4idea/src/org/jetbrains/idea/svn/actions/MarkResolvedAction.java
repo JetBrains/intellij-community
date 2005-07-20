@@ -36,10 +36,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.SelectFilesDialog;
@@ -61,18 +58,32 @@ public class MarkResolvedAction extends BasicAction {
 
   protected boolean isEnabled(Project project, SvnVcs vcs, VirtualFile file) {
     if (file.isDirectory()) {
-      SVNWCClient wcClient = new SVNWCClient(null, null);
+      SVNInfo info = null;
       try {
-        return wcClient.doInfo(new File(file.getPath()), SVNRevision.WORKING) != null;
+        SvnVcs.SVNInfoHolder infoValue = vcs.getCachedInfo(file);
+        if (infoValue != null) {
+          return infoValue.getInfo() != null;
+        } else {
+          SVNWCClient wcClient = new SVNWCClient(null, null);
+          info = wcClient.doInfo(new File(file.getPath()), SVNRevision.WORKING);
+        }
       }
       catch (SVNException e) {
         //
       }
-      return false;
+      vcs.cacheInfo(file, info);
+      return info != null;
     }
-    SVNStatusClient stClient = new SVNStatusClient(null, null);
+    SVNStatus status;
     try {
-      SVNStatus status = stClient.doStatus(new File(file.getPath()), false);
+      SvnVcs.SVNStatusHolder statusValue = vcs.getCachedStatus(file);
+      if (statusValue != null) {
+        status = statusValue.getStatus();
+      } else {
+        SVNStatusClient stClient = new SVNStatusClient(null, null);
+        status = stClient.doStatus(new File(file.getPath()), false);
+        vcs.cacheStatus(file, status);
+      }
       return status != null &&
              (status.getContentsStatus() == SVNStatusType.STATUS_CONFLICTED ||
               status.getPropertiesStatus() == SVNStatusType.STATUS_CONFLICTED);

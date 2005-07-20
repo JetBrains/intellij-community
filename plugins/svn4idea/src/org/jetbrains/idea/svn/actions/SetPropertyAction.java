@@ -57,14 +57,21 @@ public class SetPropertyAction extends BasicAction {
   }
 
   protected boolean isEnabled(Project project, SvnVcs vcs, VirtualFile file) {
-    try {
-      SVNWCClient wcClient = vcs.createWCClient();
-      SVNInfo info = wcClient.doInfo(new File(file.getPath()), SVNRevision.WORKING);
-      return info != null && info.getURL() != null;
+    SVNInfo info;
+    SvnVcs.SVNInfoHolder infoValue = vcs.getCachedInfo(file);
+    if (infoValue != null) {
+      info = infoValue.getInfo();
+    } else {
+      try {
+        SVNWCClient wcClient = new SVNWCClient(vcs.getSvnAuthenticationManager(), vcs.getSvnOptions());
+        info = wcClient.doInfo(new File(file.getPath()), SVNRevision.WORKING);
+      }
+      catch (SVNException e) {
+        info = null;
+      }
+      vcs.cacheInfo(file, info);
     }
-    catch (SVNException e) {
-      return false;
-    }
+    return info != null && info.getURL() != null;
   }
 
   protected boolean needsFiles() {

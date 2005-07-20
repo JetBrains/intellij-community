@@ -61,16 +61,22 @@ public class UnlockAction extends BasicAction {
     if (file == null || file.isDirectory()) {
       return false;
     }
-    try {
-      SVNWCClient wcClient = vcs.createWCClient();
-      SVNInfo info = wcClient.doInfo(new File(file.getPath()), SVNRevision.WORKING);
-      return info != null && info.getKind() == SVNNodeKind.FILE &&
-             info.getSchedule() == null;
+    SVNInfo info;
+    SvnVcs.SVNInfoHolder infoValue = vcs.getCachedInfo(file);
+    if (infoValue != null) {
+      info = infoValue.getInfo();
+    } else {
+      try {
+        SVNWCClient wcClient = new SVNWCClient(vcs.getSvnAuthenticationManager(), vcs.getSvnOptions());
+        info = wcClient.doInfo(new File(file.getPath()), SVNRevision.WORKING);
+      }
+      catch (SVNException e) {
+        info = null;
+      }
+      vcs.cacheInfo(file, info);
     }
-    catch (SVNException e) {
-      // ok
-    }
-    return false;
+    return info != null && info.getKind() == SVNNodeKind.FILE &&
+           info.getSchedule() == null;
   }
 
   protected boolean needsFiles() {

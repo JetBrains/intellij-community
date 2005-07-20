@@ -56,12 +56,25 @@ public class ResolveAction extends BasicAction {
   }
 
   protected boolean isEnabled(Project project, SvnVcs vcs, VirtualFile file) {
-    SVNStatusClient stClient = new SVNStatusClient(null, null);
-    SVNWCClient wcClient = new SVNWCClient(null, null);
+    SVNStatus status;
     try {
-      SVNStatus status = stClient.doStatus(new File(file.getPath()), false);
+      SvnVcs.SVNStatusHolder statusValue = vcs.getCachedStatus(file);
+      if (statusValue != null) {
+        status = statusValue.getStatus();
+      } else {
+        SVNStatusClient stClient = new SVNStatusClient(null, null);
+        status = stClient.doStatus(new File(file.getPath()), false);
+      }
       if (status != null && status.getContentsStatus() == SVNStatusType.STATUS_CONFLICTED) {
-        SVNInfo info = wcClient.doInfo(new File(file.getPath()), SVNRevision.WORKING);
+        SVNInfo info;
+        SvnVcs.SVNInfoHolder infoValue = vcs.getCachedInfo(file);
+        if (infoValue != null) {
+          info = infoValue.getInfo();
+        } else {
+          SVNWCClient wcClient = new SVNWCClient(null, null);
+          info = wcClient.doInfo(new File(file.getPath()), SVNRevision.WORKING);
+          vcs.cacheInfo(file, info);
+        }
         return info != null && info.getConflictNewFile() != null &&
                info.getConflictOldFile() != null &&
                info.getConflictWrkFile() != null;

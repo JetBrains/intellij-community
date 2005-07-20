@@ -59,9 +59,16 @@ public class AddAction extends BasicAction {
   }
 
   protected boolean isEnabled(Project project, SvnVcs vcs, VirtualFile file) {
-    SVNStatusClient stClient = new SVNStatusClient(null, null);
+    SvnVcs.SVNStatusHolder cachedStatus = vcs.getCachedStatus(file);
+    SVNStatus status;
     try {
-      SVNStatus status = stClient.doStatus(new File(file.getPath()), false);
+      if (cachedStatus != null) {
+        status = cachedStatus.getStatus();
+      } else {
+        SVNStatusClient stClient = new SVNStatusClient(null, null);
+        status = stClient.doStatus(new File(file.getPath()), false);
+        vcs.cacheStatus(file, status);
+      }
       return status != null &&
              (status.getContentsStatus() == SVNStatusType.STATUS_UNVERSIONED ||
               status.getContentsStatus() == SVNStatusType.STATUS_IGNORED);
