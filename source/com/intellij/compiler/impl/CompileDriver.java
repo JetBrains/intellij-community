@@ -482,7 +482,10 @@ public class CompileDriver {
           return myExitStatus;
         }
 
-        didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassPostProcessingCompiler.class, myProcessingCompilerAdapterFactory, forceCompile);
+        // explicitly passing forceCompile = false because in scopes that is narrower than ProjectScope it is impossible
+        // to understand whether the class to be processed is in scope or not. Otherwise compiler may process its items even if 
+        // there were changes in completely independent files.
+        didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassPostProcessingCompiler.class, myProcessingCompilerAdapterFactory, false);
         if (myExitStatus != null) {
           return myExitStatus;
         }
@@ -581,16 +584,16 @@ public class CompileDriver {
   private boolean invokeFileProcessingCompilers(final CompilerManager compilerManager, CompileContextImpl context, Class fileProcessingCompilerClass, FileProcessingCompilerAdapterFactory factory, boolean forceCompile) {
     LOG.assertTrue(FileProcessingCompiler.class.isAssignableFrom(fileProcessingCompilerClass));
     boolean didSomething = false;
-    final Compiler[] classPostProcessors = compilerManager.getCompilers(fileProcessingCompilerClass);
-    if (classPostProcessors.length > 0) {
+    final Compiler[] compilers = compilerManager.getCompilers(fileProcessingCompilerClass);
+    if (compilers.length > 0) {
       try {
-        for (int idx = 0; idx < classPostProcessors.length; idx++) {
+        for (int idx = 0; idx < compilers.length; idx++) {
           if (context.getProgressIndicator().isCanceled()) {
             myExitStatus =  ExitStatus.CANCELLED;
             return false;
           }
 
-          final boolean processedSomething = processFiles(factory.create(context, (FileProcessingCompiler)classPostProcessors[idx]), forceCompile);
+          final boolean processedSomething = processFiles(factory.create(context, (FileProcessingCompiler)compilers[idx]), forceCompile);
 
           if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
             myExitStatus = ExitStatus.ERRORS;
