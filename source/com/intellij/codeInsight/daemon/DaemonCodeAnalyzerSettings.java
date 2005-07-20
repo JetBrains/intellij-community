@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -45,12 +44,13 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
 
   public InspectionProfileImpl getInspectionProfile() {
     if (myInspectionProfile == null) {
-      final String[] avaliableProfileNames = InspectionProfileManager.getInstance().getAvaliableProfileNames();
+      final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
+      final String[] avaliableProfileNames = inspectionProfileManager.getAvaliableProfileNames();
       if (avaliableProfileNames == null || avaliableProfileNames.length == 0){
-        //can't be
-        return null;
+        //can't be but ...
+        return inspectionProfileManager.createDefaultProfile();
       } else {
-        myInspectionProfile = InspectionProfileManager.getInstance().getProfile(avaliableProfileNames[0]);
+        myInspectionProfile = inspectionProfileManager.getProfile(avaliableProfileNames[0]);
       }
     }
     if (!myInspectionProfile.wasInitialized()) {
@@ -122,12 +122,12 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
     DefaultJDOMExternalizer.readExternal(this, element);
     InspectionProfileConvertor.getInstance().storeEditorHighlightingProfile(element);
     String profileName = element.getAttributeValue("profile");
+    final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
     if (profileName != null) {
-      myInspectionProfile = InspectionProfileManager.getInstance().getProfile(profileName);
+      myInspectionProfile = inspectionProfileManager.getProfile(profileName);
     }
     else {
-      myInspectionProfile =
-      InspectionProfileManager.getInstance().getProfile(InspectionProfileConvertor.OLD_HIGHTLIGHTING_SETTINGS_PROFILE);
+      myInspectionProfile = inspectionProfileManager.createDefaultProfile();
     }
   }
 
