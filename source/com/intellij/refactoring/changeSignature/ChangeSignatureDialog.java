@@ -210,7 +210,6 @@ public class ChangeSignatureDialog extends RefactoringDialog {
       typePrompt.setLabelFor(myReturnTypeField);
       typePrompt.setDisplayedMnemonic('t');
       panel.add(myReturnTypeField);
-      myReturnTypeField.setText(factory.createTypeElement(myMethod.getReturnType()).getText());
 
       final DocumentListener documentListener = new DocumentListener() {
         public void beforeDocumentChange(DocumentEvent event) {
