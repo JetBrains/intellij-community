@@ -43,6 +43,7 @@ import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
@@ -265,8 +266,19 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
 
   public boolean fileExistsInVcs(FilePath path) {
     File file = path.getIOFile();
+    Key key = Key.create(file.getAbsolutePath());
+    File entriesFile = getEntriesFile(file);
+    SVNStatus status;
     try {
-      SVNStatus status = createStatusClient().doStatus(file, false);
+      StatusValue statusValue = (StatusValue) path.getVirtualFile().getUserData(key);
+      if (statusValue != null &&
+          statusValue.getEntriesTimestamp() == entriesFile.lastModified() &&
+          statusValue.getFileTimestamp() == file.lastModified()) {
+        status = statusValue.myValue;
+      } else {
+        status = createStatusClient().doStatus(file, false);
+        path.getVirtualFile().putUserData(key, new StatusValue(entriesFile.lastModified(), file.lastModified(), status));
+      }
       return status != null && !(status.getContentsStatus() == SVNStatusType.STATUS_ADDED ||
                                  status.getContentsStatus() == SVNStatusType.STATUS_UNVERSIONED ||
                                  status.getContentsStatus() == SVNStatusType.STATUS_IGNORED ||
@@ -280,8 +292,19 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
 
   public boolean fileIsUnderVcs(FilePath path) {
     File file = path.getIOFile();
+    Key key = Key.create(file.getAbsolutePath());
+    File entriesFile = getEntriesFile(file);
+    SVNStatus status;
     try {
-      SVNStatus status = createStatusClient().doStatus(file, false);
+      StatusValue statusValue = (StatusValue) path.getVirtualFile().getUserData(key);
+      if (statusValue != null &&
+          statusValue.getEntriesTimestamp() == entriesFile.lastModified() &&
+          statusValue.getFileTimestamp() == file.lastModified()) {
+        status = statusValue.myValue;
+      } else {
+        status = createStatusClient().doStatus(file, false);
+        path.getVirtualFile().putUserData(key, new StatusValue(entriesFile.lastModified(), file.lastModified(), status));
+      }
       return status != null && !(status.getContentsStatus() == SVNStatusType.STATUS_UNVERSIONED ||
                                  status.getContentsStatus() == SVNStatusType.STATUS_IGNORED ||
                                  status.getContentsStatus() == SVNStatusType.STATUS_OBSTRUCTED);
@@ -290,6 +313,31 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
       //
     }
     return false;
+  }
+
+  private static File getEntriesFile(File file) {
+    return file.isDirectory() ? new File(file, ".svn/entries") : new File(file.getParentFile(), ".svn/entries");
+  }
+
+  private static class StatusValue {
+
+    private SVNStatus myValue;
+    private long myEntriesTimestamp;
+    private long myFileTimestamp;
+
+    public StatusValue(long entriesStamp, long fileStamp, SVNStatus value) {
+      myValue = value;
+      myEntriesTimestamp = entriesStamp;
+      myFileTimestamp = fileStamp;
+    }
+
+    public long getEntriesTimestamp() {
+      return myEntriesTimestamp;
+    }
+
+    public long getFileTimestamp() {
+      return myFileTimestamp;
+    }
   }
 
   private static class JavaSVNDebugLogger extends DebugDefaultLogger {
