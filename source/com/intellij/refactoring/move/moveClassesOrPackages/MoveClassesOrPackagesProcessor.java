@@ -1,7 +1,6 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.j2ee.ejb.EjbUsagesUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -29,6 +28,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 
 import java.util.*;
+
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Jeka,dsl
@@ -87,6 +88,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   }
 
 
+  @NotNull
   protected UsageInfo[] findUsages() {
     List<UsageInfo> allUsages = new ArrayList<UsageInfo>();
     ArrayList<String> conflicts = new ArrayList<String>();
@@ -95,7 +97,6 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       final UsageInfo[] usages = MoveClassesOrPackagesUtil.findUsages(element, mySearchInComments,
                                                                       mySearchInNonJavaFiles, newName);
       ArrayList<UsageInfo> usageInfos = new ArrayList<UsageInfo>(Arrays.asList(usages));
-      EjbUsagesUtil.adjustEjbUsages(element, newName, usageInfos);
       allUsages.addAll(usageInfos);
     }
     myMoveDestination.analyzeModuleConflicts(Arrays.asList(myElementsToMove), conflicts);
@@ -353,8 +354,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     ClassReferenceScanner referenceScanner = new ClassReferenceScanner(aClass) {
       public PsiReference[] findReferences() {
         ArrayList<PsiReference> result = new ArrayList<PsiReference>();
-        for (int j = 0; j < usages.length; j++) {
-          UsageInfo usage = usages[j];
+        for (UsageInfo usage : usages) {
           if (usage instanceof MoveRenameUsageInfo && ((MoveRenameUsageInfo)usage).referencedElement == aClass) {
             final PsiReference reference = ((MoveRenameUsageInfo)usage).reference;
             if (reference != null) {
@@ -415,7 +415,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         if (element instanceof PsiPackage) {
 
           element = MoveClassesOrPackagesUtil.doMovePackage((PsiPackage)element, myMoveDestination,
-                                                  extractElementUsages(element, usages));
+                                                            extractElementUsages(element, usages));
 
         }
         else if (element instanceof PsiClass) {

@@ -1,14 +1,13 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.j2ee.J2EERolesUtil;
-import com.intellij.j2ee.ejb.EjbUsagesUtil;
 import com.intellij.j2ee.ejb.EjbUtil;
 import com.intellij.j2ee.ejb.role.EjbDeclMethodRole;
 import com.intellij.j2ee.ejb.role.EjbMethodRole;
-import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.PropertiesUtil;
-import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -40,6 +39,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 
 import java.util.*;
+
+import org.jetbrains.annotations.NotNull;
 
 public class RenameProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameProcessor");
@@ -209,17 +210,15 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
     Runnable runnable = new Runnable() {
       public void run() {
-        for (Iterator<AutomaticRenamer> iterator = myRenamers.iterator(); iterator.hasNext();) {
-          final AutomaticRenamer renamer = iterator.next();
+        for (final AutomaticRenamer renamer : myRenamers) {
           renamer.findUsages(variableUsages, mySearchInComments, mySearchTextOccurences);
         }
       }
     };
 
-    final boolean isOK = ApplicationManager.getApplication().runProcessWithProgressSynchronously(
+    return ApplicationManager.getApplication().runProcessWithProgressSynchronously(
           runnable, "Searching for variables", true, myProject
         );
-    return isOK;
   }
 
   public void addElement(PsiElement element, String newName) {
@@ -330,6 +329,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return new RenameViewDescriptor(myPrimaryElement, myAllRenames, mySearchInComments, mySearchTextOccurences, usages, refreshCommand);
   }
 
+  @NotNull
   protected UsageInfo[] findUsages() {
     myRenamers.clear();
     ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
@@ -352,16 +352,6 @@ public class RenameProcessor extends BaseRefactoringProcessor {
         myRenamers.add(new FormsRenamer((PsiClass)element, newName));
       }
     }
-    // add usages in ejb-jar.xml regardless of mySearchTextOccurences setting
-    // delete erroneous usages in ejb-jar.xml (e.g. belonging to another ejb)
-    EjbUsagesUtil.adjustEjbUsages(myAllRenames, result);
-
-    if (myPrimaryElement != null) {
-      // add usages in ejb-jar.xml regardless of mySearchTextOccurences setting
-      // delete erroneous usages in ejb-jar.xml (e.g. belonging to another ejb)
-      EjbUsagesUtil.adjustEjbUsages(myPrimaryElement, myNewName, result);
-    }
-
     UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);
     usageInfos = UsageViewUtil.removeDuplicatedUsages(usageInfos);
     return usageInfos;
@@ -410,8 +400,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     }
 
     final PsiManager psiManager = PsiManager.getInstance(myProject);
-    for (int i = 0; i < listenersForPackages.size(); i++) {
-      Pair<String, RefactoringElementListener> pair = listenersForPackages.get(i);
+    for (Pair<String, RefactoringElementListener> pair : listenersForPackages) {
       final PsiPackage aPackage = psiManager.findPackage(pair.getFirst());
       LOG.assertTrue(aPackage != null);
       pair.getSecond().elementRenamed(aPackage);
