@@ -29,7 +29,12 @@ public class PsiAnchor {
     else {
       myElement = null;
       myFile = element.getContainingFile();
-      LOG.assertTrue(myFile != null, "Invalid element: " + element);
+
+      if (myFile == null) {
+        myElement = element;
+        return;
+      }
+
       final PsiFile[] psiRoots = myFile.getPsiRoots();
       for (int i = 0; i < psiRoots.length; i++) {
         PsiFile root = psiRoots[i];
