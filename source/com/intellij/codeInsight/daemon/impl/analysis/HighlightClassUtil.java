@@ -554,7 +554,7 @@ public class HighlightClassUtil {
             return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, description);
           }
           if (refCountHolder != null) {
-            refCountHolder.registerReference(aClass, new MethodCandidateInfo(constructor, PsiSubstitutor.EMPTY));
+            refCountHolder.registerLocallyReferenced(constructor);
           }
           return null;
         }

@@ -20,7 +20,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.jsp.el.ELExpressionHolder;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
@@ -34,7 +33,8 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 
@@ -340,12 +340,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
         nextSibling instanceof JspExpression ||
         nextSibling instanceof ELExpressionHolder  
        ) {
-      return true;
-    }
-
-    final XmlAttributeValue parentOfType = PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class);
-    if (parentOfType != null && 
-        parentOfType.getUserData(XmlHighlightVisitor.DO_NOT_VALIDATE_KEY) != null) {
       return true;
     }
     
@@ -706,8 +700,8 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
   private void registerConstructorCall(PsiConstructorCall constructorCall) {
     JavaResolveResult resolveResult = constructorCall.resolveMethodGenerics();
-    if (myRefCountHolder != null) {
-      myRefCountHolder.registerReference(constructorCall, resolveResult);
+    if (myRefCountHolder != null && resolveResult.getElement() instanceof PsiNamedElement) {
+      myRefCountHolder.registerLocallyReferenced((PsiNamedElement)resolveResult.getElement());
     }
   }
 

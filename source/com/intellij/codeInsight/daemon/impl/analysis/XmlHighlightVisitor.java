@@ -27,7 +27,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -261,7 +260,37 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
             myResult.add(highlightInfo);
             
             if (isExtraHtmlTagEnd) {
-              QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveExtraClosingTagIntentionAction(xmlToken), null);
+              QuickFixAction.registerQuickFixAction(highlightInfo, new IntentionAction() {
+                public String getText() {
+                  return "Remove Extra Closing Tag";
+                }
+
+                public String getFamilyName() {
+                  return "Remove Extra Closing Tag";
+                }
+
+                public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+                  return true;
+                }
+
+                public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+                  if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+                  
+                  XmlToken tagEndStart = xmlToken;
+                  while(tagEndStart.getTokenType() != XmlTokenType.XML_END_TAG_START) {
+                    final PsiElement prevSibling = tagEndStart.getPrevSibling();
+                    if (!(prevSibling instanceof XmlToken)) break;
+                    tagEndStart = (XmlToken)prevSibling;
+                  }
+
+                  final PsiElement parent = tagEndStart.getParent();
+                  parent.deleteChildRange(tagEndStart,parent.getLastChild());
+                }
+
+                public boolean startInWriteAction() {
+                  return true;
+                }
+              }, null);
             } else {
               IntentionAction intentionAction = new RenameTagBeginOrEndIntentionAction(tag, name, false);
               IntentionAction intentionAction2 = new RenameTagBeginOrEndIntentionAction(tag, text, true);
@@ -710,7 +739,15 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   }
 
   private static String getUnquotedValue(XmlAttributeValue value, XmlTag tag) {
-    String unquotedValue = StringUtil.stripQuotesAroundValue(value.getText());
+    String unquotedValue = value.getText();
+
+    if (unquotedValue.length() > 0 &&
+        ( unquotedValue.charAt(0)=='"' ||
+          unquotedValue.charAt(0)=='\''
+        )
+       ) {
+      unquotedValue = unquotedValue.substring(1,unquotedValue.length()-1);
+    }
 
     if (tag instanceof HtmlTag) {
       unquotedValue = unquotedValue.toLowerCase();
@@ -751,6 +788,10 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
             quickFixProvider.registerQuickfix(info, reference);
             if (reference instanceof QuickFixProvider) ((QuickFixProvider)reference).registerQuickfix(info, reference);
           }
+        }
+        if(reference instanceof PsiJavaReference && myRefCountHolder != null){
+          final PsiJavaReference psiJavaReference = (PsiJavaReference)reference;
+          myRefCountHolder.registerReference(psiJavaReference, psiJavaReference.advancedResolve(false));
         }
       }
     }
@@ -1018,44 +1059,6 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         nextSibling =  nextSibling.getNextSibling();
       }
       return null;
-    }
-
-    public boolean startInWriteAction() {
-      return true;
-    }
-  }
-
-  private static class RemoveExtraClosingTagIntentionAction implements IntentionAction {
-    private final XmlToken myXmlToken;
-
-    public RemoveExtraClosingTagIntentionAction(final XmlToken xmlToken) {
-      myXmlToken = xmlToken;
-    }
-
-    public String getText() {
-      return "Remove Extra Closing Tag";
-    }
-
-    public String getFamilyName() {
-      return "Remove Extra Closing Tag";
-    }
-
-    public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-      return true;
-    }
-
-    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      if (!CodeInsightUtil.prepareFileForWrite(file)) return;
-
-      XmlToken tagEndStart = myXmlToken;
-      while(tagEndStart.getTokenType() != XmlTokenType.XML_END_TAG_START) {
-        final PsiElement prevSibling = tagEndStart.getPrevSibling();
-        if (!(prevSibling instanceof XmlToken)) break;
-        tagEndStart = (XmlToken)prevSibling;
-      }
-
-      final PsiElement parent = tagEndStart.getParent();
-      parent.deleteChildRange(tagEndStart,parent.getLastChild());
     }
 
     public boolean startInWriteAction() {

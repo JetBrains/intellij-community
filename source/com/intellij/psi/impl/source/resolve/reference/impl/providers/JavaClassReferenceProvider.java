@@ -2,6 +2,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.reference.ElementManipulator;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
@@ -141,7 +142,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider{
       return myType;
     }
 
-    public class JavaReference extends GenericReference{
+    public class JavaReference extends GenericReference implements PsiJavaReference {
       private final int myIndex;
       private TextRange myRange;
       private final String myText;
@@ -231,25 +232,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider{
       }
 
       public PsiElement resolveInner() {
-        if (!myElement.isValid()) return null;
-        String qName = getElement().getText().substring(getReference(0).getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset());
-        if (myIndex == myReferences.length - 1) {
-          final PsiClass aClass = myElement.getManager().findClass(qName, GlobalSearchScope.allScope(myElement.getProject()));
-          if (aClass != null) return aClass;
-        }
-        PsiElement resolveResult = myElement.getManager().findPackage(qName);
-        if(resolveResult == null)
-          resolveResult = myElement.getManager().findClass(qName, GlobalSearchScope.allScope(myElement.getProject()));
-
-        if(resolveResult == null){
-          final PsiFile containingFile = myElement.getContainingFile();
-          if(containingFile instanceof PsiJavaFile) {
-            final ClassResolverProcessor processor = new ClassResolverProcessor(getCanonicalText(), myElement);
-            containingFile.processDeclarations(processor, PsiSubstitutor.EMPTY, null, myElement);
-            if(processor.getResult().length == 1) return processor.getResult()[0].getElement();
-          }
-        }
-        return resolveResult;
+        return advancedResolve(true).getElement();
       }
 
       public Object[] getVariants() {
@@ -272,6 +255,36 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider{
         System.arraycopy(subPackages, 0, result, 0, subPackages.length);
         System.arraycopy(classes, 0, result, subPackages.length, classes.length);
         return result;
+      }
+
+      public JavaResolveResult advancedResolve(boolean incompleteCode) {
+        if (!myElement.isValid()) return JavaResolveResult.EMPTY;
+        String qName = getElement().getText().substring(getReference(0).getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset());
+        if (myIndex == myReferences.length - 1) {
+          final PsiClass aClass = myElement.getManager().findClass(qName, GlobalSearchScope.allScope(myElement.getProject()));
+          if (aClass != null) return new ClassCandidateInfo(aClass, PsiSubstitutor.EMPTY, false, false, myElement);
+        }
+        PsiElement resolveResult = myElement.getManager().findPackage(qName);
+        if(resolveResult == null)
+          resolveResult = myElement.getManager().findClass(qName, GlobalSearchScope.allScope(myElement.getProject()));
+
+        if(resolveResult == null){
+          final PsiFile containingFile = myElement.getContainingFile();
+          if(containingFile instanceof PsiJavaFile) {
+            final ClassResolverProcessor processor = new ClassResolverProcessor(getCanonicalText(), myElement);
+            containingFile.processDeclarations(processor, PsiSubstitutor.EMPTY, null, myElement);
+            if(processor.getResult().length == 1) return processor.getResult()[0];
+          }
+        }
+        return resolveResult != null ?
+               new ClassCandidateInfo(resolveResult, PsiSubstitutor.EMPTY, false, false, myElement):
+               JavaResolveResult.EMPTY;
+      }
+
+      public JavaResolveResult[] multiResolve(boolean incompleteCode) {
+        final JavaResolveResult javaResolveResult = advancedResolve(incompleteCode);
+        if(javaResolveResult.getElement() == null) return JavaResolveResult.EMPTY_ARRAY;
+        return new JavaResolveResult[]{javaResolveResult};
       }
     }
 

@@ -16,11 +16,11 @@ public class RefCountHolder {
 
   private final PsiFile myFile;
 
-  private BidirectionalMap<PsiElement,PsiElement> myLocalRefsMap = new BidirectionalMap<PsiElement, PsiElement>();
+  private BidirectionalMap<PsiReference,PsiElement> myLocalRefsMap = new BidirectionalMap<PsiReference, PsiElement>();
 
   private HashMap<PsiNamedElement,Boolean> myDclsUsedMap = new HashMap<PsiNamedElement,Boolean>();
   private HashMap<String,XmlTag> myXmlId2TagMap = new HashMap<String,XmlTag>();
-  private Map<PsiElement, PsiImportStatementBase> myImportStatements = new HashMap<PsiElement, PsiImportStatementBase>();
+  private Map<PsiReference, PsiImportStatementBase> myImportStatements = new HashMap<PsiReference, PsiImportStatementBase>();
   private Set<PsiNamedElement> myUsedElements = new HashSet<PsiNamedElement>();
 
   public RefCountHolder(PsiFile file) {
@@ -60,7 +60,7 @@ public class RefCountHolder {
     return myXmlId2TagMap.get(id);
   }
 
-  public void registerReference(PsiElement ref, JavaResolveResult resolveResult) {
+  public void registerReference(PsiReference ref, JavaResolveResult resolveResult) {
     PsiElement refElement = resolveResult.getElement();
     if (refElement != null && getFile().equals(refElement.getContainingFile())) {
       registerLocalRef(ref, refElement);
@@ -72,7 +72,7 @@ public class RefCountHolder {
     }
   }
 
-  private void registerImportStatement (PsiElement ref, PsiImportStatementBase importStatement) {
+  private void registerImportStatement (PsiReference ref, PsiImportStatementBase importStatement) {
     myImportStatements.put(ref, importStatement);
   }
 
@@ -80,9 +80,9 @@ public class RefCountHolder {
     return !myImportStatements.values().contains(importStatement);
   }
 
-  private void registerLocalRef(PsiElement ref, PsiElement refElement) {
-    if (refElement instanceof PsiMethod && PsiTreeUtil.isAncestor(refElement, ref, true)) return; // filter self-recursive calls
-    if (refElement instanceof PsiClass && PsiTreeUtil.isAncestor(refElement, ref, true)) return; // filter inner use of itself
+  private void registerLocalRef(PsiReference ref, PsiElement refElement) {
+    if (refElement instanceof PsiMethod && PsiTreeUtil.isAncestor(refElement, ref.getElement(), true)) return; // filter self-recursive calls
+    if (refElement instanceof PsiClass && PsiTreeUtil.isAncestor(refElement, ref.getElement(), true)) return; // filter inner use of itself
     myLocalRefsMap.put(ref, refElement);
     if(refElement instanceof PsiNamedElement) {
       PsiNamedElement namedElement = (PsiNamedElement)refElement;
@@ -94,29 +94,23 @@ public class RefCountHolder {
   }
 
   public void removeInvalidRefs() {
-    for(Iterator<PsiElement> iterator = myLocalRefsMap.keySet().iterator(); iterator.hasNext();){
-      PsiElement ref = iterator.next();
-      if (!ref.isValid()){
+    for(Iterator<PsiReference> iterator = myLocalRefsMap.keySet().iterator(); iterator.hasNext();){
+      PsiReference ref = iterator.next();
+      if (!ref.getElement().isValid()){
         PsiElement value = myLocalRefsMap.get(ref);
         iterator.remove();
-        List<PsiElement> array = myLocalRefsMap.getKeysByValue(value);
+        List<PsiReference> array = myLocalRefsMap.getKeysByValue(value);
         array.remove(ref);
       }
     }
-    for (Iterator<PsiElement> iterator = myImportStatements.keySet().iterator(); iterator.hasNext();) {
-      PsiElement ref = iterator.next();
-      if (!ref.isValid()) iterator.remove();
-    }
-    
-    for(Iterator<PsiNamedElement> iterator = myDclsUsedMap.keySet().iterator(); iterator.hasNext();) {
-      PsiNamedElement element = iterator.next();
-      
-      if (!element.isValid()) iterator.remove();
+    for (Iterator<PsiReference> iterator = myImportStatements.keySet().iterator(); iterator.hasNext();) {
+      PsiReference ref = iterator.next();
+      if (!ref.getElement().isValid()) iterator.remove();
     }
   }
 
   public int getRefCount(PsiElement element) {
-    List<PsiElement> array = myLocalRefsMap.getKeysByValue(element);
+    List<PsiReference> array = myLocalRefsMap.getKeysByValue(element);
     if(array != null) return array.size();
 
     Boolean usedStatus = myDclsUsedMap.get(element);
@@ -127,18 +121,19 @@ public class RefCountHolder {
 
   public int getReadRefCount(PsiElement element) {
     LOG.assertTrue(element instanceof PsiVariable);
-    List<PsiElement> array = myLocalRefsMap.getKeysByValue(element);
+    List<PsiReference> array = myLocalRefsMap.getKeysByValue(element);
     if (array == null) return 0;
     int count = 0;
-    for (PsiElement ref : array) {
-      if (!(ref instanceof PsiExpression)) { // possible with uncomplete code
+    for (PsiReference ref : array) {
+      PsiElement refElement = ref.getElement();
+      if (!(refElement instanceof PsiExpression)) { // possible with uncomplete code
         count++;
         continue;
       }
-      if (PsiUtil.isAccessedForReading((PsiExpression)ref)) {
-        if (ref.getParent() instanceof PsiExpression &&
-            ref.getParent().getParent() instanceof PsiExpressionStatement &&
-            PsiUtil.isAccessedForWriting((PsiExpression)ref)) {
+      if (PsiUtil.isAccessedForReading((PsiExpression)refElement)) {
+        if (refElement.getParent() instanceof PsiExpression &&
+            refElement.getParent().getParent() instanceof PsiExpressionStatement &&
+            PsiUtil.isAccessedForWriting((PsiExpression)refElement)) {
           continue; // "var++;"
         }
         count++;
@@ -149,15 +144,16 @@ public class RefCountHolder {
 
   public int getWriteRefCount(PsiElement element) {
     LOG.assertTrue(element instanceof PsiVariable);
-    List<PsiElement> array = myLocalRefsMap.getKeysByValue(element);
+    List<PsiReference> array = myLocalRefsMap.getKeysByValue(element);
     if (array == null) return 0;
     int count = 0;
-    for (PsiElement ref : array) {
-      if (!(ref instanceof PsiExpression)) { // possible with uncomplete code
+    for (PsiReference ref : array) {
+      final PsiElement refElement = ref.getElement();
+      if (!(refElement instanceof PsiExpression)) { // possible with uncomplete code
         count++;
         continue;
       }
-      if (PsiUtil.isAccessedForWriting((PsiExpression)ref)) {
+      if (PsiUtil.isAccessedForWriting((PsiExpression)refElement)) {
         count++;
       }
     }
