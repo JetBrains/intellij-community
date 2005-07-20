@@ -4,8 +4,10 @@ import com.intellij.j2ee.openapi.impl.ExternalResourceManagerImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
@@ -16,6 +18,8 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.xml.util.XmlNSDescriptorSequence;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.openapi.util.TextRange;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,7 +29,7 @@ import java.util.List;
 /**
  * @author Mike
  */
-public class XmlElementDescriptorImpl implements XmlElementDescriptor {
+public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritableMetaData {
   private XmlElementDecl myElementDecl;
   private XmlAttlistDecl[] myAttlistDecl;
 
@@ -116,22 +120,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor {
 
           if (token.getTokenType() == XmlTokenType.XML_NAME) {
             final String text = child.getText();
-            XmlElementDescriptor element = null;
-            if (NSDescriptor instanceof XmlNSDescriptorImpl) {
-              element = ((XmlNSDescriptorImpl)NSDescriptor).getElementDescriptor(text);
-            }
-            else if (NSDescriptor instanceof XmlNSDescriptorSequence) {
-              final List<XmlNSDescriptor> sequence = ((XmlNSDescriptorSequence)NSDescriptor).getSequence();
-              for (XmlNSDescriptor xmlNSDescriptor : sequence) {
-                if (xmlNSDescriptor instanceof XmlNSDescriptorImpl) {
-                  element = ((XmlNSDescriptorImpl)xmlNSDescriptor).getElementDescriptor(text);
-                  if(element != null) break;
-                }
-              }
-            }
-            else {
-              element = null;
-            }
+            XmlElementDescriptor element = getElementDescriptor(text, NSDescriptor);
 
             if (element != null) {
               result.add(element);
@@ -147,6 +136,26 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor {
     }, getDeclaration());
 
     return myElementDescriptors = result.toArray(new XmlElementDescriptor[result.size()]);
+  }
+
+  private XmlElementDescriptor getElementDescriptor(final String text, final XmlNSDescriptor NSDescriptor) {
+    XmlElementDescriptor element = null;
+    if (NSDescriptor instanceof XmlNSDescriptorImpl) {
+      element = ((XmlNSDescriptorImpl)NSDescriptor).getElementDescriptor(text);
+    }
+    else if (NSDescriptor instanceof XmlNSDescriptorSequence) {
+      final List<XmlNSDescriptor> sequence = ((XmlNSDescriptorSequence)NSDescriptor).getSequence();
+      for (XmlNSDescriptor xmlNSDescriptor : sequence) {
+        if (xmlNSDescriptor instanceof XmlNSDescriptorImpl) {
+          element = ((XmlNSDescriptorImpl)xmlNSDescriptor).getElementDescriptor(text);
+          if(element != null) break;
+        }
+      }
+    }
+    else {
+      element = null;
+    }
+    return element;
   }
 
   private XmlAttributeDescriptor[] myAttributeDescriptors;
@@ -187,10 +196,8 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor {
   }
 
   public XmlAttributeDescriptor getAttributeDescriptor(XmlAttribute attr){
-    String name = attr.getName();
-    //if (attr.getContainingFile().getFileType()==StdFileTypes.HTML) {
-    //  name = name.toLowerCase();
-    //}
+    final String name = attr.getName();
+    
     return getAttributeDescriptor(name);
   }
 
@@ -264,5 +271,55 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor {
 
   public String getDefaultName() {
     return getName();
+  }
+
+  public void setName(final String name) throws IncorrectOperationException {
+    final XmlNSDescriptor nsDescriptor = getNSDescriptor();
+    
+    if (nsDescriptor != null) {
+      final ReferenceProvidersRegistry registry = ReferenceProvidersRegistry.getInstance(
+        myElementDecl.getProject()
+      );
+      
+      final List<XmlToken> refs = new ArrayList<XmlToken>(1);
+      
+      final PsiElementProcessor psiElementProcessor = new PsiElementProcessor() {
+        public boolean execute(PsiElement child) {
+          if (child instanceof XmlToken) {
+            final XmlToken token = (XmlToken)child;
+
+            if (token.getTokenType() == XmlTokenType.XML_NAME) {
+              final String text = child.getText();
+              
+              if (text.equals(getName())) {
+                refs.add(token);
+              }
+            }
+
+          }
+          return true;
+        }
+      };
+      
+      
+      XmlUtil.processXmlElements( 
+        (XmlElement)nsDescriptor.getDeclaration().getContainingFile(), 
+        psiElementProcessor,
+        true
+      );
+      
+      try {
+        for(XmlToken token:refs) {
+           registry.getManipulator(token).handleContentChange(
+             token, 
+             new TextRange(0,token.getTextLength()), 
+             name
+           );
+        }
+      }
+      catch (IncorrectOperationException e) {}
+    }
+    
+    myName = name;
   }
 }
