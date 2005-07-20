@@ -581,6 +581,17 @@ public class EditTemplateDialog extends DialogWrapper {
 
   protected void doOKAction() {
     String key = myKeyField.getText().trim();
+    if (!isAllowedTemplateAbbreviation(key)) {
+      Messages.showMessageDialog(
+        getContentPane(),
+        "Cannot save the template.\n" +
+        "Template abbreviation should contain only letters, digits and dots.",
+        "Cannot Save",
+        Messages.getErrorIcon()
+      );
+      return;
+    }
+    
     for (TemplateImpl template : myTemplates) {
       if (template.getKey().equals(key) && myTemplate != template) {
         Messages.showMessageDialog(
@@ -606,6 +617,14 @@ public class EditTemplateDialog extends DialogWrapper {
     }
 
     super.doOKAction();
+  }
+
+  private boolean isAllowedTemplateAbbreviation(final String key) {
+    for (int i = 0; i < key.length(); i++) {
+      final char c = key.charAt(i);
+      if (c != '.' && !Character.isJavaIdentifierPart(c)) return false;
+    }
+    return true;
   }
 
 }
