@@ -31,13 +31,14 @@ public class BackspaceAction extends EditorAction {
         int startLine = Math.min(start.line, end.line);
         int endLine = Math.max(start.line, end.line);
         EditorModificationUtil.deleteBlockSelection(editor);
-        if (column > 0) {
+        if (column > 0 && start.column == end.column) {
           for (int i = startLine; i <= endLine; i++) {
             editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(i, column));
             doBackSpaceAtCaret(editor);
           }
+          column--;
         }
-        final int newColumn = Math.max(column - 1, 0);
+        final int newColumn = Math.max(column, 0);
         selectionModel.setBlockSelection(new LogicalPosition(startLine, newColumn), new LogicalPosition(endLine, newColumn));
         return;
       }
