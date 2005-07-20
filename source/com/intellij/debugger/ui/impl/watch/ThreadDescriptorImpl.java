@@ -107,6 +107,9 @@ public class ThreadDescriptorImpl extends NodeDescriptorImpl implements ThreadDe
         status == ThreadReference.THREAD_STATUS_ZOMBIE) {
       return false;
     }
+    return true;
+    /*
+    [jeka] with lots of threads calling threadProxy.frameCount() in advance while setting context can be costly....
     try {
       return threadProxy.frameCount() > 0;
     }
@@ -122,6 +125,7 @@ public class ThreadDescriptorImpl extends NodeDescriptorImpl implements ThreadDe
       //  }
       return false;
     }
+    */
   }
 
   public SuspendContextImpl getSuspendContext() {
