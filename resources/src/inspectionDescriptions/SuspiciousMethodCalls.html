@@ -1,0 +1,14 @@
+<html>
+<body>
+<font face="verdana" size="-1">
+This inspection reports method calls to parametrized collections, where actual argument type does not
+correspond to the collection's elements type.<br><br>
+For example if you have the following code:<br>
+<pre>
+&nbsp;&nbsp;&nbsp;&nbsp;List&lt;String&gt; listOfElements = getListOfElements();
+&nbsp;&nbsp;&nbsp;&nbsp;listOfElements.remove(<b><font color="#000080">new</font></b> Integer(<font color="#0000FF">0</font>));
+</pre>
+- the call to <b><font color="#000080">remove()</font></b> will be highlighted.<br>
+</font>
+</body>
+</html>
