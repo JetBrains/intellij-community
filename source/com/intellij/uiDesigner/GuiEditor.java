@@ -621,7 +621,6 @@ public final class GuiEditor extends JPanel implements DataProvider {
     }
     catch (final Exception exc) {
       LOG.info(exc);
-      exc.printStackTrace();
       // setting fictive container
       setRootContainer(new RadRootContainer(myModule, JPanel.class, "0"));
       myCardLayout.show(this, CARD_INVALID);
