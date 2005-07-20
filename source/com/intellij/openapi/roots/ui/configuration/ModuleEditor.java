@@ -24,6 +24,8 @@ import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author Eugene Zhuravlev
  *         Date: Oct 4, 2003
@@ -224,8 +226,9 @@ public class ModuleEditor {
     return myName;
   }
 
+  @Nullable
   public String getSelectedTabName() {
-    return myTabbedPane == null ? null : myTabbedPane.getTitleAt(myTabbedPane.getSelectedIndex());
+    return myTabbedPane == null || myTabbedPane.getSelectedIndex() == -1 ? null : myTabbedPane.getTitleAt(myTabbedPane.getSelectedIndex());
   }
 
   public void setSelectedTabName(String name) {
