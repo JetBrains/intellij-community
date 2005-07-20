@@ -115,8 +115,11 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
   }
 
   public boolean canNavigate() {
-    final OpenFileDescriptor descriptor = getDescriptor();
-    return descriptor != null ? descriptor.canNavigate() : false;
+    if (getProject() == null) return false;
+    final PsiElement psiElement = getPsiElement();
+    if (psiElement == null) return false;
+    final VirtualFile virtualFile = psiElement.getContainingFile().getVirtualFile();
+    return virtualFile != null && virtualFile.isValid();
   }
 
   public boolean canNavigateToSource() {
@@ -134,10 +137,10 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
 
   @Nullable
   private OpenFileDescriptor getDescriptor() {
-    if (getProject() == null){
-      return null;
-    }
-    final VirtualFile virtualFile = getPsiElement().getContainingFile().getVirtualFile();
+    if (getProject() == null) return null;
+    final PsiElement psiElement = getPsiElement();
+    if (psiElement == null) return null;
+    final VirtualFile virtualFile = psiElement.getContainingFile().getVirtualFile();
     if (virtualFile == null || !virtualFile.isValid()) return null;
     return new OpenFileDescriptor(getProject(), virtualFile);
   }
