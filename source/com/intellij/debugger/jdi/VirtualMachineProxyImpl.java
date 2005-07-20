@@ -86,10 +86,6 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     }
     finally {
       clearCaches();
-      // clear nested classes cache only on class redefinition
-      if (myNestedClassesCache.size() > 0) {
-        myNestedClassesCache = new THashMap<ReferenceType, List<ReferenceType>>(myNestedClassesCache.size());
-      }
     }
   }
 
@@ -428,6 +424,9 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     }
 
     myAllClasses = null;
+    if (myNestedClassesCache.size() > 0) {
+      myNestedClassesCache = new THashMap<ReferenceType, List<ReferenceType>>(myNestedClassesCache.size());
+    }
     myAllThreadsDirty = true;
     myTimeStamp++;
   }
