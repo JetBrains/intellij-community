@@ -145,8 +145,7 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
   }
 
   public boolean canNavigate() {
-    final OpenFileDescriptor descriptor = getDescriptor();
-    return descriptor != null ? descriptor.canNavigate() : false;
+    return isValid();
   }
 
   public boolean canNavigateToSource() {
