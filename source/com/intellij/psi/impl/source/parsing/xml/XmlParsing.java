@@ -628,26 +628,32 @@ public class XmlParsing implements ElementType {
         }
       }
 
-      addToken(tag, lexer);
+      CompositeElement attribute = Factory.createCompositeElement(XML_ATTRIBUTE);
+      TreeUtil.addChildren(tag, attribute);
+      
+      addToken(attribute, lexer);
 
       if (lexer.getTokenType() != XML_EQ) {
-        TreeUtil.addChildren(tag, Factory.createErrorElement("'=' expected"));
-      continue;
+        TreeUtil.addChildren(attribute, Factory.createErrorElement("'=' expected"));
+        continue;
       }
 
-      addToken(tag, lexer);
+      addToken(attribute, lexer);
+      
+      CompositeElement attributeValue = Factory.createCompositeElement(XML_ATTRIBUTE_VALUE);
+      TreeUtil.addChildren(attribute,attributeValue);
 
       if (lexer.getTokenType() != XML_ATTRIBUTE_VALUE_START_DELIMITER) {
         return;
       }
 
-      addToken(tag, lexer);
+      addToken(attributeValue, lexer);
 
       if (lexer.getTokenType() == XML_ATTRIBUTE_VALUE_TOKEN) {
-        addToken(tag, lexer);
+        addToken(attributeValue, lexer);
         if (lexer.getTokenType() == XML_ATTRIBUTE_VALUE_END_DELIMITER) {
           lastPosition = lexer.getTokenEnd();
-          addToken(tag, lexer);
+          addToken(attributeValue, lexer);
         }
         else {
           lastPosition = -1;
