@@ -610,6 +610,7 @@ public class XmlParsing implements ElementType {
   }
 
   private void parseAttributeList(CompositeElement tag, Lexer lexer) {
+    CompositeElement parent = tag;
     int lastPosition = -1;
     while (true) {
       if (lexer.getTokenType() == XML_ENTITY_REF_TOKEN) {
@@ -628,32 +629,39 @@ public class XmlParsing implements ElementType {
         }
       }
 
-      CompositeElement attribute = Factory.createCompositeElement(XML_ATTRIBUTE);
-      TreeUtil.addChildren(tag, attribute);
+      if (tag instanceof XmlTag) {
+        CompositeElement attribute = Factory.createCompositeElement(XML_ATTRIBUTE);
+        TreeUtil.addChildren(tag, attribute);
+        parent = attribute;
+      }
       
-      addToken(attribute, lexer);
+      addToken(parent, lexer);
 
       if (lexer.getTokenType() != XML_EQ) {
-        TreeUtil.addChildren(attribute, Factory.createErrorElement("'=' expected"));
+        TreeUtil.addChildren(parent, Factory.createErrorElement("'=' expected"));
         continue;
       }
 
-      addToken(attribute, lexer);
+      addToken(parent, lexer);
       
-      CompositeElement attributeValue = Factory.createCompositeElement(XML_ATTRIBUTE_VALUE);
-      TreeUtil.addChildren(attribute,attributeValue);
+      if (tag instanceof XmlTag) {
+        CompositeElement attributeValue = Factory.createCompositeElement(XML_ATTRIBUTE_VALUE);
+        TreeUtil.addChildren(parent,attributeValue);
+        parent = attributeValue;
+      }
 
       if (lexer.getTokenType() != XML_ATTRIBUTE_VALUE_START_DELIMITER) {
         return;
       }
 
-      addToken(attributeValue, lexer);
+      addToken(parent, lexer);
 
       if (lexer.getTokenType() == XML_ATTRIBUTE_VALUE_TOKEN) {
-        addToken(attributeValue, lexer);
+        addToken(parent, lexer);
+        
         if (lexer.getTokenType() == XML_ATTRIBUTE_VALUE_END_DELIMITER) {
           lastPosition = lexer.getTokenEnd();
-          addToken(attributeValue, lexer);
+          addToken(parent, lexer);
         }
         else {
           lastPosition = -1;
@@ -661,6 +669,10 @@ public class XmlParsing implements ElementType {
       }
       else {
         lastPosition = -1;
+      }
+      
+      if (tag instanceof XmlTag) {
+        parent = tag;
       }
     }
   }
