@@ -42,7 +42,7 @@ public class FileTypeChooser extends DialogWrapper{
     });
     for(int i = 0; i < fileTypes.length; i++){
       FileType type = fileTypes[i];
-      if (!type.isReadOnly()) {
+      if (!type.isReadOnly() && type != StdFileTypes.UNKNOWN) {
         myModel.addElement(type);
       }
     }
