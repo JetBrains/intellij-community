@@ -49,7 +49,7 @@ public class LocalVariableNamingConventionInspection extends ConventionInspectio
     private final RenameFix fix = new RenameFix();
 
     public String getDisplayName() {
-        return "Local Variable naming convention";
+        return "Local variable naming convention";
     }
 
     public String getGroupDisplayName() {

@@ -45,7 +45,7 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
     }
 
     public JComponent createOptionsPanel(){
-        return new SingleCheckboxOptionsPanel("Ignore if overriden parameter contains only one character",
+        return new SingleCheckboxOptionsPanel("Ignore if overridden parameter contains only one character",
                                               this,
                                               "m_ignoreSingleCharacterNames");
     }
