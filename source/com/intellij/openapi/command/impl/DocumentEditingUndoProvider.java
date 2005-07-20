@@ -80,7 +80,7 @@ class DocumentEditingUndoProvider {
       }
 
       EditorChangeAction action = new EditorChangeAction((DocumentEx)e.getDocument(), e.getOffset(),
-                                                         e.getOldFragment(), e.getNewFragment(), e.getOldTimeStamp(), myProject);
+                                                         e.getOldFragment(), e.getNewFragment(), e.getOldTimeStamp());
 
       getUndoManager().undoableActionPerformed(action);
     }

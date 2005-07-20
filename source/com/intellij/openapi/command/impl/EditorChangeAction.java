@@ -3,11 +3,12 @@ package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceByDocument;
-import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.command.undo.DocumentReferenceByVirtualFile;
+import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -18,11 +19,10 @@ class EditorChangeAction implements UndoableAction {
   private CharSequence myOldString;
   private CharSequence myNewString;
   private long myTimeStamp;
-  private final Project myProject;
 
   public EditorChangeAction(DocumentEx document, int offset,
                             CharSequence oldString, CharSequence newString,
-                            long oldTimeStamp, Project project) {
+                            long oldTimeStamp) {
     myDocumentFile = FileDocumentManager.getInstance().getFile(document);
     if (myDocumentFile != null) {
       myDocument = null;
@@ -41,7 +41,6 @@ class EditorChangeAction implements UndoableAction {
       myNewString = "";
     }
     myTimeStamp = oldTimeStamp;
-    myProject = project;
   }
 
   public void undo() {
@@ -51,10 +50,13 @@ class EditorChangeAction implements UndoableAction {
   }
 
   private void fileFileStatusChanged() {
-    if (myProject == null) return;
     VirtualFile file = myDocumentFile != null ? myDocumentFile : FileDocumentManager.getInstance().getFile(getDocument());
     if (file == null) return;
-    FileStatusManager.getInstance(myProject).fileStatusChanged(file);
+
+    final Project[] projects = ProjectManager.getInstance().getOpenProjects();
+    for (Project project : projects) {
+      FileStatusManager.getInstance(project).fileStatusChanged(file);
+    }
   }
 
   private void exchangeStrings(CharSequence newString, CharSequence oldString) {
