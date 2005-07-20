@@ -156,12 +156,12 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
       if (!(anchor.getElementType() == DOC_TAG)) {
         final CharTable charTable = SharedImplUtil.findCharTableByTree(this);
         final TreeElement newLine = Factory.createSingleLeafElement(DOC_COMMENT_DATA, new char[]{'\n'}, 0, 1, charTable, getManager());
-        firstAdded = super.addInternal(newLine, newLine, anchor, before);
-        final TreeElement leadingAsterisk = Factory.createSingleLeafElement(DOC_COMMENT_LEADING_ASTERISKS, new char[]{'*'}, 0, 1,
-                                                                            charTable, getManager());
-        super.addInternal(leadingAsterisk, leadingAsterisk, newLine, Boolean.FALSE);
+        final TreeElement leadingAsterisk = Factory.createSingleLeafElement(DOC_COMMENT_LEADING_ASTERISKS, new char[]{'*'}, 0, 1, charTable, getManager());
         final TreeElement commentData = Factory.createSingleLeafElement(DOC_COMMENT_DATA, new char[]{' '}, 0, 1, charTable, getManager());
-        super.addInternal(commentData, commentData, leadingAsterisk, Boolean.FALSE);
+        newLine.getTreeParent().addChild(leadingAsterisk);
+        newLine.getTreeParent().addChild(commentData);
+        firstAdded = super.addInternal(newLine, commentData, anchor, Boolean.FALSE);
+
         anchor = commentData;
         before = Boolean.FALSE;
       }
@@ -170,7 +170,7 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
       }
     }
 
-    if (firstAdded != null) {
+    if (firstAdded == null) {
       firstAdded = super.addInternal(first, last, anchor, before);
     }
     else {
