@@ -35,6 +35,7 @@ import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 
@@ -343,6 +344,11 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       return true;
     }
     
+    final XmlAttributeValue parentOfType = PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class);
+    if (parentOfType != null && 
+        parentOfType.getUserData(XmlHighlightVisitor.DO_NOT_VALIDATE_KEY) != null) {
+      return true;
+    }
     return false;
   }
 

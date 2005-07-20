@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -56,7 +57,7 @@ import java.util.StringTokenizer;
  */
 public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.ValidationHost {
   private static final String UNKNOWN_SYMBOL = "Cannot resolve symbol {0}";
-  static final Key<String> DO_NOT_VALIDATE_KEY = Key.create("do not validate");
+  public static final Key<String> DO_NOT_VALIDATE_KEY = Key.create("do not validate");
   private List<HighlightInfo> myResult = new SmartList<HighlightInfo>();
   private RefCountHolder myRefCountHolder;
   private DaemonCodeAnalyzerSettings mySettings;
@@ -260,37 +261,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
             myResult.add(highlightInfo);
             
             if (isExtraHtmlTagEnd) {
-              QuickFixAction.registerQuickFixAction(highlightInfo, new IntentionAction() {
-                public String getText() {
-                  return "Remove Extra Closing Tag";
-                }
-
-                public String getFamilyName() {
-                  return "Remove Extra Closing Tag";
-                }
-
-                public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-                  return true;
-                }
-
-                public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-                  if (!CodeInsightUtil.prepareFileForWrite(file)) return;
-                  
-                  XmlToken tagEndStart = xmlToken;
-                  while(tagEndStart.getTokenType() != XmlTokenType.XML_END_TAG_START) {
-                    final PsiElement prevSibling = tagEndStart.getPrevSibling();
-                    if (!(prevSibling instanceof XmlToken)) break;
-                    tagEndStart = (XmlToken)prevSibling;
-                  }
-
-                  final PsiElement parent = tagEndStart.getParent();
-                  parent.deleteChildRange(tagEndStart,parent.getLastChild());
-                }
-
-                public boolean startInWriteAction() {
-                  return true;
-                }
-              }, null);
+              QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveExtraClosingTagIntentionAction(xmlToken), null);
             } else {
               IntentionAction intentionAction = new RenameTagBeginOrEndIntentionAction(tag, name, false);
               IntentionAction intentionAction2 = new RenameTagBeginOrEndIntentionAction(tag, text, true);
@@ -739,15 +710,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   }
 
   private static String getUnquotedValue(XmlAttributeValue value, XmlTag tag) {
-    String unquotedValue = value.getText();
-
-    if (unquotedValue.length() > 0 &&
-        ( unquotedValue.charAt(0)=='"' ||
-          unquotedValue.charAt(0)=='\''
-        )
-       ) {
-      unquotedValue = unquotedValue.substring(1,unquotedValue.length()-1);
-    }
+    String unquotedValue = StringUtil.stripQuotesAroundValue(value.getText());
 
     if (tag instanceof HtmlTag) {
       unquotedValue = unquotedValue.toLowerCase();
@@ -858,18 +821,21 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     } else if (attribute.getLocalName().equals("schemaLocation")) {
       StringTokenizer tokenizer = new StringTokenizer(location);
       XmlFile file = null;
-
+      final ExternalResourceManagerEx externalResourceManager = ExternalResourceManagerEx.getInstanceEx();
+      
       while(tokenizer.hasMoreElements()) {
-        tokenizer.nextToken(); // skip namespace
+        final String namespace = tokenizer.nextToken(); // skip namespace
         if (!tokenizer.hasMoreElements()) return;
         String url = tokenizer.nextToken();
 
-        if(ExternalResourceManagerEx.getInstanceEx().isIgnoredResource(url)) continue;
+        if(externalResourceManager.isIgnoredResource(url)) continue;
         if (file == null) {
           file = (XmlFile)attribute.getContainingFile();
         }
 
-        if(XmlUtil.findXmlFile(file,url) == null) {
+        if(XmlUtil.findXmlFile(file,url) == null &&
+           externalResourceManager.getResourceLocation(namespace).equals(namespace)
+          ) {
           int start = attribute.getValueElement().getTextOffset() + location.indexOf(url);
           reportURIProblem(start,start+url.length());
         }
@@ -1059,6 +1025,44 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         nextSibling =  nextSibling.getNextSibling();
       }
       return null;
+    }
+
+    public boolean startInWriteAction() {
+      return true;
+    }
+  }
+
+  private static class RemoveExtraClosingTagIntentionAction implements IntentionAction {
+    private final XmlToken myXmlToken;
+
+    public RemoveExtraClosingTagIntentionAction(final XmlToken xmlToken) {
+      myXmlToken = xmlToken;
+    }
+
+    public String getText() {
+      return "Remove Extra Closing Tag";
+    }
+
+    public String getFamilyName() {
+      return "Remove Extra Closing Tag";
+    }
+
+    public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+      return true;
+    }
+
+    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+
+      XmlToken tagEndStart = myXmlToken;
+      while(tagEndStart.getTokenType() != XmlTokenType.XML_END_TAG_START) {
+        final PsiElement prevSibling = tagEndStart.getPrevSibling();
+        if (!(prevSibling instanceof XmlToken)) break;
+        tagEndStart = (XmlToken)prevSibling;
+      }
+
+      final PsiElement parent = tagEndStart.getParent();
+      parent.deleteChildRange(tagEndStart,parent.getLastChild());
     }
 
     public boolean startInWriteAction() {

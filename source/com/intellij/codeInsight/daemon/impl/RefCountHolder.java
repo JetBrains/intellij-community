@@ -60,7 +60,7 @@ public class RefCountHolder {
     return myXmlId2TagMap.get(id);
   }
 
-  public void registerReference(PsiReference ref, JavaResolveResult resolveResult) {
+  public void registerReference(PsiJavaReference ref, JavaResolveResult resolveResult) {
     PsiElement refElement = resolveResult.getElement();
     if (refElement != null && getFile().equals(refElement.getContainingFile())) {
       registerLocalRef(ref, refElement);
@@ -106,6 +106,11 @@ public class RefCountHolder {
     for (Iterator<PsiReference> iterator = myImportStatements.keySet().iterator(); iterator.hasNext();) {
       PsiReference ref = iterator.next();
       if (!ref.getElement().isValid()) iterator.remove();
+    }
+    for(Iterator<PsiNamedElement> iterator = myDclsUsedMap.keySet().iterator(); iterator.hasNext();) {
+      PsiNamedElement element = iterator.next();
+      
+      if (!element.isValid()) iterator.remove();
     }
   }
 
