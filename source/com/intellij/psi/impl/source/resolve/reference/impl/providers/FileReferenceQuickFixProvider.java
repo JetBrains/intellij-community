@@ -57,7 +57,7 @@ public class FileReferenceQuickFixProvider {
       }
     } else {
       final Collection<PsiElement> defaultContexts = fileReferenceSet.getDefaultContexts(reference.getElement());
-      PsiElement psiElement = defaultContexts.iterator().next();
+      final PsiElement psiElement = (!defaultContexts.isEmpty())?defaultContexts.iterator().next():null;
       
       if (psiElement instanceof PsiDirectory) {
         directory = (PsiDirectory)psiElement;

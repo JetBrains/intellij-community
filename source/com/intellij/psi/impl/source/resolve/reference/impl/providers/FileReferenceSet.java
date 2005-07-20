@@ -154,6 +154,7 @@ public class FileReferenceSet {
       if (dir != null) {
         if (properties != null) {
           result = JspManager.getInstance(project).findWebDirectoryByFile(dir.getVirtualFile(), properties);
+          if (result == null) result = dir;
         }
         else {
           result = dir;
