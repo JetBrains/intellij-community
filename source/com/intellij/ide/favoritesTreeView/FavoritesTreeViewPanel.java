@@ -485,6 +485,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       }
 
       public void update(final AnActionEvent e) {
+        super.update(e);
         e.getPresentation().setEnabled(myFavoritesConfiguration.IS_FLATTEN_PACKAGES);
       }
     });
