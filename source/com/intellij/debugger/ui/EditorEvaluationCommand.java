@@ -59,6 +59,8 @@ public abstract class EditorEvaluationCommand<T> extends DebuggerContextCommandI
   }
 
   public static void showEvaluationHint(final Editor myEditor, final PsiElement myElement, final EvaluateException e) {
+    if (myEditor.isDisposed() || !myEditor.getComponent().isVisible()) return;
+
     HintManager.getInstance().showErrorHint(myEditor, e.getMessage(), myElement.getTextRange().getStartOffset(),
                                             myElement.getTextRange().getEndOffset(), HintManager.RIGHT,
                                             HintManager.HIDE_BY_ESCAPE | HintManager.HIDE_BY_TEXT_CHANGE,
