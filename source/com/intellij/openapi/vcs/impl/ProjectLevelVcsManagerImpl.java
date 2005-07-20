@@ -337,11 +337,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public LineStatusTracker createTrackerForDocument(Document document) {
-    LineStatusTracker result = myLineStatusTrackers.get(document);
-    if (result == null) {
-      result = LineStatusTracker.createOn(document, getProject());
-      myLineStatusTrackers.put(document, result);
-    }
+    LOG.assertTrue(!myLineStatusTrackers.containsKey(document));
+    LineStatusTracker result = LineStatusTracker.createOn(document, getProject());
+    myLineStatusTrackers.put(document, result);
     return result;
   }
 
@@ -443,6 +441,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   private synchronized void installTracker(final VirtualFile virtualFile, final Document document) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+
+    if (myLineStatusTrackers.containsKey(document)) return;
+
     AbstractVcs activeVcs = getVcsFor(virtualFile);
 
     if (activeVcs == null) return;
