@@ -4,12 +4,10 @@
 This inspection reports all calls to parametrized methods where explicit argument types
 can be omitted, since they will be unambiguously inferred by compiler.<br>
 Such usages make code excessive and thus less readable.<br><br>
-For example if you have parametrized method "<code>&lt;T&gt; <b><font color="#000080">void</font></b> addItem(T t)</code>"
-and the following code with call to this method:<br><br>
-<code>
-&nbsp;&nbsp;&nbsp;&nbsp;<b><font color="#000080">this</font></b>.&lt;String&gt;addItem(<font color="#008000">"&nbsp;"</font>);<br>
-</code>
-<br><br>
+For example if you have a call to parametrized method like:
+<pre>
+&nbsp;&nbsp;&nbsp;&nbsp;<b><font color="#000080">this</font></b>.&lt;String&gt;addItem(<font color="#008000">""</font>);
+</pre>
 - the usage of <b><font color="#000080">&lt;String&gt;</font></b> will be highlighted.<br><br>
 </font>
 </body>
