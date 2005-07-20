@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!ELEMENT idea-plugin (name | id? | description | version | vendor | change-notes? | idea-version | depends* | application-components? | project-components? | module-components? | actions? | helpset)+>
+<!ELEMENT idea-plugin (name | id? | description | version | vendor | change-notes? | idea-version | depends* | extensions* | application-components? | project-components? | module-components? | actions? | helpset)+>
 <!ATTLIST idea-plugin
     url CDATA #IMPLIED
     version CDATA #IMPLIED>
@@ -41,6 +41,11 @@
 <!ELEMENT change-notes (#PCDATA)>
 
 <!ELEMENT depends (#PCDATA)>
+
+<!-- extensions. Most relaxed constraints since content of the particular extension cannot be expressed with DTD -->
+<!ELEMENT extensions ANY>
+<!ATTLIST extensions
+   xmlns CDATA #REQUIRED>
 
 <!ELEMENT application-components (component*)>
 <!ELEMENT project-components (component*)>
