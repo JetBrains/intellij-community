@@ -50,14 +50,13 @@ public class AddToWatchAction extends DebuggerAction {
 
   public void update(AnActionEvent e) {
     DebuggerTreeNodeImpl[] selectedNodes = getSelectedNodes(e.getDataContext());
-    boolean enabled;
-    if (selectedNodes != null) {
-      enabled = true;
+    boolean enabled = false;
+    if (selectedNodes != null && selectedNodes.length > 0) {
       if (getPanel(e.getDataContext()) instanceof MainWatchPanel) {
-        for (int i = 0; i < selectedNodes.length; i++) {
-          DebuggerTreeNodeImpl node = selectedNodes[i];
+        enabled = true;
+        for (DebuggerTreeNodeImpl node : selectedNodes) {
           NodeDescriptorImpl descriptor = node.getDescriptor();
-          if(!(descriptor instanceof ValueDescriptorImpl)) {
+          if (!(descriptor instanceof ValueDescriptorImpl)) {
             enabled = false;
             break;
           }
