@@ -100,7 +100,7 @@ public final class GridConstraints implements Cloneable {
   public final Dimension myMinimumSize;
 
   /**
-   * Overriden preferred size. Never <code>null</code>. Term "overriden" means that GridLayoutManager gets
+   * overridden preferred size. Never <code>null</code>. Term "overridden" means that GridLayoutManager gets
    * preferred size from the constrains first. Moreover if one of the returned dimensions (x or y)
    * is negative then the corresponding dimension is also calculated by the component.
    * It means that it's possible to override any particular dimension without subclassing

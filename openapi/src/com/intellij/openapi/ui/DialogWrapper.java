@@ -154,7 +154,7 @@ public abstract class DialogWrapper {
   /**
    * Factory method. It creates border for dialog's content pane. By default content
    * pane has has empty border with <code>(8,8,8,8)</code> insets. The subclasses can
-   * retirn <code>null</code> in overriden methods. In this case there will be no
+   * retirn <code>null</code> in overridden methods. In this case there will be no
    * any border in the content pane.
    */
   protected Border createContentPaneBorder() {

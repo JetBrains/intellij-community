@@ -818,7 +818,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     old2NewNames.put("NewInterface", "Interface");
     old2NewNames.put("CatchBody", "Catch Statement Body");
     old2NewNames.put("ImplementedFunction", "Implemented Method Body");
-    old2NewNames.put("OverridenFunction", "Overriden Method Body");
+    old2NewNames.put("OverridenFunction", "Overridden Method Body");
     old2NewNames.put("FromUsageFunction", "New Method Body");
   }
 

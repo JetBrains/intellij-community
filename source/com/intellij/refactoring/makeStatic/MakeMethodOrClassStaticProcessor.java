@@ -123,7 +123,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
       if (usageInfo instanceof OverridingMethodUsageInfo) {
         LOG.assertTrue(myMember instanceof PsiMethod);
         final PsiMethod overridingMethod = ((PsiMethod)usageInfo.getElement());
-        String message = "Method " + ConflictsUtil.getDescription(myMember, false) + " is overriden by " +
+        String message = "Method " + ConflictsUtil.getDescription(myMember, false) + " is overridden by " +
           ConflictsUtil.getDescription(overridingMethod, true) + ".";
         conflicts.add(message);
       }
