@@ -26,6 +26,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.ui.*;
@@ -240,7 +241,11 @@ public class CommanderPanel extends JPanel {
   }
 
   protected boolean shouldDrillDownOnEmptyElement(final Object value) {
-    return !(value instanceof PsiMethod || value instanceof PsiField);
+    return !(value instanceof PsiMethod || value instanceof PsiField || isForm(value));
+  }
+
+  private boolean isForm(final Object value) {
+    return value instanceof PsiFile && ((PsiFile)value).getVirtualFile().getFileType() == StdFileTypes.GUI_DESIGNER_FORM;
   }
 
   private boolean topElementIsSelected() {
