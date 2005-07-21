@@ -30,7 +30,7 @@ public class FileReference implements PsiPolyVariantReference, QuickFixProvider 
   private final int myIndex;
   private TextRange myRange;
   private final String myText;
-  private FileReferenceSet myFileReferenceSet;
+  private final FileReferenceSet myFileReferenceSet;
 
   public FileReference(final FileReferenceSet fileReferenceSet, TextRange range, int index, String text){
     myFileReferenceSet = fileReferenceSet;
