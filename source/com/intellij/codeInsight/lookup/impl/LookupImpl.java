@@ -11,9 +11,13 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.util.containers.HashMap;
+import org.apache.oro.text.regex.Pattern;
+import org.apache.oro.text.regex.PatternMatcher;
+import org.apache.oro.text.regex.Perl5Matcher;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -22,10 +26,6 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-
-import org.apache.oro.text.regex.PatternMatcher;
-import org.apache.oro.text.regex.Perl5Matcher;
-import org.apache.oro.text.regex.Pattern;
 
 public class LookupImpl extends LightweightHint implements Lookup {
   static final Object EMPTY_ITEM_ATTRIBUTE = Key.create("emptyItem");
@@ -337,7 +337,6 @@ public class LookupImpl extends LightweightHint implements Lookup {
   private void selectMostPreferableItem(){
     //if (!isVisible()) return;
 
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     if (myItemPreferencePolicy == null){
       myIndex = -1;
     }
@@ -349,6 +348,8 @@ public class LookupImpl extends LightweightHint implements Lookup {
       int prefItemIndex = -1;
       for(int i = 0; i < items.length; i++){
         LookupItem item = (LookupItem)items[i];
+        final Object obj = item.getObject();
+        if (obj instanceof PsiElement && !((PsiElement)obj).isValid()) continue;
         if (prefItem == null){
           prefItem = item;
           prefItemIndex = i;
