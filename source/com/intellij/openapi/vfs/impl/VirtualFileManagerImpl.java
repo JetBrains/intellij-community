@@ -218,7 +218,9 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
         ApplicationManager.getApplication().runWriteAction(
           new Runnable() {
             public void run() {
-              for (Runnable runnable : myRefreshEventsToFire) {
+              //noinspection ForLoopReplaceableByForEach
+              for (int i = 0; i < myRefreshEventsToFire.size(); i++) {
+                Runnable runnable = myRefreshEventsToFire.get(i);
                 try {
                   runnable.run();
                 }
@@ -236,7 +238,9 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
                 final FileSystemSynchronizer synchronizer;
                 if (asynchronous) {
                   synchronizer = new FileSystemSynchronizer();
-                  for (CacheUpdater participant : myRefreshParticipants) {
+                  //noinspection ForLoopReplaceableByForEach
+                  for (int i = 0; i < myRefreshParticipants.size(); i++) {
+                    CacheUpdater participant = myRefreshParticipants.get(i);
                     synchronizer.registerCacheUpdater(participant);
                   }
                 }
