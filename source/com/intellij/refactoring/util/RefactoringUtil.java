@@ -1472,11 +1472,12 @@ public class RefactoringUtil {
         final PsiElement element = usage.getElement();
         if (element != null &&
             PsiTreeUtil.getParentOfType(element, PsiImportStatement.class, false) == null) {
-          final GlobalSearchScope resolveScope1 = element.getResolveScope();
+
           for (PsiElement scope : scopes) {
             if (PsiTreeUtil.isAncestor(scope, element, false)) continue NextUsage;
           }
 
+          final GlobalSearchScope resolveScope1 = element.getResolveScope();
           if (!resolveScope1.isSearchInModuleContent(targetModule)) {
             final PsiMember container = ConflictsUtil.getContainer(element);
             LOG.assertTrue(container != null);
