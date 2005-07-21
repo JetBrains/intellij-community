@@ -108,11 +108,10 @@ public class FindUsagesManager implements JDOMExternalizable{
 
   public boolean canFindUsages(final PsiElement element) {
     if (element == null) return false;
-
+    if (element instanceof PsiFile) return ((PsiFile)element).getVirtualFile() != null;
     final Language language = element.getLanguage();
-    if (language == null) return false;
     final FindUsagesProvider provider = language.getFindUsagesProvider();
-    return provider != null && provider.canFindUsagesFor(element);
+    return provider.canFindUsagesFor(element);
   }
 
   public void clearFindingNextUsageInFile() {
