@@ -1,5 +1,7 @@
 package com.intellij.ui.plaf.beg;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
 import javax.swing.border.AbstractBorder;
 import javax.swing.border.Border;
@@ -203,8 +205,8 @@ public class BegBorders {
     g.translate(x, y);
     g.setColor(MetalLookAndFeel.getControlDarkShadow());
     g.drawRect(0, 0, w - 3, h - 3);
-    g.drawLine(w - 2, 0, w - 2, 0);
-    g.drawLine(0, h - 2, 0, h - 2);
+    UIUtil.drawLine(g, w - 2, 0, w - 2, 0);
+    UIUtil.drawLine(g, 0, h - 2, 0, h - 2);
     g.translate(-x, -y);
   }
 
@@ -214,8 +216,8 @@ public class BegBorders {
     drawFlush3DBorder(g, 0, 0, w, h);
 
     g.setColor(MetalLookAndFeel.getControlShadow());
-    g.drawLine(1, 1, 1, h - 1);
-    g.drawLine(1, 1, w - 1, 1);
+    UIUtil.drawLine(g, 1, 1, 1, h - 1);
+    UIUtil.drawLine(g, 1, 1, w - 1, 1);
     g.translate(-x, -y);
   }
 
@@ -224,8 +226,8 @@ public class BegBorders {
     g.translate(x, y);
     g.setColor(MetalLookAndFeel.getControlDarkShadow());
     g.drawRect(0, 0, w - 3, h - 3);
-    g.drawLine(w - 2, 0, w - 2, 0);
-    g.drawLine(0, h - 2, 0, h - 2);
+    UIUtil.drawLine(g, w - 2, 0, w - 2, 0);
+    UIUtil.drawLine(g, 0, h - 2, 0, h - 2);
     g.translate(-x, -y);
   }
 
@@ -246,10 +248,10 @@ public class BegBorders {
   static void drawActiveButtonBorder(Graphics g, int x, int y, int w, int h) {
     drawFlush3DBorder(g, x, y, w, h);
     g.setColor(MetalLookAndFeel.getPrimaryControl());
-    g.drawLine(x + 1, y + 1, x + 1, h - 3);
-    g.drawLine(x + 1, y + 1, w - 3, x + 1);
+    UIUtil.drawLine(g, x + 1, y + 1, x + 1, h - 3);
+    UIUtil.drawLine(g, x + 1, y + 1, w - 3, x + 1);
     g.setColor(MetalLookAndFeel.getPrimaryControlDarkShadow());
-    g.drawLine(x + 2, h - 2, w - 2, h - 2);
-    g.drawLine(w - 2, y + 2, w - 2, h - 2);
+    UIUtil.drawLine(g, x + 2, h - 2, w - 2, h - 2);
+    UIUtil.drawLine(g, w - 2, y + 2, w - 2, h - 2);
   }
 }

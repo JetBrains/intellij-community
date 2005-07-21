@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntProcedure;
@@ -198,7 +199,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       g.fillRect(getLineNumberAreaOffset(), clip.y, getLineNumberAreaWidth(), clip.height);
       g.setColor(Color.white);
       int x = getLineNumberAreaOffset() + getLineNumberAreaWidth() - 2;
-      g.drawLine(x, clip.y, x, clip.y + clip.height);
+      UIUtil.drawLine(g, x, clip.y, x, clip.y + clip.height);
       paintLineNumbers(g);
     }
   }
@@ -715,7 +716,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
         //Minus
         int minusHeight = y + baseHeight / 2 + (height - baseHeight) / 4;
-        g.drawLine(anchorX + 2, minusHeight, anchorX + width - 2, minusHeight);
+        UIUtil.drawLine(g, anchorX + 2, minusHeight, anchorX + width - 2, minusHeight);
       }
     }
     finally {
@@ -731,7 +732,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
                                   boolean paintBackground) {
     drawSquareWithMinus(g, anchorX, y, width, active, paintBackground);
 
-    g.drawLine(anchorX + width / 2, y + 2, anchorX + width / 2, y + width - 2);
+    UIUtil.drawLine(g, anchorX + width / 2, y + 2, anchorX + width / 2, y + width - 2);
   }
 
   private void drawSquareWithMinus(Graphics2D g,
@@ -750,7 +751,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
       // Draw plus
       if (!active) g.setColor(getFoldingColor(true));
-      g.drawLine(anchorX + 2, y + width / 2, anchorX + width - 2, y + width / 2);
+      UIUtil.drawLine(g, anchorX + 2, y + width / 2, anchorX + width - 2, y + width / 2);
     }
   }
 
@@ -767,13 +768,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       int lineX = anchorX + width / 2;
 
       g.setColor(getFoldingColor(true));
-      g.drawLine(lineX, startY, lineX, endY);
+      UIUtil.drawLine(g, lineX, startY, lineX, endY);
     }
   }
 
   private void drawDottedLine(Graphics2D g, int lineX, int startY, int endY) {
     g.setColor(myEditor.getBackroundColor());
-    g.drawLine(lineX, startY, lineX, endY);
+    UIUtil.drawLine(g, lineX, startY, lineX, endY);
 
     g.setColor(getFoldingColor(false));
 

@@ -3,6 +3,7 @@ package com.intellij.ui;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.plaf.beg.BegTreeHandleUtil;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntObjectHashMap;
 
 import javax.swing.*;
@@ -281,7 +282,7 @@ public class HighlightableComponent extends JComponent {
         if (hRegion.textAttributes.getEffectColor() != null){
           g.setColor(hRegion.textAttributes.getEffectColor());
           int y = yOffset/*fontMetrics.getMaxAscent()*/ + 2;
-          g.drawLine(offset, y, offset + fontMetrics.stringWidth(text) - 1, y);
+          UIUtil.drawLine(g, offset, y, offset + fontMetrics.stringWidth(text) - 1, y);
         }
 
         // draw highlight border

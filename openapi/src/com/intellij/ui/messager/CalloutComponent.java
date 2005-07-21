@@ -23,6 +23,7 @@ import com.intellij.ui.UI;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -372,7 +373,7 @@ public class CalloutComponent {
           break;
       }
 
-      g2.drawLine((int)line.getX1(), (int)line.getY1(), (int)line.getX2(), (int)line.getY2());
+      UIUtil.drawLine(g2, (int)line.getX1(), (int)line.getY1(), (int)line.getX2(), (int)line.getY2());
 
       final Shape arrow = LineEndDecorator.getArrowShape(line, line.getP2());
       g2.fill(arrow);

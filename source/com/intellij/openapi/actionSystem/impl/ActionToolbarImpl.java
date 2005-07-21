@@ -5,8 +5,8 @@ import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.actionSystem.ex.TimerListener;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.actionSystem.ex.TimerListener;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.Keymap;
@@ -14,6 +14,7 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.ex.KeymapManagerListener;
 import com.intellij.openapi.keymap.ex.WeakKeymapManagerListener;
 import com.intellij.openapi.wm.ex.ActionToolbarEx;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -118,9 +119,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbarEx {
     // BTW it's a bit strange :) Toolbar has 4 sides fo border :)
     if (myBorderVisible) {
       g.setColor(UIManager.getColor("Separator.highlight"));
-      g.drawLine(0, 0, getWidth() - 1, 0);
+      UIUtil.drawLine(g, 0, 0, getWidth() - 1, 0);
       g.setColor(UIManager.getColor("Separator.shadow"));
-      g.drawLine(0, getHeight() - 1, getWidth() - 1, getHeight() - 1);
+      UIUtil.drawLine(g, 0, getHeight() - 1, getWidth() - 1, getHeight() - 1);
     }
   }
 
@@ -448,10 +449,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbarEx {
       g.setColor(UIManager.getColor("Separator.shadow"));
       if (getParent() != null) {
         if (myOrientation == SwingConstants.HORIZONTAL) {
-          g.drawLine(3, 2, 3, getParent().getSize().height - 2);
+          UIUtil.drawLine(g, 3, 2, 3, getParent().getSize().height - 2);
         }
         else {
-          g.drawLine(2, 3, getParent().getSize().width - 2, 3);
+          UIUtil.drawLine(g, 2, 3, getParent().getSize().width - 2, 3);
         }
       }
     }

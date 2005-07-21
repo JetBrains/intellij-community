@@ -21,6 +21,7 @@ import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.ActivatableLineBorder;
 import com.intellij.ui.PopupHandler;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -632,29 +633,29 @@ public final class InternalDecorator extends JPanel {
         if (isVertical) {
           if (anchor == ToolWindowAnchor.TOP) {
             g.setColor(Color.white);
-            g.drawLine(x, y, x + width - 1, y);
+            UIUtil.drawLine(g, x, y, x + width - 1, y);
             g.setColor(Color.darkGray);
-            g.drawLine(x, y + height - 1, x + width - 1, y + height - 1);
+            UIUtil.drawLine(g, x, y + height - 1, x + width - 1, y + height - 1);
           }
           else {
             g.setColor(Color.darkGray);
-            g.drawLine(x, y, x + width - 1, y);
+            UIUtil.drawLine(g, x, y, x + width - 1, y);
             g.setColor(Color.white);
-            g.drawLine(x, y + height - 1, x + width - 1, y + height - 1);
+            UIUtil.drawLine(g, x, y + height - 1, x + width - 1, y + height - 1);
           }
         }
         else {
           if (anchor == ToolWindowAnchor.LEFT) {
             g.setColor(Color.white);
-            g.drawLine(x, y, x, y + height - 1);
+            UIUtil.drawLine(g, x, y, x, y + height - 1);
             g.setColor(Color.darkGray);
-            g.drawLine(x + width - 1, y, x + width - 1, y + height - 1);
+            UIUtil.drawLine(g, x + width - 1, y, x + width - 1, y + height - 1);
           }
           else {
             g.setColor(Color.darkGray);
-            g.drawLine(x, y, x, y + height - 1);
+            UIUtil.drawLine(g, x, y, x, y + height - 1);
             g.setColor(Color.white);
-            g.drawLine(x + width - 1, y, x + width - 1, y + height - 1);
+            UIUtil.drawLine(g, x + width - 1, y, x + width - 1, y + height - 1);
           }
         }
       }

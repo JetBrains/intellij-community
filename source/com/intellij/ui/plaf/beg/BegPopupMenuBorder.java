@@ -1,9 +1,11 @@
 
 package com.intellij.ui.plaf.beg;
 
-import java.awt.*;
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.border.AbstractBorder;
 import javax.swing.plaf.UIResource;
+import java.awt.*;
 
 /**
  *
@@ -19,17 +21,17 @@ public class BegPopupMenuBorder extends AbstractBorder implements UIResource {
     g.translate(x, y);
 
     g.setColor(color1);
-    g.drawLine(0, 0, w - 2, 0);
-    g.drawLine(0, 0, 0, h - 2);
+    UIUtil.drawLine(g, 0, 0, w - 2, 0);
+    UIUtil.drawLine(g, 0, 0, 0, h - 2);
     g.setColor(color2);
-    g.drawLine(1, 1, w - 3, 1);
-    g.drawLine(1, 1, 1, h - 3);
+    UIUtil.drawLine(g, 1, 1, w - 3, 1);
+    UIUtil.drawLine(g, 1, 1, 1, h - 3);
     g.setColor(color3);
-    g.drawLine(1, h - 2, w - 2, h - 2);
-    g.drawLine(w - 2, 1, w - 2, h - 2);
+    UIUtil.drawLine(g, 1, h - 2, w - 2, h - 2);
+    UIUtil.drawLine(g, w - 2, 1, w - 2, h - 2);
     g.setColor(color4);
-    g.drawLine(0, h - 1, w - 1, h - 1);
-    g.drawLine(w - 1, 0, w - 1, h - 1);
+    UIUtil.drawLine(g, 0, h - 1, w - 1, h - 1);
+    UIUtil.drawLine(g, w - 1, 0, w - 1, h - 1);
     g.translate(-x, -y);
   }
 

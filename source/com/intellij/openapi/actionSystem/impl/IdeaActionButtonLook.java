@@ -2,6 +2,7 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,12 +34,12 @@ public class IdeaActionButtonLook extends ActionButtonLook {
     Rectangle rectangle = new Rectangle(component.getWidth(), component.getHeight());
     Color color = new Color(8, 36, 107);
     g.setColor(color);
-    g.drawLine(rectangle.x, rectangle.y, rectangle.x, (rectangle.y + rectangle.height) - 1);
-    g.drawLine(rectangle.x, rectangle.y, (rectangle.x + rectangle.width) - 1, rectangle.y);
-    g.drawLine((rectangle.x + rectangle.width) - 1, rectangle.y, (rectangle.x + rectangle.width) - 1,
-               (rectangle.y + rectangle.height) - 1);
-    g.drawLine(rectangle.x, (rectangle.y + rectangle.height) - 1, (rectangle.x + rectangle.width) - 1,
-               (rectangle.y + rectangle.height) - 1);
+    UIUtil.drawLine(g, rectangle.x, rectangle.y, rectangle.x, (rectangle.y + rectangle.height) - 1);
+    UIUtil.drawLine(g, rectangle.x, rectangle.y, (rectangle.x + rectangle.width) - 1, rectangle.y);
+    UIUtil.drawLine(g, (rectangle.x + rectangle.width) - 1, rectangle.y, (rectangle.x + rectangle.width) - 1,
+                    (rectangle.y + rectangle.height) - 1);
+    UIUtil.drawLine(g, rectangle.x, (rectangle.y + rectangle.height) - 1, (rectangle.x + rectangle.width) - 1,
+                    (rectangle.y + rectangle.height) - 1);
   }
 
   public void paintIcon(Graphics g, ActionButtonComponent actionButton, Icon icon) {

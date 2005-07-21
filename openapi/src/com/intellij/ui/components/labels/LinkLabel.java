@@ -21,6 +21,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.UI;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -138,11 +139,11 @@ public class LinkLabel extends JLabel {
         y += k;
 
         if (getHorizontalAlignment() == LEFT) {
-          g.drawLine(x + shiftX, y + shiftY, x + getFontMetrics(getFont()).stringWidth(getText()) + shiftX, y + shiftY);
+          UIUtil.drawLine(g, x + shiftX, y + shiftY, x + getFontMetrics(getFont()).stringWidth(getText()) + shiftX, y + shiftY);
         }
         else {
-          g.drawLine(getWidth() - 1 - getFontMetrics(getFont()).stringWidth(getText()) + shiftX, y + shiftY, getWidth() - 1 + shiftX,
-            y + shiftY);
+          UIUtil.drawLine(g, getWidth() - 1 - getFontMetrics(getFont()).stringWidth(getText()) + shiftX, y + shiftY,
+                          getWidth() - 1 + shiftX, y + shiftY);
         }
       }
       else {

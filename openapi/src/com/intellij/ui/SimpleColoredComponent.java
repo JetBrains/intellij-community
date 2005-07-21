@@ -19,6 +19,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.peer.PeerFactory;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -309,7 +310,7 @@ public class SimpleColoredComponent extends JComponent {
       // 1. Strikeout effect
       if (attributes.isStrikeout()) {
         final int strikeOutAt = textBaseline + (metrics.getDescent() - metrics.getAscent())/2;
-        g.drawLine(xOffset, strikeOutAt, xOffset+fragmentWidth, strikeOutAt);
+        UIUtil.drawLine(g, xOffset, strikeOutAt, xOffset + fragmentWidth, strikeOutAt);
       }
       // 2. Waved effect
       if(attributes.isWaved()){
@@ -318,8 +319,8 @@ public class SimpleColoredComponent extends JComponent {
         }
         final int wavedAt = textBaseline + 1;
         for(int x = xOffset; x <= xOffset + fragmentWidth; x += 4){
-          g.drawLine(x, wavedAt, x + 2, wavedAt + 2);
-          g.drawLine( x + 3, wavedAt + 1,  x + 4, wavedAt);
+          UIUtil.drawLine(g, x, wavedAt, x + 2, wavedAt + 2);
+          UIUtil.drawLine(g, x + 3, wavedAt + 1, x + 4, wavedAt);
         }
       }
 

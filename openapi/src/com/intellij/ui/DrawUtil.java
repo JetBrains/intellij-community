@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
+
 import java.awt.*;
 
 /**
@@ -31,20 +33,20 @@ public class DrawUtil {
     int y1 = (int) Math.round(y1d);
     int y2 = (int) Math.round(y2d);
 
-    g.drawLine(x1 + 1, y1, x2 - 1, y1);
-    g.drawLine(x1 + 1, y2, x2 - 1, y2);
+    UIUtil.drawLine(g, x1 + 1, y1, x2 - 1, y1);
+    UIUtil.drawLine(g, x1 + 1, y2, x2 - 1, y2);
 
-    g.drawLine(x1, y1 + 1, x1, y2 - 1);
-    g.drawLine(x2, y1 + 1, x2, y2 - 1);
+    UIUtil.drawLine(g, x1, y1 + 1, x1, y2 - 1);
+    UIUtil.drawLine(g, x2, y1 + 1, x2, y2 - 1);
 
     g.setColor(oldColor);
   }
 
   public static void drawPlainRect(Graphics g, int x1, int y1, int x2, int y2) {
-    g.drawLine(x1, y1, x2 - 1, y1);
-    g.drawLine(x2, y1, x2, y2 - 1);
-    g.drawLine(x1 + 1, y2, x2, y2);
-    g.drawLine(x1, y1 + 1, x1, y2);
+    UIUtil.drawLine(g, x1, y1, x2 - 1, y1);
+    UIUtil.drawLine(g, x2, y1, x2, y2 - 1);
+    UIUtil.drawLine(g, x1 + 1, y2, x2, y2);
+    UIUtil.drawLine(g, x1, y1 + 1, x1, y2);
   }
 
 }

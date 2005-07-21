@@ -1,6 +1,7 @@
 package com.intellij.uiDesigner;
 
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -166,7 +167,7 @@ final class Painter {
         final int y = (ys[i] + heights[i] + ys[i + 1]) / 2;
         // Draw dotted horizontal line
         for(int x = 0; x < width; x+=4){
-          g.drawLine(x, y, Math.min(x+2, width - 1), y);
+          UIUtil.drawLine(g, x, y, Math.min(x + 2, width - 1), y);
         }
       }
 
@@ -178,7 +179,7 @@ final class Painter {
         final int x = (xs[i] + widths[i] + xs[i + 1]) / 2;
         // Draw dotted vertical line
         for(int y = 0; y < height; y+=4){
-          g.drawLine(x, y, x, Math.min(y+2, height - 1));
+          UIUtil.drawLine(g, x, y, x, Math.min(y + 2, height - 1));
         }
       }
     }finally{

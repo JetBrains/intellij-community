@@ -1,5 +1,7 @@
 package com.intellij.openapi.progress.util;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -106,21 +108,21 @@ public class ColorProgressBar extends JComponent {
     g2.setPaint(SHADOW1);
     rect.setRect(1, 1, size.width - 3, size.height - 3);
     g2.draw(rect);
-    g2.drawLine(2, 2, 2, 2);
-    g2.drawLine(2, size.height - 2, 2, size.height - 2);
-    g2.drawLine(size.width - 2, 2, size.width - 2, 2);
-    g2.drawLine(0, 2, 0, 2);
-    g2.drawLine(2, 0, 2, 0);
+    UIUtil.drawLine(g2, 2, 2, 2, 2);
+    UIUtil.drawLine(g2, 2, size.height - 2, 2, size.height - 2);
+    UIUtil.drawLine(g2, size.width - 2, 2, size.width - 2, 2);
+    UIUtil.drawLine(g2, 0, 2, 0, 2);
+    UIUtil.drawLine(g2, 2, 0, 2, 0);
 
     g2.setPaint(SHADOW2);
-    g2.drawLine(0, 2, 0, size.height - 4);
-    g2.drawLine(1, 1, 1, 1);
-    g2.drawLine(2, 0, size.width - 3, 0);
-    g2.drawLine(1, size.height - 3, 1, size.height - 3);
-    g2.drawLine(2, size.height - 2, size.width - 3, size.height - 2);
-    g2.drawLine(size.width - 2, 1, size.width - 2, 1);
-    g2.drawLine(size.width - 1, 2, size.width - 1, size.height - 4);
-    g2.drawLine(size.width - 2, size.height - 3, size.width - 2, size.height - 3);
+    UIUtil.drawLine(g2, 0, 2, 0, size.height - 4);
+    UIUtil.drawLine(g2, 1, 1, 1, 1);
+    UIUtil.drawLine(g2, 2, 0, size.width - 3, 0);
+    UIUtil.drawLine(g2, 1, size.height - 3, 1, size.height - 3);
+    UIUtil.drawLine(g2, 2, size.height - 2, size.width - 3, size.height - 2);
+    UIUtil.drawLine(g2, size.width - 2, 1, size.width - 2, 1);
+    UIUtil.drawLine(g2, size.width - 1, 2, size.width - 1, size.height - 4);
+    UIUtil.drawLine(g2, size.width - 2, size.height - 3, size.width - 2, size.height - 3);
 
     int y_center = size.height / 2;
     int y_steps = size.height / 2 - 3;
@@ -140,15 +142,15 @@ public class ColorProgressBar extends JComponent {
         g2.setPaint(myColor);
 
         int startXOffset = x_offset + (BRICK_WIDTH + BRICK_SPACE) * i;
-        g2.drawLine(startXOffset, y_center, startXOffset + BRICK_WIDTH - 1, y_center);
+        UIUtil.drawLine(g2, startXOffset, y_center, startXOffset + BRICK_WIDTH - 1, y_center);
 
         for (int j = 0; j < y_steps; j++) {
           Color color = new Color(myColor.getRed(), myColor.getGreen(), myColor.getBlue(), 255 - alpha_step * (j + 1));
           g2.setPaint(color);
-          g2.drawLine(startXOffset, y_center - 1 - j, startXOffset + BRICK_WIDTH - 1, y_center - 1 - j);
+          UIUtil.drawLine(g2, startXOffset, y_center - 1 - j, startXOffset + BRICK_WIDTH - 1, y_center - 1 - j);
 
           if (!(y_center % 2 != 0 && j == y_steps - 1)) {
-            g2.drawLine(startXOffset, y_center + 1 + j, startXOffset + BRICK_WIDTH - 1, y_center + 1 + j);
+            UIUtil.drawLine(g2, startXOffset, y_center + 1 + j, startXOffset + BRICK_WIDTH - 1, y_center + 1 + j);
           }
         }
         g2.setColor(
@@ -159,13 +161,13 @@ public class ColorProgressBar extends JComponent {
     } else {
       for (int i = 0; i < bricksToDraw; i++) {
         g2.setPaint(myColor);
-        g2.drawLine(x_offset, y_center, x_offset + BRICK_WIDTH - 1, y_center);
+        UIUtil.drawLine(g2, x_offset, y_center, x_offset + BRICK_WIDTH - 1, y_center);
         for (int j = 0; j < y_steps; j++) {
           Color color = new Color(myColor.getRed(), myColor.getGreen(), myColor.getBlue(), 255 - alpha_step * (j + 1));
           g2.setPaint(color);
-          g2.drawLine(x_offset, y_center - 1 - j, x_offset + BRICK_WIDTH - 1, y_center - 1 - j);
+          UIUtil.drawLine(g2, x_offset, y_center - 1 - j, x_offset + BRICK_WIDTH - 1, y_center - 1 - j);
           if (!(y_center % 2 != 0 && j == y_steps - 1)) {
-            g2.drawLine(x_offset, y_center + 1 + j, x_offset + BRICK_WIDTH - 1, y_center + 1 + j);
+            UIUtil.drawLine(g2, x_offset, y_center + 1 + j, x_offset + BRICK_WIDTH - 1, y_center + 1 + j);
           }
         }
         g2.setColor(

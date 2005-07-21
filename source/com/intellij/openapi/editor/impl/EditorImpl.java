@@ -138,7 +138,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
 
   private static final int CACHED_CHARS_BUFFER_SIZE = 300;
 
-  private ArrayList<CachedFontContent> myFontCache = null;
+  private final ArrayList<CachedFontContent> myFontCache = new ArrayList<CachedFontContent>();
   private FontInfo myCurrentFontType = null;
 
   private boolean myIsBlockSelectionMode;
@@ -1061,7 +1061,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
       BasicStroke dotted = new BasicStroke(1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{0, 2, 0, 2},
                                            0);
       g.setStroke(dotted);
-      g.drawLine(p1.x, y, p2.x, y);
+      UIUtil.drawLine(g, p1.x, y, p2.x, y);
       g.setStroke(saved);
     }
   }
@@ -1078,7 +1078,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     int x = mySettings.getRightMargin(myProject) * getSpaceWidth(Font.PLAIN);
     if (x >= clip.x && x < clip.x + clip.width) {
       g.setColor(rightMargin);
-      g.drawLine(x, clip.y, x, clip.y + clip.height);
+      UIUtil.drawLine(g, x, clip.y, x, clip.y + clip.height);
     }
   }
 
@@ -1131,7 +1131,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
               drawWave(g, end.x, end.x + charWidth - 1, y);
             }
             else if (attributes.getEffectType() != EffectType.BOXED) {
-              g.drawLine(end.x, y, end.x + charWidth - 1, y);
+              UIUtil.drawLine(g, end.x, y, end.x + charWidth - 1, y);
             }
           }
         }
@@ -1326,7 +1326,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     EffectType effectType = attributes.getEffectType();
     int fontType = attributes.getFontType();
     myCurrentFontType = null;
-    myFontCache = new ArrayList<CachedFontContent>();
     g.setColor(currentColor);
     Point position = new Point(0, visibleLineNumber * lineHeight);
     while (!iterationState.atEnd() && !lIterator.atEnd()) {
@@ -1446,10 +1445,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
   }
 
   private void flushCachedChars(Graphics g) {
-    for (int i = 0; i < myFontCache.size(); i++) {
-      myFontCache.get(i).flushContent(g);
+    for (CachedFontContent cache : myFontCache) {
+      cache.flushContent(g);
     }
-    myFontCache = null;
   }
 
   private void paintCaretCursor(Graphics g) {
@@ -1491,7 +1489,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
         y += getLineHeight();
       }
 
-      g.drawLine(0, y - 1, endShift, y - 1);
+      UIUtil.drawLine(g, 0, y - 1, endShift, y - 1);
     }
   }
 
@@ -1548,14 +1546,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
 //      myBorderEffect.flushIfCantProlong(g, this, effectType, effectColor);
       if (effectType == EffectType.LINE_UNDERSCORE) {
         g.setColor(effectColor);
-        g.drawLine(xStart, y + 1, xStart + w, y + 1);
+        UIUtil.drawLine(g, xStart, y + 1, xStart + w, y + 1);
         g.setColor(savedColor);
       }
       else {
         if (effectType == EffectType.STRIKEOUT) {
           g.setColor(effectColor);
           int y1 = y - getCharHeight() / 2;
-          g.drawLine(xStart, y1, xStart + w, y1);
+          UIUtil.drawLine(g, xStart, y1, xStart + w, y1);
           g.setColor(savedColor);
         }
         else {
@@ -1614,8 +1612,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
       final int halfCharHeight = charHeight / 2;
       int mid = y - halfCharHeight;
       int top = y - charHeight;
-      g.drawLine(start, mid, stop, mid);
-      g.drawLine(stop, y, stop, top);
+      UIUtil.drawLine(g, start, mid, stop, mid);
+      UIUtil.drawLine(g, stop, y, stop, top);
       g.fillPolygon(new int[]{stop - halfCharHeight, stop - halfCharHeight, stop},
                     new int[]{y, y - charHeight, y - halfCharHeight}, 3);
       g.setColor(oldColor);
@@ -1673,12 +1671,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     }
 
     int x = WAVE_SEGMENT_LENGTH * endSegment;
-    g.drawLine(x, y + WAVE_HEIGHT, x + WAVE_SEGMENT_LENGTH / 2, y);
+    UIUtil.drawLine(g, x, y + WAVE_HEIGHT, x + WAVE_SEGMENT_LENGTH / 2, y);
   }
 
   private static void drawWaveSegment(Graphics g, int x, int y) {
-    g.drawLine(x, y + WAVE_HEIGHT, x + WAVE_SEGMENT_LENGTH / 2, y);
-    g.drawLine(x + WAVE_SEGMENT_LENGTH / 2, y, x + WAVE_SEGMENT_LENGTH, y + WAVE_HEIGHT);
+    UIUtil.drawLine(g, x, y + WAVE_HEIGHT, x + WAVE_SEGMENT_LENGTH / 2, y);
+    UIUtil.drawLine(g, x + WAVE_SEGMENT_LENGTH / 2, y, x + WAVE_SEGMENT_LENGTH, y + WAVE_HEIGHT);
   }
 
   private int getTextSegmentWidth(CharSequence text, int xStart, int fontType) {
@@ -2668,7 +2666,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
 
       if (EditorImpl.this.myIsInsertMode != mySettings.isBlockCursor()) {
         for (int i = 0; i < mySettings.getLineCursorWidth(); i++) {
-          g.drawLine(x + i, y, x + i, y + lineHeight - 1);
+          UIUtil.drawLine(g, x + i, y, x + i, y + lineHeight - 1);
         }
       }
       else {

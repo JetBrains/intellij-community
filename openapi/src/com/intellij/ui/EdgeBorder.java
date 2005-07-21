@@ -15,6 +15,8 @@
 */
 package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
@@ -48,27 +50,27 @@ public class EdgeBorder implements Border {
     java.awt.Color color2 = g.getColor();
     if ((b & 0xf) != 0){
       g.setColor(color);
-      g.drawLine(x, y, (x + width) - 1, y);
+      UIUtil.drawLine(g, x, y, (x + width) - 1, y);
       g.setColor(color1);
-      g.drawLine(x, y + 1, (x + width) - 1, y + 1);
+      UIUtil.drawLine(g, x, y + 1, (x + width) - 1, y + 1);
     }
     if ((b & 0xf0) != 0){
       g.setColor(color);
-      g.drawLine(x, y, x, (y + height) - 1);
+      UIUtil.drawLine(g, x, y, x, (y + height) - 1);
       g.setColor(color1);
-      g.drawLine(x + 1, y, x + 1, (y + height) - 1);
+      UIUtil.drawLine(g, x + 1, y, x + 1, (y + height) - 1);
     }
     if ((b & 0xf00) != 0){
       g.setColor(color);
-      g.drawLine(x, (y + height) - 2, (x + width) - 1, (y + height) - 2);
+      UIUtil.drawLine(g, x, (y + height) - 2, (x + width) - 1, (y + height) - 2);
       g.setColor(color1);
-      g.drawLine(x, (y + height) - 1, (x + width) - 1, (y + height) - 1);
+      UIUtil.drawLine(g, x, (y + height) - 1, (x + width) - 1, (y + height) - 1);
     }
     if ((b & 0xf000) != 0){
       g.setColor(color1);
-      g.drawLine((x + width) + 1, y, (x + width) + 1, (y + height) - 1);
+      UIUtil.drawLine(g, (x + width) + 1, y, (x + width) + 1, (y + height) - 1);
       g.setColor(color);
-      g.drawLine((x + width), y, (x + width), (y + height) - 1);
+      UIUtil.drawLine(g, (x + width), y, (x + width), (y + height) - 1);
     }
     g.setColor(color2);
   }

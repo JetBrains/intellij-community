@@ -6,6 +6,7 @@ import com.intellij.openapi.diff.impl.util.TextDiffType;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -30,8 +31,8 @@ class DividerPoligon {
     g.setColor(myColor);
     g.fill(new Polygon(new int[]{0, 0, width, width}, new int[]{myStart1, myEnd1, myEnd2, myStart2}, 4));
     g.setColor(Color.GRAY);
-    g.drawLine(0, myStart1, width, myStart2);
-    g.drawLine(0, myEnd1, width, myEnd2);
+    UIUtil.drawLine(g, 0, myStart1, width, myStart2);
+    UIUtil.drawLine(g, 0, myEnd1, width, myEnd2);
   }
 
   public int hashCode() {

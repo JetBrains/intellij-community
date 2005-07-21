@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.Equality;
 
 import java.awt.*;
@@ -184,7 +185,7 @@ public class BorderEffect {
     }
 
     private void lineTo(int x, int y) {
-      myGraphics.drawLine(myX, myY, x, y);
+      UIUtil.drawLine(myGraphics, myX, myY, x, y);
       myX = x;
       myY = y;
     }

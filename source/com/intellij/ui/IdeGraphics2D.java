@@ -1,16 +1,18 @@
 package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
+
 import java.awt.*;
+import java.awt.font.FontRenderContext;
+import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.RenderableImage;
-import java.awt.font.GlyphVector;
-import java.awt.font.FontRenderContext;
-import java.util.Map;
 import java.text.AttributedCharacterIterator;
+import java.util.Map;
 
 /**
  * @author Vladimir Kondratyev
@@ -97,7 +99,7 @@ public class IdeGraphics2D extends Graphics2D{
   }
 
   public void drawLine(int x1, int y1, int x2, int y2) {
-    myDelegate.drawLine(x1, y1, x2, y2);
+    UIUtil.drawLine(myDelegate, x1, y1, x2, y2);
   }
 
   public void drawOval(int x, int y, int width, int height) {

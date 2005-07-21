@@ -2,6 +2,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -229,9 +230,9 @@ abstract public class AbstractToolTipHandler <KeyType, ComponentType extends JCo
     g.translate((visibleRect.x + visibleRect.width - cellLocation.x), 0);
     g.setColor(Color.black);
     int rightX = myImage.getWidth() - 1;
-    g.drawLine(0, 0, rightX, 0);
-    g.drawLine(rightX, 0, rightX, height);
-    g.drawLine(0, height - 1, rightX, height - 1);
+    UIUtil.drawLine(g, 0, 0, rightX, 0);
+    UIUtil.drawLine(g, rightX, 0, rightX, height);
+    UIUtil.drawLine(g, 0, height - 1, rightX, height - 1);
     g.dispose();
 
     myComponent.remove(rComponent);

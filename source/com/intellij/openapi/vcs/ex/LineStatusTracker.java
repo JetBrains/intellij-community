@@ -36,14 +36,14 @@ import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.SideBorder2;
 import com.intellij.util.EventUtil;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
-
-import org.jetbrains.annotations.Nullable;
 
 /**
  * author: lesya
@@ -191,9 +191,9 @@ public class LineStatusTracker implements EditorColorsListener {
     if (r.height > 0) {
       g.fillRect(x, r.y + 2, width, r.height - 4);
       g.setColor(gutter.getFoldingColor(false));
-      g.drawLine(x, r.y + 2, x + width, r.y + 2);
-      g.drawLine(x, r.y + 2, x, r.y + r.height - 3);
-      g.drawLine(x, r.y + r.height - 3, x + width, r.y + r.height - 3);
+      UIUtil.drawLine(g, x, r.y + 2, x + width, r.y + 2);
+      UIUtil.drawLine(g, x, r.y + 2, x, r.y + r.height - 3);
+      UIUtil.drawLine(g, x, r.y + r.height - 3, x + width, r.y + r.height - 3);
     }
     else {
       int[] xPoints = new int[]{x, x, x + width - 1};

@@ -18,6 +18,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LabeledIcon;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -783,12 +784,12 @@ public class WelcomeScreen {
       Rectangle rectangle = new Rectangle(getSize());
       Color color = ACTION_BUTTON_BORDER_COLOR;
       g.setColor(color);
-      g.drawLine(rectangle.x, rectangle.y, rectangle.x, (rectangle.y + rectangle.height) - 1);
-      g.drawLine(rectangle.x, rectangle.y, (rectangle.x + rectangle.width) - 1, rectangle.y);
-      g.drawLine((rectangle.x + rectangle.width) - 1, rectangle.y, (rectangle.x + rectangle.width) - 1,
-                 (rectangle.y + rectangle.height) - 1);
-      g.drawLine(rectangle.x, (rectangle.y + rectangle.height) - 1, (rectangle.x + rectangle.width) - 1,
-                 (rectangle.y + rectangle.height) - 1);
+      UIUtil.drawLine(g, rectangle.x, rectangle.y, rectangle.x, (rectangle.y + rectangle.height) - 1);
+      UIUtil.drawLine(g, rectangle.x, rectangle.y, (rectangle.x + rectangle.width) - 1, rectangle.y);
+      UIUtil.drawLine(g, (rectangle.x + rectangle.width) - 1, rectangle.y, (rectangle.x + rectangle.width) - 1,
+                      (rectangle.y + rectangle.height) - 1);
+      UIUtil.drawLine(g, rectangle.x, (rectangle.y + rectangle.height) - 1, (rectangle.x + rectangle.width) - 1,
+                      (rectangle.y + rectangle.height) - 1);
     }
 
     public int getPopState() {
@@ -882,14 +883,14 @@ public class WelcomeScreen {
       Rectangle rectangle = new Rectangle(getSize());
       Color color = WHITE_BORDER_COLOR;
       g.setColor(color);
-      g.drawLine(rectangle.x, rectangle.y, rectangle.x, (rectangle.y + rectangle.height) - 1);
-      g.drawLine(rectangle.x, rectangle.y, (rectangle.x + rectangle.width) - 1, rectangle.y);
+      UIUtil.drawLine(g, rectangle.x, rectangle.y, rectangle.x, (rectangle.y + rectangle.height) - 1);
+      UIUtil.drawLine(g, rectangle.x, rectangle.y, (rectangle.x + rectangle.width) - 1, rectangle.y);
       color = GRAY_BORDER_COLOR;
       g.setColor(color);
-      g.drawLine((rectangle.x + rectangle.width) - 1, rectangle.y + 1, (rectangle.x + rectangle.width) - 1,
-                 (rectangle.y + rectangle.height) - 1);
-      g.drawLine(rectangle.x + 1, (rectangle.y + rectangle.height) - 1, (rectangle.x + rectangle.width) - 1,
-                 (rectangle.y + rectangle.height) - 1);
+      UIUtil.drawLine(g, (rectangle.x + rectangle.width) - 1, rectangle.y + 1, (rectangle.x + rectangle.width) - 1,
+                      (rectangle.y + rectangle.height) - 1);
+      UIUtil.drawLine(g, rectangle.x + 1, (rectangle.y + rectangle.height) - 1, (rectangle.x + rectangle.width) - 1,
+                      (rectangle.y + rectangle.height) - 1);
     }
   }
 }

@@ -1,6 +1,7 @@
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.Patches;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.MenuKeyEvent;
@@ -337,11 +338,11 @@ public class IdeaMenuUI extends BasicMenuUI{
     int k1 = i1 + myMaxGutterIconWidth + 1;
     int l1 = j1 + myMaxGutterIconWidth + 4;
     g.setColor(BegResources.m);
-    g.drawLine(i1, j1, i1, l1);
-    g.drawLine(i1, j1, k1, j1);
+    UIUtil.drawLine(g, i1, j1, i1, l1);
+    UIUtil.drawLine(g, i1, j1, k1, j1);
     g.setColor(BegResources.j);
-    g.drawLine(k1, j1, k1, l1);
-    g.drawLine(i1, l1, k1, l1);
+    UIUtil.drawLine(g, k1, j1, k1, l1);
+    UIUtil.drawLine(g, i1, l1, k1, l1);
   }
 
   private void resetRects() {

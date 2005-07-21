@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.LabeledIcon;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -309,7 +310,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       RoundRectangle2D rect = new RoundRectangle2D.Double(0, 0, width - 1, height - 1, 0, 0);
       g2.fill(rect);
       g2.setPaint(Color.GRAY);
-      g2.drawLine(0, height - 1, width - 1, height - 1);
+      UIUtil.drawLine(g2, 0, height - 1, width - 1, height - 1);
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldAntialiasing);
     }
   }

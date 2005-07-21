@@ -1,9 +1,11 @@
 package com.intellij.ui.plaf.beg;
 
-import java.awt.*;
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicScrollBarUI;
+import java.awt.*;
 
 public class BegScrollBarUI extends BasicScrollBarUI {
   public static ComponentUI createUI(JComponent c) {
@@ -22,13 +24,13 @@ public class BegScrollBarUI extends BasicScrollBarUI {
 
     g.setColor(thumbDarkShadowColor);
 //    g.drawRect(0, 0, w - 1, h - 1);
-    g.drawLine(0, 1, 0, h - 2);
+    UIUtil.drawLine(g, 0, 1, 0, h - 2);
     //left
-    g.drawLine(1, 0, w - 2, 0);
+    UIUtil.drawLine(g, 1, 0, w - 2, 0);
     //top
-    g.drawLine(w - 1, 1, w - 1, h - 2);
+    UIUtil.drawLine(g, w - 1, 1, w - 1, h - 2);
     //right
-    g.drawLine(1, h - 1, w - 2, h - 1);
+    UIUtil.drawLine(g, 1, h - 1, w - 2, h - 1);
     //bottom
 //    g.setColor(thumbColor);
     g.setColor(new Color(247, 243, 239));

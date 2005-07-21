@@ -2,6 +2,7 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -49,7 +50,7 @@ public class ActionButtonWithText extends ActionButton {
       final int startX = textStartX + fontMetrics.charsWidth(chars, 0, mnemonicIndex);
       final int startY = y + iconTextDifference + fontMetrics.getMaxAscent() + fontMetrics.getMaxDescent();
       final int endX = startX + fontMetrics.charWidth(text.charAt(mnemonicIndex));
-      g.drawLine(startX, startY, endX, startY);
+      UIUtil.drawLine(g, startX, startY, endX, startY);
     }
   }
 

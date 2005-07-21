@@ -56,4 +56,8 @@ public class UIUtil {
     final Image image = ImageLoader.loadFromResource("/icon.png");
     frame.setIconImage(image);
   }
+
+  public static void drawLine(Graphics g, int x1, int y1, int x2, int y2) {
+    g.drawLine(x1, y1, x2, y2);
+  }
 }

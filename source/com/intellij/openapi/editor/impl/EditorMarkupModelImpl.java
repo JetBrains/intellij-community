@@ -33,6 +33,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.SmartList;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 
 import javax.swing.*;
@@ -330,18 +331,18 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
         g.setColor(brighter);
         //left
-        g.drawLine(x, yStart, x, yEnd - 1);
+        UIUtil.drawLine(g, x, yStart, x, yEnd - 1);
         if (i == 0 || !isAdjacent(mySpots.get(i - 1), markSpot) || wider(markSpot, mySpots.get(i - 1))) {
           //top decoration
-          g.drawLine(x + 1, yStart, x + paintWidth - 2, yStart);
+          UIUtil.drawLine(g, x + 1, yStart, x + paintWidth - 2, yStart);
         }
         g.setColor(darker);
         if (i == mySpots.size() - 1 || !isAdjacent(markSpot, mySpots.get(i + 1)) || wider(markSpot, mySpots.get(i + 1))) {
           // bottom decoration
-          g.drawLine(x + 1, yEnd - 1, x + paintWidth - 2, yEnd - 1);
+          UIUtil.drawLine(g, x + 1, yEnd - 1, x + paintWidth - 2, yEnd - 1);
         }
         //right
-        g.drawLine(x + paintWidth - 2, yStart, x + paintWidth - 2, yEnd - 1);
+        UIUtil.drawLine(g, x + paintWidth - 2, yStart, x + paintWidth - 2, yEnd - 1);
 
       }
     }

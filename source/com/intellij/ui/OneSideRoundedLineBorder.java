@@ -1,5 +1,7 @@
 package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.border.LineBorder;
 import java.awt.*;
 
@@ -47,17 +49,17 @@ public class OneSideRoundedLineBorder extends LineBorder {
         g2.drawRoundRect(startX, startY, correctedWidth, correctedHeight, myArcSize, myArcSize);
       }
       else if (myIsTopRounded){
-        g2.drawLine(startX + myRadius, startY, startX + correctedWidth - myRadius, startY); // top
+        UIUtil.drawLine(g2, startX + myRadius, startY, startX + correctedWidth - myRadius, startY); // top
         if (myDrawDottedAngledSide) {
           drawDottedLine(g2, startX, startY + correctedHeight, startX + correctedWidth, startY + correctedHeight); // bottom
         }
         else {
-          g2.drawLine(startX, startY + correctedHeight, startX + correctedWidth, startY + correctedHeight); // bottom
+          UIUtil.drawLine(g2, startX, startY + correctedHeight, startX + correctedWidth, startY + correctedHeight); // bottom
         }
         g2.drawArc(startX, startY, myArcSize, myArcSize, 90, 90);
         g2.drawArc(startX + correctedWidth - myArcSize, startY, myArcSize, myArcSize, 0, 90);
-        g2.drawLine(startX, startY + myRadius + 1, startX, startY + correctedHeight);  // left
-        g2.drawLine(startX + correctedWidth, startY + myRadius + 1, startX + correctedWidth, startY + correctedHeight);  // right
+        UIUtil.drawLine(g2, startX, startY + myRadius + 1, startX, startY + correctedHeight);  // left
+        UIUtil.drawLine(g2, startX + correctedWidth, startY + myRadius + 1, startX + correctedWidth, startY + correctedHeight);  // right
       }
       else if (myIsBottomRounded) {
         // todo
@@ -75,7 +77,7 @@ public class OneSideRoundedLineBorder extends LineBorder {
     final Stroke saved = g.getStroke();
     g.setStroke(new BasicStroke(1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, DASH, y1 % 2));
 
-    g.drawLine(x1, y1, x2, y2);
+    UIUtil.drawLine(g, x1, y1, x2, y2);
 
     g.setStroke(saved);
   }

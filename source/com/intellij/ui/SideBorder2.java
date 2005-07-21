@@ -1,7 +1,9 @@
 package com.intellij.ui;
 
-import java.awt.*;
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.border.Border;
+import java.awt.*;
 
 public class SideBorder2 implements Border {
   public boolean isBorderOpaque() {
@@ -46,19 +48,19 @@ public class SideBorder2 implements Border {
     for(i = 0; i < getThickness(); i++){
       if (myLeftColor != null){
         g.setColor(myLeftColor);
-        g.drawLine(x + i, y + i, x + i, height - i - i - 1);
+        UIUtil.drawLine(g, x + i, y + i, x + i, height - i - i - 1);
       }
       if (myTopColor != null){
         g.setColor(myTopColor);
-        g.drawLine(x + i, y + i, width - i - i - 1, y + i);
+        UIUtil.drawLine(g, x + i, y + i, width - i - i - 1, y + i);
       }
       if (myRightColor != null){
         g.setColor(myRightColor);
-        g.drawLine(width - i - i - 1, y + i, width - i - i - 1, height - i - i - 1);
+        UIUtil.drawLine(g, width - i - i - 1, y + i, width - i - i - 1, height - i - i - 1);
       }
       if (myBottomColor != null){
         g.setColor(myBottomColor);
-        g.drawLine(x + i, height - i - i - 1, width - i - i - 1, height - i - i - 1);
+        UIUtil.drawLine(g, x + i, height - i - i - 1, width - i - i - 1, height - i - i - 1);
       }
     }
     g.setColor(oldColor);

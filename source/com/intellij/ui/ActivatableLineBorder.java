@@ -1,5 +1,7 @@
 package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.border.Border;
 import java.awt.*;
 
@@ -27,9 +29,9 @@ public class ActivatableLineBorder implements Border {
 
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     g.setColor(active ? ACTIVE_COLOR : INACTIVE_COLOR);
-    g.drawLine(x + 1, y, x + width - 2, y);
-    g.drawLine(x + 1, y + height - 1, x + width - 2, y + height - 1);
-    g.drawLine(x, y + 1, x, y + height - 2);
-    g.drawLine(x + width - 1, y + 1, x + width - 1, y + height - 2);
+    UIUtil.drawLine(g, x + 1, y, x + width - 2, y);
+    UIUtil.drawLine(g, x + 1, y + height - 1, x + width - 2, y + height - 1);
+    UIUtil.drawLine(g, x, y + 1, x, y + height - 2);
+    UIUtil.drawLine(g, x + width - 1, y + 1, x + width - 1, y + height - 2);
   }
 }

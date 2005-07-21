@@ -17,6 +17,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.containers.IntArrayList;
+import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
@@ -29,9 +30,9 @@ import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Collection;
 
 public class TextPainter implements Printable {
   private DocumentEx myDocument;
@@ -276,7 +277,7 @@ public class TextPainter implements Printable {
           if (marker != null && marker.startOffset < lEnd) {
             Color save = g.getColor();
             setForegroundColor(g, marker.separatorColor);
-            g.drawLine(0, (int) lineY, (int) clip.getWidth(), (int) lineY);
+            UIUtil.drawLine(g, 0, (int)lineY, (int)clip.getWidth(), (int)lineY);
             setForegroundColor(g, save);
             myCurrentMethodSeparator++;
           }
@@ -549,7 +550,7 @@ public class TextPainter implements Printable {
       Color savedColor = g.getColor();
       setForegroundColor(g, underscoredColor);
       double w = getTextSegmentWidth(text, myOffset, length, position.getX(), g);
-      g.drawLine((int) position.getX(), (int) y + 1, (int) (xStart + w), (int) (y + 1));
+      UIUtil.drawLine(g, (int)position.getX(), (int)y + 1, (int)(xStart + w), (int)(y + 1));
       g.setColor(savedColor);
     }
     position.setLocation(x, position.getY());

@@ -1,5 +1,7 @@
 package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.border.LineBorder;
 import java.awt.*;
 
@@ -40,16 +42,16 @@ public class SideBorder extends LineBorder {
     g.setColor(getLineColor());
     for(i = 0; i < getThickness(); i++){
       if ((mySideMask & LEFT) != 0){
-        g.drawLine(x + i, y + i, x + i, height - i - i - 1);
+        UIUtil.drawLine(g, x + i, y + i, x + i, height - i - i - 1);
       }
       if ((mySideMask & TOP) != 0){
-        g.drawLine(x + i, y + i, width - i - i - 1, y + i);
+        UIUtil.drawLine(g, x + i, y + i, width - i - i - 1, y + i);
       }
       if ((mySideMask & RIGHT) != 0){
-        g.drawLine(width - i - i - 1, y + i, width - i - i - 1, height - i - i - 1);
+        UIUtil.drawLine(g, width - i - i - 1, y + i, width - i - i - 1, height - i - i - 1);
       }
       if ((mySideMask & BOTTOM) != 0){
-        g.drawLine(x + i, height - i - i - 1, width - i - i - 1, height - i - i - 1);
+        UIUtil.drawLine(g, x + i, height - i - i - 1, width - i - i - 1, height - i - i - 1);
       }
     }
     g.setColor(oldColor);

@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.HoverHyperlinkLabel;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -22,7 +23,6 @@ import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -349,13 +349,13 @@ public class ContentRootPanel extends JPanel {
       }
       */
       if (SystemInfo.isMac) {
-        g.drawLine(x1, y1, x2, y2);
+        UIUtil.drawLine(g, x1, y1, x2, y2);
       }
       else {
         final Stroke saved = g.getStroke();
         g.setStroke(new BasicStroke(1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, DASH, y1 % 2));
 
-        g.drawLine(x1, y1, x2, y2);
+        UIUtil.drawLine(g, x1, y1, x2, y2);
 
         g.setStroke(saved);
       }

@@ -1,5 +1,7 @@
 package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -27,7 +29,7 @@ public class StrikeoutLabel extends JLabel{
         iconWidth += getIconTextGap();
       }
       g.setColor(this.getForeground());
-      g.drawLine(iconWidth, size.height / 2, width, size.height / 2);
+      UIUtil.drawLine(g, iconWidth, size.height / 2, width, size.height / 2);
     }
   }
 }

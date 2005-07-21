@@ -1,5 +1,7 @@
 package com.intellij.ui.plaf.beg;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.metal.MetalTabbedPaneUI;
@@ -44,60 +46,60 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
         {
           if (isSelected) {
             // left
-            g.drawLine(x, y + 1, x, y + h - 1);
+            UIUtil.drawLine(g, x, y + 1, x, y + h - 1);
             // top
-            g.drawLine(x + 1, y, x + w - 3, y);
+            UIUtil.drawLine(g, x + 1, y, x + w - 3, y);
             // right
-            g.drawLine(x + w - 2, y + 1, x + w - 2, y + h - 1);
+            UIUtil.drawLine(g, x + w - 2, y + 1, x + w - 2, y + h - 1);
           }
           else {
             // left
-            g.drawLine(x, y + 1, x, y + h - 1);
+            UIUtil.drawLine(g, x, y + 1, x, y + h - 1);
             // top
-            g.drawLine(x + 1, y, x + w - 3, y);
+            UIUtil.drawLine(g, x + 1, y, x + w - 3, y);
             // right
-            g.drawLine(x + w - 2, y + 1, x + w - 2, y + h - 1);
+            UIUtil.drawLine(g, x + w - 2, y + 1, x + w - 2, y + h - 1);
           }
           break;
         }
       case LEFT:
         {
           // top
-          g.drawLine(x + 1, y + 1, x + w - 1, y + 1);
+          UIUtil.drawLine(g, x + 1, y + 1, x + w - 1, y + 1);
           // left
-          g.drawLine(x, y + 2, x, y + h - 2);
+          UIUtil.drawLine(g, x, y + 2, x, y + h - 2);
           //bottom
-          g.drawLine(x + 1, y + h - 1, x + w - 1, y + h - 1);
+          UIUtil.drawLine(g, x + 1, y + h - 1, x + w - 1, y + h - 1);
           break;
         }
       case BOTTOM:
         {
           if (isSelected) {
             // left
-            g.drawLine(x, y, x, y + h - 2);
+            UIUtil.drawLine(g, x, y, x, y + h - 2);
             // bottom
-            g.drawLine(x + 1, y + h - 1, x + w - 2, y + h - 1);
+            UIUtil.drawLine(g, x + 1, y + h - 1, x + w - 2, y + h - 1);
             // right
-            g.drawLine(x + w - 1, y, x + w - 1, y + h - 2);
+            UIUtil.drawLine(g, x + w - 1, y, x + w - 1, y + h - 2);
           }
           else {
             // left
-            g.drawLine(x, y, x, y + h - 1);
+            UIUtil.drawLine(g, x, y, x, y + h - 1);
             // bottom
-            g.drawLine(x + 1, y + h - 1, x + w - 3, y + h - 1);
+            UIUtil.drawLine(g, x + 1, y + h - 1, x + w - 3, y + h - 1);
             // right
-            g.drawLine(x + w - 2, y, x + w - 2, y + h - 1);
+            UIUtil.drawLine(g, x + w - 2, y, x + w - 2, y + h - 1);
           }
           break;
         }
       case RIGHT:
         {
           // top
-          g.drawLine(x, y + 1, x + w - 2, y + 1);
+          UIUtil.drawLine(g, x, y + 1, x + w - 2, y + 1);
           // right
-          g.drawLine(x + w - 1, y + 2, x + w - 1, y + h - 2);
+          UIUtil.drawLine(g, x + w - 1, y + 2, x + w - 1, y + h - 2);
           //bottom
-          g.drawLine(x, y + h - 1, x + w - 2, y + h - 1);
+          UIUtil.drawLine(g, x, y + h - 1, x + w - 2, y + h - 1);
           break;
         }
       default:
@@ -171,24 +173,24 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
       if (tabPlacement != TOP || selectedIndex < 0 ||
           (selRect.y + selRect.height + 1 < y) ||
           (selRect.x < x || selRect.x > x + w)) {
-        g.drawLine(x, y, x + w - 1, y);
+        UIUtil.drawLine(g, x, y, x + w - 1, y);
       }
       else {
         // Break line to show visual connection to selected tab
         boolean lastInRun = isLastInRun(selectedIndex);
 
-        g.drawLine(x, y, selRect.x, y);
+        UIUtil.drawLine(g, x, y, selRect.x, y);
 
         if (selRect.x + selRect.width < right - 1) {
           if (leftToRight && !lastInRun) {
-            g.drawLine(selRect.x + selRect.width - 2, y, right, y);
+            UIUtil.drawLine(g, selRect.x + selRect.width - 2, y, right, y);
           }
           else {
-            g.drawLine(selRect.x + selRect.width - 2, y, right, y);
+            UIUtil.drawLine(g, selRect.x + selRect.width - 2, y, right, y);
           }
         }
         else {
-          g.drawLine(x + w - 2, y, x + w - 2, y);
+          UIUtil.drawLine(g, x + w - 2, y, x + w - 2, y);
         }
       }
     }
@@ -210,27 +212,25 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
       if (tabPlacement != BOTTOM || selectedIndex < 0 ||
           (selRect.y - 1 > h) ||
           (selRect.x < x || selRect.x > x + w)) {
-        g.drawLine(x, y + h - 1, x + w - 1, y + h - 1);
+        UIUtil.drawLine(g, x, y + h - 1, x + w - 1, y + h - 1);
       }
       else {
         // Break line to show visual connection to selected tab
         boolean lastInRun = isLastInRun(selectedIndex);
 
         if (leftToRight || lastInRun) {
-          g.drawLine(x, bottom, selRect.x, bottom);
+          UIUtil.drawLine(g, x, bottom, selRect.x, bottom);
         }
         else {
-          g.drawLine(x, bottom, selRect.x - 1, bottom);
+          UIUtil.drawLine(g, x, bottom, selRect.x - 1, bottom);
         }
 
         if (selRect.x + selRect.width < x + w - 2) {
           if (leftToRight && !lastInRun) {
-            g.drawLine(selRect.x + selRect.width, bottom,
-                       right, bottom);
+            UIUtil.drawLine(g, selRect.x + selRect.width, bottom, right, bottom);
           }
           else {
-            g.drawLine(selRect.x + selRect.width - 1, bottom,
-                       right, bottom);
+            UIUtil.drawLine(g, selRect.x + selRect.width - 1, bottom, right, bottom);
           }
         }
       }
@@ -250,14 +250,13 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
       if (tabPlacement != LEFT || selectedIndex < 0 ||
           (selRect.x + selRect.width + 1 < x) ||
           (selRect.y < y || selRect.y > y + h)) {
-        g.drawLine(x, y, x, y + h - 2);
+        UIUtil.drawLine(g, x, y, x, y + h - 2);
       }
       else {
         // Break line to show visual connection to selected tab
-        g.drawLine(x, y, x, selRect.y + 1);
+        UIUtil.drawLine(g, x, y, x, selRect.y + 1);
         if (selRect.y + selRect.height < y + h - 2) {
-          g.drawLine(x, selRect.y + selRect.height + 1,
-                     x, y + h + 2);
+          UIUtil.drawLine(g, x, selRect.y + selRect.height + 1, x, y + h + 2);
         }
       }
     }
@@ -276,15 +275,14 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
       if (tabPlacement != RIGHT || selectedIndex < 0 ||
           (selRect.x - 1 > w) ||
           (selRect.y < y || selRect.y > y + h)) {
-        g.drawLine(x + w - 1, y, x + w - 1, y + h - 1);
+        UIUtil.drawLine(g, x + w - 1, y, x + w - 1, y + h - 1);
       }
       else {
         // Break line to show visual connection to selected tab
-        g.drawLine(x + w - 1, y, x + w - 1, selRect.y);
+        UIUtil.drawLine(g, x + w - 1, y, x + w - 1, selRect.y);
 
         if (selRect.y + selRect.height < y + h - 2) {
-          g.drawLine(x + w - 1, selRect.y + selRect.height,
-                     x + w - 1, y + h - 2);
+          UIUtil.drawLine(g, x + w - 1, selRect.y + selRect.height, x + w - 1, y + h - 2);
         }
       }
     }

@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -293,22 +294,22 @@ public final class FloatingDecorator extends JDialog{
       super.paint(g);
       if(ANCHOR_TOP==myAnchor){
         g.setColor(Color.lightGray);
-        g.drawLine(0,0,getWidth()-1,0);
-        g.drawLine(0,0,0,getHeight()-1);
+        UIUtil.drawLine(g, 0, 0, getWidth() - 1, 0);
+        UIUtil.drawLine(g, 0, 0, 0, getHeight() - 1);
         g.setColor(Color.gray);
-        g.drawLine(getWidth()-1,0,getWidth()-1,getHeight()-1);
+        UIUtil.drawLine(g, getWidth() - 1, 0, getWidth() - 1, getHeight() - 1);
       } else if(ANCHOR_LEFT==myAnchor){
         g.setColor(Color.lightGray);
-        g.drawLine(0,0,0,getHeight()-1);
+        UIUtil.drawLine(g, 0, 0, 0, getHeight() - 1);
       } else if(ANCHOR_BOTTOM==myAnchor){
         g.setColor(Color.lightGray);
-        g.drawLine(0,0,0,getHeight()-1);
+        UIUtil.drawLine(g, 0, 0, 0, getHeight() - 1);
         g.setColor(Color.gray);
-        g.drawLine(0,getHeight()-1,getWidth()-1,getHeight()-1);
-        g.drawLine(getWidth()-1,0,getWidth()-1,getHeight()-1);
+        UIUtil.drawLine(g, 0, getHeight() - 1, getWidth() - 1, getHeight() - 1);
+        UIUtil.drawLine(g, getWidth() - 1, 0, getWidth() - 1, getHeight() - 1);
       } else{ // RIGHT
         g.setColor(Color.gray);
-        g.drawLine(getWidth()-1,0,getWidth()-1,getHeight()-1);
+        UIUtil.drawLine(g, getWidth() - 1, 0, getWidth() - 1, getHeight() - 1);
       }
     }
   }

@@ -1,5 +1,7 @@
 package com.intellij.uiDesigner;
 
+import com.intellij.util.ui.UIUtil;
+
 import java.awt.*;
 
 /**
@@ -27,12 +29,12 @@ public final class VSpacer extends DesignSpacer{
     final int x=(getWidth()-handleWidth)/2;
     drawHandle(g,x,0);
     g.setColor(ourColor1);
-    g.drawLine(x+handleWidth/2,handleHeight,x+handleWidth/2,handleHeight+1);
+    UIUtil.drawLine(g, x + handleWidth / 2, handleHeight, x + handleWidth / 2, handleHeight + 1);
 
     // Paint bottom handle
     final int y=getHeight()-handleHeight-1;
     drawHandle(g,x,y);
-    g.drawLine(x+handleWidth/2,y-2,x+handleWidth/2,y);
+    UIUtil.drawLine(g, x + handleWidth / 2, y - 2, x + handleWidth / 2, y);
     g.setColor(ourColor1);
 
     // Draw spring
@@ -47,22 +49,14 @@ public final class VSpacer extends DesignSpacer{
     g.setColor(ourColor1);
 
     g.drawRect(x,y,HANDLE_ATOM_HEIGHT-1,HANDLE_ATOM_WIDTH-1);
-    g.drawLine(
-      x+HANDLE_ATOM_HEIGHT,
-      y+HANDLE_ATOM_WIDTH/2,
-      x+HANDLE_ATOM_HEIGHT+HANDLE_ATOM_SPACE-1,
-      y+HANDLE_ATOM_WIDTH/2
-    );
+    UIUtil.drawLine(g, x + HANDLE_ATOM_HEIGHT, y + HANDLE_ATOM_WIDTH / 2, x + HANDLE_ATOM_HEIGHT + HANDLE_ATOM_SPACE - 1,
+                    y + HANDLE_ATOM_WIDTH / 2);
 
     x+=HANDLE_ATOM_HEIGHT+HANDLE_ATOM_SPACE;
 
     g.drawRect(x,y,HANDLE_ATOM_HEIGHT-1,HANDLE_ATOM_WIDTH-1);
-    g.drawLine(
-      x+HANDLE_ATOM_HEIGHT,
-      y+HANDLE_ATOM_WIDTH/2,
-      x+HANDLE_ATOM_HEIGHT+HANDLE_ATOM_SPACE-1,
-      y+HANDLE_ATOM_WIDTH/2
-    );
+    UIUtil.drawLine(g, x + HANDLE_ATOM_HEIGHT, y + HANDLE_ATOM_WIDTH / 2, x + HANDLE_ATOM_HEIGHT + HANDLE_ATOM_SPACE - 1,
+                    y + HANDLE_ATOM_WIDTH / 2);
 
     x+=HANDLE_ATOM_HEIGHT+HANDLE_ATOM_SPACE;
 
@@ -77,12 +71,12 @@ public final class VSpacer extends DesignSpacer{
 
   private static void drawSpringPeriod(final Graphics g,final int x,final int y){
     g.setColor(ourColor2);
-    g.drawLine(x+1,y,x+2,y);
-    g.drawLine(x,y+1,x,y+1);
-    g.drawLine(x-1,y+2,x-2,y+2);
+    UIUtil.drawLine(g, x + 1, y, x + 2, y);
+    UIUtil.drawLine(g, x, y + 1, x, y + 1);
+    UIUtil.drawLine(g, x - 1, y + 2, x - 2, y + 2);
 
     g.setColor(ourColor3);
-    g.drawLine(x,y+3,x,y+3);
+    UIUtil.drawLine(g, x, y + 3, x, y + 3);
   }
 
   public Dimension getMinimumSize(){
