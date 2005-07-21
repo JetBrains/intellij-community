@@ -50,7 +50,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Appl
   }
 
   public String getHelpTopic() {
-    return "preferences.versionUpdates"; //TODO[pti]: request Help Topic
+    return "preferences.updates";
   }
 
   public Icon getIcon() {
