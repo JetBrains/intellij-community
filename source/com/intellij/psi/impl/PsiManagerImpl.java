@@ -50,6 +50,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 
@@ -465,6 +466,12 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
       if (!element1.isPhysical() && !element2.isPhysical()) return element1.getText().equals(element2.getText());
     }
 
+    if (element1 instanceof XmlElementDecl && element2 instanceof XmlElementDecl) {
+      if (!element1.isPhysical()) element1 = element1.getOriginalElement();  
+      if (!element2.isPhysical()) element2 = element2.getOriginalElement();
+      return element1 == element2;
+    }
+    
     return false;
   }
 
