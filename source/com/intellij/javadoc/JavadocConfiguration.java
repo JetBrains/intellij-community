@@ -138,7 +138,7 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
 
 
     private void setupExeParams(final ProjectJdk jdk, GeneralCommandLine cmdLine) throws ExecutionException {
-      final String jdkPath = jdk != null? PathUtil.getLocalPath(jdk.getHomeDirectory()) : null;
+      final String jdkPath = jdk != null? new File(jdk.getVMExecutablePath()).getParent() : null;
       if (jdkPath == null) {
         throw new CantRunException("JDK path is not specified\nCannot generate JavaDoc");
       }
@@ -152,7 +152,7 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
         }
       }
       cmdLine.setWorkingDirectory(null);
-      cmdLine.setExePath(jdkPath.replace('/', File.separatorChar) + File.separator + "bin" + File.separator + (SystemInfo.isWindows ? "javadoc.exe" : "javadoc"));
+      cmdLine.setExePath(jdkPath.replace('/', File.separatorChar) + File.separator + (SystemInfo.isWindows ? "javadoc.exe" : "javadoc"));
     }
 
     private void setupProgramParameters(final GeneralCommandLine cmdLine) throws CantRunException {
