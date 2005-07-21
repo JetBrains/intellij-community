@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
@@ -27,6 +28,7 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class FileReferenceSet {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet");
   private static final char SEPARATOR = '/';
   private static final String SEPARATOR_STRING = "/";
 
@@ -128,6 +130,7 @@ public class FileReferenceSet {
   public Collection<PsiElement> getDefaultContexts(PsiElement element) {
     Project project = element.getProject();
     PsiFile file = element.getContainingFile();
+    LOG.assertTrue(file != null, "Invalid element: " + element);
 
     if (!file.isPhysical()) file = file.getOriginalFile();
     if (file == null) return Collections.EMPTY_LIST;
