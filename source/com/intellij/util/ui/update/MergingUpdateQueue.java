@@ -66,8 +66,7 @@ public class MergingUpdateQueue implements Runnable, Disposable {
     }
 
     myActive = false;
-    myWaiterForMerge.cancel();
-    myWaiterForMerge = null;
+    clearWaiter();
   }
 
   public void showNotify() {
@@ -81,9 +80,7 @@ public class MergingUpdateQueue implements Runnable, Disposable {
   }
 
   private void restartTimer() {
-    if (myWaiterForMerge != null) {
-      myWaiterForMerge.cancel();
-    }
+    clearWaiter();
     myWaiterForMerge = new Timer(true);
     myWaiterForMerge.scheduleAtFixedRate(new TimerTask() {
       public void run() {
@@ -237,6 +234,10 @@ public class MergingUpdateQueue implements Runnable, Disposable {
   }
 
   public void dispose() {
+    clearWaiter();
+  }
+
+  private void clearWaiter() {
     if (myWaiterForMerge != null) {
       myWaiterForMerge.cancel();
       myWaiterForMerge = null;
