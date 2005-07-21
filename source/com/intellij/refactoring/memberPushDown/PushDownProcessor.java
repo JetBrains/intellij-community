@@ -18,6 +18,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
+import com.intellij.codeInsight.ChangeContextUtil;
 
 import java.util.Set;
 
@@ -136,6 +137,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
           super.visitNewExpression(expression);
         }
       });
+      ChangeContextUtil.encodeContextInfo(member, false);
     }
   }
 
@@ -155,6 +157,13 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
   }
 
   private void decodeRefs(final PsiMember member, final PsiClass targetClass) {
+    try {
+      ChangeContextUtil.decodeContextInfo(member, null, null);
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+
     final PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
     member.accept(new PsiRecursiveElementVisitor() {
       public void visitReferenceExpression(PsiReferenceExpression expression) {
