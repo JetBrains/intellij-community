@@ -24,7 +24,7 @@ public class EditAction extends AsbtractActionFromEditGroup {
     if (!e.getPresentation().isVisible()) {
       return;
     }
-    Project project = CvsContextWrapper.createCachedInstance(e).getProject();
+    Project project = CvsContextWrapper.createInstance(e).getProject();
 
     if (project == null) return;
 
