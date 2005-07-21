@@ -43,7 +43,7 @@ public class CheckoutFileAction extends ActionOnSelectedElement {
     if (!e.getPresentation().isVisible()) {
       return;
     }
-    Project project = CvsContextWrapper.createCachedInstance(e).getProject();
+    Project project = CvsContextWrapper.createInstance(e).getProject();
     if (project == null) return;
     adjustName(CvsVcs2.getInstance(project).getCheckoutOptions().getValue(), e);
   }

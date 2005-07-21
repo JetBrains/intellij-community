@@ -105,7 +105,7 @@ public class FormatterImpl extends FormatterEx
     disableFormatting();
     try {
       final FormatProcessor processor = new FormatProcessor(model, block, settings, indentOptions, affectedRange);
-      final LeafBlockWrapper blockBefore = processor.getBlockBefore(affectedRange.getStartOffset());
+      final LeafBlockWrapper blockBefore = processor.getBlockAfter(affectedRange.getStartOffset());
       LOG.assertTrue(blockBefore != null);
       WhiteSpace whiteSpace = blockBefore.getWhiteSpace();
       LOG.assertTrue(whiteSpace != null);
@@ -160,7 +160,11 @@ public class FormatterImpl extends FormatterEx
       final Block block = model.getRootBlock();
       final FormatProcessor processor = new FormatProcessor(documentModel, block, settings, indentOptions, affectedRange);
 
-      final LeafBlockWrapper blockAfterOffset = processor.getBlockBefore(offset);
+      final LeafBlockWrapper blockAfterOffset = processor.getBlockAfter(offset);
+
+      if (blockAfterOffset != null && blockAfterOffset.contains(offset)) {
+        return offset;
+      }
 
       if (blockAfterOffset != null) {
         final WhiteSpace whiteSpace = blockAfterOffset.getWhiteSpace();
@@ -222,7 +226,7 @@ public class FormatterImpl extends FormatterEx
       final Block block = model.getRootBlock();
       final FormatProcessor processor = new FormatProcessor(documentModel, block, settings, indentOptions, affectedRange);
 
-      final LeafBlockWrapper blockAfterOffset = processor.getBlockBefore(offset);
+      final LeafBlockWrapper blockAfterOffset = processor.getBlockAfter(offset);
 
       if (blockAfterOffset != null) {
         final WhiteSpace whiteSpace = blockAfterOffset.getWhiteSpace();

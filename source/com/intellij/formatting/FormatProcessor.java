@@ -25,6 +25,7 @@ class FormatProcessor {
   LeafBlockWrapper myFirstWrappedBlockOnLine = null;
 
   private final LeafBlockWrapper myFirstTokenBlock;
+  private final LeafBlockWrapper myLastTokenBlock;
 
   private Map<TextRange, Pair<AbstractBlockWrapper, Boolean>> myPreviousDependancies = new HashMap<TextRange, Pair<AbstractBlockWrapper, Boolean>>();
   private Collection<WhiteSpace> myAlignAgain = new HashSet<WhiteSpace>();
@@ -42,6 +43,7 @@ class FormatProcessor {
                                                                       indentOptions);
     myInfos = builder.getBlockToInfoMap();
     myFirstTokenBlock = builder.getFirstTokenBlock();
+    myLastTokenBlock = builder.getLastTokenBlock();
     myCurrentBlock = myFirstTokenBlock;
     myTextRangeToWrapper = buildTextRangeToInfoMap(myFirstTokenBlock);
     myLastWhiteSpace = new WhiteSpace(getLastBlock().getTextRange().getEndOffset(), false);
@@ -559,14 +561,33 @@ class FormatProcessor {
     return false;
   }
 
-  public LeafBlockWrapper getBlockBefore(final int startOffset) {
+  public LeafBlockWrapper getBlockAfter(final int startOffset) {
     int current = startOffset;
+    LeafBlockWrapper result = null;
     while (current < myLastWhiteSpace.getTextRange().getStartOffset()) {
       final LeafBlockWrapper currentValue = myTextRangeToWrapper.get(current);
-      if (currentValue != null) return currentValue;
+      if (currentValue != null) {
+        result = currentValue;
+        break;
+      }
       current++;
     }
-    return null;
+
+    LeafBlockWrapper prevBlock = getPrevBlock(result);
+
+    if (prevBlock != null && prevBlock.contains(startOffset)) {
+      return prevBlock;
+    } else {
+      return result;
+    }
+  }
+
+  private LeafBlockWrapper getPrevBlock(final LeafBlockWrapper result) {
+    if (result != null) {
+      return result.getPreviousBlock();
+    } else {
+      return myLastTokenBlock;
+    }
   }
 
   public void setAllWhiteSpacesAreReadOnly() {

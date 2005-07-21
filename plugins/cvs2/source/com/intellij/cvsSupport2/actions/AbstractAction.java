@@ -200,18 +200,6 @@ public abstract class AbstractAction extends AnAction {
     return (inputEvent.getModifiers() & Event.SHIFT_MASK) != 0;
   }
 
-  protected CvsConfiguration getConfig(AnActionEvent e) {
-    Project project = CvsContextWrapper.createCachedInstance(e).getProject();
-    if (project == null) return null;
-    return CvsConfiguration.getInstance(project);
-  }
-
-  protected VcsConfiguration getCommonConfig(AnActionEvent e) {
-    Project project = CvsContextWrapper.createCachedInstance(e).getProject();
-    if (project == null) return null;
-    return VcsConfiguration.getInstance(project);
-  }
-
   private class MyCvsOperationExecutorCallback implements CvsOperationExecutorCallback {
     private final CvsContext myContext;
     private final CvsHandler myHandler;

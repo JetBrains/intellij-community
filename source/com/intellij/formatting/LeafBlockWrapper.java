@@ -125,4 +125,8 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
   public IndentInside getLastLineIndent() {
     return myLastLineIndent;
   }
+
+  public boolean contains(final int offset) {
+    return myTextRange.getStartOffset() < offset && myTextRange.getEndOffset() > offset;
+  }
 }

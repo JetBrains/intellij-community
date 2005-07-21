@@ -15,6 +15,7 @@ class InitialInfoBuilder {
   private final Map<Block, AbstractBlockWrapper> myResult = new LinkedHashMap<Block, AbstractBlockWrapper>();
   private LeafBlockWrapper myPreviousBlock;
   private LeafBlockWrapper myFirstTokenBlock;
+  private LeafBlockWrapper myLastTokenBlock;
   private SpacingImpl myCurrentSpaceProperty;
   private final CodeStyleSettings.IndentOptions myOptions;
 
@@ -27,7 +28,7 @@ class InitialInfoBuilder {
     myOptions = options;
   }
 
-  public static final InitialInfoBuilder buildBlocks(Block root,
+  public static InitialInfoBuilder buildBlocks(Block root,
                                                      FormattingDocumentModel model,
                                                      final TextRange affectedRange,
                                                      final CodeStyleSettings.IndentOptions options) {
@@ -136,6 +137,7 @@ class InitialInfoBuilder {
     if (myFirstTokenBlock == null) {
       myFirstTokenBlock = info;
     }
+    myLastTokenBlock = info;
     if (currentWhiteSpaceIsRreadOnly()) {
       myCurrentWhiteSpace.setReadOnly(true);
     }
@@ -177,5 +179,9 @@ class InitialInfoBuilder {
 
   public LeafBlockWrapper getFirstTokenBlock() {
     return myFirstTokenBlock;
+  }
+
+  public LeafBlockWrapper getLastTokenBlock() {
+    return myLastTokenBlock;
   }
 }
