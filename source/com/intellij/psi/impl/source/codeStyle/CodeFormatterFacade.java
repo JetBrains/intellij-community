@@ -17,9 +17,6 @@ import com.intellij.psi.impl.source.codeStyle.javadoc.CommentFormatter;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.util.IncorrectOperationException;
 
-/**
- *
- */
 public class CodeFormatterFacade implements Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade");
 
