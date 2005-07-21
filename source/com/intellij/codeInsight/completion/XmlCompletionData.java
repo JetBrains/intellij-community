@@ -235,7 +235,7 @@ public class XmlCompletionData extends CompletionData {
         editor.getSelectionModel().removeSelection();
       }
       current = context.file.findElementAt(context.startOffset);
-      if(current.getPrevSibling() instanceof XmlToken){
+      if(current != null && current.getPrevSibling() instanceof XmlToken){
         if(!isClosed(current) && ((XmlToken)current.getPrevSibling()).getTokenType() == XmlTokenType.XML_END_TAG_START){
           editor.getDocument().insertString(current.getTextRange().getEndOffset(), ">");
           editor.getCaretModel().moveToOffset(editor.getCaretModel().getOffset() + 1);
