@@ -119,7 +119,6 @@ public class PsiElement2UsageTargetAdapter implements UsageTarget {
 
   private class MyItemPresentation implements ItemPresentation {
     private String myPresentableText;
-    private long myModificationStamp;
     private final PsiElement myElement;
     private final ItemPresentation myPresentation;
     private Icon myIconOpen;
@@ -129,25 +128,15 @@ public class PsiElement2UsageTargetAdapter implements UsageTarget {
       myElement = element;
       myPresentation = ((NavigationItem)element).getPresentation();
       update();
-      myPresentableText = createPresentableText(myElement);
-      myModificationStamp = getCurrentModificationStamp();
     }
 
     public void update() {
       myIconOpen = myPresentation != null ? myPresentation.getIcon(true) : null;
       myIconClosed = myPresentation != null ? myPresentation.getIcon(false) : null;
+      myPresentableText = createPresentableText(myElement);
     }
 
     public String getPresentableText() {
-      if (!myElement.isValid()) {
-        // cannot update anything, just return the last text
-        return myPresentableText;
-      }
-      final long currentModificationStamp = getCurrentModificationStamp();
-      if (myModificationStamp != currentModificationStamp) {
-        myPresentableText = createPresentableText(myElement);
-        myModificationStamp = currentModificationStamp;
-      }
       return myPresentableText;
     }
     
@@ -155,11 +144,6 @@ public class PsiElement2UsageTargetAdapter implements UsageTarget {
       return UsageViewUtil.createNodeText(element, true);
     }
 
-    private long getCurrentModificationStamp() {
-      final PsiFile containingFile = myElement.getContainingFile();
-      return containingFile == null? -1L : containingFile.getModificationStamp();
-    }
-    
     public String getLocationString() {
       return null;
     }
