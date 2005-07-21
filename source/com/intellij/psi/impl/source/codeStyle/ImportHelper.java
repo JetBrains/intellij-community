@@ -596,8 +596,8 @@ public class ImportHelper{
       for (PsiImportStatementBase anImport : imports) {
         PsiJavaCodeReferenceElement ref = anImport.getImportReference();
         if (ref == null) continue;
-        PsiElement refElement = ref.resolve();
-        if (refElement == null) {
+        JavaResolveResult[] results = ref.multiResolve(false);
+        if (results.length == 0) {
           String text = ref.getCanonicalText();
           if (anImport.isOnDemand()) {
             text += ".*";
