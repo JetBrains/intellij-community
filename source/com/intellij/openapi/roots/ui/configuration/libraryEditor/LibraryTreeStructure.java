@@ -16,7 +16,7 @@ public class LibraryTreeStructure extends AbstractTreeStructure{
 
   public LibraryTreeStructure(LibraryTableEditor parentElement, Library library) {
     myParentEditor = parentElement;
-    myRootElement = new LibraryElement(library, myParentEditor);
+    myRootElement = new LibraryElement(library, myParentEditor, false);
     myRootElementDescriptor = new NodeDescriptor(null, null) {
       public boolean update() {
         myName = "Root";

@@ -185,7 +185,7 @@ public class LibraryTableEditor {
   }
 
   public void selectLibrary(Library library, boolean expand) {
-    LibraryTableTreeContentElement element = new LibraryElement(library, this);
+    LibraryTableTreeContentElement element = new LibraryElement(library, this, false);
     myTreeBuilder.buildNodeForElement(element);
     DefaultMutableTreeNode node = myTreeBuilder.getNodeForElement(element);
     if (node == null) {
