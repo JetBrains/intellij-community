@@ -1475,6 +1475,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
       }
 
       int y = visibleLineNumberToYPosition(logicalToVisualPosition(new LogicalPosition(lineNumber, 0)).line);
+      if (marker.getLineSeparatorPlacement() != SeparatorPlacement.TOP) {
+        y += getLineHeight();
+      }
+
       if (y < clip.y || y > clip.y + clip.height) return;
 
       int endShift = clip.x + clip.width;
@@ -1484,11 +1488,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
           && myScheme.getColor(EditorColors.RIGHT_MARGIN_COLOR) != null) {
         endShift =
         Math.min(endShift, mySettings.getRightMargin(myProject) * getSpaceWidth(Font.PLAIN));
-      }
-
-
-      if (marker.getLineSeparatorPlacement() != SeparatorPlacement.TOP) {
-        y += getLineHeight();
       }
 
       UIUtil.drawLine(g, 0, y - 1, endShift, y - 1);
