@@ -184,14 +184,14 @@ public class PositionManagerImpl implements PositionManager {
   }
 
   public List<ReferenceType> getAllClasses(final SourcePosition classPosition) {
-    final PsiClass psiClass = JVMNameUtil.getClassAt(classPosition);
-
-    if(psiClass == null) {
-      return (List<ReferenceType>)Collections.EMPTY_LIST;
-    }
-
     return ApplicationManager.getApplication().runReadAction(new Computable<List<ReferenceType>> () {
       public List<ReferenceType> compute() {
+        final PsiClass psiClass = JVMNameUtil.getClassAt(classPosition);
+
+        if(psiClass == null) {
+          return (List<ReferenceType>)Collections.EMPTY_LIST;
+        }
+
         if(PsiUtil.isLocalOrAnonymousClass(psiClass)) {
           final PsiClass parentNonLocal = JVMNameUtil.getTopLevelParentClass(psiClass);
           if(parentNonLocal == null) {
