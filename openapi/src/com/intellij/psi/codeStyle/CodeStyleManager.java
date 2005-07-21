@@ -38,6 +38,7 @@ public abstract class CodeStyleManager {
   public abstract Project getProject();
 
   public abstract PsiElement reformat(PsiElement element) throws IncorrectOperationException;
+  public abstract PsiElement reformat(PsiElement element, boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException;
   public abstract PsiElement reformatRange(PsiElement element, int startOffset, int endOffset) throws IncorrectOperationException;
 
   public abstract void reformatText(PsiFile element, int startOffset, int endOffset) throws IncorrectOperationException;

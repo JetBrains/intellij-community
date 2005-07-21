@@ -24,8 +24,11 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel{
   public static FormattingDocumentModelImpl createOn(PsiFile file) {
     Document document = getDocumentToBeUsedFor(file);
     if (document != null) {
+      if (PsiDocumentManager.getInstance(file.getProject()).isUncommited(document)) {
+        LOG.assertTrue(false, "Document is uncommited");
+      }
       if (!document.getText().equals(file.getText())) {
-        LOG.assertTrue(false);
+        LOG.assertTrue(false, "Document and psi file texts should be equal");
       }
       return new FormattingDocumentModelImpl(document);
     }

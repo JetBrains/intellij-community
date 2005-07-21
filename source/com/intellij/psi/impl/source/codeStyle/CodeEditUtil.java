@@ -96,7 +96,7 @@ public class CodeEditUtil {
       clearIndentInfo(dirtyElements);
     }
 
-    checkAllWhiteSpaces(parent);
+    //checkAllWhiteSpaces(parent);
 
     return returnFirstChangedNode(treePrev, parent);
   }
@@ -215,13 +215,13 @@ public class CodeEditUtil {
   }
 
   private static void checkAllWhiteSpaces(final ASTNode parent) {
-    LOG.assertTrue(parent.getPsi().isValid());
+    LOG.assertTrue(parent.getPsi().isValid(), "Parent not valid");
     if (LOG.isDebugEnabled()) {
       ASTNode node = parent.getPsi().getContainingFile().getNode();
       ASTNode leaf = TreeUtil.findFirstLeaf(node);
       while (leaf != null) {
         if (isInvalidWhiteSpace(leaf)) {
-          LOG.assertTrue(false);
+          LOG.assertTrue(false, "Invalid white space.");
         }
         leaf = TreeUtil.nextLeaf(leaf);
       }
@@ -238,7 +238,7 @@ public class CodeEditUtil {
     } else {
       checkAllWhiteSpaces(parent);
       removeChildrenAndAdjustWhiteSpaces(first, last, parent);
-      checkAllWhiteSpaces(parent);
+      //checkAllWhiteSpaces(parent);
     }
   }
 
@@ -454,7 +454,8 @@ public class CodeEditUtil {
     return false;
   }
 
-  private static void saveIndents(final ASTNode first, final ASTNode lastChild, final Collection<PsiElement> dirtyElements) {
+  private static void saveIndents(ASTNode first, final ASTNode lastChild, final Collection<PsiElement> dirtyElements) {
+    first = ((TreeElement)first).getTransformedFirstOrSelf();
     final PsiFile file = first.getPsi().getContainingFile();
     final Language language = file.getLanguage();
     final FormattingModelBuilder builder = language.getFormattingModelBuilder();
@@ -700,7 +701,7 @@ public class CodeEditUtil {
         adjustWhiteSpaceBefore(elementAfter, true, true, true, false);
       }
 
-      checkAllWhiteSpaces(parent);
+      //checkAllWhiteSpaces(parent);
       return returnFirstChangedNode(treePrev, parent);
     }
     finally {

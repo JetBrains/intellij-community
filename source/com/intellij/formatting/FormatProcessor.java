@@ -548,6 +548,7 @@ class FormatProcessor {
 
   public boolean containsLineFeeds(final TextRange dependance) {
     LeafBlockWrapper child = myTextRangeToWrapper.get(dependance.getStartOffset());
+    if (child == null) return false;
     if (child.containsLineFeeds()) return true;
     final int endOffset = dependance.getEndOffset();
     while (child.getTextRange().getEndOffset() < endOffset) {

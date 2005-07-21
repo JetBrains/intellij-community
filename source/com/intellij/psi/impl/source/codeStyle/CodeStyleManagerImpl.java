@@ -1,10 +1,10 @@
 package com.intellij.psi.impl.source.codeStyle;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
 import com.intellij.formatting.FormatterEx;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -15,13 +15,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.jsp.IJspElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -30,8 +30,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.beans.Introspector;
 import java.util.*;
@@ -43,11 +43,32 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
   private StatisticsManagerEx myStatisticsManager;
 
+  private final List<PostFormatProcessor> myPostFormatProcessors = new ArrayList<PostFormatProcessor>();
+
   public CodeStyleManagerImpl(Project project, StatisticsManagerEx statisticsManagerEx) {
     myProject = project;
 
-    myStatisticsManager =
-    statisticsManagerEx;
+    myStatisticsManager = statisticsManagerEx;
+
+    myPostFormatProcessors.add(new PostFormatProcessor() {
+      public PsiElement processElement(PsiElement source, CodeStyleSettings settings) {
+        return new BraceEnforcer(settings).process(source);
+      }
+
+      public TextRange processText(PsiFile source, TextRange rangeToReformat, CodeStyleSettings settings) {
+        return new BraceEnforcer(settings).processText(source, rangeToReformat);
+      }
+    });
+
+    myPostFormatProcessors.add(new PostFormatProcessor() {
+      public PsiElement processElement(PsiElement source, CodeStyleSettings settings) {
+        return new ImportsFormatter(settings, source.getContainingFile()).process(source);
+      }
+
+      public TextRange processText(PsiFile source, TextRange rangeToReformat, CodeStyleSettings settings) {
+        return new ImportsFormatter(settings, source.getContainingFile()).processText(source, rangeToReformat);
+      }
+    });
   }
 
   public String getComponentName() {
@@ -67,6 +88,10 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   }
 
   public PsiElement reformat(PsiElement element) throws IncorrectOperationException {
+    return reformat(element, false);
+  }
+
+  public PsiElement reformat(PsiElement element, boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException {
     CheckUtil.checkWritable(element);
     if( !SourceTreeToPsiMap.hasTreeElement( element ) )
     {
@@ -85,7 +110,28 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     Helper helper = new Helper(fileType, myProject);
     final PsiElement formatted = SourceTreeToPsiMap.treeElementToPsi(
       new CodeFormatterFacade(getSettings(), helper).process(treeElement, -1));
-    return new BraceEnforcer(getSettings()).process(formatted);
+    if (!canChangeWhiteSpacesOnly) {
+      return postProcessElement(formatted);
+    } else {
+      return formatted;
+    }
+
+  }
+
+  private PsiElement postProcessElement(final PsiElement formatted) {
+    PsiElement result = formatted;
+    for (Iterator<PostFormatProcessor> iterator = myPostFormatProcessors.iterator(); iterator.hasNext();) {
+      PostFormatProcessor postFormatProcessor = iterator.next();
+      result = postFormatProcessor.processElement(result, getSettings());
+    }
+    return result;
+  }
+
+  private void postProcessText(final PsiFile file, final TextRange textRange) {
+    TextRange currentRange = textRange;
+    for (Iterator<PostFormatProcessor> iterator = myPostFormatProcessors.iterator(); iterator.hasNext();) {
+      currentRange = iterator.next().processText(file, currentRange, getSettings());
+    }
   }
 
   public PsiElement reformatRange(PsiElement element,
@@ -134,12 +180,10 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
     if ((startElement != null || formatFromStart)
       && (endElement != null || formatToEnd)) {
-      new BraceEnforcer(getSettings()).process(file,
-        formatFromStart ? 0 : startElement.getTextRange().getStartOffset(),
-        formatToEnd ? file.getTextLength() : endElement.getTextRange().getEndOffset());
+      postProcessText(file, new TextRange(formatFromStart ? 0 : startElement.getTextRange().getStartOffset(),
+        formatToEnd ? file.getTextLength() : endElement.getTextRange().getEndOffset()));
     }
   }
-
 
   private PsiElement reformatRangeImpl(final PsiElement element,
                                        final int startOffset,
@@ -162,23 +206,10 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
     Helper helper = new Helper(fileType, myProject);
     final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(), helper);
-    final PsiElement start = element.getContainingFile().findElementAt(startOffset);
-    final PsiElement end = element.getContainingFile().findElementAt(endOffset);
-    
-    final SmartPsiElementPointer startPointer = start == null ? null : SmartPointerManager.getInstance(getProject())
-      .createSmartPsiElementPointer(start);
-    
-    final SmartPsiElementPointer endPointer = end == null ? null : SmartPointerManager.getInstance(getProject())
-      .createSmartPsiElementPointer(end);
-    
     final PsiElement formatted = SourceTreeToPsiMap.treeElementToPsi(codeFormatter.processRange(treeElement, startOffset, endOffset));
-    final PsiElement startElement = startPointer == null ? null : startPointer.getElement();
-    final PsiElement endElement = endPointer == null ? null : endPointer.getElement();
-    
-    if (!canChangeWhiteSpacesOnly && startElement != null && endElement != null) {
-      return new BraceEnforcer(getSettings()).process(formatted, 
-                                                      startElement.getTextRange().getStartOffset(), 
-                                                      endElement.getTextRange().getEndOffset());
+
+    if (!canChangeWhiteSpacesOnly) {
+      return postProcessElement(formatted);
     } else {
       return formatted;
     }

@@ -266,6 +266,7 @@ public class FormatterImpl extends FormatterEx
         lineStartOffset--;
       }
       lineStartOffset = CharArrayUtil.shiftBackward(text, lineStartOffset, "\t ");
+      if (lineStartOffset < 0) lineStartOffset = 0;
       if (lineStartOffset != offset && text.charAt(lineStartOffset) == '\n') {
         lineStartOffset++;
       }
