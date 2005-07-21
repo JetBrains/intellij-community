@@ -1,6 +1,7 @@
 /** $Id$ */
 package org.intellij.images.ui;
 
+import com.intellij.util.ui.UIUtil;
 import org.intellij.images.editor.ImageDocument;
 
 import javax.swing.*;
@@ -85,10 +86,10 @@ public class ImageComponentUI extends ComponentUI {
             g.setColor(ic.getGridLineColor());
             int ls = ic.getGridLineSpan();
             for (int dx = ls; dx < imageWidth; dx += ls) {
-                g.drawLine((int)((double)dx * zoomX), 0, (int)((double)dx * zoomX), size.height);
+              UIUtil.drawLine(g, (int)((double)dx * zoomX), 0, (int)((double)dx * zoomX), size.height);
             }
             for (int dy = ls; dy < imageHeight; dy += ls) {
-                g.drawLine(0, (int)((double)dy * zoomY), size.width, (int)((double)dy * zoomY));
+              UIUtil.drawLine(g, 0, (int)((double)dy * zoomY), size.width, (int)((double)dy * zoomY));
             }
         }
     }
