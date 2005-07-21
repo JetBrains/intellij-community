@@ -71,9 +71,11 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
 
   public String getNamespace(){
     final String namespacePrefix = XmlUtil.findPrefixByQualifiedName(getName(null));
+    final XmlNSDescriptorImpl xmlNSDescriptor = (XmlNSDescriptorImpl)getNSDescriptor();
+    if(xmlNSDescriptor == null || myDescriptorTag == null) return XmlUtil.EMPTY_URI;
     return "".equals(namespacePrefix) ?
-      ((XmlNSDescriptorImpl)getNSDescriptor()).getDefaultNamespace() :
-      myDescriptorTag.getNamespaceByPrefix(namespacePrefix);
+           xmlNSDescriptor.getDefaultNamespace() :
+           myDescriptorTag.getNamespaceByPrefix(namespacePrefix);
   }
 
   public void init(PsiElement element){
