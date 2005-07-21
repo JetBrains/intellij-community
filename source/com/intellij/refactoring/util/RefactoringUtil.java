@@ -1465,6 +1465,7 @@ public class RefactoringUtil {
       });
     }
 
+    NextUsage:
     for (UsageInfo usage : usages) {
       if (usage instanceof MoveRenameUsageInfo) {
         final MoveRenameUsageInfo moveRenameUsageInfo = ((MoveRenameUsageInfo)usage);
@@ -1472,6 +1473,10 @@ public class RefactoringUtil {
         if (element != null &&
             PsiTreeUtil.getParentOfType(element, PsiImportStatement.class, false) == null) {
           final GlobalSearchScope resolveScope1 = element.getResolveScope();
+          for (PsiElement scope : scopes) {
+            if (PsiTreeUtil.isAncestor(scope, element, false)) continue NextUsage;
+          }
+
           if (!resolveScope1.isSearchInModuleContent(targetModule)) {
             final PsiMember container = ConflictsUtil.getContainer(element);
             LOG.assertTrue(container != null);
