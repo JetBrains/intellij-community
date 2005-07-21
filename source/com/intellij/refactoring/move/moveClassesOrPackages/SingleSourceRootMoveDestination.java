@@ -8,6 +8,7 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.usageView.UsageInfo;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -56,8 +57,8 @@ public class SingleSourceRootMoveDestination implements MoveDestination {
   }
 
   public void analyzeModuleConflicts(final Collection<PsiElement> elements,
-                                     ArrayList<String> conflicts) {
-    RefactoringUtil.analyzeModuleConflicts(myPackage.getManager().getProject(), elements, myTargetDirectory, conflicts);
+                                     ArrayList<String> conflicts, final UsageInfo[] usages) {
+    RefactoringUtil.analyzeModuleConflicts(myPackage.getManager().getProject(), elements, usages, myTargetDirectory, conflicts);
   }
 
   public PsiDirectory getTargetDirectory(PsiFile source) {

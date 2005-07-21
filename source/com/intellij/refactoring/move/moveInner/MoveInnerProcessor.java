@@ -33,9 +33,9 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 
 public class MoveInnerProcessor extends BaseRefactoringProcessor {
@@ -72,6 +72,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     return new MoveInnerViewDescriptor(myInnerClass, usages, refreshCommand);
   }
 
+  @NotNull
   protected UsageInfo[] findUsages() {
     PsiManager manager = PsiManager.getInstance(myProject);
     PsiSearchHelper helper = manager.getSearchHelper();
@@ -106,8 +107,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     }
     MoveClassesOrPackagesUtil.findNonCodeUsages(mySearchInComments, mySearchInNonJavaFiles,
                                                 myInnerClass, newQName, usageInfos);
-    UsageInfo[] usages = usageInfos.toArray(new UsageInfo[usageInfos.size()]);
-    return usages;
+    return usageInfos.toArray(new UsageInfo[usageInfos.size()]);
   }
 
   protected void refreshElements(PsiElement[] elements) {
@@ -330,8 +330,6 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
 
 //    if (myInnerClass.hasModifierProperty(PsiModifier.)) {
     myOuterClass.accept(new Visitor());
-
-    RefactoringUtil.analyzeModuleConflicts(myProject, Collections.<PsiElement>singletonList(myInnerClass), myTargetContainer, conflicts);
 
     return showConflicts(conflicts);
   }

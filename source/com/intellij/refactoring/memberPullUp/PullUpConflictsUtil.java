@@ -16,6 +16,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.InterfaceContainmentVerifier;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.usageView.UsageInfo;
 
 import java.util.*;
 
@@ -38,10 +39,10 @@ public class PullUpConflictsUtil {
       isInterfaceTarget = false;
       targetRepresentativeElement = targetDirectory;
     }
-    for (int idx = 0; idx < infos.length; idx++) {
-      PsiElement member = infos[idx].getMember();
+    for (MemberInfo info : infos) {
+      PsiElement member = info.getMember();
       if (member instanceof PsiMethod) {
-        if (!infos[idx].isToAbstract() && !isInterfaceTarget) {
+        if (!info.isToAbstract() && !isInterfaceTarget) {
           movedMembers.add(member);
         }
         else {
@@ -61,8 +62,7 @@ public class PullUpConflictsUtil {
     }
     // check if moved methods use other members in the classes between Subclass and Superclass
     List<PsiElement> checkModuleConflictsList = new ArrayList<PsiElement>();
-    for (Iterator<PsiElement> it = movedMembers.iterator(); it.hasNext();) {
-      PsiElement member = it.next();
+    for (PsiElement member : movedMembers) {
       if (member instanceof PsiMethod || member instanceof PsiClass) {
         ConflictingUsagesOfSubClassMembers visitor =
           new ConflictingUsagesOfSubClassMembers(member, movedMembers, abstractMethods, subclass, superClass,
@@ -72,20 +72,18 @@ public class PullUpConflictsUtil {
       }
       checkModuleConflictsList.add(member);
     }
-    for (Iterator<PsiMethod> iterator = abstractMethods.iterator(); iterator.hasNext();) {
-      final PsiMethod method = iterator.next();
+    for (final PsiMethod method : abstractMethods) {
       checkModuleConflictsList.add(method.getParameterList());
       checkModuleConflictsList.add(method.getReturnTypeElement());
     }
     RefactoringUtil.analyzeModuleConflicts(subclass.getProject(), checkModuleConflictsList,
-                                           targetRepresentativeElement, conflictsList);
-    String[] conflicts = conflictsList.toArray(new String[conflictsList.size()]);
-    return conflicts;
+                                           new UsageInfo[0], targetRepresentativeElement, conflictsList);
+    return conflictsList.toArray(new String[conflictsList.size()]);
   }
 
   private static void checkInterfaceTarget(MemberInfo[] infos, LinkedHashSet<String> conflictsList) {
-    for (int i = 0; i < infos.length; i++) {
-      PsiElement member = infos[i].getMember();
+    for (MemberInfo info : infos) {
+      PsiElement member = info.getMember();
 
       if (member instanceof PsiField || member instanceof PsiClass) {
 
@@ -111,8 +109,8 @@ public class PullUpConflictsUtil {
   private static void checkSuperclassMembers(PsiClass superClass,
                                              MemberInfo[] infos,
                                              LinkedHashSet<String> conflictsList) {
-    for (int i = 0; i < infos.length; i++) {
-      PsiElement member = infos[i].getMember();
+    for (MemberInfo info : infos) {
+      PsiElement member = info.getMember();
       boolean isConflict = false;
       if (member instanceof PsiField) {
         String name = ((PsiField)member).getName();

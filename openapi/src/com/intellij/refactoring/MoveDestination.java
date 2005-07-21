@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.usageView.UsageInfo;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -55,5 +56,5 @@ public interface MoveDestination {
   String verify(PsiDirectory source);
   String verify(PsiPackage source);
 
-  void analyzeModuleConflicts(final Collection<PsiElement> elements, ArrayList<String> conflicts);
+  void analyzeModuleConflicts(final Collection<PsiElement> elements, ArrayList<String> conflicts, final UsageInfo[] usages);
 }

@@ -99,7 +99,8 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       ArrayList<UsageInfo> usageInfos = new ArrayList<UsageInfo>(Arrays.asList(usages));
       allUsages.addAll(usageInfos);
     }
-    myMoveDestination.analyzeModuleConflicts(Arrays.asList(myElementsToMove), conflicts);
+    myMoveDestination.analyzeModuleConflicts(Arrays.asList(myElementsToMove), conflicts,
+                                             allUsages.toArray(new UsageInfo[allUsages.size()]));
     final UsageInfo[] usageInfos = allUsages.toArray(new UsageInfo[allUsages.size()]);
     detectPackageLocalsMoved(usageInfos, conflicts);
     detectPackageLocalsUsed(conflicts);

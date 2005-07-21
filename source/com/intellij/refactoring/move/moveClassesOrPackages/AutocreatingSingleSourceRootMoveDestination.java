@@ -9,6 +9,7 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.usageView.UsageInfo;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -58,8 +59,8 @@ public class AutocreatingSingleSourceRootMoveDestination extends AutocreatingMov
   }
 
   public void analyzeModuleConflicts(final Collection<PsiElement> elements,
-                                     ArrayList<String> conflicts) {
-    RefactoringUtil.analyzeModuleConflicts(getTargetPackage().getManager().getProject(), elements, mySourceRoot, conflicts);
+                                     ArrayList<String> conflicts, final UsageInfo[] usages) {
+    RefactoringUtil.analyzeModuleConflicts(getTargetPackage().getManager().getProject(), elements, usages, mySourceRoot, conflicts);
   }
 
   PsiDirectory myTargetDirectory = null;

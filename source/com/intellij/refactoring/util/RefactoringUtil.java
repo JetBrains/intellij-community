@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -25,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -95,8 +97,7 @@ public class RefactoringUtil {
       public Boolean visitClassType(PsiClassType classType) {
         if (classType.resolve() == null) return Boolean.FALSE;
         PsiType[] parameters = classType.getParameters();
-        for (int i = 0; i < parameters.length; i++) {
-          PsiType parameter = parameters[i];
+        for (PsiType parameter : parameters) {
           if (parameter != null && !parameter.accept(this).booleanValue()) return Boolean.FALSE;
         }
 
@@ -310,9 +311,7 @@ public class RefactoringUtil {
       }
     }
 
-    Iterator<PsiFile> iter = filesToOffsetsMap.keySet().iterator();
-    while (iter.hasNext()) {
-      PsiFile file = iter.next();
+    for (PsiFile file : filesToOffsetsMap.keySet()) {
       final Document editorDocument = PsiDocumentManager.getInstance(project).getDocument(file);
 
       ArrayList<UsageOffset> list = filesToOffsetsMap.get(file);
@@ -521,7 +520,7 @@ public class RefactoringUtil {
 
   public static boolean canBeDeclaredFinal(PsiVariable variable) {
     LOG.assertTrue(variable instanceof PsiLocalVariable || variable instanceof PsiParameter);
-    final boolean isReassigned = HighlightControlFlowUtil.isReassigned(variable, new THashMap(), new THashMap());
+    final boolean isReassigned = HighlightControlFlowUtil.isReassigned(variable, new THashMap<PsiElement, Collection<ControlFlowUtil.VariableInfo>>(), new THashMap<PsiParameter, Boolean>());
     return !isReassigned;
   }
 
@@ -814,8 +813,8 @@ public class RefactoringUtil {
   /**
    * @return List of highlighters
    */
-  public static ArrayList highlightAllOccurences(Project project, PsiElement[] occurences, Editor editor) {
-    ArrayList highlighters = new ArrayList();
+  public static ArrayList<RangeHighlighter> highlightAllOccurences(Project project, PsiElement[] occurences, Editor editor) {
+    ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     HighlightManager highlightManager = HighlightManager.getInstance(project);
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
@@ -823,11 +822,11 @@ public class RefactoringUtil {
     return highlighters;
   }
 
-  public static ArrayList highlightOccurences(Project project, PsiElement[] occurences, Editor editor) {
+  public static ArrayList<RangeHighlighter> highlightOccurences(Project project, PsiElement[] occurences, Editor editor) {
     if (occurences.length > 1) {
       return highlightAllOccurences(project, occurences, editor);
     }
-    return new ArrayList();
+    return new ArrayList<RangeHighlighter>();
   }
 
   public static String createTempVar(PsiExpression expr, PsiElement context, boolean declareFinal)
@@ -1414,6 +1413,7 @@ public class RefactoringUtil {
 
   public static void analyzeModuleConflicts(Project project,
                                             Collection<? extends PsiElement> scope,
+                                            final UsageInfo[] usages,
                                             PsiElement target,
                                             final Collection<String> conflicts) {
     if (scope == null) return;
@@ -1425,11 +1425,12 @@ public class RefactoringUtil {
       vFile = ((PsiDirectory)target).getVirtualFile();
     }
     if (vFile == null) return;
-    analyzeModuleConflicts(project, scope, vFile, conflicts);
+    analyzeModuleConflicts(project, scope, usages, vFile, conflicts);
   }
 
   public static void analyzeModuleConflicts(Project project,
                                             final Collection<? extends PsiElement> scopes,
+                                            final UsageInfo[] usages,
                                             final VirtualFile vFile,
                                             final Collection<String> conflicts) {
     if (scopes == null) return;
@@ -1462,7 +1463,30 @@ public class RefactoringUtil {
           }
         }
       });
+    }
 
+    for (UsageInfo usage : usages) {
+      if (usage instanceof MoveRenameUsageInfo) {
+        final MoveRenameUsageInfo moveRenameUsageInfo = ((MoveRenameUsageInfo)usage);
+        final PsiElement element = usage.getElement();
+        if (element != null &&
+            PsiTreeUtil.getParentOfType(element, PsiImportStatement.class, false) == null) {
+          final GlobalSearchScope resolveScope1 = element.getResolveScope();
+          if (!resolveScope1.isSearchInModuleContent(targetModule)) {
+            final PsiMember container = ConflictsUtil.getContainer(element);
+            LOG.assertTrue(container != null);
+            final String scopeDescription = ConflictsUtil.htmlEmphasize(ConflictsUtil.getDescription(container,
+                                                                                                     true));
+            Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(element.getContainingFile().getVirtualFile());
+            final String message =
+                ConflictsUtil.capitalize(ConflictsUtil.htmlEmphasize(ConflictsUtil.getDescription(moveRenameUsageInfo.referencedElement, true))) +
+                ", referenced in " + scopeDescription +
+                ", will not be accessible from module " +
+                ConflictsUtil.htmlEmphasize(module.getName());
+            conflicts.add(message);
+          }
+        }
+      }
     }
   }
 

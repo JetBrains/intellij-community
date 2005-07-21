@@ -9,6 +9,7 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.usageView.UsageInfo;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -77,7 +78,7 @@ public class MultipleRootsMoveDestination extends AutocreatingMoveDestination {
   }
 
   public void analyzeModuleConflicts(final Collection<PsiElement> elements,
-                                     ArrayList<String> conflicts) {
+                                     ArrayList<String> conflicts, final UsageInfo[] usages) {
   }
 
   public PsiDirectory getTargetIfExists(PsiDirectory source) {

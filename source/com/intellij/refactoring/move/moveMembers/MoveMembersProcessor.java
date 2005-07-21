@@ -31,6 +31,8 @@ import com.intellij.util.containers.HashMap;
 
 import java.util.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public class MoveMembersProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveMembers.MoveMembersProcessor");
 
@@ -87,6 +89,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     return new MoveMemberViewDescriptor(myMembersToMove.toArray(new PsiElement[myMembersToMove.size()]), usages, refreshCommand);
   }
 
+  @NotNull
   protected UsageInfo[] findUsages() {
     final PsiManager manager = PsiManager.getInstance(myProject);
     final PsiSearchHelper helper = manager.getSearchHelper();
@@ -102,29 +105,29 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
             // both member and the reference to it will be in target class
             if (!isInMovedElement(refExpr)) {
               if (qualifier != null) {
-                usagesList.add(new MyUsageInfo(member, refExpr, null, qualifier));  // remove qualifier
+                usagesList.add(new MyUsageInfo(member, refExpr, null, qualifier, psiReference));  // remove qualifier
               }
             }
             else {
               if (qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier)
                 .isReferenceTo(member.getContainingClass())) {
-                usagesList.add(new MyUsageInfo(member, refExpr, null, qualifier));  // change qualifier
+                usagesList.add(new MyUsageInfo(member, refExpr, null, qualifier, psiReference));  // change qualifier
               }
             }
           }
           else {
             // member in target class, the reference will be outside target class
             if (qualifier == null) {
-              usagesList.add(new MyUsageInfo(member, refExpr, myTargetClass, refExpr)); // add qualifier
+              usagesList.add(new MyUsageInfo(member, refExpr, myTargetClass, refExpr, psiReference)); // add qualifier
             }
             else {
-              usagesList.add(new MyUsageInfo(member, refExpr, myTargetClass, qualifier)); // change qualifier
+              usagesList.add(new MyUsageInfo(member, refExpr, myTargetClass, qualifier, psiReference)); // change qualifier
             }
           }
         }
         else {
           if (!isInMovedElement(ref)) {
-            usagesList.add(new MyUsageInfo(member, ref, null, ref));
+            usagesList.add(new MyUsageInfo(member, ref, null, ref, psiReference));
           }
         }
       }
@@ -202,8 +205,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
         PsiElement newMember = myTargetClass.add(memberCopy);
 
         fixVisibility(newMember);
-        for (int i = 0; i < refsToBeRebind.size(); i++) {
-          PsiReference reference = refsToBeRebind.get(i);
+        for (PsiReference reference : refsToBeRebind) {
           reference.bindToElement(newMember);
         }
 
@@ -269,13 +271,14 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     final ArrayList<String> conflicts = new ArrayList<String>();
+    final UsageInfo[] usages = refUsages.get();
     try {
-      addInaccessiblleConflicts(conflicts, refUsages.get());
+      addInaccessiblleConflicts(conflicts, usages);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
-    RefactoringUtil.analyzeModuleConflicts(myProject, myMembersToMove, myTargetClass, conflicts);
+    RefactoringUtil.analyzeModuleConflicts(myProject, myMembersToMove, usages, myTargetClass, conflicts);
     return showConflicts(conflicts);
   }
 
@@ -360,8 +363,8 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   }
 
   public static String[] analyzeAccessibilityConflicts(final Set<PsiMember> membersToMove,
-                                                        final PsiClass targetClass,
-                                                        final LinkedHashSet<String> conflicts, String newVisibility) {
+                                                       final PsiClass targetClass,
+                                                       final LinkedHashSet<String> conflicts, String newVisibility) {
     for (PsiMember member : membersToMove) {
       checkUsedElements(member, member, membersToMove, targetClass, conflicts);
 
@@ -448,10 +451,10 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
                                          LinkedHashSet<String> conflicts) {
     if (!PsiUtil.isAccessible(refMember, newContext, accessClass)) {
       String message = ConflictsUtil.getDescription(refMember, true)
-        + " is " + VisibilityUtil.getVisiblityStringToDisplay(refMember)
-        + " and will not be accessible from "
-        + ConflictsUtil.getDescription(member, false)
-        + " in the target class.";
+                       + " is " + VisibilityUtil.getVisiblityStringToDisplay(refMember)
+                       + " and will not be accessible from "
+                       + ConflictsUtil.getDescription(member, false)
+                       + " in the target class.";
       message = ConflictsUtil.capitalize(message);
       conflicts.add(message);
     }
@@ -488,16 +491,16 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   }
 
 
-  private static class MyUsageInfo extends UsageInfo {
+  private static class MyUsageInfo extends MoveRenameUsageInfo {
     public final PsiClass qualifierClass;
     public final PsiElement reference;
     public final PsiMember member;
 
-    public MyUsageInfo(PsiMember member, PsiElement reference, PsiClass qualifierClass, PsiElement highlightElement) {
-      super(highlightElement);
+    public MyUsageInfo(PsiMember member, PsiElement element, PsiClass qualifierClass, PsiElement highlightElement, final PsiReference ref) {
+      super(highlightElement, ref, member);
       this.member = member;
       this.qualifierClass = qualifierClass;
-      this.reference = reference;
+      this.reference = element;
     }
   }
 
