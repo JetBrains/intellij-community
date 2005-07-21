@@ -64,7 +64,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     return getNode().findChildByType(PropertiesElementTypes.PROPERTIES_LIST);
   }
 
-  private void ensurePropertiesLoaded() {
+  private synchronized void ensurePropertiesLoaded() {
     if (myPropertiesMap != null) {
       return;
     }
@@ -98,7 +98,8 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     return list == null ? Collections.EMPTY_LIST : list;
   }
 
-  @NotNull public ResourceBundle getResourceBundle() {
+  @NotNull
+  public ResourceBundle getResourceBundle() {
     String baseName = PropertiesUtil.getBaseName(getVirtualFile());
     return new ResourceBundleImpl(getContainingFile().getContainingDirectory().getVirtualFile(), baseName);
   }
@@ -142,7 +143,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     return result;
   }
 
-  public void subtreeChanged() {
+  public synchronized void subtreeChanged() {
     super.subtreeChanged();
     myPropertiesMap = null;
     myProperties = null;
