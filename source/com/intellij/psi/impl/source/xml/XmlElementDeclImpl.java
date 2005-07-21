@@ -9,12 +9,15 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.xml.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mike
@@ -77,5 +80,10 @@ public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl
   public String getName() {
     XmlElement name = getNameElement();
     return (name != null )? name.getText():null;
+  }
+
+  @NotNull
+  public PsiReference[] getReferences() {
+    return ResolveUtil.getReferencesFromProviders(this);
   }
 }

@@ -9,10 +9,17 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author Mike
@@ -113,51 +120,62 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
     return null;
   }
 
-  public PsiReference getReference() {
+  @NotNull
+  public PsiReference[] getReferences() {
     final XmlElement dtdUrlElement = getDtdUrlElement();
-    if (dtdUrlElement == null) return null;
+    PsiReference uriRef = null;
+      
+    if (dtdUrlElement != null) {
+      final String uri = extractValue(dtdUrlElement);
+  
+      uriRef = new PsiReference() {
+        public PsiElement getElement() {
+          return XmlDoctypeImpl.this;
+        }
+  
+        public TextRange getRangeInElement() {
+          return new TextRange(
+            dtdUrlElement.getTextRange().getStartOffset() - getTextRange().getStartOffset(),
+            dtdUrlElement.getTextRange().getEndOffset() - getTextRange().getStartOffset()
+          );
+        }
+  
+        public PsiElement resolve() {
+          return XmlUtil.findXmlFile(XmlUtil.getContainingFile(XmlDoctypeImpl.this), uri);
+        }
+  
+        public String getCanonicalText() {
+          return uri;
+        }
+  
+        public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+          throw new IncorrectOperationException();
+        }
+  
+        public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+          throw new IncorrectOperationException();
+        }
+  
+        public boolean isReferenceTo(PsiElement element) {
+          return element == dtdUrlElement;
+        }
+  
+        public Object[] getVariants() {
+          return null;
+        }
+  
+        public boolean isSoft() {
+          return false;
+        }
+      };
+    }
 
-    final String uri = extractValue(dtdUrlElement);
-
-    return new PsiReference() {
-      public PsiElement getElement() {
-        return XmlDoctypeImpl.this;
-      }
-
-      public TextRange getRangeInElement() {
-        return new TextRange(
-          dtdUrlElement.getTextRange().getStartOffset() - getTextRange().getStartOffset(),
-          dtdUrlElement.getTextRange().getEndOffset() - getTextRange().getStartOffset()
-        );
-      }
-
-      public PsiElement resolve() {
-        return XmlUtil.findXmlFile(XmlUtil.getContainingFile(XmlDoctypeImpl.this), uri);
-      }
-
-      public String getCanonicalText() {
-        return uri;
-      }
-
-      public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-        throw new IncorrectOperationException();
-      }
-
-      public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
-        throw new IncorrectOperationException();
-      }
-
-      public boolean isReferenceTo(PsiElement element) {
-        return element == dtdUrlElement;
-      }
-
-      public Object[] getVariants() {
-        return null;
-      }
-
-      public boolean isSoft() {
-        return false;
-      }
-    };
+    final PsiReference[] referencesFromProviders = ResolveUtil.getReferencesFromProviders(this);
+    
+    return ArrayUtil.mergeArrays(
+      uriRef != null? new PsiReference[] {uriRef}: PsiReference.EMPTY_ARRAY,
+      referencesFromProviders,
+      PsiReference.class
+    );
   }
 }

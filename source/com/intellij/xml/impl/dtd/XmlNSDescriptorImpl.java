@@ -85,7 +85,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     return getElements();
   }
 
-  final XmlElementDescriptor getElementDescriptor(String name){
+  public final XmlElementDescriptor getElementDescriptor(String name){
     return buildDeclarationMap().get(name);
   }
 

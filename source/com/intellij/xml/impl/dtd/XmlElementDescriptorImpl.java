@@ -248,10 +248,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   public XmlElementDescriptor getElementDescriptor(XmlTag element){
     String name = element.getName();
     if(name == null) return null;
-    //if (element.getContainingFile().getFileType()==StdFileTypes.HTML) {
-    //  name = name.toLowerCase();
-    //}
-
+    
     if (elementDescriptorsMap==null) {
       final XmlElementDescriptor[] descriptors = getElementsDescriptors(element);
       elementDescriptorsMap = new HashMap<String, XmlElementDescriptor>(descriptors.length);
@@ -274,52 +271,6 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   }
 
   public void setName(final String name) throws IncorrectOperationException {
-    final XmlNSDescriptor nsDescriptor = getNSDescriptor();
-    
-    if (nsDescriptor != null) {
-      final ReferenceProvidersRegistry registry = ReferenceProvidersRegistry.getInstance(
-        myElementDecl.getProject()
-      );
-      
-      final List<XmlToken> refs = new ArrayList<XmlToken>(1);
-      
-      final PsiElementProcessor psiElementProcessor = new PsiElementProcessor() {
-        public boolean execute(PsiElement child) {
-          if (child instanceof XmlToken) {
-            final XmlToken token = (XmlToken)child;
-
-            if (token.getTokenType() == XmlTokenType.XML_NAME) {
-              final String text = child.getText();
-              
-              if (text.equals(getName())) {
-                refs.add(token);
-              }
-            }
-
-          }
-          return true;
-        }
-      };
-      
-      
-      XmlUtil.processXmlElements( 
-        (XmlElement)nsDescriptor.getDeclaration().getContainingFile(), 
-        psiElementProcessor,
-        true
-      );
-      
-      try {
-        for(XmlToken token:refs) {
-           registry.getManipulator(token).handleContentChange(
-             token, 
-             new TextRange(0,token.getTextLength()), 
-             name
-           );
-        }
-      }
-      catch (IncorrectOperationException e) {}
-    }
-    
     myName = name;
   }
 }

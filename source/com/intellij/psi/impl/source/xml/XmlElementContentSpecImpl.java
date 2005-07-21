@@ -4,9 +4,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.xml.XmlElementContentSpec;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.PsiReference;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mike
@@ -49,5 +52,10 @@ public class XmlElementContentSpecImpl extends XmlElementImpl implements XmlElem
 
   public boolean hasChildren() {
     return !(isEmpty() || isAny() || isMixed());
+  }
+  
+  @NotNull
+  public PsiReference[] getReferences() {
+    return ResolveUtil.getReferencesFromProviders(this);
   }
 }

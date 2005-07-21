@@ -368,6 +368,11 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     
     final DtdReferencesProvider dtdReferencesProvider = new DtdReferencesProvider();
     registerReferenceProvider(null, XmlEntityRef.class,dtdReferencesProvider);
+    registerReferenceProvider(null, XmlDoctype.class,dtdReferencesProvider);
+    registerReferenceProvider(null, XmlElementDecl.class,dtdReferencesProvider);
+    registerReferenceProvider(null, XmlAttlistDecl.class,dtdReferencesProvider);
+    registerReferenceProvider(null, XmlElementContentSpec.class,dtdReferencesProvider);
+    
     URIReferenceProvider uriProvider = new URIReferenceProvider();
     
     registerXmlAttributeValueReferenceProvider(
