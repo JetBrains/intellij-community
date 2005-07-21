@@ -98,7 +98,7 @@ public class BrowserUtil {
    * This method works around Windows 'start' command behaivor of dropping anchors from the url for local urls.
    */
   private static String redirectUrl(String url, String urlString) throws IOException {
-    if (!urlString.startsWith("file:") || urlString.indexOf("#") == -1) return urlString;
+    if (url.indexOf('&') == -1 && (!urlString.startsWith("file:") || urlString.indexOf("#") == -1)) return urlString;
 
     File redirect = File.createTempFile("redirect", ".html");
     redirect.deleteOnExit();
