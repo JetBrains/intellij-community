@@ -88,7 +88,7 @@ public class PsiTreeUtil {
     return null;
   }
 
-  @Nullable public static <ParentType extends PsiElement> ParentType getParentOfType(@NotNull PsiElement element, @NotNull Class<ParentType> aClass) {
+  @Nullable public static <ParentType extends PsiElement> ParentType getParentOfType(@Nullable PsiElement element, @NotNull Class<ParentType> aClass) {
     return getParentOfType(element, aClass, true);
   }
 
