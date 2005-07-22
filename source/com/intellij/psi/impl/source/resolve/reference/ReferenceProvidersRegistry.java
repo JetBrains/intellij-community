@@ -299,11 +299,20 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       new String[]{"page"},
       new ScopeFilter(
         new ParentElementFilter(
-          new AndFilter(
-            new NamespaceFilter(XmlUtil.JSP_URI),
+          new OrFilter(
             new AndFilter(
-              new ClassFilter(XmlTag.class),
-              new TextFilter("include")
+              new NamespaceFilter(XmlUtil.JSP_URI),
+              new AndFilter(
+                new ClassFilter(XmlTag.class),
+                new TextFilter("include")
+              )
+            ),
+            new AndFilter(
+              new NamespaceFilter(XmlUtil.STRUTS_HTML_URI),
+              new AndFilter(
+                new ClassFilter(XmlTag.class),
+                new TextFilter("rewrite")
+              )
             )
           ), 2
         )
@@ -397,7 +406,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     registerReferenceProvider(PsiLiteralExpression.class, filePathReferenceProvider);
     
     registerXmlAttributeValueReferenceProvider(
-      new String[] {"ref","type","base","name","substitutionGroup"},
+      new String[] {"ref","type","base","name","substitutionGroup","memberTypes"},
       new ScopeFilter(
         new ParentElementFilter(
           new NamespaceFilter(MetaRegistry.SCHEMA_URIS), 2
