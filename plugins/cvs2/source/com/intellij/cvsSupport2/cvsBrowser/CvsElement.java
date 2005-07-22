@@ -3,11 +3,13 @@ package com.intellij.cvsSupport2.cvsBrowser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Alarm;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
+import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.io.File;
 import java.util.Enumeration;
@@ -25,6 +27,8 @@ public class CvsElement extends DefaultMutableTreeNode {
   private CvsTreeModel myModel;
   private final Project myProject;
   private Thread myLoadingThread;
+
+  private final Alarm myPeriodAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   public CvsElement(Icon icon, Icon expandedIcon, Project project) {
     myIcon = icon;
@@ -91,7 +95,7 @@ public class CvsElement extends DefaultMutableTreeNode {
 
   private List getMyChildren() {
     if (children == null) {
-      final DefaultMutableTreeNode loadingNode = createLoadingNode();
+      final LoadingNode loadingNode = new LoadingNode();
 
       getModel().insertNodeInto(loadingNode, this, 0);
       myModel.getCvsTree().getTree().setEnabled(false);
@@ -101,21 +105,21 @@ public class CvsElement extends DefaultMutableTreeNode {
         }
       });
       myLoadingThread.start();
+
+      final Runnable periodRequest = new Runnable() {
+        public void run() {
+          if (isNodeChild(loadingNode)) {
+            loadingNode.updatePeriod();
+            ((DefaultTreeModel)myModel.getCvsTree().getTree().getModel()).nodeChanged(loadingNode);
+            myPeriodAlarm.addRequest(this, 200);
+          }
+
+        }
+      };
+      myPeriodAlarm.addRequest(periodRequest, 200);
     }
 
     return children;
-  }
-
-  private DefaultMutableTreeNode createLoadingNode() {
-    return new DefaultMutableTreeNode() {
-      public boolean getAllowsChildren() {
-        return false;
-      }
-
-      public String toString() {
-        return "Loading...";
-      }
-    };
   }
 
   public CvsTreeModel getModel() {
@@ -163,9 +167,9 @@ public class CvsElement extends DefaultMutableTreeNode {
   }
 
   private class MyGetContentCallback implements GetContentCallback {
-    private final DefaultMutableTreeNode myLoadingNode;
+    private final LoadingNode myLoadingNode;
 
-    public MyGetContentCallback(DefaultMutableTreeNode loadingNode) {
+    public MyGetContentCallback(LoadingNode loadingNode) {
       myLoadingNode = loadingNode;
     }
 
@@ -184,6 +188,7 @@ public class CvsElement extends DefaultMutableTreeNode {
     }
 
     public void finished() {
+      myPeriodAlarm.cancelAllRequests();
       if (isNodeChild(myLoadingNode)) {
         remove(myLoadingNode);
       }

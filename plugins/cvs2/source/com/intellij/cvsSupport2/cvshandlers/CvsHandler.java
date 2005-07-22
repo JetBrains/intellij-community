@@ -111,14 +111,22 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
     myMessagesConsole.connectToOutputView(editor, project);
   }
 
+  protected boolean runInReadThread(){
+    return true;
+  }
+
   public void run(final ModalityContext executor) {
     initializeListeners();
     try {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          internalRun(executor);
-        }
-      });
+      if (runInReadThread()) {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            internalRun(executor);
+          }
+        });
+      } else {
+        internalRun(executor);
+      }
     } finally {
       deinitializeListeners();
     }

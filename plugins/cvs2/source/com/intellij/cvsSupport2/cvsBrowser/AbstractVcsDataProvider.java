@@ -41,8 +41,10 @@ public abstract class AbstractVcsDataProvider implements RemoteResourceDataProvi
   }
 
 
-  public void fillDirectoryContent(final CvsElement parent, String path,
-                                   final GetContentCallback callback, final Project project) {
+  public void fillDirectoryContent(final CvsElement parent,
+                                   String path,
+                                   final GetContentCallback callback,
+                                   final Project project) {
 
     executeCommand(createDirectoryContentProvider(path), callback, parent, project);
 
@@ -62,7 +64,11 @@ public abstract class AbstractVcsDataProvider implements RemoteResourceDataProvi
     executor1.setIsQuietOperation(true);
 
     executor1.performActionSync(
-      new CommandCvsHandler("Browse Repository", (CvsOperation)command, false),
+      new CommandCvsHandler("Browse Repository", (CvsOperation)command, false){
+        protected boolean runInReadThread() {
+          return false;
+        }
+      },
       new CvsOperationExecutorCallback() {
         public void executionFinished(boolean successfully) {
           callback.finished();

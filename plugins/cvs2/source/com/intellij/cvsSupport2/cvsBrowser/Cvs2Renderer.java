@@ -1,6 +1,5 @@
 package com.intellij.cvsSupport2.cvsBrowser;
 
-import com.intellij.util.ui.IdeaUIManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.IdeaUIManager;
@@ -19,6 +18,8 @@ public class Cvs2Renderer extends ColoredTreeCellRenderer {
                                                       IdeaUIManager.getTreeForegroung()));
     if (value instanceof CvsElement) {
       setIcon(((CvsElement)value).getIcon(expanded));
+    } else if (value instanceof LoadingNode) {
+      setIcon(((LoadingNode)value).getIcon());
     }
   }
 }
