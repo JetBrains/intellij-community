@@ -51,9 +51,7 @@ public class UsageViewUtil {
     }
     else if (element != null) {
       FindUsagesProvider provider = element.getLanguage().getFindUsagesProvider();
-      if (provider != null) {
-        return provider.getNodeText(element, useFullName);
-      }
+      return provider.getNodeText(element, useFullName);
     }
 
     return "";
@@ -226,19 +224,13 @@ public class UsageViewUtil {
     }
 
     final Language lang = psiElement.getLanguage();
-    if (lang != null) {
-      FindUsagesProvider provider = lang.getFindUsagesProvider();
-      if (provider != null) {
-        return provider.getType(psiElement);
-      }
-    }
-
-    return "";
+    FindUsagesProvider provider = lang.getFindUsagesProvider();
+    return provider.getType(psiElement);
   }
 
   public static String getDescriptiveName(final PsiElement psiElement) {
     LOG.assertTrue(psiElement.isValid());
-    String ret = "";
+    String ret;
 
     if (psiElement instanceof XmlTag) {
       final PsiMetaData metaData = ((XmlTag)psiElement).getMetaData();
@@ -250,12 +242,8 @@ public class UsageViewUtil {
     }
     else {
       final Language lang = psiElement.getLanguage();
-      if (lang != null) {
-        FindUsagesProvider provider = lang.getFindUsagesProvider();
-        if (provider != null) {
-          return provider.getDescriptiveName(psiElement);
-        }
-      }
+      FindUsagesProvider provider = lang.getFindUsagesProvider();
+      return provider.getDescriptiveName(psiElement);
     }
 
     return ret;
@@ -277,15 +265,14 @@ public class UsageViewUtil {
   }
 
   public static boolean hasNonCodeUsages(UsageInfo[] usages) {
-    for (int i = 0; i < usages.length; i++) {
-      if (usages[i].isNonCodeUsage) return true;
+    for (UsageInfo usage : usages) {
+      if (usage.isNonCodeUsage) return true;
     }
     return false;
   }
 
   public static boolean hasReadOnlyUsages(UsageInfo[] usages) {
-    for (int i = 0; i < usages.length; i++) {
-      UsageInfo usage = usages[i];
+    for (UsageInfo usage : usages) {
       if (!usage.isWritable()) return true;
     }
     return false;
