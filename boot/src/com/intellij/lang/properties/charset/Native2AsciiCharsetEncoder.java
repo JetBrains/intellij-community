@@ -30,6 +30,7 @@ class Native2AsciiCharsetEncoder extends CharsetEncoder {
           out.put(byteBuffer);
         }
         else {
+          if (out.remaining() < 6) throw new BufferOverflowException();
           out.put((byte)'\\');
           out.put((byte)'u');
           out.put((byte)Character.forDigit(c >> 12, 16));
