@@ -8,6 +8,7 @@ import com.intellij.ui.TabbedPaneWrapper;
 import javax.swing.*;
 import java.util.Iterator;
 import java.util.List;
+import java.awt.*;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -44,11 +45,12 @@ public abstract class CompositeConfigurable extends BaseConfigurable {
 
   public JComponent createComponent() {
     myTabbedPane = new TabbedPaneWrapper();
-    for (Iterator<Configurable> iterator = getConfigurables().iterator(); iterator.hasNext();) {
-      Configurable configurable = iterator.next();
+    for (Configurable configurable : getConfigurables()) {
       myTabbedPane.addTab(configurable.getDisplayName(), configurable.getIcon(), configurable.createComponent(), null);
     }
-    return myTabbedPane.getComponent();
+    final JComponent component = myTabbedPane.getComponent();
+    component.setPreferredSize(new Dimension(500, 400));
+    return component;
   }
 
   public void disposeUIResources() {

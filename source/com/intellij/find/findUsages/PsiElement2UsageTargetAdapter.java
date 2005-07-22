@@ -119,13 +119,11 @@ public class PsiElement2UsageTargetAdapter implements UsageTarget {
 
   private class MyItemPresentation implements ItemPresentation {
     private String myPresentableText;
-    private final PsiElement myElement;
     private final ItemPresentation myPresentation;
     private Icon myIconOpen;
     private Icon myIconClosed;
 
     public MyItemPresentation(final PsiElement element) {
-      myElement = element;
       myPresentation = ((NavigationItem)element).getPresentation();
       update();
     }
@@ -133,7 +131,10 @@ public class PsiElement2UsageTargetAdapter implements UsageTarget {
     public void update() {
       myIconOpen = myPresentation != null ? myPresentation.getIcon(true) : null;
       myIconClosed = myPresentation != null ? myPresentation.getIcon(false) : null;
-      myPresentableText = createPresentableText(myElement);
+      final PsiElement element = getElement();
+      if (element != null) {
+        myPresentableText = createPresentableText(element);
+      }
     }
 
     public String getPresentableText() {
