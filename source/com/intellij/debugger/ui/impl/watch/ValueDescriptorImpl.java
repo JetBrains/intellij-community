@@ -2,6 +2,7 @@ package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.jdi.ObjectReferenceCachingProxy;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -28,11 +29,11 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   NodeRenderer myAutoRenderer = null;
 
-  private Value             myValue;
+  private Value myValue;
   private EvaluateException myValueException;
   protected EvaluationContextImpl myStoredEvaluationContext = null;
 
-  private String            myValueLabel;
+  private String myValueLabel;
 
   protected boolean myIsNew = true;
   private boolean myIsDirty = false;
@@ -80,7 +81,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     // the following code makes sence only if we do not use ObjectReference.enableCollection() / disableCollection()
     // to keep temporary objects
     if (Patches.IBM_JDK_DISABLE_COLLECTION_BUG && myStoredEvaluationContext != null && !myStoredEvaluationContext.getSuspendContext().isResumed() &&
-        myValue instanceof ObjectReference && ((ObjectReference)myValue).isCollected()) {
+        myValue instanceof ObjectReference && VirtualMachineProxyImpl.isCollected((ObjectReference)myValue)) {
       
       final Semaphore semaphore = new Semaphore();
       semaphore.down();
@@ -113,7 +114,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       value = calcValue(evaluationContext);
 
       if(!myIsNew) {
-        if (myValue instanceof ObjectReference && ((ObjectReference)myValue).isCollected()) {
+        if (myValue instanceof ObjectReference && VirtualMachineProxyImpl.isCollected((ObjectReference)myValue)) {
           myIsDirty = true;
         }
         else if (myValue instanceof DoubleValue && Double.isNaN(((DoubleValue)myValue).doubleValue())) {

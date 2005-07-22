@@ -11,6 +11,7 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.ui.DebuggerExpressionComboBox;
 import com.intellij.debugger.ui.EditorEvaluationCommand;
 import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
@@ -150,7 +151,7 @@ public class SetValueAction extends DebuggerAction {
       final ArrayElementDescriptorImpl elementDescriptor = (ArrayElementDescriptorImpl)descriptor;
       final ArrayReference array = elementDescriptor.getArray();
       if (array != null) {
-        if (array.isCollected()) {
+        if (VirtualMachineProxyImpl.isCollected(array)) {
           // will only be the case if debugger does not use ObjectReference.disableCollection() because of Patches.IBM_JDK_DISABLE_COLLECTION_BUG
           Messages.showWarningDialog(tree, "The array object has been garbage-collected in the debugge VM.\nThe value will be recalculated", "Object Collected");
           node.getParent().calcValue();

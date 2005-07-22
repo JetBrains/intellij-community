@@ -442,7 +442,8 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   public static boolean isCollected(ObjectReference reference) {
     if(isJ2ME(reference.virtualMachine())){
       return false;
-    } else {
+    }
+    else {
       return reference.isCollected();
     }
   }
