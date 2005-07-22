@@ -1,6 +1,7 @@
 package com.intellij.ide.todo.nodes;
 
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.ide.todo.CurrentFileTodosTreeBuilder;
 import com.intellij.ide.todo.ToDoSummary;
 import com.intellij.ide.todo.TodoFileDirAndModuleComparator;
 import com.intellij.ide.todo.TodoTreeBuilder;
@@ -43,8 +44,15 @@ public class SummaryNode extends BaseToDoNode<ToDoSummary> {
       }
     }
     else {
-      if (myToDoSettings.getIsPackagesShown()) {
-        TodoPackageUtil.addPackagesToChildren(children, myBuilder.getAllFiles(), null, myBuilder, getProject());        
+      if (myToDoSettings.getIsPackagesShown()) {        
+        if (myBuilder instanceof CurrentFileTodosTreeBuilder){
+          final Iterator allFiles = myBuilder.getAllFiles();
+          if(allFiles.hasNext()){
+            children.add(new TodoFileNode(myProject, (PsiFile)allFiles.next(), myBuilder, false));
+          }
+        } else {
+          TodoPackageUtil.addPackagesToChildren(children, null, myBuilder, getProject());
+        }
       }
       else {
         for (Iterator i = myBuilder.getAllFiles(); i.hasNext();) {

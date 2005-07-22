@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageTreeColorsScheme;
@@ -216,17 +217,40 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
    *         and which are located under specified <code>psiDirctory</code>.
    * @see com.intellij.ide.todo.FileTree#getFiles(VirtualFile)
    */
+  public Iterator<PsiFile> getFilesUnderDirectory(PsiDirectory psiDirectory) {
+    ArrayList<VirtualFile> files = myFileTree.getFilesUnderDirectory(psiDirectory.getVirtualFile());
+    ArrayList<PsiFile> psiFileList = new ArrayList<PsiFile>(files.size());
+    PsiManager psiManager = PsiManager.getInstance(myProject);
+    for (int i = 0; i < files.size(); i++) {
+      VirtualFile file = files.get(i);
+      final Module module = ModuleUtil.findModuleForPsiElement(psiDirectory);
+      if (module != null) {
+        final boolean isInContent = ModuleRootManager.getInstance(module).getFileIndex().isInContent(file);
+        if (!isInContent) continue;
+      }
+      if (file.isValid()) {
+        PsiFile psiFile = psiManager.findFile(file);
+        if (psiFile != null) {
+          psiFileList.add(psiFile);          
+        }
+      }
+    }
+    return psiFileList.iterator();
+  }
+
+  /**
+   * @return read-only iterator of all valid PSI files that can have TODO items
+   *         and which are located under specified <code>psiDirctory</code>.
+   * @see com.intellij.ide.todo.FileTree#getFiles(VirtualFile)
+   */
   public Iterator<PsiFile> getFiles(PackageElement packageElement) {
     final PsiManager psiManager = PsiManager.getInstance(myProject);
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     ArrayList<PsiFile> psiFileList = new ArrayList<PsiFile>();
-    final PsiDirectory[] directories = packageElement.getPackage().getDirectories();
+    GlobalSearchScope scope = packageElement.getModule() != null ? GlobalSearchScope.moduleScope(packageElement.getModule()) :
+                                                                   GlobalSearchScope.projectScope(myProject);
+    final PsiDirectory[] directories = packageElement.getPackage().getDirectories(scope);
     for (PsiDirectory directory : directories) {
       final VirtualFile directoryFile = directory.getVirtualFile();
-      final Module module = fileIndex.getModuleForFile(directoryFile);
-      if (packageElement.getModule() != null && module != null && !packageElement.getModule().equals(module)){
-        continue;
-      }
       ArrayList<VirtualFile> files = myFileTree.getFiles(directoryFile);
       for (VirtualFile file : files) {
         if (file.isValid()){

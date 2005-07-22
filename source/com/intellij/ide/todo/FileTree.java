@@ -81,6 +81,15 @@ final class FileTree{
     return files == null || files.isEmpty();
   }
 
+  ArrayList<VirtualFile> getFilesUnderDirectory(VirtualFile dir){
+    ArrayList<VirtualFile> filesList=new ArrayList<VirtualFile>();
+    final ArrayList<VirtualFile> files = myStrictDirectory2Children.get(dir);
+    if (files != null){
+      filesList.addAll(files);
+    }
+    return filesList;
+  }
+
   void removeFile(VirtualFile file){
     if(!myFiles.contains(file)){
       return;

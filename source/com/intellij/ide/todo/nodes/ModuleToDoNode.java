@@ -34,7 +34,7 @@ public class ModuleToDoNode extends BaseToDoNode<Module> implements HighlightedR
   public Collection<AbstractTreeNode> getChildren() {
     ArrayList<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
     if (myToDoSettings.getIsPackagesShown()) {
-      TodoPackageUtil.addPackagesToChildren(children, myBuilder.getFiles(getValue()), getValue(), myBuilder, getProject());
+      TodoPackageUtil.addPackagesToChildren(children, getValue(), myBuilder, getProject());
     }
     else {
       for (Iterator i = myBuilder.getAllFiles(); i.hasNext();) {
