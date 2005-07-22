@@ -108,7 +108,11 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
 
   public void propertyChanged(VirtualFilePropertyEvent event) {
     if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
-      undoableActionPerformed(event);
+      if (shouldProcess(event)) {
+        undoableActionPerformed(event);
+      } else {
+        createNonUndoableAction(event.getFile(),true);
+      }
     }
   }
 
@@ -116,12 +120,16 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
   }
 
   public void fileCreated(VirtualFileEvent event) {
-    if (event.getRequestor() == null) {
+    if (!shouldProcess(event)) {
       createNonUndoableAction(event.getFile(), true);
     }
     else {
       undoableActionPerformed(event);
     }
+  }
+
+  private boolean shouldProcess(final VirtualFileEvent event) {
+    return event.getRequestor() != null && getLocalVcs().isUnderVcs(event.getFile());
   }
 
   public void fileDeleted(VirtualFileEvent event) {
@@ -138,21 +146,26 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
   }
 
   public void fileMoved(VirtualFileMoveEvent event) {
-    undoableActionPerformed(event);
+    if (shouldProcess(event)) {
+      undoableActionPerformed(event);
+    } else {
+      createNonUndoableAction(event.getFile(), true);
+    }
+
   }
 
   public void beforePropertyChange(VirtualFilePropertyEvent event) {
   }
 
   public void beforeContentsChange(VirtualFileEvent event) {
-    if (event.getRequestor() == null) {
+    if (!shouldProcess(event)) {
       createNonUndoableAction(event.getFile(), false);
     }
   }
 
   public void beforeFileDeletion(VirtualFileEvent event) {
     VirtualFile file = event.getFile();
-    if (event.getRequestor() == null) {
+    if (!shouldProcess(event)) {
       createNonUndoableAction(file, true);
     }
     else {
@@ -168,7 +181,11 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
   }
 
   private void createNonUndoableAction(final VirtualFile vFile, final boolean isComplex) {
-    if (getLocalVcs() == null || !getLocalVcs().isUnderVcs(vFile)) {
+    if (getLocalVcs() == null) {
+      return;
+    }
+
+    if (!vFile.getFileType().isBinary() && !getLocalVcs().isUnderVcs(vFile)) {
       return;
     }
 
@@ -221,7 +238,6 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
   }
 
   private void addActionForFileTo(CompositeUndoableAction compositeUndoableAction, final VirtualFile vFile) {
-    if (!getLocalVcs().isUnderVcs(vFile)) return;
     final String filePath = vFile.getPath();
     final boolean isDirectory = vFile.isDirectory();
     final LvcsRevision afterActionPerformedRevision = getCurrentRevision(filePath, isDirectory);

@@ -12,6 +12,7 @@ import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.xml.util.XmlUtil;
 
 public class HtmlPolicy extends XmlFormattingPolicy{
   private CodeStyleSettings mySettings;
@@ -117,13 +118,12 @@ public class HtmlPolicy extends XmlFormattingPolicy{
     final String name = tag.getName();
     if (name == null) return false;
 
-    if (isScriptletObject(name)) return true;
-    if (JspUtil.getDirectiveKindByTag(tag) != null) return true;
-    return false;
+    if (isScriptletObject(tag)) return true;
+    return JspUtil.getDirectiveKindByTag(tag) != null;
   }
 
-  private boolean isScriptletObject(final String name) {
-    return name.equals("jsp:scriptlet") || name.equals("jsp:declaration") || name.equals("jsp:root");
+  private boolean isScriptletObject(final XmlTag tag) {
+    return XmlUtil.JSP_URI.equals(tag.getNamespace());
   }
 
   public boolean isTextElement(XmlTag tag) {
@@ -170,7 +170,7 @@ public class HtmlPolicy extends XmlFormattingPolicy{
     return mySettings;
   }
 
-  public boolean addSpaceIntoEmptyTag() {    
+  public boolean addSpaceIntoEmptyTag() {
     return mySettings.HTML_SPACE_INSIDE_EMPTY_TAG;
   }
 
