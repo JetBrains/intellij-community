@@ -121,6 +121,7 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
         final MenuSelectionManager menuSelectionManager = MenuSelectionManager.defaultManager();
         menuSelectionManager.clearSelectedPath();
         myWindow.setAsCurrentWindow(true);
+        myLastClickedIndex = -1; // pressing any button must invalidate last stored index 
       }
 
       // activate current tabbed pane:
