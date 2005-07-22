@@ -148,7 +148,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
         }
         {
           // namespace attributes processing (XSD declaration via ExternalResourceManager)
-          if(containNamespaceDeclarations()){
+          if(hasNamespaceDeclarations()){
             final XmlAttribute[] attributes = getAttributes();
             for (final XmlAttribute attribute : attributes) {
               if (attribute.isNamespaceDeclaration()) {
@@ -427,7 +427,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
   }
 
   private void initNamespaceMaps(PsiElement parent) {
-    if(myNamespaceMap == null && containNamespaceDeclarations()){
+    if(myNamespaceMap == null && hasNamespaceDeclarations()){
       myNamespaceMap = new BidirectionalMap<String, String>();
       final XmlAttribute[] attributes = getAttributes();
       for (final XmlAttribute attribute : attributes) {
@@ -454,16 +454,25 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     }
   }
 
-  private boolean containNamespaceDeclarations() {
-    if (myAttributes == null) {
-      getAttributes();
-    }
-    return myHaveNamespaceDeclarations;
-  }
-
   public String getLocalName() {
     final String name = getName();
     return name.substring(name.indexOf(':') + 1);
+  }
+
+  public boolean hasNamespaceDeclarations() {
+    getAttributes();
+    return myHaveNamespaceDeclarations;
+  }
+
+  public Map<String, String> getLocalNamespaceDeclarations() {
+    Map<String, String> namespaces = new HashMap<String, String>();
+    final XmlAttribute[] attributes = getAttributes();
+    for (int i = 0; i < attributes.length; i++) {
+      final XmlAttribute attribute = attributes[i];
+      if(!attribute.isNamespaceDeclaration() || attribute.getValue() == null) continue;
+      namespaces.put(attribute.getLocalName(), attribute.getValue());
+    }
+    return namespaces;
   }
 
   public XmlAttribute setAttribute(String qname, String value) throws IncorrectOperationException {
@@ -812,8 +821,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     }
 
     public PomModelEvent runInner() {
-      final TreeElement treeElement = XmlTagImpl.super.addInternal(myChild, myChild, myAnchor, Boolean.valueOf(myBefore));
-      myRetHolder = treeElement;
+      myRetHolder = XmlTagImpl.super.addInternal(myChild, myChild, myAnchor, Boolean.valueOf(myBefore));
       return null;
     }
 

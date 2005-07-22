@@ -21,6 +21,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 
+import java.util.Map;
+
 /**
  * @author Mike
  */
@@ -53,6 +55,9 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
   String getNamespaceByPrefix(String prefix);
   String getPrefixByNamespace(String namespace);
   String[] knownNamespaces();
+
+  boolean hasNamespaceDeclarations();
+  Map<String, String> getLocalNamespaceDeclarations();
 
   XmlTagValue getValue();
 
