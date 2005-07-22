@@ -202,8 +202,10 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
     return new ElementFilter() {
       public boolean isAcceptable(Object element, PsiElement context) {
         final PsiElement parent = context.getParent();
-        if(parent instanceof XmlEntityDecl &&
+        
+        if((parent instanceof XmlEntityDecl &&
            !((XmlEntityDecl)parent).isInternalReference()
+           )
           ) {
           PsiElement prevSibling = context.getPrevSibling();
           if (prevSibling instanceof PsiWhiteSpace) {
@@ -212,7 +214,7 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
 
           if (prevSibling instanceof XmlToken &&
               ((XmlToken)prevSibling).getTokenType() == XmlTokenType.XML_DOCTYPE_SYSTEM ||
-                                                                                        prevSibling instanceof XmlAttributeValue
+              prevSibling instanceof XmlAttributeValue
             ) {
             return true;
           }

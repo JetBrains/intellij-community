@@ -49,6 +49,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
   public static ReferenceProviderType CLASS_REFERENCE_PROVIDER = new ReferenceProviderType("Class Reference Provider");
   public static ReferenceProviderType PATH_REFERENCES_PROVIDER = new ReferenceProviderType("Path References Provider");
   public static ReferenceProviderType CSS_CLASS_OR_ID_KEY_PROVIDER = new ReferenceProviderType("Css Class or ID Provider");
+  public static ReferenceProviderType URI_PROVIDER = new ReferenceProviderType("Uri references provider");
 
   public static final ReferenceProvidersRegistry getInstance(Project project) {
     return project.getComponent(ReferenceProvidersRegistry.class);
@@ -367,6 +368,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     );
     
     final DtdReferencesProvider dtdReferencesProvider = new DtdReferencesProvider();
+    //registerReferenceProvider(null, XmlEntityDecl.class,dtdReferencesProvider);
     registerReferenceProvider(null, XmlEntityRef.class,dtdReferencesProvider);
     registerReferenceProvider(null, XmlDoctype.class,dtdReferencesProvider);
     registerReferenceProvider(null, XmlElementDecl.class,dtdReferencesProvider);
@@ -375,6 +377,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     
     URIReferenceProvider uriProvider = new URIReferenceProvider();
     
+    registerTypeWithProvider(URI_PROVIDER,uriProvider);
     registerXmlAttributeValueReferenceProvider(
       null,
       dtdReferencesProvider.getSystemReferenceFilter(),

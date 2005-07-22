@@ -112,11 +112,15 @@ public class URIReferenceProvider implements PsiReferenceProvider {
           ((XmlAttribute)parent).isNamespaceDeclaration()
         )
        ) {
-      return new PsiReference[] { new URLReference(element)};
+      return getUrlReference(element);
     } else {
       if (s.startsWith("file:")) s = s.substring("file:".length());
       return new FileReferenceSet(s,element,text.indexOf(s), ReferenceType.FILE_TYPE, this,true).getAllReferences();
     }
+  }
+
+  public PsiReference[] getUrlReference(final PsiElement element) {
+    return new PsiReference[] { new URLReference(element)};
   }
 
   public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
