@@ -2,19 +2,15 @@ package com.intellij.xml.impl.schema;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.meta.PsiWritableMetaData;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.util.XmlUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.util.XmlUtil;
 
 /**
  * @author Mike
@@ -270,14 +266,6 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   }
 
   public void setName(String name) throws IncorrectOperationException {
-    if (myDescriptorTag.isWritable()) {
-      final VirtualFile virtualFile = myDescriptorTag.getContainingFile().getVirtualFile();
-
-      if (virtualFile!=null &&
-          ProjectRootManager.getInstance(myDescriptorTag.getProject()).getFileIndex().getModuleForFile(virtualFile)!=null
-          ) {
-        myDescriptorTag.setAttribute("name",name);
-      }
-    }
+    NamedObjectDescriptor.setName(myDescriptorTag, name);
   }
 }

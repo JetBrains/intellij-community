@@ -137,7 +137,10 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
       return text.substring(1,text.length()- 1);
     }
 
-    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    public PsiElement handleElementRename(String _newElementName) throws IncorrectOperationException {
+      final String canonicalText = getCanonicalText();
+      final String newElementName = canonicalText.substring(0,canonicalText.indexOf(':') + 1) + _newElementName;
+      
       return ReferenceProvidersRegistry.getInstance(myElement.getProject()).getManipulator(myElement).handleContentChange(
         myElement,
         getRangeInElement(),

@@ -184,6 +184,14 @@ public class MetaRegistry {
       ),
           com.intellij.xml.impl.schema.XmlElementDescriptorImpl.class);
     }
+    
+    {
+      addMetadataBinding(new AndFilter(
+          new NamespaceFilter(SCHEMA_URIS),
+          new TextFilter(new String[] {"complexType","simpleType", "group","attributeGroup" })
+      ),
+          com.intellij.xml.impl.schema.NamedObjectDescriptor.class);
+    }
 
     {
       addMetadataBinding(
