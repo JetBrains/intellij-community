@@ -11,7 +11,7 @@
     <children>
       <scrollpane id="1fca1">
         <constraints>
-          <xy x="30" y="50" width="399" height="316"/>
+          <xy x="30" y="50" width="405" height="316"/>
           <grid row="2" column="1" row-span="7" col-span="2" vsize-policy="7" hsize-policy="7" anchor="0" fill="3"/>
         </constraints>
         <properties/>
@@ -25,16 +25,16 @@
       </scrollpane>
       <component id="edf19" class="javax.swing.JButton" binding="myAddActionButton">
         <constraints>
-          <xy x="439" y="50" width="117" height="25"/>
+          <xy x="445" y="50" width="111" height="25"/>
           <grid row="2" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
         </constraints>
         <properties>
-          <text value="&amp;Add"/>
+          <text value="Add a&amp;fter"/>
         </properties>
       </component>
       <component id="2a153" class="javax.swing.JButton" binding="myRemoveActionButton">
         <constraints>
-          <xy x="439" y="140" width="117" height="25"/>
+          <xy x="445" y="140" width="111" height="25"/>
           <grid row="5" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
         </constraints>
         <properties>
@@ -43,7 +43,7 @@
       </component>
       <component id="b9ee1" class="javax.swing.JButton" binding="myMoveActionDownButton">
         <constraints>
-          <xy x="439" y="200" width="117" height="25"/>
+          <xy x="445" y="200" width="111" height="25"/>
           <grid row="7" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
         </constraints>
         <properties>
@@ -52,7 +52,7 @@
       </component>
       <component id="ab0b0" class="javax.swing.JButton" binding="myMoveActionUpButton">
         <constraints>
-          <xy x="439" y="170" width="117" height="25"/>
+          <xy x="445" y="170" width="111" height="25"/>
           <grid row="6" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
         </constraints>
         <properties>
@@ -61,7 +61,7 @@
       </component>
       <component id="efd3f" class="javax.swing.JButton" binding="myAddSeparatorButton">
         <constraints>
-          <xy x="439" y="80" width="117" height="25"/>
+          <xy x="445" y="80" width="111" height="25"/>
           <grid row="3" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
         </constraints>
         <properties>
@@ -70,7 +70,7 @@
       </component>
       <vspacer id="bd8d3">
         <constraints>
-          <xy x="492" y="225" width="11" height="141"/>
+          <xy x="495" y="225" width="11" height="141"/>
           <grid row="8" column="3" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
         </constraints>
       </vspacer>
@@ -124,7 +124,7 @@
       </grid>
       <component id="b0a2f" class="javax.swing.JButton" binding="myEditIconButton">
         <constraints>
-          <xy x="439" y="110" width="117" height="25"/>
+          <xy x="445" y="110" width="111" height="25"/>
           <grid row="4" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
         </constraints>
         <properties>
