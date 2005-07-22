@@ -129,16 +129,16 @@ public class PathUtil {
         stack.push(token);
       }
     }
-    final String[] strings = stack.toArray(new String[stack.size()]);
     final StringBuffer result = new StringBuffer(path.length());
     if (path.charAt(0) == '/') {
       result.append("/");
     }
-    for (int i = 0; i < strings.length; i++) {
-      if (i > 0) {
+
+    for (final String str: stack){
+      if(result.length() > 0){
         result.append('/');
       }
-      result.append(strings[i]);
+      result.append(str);
     }
     return result.toString();
   }
