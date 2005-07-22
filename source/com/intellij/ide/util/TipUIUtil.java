@@ -100,6 +100,7 @@ public class TipUIUtil{
         final Shortcut shortcut = shortcuts[i];
         if (shortcut instanceof KeyboardShortcut) {
           shortcutText = KeymapUtil.getShortcutText(shortcut);
+          break;
         }
       }
       final String replacement = MessageFormat.format(SHORTCUT_HTML_TEMPLATE, new Object[]{shortcutText});
