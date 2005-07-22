@@ -8,9 +8,9 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nullable;
@@ -44,9 +44,10 @@ public class PsiBuilderImpl implements PsiBuilder {
   public PsiBuilderImpl(Language lang, final Project project, CharTable charTable, CharSequence text) {
     myText = text;
     ParserDefinition parserDefinition = lang.getParserDefinition();
+    assert parserDefinition != null;
     myLexer = parserDefinition.createLexer(project);
-    myWhitespaces = parserDefinition.getWhitespaceTokens() != null ? parserDefinition.getWhitespaceTokens() : TokenSet.EMPTY;
-    myComments = parserDefinition.getCommentTokens() != null ? parserDefinition.getCommentTokens() : TokenSet.EMPTY;
+    myWhitespaces = parserDefinition.getWhitespaceTokens();
+    myComments = parserDefinition.getCommentTokens();
     myCharTable = charTable;
     myFileLevelParsing = myCharTable == null;
 

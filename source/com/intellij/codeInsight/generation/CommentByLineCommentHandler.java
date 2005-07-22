@@ -205,6 +205,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     }
 
     int offset = myDocument.getLineStartOffset(line);
+    offset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), offset, " \t");
     final PsiElement elt = myFile.findElementAt(offset);
     if (elt == null) return null;
     Language lang = elt.getLanguage();
