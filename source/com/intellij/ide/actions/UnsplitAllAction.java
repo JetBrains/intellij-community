@@ -25,7 +25,7 @@ public final class UnsplitAllAction extends AnAction{
       presentation.setEnabled(false);
       return;
     }
-    presentation.setText("Un_split All");
+    presentation.setText("U_nsplit All");
     final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
     presentation.setEnabled (fileEditorManager.isInSplitter());
   }

@@ -66,7 +66,7 @@ public class HideAllToolWindowsAction extends AnAction {
     for (String id : ids) {
       if (toolWindowManager.getToolWindow(id).isVisible()) {
         presentation.setEnabled(true);
-        presentation.setText("Hi&de All Windows", true);
+        presentation.setText("Hide All Windows", true);
         return;
       }
     }

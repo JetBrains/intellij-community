@@ -34,7 +34,7 @@ public class CloseEditorAction extends AnAction {
       return;
     }
     if (ActionPlaces.EDITOR_POPUP.equals(event.getPlace()) || ActionPlaces.EDITOR_TAB_POPUP.equals(event.getPlace())) {
-      presentation.setText("_Close");
+      presentation.setText("Close");
     }
     final EditorWindow window = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
     presentation.setEnabled(window != null && window.getTabCount() > 0);

@@ -100,9 +100,9 @@ public class PinActiveTabAction extends ToggleAction {
     DataContext context = e.getDataContext();
     presentation.setEnabled(getFile(context) != null || getContent(context) != null);
     if (ActionPlaces.EDITOR_TAB_POPUP.equals(e.getPlace())) {
-      presentation.setText(isSelected(e) ? "_Unpin Tab" : "_Pin Tab");
+      presentation.setText(isSelected(e) ? "Unp_in Tab" : "P_in Tab");
     } else {
-      presentation.setText(isSelected(e) ? "Unpin _Active Tab" : "_Pin Active Tab");
+      presentation.setText(isSelected(e) ? "Unp_in Active Tab" : "P_in Active Tab");
     }
   }
 }

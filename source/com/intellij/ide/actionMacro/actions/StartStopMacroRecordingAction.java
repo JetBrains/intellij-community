@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project;
 public class StartStopMacroRecordingAction extends AnAction {
   public void update(AnActionEvent e) {
     e.getPresentation().setEnabled(e.getDataContext().getData(DataConstants.EDITOR) != null);
-    e.getPresentation().setText(ActionMacroManager.getInstance().isRecording() ? "Stop Macro Recording" : "Start Macro Recording");
+    e.getPresentation().setText(ActionMacroManager.getInstance().isRecording() ? "Stop _Macro Recording" : "Start _Macro Recording");
   }
 
   public void actionPerformed(AnActionEvent e) {

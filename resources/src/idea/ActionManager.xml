@@ -17,7 +17,7 @@
 
     <action id="AddToFavoritesPopup" class="com.intellij.ide.favoritesTreeView.AddToFavoritesPopupAction" text="Add To Favorites" description="Add selected node to favorites"/>
     <group id="AddToFavorites" class="com.intellij.ide.favoritesTreeView.AddToFavoritesActionGroup" popup="true" text="Add To _Favorites"/>
-    <group id="AddAllToFavorites" class="com.intellij.ide.favoritesTreeView.AddAllToFavoritesActionGroup" popup="true" text="Add _All To Favorites"/>
+    <group id="AddAllToFavorites" class="com.intellij.ide.favoritesTreeView.AddAllToFavoritesActionGroup" popup="true" text="Add A_ll To Favorites"/>
     <action id="AddNewFavoritesList" class="com.intellij.ide.favoritesTreeView.AddNewFavoritesListAction" text="Add New Favorites List" description="Add New Favorites List"/>
     <group id="SendToFavoritesGroup" class="com.intellij.ide.favoritesTreeView.SendToFavoritesGroup" popup="true" text="_Send To Favorites"/>
     <group id="RunContextGroup" popup="false">
@@ -216,7 +216,7 @@
         <action id="NewProject" class="com.intellij.ide.actions.NewProjectAction" text="_New Project..." description="Create a new project"/>
         <action id="NewModule" class="com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction" text="New _Module..." description="Add new module to the project"/>
         <action id="OpenProject" class="com.intellij.ide.actions.OpenProjectAction" text="_Open Project..." description="Open an existing project"/>
-        <action id="OpenFile" class="com.intellij.ide.actions.OpenFileAction" text="_Open File..." icon="/actions/menu-open.png" description="Open file in editor"/>
+        <action id="OpenFile" class="com.intellij.ide.actions.OpenFileAction" text="Open Fi_le..." icon="/actions/menu-open.png" description="Open file in editor"/>
         <group id="$LRU" class="com.intellij.ide.actions.RecentProjectsGroup" text="_Reopen" popup="true" description="List of recently opened projects"/>
         <action id="CloseProject" class="com.intellij.ide.actions.CloseProjectAction" text="Close Pro_ject" description="Close current project"/>
 
@@ -228,12 +228,12 @@
         <action id="ExportSettings" class="com.intellij.ide.actions.ExportSettingsAction" text="_Export Settings..." description="Export global settings"/>
         <action id="ImportSettings" class="com.intellij.ide.actions.ImportSettingsAction" text="_Import Settings..." description="Import global settings"/>
         <separator/>
-        <action id="ImportFromJBuilder" class="com.intellij.openapi.project.impl.importProject.jbuilder.ImportFromJBuilderAction" text="Import From _JBuilder" description="Load Modules From JBuilder Project"/>
+        <action id="ImportFromJBuilder" class="com.intellij.openapi.project.impl.importProject.jbuilder.ImportFromJBuilderAction" text="Import _From JBuilder" description="Load Modules From JBuilder Project"/>
         <separator/>
         <action id="Synchronize" class="com.intellij.ide.actions.SynchronizeAction" text="S_ynchronize" icon="/actions/sync.png" description="Detect all externally changed files and reload them from disk"/>
         <action id="ReloadFromDisk" class="com.intellij.ide.actions.ReloadFromDiskAction" text="Reload from Dis_k" description="Reload current file from disk and lose all changes"/>
         <separator/>
-        <group id="Vcs.Checkout" class="com.intellij.openapi.vcs.checkout.CheckoutActionGroup" text="C_heckout from Version Control" popup="true"/>
+        <group id="Vcs.Checkout" class="com.intellij.openapi.vcs.checkout.CheckoutActionGroup" text="_Checkout from Version Control" popup="true"/>
         <separator/>
         <action id="ExportToHTML" class="com.intellij.codeEditor.printing.ExportToHTMLAction" text="Export to _HTML..." description="Save file content in HTML format with syntax coloring"/>
         <action id="Print" class="com.intellij.codeEditor.printing.PrintAction" text="_Print..." description="Print file"/>
@@ -396,7 +396,7 @@
         <separator/>
         <action id="SurroundWith" class="com.intellij.codeInsight.generation.actions.SurroundWithAction" text="_Surround With..." description="Surround selected code fragment with if, while, try/catch or other construct"/>
         <!-- Alt-Ins in Java code-->
-        <action id="Generate" text="_Generate..." description="Generate constructor, getter or setter method, or EJB components" class="com.intellij.codeInsight.generation.actions.GenerateAction"/>
+        <action id="Generate" text="Generate..." description="Generate constructor, getter or setter method, or EJB components" class="com.intellij.codeInsight.generation.actions.GenerateAction"/>
         <separator/>
         <group id="CodeCompletionGroup" class="com.intellij.codeInsight.completion.actions.CodeCompletionGroup" text="_Complete Code" popup="true">
           <action id="CodeCompletion" class="com.intellij.codeInsight.completion.actions.CodeCompletionAction" text="Basic" description="Complete code"/>
@@ -434,18 +434,18 @@
 
       <!-- Refactor -->
       <group id="RefactoringMenu" class="com.intellij.refactoring.actions.RefactoringGroup" text="_Refactor" popup="true">
-        <action id="RenameElement" class="com.intellij.refactoring.actions.RenameElementAction" text="_Rename..." description="Rename the selected symbol and correct all references"/>
-        <action id="ChangeSignature" class="com.intellij.refactoring.actions.ChangeSignatureAction" text="Change _Signature..." description="Change signature of the selected method or class and correct all references"/>
+        <action id="RenameElement" class="com.intellij.refactoring.actions.RenameElementAction" text="Rename..." description="Rename the selected symbol and correct all references"/>
+        <action id="ChangeSignature" class="com.intellij.refactoring.actions.ChangeSignatureAction" text="Change Signature..." description="Change signature of the selected method or class and correct all references"/>
         <action id="MakeStatic" class="com.intellij.refactoring.actions.MakeStaticAction" text="Make S_tatic..." description="Convert method or inner class to static and correct all references"/>
         <action id="ConvertToInstanceMethod" class="com.intellij.refactoring.actions.ConvertToInstanceMethodAction" text="C_onvert To Instance Method..." description="Convert static method to instance method and correct all references"/>
         <separator/>
-        <action id="Move" class="com.intellij.refactoring.actions.MoveAction" text="_Move..." description="Move the selected class, method, package or static member to another package or class and correct all references"/>
-        <action id="CopyElement" class="com.intellij.ide.actions.CopyElementAction" text="C_opy..." description="Create a copy of the selected class, file(s) or directory(es)"/>
+        <action id="Move" class="com.intellij.refactoring.actions.MoveAction" text="Move..." description="Move the selected class, method, package or static member to another package or class and correct all references"/>
+        <action id="CopyElement" class="com.intellij.ide.actions.CopyElementAction" text="Copy..." description="Create a copy of the selected class, file(s) or directory(es)"/>
         <action id="CloneElement" class="com.intellij.ide.actions.CloneElementAction" text="Clo_ne..." description="Create a copy of the selected class, file or directory in the same package/directory"/>
         <action id="SafeDelete" class="com.intellij.refactoring.actions.SafeDeleteAction" text="Safe _Delete..." description="Delete the selected class, method or field, checking for usages"/>
         <separator/>
         <action id="ExtractMethod" class="com.intellij.refactoring.actions.ExtractMethodAction" text="E_xtract Method..." description="Turn the selected code fragment into a method"/>
-        <action id="MethodDuplicates" class="com.intellij.refactoring.actions.MethodDuplicatesAction" text="Replace Method Code Duplicates..." description="Finds code in current file that can be transformed into a call of selected method"/>
+        <action id="MethodDuplicates" class="com.intellij.refactoring.actions.MethodDuplicatesAction" text="_Replace Method Code Duplicates..." description="Finds code in current file that can be transformed into a call of selected method"/>
         <action id="IntroduceVariable" class="com.intellij.refactoring.actions.IntroduceVariableAction" text="Introduce _Variable..." description="Put a result of the selected expression into a variable"/>
         <action id="IntroduceField" class="com.intellij.refactoring.actions.IntroduceFieldAction" text="Introduce _Field..." description="Put a result of the selected expression into a field"/>
         <action id="IntroduceConstant" class="com.intellij.refactoring.actions.IntroduceConstantAction" text="Introduce _Constant..." description="Replace selected expression with a constant (static final field)"/>
@@ -455,20 +455,20 @@
         <action id="ExtractSuperclass" class="com.intellij.refactoring.actions.ExtractSuperclassAction" text="Extract S_uperclass..." description="Extract superclass from the selected class"/>
         <action id="TurnRefsToSuper" class="com.intellij.refactoring.actions.TurnRefsToSuperAction" text="Use Interface _Where Possible..." description="Change usages of a class to those of its superclass or interface"/>
         <action id="MembersPullUp" class="com.intellij.refactoring.actions.PullUpAction" text="Pu_ll Members Up..." description="Pull class members to superclass or implemented interface"/>
-        <action id="MemberPushDown" class="com.intellij.refactoring.actions.PushDownAction" text="Pus_h Members Down..." description="Push class members down to directly inheriting subclasses"/>
-        <action id="InheritanceToDelegation" class="com.intellij.refactoring.actions.InheritanceToDelegationAction" text="Replace Inheritance with Dele_gation..." description="Replace inheritance with delegation"/>
+        <action id="MemberPushDown" class="com.intellij.refactoring.actions.PushDownAction" text="Pu_sh Members Down..." description="Push class members down to directly inheriting subclasses"/>
+        <action id="InheritanceToDelegation" class="com.intellij.refactoring.actions.InheritanceToDelegationAction" text="Replace _Inheritance with Delegation..." description="Replace inheritance with delegation"/>
         <separator/>
-        <action id="Inline" class="com.intellij.refactoring.actions.InlineAction" text="Inli_ne..." description="Inline the selected method or variable"/>
+        <action id="Inline" class="com.intellij.refactoring.actions.InlineAction" text="Inline..." description="Inline the selected method or variable"/>
         <action id="AnonymousToInner" class="com.intellij.refactoring.actions.AnonymousToInnerAction" text="Convert Anon_ymous to Inner..." description="Convert anonymous class into an inner class"/>
         <action id="EncapsulateFields" class="com.intellij.refactoring.actions.EncapsulateFieldsAction" text="_Encapsulate Fields..." description="Replace direct access to fields in the selected class with use of accessor methods"/>
         <action id="ReplaceTempWithQuery" class="com.intellij.refactoring.actions.TempWithQueryAction" text="Replace Temp with _Query..." description="Turn the selected variable into a method"/>
         <action id="ReplaceConstructorWithFactory" class="com.intellij.refactoring.actions.ReplaceConstructorWithFactoryAction" text="Replace Constructor with F_actory Method..." description="Create a static factory method and use it instead of a constructor"/>
         <separator/>
-        <action id="Generify" class="com.intellij.refactoring.actions.TypeCookAction" text="Generify..." description="Convert your code to use generic types"/>
-        <action id="Migrate" class="com.intellij.refactoring.actions.MigrateAction" text="Mi_grate..." description="Open migration dialog"/>
-        <action id="Type Migration" internal="true" class="com.intellij.refactoring.actions.TypeMigrationAction" text="Type Migration..." description="Migrate one type to another"/>
+        <action id="Generify" class="com.intellij.refactoring.actions.TypeCookAction" text="Ge_nerify..." description="Convert your code to use generic types"/>
+        <action id="Migrate" class="com.intellij.refactoring.actions.MigrateAction" text="_Migrate..." description="Open migration dialog"/>
+        <action id="Type Migration" internal="true" class="com.intellij.refactoring.actions.TypeMigrationAction" text="Type Mi_gration..." description="Migrate one type to another"/>
         <separator/>
-        <action id="ExtractInclude" class="com.intellij.refactoring.actions.ExtractIncludeAction" text="Extract Include File..." description="Turn the selected code fragment into included file"/>
+        <action id="ExtractInclude" class="com.intellij.refactoring.actions.ExtractIncludeAction" text="E_xtract Include File..." description="Turn the selected code fragment into included file"/>
       </group>
 
       <!-- Build -->
@@ -487,17 +487,17 @@
 
       <group text="R_un" id="RunMenu" popup="true">
         <group id="RunnerActions" text="Run/Debug" />
-        <action id="editRunConfigurations" text="Edit Configurations" class="com.intellij.execution.actions.EditRunConfigurationsAction" description="Open edit Run/Debug configurations dialog"/>
-        <action id="Stop" text="Stop" class="com.intellij.execution.actions.StopAction" description="Stop process" icon = "/actions/suspend.png"/>
-        <action id="Hotswap" class="com.intellij.debugger.actions.HotSwapAction" text="_Reload Changed Classes" description="Reload all changed classes into application being debugged (HotSwap)"/>
+        <action id="editRunConfigurations" text="Edit Configu_rations" class="com.intellij.execution.actions.EditRunConfigurationsAction" description="Open edit Run/Debug configurations dialog"/>
+        <action id="Stop" text="Stop" class="com.intellij.execution.actions.StopAction" description="_Stop process" icon = "/actions/suspend.png"/>
+        <action id="Hotswap" class="com.intellij.debugger.actions.HotSwapAction" text="Relo_ad Changed Classes" description="Reload all changed classes into application being debugged (HotSwap)"/>
         <separator/>
         <action id="StepOver" class="com.intellij.debugger.actions.StepOverAction" text="Step _Over" icon="/actions/traceOver.png" description="Step to the next line in this file"/>
         <action id="StepInto" class="com.intellij.debugger.actions.StepIntoAction" text="Step _Into" icon="/actions/traceInto.png" description="Step to the next line executed"/>
         <action id="StepOut" class="com.intellij.debugger.actions.StepOutAction" text="Step Ou_t" icon="/actions/stepOut.png" description="Step to the first line executed after returning from this method"/>
-        <action id="ForceStepOver" class="com.intellij.debugger.actions.ForceStepOverAction" text="Fo_rce Step Over" icon="/actions/traceOver.png" description="Step over, disable all breakpoints before stepping."/>
-        <action id="ForceStepInto" class="com.intellij.debugger.actions.ForceStepIntoAction" text="Fo_rce Step Into" icon="/actions/forceStepInto.png" description="Step into, ignore stepping filters for libraries, constructors, etc."/>
+        <action id="ForceStepOver" class="com.intellij.debugger.actions.ForceStepOverAction" text="Force Step O_ver" icon="/actions/traceOver.png" description="Step over, disable all breakpoints before stepping."/>
+        <action id="ForceStepInto" class="com.intellij.debugger.actions.ForceStepIntoAction" text="Force Step I_nto" icon="/actions/forceStepInto.png" description="Step into, ignore stepping filters for libraries, constructors, etc."/>
         <action id="RunToCursor" class="com.intellij.debugger.actions.RunToCursorAction" text="Run to _Cursor" icon="/actions/runToCursor.png" description="Run to the line where the caret is"/>
-        <action id="Debugger.PopFrame" class="com.intellij.debugger.actions.PopFrameAction" text="Pop Frame" icon="/actions/popFrame.png" description="Moves execution point back to the method call dropping current method frames from the stack"/>
+        <action id="Debugger.PopFrame" class="com.intellij.debugger.actions.PopFrameAction" text="Pop _Frame" icon="/actions/popFrame.png" description="Moves execution point back to the method call dropping current method frames from the stack"/>
         <action id="Pause" class="com.intellij.debugger.actions.PauseAction" text="_Pause Program" icon="/actions/pause.png" description="Suspend program execution and enable debugging"/>
         <action id="Resume" class="com.intellij.debugger.actions.ResumeAction" text="Resume Pro_gram" icon="/actions/resume.png" description="Resume program execution"/>
         <separator/>
@@ -508,7 +508,7 @@
         <action id="ToggleLineBreakpoint" class="com.intellij.debugger.actions.ToggleLineBreakpointAction" text="Toggle _Line Breakpoint" description="Toggle line breakpoint at caret"/>
         <action id="ToggleMethodBreakpoint" class="com.intellij.debugger.actions.ToggleMethodBreakpointAction" text="Toggle _Method Breakpoint" description="Toggle method breakpoint for the method at caret"/>
         <action id="ToggleFieldBreakpoint" class="com.intellij.debugger.actions.ToggleFieldBreakpointAction" text="Toggle _Field Watchpoint" description="Toggle field watchpoint for the field at caret"/>
-        <action id="ToggleBreakpointEnabled" class="com.intellij.debugger.actions.ToggleBreakpointEnabledAction" text="Toggle Breakpoint Enabled" description="Enable/disable breakpoint at the current line"/>
+        <action id="ToggleBreakpointEnabled" class="com.intellij.debugger.actions.ToggleBreakpointEnabledAction" text="Toggle _Breakpoint Enabled" description="Enable/disable breakpoint at the current line"/>
         <action id="ViewBreakpoints" class="com.intellij.debugger.actions.ViewBreakpointsAction" text="_View Breakpoints" icon="/debugger/viewBreakpoints.png" description="View and manage all breakpoints and watchpoints"/>
         <separator/>
         <action id="ExportThreads" class="com.intellij.debugger.actions.ExportThreadsAction" text="Export T_hreads..." description="Save all threads information to a text file or clipboard"/>
@@ -569,36 +569,36 @@
 
       <!-- Window -->
       <group text="_Window" id="WindowMenu" popup="true">
-        <group id="ToolWindowsGroup" class="com.intellij.ide.actions.ToolWindowsGroup" popup="true" text="T_ool Windows"/>
+        <group id="ToolWindowsGroup" class="com.intellij.ide.actions.ToolWindowsGroup" popup="true" text="_Tool Windows"/>
         <separator/>
-        <action id="StoreDefaultLayout" class="com.intellij.ide.actions.StoreDefaultLayoutAction" text="Store Current Layout as Defa_ult" description="Store current layout as default"/>
+        <action id="StoreDefaultLayout" class="com.intellij.ide.actions.StoreDefaultLayoutAction" text="Store Current La_yout as Default" description="Store current layout as default"/>
         <action id="RestoreDefaultLayout" class="com.intellij.ide.actions.RestoreDefaultLayoutAction" text="Restore Default Layout" description="Restore default layout"/>
         <separator/>
-        <action id="HideActiveWindow" class="com.intellij.ide.actions.HideToolWindowAction" text="_Hide Active Window" description="Hide active tool window"/>
-        <action id="HideAllWindows" class="com.intellij.ide.actions.HideAllToolWindowsAction" text="Hi_de All Windows" description="Hide all tool windows"/>
-        <action id="JumpToLastWindow" class="com.intellij.ide.actions.JumpToLastWindowAction" text="_Jump to Last Window" description="Activate last focused tool window"/>
+        <action id="HideActiveWindow" class="com.intellij.ide.actions.HideToolWindowAction" text="Hide Active Window" description="Hide active tool window"/>
+        <action id="HideAllWindows" class="com.intellij.ide.actions.HideAllToolWindowsAction" text="Hide All Windows" description="Hide all tool windows"/>
+        <action id="JumpToLastWindow" class="com.intellij.ide.actions.JumpToLastWindowAction" text="Jump to Last Window" description="Activate last focused tool window"/>
         <separator/>
         <action id="TogglePinnedMode" class="com.intellij.ide.actions.TogglePinnedModeAction" text="_Pinned Mode" description="Pin/unpin active tool window"/>
         <action id="ToggleDockMode" class="com.intellij.ide.actions.ToggleDockModeAction" text="Dock_ed Mode" description="Dock/undock active tool window"/>
         <action id="ToggleFloatingMode" class="com.intellij.ide.actions.ToggleFloatingModeAction" text="_Floating Mode" description="Float/unfloat active tool window"/>
         <separator/>
-        <action id="NextTab" class="com.intellij.ide.actions.NextTabAction" text="Select _Next Tab" description="Activate next tab"/>
-        <action id="PreviousTab" class="com.intellij.ide.actions.PreviousTabAction" text="Select Previ_ous Tab" description="Activate previous tab"/>
-        <action id="CloseActiveTab" class="com.intellij.ide.actions.CloseActiveTabAction" text="Close Active _Tab" description="Close active tool window tab"/>
-        <action id="PinActiveTab" class="com.intellij.ide.actions.PinActiveTabAction" text="Pin _Active Tab" description="Pin active tool window or editor tab"/>
+        <action id="NextTab" class="com.intellij.ide.actions.NextTabAction" text="Select Next Tab" description="Activate next tab"/>
+        <action id="PreviousTab" class="com.intellij.ide.actions.PreviousTabAction" text="Select Previous Tab" description="Activate previous tab"/>
+        <action id="CloseActiveTab" class="com.intellij.ide.actions.CloseActiveTabAction" text="Close Active Tab" description="Close active tool window tab"/>
+        <action id="PinActiveTab" class="com.intellij.ide.actions.PinActiveTabAction" text="P_in Active Tab" description="Pin active tool window or editor tab"/>
         <separator/>
-        <action id="CloseEditor" class="com.intellij.ide.actions.CloseEditorAction" text="_Close Active Editor" description="Close active editor"/>
+        <action id="CloseEditor" class="com.intellij.ide.actions.CloseEditorAction" text="Close Active Editor" description="Close active editor"/>
         <action id="CloseAllEditors" class="com.intellij.ide.actions.CloseAllEditorsAction" text="Close A_ll Editors" description="Close all editors in active tab group"/>
-        <action id="CloseAllEditorsButActive" class="com.intellij.ide.actions.CloseAllEditorsButActiveAction" text="Close All Editors B_ut Active" description="Close all open editors except the active one"/>
+        <action id="CloseAllEditorsButActive" class="com.intellij.ide.actions.CloseAllEditorsButActiveAction" text="Close All Editors _But Active" description="Close all open editors except the active one"/>
         <action id="CloseAllUnmodifiedEditors" class="com.intellij.ide.actions.CloseAllUnmodifiedEditorsAction" text="Close All _Unmodified Editors" description="Close all nonmodified editors"/>
         <separator/>
         <action id="SplitVertically"        class="com.intellij.ide.actions.SplitVerticallyAction"   text="Split _Vertically" icon="/actions/splitVertically.png" description="Split editor area into 2 tab groups and move the current tab to the right group"/>
         <action id="SplitHorizontally"      class="com.intellij.ide.actions.SplitHorizontallyAction" text="Split _Horizontally"  icon="/actions/splitHorizontally.png" description="Split editor area into 2 tab groups and move the current tab to the bottom group"/>
-        <action id="ChangeSplitOrientation" class="com.intellij.ide.actions.ChangeSplitterOrientationAction" text="Change Splitter _Orientation" description="Changes orientation of splitter"/>
+        <action id="ChangeSplitOrientation" class="com.intellij.ide.actions.ChangeSplitterOrientationAction" text="Change Splitter O_rientation" description="Changes orientation of splitter"/>
         <action id="Unsplit"                class="com.intellij.ide.actions.UnsplitAction"         text="Un_split"     description="Unsplit Window"/>
-        <action id="UnsplitAll"             class="com.intellij.ide.actions.UnsplitAllAction"      text="Un_split All" description="Remove all splitters"/>
-        <action id="NextSplitter"           class="com.intellij.ide.actions.NextSplitAction"       text="Goto _Next Splitter"     description="Goto next splitter window"/>
-        <action id="PrevSplitter"           class="com.intellij.ide.actions.PrevSplitAction"       text="Goto _Previons Splitter"     description="Goto previous splitter window"/>
+        <action id="UnsplitAll"             class="com.intellij.ide.actions.UnsplitAllAction"      text="U_nsplit All" description="Remove all splitters"/>
+        <action id="NextSplitter"           class="com.intellij.ide.actions.NextSplitAction"       text="Goto Next Splitter"     description="Goto next splitter window"/>
+        <action id="PrevSplitter"           class="com.intellij.ide.actions.PrevSplitAction"       text="Goto Previons Splitter"     description="Goto previous splitter window"/>
       </group>
 
       <!-- Help -->
@@ -727,7 +727,7 @@
       <separator/>
       <reference ref="CloseEditor"/>
       <separator/>
-      <group id="EditorPopupMenu.GoTo" text="Go To" description="Go To Editor Popup Menu Group"  popup="true">
+      <group id="EditorPopupMenu.GoTo" text="_Go To" description="Go To Editor Popup Menu Group"  popup="true">
         <reference ref="GotoDeclaration"/>
         <reference ref="GotoImplementation"/>
         <reference ref="GotoTypeDeclaration"/>
@@ -794,8 +794,8 @@
       <reference ref="ExternalToolsGroup"/>
     </group>
 
-    <action id="ModuleSettings" text="Module Settings..." description="Open settings dialog for selected module" class="com.intellij.ide.actions.ShowModulePropertiesAction"/>
-    <group id="MoveModuleToGroup" text="Move Module to Group" description="Move module " class="com.intellij.ide.projectView.impl.MoveModuleToGroupTopLevel" popup="true"/>
+    <action id="ModuleSettings" text="Module _Settings..." description="Open settings dialog for selected module" class="com.intellij.ide.actions.ShowModulePropertiesAction"/>
+    <group id="MoveModuleToGroup" text="Move Module to Group" description="_Move module " class="com.intellij.ide.projectView.impl.MoveModuleToGroupTopLevel" popup="true"/>
 
     <group id="ProjectViewPopupMenu">
       <reference ref="NewGroup"/>

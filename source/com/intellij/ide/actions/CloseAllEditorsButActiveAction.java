@@ -44,10 +44,10 @@ public class CloseAllEditorsButActiveAction extends AnAction {
       return;
     }
     if (ActionPlaces.EDITOR_POPUP.equals(event.getPlace())) {
-      presentation.setText("Close All B_ut Current");
+      presentation.setText("Close All _But Current");
     }
     else if (ActionPlaces.EDITOR_TAB_POPUP.equals(event.getPlace())) {
-      presentation.setText("Close All B_ut This");
+      presentation.setText("Close All _But This");
     }
     FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
     VirtualFile selectedFile;
