@@ -525,7 +525,7 @@ public class PackageUtil {
       for (int i = 0; i < modules.length; i++) {
         Module module1 = modules[i];
         final OrderEntry orderEntryForFile = ModuleRootManager.getInstance(module1).getFileIndex().getOrderEntryForFile(file);
-        if (orderEntryForFile instanceof ModuleJdkOrderEntry || orderEntryForFile instanceof LibraryOrderEntry) return true;
+        if (orderEntryForFile instanceof JdkOrderEntry || orderEntryForFile instanceof LibraryOrderEntry) return true;
       }
       return false;
     }
