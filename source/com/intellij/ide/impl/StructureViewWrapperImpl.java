@@ -13,6 +13,9 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.Alarm;
@@ -49,7 +52,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper {
     myPanel = new JPanel(new BorderLayout());
     myPanel.setBackground(UIManager.getColor("Tree.textBackground"));
 
-    myAlarm = new Alarm();
+    myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
     getComponent().addHierarchyListener(new HierarchyListener() {
       public void hierarchyChanged(HierarchyEvent e) {
@@ -69,17 +72,23 @@ public class StructureViewWrapperImpl implements StructureViewWrapper {
         myAlarm.addRequest(
           new Runnable() {
             public void run() {
-              try {
-                myAlarm.cancelAllRequests();
-                if (psiManager.isDisposed()) {
-                  return; // project may have been closed
+              ApplicationManager.getApplication().invokeLater(new Runnable() {
+                public void run() {
+                  if (myLastEvent == null) {
+                    return;
+                  }
+                  try {
+                    if (psiManager.isDisposed()) {
+                      return; // project may have been closed
+                    }
+                    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+                    setFileEditor(myLastEvent.getNewEditor());
+                  }
+                  finally {
+                    myLastEvent = null;
+                  }
                 }
-                PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-                setFileEditor(myLastEvent.getNewEditor());
-              }
-              finally {
-                myLastEvent = null;
-              }
+              }, ModalityState.NON_MMODAL);
             }
           }, 400
         );
