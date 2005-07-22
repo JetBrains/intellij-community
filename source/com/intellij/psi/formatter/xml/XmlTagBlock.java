@@ -6,6 +6,7 @@ import com.intellij.formatting.*;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,9 +71,11 @@ public class XmlTagBlock extends AbstractXmlBlock{
         else if (isJspxJavaContainingNode(child)) {
           createJspTextNode(localResult, child, getChildIndent());
         }
+        /*
         else if (child.getElementType() == ElementType.XML_TEXT) {
           child  = createXmlTextBlocks(localResult, child, wrap, alignment);
         }
+        */
         else {
           final Indent indent;
 
@@ -102,6 +105,16 @@ public class XmlTagBlock extends AbstractXmlBlock{
 
   }
 
+  protected
+  @Nullable
+  ASTNode processChild(List<Block> result, final ASTNode child, final Wrap wrap, final Alignment alignment, final Indent indent) {
+    if (child.getElementType() == ElementType.XML_TEXT) {
+      return createXmlTextBlocks(result, child, wrap, alignment);
+    } else {
+      return super.processChild(result, child, wrap, alignment, indent);
+    }
+  }
+
   private Indent getChildrenIndent() {
     return myXmlFormattingPolicy.indentChildrenOf(getTag())
            ? Indent.getNormalIndent()
@@ -112,13 +125,13 @@ public class XmlTagBlock extends AbstractXmlBlock{
     return myIndent;
   }
 
-  private ASTNode createXmlTextBlocks(final ArrayList<Block> list, final ASTNode textNode, final Wrap wrap, final Alignment alignment) {
+  private ASTNode createXmlTextBlocks(final List<Block> list, final ASTNode textNode, final Wrap wrap, final Alignment alignment) {
     ChameleonTransforming.transformChildren(myNode);
     ASTNode child = textNode.getFirstChildNode();
     return createXmlTextBlocks(list, textNode, child, wrap, alignment);
   }
 
-  private ASTNode createXmlTextBlocks(final ArrayList<Block> list, final ASTNode textNode, ASTNode child,
+  private ASTNode createXmlTextBlocks(final List<Block> list, final ASTNode textNode, ASTNode child,
                                       final Wrap wrap,
                                       final Alignment alignment
   ) {
