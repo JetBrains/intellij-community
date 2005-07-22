@@ -221,7 +221,10 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
           .createSpacing(0, Integer.MAX_VALUE, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
       }
     }
-
+    else if (myRole2 == ChildRole.COMMA || myChild2.getElementType() == ElementType.SEMICOLON) {
+      myResult = Spacing
+        .createSpacing(0, 0, 0, false, 0);
+    }
     else if (myRole1 == ChildRole.MODIFIER_LIST) {
       processModifierList();
     }
