@@ -1263,10 +1263,9 @@ public class RefactoringUtil {
     if (sourceRootPackage == null || !targetQName.startsWith(sourceRootPackage)) {
       throw new IncorrectOperationException("Cannot create package '" + targetQName + "' in source folder " + sourceRoot.getPresentableUrl());
     }
-    String temp = targetQName.substring(sourceRootPackage.length());
-    if (StringUtil.startsWithChar(temp, '.')) temp = temp.substring(1);  // remove initial '.'
-    String qNameToCreate = temp;
-    return qNameToCreate;
+    String result = targetQName.substring(sourceRootPackage.length());
+    if (StringUtil.startsWithChar(result, '.')) result = result.substring(1);  // remove initial '.'
+    return result;
   }
 
 
@@ -1310,6 +1309,7 @@ public class RefactoringUtil {
         Ref<Integer> ref = map.get(type);
         if (ref == null) {
           ref = Ref.create(new Integer(0));
+          map.put(type, ref);
         }
         ref.set(new Integer(ref.get().intValue() + 1));
       }
