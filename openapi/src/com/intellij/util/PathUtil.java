@@ -106,26 +106,22 @@ public class PathUtil {
     return path.replace('/', File.separatorChar);
   }
 
-  public static final String getCanonicalPath(String path){
+  public static final String getCanonicalPath(String path) {
     if (path == null || path.length() == 0) {
       return path;
     }
     path = path.replace(File.separatorChar, '/');
     final StringTokenizer tok = new StringTokenizer(path, "/");
     final Stack<String> stack = new Stack<String>();
-    while(tok.hasMoreTokens()){
+    while (tok.hasMoreTokens()) {
       final String token = tok.nextToken();
-
-      if(token.length() == 0) {
-        continue;
-      }
-      else if("..".equals(token)){
-        if(stack.isEmpty()) {
+      if ("..".equals(token)) {
+        if (stack.isEmpty()) {
           return null;
         }
         stack.pop();
       }
-      else if (!".".equals(token)) {
+      else if (token.length() != 0 && !".".equals(token)) {
         stack.push(token);
       }
     }
@@ -133,9 +129,9 @@ public class PathUtil {
     if (path.charAt(0) == '/') {
       result.append("/");
     }
-
-    for (final String str: stack){
-      if(result.length() > 0){
+    for (int i = 0; i < stack.size(); i++) {
+      String str = stack.get(i);
+      if (i > 0) {
         result.append('/');
       }
       result.append(str);
