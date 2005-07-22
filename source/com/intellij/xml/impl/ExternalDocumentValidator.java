@@ -196,8 +196,8 @@ public class ExternalDocumentValidator {
     XmlDoctype.class
   };
 
-  private XmlElement getNodeForMessage(final PsiElement currentElement) {
-    XmlElement parentOfType = (XmlElement)PsiTreeUtil.getParentOfType(
+  private PsiElement getNodeForMessage(final PsiElement currentElement) {
+    PsiElement parentOfType = PsiTreeUtil.getParentOfType(
         currentElement,
         parentClasses,
         false
@@ -205,10 +205,10 @@ public class ExternalDocumentValidator {
     
     if (parentOfType == null) {
       if (currentElement instanceof XmlToken) {
-        parentOfType = (XmlElement)currentElement.getParent();
+        parentOfType = currentElement.getParent();
       }
       else {
-        parentOfType = (XmlElement)currentElement;
+        parentOfType = currentElement;
       }
     }
     return parentOfType;
