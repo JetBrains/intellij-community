@@ -901,8 +901,12 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     if (element == null) return;
     if (element instanceof PsiDirectory) {
        select(element, ((PsiDirectory)element).getVirtualFile() , requestFocus);
-    } else {
-      select(element, element.getContainingFile().getVirtualFile(), requestFocus);
+    }
+    else {
+      final PsiFile containingFile = element.getContainingFile();
+      if (containingFile != null) {
+        select(element, containingFile.getVirtualFile(), requestFocus);
+      }
     }
 
   }

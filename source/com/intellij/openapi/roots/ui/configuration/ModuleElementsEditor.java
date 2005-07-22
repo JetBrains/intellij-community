@@ -4,8 +4,10 @@ import com.intellij.openapi.module.ModuleConfigurationEditor;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.Disposable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 
 /**
  * @author Eugene Zhuravlev
@@ -16,6 +18,7 @@ public abstract class ModuleElementsEditor implements ModuleConfigurationEditor 
   protected final Project myProject;
   protected final ModifiableRootModel myModel;
   protected JComponent myComponent;
+  private java.util.List<Disposable> myDisposables = new ArrayList<Disposable>();
 
   protected ModuleElementsEditor(Project project, ModifiableRootModel model) {
     myProject = project;
@@ -30,7 +33,13 @@ public abstract class ModuleElementsEditor implements ModuleConfigurationEditor 
   public void apply() throws ConfigurationException {}
   public void reset() {}
   public void moduleStateChanged() {}
-  public void disposeUIResources() {}
+
+  public void disposeUIResources() {
+    for (Disposable disposable : myDisposables) {
+      disposable.dispose();
+    }
+    myDisposables.clear();
+  }
 
   // caching
   public final JComponent createComponent() {
@@ -43,6 +52,10 @@ public abstract class ModuleElementsEditor implements ModuleConfigurationEditor 
 
   public JComponent getComponent() {
     return createComponent();
+  }
+
+  protected void registerDisposable(Disposable disposable) {
+    myDisposables.add(disposable);
   }
 
   protected abstract JComponent createComponentImpl();

@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
+import com.intellij.openapi.Disposable;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.ui.ScrollPaneFactory;
@@ -70,7 +71,6 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
   private VirtualFile myLastSelectedDir = null;
   private JRadioButton myRbRelativePaths;
   private JCheckBox myCbExcludeOutput;
-  private VirtualFileManagerAdapter myVFMListener;
   private final String myModuleName;
   private final ModulesProvider myModulesProvider;
 
@@ -78,7 +78,7 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
     super(project, model);
     myModuleName = moduleName;
     myModulesProvider = modulesProvider;
-    myVFMListener = new VirtualFileManagerAdapter() {
+    final VirtualFileManagerAdapter fileManagerListener = new VirtualFileManagerAdapter() {
       public void afterRefreshFinish(boolean asynchonous) {
         for (Iterator<ContentEntry> it = myEntryToEditorMap.keySet().iterator(); it.hasNext();) {
           final ContentEntryEditor editor = myEntryToEditorMap.get(it.next());
@@ -88,7 +88,13 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
         }
       }
     };
-    ((VirtualFileManagerEx)VirtualFileManager.getInstance()).addVirtualFileManagerListener(myVFMListener);
+    final VirtualFileManagerEx fileManager = ((VirtualFileManagerEx)VirtualFileManager.getInstance());
+    fileManager.addVirtualFileManagerListener(fileManagerListener);
+    registerDisposable(new Disposable() {
+      public void dispose() {
+        fileManager.removeVirtualFileManagerListener(fileManagerListener);
+      }
+    });
   }
 
   public String getHelpTopic() {
@@ -104,7 +110,6 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
   }
 
   public void disposeUIResources() {
-    ((VirtualFileManagerEx)VirtualFileManager.getInstance()).removeVirtualFileManagerListener(myVFMListener);
     if (myRootTreeEditor != null) {
       myRootTreeEditor.setContentEntryEditor(null);
     }
