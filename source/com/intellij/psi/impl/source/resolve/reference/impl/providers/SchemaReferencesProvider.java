@@ -104,8 +104,9 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
         XmlNSDescriptorImpl xmlNSDescriptor = ((XmlNSDescriptorImpl)nsDescriptor);
         
         final String localName = tag.getLocalName();
+        final String attributeLocalName = attribute.getLocalName();
         
-        if ("ref".equals(attribute.getLocalName())) {
+        if ("ref".equals(attributeLocalName) || "substitutionGroup".equals(attributeLocalName)) {
           if (localName.equals("group")) {
             return xmlNSDescriptor.findGroup(canonicalText);
           } else if (localName.equals("attributeGroup")) {
@@ -117,7 +118,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
               new HashSet<XmlNSDescriptorImpl>(),
               true
             );
-  
+
             return descriptor != null ? descriptor.getDeclaration(): null;
           }
         } else {
@@ -137,7 +138,11 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
     }
 
     public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-      return null;
+      return ReferenceProvidersRegistry.getInstance(myElement.getProject()).getManipulator(myElement).handleContentChange(
+        myElement,
+        getRangeInElement(),
+        newElementName
+      );
     }
 
     public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
