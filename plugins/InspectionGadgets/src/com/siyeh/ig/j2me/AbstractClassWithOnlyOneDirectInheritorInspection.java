@@ -34,7 +34,7 @@ public class AbstractClassWithOnlyOneDirectInheritorInspection extends ClassInsp
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Abstract class #ref has has only one direct inheritor #loc";
+        return "Abstract class #ref has only one direct inheritor #loc";
     }
 
     public BaseInspectionVisitor buildVisitor() {

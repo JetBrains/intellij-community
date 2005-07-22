@@ -36,7 +36,7 @@ public class InterfaceWithOnlyOneDirectInheritorInspection extends ClassInspecti
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Interface #ref has has only one direct inheritor #loc";
+        return "Interface #ref has only one direct inheritor #loc";
     }
 
     public BaseInspectionVisitor buildVisitor() {
