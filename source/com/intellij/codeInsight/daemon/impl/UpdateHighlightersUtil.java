@@ -21,8 +21,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.HashMap;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collection;
+import java.util.List;
 
 public class UpdateHighlightersUtil {
 
@@ -43,7 +43,7 @@ public class UpdateHighlightersUtil {
                                              int endOffset,
                                              Collection<HighlightInfo> highlights,
                                              int group) {
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     List<HighlightInfo> array = new ArrayList<HighlightInfo>();
 
     HighlightInfo[] oldHighlights = DaemonCodeAnalyzerImpl.getHighlights(document, project);
@@ -149,7 +149,7 @@ public class UpdateHighlightersUtil {
                                             int endOffset,
                                             Collection<LineMarkerInfo> markers,
                                             int group) {
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
     ArrayList<LineMarkerInfo> array = new ArrayList<LineMarkerInfo>();
 

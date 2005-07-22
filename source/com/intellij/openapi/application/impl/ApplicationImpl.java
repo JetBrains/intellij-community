@@ -177,25 +177,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private static Thread ourDispatchThread = null;
 
   public boolean isDispatchThread() {
-    return isDispatchThread(Thread.currentThread());
-  }
-
-  /**
-   * @fabrique
-   */
-  protected boolean isDispatchThread(Thread currentThread) {
-    if (ourDispatchThread == null && EventQueue.isDispatchThread()) {
-      ourDispatchThread = Thread.currentThread();
-    }
-
-    if (ourDispatchThread == currentThread) return true;
-
-    if (ourDispatchThread != null && !ourDispatchThread.isAlive()) {
-      ourDispatchThread = null;
-      return isDispatchThread(currentThread);
-    }
-
-    return false;
+    return EventQueue.isDispatchThread();
   }
 
   private void save(String path) throws IOException {
@@ -758,15 +740,15 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         LOG.error("Read access from event dispatch thread is allowed only inside input event processing or LaterInvocatorEx.invokeLater");
       }
       */
+
+      return true;
     }
     else {
       if (myExceptionalThreadWithReadAccess == currentThread) return true;
       if (myActionsLock.isReadLockAcquired(currentThread)) return true;
       if (myActionsLock.isWriteLockAcquired(currentThread)) return true;
-      return isDispatchThread(currentThread);
+      return isDispatchThread();
     }
-
-    return true;
   }
 
   public void assertReadAccessToDocumentsAllowed() {
@@ -787,10 +769,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
    * Overriden in Visual Fabrique
    */
   protected void assertCanRunWriteAction() {
-    if (!isDispatchThread()) {
-      LOG.error("Write access is allowed from event dispatch thread only");
-    }
+    assertIsDispatchThread("Write access is allowed from event dispatch thread only");
     /*
+    if (!isDispatchThread()) {
+      LOG.error();
+    }
     else{
       if (!IdeEventQueue.getInstance().isInInputEvent() && !LaterInvocatorEx.isInMyRunnable()) {
         LOG.error("Write actions are allowed only inside input event processing or LaterInvocatorEx.invokeLater");
@@ -800,10 +783,23 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public void assertIsDispatchThread() {
-    if (!isDispatchThread() && !EventQueue.isDispatchThread()) { // Last one to be completely sure.
-      LOG.error("Access is allowed from event dispatch thread only. Current thread=" + Thread.currentThread() + ", ourDispatch=" +
-                ourDispatchThread);
+    assertIsDispatchThread("Access is allowed from event dispatch thread only.");
+  }
+
+  private void assertIsDispatchThread(String message) {
+    final Thread currentThread = Thread.currentThread();
+    if (ourDispatchThread == currentThread) return;
+
+    if (EventQueue.isDispatchThread()) {
+      ourDispatchThread = currentThread;
     }
+    if (ourDispatchThread == currentThread) return;
+
+    LOG.error(message,
+              new String[]{"Current thread: " + describe(Thread.currentThread()),
+                "Our dispatch thread:" + describe(ourDispatchThread),
+                "SystemEventQueueThread: " + describe(getEventQueueThread())
+              });
   }
 
   public void assertWriteAccessAllowed() {

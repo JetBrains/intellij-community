@@ -39,7 +39,7 @@ public class TargetElementUtil {
   }
 
   public static PsiReference findReference(Editor editor, int offset) {
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
     DataContext dataContext = DataManager.getInstance().getDataContext(editor.getComponent());
     Project project = (Project) dataContext.getData(DataConstants.PROJECT);
@@ -59,7 +59,7 @@ public class TargetElementUtil {
   }
 
   public static PsiElement findTargetElement(Editor editor, int flags, int offset) {
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
     DataContext dataContext = DataManager.getInstance().getDataContext(editor.getComponent());
     Project project = (Project) dataContext.getData(DataConstants.PROJECT);

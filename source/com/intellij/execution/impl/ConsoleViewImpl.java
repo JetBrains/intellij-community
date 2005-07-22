@@ -5,8 +5,8 @@ import com.intellij.execution.filters.*;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.ide.macro.DataAccessor;
 import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.macro.DataAccessor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -38,7 +39,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Alarm;
@@ -163,7 +163,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
   }
 
   private static void assertIsDispatchThread() {
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
   }
 
   public void setOutputPaused(final boolean value) {
@@ -274,7 +274,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
   }
 
   private void flushDeferredText(){
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
     synchronized(LOCK){
       if (myOutputPaused) return;
@@ -477,7 +477,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
 
   private void highlightHyperlinks(final int line1, final int line2){
     if (myMessageFilter != null){
-      LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+      ApplicationManager.getApplication().assertIsDispatchThread();
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       final Document document = myEditor.getDocument();
       final CharSequence chars = document.getCharsSequence();

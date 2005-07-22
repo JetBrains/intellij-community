@@ -18,7 +18,6 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.UserDataHolderBase;
-import gnu.trove.THashSet;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -178,7 +177,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   public HighlighterList getHighlighterList() {
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     return myHighlighterList;
   }
 

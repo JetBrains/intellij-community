@@ -280,7 +280,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   public void updateVisibleHighlighters(Editor editor) {
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     setShowPostIntentions(false);
 
@@ -291,7 +291,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   private void updateAll(FileEditor editor, Runnable postRunnable) {
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (LOG.isDebugEnabled()) {
       /* TODO:
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
@@ -467,7 +467,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   public static void setHighlights(Document document, HighlightInfo[] highlights, Project project) {
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     MarkupModel markup = document.getMarkupModel(project);
     if (markup != null) {
       highlights = stripWarningsCoveredByErrors(highlights, markup);
@@ -513,14 +513,14 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   @Nullable
   public static LineMarkerInfo[] getLineMarkers(Document document, Project project) {
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     MarkupModel markup = document.getMarkupModel(project);
     if (markup == null) return null;
     return markup.getUserData(MARKERS_IN_EDITOR_DOCUMENT_KEY);
   }
 
   public static void setLineMarkers(Document document, LineMarkerInfo[] lineMarkers, Project project) {
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     MarkupModel markup = document.getMarkupModel(project);
     if (markup == null) return;
     markup.putUserData(MARKERS_IN_EDITOR_DOCUMENT_KEY, lineMarkers);
@@ -543,7 +543,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   private void updateHighlighters(final FileEditor editor, final Set<HighlightingPass> passesToPerform, final Runnable postRunnable) {
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
     if (myUpdateProgress.isRunning()) return;
     if (passesToPerform.isEmpty()) {

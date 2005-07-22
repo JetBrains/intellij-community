@@ -33,7 +33,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
   }
 
   public void invoke(final Project project, final Editor editor, PsiFile file, int lbraceOffset, PsiMethod highlightedMethod) {
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 

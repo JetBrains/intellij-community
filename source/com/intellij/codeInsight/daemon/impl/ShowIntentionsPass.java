@@ -63,7 +63,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
   ShowIntentionsPass(Project project, Editor editor, IntentionAction[] intentionActions, boolean isSecondPass) {
     super(editor.getDocument());
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
     myIsSecondPass = isSecondPass;
     myProject = project;
@@ -86,7 +86,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   }
 
   public void doApplyInformationToEditor() {
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
     if (!myEditor.getContentComponent().hasFocus()) return;
 

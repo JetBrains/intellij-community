@@ -27,12 +27,12 @@ public final class SelectionState{
   }
 
   public boolean isInsideChange(){
-    ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsDispatchThread();
     return myInsideChange;
   }
 
   public void setInsideChange(final boolean insideChange){
-    ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myInsideChange = insideChange;
   }
 

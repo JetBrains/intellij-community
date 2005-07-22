@@ -81,7 +81,7 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
                              final String name,
                              final Object groupId,
                              UndoConfirmationPolicy undoConfirmationPolicy) {
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("executeCommand: " + command + ", name = " + name + ", groupId = " + groupId);

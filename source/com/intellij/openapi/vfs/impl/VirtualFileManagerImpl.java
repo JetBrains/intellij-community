@@ -109,10 +109,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
 
     try {
       if (!asynchronous) {
-        LOG.assertTrue(
-          ApplicationManager.getApplication().isDispatchThread(),
-          "Synchronous refresh can be performed in AWT-thread only!"
-        );
+        ApplicationManager.getApplication().assertIsDispatchThread();
       }
 
       for (VirtualFileSystem fileSystem : myFileSystems) {
@@ -191,7 +188,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
       ApplicationManager.getApplication().invokeLater(action, modalityState);
     }
     else {
-      LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+      ApplicationManager.getApplication().assertIsDispatchThread();
       action.run();
     }
   }
@@ -284,7 +281,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
       ApplicationManager.getApplication().invokeLater(action, modalityState);
     }
     else {
-      LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+      ApplicationManager.getApplication().assertIsDispatchThread();
       action.run();
     }
   }
@@ -298,7 +295,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
           }, modalityState);
     }
     else {
-      LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+      ApplicationManager.getApplication().assertIsDispatchThread();
       myRefreshEventsToFire.add(action);
     }
   }

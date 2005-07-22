@@ -135,7 +135,7 @@ public class AutoPopupController implements ProjectComponent {
   public void autoPopupParameterInfo(final Editor editor, final PsiMethod highlightedMethod){
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     if (settings.AUTO_POPUP_PARAMETER_INFO) {
       final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
