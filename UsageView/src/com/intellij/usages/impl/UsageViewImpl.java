@@ -840,8 +840,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
 
     Set<Usage> usages = new HashSet<Usage>();
-    for (int i = 0; i < selectionPaths.length; i++) {
-      TreePath selectionPath = selectionPaths[i];
+    for (TreePath selectionPath : selectionPaths) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
       collectUsages(node, usages);
     }
@@ -986,23 +985,16 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
       if (dataId.equals(USAGES)) {
         final Set<Usage> selectedUsages = getSelectedUsages();
-        if (selectedUsages == null) {
-          return null;
-        }
-        for (Iterator it = selectedUsages.iterator(); it.hasNext();) {
-          final Usage usage = (Usage)it.next();
-          if (!usage.isValid()) {
-            it.remove();
-          }
-        }
-        return selectedUsages.toArray(new Usage[selectedUsages.size()]);
+        return (selectedUsages != null) ? selectedUsages.toArray(new Usage[selectedUsages.size()]) : null;
       }
 
       if (dataId.equals(USAGE_TARGETS)) {
-        final UsageTarget[] selectedUsageTargets = getSelectedUsageTargets();
-        if (selectedUsageTargets != null) {
-          return selectedUsageTargets;
-        }
+        return getSelectedUsageTargets();
+      }
+
+      if (dataId.equals(DataConstants.VIRTUAL_FILE_ARRAY)) {
+        final Set<Usage> usages = getSelectedUsages();
+        return provideVirtualFileArray((usages != null) ? usages.toArray(new Usage[usages.size()]) : null, getSelectedUsageTargets());
       }
 
       if (node != null) {
@@ -1015,6 +1007,42 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
       return null;
     }
+
+    private VirtualFile[] provideVirtualFileArray(Usage[] usages, UsageTarget[] usageTargets) {
+      if (usages == null && usageTargets == null) {
+        return null;
+      }
+
+      final Set<VirtualFile> result = new java.util.HashSet<VirtualFile>();
+
+      if (usages != null) {
+        for (Usage usage : usages) {
+          if (usage.isValid()) {
+            if (usage instanceof UsageInFile) {
+              result.add(((UsageInFile)usage).getFile());
+            }
+
+            if (usage instanceof UsageInFiles) {
+              result.addAll(Arrays.asList(((UsageInFiles)usage).getFiles()));
+            }
+          }
+        }
+      }
+
+      if (usageTargets != null) {
+        for (UsageTarget usageTarget : usageTargets) {
+          if (usageTarget.isValid()) {
+            final VirtualFile[] files = usageTarget.getFiles();
+            if (files != null) {
+              result.addAll(Arrays.asList(files));
+            }
+          }
+        }
+      }
+
+      return result.toArray(new VirtualFile[result.size()]);
+    }
+
   }
 
   private static class MyAutoScrollToSourceOptionProvider implements AutoScrollToSourceOptionProvider {
