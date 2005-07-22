@@ -18,6 +18,9 @@ import com.intellij.xml.impl.schema.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
+import java.util.StringTokenizer;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -76,12 +79,18 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
       return true;
     }
   }
-  
+
   static class TypeOrElementOrAttributeReference implements PsiReference {
     private PsiElement myElement;
+    private TextRange myRange;
 
     TypeOrElementOrAttributeReference(PsiElement element) {
+      this(element,new TextRange(1,element.getTextLength()-1));
+    }
+
+    TypeOrElementOrAttributeReference(PsiElement element, TextRange range) {
       myElement = element;
+      myRange   = range;
     }
 
     public PsiElement getElement() {
@@ -89,7 +98,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
     }
 
     public TextRange getRangeInElement() {
-      return new TextRange(1,myElement.getTextLength()-1);
+      return myRange;
     }
 
     @Nullable
@@ -97,16 +106,16 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
       final XmlAttribute attribute = PsiTreeUtil.getParentOfType(myElement, XmlAttribute.class);
       final XmlTag tag = attribute.getParent();
       XmlDocument document = ((XmlFile)tag.getContainingFile()).getDocument();
-      
+
       String canonicalText = getCanonicalText();
       XmlNSDescriptor nsDescriptor = (XmlNSDescriptor)document.getMetaData();
-      
+
       if (nsDescriptor instanceof XmlNSDescriptorImpl) {
         XmlNSDescriptorImpl xmlNSDescriptor = ((XmlNSDescriptorImpl)nsDescriptor);
-        
+
         final String localName = tag.getLocalName();
         final String attributeLocalName = attribute.getLocalName();
-        
+
         if ("ref".equals(attributeLocalName) || "substitutionGroup".equals(attributeLocalName)) {
           if (localName.equals("group")) {
             return xmlNSDescriptor.findGroup(canonicalText);
@@ -129,7 +138,10 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
 
             return descriptor != null ? descriptor.getDeclaration(): null;
           }
-        } else if ("type".equals(attributeLocalName) || "base".equals(attributeLocalName)) {
+        } else if ("type".equals(attributeLocalName) || 
+                   "base".equals(attributeLocalName) ||
+                   "memberTypes".equals(attributeLocalName)
+                  ) {
           TypeDescriptor typeDescriptor = ((XmlNSDescriptorImpl)nsDescriptor).getTypeDescriptor(canonicalText,tag);
           if (typeDescriptor instanceof ComplexTypeDescriptor) {
             return ((ComplexTypeDescriptor)typeDescriptor).getDeclaration();
@@ -142,13 +154,13 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
 
     public String getCanonicalText() {
       String text = myElement.getText();
-      return text.substring(1,text.length()- 1);
+      return text.substring(myRange.getStartOffset(),myRange.getEndOffset());
     }
 
     public PsiElement handleElementRename(String _newElementName) throws IncorrectOperationException {
       final String canonicalText = getCanonicalText();
       final String newElementName = canonicalText.substring(0,canonicalText.indexOf(':') + 1) + _newElementName;
-      
+
       return ReferenceProvidersRegistry.getInstance(myElement.getProject()).getManipulator(myElement).handleContentChange(
         myElement,
         getRangeInElement(),
@@ -179,6 +191,23 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
         "name".equals(((XmlAttribute)parent).getName())
        ) {
       return new PsiReference[] { new NameReference(element) };
+    } else if (parent instanceof XmlAttribute &&
+               "memberTypes".equals(((XmlAttribute)parent).getName())
+              ) {
+      final List<PsiReference> result = new ArrayList<PsiReference>(1);
+      final String text = element.getText();
+      int lastIndex = 1;
+      int index = text.indexOf(' ');
+
+      while(index != -1) {
+        result.add( new TypeOrElementOrAttributeReference(element, new TextRange(lastIndex, index) ) );
+        lastIndex = index + 1;
+        index = text.indexOf(' ',lastIndex);
+      }
+
+      result.add( new TypeOrElementOrAttributeReference(element, new TextRange(lastIndex, text.length() - 1) ) );
+      
+      return result.toArray(new PsiReference[result.size()]);
     } else {
       return new PsiReference[] { new TypeOrElementOrAttributeReference(element) };
     }
