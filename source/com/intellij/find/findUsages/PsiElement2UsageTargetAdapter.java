@@ -34,7 +34,7 @@ public class PsiElement2UsageTargetAdapter implements UsageTarget {
       throw new IllegalArgumentException("Element is not a navigation item: " + element);
     }
 
-    myPresentation = new MyItemPresentation(element);
+    myPresentation = new MyItemPresentation();
   }
 
   public String getName() {
@@ -103,9 +103,7 @@ public class PsiElement2UsageTargetAdapter implements UsageTarget {
   }
 
   public void update() {
-    if (isValid()) {
-      myPresentation.update();
-    }
+    myPresentation.update();
   }
 
   public static UsageTarget[] convert(PsiElement[] psiElements) {
@@ -119,20 +117,19 @@ public class PsiElement2UsageTargetAdapter implements UsageTarget {
 
   private class MyItemPresentation implements ItemPresentation {
     private String myPresentableText;
-    private final ItemPresentation myPresentation;
     private Icon myIconOpen;
     private Icon myIconClosed;
 
-    public MyItemPresentation(final PsiElement element) {
-      myPresentation = ((NavigationItem)element).getPresentation();
+    public MyItemPresentation() {
       update();
     }
 
     public void update() {
-      myIconOpen = myPresentation != null ? myPresentation.getIcon(true) : null;
-      myIconClosed = myPresentation != null ? myPresentation.getIcon(false) : null;
       final PsiElement element = getElement();
       if (element != null) {
+        final ItemPresentation presentation = ((NavigationItem)element).getPresentation();
+        myIconOpen = presentation != null ? presentation.getIcon(true) : null;
+        myIconClosed = presentation != null ? presentation.getIcon(false) : null;
         myPresentableText = createPresentableText(element);
       }
     }
