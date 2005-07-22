@@ -9,7 +9,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -19,7 +18,6 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElementDecl;
 
 public class TargetElementUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.TargetElementUtil");
   public static final int REFERENCED_ELEMENT_ACCEPTED = 0x01;
   public static final int ELEMENT_NAME_ACCEPTED = 0x02;
   public static final int NEW_AS_CONSTRUCTOR = 0x04;
@@ -224,10 +222,6 @@ public class TargetElementUtil {
       }
       if (refElement instanceof PsiClass && refElement.getContainingFile().getVirtualFile() == null) { // in mirror file of compiled class
         return manager.findClass(((PsiClass) refElement).getQualifiedName(), refElement.getResolveScope());
-      } else if (refElement instanceof PsiAnnotationMethod) {
-        PsiClass aClass = manager.findClass(((PsiAnnotationMethod)refElement).getContainingClass().getQualifiedName(), refElement.getResolveScope());
-        PsiMethod method = aClass.findMethodBySignature((PsiMethod)refElement, false);
-        return method != null ? method : refElement;
       }
       return refElement;
     }
