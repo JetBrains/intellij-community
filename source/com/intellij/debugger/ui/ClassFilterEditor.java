@@ -64,6 +64,7 @@ public class ClassFilterEditor extends JPanel {
     myTable.setTableHeader(null);
     myTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
     myTable.setColumnSelectionAllowed(false);
+    myTable.setPreferredScrollableViewportSize(new Dimension(200, 100));
 
     TableColumnModel columnModel = myTable.getColumnModel();
     TableColumn column = columnModel.getColumn(myTableModel.CHECK_MARK);
