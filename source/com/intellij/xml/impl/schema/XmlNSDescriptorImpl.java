@@ -132,10 +132,20 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     return false;
   }
 
-  protected XmlAttributeDescriptorImpl getAttribute(String localName, String namespace) {
+  public XmlAttributeDescriptorImpl getAttribute(String localName, String namespace) {
     XmlDocument document = myFile.getDocument();
     XmlTag rootTag = document.getRootTag();
     if (rootTag == null) return null;
+    
+    XmlNSDescriptorImpl nsDescriptor = (XmlNSDescriptorImpl)rootTag.getNSDescriptor(namespace, true);
+    
+    if (nsDescriptor != this && nsDescriptor != null) {
+      return nsDescriptor.getAttribute(
+        localName,
+        namespace
+      );
+    }
+    
     XmlTag[] tags = rootTag.getSubTags();
 
     for (int i = 0; i < tags.length; i++) {
@@ -147,6 +157,39 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
         if (name != null) {
           if (checkElementNameEquivalence(localName, namespace, name, tag)) {
             return createAttributeDescriptor(tag);
+          }
+        }
+      } else if (equalsToSchemaName(tag, "include") ||
+               (equalsToSchemaName(tag, "import") && 
+                namespace.equals(tag.getAttributeValue("namespace"))
+               )
+              ) {
+        final XmlAttribute schemaLocation = tag.getAttribute("schemaLocation", tag.getNamespace());
+        
+        if (schemaLocation != null) {
+          final XmlFile xmlFile = XmlUtil.findXmlFile(rootTag.getContainingFile(), schemaLocation.getValue());
+          
+          if (xmlFile != null) {
+            
+            final XmlDocument includedDocument = xmlFile.getDocument();
+            if (includedDocument != null) {
+              final PsiMetaData data = includedDocument.getMetaData();
+              if(data instanceof XmlNSDescriptorImpl){
+                final XmlAttributeDescriptorImpl attributeDescriptor = ((XmlNSDescriptorImpl)data).getAttribute(localName, namespace);
+                
+                if(attributeDescriptor != null){
+                  final CachedValue<XmlAttributeDescriptorImpl> value = includedDocument.getManager().getCachedValuesManager().createCachedValue(
+                    new CachedValueProvider<XmlAttributeDescriptorImpl>(){
+                      public Result<XmlAttributeDescriptorImpl> compute() {
+                        return new Result<XmlAttributeDescriptorImpl>(attributeDescriptor, attributeDescriptor.getDependences());
+                      }
+                    },
+                    false
+                  );
+                  return value.getValue();
+                }
+              }
+            }
           }
         }
       }

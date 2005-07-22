@@ -13,6 +13,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.impl.schema.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +56,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
       return ReferenceProvidersRegistry.getInstance(myElement.getProject()).getManipulator(myElement).handleContentChange(
         myElement,
         getRangeInElement(),
-        newElementName
+        newElementName.substring(newElementName.indexOf(':') + 1)
       );
     }
 
@@ -76,10 +77,10 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
     }
   }
   
-  static class TypeOrElementReference implements PsiReference {
+  static class TypeOrElementOrAttributeReference implements PsiReference {
     private PsiElement myElement;
 
-    TypeOrElementReference(PsiElement element) {
+    TypeOrElementOrAttributeReference(PsiElement element) {
       myElement = element;
     }
 
@@ -111,7 +112,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
             return xmlNSDescriptor.findGroup(canonicalText);
           } else if (localName.equals("attributeGroup")) {
             return xmlNSDescriptor.findAttributeGroup(canonicalText);
-          } else {
+          } else if ("element".equals(localName)) {
             XmlElementDescriptor descriptor = xmlNSDescriptor.getElementDescriptor(
               XmlUtil.findLocalNameByQualifiedName(canonicalText),
               tag.getNamespaceByPrefix(XmlUtil.findPrefixByQualifiedName(canonicalText)),
@@ -120,8 +121,15 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
             );
 
             return descriptor != null ? descriptor.getDeclaration(): null;
+          } else if ("attribute".equals(localName)) {
+            XmlAttributeDescriptor descriptor = xmlNSDescriptor.getAttribute(
+              XmlUtil.findLocalNameByQualifiedName(canonicalText),
+              tag.getNamespaceByPrefix(XmlUtil.findPrefixByQualifiedName(canonicalText))
+            );
+
+            return descriptor != null ? descriptor.getDeclaration(): null;
           }
-        } else {
+        } else if ("type".equals(attributeLocalName) || "base".equals(attributeLocalName)) {
           TypeDescriptor typeDescriptor = ((XmlNSDescriptorImpl)nsDescriptor).getTypeDescriptor(canonicalText,tag);
           if (typeDescriptor instanceof ComplexTypeDescriptor) {
             return ((ComplexTypeDescriptor)typeDescriptor).getDeclaration();
@@ -172,7 +180,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
        ) {
       return new PsiReference[] { new NameReference(element) };
     } else {
-      return new PsiReference[] { new TypeOrElementReference(element) };
+      return new PsiReference[] { new TypeOrElementOrAttributeReference(element) };
     }
   }
 
