@@ -115,43 +115,45 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
             m_inClass = wasInClass;
         }
 
-        public void visitReferenceElement(PsiJavaCodeReferenceElement element){
-            super.visitReferenceElement(element);
-            final String text = element.getText();
+        public void visitReferenceElement(
+                PsiJavaCodeReferenceElement reference){
+            super.visitReferenceElement(reference);
+            final String text = reference.getText();
             if(text.indexOf((int) '.') < 0){
                 return;
             }
             if(m_ignoreJavadoc){
                 final PsiElement containingComment =
-                        PsiTreeUtil.getParentOfType(element,
+                        PsiTreeUtil.getParentOfType(reference,
                                                     PsiDocComment.class);
                 if(containingComment != null){
                     return;
                 }
             }
-            final PsiElement psiElement = element.resolve();
+            final PsiElement psiElement = reference.resolve();
             if(!(psiElement instanceof PsiClass)){
                 return;
             }
             final PsiReferenceParameterList typeParameters =
-                    element.getParameterList();
-            if(typeParameters == null)
-            {
+                    reference.getParameterList();
+            if(typeParameters == null){
                 return;
             }
             typeParameters.accept(this);
-            final PsiClass aClass = (PsiClass) psiElement;
-            final PsiClass outerClass =
-                    ClassUtils.getOutermostContainingClass(aClass);
-            final String fqName = outerClass.getQualifiedName();
-            if(!text.startsWith(fqName)){
-                return;
+            PsiClass containingClass =
+                    ClassUtils.getContainingClass(reference);
+            while(containingClass != null){
+                final String containingClassName = containingClass.getName();
+                if(text.endsWith('.'+containingClassName)){
+                    return;
+                }
+                containingClass = ClassUtils.getContainingClass(containingClass);
             }
-            final PsiJavaFile file = (PsiJavaFile) element.getContainingFile();
+            final PsiJavaFile file = (PsiJavaFile) reference.getContainingFile();
             if(!ImportUtils.nameCanBeImported(text, file)){
                 return;
             }
-            registerError(element);
+            registerError(reference);
         }
     }
 }
