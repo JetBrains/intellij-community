@@ -91,7 +91,7 @@ public class StartupManagerImpl extends StartupManagerEx implements ProjectCompo
   public void runPostStartupActivities() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     runActivities(myPostStartupActivities);
-    VirtualFileManager.getInstance().refresh(true);
+    VirtualFileManager.getInstance().refresh(false);
   }
 
   private void runActivities(final List<Runnable> activities) {
