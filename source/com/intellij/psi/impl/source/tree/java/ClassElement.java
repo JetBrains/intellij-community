@@ -117,6 +117,25 @@ public class ClassElement extends RepositoryTreeElement {
     return super.addInternal(first, last, anchor, before);
   }
 
+  public void deleteChildInternal(ASTNode child) {
+    if (isEnum()) {
+      if (child.getElementType() == ENUM_CONSTANT) {
+        ASTNode next = TreeUtil.skipElements(child.getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
+        if (next != null && next.getElementType() == COMMA) {
+          deleteChildInternal(next);
+        }
+        else {
+          ASTNode prev = TreeUtil.skipElementsBack(child.getTreePrev(), WHITE_SPACE_OR_COMMENT_BIT_SET);
+          if (prev != null && prev.getElementType() == COMMA) {
+            deleteChildInternal(prev);
+          }
+        }
+      }
+    }
+
+    super.deleteChildInternal(child);
+  }
+
   public boolean isEnum() {
     final ASTNode keyword = findChildByRole(ChildRole.CLASS_OR_INTERFACE_KEYWORD);
     return keyword != null && keyword.getElementType() == ENUM_KEYWORD;
@@ -207,9 +226,15 @@ public class ClassElement extends RepositoryTreeElement {
     for (ASTNode child = first.getTreeNext(); child != null; child = child.getTreeNext()) {
       final IElementType childType = child.getElementType();
       if (WHITE_SPACE_OR_COMMENT_BIT_SET.isInSet(childType) ||
-          childType == ERROR_ELEMENT || childType == ENUM_CONSTANT) continue;
-      else if (childType == COMMA) continue;
-      else if (childType == SEMICOLON) return child;
+          childType == ERROR_ELEMENT || childType == ENUM_CONSTANT) {
+        continue;
+      }
+      else if (childType == COMMA) {
+        continue;
+      }
+      else if (childType == SEMICOLON) {
+        return child;
+      }
       else {
         return TreeUtil.skipElementsBack(child.getTreePrev(), WHITE_SPACE_OR_COMMENT_BIT_SET);
       }
