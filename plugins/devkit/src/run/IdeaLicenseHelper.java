@@ -28,7 +28,8 @@ import java.io.IOException;
  * Date: Dec 3, 2004
  */
 public class IdeaLicenseHelper {
-  private static final String LICENSE_PATH_PREFERRED = "idea40.key";
+  private static final String LICENSE_PATH_PREFERRED = "idea50.key";
+  private static final String LICENSE_PATH_40 = "idea40.key";
   private static final String LICENSE_PATH_SYSTEM = "idea.license";
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.run.IdeaLicenseHelper");
@@ -37,6 +38,10 @@ public class IdeaLicenseHelper {
     final File config = new File(configPath, LICENSE_PATH_PREFERRED);
     if (config.exists()){
       return config;
+    }
+    final File idea4 = new File(configPath, LICENSE_PATH_40);
+    if (idea4.exists()){
+      return idea4;
     }
     final File system = new File(systemPath, LICENSE_PATH_SYSTEM);
     if (system.exists()){
