@@ -4,6 +4,8 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,13 +18,27 @@ public class CloseEditorAction extends AnAction {
         project, new Runnable(){
         public void run() {
           EditorWindow window = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
-          final VirtualFile vFile = (VirtualFile)dataContext.getData(DataConstants.VIRTUAL_FILE);
-          if (window != null && vFile != null && window.isFileOpen(vFile)) {
-            window.closeFile(vFile);
+          if (window != null) {
+            final VirtualFile vFile = (VirtualFile)dataContext.getData(DataConstants.VIRTUAL_FILE);
+            closeFileInWindow(vFile, window);
+          }
+          else {
+            final FileEditorManagerEx fileEditorManager = ((FileEditorManagerEx)FileEditorManager.getInstance(project));
+            window = fileEditorManager.getCurrentWindow();
+            if (window != null) {
+              final VirtualFile vFile = window.getSelectedFile();
+              closeFileInWindow(vFile, window);
+            }
           }
         }
       }, "Close Active Editor", null
     );
+  }
+
+  private void closeFileInWindow(final VirtualFile vFile, final EditorWindow window) {
+    if (vFile != null && window.isFileOpen(vFile)) {
+      window.closeFile(vFile);
+    }
   }
 
   public void update(final AnActionEvent event){
@@ -36,7 +52,10 @@ public class CloseEditorAction extends AnAction {
     if (ActionPlaces.EDITOR_POPUP.equals(event.getPlace()) || ActionPlaces.EDITOR_TAB_POPUP.equals(event.getPlace())) {
       presentation.setText("Close");
     }
-    final EditorWindow window = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
+    EditorWindow window = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
+    if (window == null) {
+      window = ((FileEditorManagerEx)FileEditorManager.getInstance(project)).getCurrentWindow();
+    }
     presentation.setEnabled(window != null && window.getTabCount() > 0);
   }
 }
