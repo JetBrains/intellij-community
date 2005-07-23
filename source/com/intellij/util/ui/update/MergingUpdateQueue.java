@@ -84,7 +84,11 @@ public class MergingUpdateQueue implements Runnable, Disposable {
     myWaiterForMerge = new Timer(true);
     myWaiterForMerge.scheduleAtFixedRate(new TimerTask() {
       public void run() {
-        ApplicationManager.getApplication().invokeLater(MergingUpdateQueue.this, getModalityState());
+        synchronized (mySheduledUpdates) {
+          if (mySheduledUpdates.size() > 0) {
+            ApplicationManager.getApplication().invokeLater(MergingUpdateQueue.this, getModalityState());
+          }
+        }
       }
     }, myMergingTimeSpan, myMergingTimeSpan);
   }
