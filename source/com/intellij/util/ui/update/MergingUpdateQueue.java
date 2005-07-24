@@ -8,10 +8,13 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.util.Alarm;
 
 import javax.swing.*;
-import java.util.*;
-import java.util.Timer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class MergingUpdateQueue implements Runnable, Disposable {
 
@@ -19,20 +22,20 @@ public class MergingUpdateQueue implements Runnable, Disposable {
 
   private final Set<Update> mySheduledUpdates = new TreeSet<Update>();
 
-  private java.util.Timer myWaiterForMerge;
+  private Alarm myWaiterForMerge = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private boolean myFlushing;
 
   private String myName;
   private int myMergingTimeSpan;
   private final JComponent myComponent;
-  private boolean myPathThrough;
+  private boolean myPassThrough;
 
   public MergingUpdateQueue(String name, int mergingTimeSpan, boolean isActive, JComponent component) {
     myMergingTimeSpan = mergingTimeSpan;
     myComponent = component;
     myName = name;
-    myPathThrough = ApplicationManager.getApplication().isUnitTestMode();
+    myPassThrough = ApplicationManager.getApplication().isUnitTestMode();
 
     if (isActive) {
       showNotify();
@@ -52,12 +55,12 @@ public class MergingUpdateQueue implements Runnable, Disposable {
     }
   }
 
-  public final boolean isPathThrough() {
-    return myPathThrough;
+  public final boolean isPassThrough() {
+    return myPassThrough;
   }
 
-  public final void setPathThrough(boolean pathThrough) {
-    myPathThrough = pathThrough;
+  public final void setPassThrough(boolean passThrough) {
+    myPassThrough = passThrough;
   }
 
   public void hideNotify() {
@@ -81,16 +84,7 @@ public class MergingUpdateQueue implements Runnable, Disposable {
 
   private void restartTimer() {
     clearWaiter();
-    myWaiterForMerge = new Timer(true);
-    myWaiterForMerge.scheduleAtFixedRate(new TimerTask() {
-      public void run() {
-        synchronized (mySheduledUpdates) {
-          if (mySheduledUpdates.size() > 0) {
-            ApplicationManager.getApplication().invokeLater(MergingUpdateQueue.this, getModalityState());
-          }
-        }
-      }
-    }, myMergingTimeSpan, myMergingTimeSpan);
+    myWaiterForMerge.addRequest(this, myMergingTimeSpan, getModalityState());
   }
 
 
@@ -129,8 +123,7 @@ public class MergingUpdateQueue implements Runnable, Disposable {
             mySheduledUpdates.clear();
           }
 
-          for (int i = 0; i < all.length; i++) {
-            Update each = all[i];
+          for (Update each : all) {
             if (!isExpired(each)) {
               toUpdate.add(each);
             }
@@ -180,7 +173,7 @@ public class MergingUpdateQueue implements Runnable, Disposable {
 
   public void queue(final Update update) {
     final Application app = ApplicationManager.getApplication();
-    if (myPathThrough) {
+    if (myPassThrough) {
       app.invokeLater(update);
       return;
     }
@@ -242,10 +235,7 @@ public class MergingUpdateQueue implements Runnable, Disposable {
   }
 
   private void clearWaiter() {
-    if (myWaiterForMerge != null) {
-      myWaiterForMerge.cancel();
-      myWaiterForMerge = null;
-    }
+    myWaiterForMerge.cancelAllRequests();
   }
 
   public String toString() {
