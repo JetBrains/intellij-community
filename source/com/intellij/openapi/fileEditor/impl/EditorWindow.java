@@ -90,34 +90,47 @@ public class EditorWindow {
   }
 
   public void closeFile(final VirtualFile file, final boolean unsplit) {
-    final EditorWithProviderComposite[] editors = getManager().getEditorComposites(file);
-    LOG.assertTrue(editors != null);
-    final EditorWithProviderComposite editor = findFileComposite(file);
-    getManager().disposeComposite(editor);
+    getManager().mySplitters.myInsideChange++;
+    try {
+      final EditorWithProviderComposite[] editors = getManager().getEditorComposites(file);
+      LOG.assertTrue(editors != null);
+      final EditorWithProviderComposite editor = findFileComposite(file);
+      getManager().disposeComposite(editor);
 
-    if (myTabbedPane != null) {
-      final int componentIndex = findComponentIndex(editor.getComponent());
-      if (componentIndex >= 0) { // editor could close itself on decomposition
-        final int indexToSelect = calcIndexToSelect(file, componentIndex);
-        if (indexToSelect >= 0) {
-          myTabbedPane.setSelectedIndex(indexToSelect);
+      if (myTabbedPane != null) {
+        final int componentIndex = findComponentIndex(editor.getComponent());
+        if (componentIndex >= 0) { // editor could close itself on decomposition
+          int indexToSelect = calcIndexToSelect(file, componentIndex);
+          if (indexToSelect >= 0) {
+            myTabbedPane.setSelectedIndex(indexToSelect);
+          }
+
+          myTabbedPane.removeTabAt(componentIndex);
+
+          // Dirty hack [max].
+          final VirtualFile selectedFile = getSelectedFile();
+          if (selectedFile != null) {
+            getManager().openFileImpl3(this, selectedFile, false, null);
+          }
         }
-        myTabbedPane.removeTabAt(componentIndex);
+      }
+      else {
+        myPanel.removeAll ();
+      }
+      if (unsplit && getTabCount() == 0) {
+        unsplit ();
+      }
+      myPanel.revalidate ();
+      if (myTabbedPane == null) {
+        // in tabless mode
+        myPanel.repaint();
+      }
+      if (editors.length == 1) {
+        getManager().closeFile(file);
       }
     }
-    else {
-      myPanel.removeAll ();
-    }
-    if (unsplit && getTabCount() == 0) {
-      unsplit ();
-    }
-    myPanel.revalidate ();
-    if (myTabbedPane == null) {
-      // in tabless mode
-      myPanel.repaint();
-    }
-    if (editors.length == 1) {
-      getManager().closeFile(file);
+    finally {
+      getManager().mySplitters.myInsideChange--;
     }
   }
 
@@ -125,7 +138,7 @@ public class EditorWindow {
     final int currentlySelectedIndex = myTabbedPane.getSelectedIndex();
     if (currentlySelectedIndex != fileIndex) {
       // if the file being closed is not currently selected, keep the currently selected file open
-      return fileIndex < currentlySelectedIndex ? currentlySelectedIndex - 1 : -1;
+      return -1;
     }
     if (UISettings.getInstance().ACTIVATE_MRU_EDITOR_ON_CLOSE) {
       // try to open last visited file

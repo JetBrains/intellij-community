@@ -522,7 +522,7 @@ public final class EditorsSplitters extends JPanel {
           getManager().updateFileName(newActiveWindow == null ? null : newActiveWindow.getSelectedFile());
           myCurrentFile = getCurrentFile();
         }
-        if (oldActiveWindow != newActiveWindow) {
+        if (oldActiveWindow != newActiveWindow && component != null) {
           setCurrentWindow(newActiveWindow, false);
         }
         if (component == null && !currentFileChanged) {

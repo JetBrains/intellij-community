@@ -95,7 +95,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
    * Updates icons for open files when project roots change
    */
   private final MyPsiTreeChangeListener myPsiTreeChangeListener;
-  final private EditorsSplitters mySplitters;
+  final EditorsSplitters mySplitters;
   private boolean myDoNotTransferFocus = false;
 
 
