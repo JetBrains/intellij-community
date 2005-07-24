@@ -1,9 +1,7 @@
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 
 /**
@@ -15,6 +13,11 @@ public class QuickChangeSchemesAction extends QuickSwitchSchemeAction {
     for (int i = 0; i < actions.length; i++) {
       group.add(actions[i]);
     }
+  }
+
+  public void actionPerformed(AnActionEvent e) {
+    super.actionPerformed(e);
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("ui.scheme.quickswitch");
   }
 
   protected boolean isEnabled() {
