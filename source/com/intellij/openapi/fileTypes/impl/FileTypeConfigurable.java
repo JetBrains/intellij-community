@@ -168,7 +168,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Applicatio
     UserFileType ftToEdit = myOriginalToEditedMap.get(fileType);
     if (ftToEdit == null) ftToEdit = ((UserFileType)fileType).clone();
     if (ftToEdit.getEditor() == null) return;
-    TypeEditor editor = new TypeEditor(myRecognizedFileType.myEditButton, ftToEdit);
+    TypeEditor editor = new TypeEditor(myRecognizedFileType.myEditButton, ftToEdit, "Edit File Type");
     editor.show();
     if (editor.isOK()) {
       myOriginalToEditedMap.put((UserFileType)fileType, ftToEdit);
@@ -201,7 +201,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Applicatio
   private void addFileType() {
     //TODO: support adding binary file types...
     CustomFileType type = new CustomFileType(new SyntaxTable());
-    TypeEditor editor = new TypeEditor(myRecognizedFileType.myAddButton, type);
+    TypeEditor editor = new TypeEditor(myRecognizedFileType.myAddButton, type, "New File Type");
     editor.show();
     if (editor.isOK()) {
       myTempFileTypes.add(type);
@@ -437,10 +437,11 @@ public class FileTypeConfigurable extends BaseConfigurable implements Applicatio
     private T myFileType;
     private SettingsEditor<T> myEditor;
 
-    public TypeEditor(Component parent, T fileType) {
+    public TypeEditor(Component parent, T fileType, final String title) {
       super(parent, false);
       myFileType = fileType;
       myEditor = fileType.getEditor();
+      setTitle(title);
       init();
     }
 
