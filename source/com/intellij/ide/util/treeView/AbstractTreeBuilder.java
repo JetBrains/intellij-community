@@ -2,6 +2,7 @@ package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.LoadingNode;
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -15,6 +16,7 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.enumeration.EnumerationCopy;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -134,8 +136,7 @@ public abstract class AbstractTreeBuilder {
 
   public final DefaultMutableTreeNode getNodeForPath(Object[] path) {
     DefaultMutableTreeNode node = null;
-    for (int idx = 0; idx < path.length; idx++) {
-      final Object pathElement = path[idx];
+    for (final Object pathElement : path) {
       node = node == null ? getFirstNode(pathElement) : findNodeForChildElement(node, pathElement);
       if (node == null) {
         break;
@@ -157,8 +158,7 @@ public abstract class AbstractTreeBuilder {
         elements.add(0, element);
       }
 
-      for (int i = 0; i < elements.size(); i++) {
-        final Object element1 = elements.get(i);
+      for (final Object element1 : elements) {
         node = getNodeForElement(element1);
         if (node != null) {
           myTree.expandPath(new TreePath(node.getPath()));
@@ -170,8 +170,7 @@ public abstract class AbstractTreeBuilder {
   public final void buildNodeForPath(Object[] path) {
     myUpdater.performUpdate();
     DefaultMutableTreeNode node = null;
-    for (int idx = 0; idx < path.length; idx++) {
-      final Object pathElement = path[idx];
+    for (final Object pathElement : path) {
       node = node == null ? getFirstNode(pathElement) : findNodeForChildElement(node, pathElement);
       if (node != null) {
         myTree.expandPath(new TreePath(node.getPath()));
@@ -193,8 +192,8 @@ public abstract class AbstractTreeBuilder {
     ArrayList<TreeNode> childNodes = TreeUtil.childrenToArray(node);
     node.removeAllChildren();
     Collections.sort(childNodes, myNodeComparator);
-    for (int i = 0; i < childNodes.size(); i++) {
-      DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)childNodes.get(i);
+    for (TreeNode childNode1 : childNodes) {
+      DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)childNode1;
       node.add(childNode);
       resortChildren(childNode);
     }
@@ -203,7 +202,6 @@ public abstract class AbstractTreeBuilder {
   protected final void initRootNode() {
     Object rootElement = myTreeStructure.getRootElement();
     NodeDescriptor nodeDescriptor = myTreeStructure.createDescriptor(rootElement, null);
-    LOG.assertTrue(nodeDescriptor != null, String.valueOf(rootElement));
     myRootNode.setUserObject(nodeDescriptor);
     nodeDescriptor.update();
     if (rootElement != null) {
@@ -262,163 +260,133 @@ public abstract class AbstractTreeBuilder {
     final boolean wasLeaf = node.getChildCount() == 0;
 
     final NodeDescriptor descriptor = (NodeDescriptor)node.getUserObject();
+
     if (descriptor == null) return;
 
     if (myUnbuiltNodes.contains(node)) {
-      if (isAlwaysShowPlus(descriptor)) return; // check for isAlwaysShowPlus is important for e.g. changing Show Members state!
-
-      Object element = descriptor.getElement();
-      if (myTreeStructure.isToBuildChildrenInBackground(element)) return; //?
-
-      Object[] children = myTreeStructure.getChildElements(descriptor.getElement());
-      if (children.length == 0) {
-        for (int i = 0; i < node.getChildCount(); i++) {
-          if (node.getChildAt(i) instanceof LoadingNode) {
-            myTreeModel.removeNodeFromParent((MutableTreeNode)node.getChildAt(i));
-            break;
-          }
-        }
-        myUnbuiltNodes.remove(node);
-      }
+      processUnbuilt(node, descriptor);
       return;
     }
 
     Object element = descriptor.getElement();
     if (myTreeStructure.isToBuildChildrenInBackground(element)) {
-      Runnable updateRunnable = new Runnable() {
-        public void run() {
-          descriptor.update();
-          Object element = descriptor.getElement();
-          if (element == null) return;
-
-          myTreeStructure.getChildElements(element); // load children
-        }
-      };
-
-      Runnable postRunnable = new Runnable() {
-        public void run() {
-          descriptor.update();
-          Object element = descriptor.getElement();
-          if (element != null) {
-            myUnbuiltNodes.remove(node);
-            myUpdater.addSubtreeToUpdateByElement(element);
-            myUpdater.performUpdate();
-
-            for (int i = 0; i < node.getChildCount(); i++) {
-              TreeNode child = node.getChildAt(i);
-              if (child instanceof LoadingNode) {
-                if (TreeBuilderUtil.isNodeOrChildSelected(myTree, node)) {
-                  myTree.addSelectionPath(new TreePath(myTreeModel.getPathToRoot(node)));
-                }
-                myTreeModel.removeNodeFromParent((MutableTreeNode)child);
-                break;
-              }
-            }
-          }
-        }
-      };
-
-      String text = " searching...";
-      for (int i = 0; i < node.getChildCount(); i++) {
-        TreeNode child = node.getChildAt(i);
-        if (child instanceof LoadingNode && text.equals(((LoadingNode)child).getUserObject())) {
-          return;
-        }
-      }
-      LoadingNode loadingNode = new LoadingNode(text);
-      myTreeModel.insertNodeInto(loadingNode, node, node.getChildCount()); // 2 loading nodes - only one will be removed
-
-      addTaskToWorker(updateRunnable, true, postRunnable);
-
+      updateInBackground(node, descriptor);
       return;
     }
 
-    Object[] children = myTreeStructure.getChildElements(descriptor.getElement());
-    Map<Object,Integer> elementToIndexMap = new LinkedHashMap<Object, Integer>();
-    for (int i = 0; i < children.length; i++) {
-      Object child = children[i];
-      elementToIndexMap.put(child, new Integer(i));
+    Map<Object, Integer> elementToIndexMap = collectElementToIndexMap(descriptor);
+
+    processAllChildren(node, elementToIndexMap);
+
+    ArrayList<TreeNode> nodesToInsert = collectNodesToInsert(descriptor, elementToIndexMap);
+
+    insertNodesInto(nodesToInsert, node);
+
+    updateNodesToInsert(nodesToInsert);
+
+    if (wasExpanded) {
+      myTree.expandPath(new TreePath(node.getPath()));
     }
 
+    if (wasExpanded || wasLeaf) {
+      expand(node, descriptor, wasLeaf);
+    }
+
+  }
+
+  private void processUnbuilt(final DefaultMutableTreeNode node, final NodeDescriptor descriptor) {
+    if (isAlwaysShowPlus(descriptor)) return; // check for isAlwaysShowPlus is important for e.g. changing Show Members state!
+
+    Object element = descriptor.getElement();
+    if (myTreeStructure.isToBuildChildrenInBackground(element)) return; //?
+
+    Object[] children = myTreeStructure.getChildElements(descriptor.getElement());
+    if (children.length == 0) {
+      for (int i = 0; i < node.getChildCount(); i++) {
+        if (node.getChildAt(i) instanceof LoadingNode) {
+          myTreeModel.removeNodeFromParent((MutableTreeNode)node.getChildAt(i));
+          break;
+        }
+      }
+      myUnbuiltNodes.remove(node);
+    }
+  }
+
+  private void updateNodesToInsert(final ArrayList<TreeNode> nodesToInsert) {
+    for (TreeNode aNodesToInsert : nodesToInsert) {
+      DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)aNodesToInsert;
+      addLoadingNode(childNode);
+      updateNodeChildren(childNode);
+    }
+  }
+
+  private void processAllChildren(final DefaultMutableTreeNode node, final Map<Object, Integer> elementToIndexMap) {
     ArrayList<TreeNode> childNodes = TreeUtil.childrenToArray(node);
-    for (int i = 0; i < childNodes.size(); i++) {
-      DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)childNodes.get(i);
+    for (TreeNode childNode1 : childNodes) {
+      DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)childNode1;
+      if (childNode instanceof LoadingNode) continue;
+      processChildNode(childNode, (NodeDescriptor)childNode.getUserObject(), node, elementToIndexMap);
+    }
+  }
+
+  private Map<Object, Integer> collectElementToIndexMap(final NodeDescriptor descriptor) {
+    Map<Object,Integer> elementToIndexMap = new LinkedHashMap<Object, Integer>();
+    Object[] children = myTreeStructure.getChildElements(descriptor.getElement());
+    int index = 0;
+    for (Object child : children) {
+      if (child instanceof ProjectViewNode) {
+        final ProjectViewNode projectViewNode = ((ProjectViewNode)child);
+        projectViewNode.update();
+        if (projectViewNode.getValue() == null) continue;
+      }
+      elementToIndexMap.put(child, index);
+      index++;
+    }
+    return elementToIndexMap;
+  }
+
+  private void expand(final DefaultMutableTreeNode node, final NodeDescriptor descriptor, final boolean wasLeaf) {
+    final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+    alarm.addRequest(
+      new Runnable() {
+        public void run() {
+          myTree.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        }
+      },
+      WAIT_CURSOR_DELAY
+    );
+
+    if (wasLeaf && isAutoExpandNode(descriptor)) {
+      myTree.expandPath(new TreePath(node.getPath()));
+    }
+
+    ArrayList<TreeNode> nodes = TreeUtil.childrenToArray(node);
+    for (TreeNode node1 : nodes) {
+      DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)node1;
       if (childNode instanceof LoadingNode) continue;
       NodeDescriptor childDescr = (NodeDescriptor)childNode.getUserObject();
-      if (childDescr == null) {
-        boolean isInMap = myElementToNodeMap.containsValue(childNode);
-        LOG.error("childDescr == null, builder=" + this + ", childNode=" + childNode.getClass() + ", isInMap = " + isInMap + ", node = " + node);
-        continue;
-      }
-      Object oldElement = childDescr.getElement();
-      if (oldElement == null){
-        LOG.error("oldElement == null, builder=" + this + ", childDescr=" + childDescr);
-        continue;
-      }
-      boolean changes = childDescr.update();
-      Object newElement = childDescr.getElement();
-      Integer index = newElement != null ? elementToIndexMap.get(newElement) : null;
-      if (index != null) {
-        if (childDescr.getIndex() != index.intValue()) {
-          changes = true;
-        }
-        childDescr.setIndex(index.intValue());
-      }
-      if (newElement != null && changes) {
-        updateNodeImageAndPosition(childNode);
-      }
-      if (!oldElement.equals(newElement)) {
-        removeMapping(oldElement, childNode);
-        if (newElement != null) {
-          createMapping(newElement, childNode);
-        }
-      }
-
-      if (index == null) {
-        int selectedIndex = -1;
-        if (TreeBuilderUtil.isNodeOrChildSelected(myTree, childNode)) {
-          selectedIndex = node.getIndex(childNode);
-        }
-
-        myTreeModel.removeNodeFromParent(childNode);
-        disposeNode(childNode);
-
-        if (selectedIndex >= 0) {
-          if (node.getChildCount() > 0) {
-            if (node.getChildCount() > selectedIndex) {
-              TreeNode newChildNode = node.getChildAt(selectedIndex);
-              myTree.addSelectionPath(new TreePath(myTreeModel.getPathToRoot(newChildNode)));
-            }
-            else {
-              TreeNode newChild = node.getChildAt(node.getChildCount() - 1);
-              myTree.addSelectionPath(new TreePath(myTreeModel.getPathToRoot(newChild)));
-            }
-          }
-          else {
-            myTree.addSelectionPath(new TreePath(myTreeModel.getPathToRoot(node)));
-          }
-        }
-      }
-      else {
-        elementToIndexMap.remove(newElement);
-        updateNodeChildren(childNode);
-      }
-
-      if (node.equals(myRootNode)) {
-        myTreeModel.nodeChanged(myRootNode);
+      if (isAutoExpandNode(childDescr)) {
+        myTree.expandPath(new TreePath(childNode.getPath()));
       }
     }
 
+    int n = alarm.cancelAllRequests();
+    if (n == 0) {
+      myTree.setCursor(Cursor.getDefaultCursor());
+    }
+  }
+
+  private ArrayList<TreeNode> collectNodesToInsert(final NodeDescriptor descriptor, final Map<Object, Integer> elementToIndexMap) {
     ArrayList<TreeNode> nodesToInsert = new ArrayList<TreeNode>();
-    for (Iterator<Object> iterator = elementToIndexMap.keySet().iterator(); iterator.hasNext();) {
-      Object child = iterator.next();
+    for (Object child : elementToIndexMap.keySet()) {
       Integer index = elementToIndexMap.get(child);
       final NodeDescriptor childDescr = myTreeStructure.createDescriptor(child, descriptor);
+      //noinspection ConstantConditions
       if (childDescr == null) {
         LOG.error("childDescr == null, treeStructure = " + myTreeStructure + ", child = " + child);
         continue;
       }
-      childDescr.setIndex(index.intValue());
+      childDescr.setIndex(index);
       childDescr.update();
       if (childDescr.getElement() == null) {
         LOG.error("childDescr.getElement() == null, child = " + child + ", builder = " + this);
@@ -428,50 +396,121 @@ public abstract class AbstractTreeBuilder {
       nodesToInsert.add(childNode);
       createMapping(child, childNode);
     }
+    return nodesToInsert;
+  }
 
-    insertNodesInto(nodesToInsert, node);
+  private void updateInBackground(final DefaultMutableTreeNode node, final NodeDescriptor descriptor) {
+    Runnable updateRunnable = new Runnable() {
+      public void run() {
+        descriptor.update();
+        Object element = descriptor.getElement();
+        if (element == null) return;
 
-    for (int i = 0; i < nodesToInsert.size(); i++) {
-      DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)nodesToInsert.get(i);
-      addLoadingNode(childNode);
+        myTreeStructure.getChildElements(element); // load children
+      }
+    };
+
+    Runnable postRunnable = new Runnable() {
+      public void run() {
+        descriptor.update();
+        Object element = descriptor.getElement();
+        if (element != null) {
+          myUnbuiltNodes.remove(node);
+          myUpdater.addSubtreeToUpdateByElement(element);
+          myUpdater.performUpdate();
+
+          for (int i = 0; i < node.getChildCount(); i++) {
+            TreeNode child = node.getChildAt(i);
+            if (child instanceof LoadingNode) {
+              if (TreeBuilderUtil.isNodeOrChildSelected(myTree, node)) {
+                myTree.addSelectionPath(new TreePath(myTreeModel.getPathToRoot(node)));
+              }
+              myTreeModel.removeNodeFromParent((MutableTreeNode)child);
+              break;
+            }
+          }
+        }
+      }
+    };
+
+    String text = " searching...";
+    for (int i = 0; i < node.getChildCount(); i++) {
+      TreeNode child = node.getChildAt(i);
+      if (child instanceof LoadingNode && text.equals(((LoadingNode)child).getUserObject())) {
+        return;
+      }
+    }
+    LoadingNode loadingNode = new LoadingNode(text);
+    myTreeModel.insertNodeInto(loadingNode, node, node.getChildCount()); // 2 loading nodes - only one will be removed
+
+    addTaskToWorker(updateRunnable, true, postRunnable);
+
+  }
+
+  private void processChildNode(final DefaultMutableTreeNode childNode, final NodeDescriptor childDescr, final DefaultMutableTreeNode node,
+                                final Map<Object, Integer> elementToIndexMap) {
+    if (childDescr == null) {
+      boolean isInMap = myElementToNodeMap.containsValue(childNode);
+      LOG.error("childDescr == null, builder=" + this + ", childNode=" + childNode.getClass() + ", isInMap = " + isInMap + ", node = " + node);
+      return;
+    }
+    Object oldElement = childDescr.getElement();
+    if (oldElement == null){
+      LOG.error("oldElement == null, builder=" + this + ", childDescr=" + childDescr);
+      return;
+    }
+    boolean changes = childDescr.update();
+    Object newElement = childDescr.getElement();
+    Integer index = newElement != null ? elementToIndexMap.get(newElement) : null;
+    if (index != null) {
+      if (childDescr.getIndex() != index) {
+        changes = true;
+      }
+      childDescr.setIndex(index);
+    }
+    if (newElement != null && changes) {
+      updateNodeImageAndPosition(childNode);
+    }
+    if (!oldElement.equals(newElement)) {
+      removeMapping(oldElement, childNode);
+      if (newElement != null) {
+        createMapping(newElement, childNode);
+      }
+    }
+
+    if (index == null) {
+      int selectedIndex = -1;
+      if (TreeBuilderUtil.isNodeOrChildSelected(myTree, childNode)) {
+        selectedIndex = node.getIndex(childNode);
+      }
+
+      myTreeModel.removeNodeFromParent(childNode);
+      disposeNode(childNode);
+
+      if (selectedIndex >= 0) {
+        if (node.getChildCount() > 0) {
+          if (node.getChildCount() > selectedIndex) {
+            TreeNode newChildNode = node.getChildAt(selectedIndex);
+            myTree.addSelectionPath(new TreePath(myTreeModel.getPathToRoot(newChildNode)));
+          }
+          else {
+            TreeNode newChild = node.getChildAt(node.getChildCount() - 1);
+            myTree.addSelectionPath(new TreePath(myTreeModel.getPathToRoot(newChild)));
+          }
+        }
+        else {
+          myTree.addSelectionPath(new TreePath(myTreeModel.getPathToRoot(node)));
+        }
+      }
+    }
+    else {
+      elementToIndexMap.remove(newElement);
       updateNodeChildren(childNode);
     }
 
-    if (wasExpanded) {
-      myTree.expandPath(new TreePath(node.getPath()));
+    if (node.equals(myRootNode)) {
+      myTreeModel.nodeChanged(myRootNode);
     }
-
-    if (wasExpanded || wasLeaf) {
-      final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-      alarm.addRequest(
-        new Runnable() {
-          public void run() {
-            myTree.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-          }
-        },
-        WAIT_CURSOR_DELAY
-      );
-
-      if (wasLeaf && isAutoExpandNode(descriptor)) {
-        myTree.expandPath(new TreePath(node.getPath()));
-      }
-
-      ArrayList<TreeNode> nodes = TreeUtil.childrenToArray(node);
-      for (int i = 0; i < nodes.size(); i++) {
-        DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)nodes.get(i);
-        if (childNode instanceof LoadingNode) continue;
-        NodeDescriptor childDescr = (NodeDescriptor)childNode.getUserObject();
-        if (isAutoExpandNode(childDescr)) {
-          myTree.expandPath(new TreePath(childNode.getPath()));
-        }
-      }
-
-      int n = alarm.cancelAllRequests();
-      if (n == 0) {
-        myTree.setCursor(Cursor.getDefaultCursor());
-      }
-    }
-
   }
 
   private void addLoadingNode(DefaultMutableTreeNode node) {
@@ -535,6 +574,7 @@ public abstract class AbstractTreeBuilder {
           );
         }
         catch (ProcessCanceledException e) {
+          //ignore
         }
       }
     };
@@ -706,8 +746,7 @@ public abstract class AbstractTreeBuilder {
       TreePath path = new TreePath(myTreeModel.getPathToRoot(parent));
       TreePath[] paths = myTree.getSelectionPaths();
       if (paths == null) return false;
-      for (int i = 0; i < paths.length; i++) {
-        TreePath path1 = paths[i];
+      for (TreePath path1 : paths) {
         if (path.isDescendant(path1)) return true;
       }
       return false;
@@ -792,8 +831,7 @@ public abstract class AbstractTreeBuilder {
     }
 
     final List<DefaultMutableTreeNode> allNodesForElement = (List<DefaultMutableTreeNode>)value;
-    for (Iterator<DefaultMutableTreeNode> it = allNodesForElement.iterator(); it.hasNext();) {
-      final DefaultMutableTreeNode elementNode = it.next();
+    for (final DefaultMutableTreeNode elementNode : allNodesForElement) {
       if (parentNode.equals(elementNode.getParent())) {
         return elementNode;
       }
@@ -803,12 +841,15 @@ public abstract class AbstractTreeBuilder {
   }
 
   private static class AbstractTreeNodeWrapper extends AbstractTreeNode<Object> {
+    private static final ArrayList<AbstractTreeNode> EMPTY_LIST = new ArrayList<AbstractTreeNode>();
+
     public AbstractTreeNodeWrapper(Object element) {
       super(null, element);
     }
 
+    @NotNull
     public Collection<AbstractTreeNode> getChildren() {
-      return null;
+      return EMPTY_LIST;
     }
 
     public void update(PresentationData presentation) {
