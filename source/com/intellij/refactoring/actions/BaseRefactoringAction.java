@@ -67,7 +67,7 @@ public abstract class BaseRefactoringAction extends AnAction {
           element = file.findElementAt(element.getTextRange().getStartOffset() - 1);
         }
       }
-      if (element == null || file == null || element.getLanguage() == null ||
+      if (element == null || file == null ||
           !isAvailableForLanguage(element.getLanguage()) || !isAvailableForFile(file)) {
         presentation.setEnabled(false);
       } else {
