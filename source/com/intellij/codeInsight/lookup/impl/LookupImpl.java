@@ -4,6 +4,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
@@ -305,6 +306,7 @@ public class LookupImpl extends LightweightHint implements Lookup {
           }
           else{
             if (prefixLength > 0){
+              FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.camelHumps");
               myEditor.getDocument().deleteString(lookupStart, lookupStart + prefixLength);
             }
             myEditor.getDocument().insertString(lookupStart, s);

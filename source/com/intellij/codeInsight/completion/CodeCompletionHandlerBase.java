@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -148,6 +149,11 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       }
 
       EditorModificationUtil.deleteSelectedText(editor);
+
+      if (!uniqueText.toLowerCase().startsWith(prefix.toLowerCase())) {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.camelHumps");
+      }
+
       editor.getDocument().replaceString(offset1 - prefix.length(), offset1, uniqueText);
       final int offset = offset1 - prefix.length() + uniqueText.length();
       editor.getCaretModel().moveToOffset(offset);
