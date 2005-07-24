@@ -102,6 +102,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
            || elementType == ElementType.IF_STATEMENT
            || elementType == ElementType.METHOD
            || elementType == ElementType.ARRAY_INITIALIZER_EXPRESSION
+           || elementType == ElementType.CLASS_INITIALIZER
            || elementType == ElementType.FOREACH_STATEMENT;
   }
 
