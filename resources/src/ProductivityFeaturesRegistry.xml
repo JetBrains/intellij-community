@@ -152,7 +152,7 @@
       successive-show="8"
       />
     <feature
-      id="editing.complition.camelHumps"
+      id="editing.completion.camelHumps"
       tip-file="CamelHumpsInCodeCompletion.html"
       name="Camel prefixes in code completion"
       min-usage-count="1"
@@ -192,6 +192,14 @@
       id="codeassists.quickdefinition"
       name="Quick Definition lookup"
       tip-file="CtrlShiftI.html"
+      min-usage-count="1"
+      first-show="1"
+      successive-show="1"
+    />
+    <feature
+      id="codeassists.quickdefinition.lookup"
+      name="Quick Definition in lookup lists"
+      tip-file="CtrlShiftIForLookup.html"
       min-usage-count="1"
       first-show="1"
       successive-show="1"
