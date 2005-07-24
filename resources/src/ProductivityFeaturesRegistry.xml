@@ -155,9 +155,9 @@
       id="editing.completion.camelHumps"
       tip-file="CamelHumpsInCodeCompletion.html"
       name="Camel prefixes in code completion"
-      min-usage-count="1"
-      first-show="1"
-      successive-show="1"
+      min-usage-count="8"
+      first-show="5"
+      successive-show="7"
       />
   </group>
   
@@ -192,17 +192,17 @@
       id="codeassists.quickdefinition"
       name="Quick Definition lookup"
       tip-file="CtrlShiftI.html"
-      min-usage-count="1"
-      first-show="1"
-      successive-show="1"
+      min-usage-count="9"
+      first-show="3"
+      successive-show="5"
     />
     <feature
       id="codeassists.quickdefinition.lookup"
       name="Quick Definition in lookup lists"
       tip-file="CtrlShiftIForLookup.html"
       min-usage-count="1"
-      first-show="1"
-      successive-show="1"
+      first-show="5"
+      successive-show="7"
     />
     <feature
       id="codeassists.quickjavadoc.lookup"
@@ -339,16 +339,16 @@
       id="ui.scheme.quickswitch"
       name="Quick switch scheme"
       tip-file="QuickSwitchScheme.html"
-      first-show="1"
-      successive-show="1"
+      first-show="7"
+      successive-show="3"
       min-usage-count="1"
       />
     <feature
       id="ui.recentchanges"
       name="Recent changes"
       tip-file="RecentChanges.html"
-      first-show="1"
-      successive-show="1"
+      first-show="5"
+      successive-show="5"
       min-usage-count="1"
       />
     <!-- TODO: Uncomment usage in InsertPathAction when FeatureUsageTracker goes to OpenApi
