@@ -42,6 +42,7 @@
   <tip file="NextPrevError.html"/>
   <tip file="InsertLiveTemplate.html"/>
   <tip file="MethodSeparators.html"/>
+  <tip file="CamelHumpsInCodeCompletion.html"/> <!--covered-->
   <tip file="MethodUpDown.html"/>
   <tip file="JoinLines.html"/>
   <tip file="CopyClass.html"/>              <!--covered-->
@@ -57,10 +58,13 @@
   <tip file="IntroduceVariableIncompleteCode.html"/>
   <tip file="CreateTargetTag.html"/>
   <tip file="GoToSymbol.html"/>
+  <tip file="RecentChanges.html"/>          <!--covered-->
   <tip file="CreatePropertyTag.html"/>
+  <tip file="QuickSwitchScheme.html"/>      <!--covered-->
   <tip file="CompleteStatement.html"/>
   <tip file="CamelPrefixesInNavigationPopups.html"/>
-
+  <tip file="CtrlShiftI.html"/>             <!--covered-->
   <tip file="CopyPasteReference.html"/>
   <tip file="MoveUpDown.html"/>
+  <tip file="SelectRunDebugConfiguration.html"/>
 </tips>

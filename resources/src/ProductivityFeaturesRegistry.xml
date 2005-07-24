@@ -151,6 +151,14 @@
       first-show="4"
       successive-show="8"
       />
+    <feature
+      id="editing.complition.camelHumps"
+      tip-file="CamelHumpsInCodeCompletion.html"
+      name="Camel prefixes in code completion"
+      min-usage-count="1"
+      first-show="1"
+      successive-show="1"
+      />
   </group>
   
   <group id="editing" name="Code Editing">
@@ -179,6 +187,14 @@
       min-usage-count="3" 
       first-show="3" 
       successive-show="5" 
+    />
+    <feature
+      id="codeassists.quickdefinition"
+      name="Quick Definition lookup"
+      tip-file="CtrlShiftI.html"
+      min-usage-count="1"
+      first-show="1"
+      successive-show="1"
     />
     <feature
       id="codeassists.quickjavadoc.lookup"
@@ -310,6 +326,22 @@
       first-show="5"
       successive-show="4"
       min-usage-count="6"
+      />
+    <feature
+      id="ui.scheme.quickswitch"
+      name="Quick switch scheme"
+      tip-file="QuickSwitchScheme.html"
+      first-show="1"
+      successive-show="1"
+      min-usage-count="1"
+      />
+    <feature
+      id="ui.recentchanges"
+      name="Recent changes"
+      tip-file="RecentChanges.html"
+      first-show="1"
+      successive-show="1"
+      min-usage-count="1"
       />
     <!-- TODO: Uncomment usage in InsertPathAction when FeatureUsageTracker goes to OpenApi
     <feature
