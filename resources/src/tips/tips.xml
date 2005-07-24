@@ -67,4 +67,6 @@
   <tip file="CopyPasteReference.html"/>
   <tip file="MoveUpDown.html"/>
   <tip file="SelectRunDebugConfiguration.html"/>
+  <tip file="CtrlShiftIForLookup.html"/>    <!--covered-->
+  <tip file="PropertiesCompletion.html"/>
 </tips>
