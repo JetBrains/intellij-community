@@ -50,6 +50,7 @@
   <tip file="HierarchyBrowser.html"/>
   <tip file="BreakpointSpeedmenu.html"/>
   <tip file="EvaluateExpressionInEditor.html"/>
+  <tip file="WordCompletion.html"/>
   <tip file="QuickJavaDocInLookups.html"/>  <!--covered-->
   <tip file="DotEtcInLookups.html"/>        <!--covered-->
   <tip file="MenuItemsDescriptions.html"/>
