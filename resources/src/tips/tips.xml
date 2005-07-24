@@ -59,6 +59,7 @@
   <tip file="CreateTargetTag.html"/>
   <tip file="GoToSymbol.html"/>
   <tip file="RecentChanges.html"/>          <!--covered-->
+  <tip file="ImageFileCompletion.html"/>
   <tip file="CreatePropertyTag.html"/>
   <tip file="QuickSwitchScheme.html"/>      <!--covered-->
   <tip file="CompleteStatement.html"/>
