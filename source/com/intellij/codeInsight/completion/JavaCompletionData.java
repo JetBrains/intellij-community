@@ -243,10 +243,15 @@ public class JavaCompletionData extends CompletionData{
         CLASS_BODY,
         new OrFilter(
           END_OF_BLOCK,
-          new LeftNeighbour(new OrFilter(
-            new TextFilter(MODIFIERS_LIST),
-            new SuperParentFilter(new ClassFilter(PsiAnnotation.class)),
-            new TokenTypeFilter(JavaTokenType.GT)))
+          new LeftNeighbour(
+            new OrFilter(
+              new TextFilter(MODIFIERS_LIST),
+              new OrFilter(
+                new SuperParentFilter(new ClassFilter(PsiAnnotation.class)),
+                new TokenTypeFilter(JavaTokenType.GT)
+              )
+            )
+          )
         )));
 
 // completion
