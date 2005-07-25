@@ -378,6 +378,15 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
             }
           }
         }
+        for (final EditorWindow window : windows) {
+          if (window.isDisposed()) {
+            // call to window.unsplit() which might make its sibling disposed
+            continue;
+          }
+          if (window.getTabCount() == 0) {
+            window.unsplit();
+          }
+        }
       }
       myDispatcher.getMulticaster().fileClosed(this, file);
     }

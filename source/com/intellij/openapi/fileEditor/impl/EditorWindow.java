@@ -34,6 +34,7 @@ public class EditorWindow {
   protected final EditorsSplitters myOwner;
   private static final Icon MODIFIED_ICON = IconLoader.getIcon("/general/modified.png");
   private static final Icon GAP_ICON = EmptyIcon.create(MODIFIED_ICON.getIconWidth(), MODIFIED_ICON.getIconHeight());
+  private boolean myIsDisposed = false;
 
   protected EditorWindow(final EditorsSplitters owner) {
     myOwner = owner;
@@ -70,11 +71,18 @@ public class EditorWindow {
     return myOwner.myWindows;
   }
 
-
-
   private void dispose() {
-    disposeTabs();
-    getWindows ().remove(this);
+    try {
+      disposeTabs();
+      getWindows ().remove(this);
+    }
+    finally {
+      myIsDisposed = true;
+    }
+  }
+
+  public boolean isDisposed() {
+    return myIsDisposed;
   }
 
   private void disposeTabs() {
@@ -174,7 +182,8 @@ public class EditorWindow {
       if (componentIndex >= 0) { // editor could close itself while disposing.
         myTabbedPane.removeTabAt(componentIndex);
       }
-    } else {
+    }
+    else {
       myPanel.removeAll();
     }
   }
@@ -542,13 +551,16 @@ public class EditorWindow {
       final JPanel parent2 = (JPanel)parent.getParent();
       final Set<EditorWithProviderComposite> siblingSelectedEditors = new HashSet<EditorWithProviderComposite>(siblings.length);
       for (EditorWindow sibling : siblings) {
+        // selected editors will be added first
         final EditorWithProviderComposite selected = sibling.getSelectedEditor();
         if (editorToSelect == null) {
           editorToSelect = selected;
         }
-        siblingSelectedEditors.add(selected);
-        // selected editors will be added first
-        processSiblingEditor(selected);
+        if (selected != null) {
+          // selected can be null if sibling does not have any editors at all
+          siblingSelectedEditors.add(selected);
+          processSiblingEditor(selected);
+        }
       }
       for (final EditorWindow sibling : siblings) {
         final EditorWithProviderComposite[] siblingEditors = sibling.getEditors();
