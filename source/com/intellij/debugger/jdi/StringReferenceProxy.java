@@ -20,9 +20,6 @@ public class StringReferenceProxy extends ObjectReferenceProxyImpl{
     checkValid();
     if (myStringValue == null) {
       myStringValue = getStringReference().value();
-      if (myStringValue != null) {
-        myStringValue = myStringValue.intern();
-      }
     }
     return myStringValue;
   }
