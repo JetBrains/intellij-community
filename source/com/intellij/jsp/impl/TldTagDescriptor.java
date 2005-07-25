@@ -36,14 +36,16 @@ public class TldTagDescriptor extends CustomTagDescriptorBase  {
   public XmlAttributeDescriptor[] getAttributesDescriptors() {
     if (myAttributeDescriptors==null) {
       final XmlTag[] subTags = myTag.findSubTags("attribute", null);
-      myAttributeDescriptors = new XmlAttributeDescriptor[subTags.length];
-
+      final XmlAttributeDescriptor[] xmlAttributeDescriptors = new XmlAttributeDescriptor[subTags.length];
+      
       for (int i = 0; i < subTags.length; i++) {
-        myAttributeDescriptors[i] = new TldAttributeDescriptor(
+        xmlAttributeDescriptors[i] = new TldAttributeDescriptor(
           subTags[i],
           CustomTagSupportUtil.ValueAccessor.SUB_TAG_ACCESSOR
         );
       }
+      
+      myAttributeDescriptors = xmlAttributeDescriptors;
     }
     return myAttributeDescriptors;
   }
