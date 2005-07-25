@@ -455,6 +455,7 @@ public class RefactoringUtil {
 
   public static PsiClass getThisClass(PsiElement place) {
     PsiElement parent = place.getContext();
+    if (parent == null) return null;
     PsiElement prev = null;
     while (true) {
       if (parent instanceof PsiClass) {
