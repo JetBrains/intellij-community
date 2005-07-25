@@ -202,8 +202,9 @@
       tip-file="CtrlShiftIForLookup.html"
       min-usage-count="1"
       first-show="5"
-      successive-show="7"
-    />
+      successive-show="7">
+      <dependency id="codeassists.quickdefinition"/>
+    </feature>
     <feature
       id="codeassists.quickjavadoc.lookup"
       name="Quick JavaDoc in lookups"
