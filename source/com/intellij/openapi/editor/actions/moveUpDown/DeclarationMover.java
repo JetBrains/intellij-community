@@ -49,6 +49,7 @@ class DeclarationMover extends LineMover {
 
   private static LineRange memberRange(PsiElement member, Editor editor, LineRange lineRange) {
     final TextRange textRange = member.getTextRange();
+    if (editor.getDocument().getTextLength() < textRange.getEndOffset()) return null;
     // we should be positioned on member start or end to be able to move it
     final int startLine = editor.offsetToLogicalPosition(textRange.getStartOffset()).line;
     final int endLine = editor.offsetToLogicalPosition(textRange.getEndOffset()).line;
