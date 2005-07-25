@@ -53,7 +53,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Map;
 
 public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataProvider {
@@ -730,10 +729,8 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
     }
 
     public HyperlinkInfo getHyperlinkAt(final int offset) {
-      final Iterator<RangeHighlighter> iterator = myHighlighterToMessageInfoMap.keySet().iterator();
-      while(iterator.hasNext()){
-        final RangeHighlighter highlighter = iterator.next();
-        if (containsOffset(offset, highlighter)){
+      for (final RangeHighlighter highlighter : myHighlighterToMessageInfoMap.keySet()) {
+        if (containsOffset(offset, highlighter)) {
           return myHighlighterToMessageInfoMap.get(highlighter);
         }
       }
