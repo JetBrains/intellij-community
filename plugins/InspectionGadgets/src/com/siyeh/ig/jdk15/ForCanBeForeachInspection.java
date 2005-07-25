@@ -70,6 +70,8 @@ public class ForCanBeForeachInspection extends StatementInspection{
     }
 
     private static class ForCanBeForeachFix extends InspectionGadgetsFix{
+        private static String indexName;
+
         public String getName(){
             return "Replace with 'for each'";
         }
@@ -417,20 +419,24 @@ public class ForCanBeForeachInspection extends StatementInspection{
             }
         }
 
-        private static boolean isListGetLookup(final PsiElement element,
-                                               final String indexName,
-                                               final String arrayName){
+        private static boolean isListGetLookup(PsiElement element,
+                                               String indexName,
+                                               String arrayName){
+            ForCanBeForeachFix.indexName = indexName;
             if(!(element instanceof PsiExpression && expressionIsListGetLookup(
                     (PsiExpression) element))){
                 return false;
             }
-            PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression) element;
+
+            final PsiExpression expression = (PsiExpression) element;
+            PsiMethodCallExpression methodCallExpression =
+                    (PsiMethodCallExpression) ParenthesesUtils.stripParentheses(expression);
             if(!arrayName
                     .equals(methodCallExpression.getMethodExpression()
                             .getQualifierExpression().getText())){
                 return false;
             }
-            PsiExpressionList argumentList = methodCallExpression
+            final PsiExpressionList argumentList = methodCallExpression
                     .getArgumentList();
             if(argumentList == null){
                 return false;
@@ -497,7 +503,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
         private static boolean isListElementDeclaration(PsiStatement statement,
                                                         String arrayName,
                                                         String indexName,
-                                                        final PsiType type){
+                                                        PsiType type){
             if(!(statement instanceof PsiDeclarationStatement)){
                 return false;
             }
