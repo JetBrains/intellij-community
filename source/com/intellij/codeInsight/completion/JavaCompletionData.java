@@ -95,7 +95,8 @@ public class JavaCompletionData extends CompletionData{
     {
       final ElementFilter position = new OrFilter(new ElementFilter[]{
         END_OF_BLOCK,
-        new LeftNeighbour(new TextFilter(MODIFIERS_LIST)),
+        new LeftNeighbour(new OrFilter(new SuperParentFilter(new ClassFilter(PsiAnnotation.class)),
+                                       new TextFilter(MODIFIERS_LIST))),
         new StartElementFilter()
       });
 
