@@ -43,6 +43,7 @@ import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Collections;
 
 public class HighlightVisitorImpl extends PsiElementVisitor implements HighlightVisitor, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl");
@@ -67,7 +68,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   private final Map<PsiElement, Collection<PsiReferenceExpression>> myUninitializedVarProblems = new THashMap<PsiElement, Collection<PsiReferenceExpression>>();
   // map codeBlock->List of PsiReferenceExpression of extra initailization of final variable
   private final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> myFinalVarProblems = new THashMap<PsiElement, Collection<ControlFlowUtil.VariableInfo>>();
-  private final Map<PsiParameter, Boolean> myParameterIsReassigned = new THashMap<PsiParameter, Boolean>();
+  private final Map<PsiParameter, Boolean> myParameterIsReassigned = Collections.synchronizedMap(new THashMap<PsiParameter, Boolean>());
   public static final String UNKNOWN_SYMBOL = "Cannot resolve symbol ''{0}''";
 
   private final Map<PsiMethod, PsiClass[]> myUnhandledExceptionsForMethod = new HashMap<PsiMethod, PsiClass[]>();
@@ -327,25 +328,25 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
   private boolean filterJspErrors(final PsiErrorElement element) {
     PsiElement nextSibling = element.getNextSibling();
-    
+
     if (nextSibling == null) {
       nextSibling = element.getContainingFile().findElementAt(element.getTextOffset()+1);
       if (nextSibling != null) nextSibling = nextSibling.getParent();
     }
-    
+
     while (nextSibling instanceof PsiWhiteSpace) {
       nextSibling = nextSibling.getNextSibling();
     }
 
     if (nextSibling instanceof JspText ||
         nextSibling instanceof JspExpression ||
-        nextSibling instanceof ELExpressionHolder  
+        nextSibling instanceof ELExpressionHolder
        ) {
       return true;
     }
-    
+
     final XmlAttributeValue parentOfType = PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class);
-    if (parentOfType != null && 
+    if (parentOfType != null &&
         parentOfType.getUserData(XmlHighlightVisitor.DO_NOT_VALIDATE_KEY) != null) {
       return true;
     }
@@ -405,16 +406,16 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   public void visitImportStaticStatement(PsiImportStaticStatement statement) {
     if (statement.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) {
       myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                       statement.getFirstChild(),
-                                                       "Static imports are not supported at this language level"));
+                                                     statement.getFirstChild(),
+                                                     "Static imports are not supported at this language level"));
     }
   }
 
   public void visitForeachStatement(PsiForeachStatement statement) {
     if (statement.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) {
       myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                       statement.getFirstChild(),
-                                                       "Foreach loops are not supported at this language level"));
+                                                     statement.getFirstChild(),
+                                                     "Foreach loops are not supported at this language level"));
     }
     else {
       myHolder.add(GenericsHighlightUtil.checkForeachLoopParameterType(statement));

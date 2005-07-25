@@ -100,7 +100,6 @@ public class HighlightControlFlowUtil {
     }
     for (PsiClassInitializer initializer : initializers) {
       if (initializer.hasModifierProperty(PsiModifier.STATIC) == isFieldStatic
-          && initializer.getBody() != null
           && variableDefinitelyAssignedIn(field, initializer.getBody())) {
         return true;
       }
@@ -629,8 +628,7 @@ public class HighlightControlFlowUtil {
 
     if (!variable.getManager().areElementsEquivalent(enclosingCtrOrInitializer.getParent(), field.getContainingClass())) return false;
     PsiExpression qualifierExpression = reference.getQualifierExpression();
-    if (qualifierExpression != null && !(qualifierExpression instanceof PsiThisExpression)) return false;
-    return true;
+    return qualifierExpression == null || qualifierExpression instanceof PsiThisExpression;
   }
 
   //@top
