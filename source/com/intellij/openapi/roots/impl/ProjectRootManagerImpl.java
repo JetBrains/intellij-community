@@ -157,6 +157,10 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       };
       ApplicationManager.getApplication().invokeLater(myReloadProjectRequest, ModalityState.NON_MMODAL);
     }
+    else {
+      // if the project is not open, reset the original level to the same value as mylanguageLevel has
+      myOriginalLanguageLevel = languageLevel;
+    }
   }
 
   private final static HashMap<ProjectRootType, OrderRootType> ourProjectRootTypeToOrderRootType = new HashMap<ProjectRootType, OrderRootType>();
