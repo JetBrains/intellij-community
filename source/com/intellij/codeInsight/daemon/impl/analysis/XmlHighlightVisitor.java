@@ -33,7 +33,7 @@ import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.impl.source.jsp.jspJava.JspText;
-import com.intellij.psi.impl.source.jsp.tagLibrary.TldUtil;
+import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -441,7 +441,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
             new InsertRequiredAttributeIntention(
               tag,
               "uri",
-              TldUtil.getPossibleTldUris((JspFile)tag.getContainingFile())
+              JspManager.getPossibleTldUris((JspFile)tag.getContainingFile())
             ),
             null
           );

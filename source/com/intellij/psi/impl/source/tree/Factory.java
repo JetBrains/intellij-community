@@ -455,7 +455,8 @@ public class Factory implements Constants {
         }
       }
     }
-    LOG.assertTrue(element.getElementType() == type, "Type created: " + element.getElementType() + " wanted: " + type);
+    if(element.getElementType() != type)
+      LOG.error("Type created: " + element.getElementType() + " wanted: " + type);
     return element;
   }
 

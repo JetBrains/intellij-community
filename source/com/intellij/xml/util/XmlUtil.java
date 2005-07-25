@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
-import com.intellij.psi.impl.source.jsp.tagLibrary.TldUtil;
+import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
@@ -172,7 +172,7 @@ public class XmlUtil {
     }
 
     if (result == null && base instanceof JspFile) {
-      result = TldUtil.getTldFileByUri(uri,(JspFile)base);
+      result = JspManager.getInstance(base.getProject()).getTldFileByUri(uri,(JspFile)base);
     }
 
     if (result instanceof XmlFile) {
@@ -180,7 +180,7 @@ public class XmlUtil {
       return xmlFile;
     }
     if(base instanceof JspFile)
-      return TldUtil.getTldFileByUri(uri, (JspFile)base);
+      return JspManager.getInstance(base.getProject()).getTldFileByUri(uri, (JspFile)base);
     return null;
   }
 
