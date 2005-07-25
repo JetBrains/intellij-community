@@ -23,10 +23,6 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
     myThrowExceptionOnOverflow = throwExceptionOnOverflow;
   }
 
-  private Object getValue() {
-    return myValue;
-  }
-
   public void visitLiteralExpression(PsiLiteralExpression expression) {
     myValue = expression.getValue();
   }
@@ -575,8 +571,7 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
   }
 
   private static Object _compute(ConstantExpressionEvaluator evaluator, PsiExpression expression) {
-    evaluator.accept(expression);
-    return evaluator.getValue();
+    return evaluator.accept(expression);
   }
 
 }

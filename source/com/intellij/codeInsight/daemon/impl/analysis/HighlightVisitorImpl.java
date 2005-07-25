@@ -20,30 +20,29 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.el.ELExpressionHolder;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
-import com.intellij.psi.impl.source.jsp.jspJava.JspText;
 import com.intellij.psi.impl.source.jsp.jspJava.JspExpression;
+import com.intellij.psi.impl.source.jsp.jspJava.JspText;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.javadoc.PsiDocToken;
+import com.intellij.psi.jsp.el.ELExpressionHolder;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 
 import java.text.MessageFormat;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Collections;
 
 public class HighlightVisitorImpl extends PsiElementVisitor implements HighlightVisitor, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl");
@@ -65,16 +64,15 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   private Boolean runEjbHighlighting;
   private AspectHighlighter myAspectHighlightVisitor;
   // map codeBlock->List of PsiReferenceExpression of uninitailized final variables
-  private final Map<PsiElement, Collection<PsiReferenceExpression>> myUninitializedVarProblems = new THashMap<PsiElement, Collection<PsiReferenceExpression>>();
+  private final Map<PsiElement, Collection<PsiReferenceExpression>> myUninitializedVarProblems = Collections.synchronizedMap(new THashMap<PsiElement, Collection<PsiReferenceExpression>>());
   // map codeBlock->List of PsiReferenceExpression of extra initailization of final variable
-  private final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> myFinalVarProblems = new THashMap<PsiElement, Collection<ControlFlowUtil.VariableInfo>>();
+  private final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> myFinalVarProblems = Collections.synchronizedMap(new THashMap<PsiElement, Collection<ControlFlowUtil.VariableInfo>>());
   private final Map<PsiParameter, Boolean> myParameterIsReassigned = Collections.synchronizedMap(new THashMap<PsiParameter, Boolean>());
   public static final String UNKNOWN_SYMBOL = "Cannot resolve symbol ''{0}''";
 
-  private final Map<PsiMethod, PsiClass[]> myUnhandledExceptionsForMethod = new HashMap<PsiMethod, PsiClass[]>();
-  private final Map<String, PsiClass> mySingleImportedClasses = new THashMap<String, PsiClass>();
-  private final Map<String, PsiElement> mySingleImportedFields = new THashMap<String, PsiElement>();
-  private final Map<MethodSignature, PsiElement> mySingleImportedMethods = new THashMap<MethodSignature, PsiElement>();
+  private final Map<String, PsiClass> mySingleImportedClasses = Collections.synchronizedMap(new THashMap<String, PsiClass>());
+  private final Map<String, PsiElement> mySingleImportedFields = Collections.synchronizedMap(new THashMap<String, PsiElement>());
+  private final Map<MethodSignature, PsiElement> mySingleImportedMethods = Collections.synchronizedMap(new THashMap<MethodSignature, PsiElement>());
   private final AnnotationHolderImpl myAnnotationHolder = new AnnotationHolderImpl();
 
   public String getComponentName() {
@@ -136,7 +134,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   public void init() {
     myUninitializedVarProblems.clear();
     myFinalVarProblems.clear();
-    myUnhandledExceptionsForMethod.clear();
     mySingleImportedClasses.clear();
     mySingleImportedFields.clear();
     mySingleImportedMethods.clear();
@@ -149,20 +146,18 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
   public void visitElement(PsiElement element) {
     Language lang = element.getLanguage();
-    if (lang != null) {
-      Annotator annotator = lang.getAnnotator();
-      if (annotator != null) {
-        annotator.annotate(element, myAnnotationHolder);
-        if (myAnnotationHolder.hasAnnotations()) {
-          Annotation[] annotations = myAnnotationHolder.getResult();
-          for (Annotation annotation : annotations) {
-            myHolder.add(HighlightUtil.convertToHighlightInfo(annotation));
-          }
+    Annotator annotator = lang.getAnnotator();
+    if (annotator != null) {
+      annotator.annotate(element, myAnnotationHolder);
+      if (myAnnotationHolder.hasAnnotations()) {
+        Annotation[] annotations = myAnnotationHolder.getResult();
+        for (Annotation annotation : annotations) {
+          myHolder.add(HighlightUtil.convertToHighlightInfo(annotation));
         }
-        myAnnotationHolder.clear();
-      } else if (element instanceof JspText) {
-        myXmlVisitor.visitJspElement((JspText)element);
       }
+      myAnnotationHolder.clear();
+    } else if (element instanceof JspText) {
+      myXmlVisitor.visitJspElement((JspText)element);
     }
   }
 
@@ -326,7 +321,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     }
   }
 
-  private boolean filterJspErrors(final PsiErrorElement element) {
+  private static boolean filterJspErrors(final PsiErrorElement element) {
     PsiElement nextSibling = element.getNextSibling();
 
     if (nextSibling == null) {
@@ -346,11 +341,8 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     }
 
     final XmlAttributeValue parentOfType = PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class);
-    if (parentOfType != null &&
-        parentOfType.getUserData(XmlHighlightVisitor.DO_NOT_VALIDATE_KEY) != null) {
-      return true;
-    }
-    return false;
+    return parentOfType != null &&
+           parentOfType.getUserData(XmlHighlightVisitor.DO_NOT_VALIDATE_KEY) != null;
   }
 
   public void visitEnumConstant(PsiEnumConstant enumConstant) {
@@ -367,7 +359,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   public void visitExpression(PsiExpression expression) {
     if (myHolder.add(HighlightUtil.checkMustBeBoolean(expression))) return;
     if (expression instanceof PsiArrayAccessExpression
-        && ((PsiArrayAccessExpression)expression).getArrayExpression() != null
         && ((PsiArrayAccessExpression)expression).getIndexExpression() != null) {
       myHolder.add(HighlightUtil.checkValidArrayAccessExpression(((PsiArrayAccessExpression)expression).getArrayExpression(),
                                                                  ((PsiArrayAccessExpression)expression).getIndexExpression()));
