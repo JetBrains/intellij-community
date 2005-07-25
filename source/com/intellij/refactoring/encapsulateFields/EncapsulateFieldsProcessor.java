@@ -131,7 +131,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     for(int i = 0; i < fields.length; i++){
       PsiField field = fields[i];
       PsiSearchHelper helper = field.getManager().getSearchHelper();
-      PsiReference[] refs = helper.findReferences(field, GlobalSearchScope.projectScope(myProject), false);
+      PsiReference[] refs = helper.findReferences(field, GlobalSearchScope.projectScope(myProject), true);
       for (final PsiReference reference : refs) {
         if (!(reference instanceof PsiReferenceExpression)) continue;
         PsiReferenceExpression ref = (PsiReferenceExpression)reference;
@@ -215,21 +215,13 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     }
 
     for (List<MyUsageInfo> usageInfos : usagesInFiles.values()) {
-      //sort usages so that descendants in the tree go first, and rhs usages go before lhs
-      //this is to avoid elements become invalid as a result of processUsage
+      //sort usages in depth-first, right-to-left order
+      //this is to avoid elements to become invalid as a result of processUsage
       Collections.sort(usageInfos, new Comparator<MyUsageInfo>() {
         public int compare(final MyUsageInfo usage1, final MyUsageInfo usage2) {
           final PsiElement element1 = usage1.getElement();
-          final PsiElement element2 = usage1.getElement();
-          if (PsiTreeUtil.isAncestor(element1, element2, true)) return 1;
-          if (PsiTreeUtil.isAncestor(element2, element1, true)) return -1;
-          final PsiElement commonParent = PsiTreeUtil.findCommonParent(element1, element2);
-          if (commonParent instanceof PsiAssignmentExpression) {
-            final PsiExpression lExpression = ((PsiAssignmentExpression)commonParent).getLExpression();
-            if (PsiTreeUtil.isAncestor(lExpression, element1, true)) return 1;
-            return -1;
-          }
-          return 0;
+          final PsiElement element2 = usage2.getElement();
+          return element2.getTextRange().getStartOffset() - element1.getTextRange().getStartOffset();
         }
       });
 
