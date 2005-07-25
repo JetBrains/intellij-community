@@ -1,24 +1,29 @@
 package com.intellij.psi.impl;
 
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.ConstantEvaluationOverflowException;
-import com.intellij.psi.util.ConstantExpressionUtil;
+import com.intellij.psi.util.*;
+import com.intellij.util.containers.SoftHashMap;
 import gnu.trove.THashSet;
 
+import java.util.Map;
 import java.util.Set;
 
 public class ConstantExpressionEvaluator extends PsiElementVisitor {
-  protected Set<PsiVariable> myVisitedVars;
-  protected boolean myThrowExceptionOnOverflow;
-  protected Object myValue;
+  private Set<PsiVariable> myVisitedVars;
+  private boolean myThrowExceptionOnOverflow;
+  private Object myValue;
+  private static final Key<CachedValue<Map<PsiElement,Object>>> CONSTANT_VALUE_MAP_KEY = new Key<CachedValue<Map<PsiElement, Object>>>("CONSTANT_VALUE_MAP_KEY");
+  private static final Object NO_VALUE = new Object();
 
-  protected ConstantExpressionEvaluator(Set<PsiVariable> visitedVars, boolean throwExceptionOnOverflow) {
+  private ConstantExpressionEvaluator(Set<PsiVariable> visitedVars, boolean throwExceptionOnOverflow) {
     myVisitedVars = visitedVars;
     myThrowExceptionOnOverflow = throwExceptionOnOverflow;
   }
 
-  protected Object getValue() {
+  private Object getValue() {
     return myValue;
   }
 
@@ -348,13 +353,32 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
     myValue = value;
   }
 
-  protected Object accept(PsiElement element) {
-    myValue = null;
-    if (element != null) {
+  private Object accept(PsiElement element) {
+    if (element == null) return null;
+
+    Project project = element.getProject();
+    CachedValue<Map<PsiElement,Object>> cachedValue = project.getUserData(CONSTANT_VALUE_MAP_KEY);
+    if (cachedValue == null) {
+      cachedValue = PsiManager.getInstance(project).getCachedValuesManager().createCachedValue(new CachedValueProvider<Map<PsiElement,Object>>() {
+        public CachedValueProvider.Result<Map<PsiElement,Object>> compute() {
+          return new Result<Map<PsiElement, Object>>(new SoftHashMap<PsiElement, Object>(),new Object[]{PsiModificationTracker.MODIFICATION_COUNT});
+        }
+      }, false);
+      project.putUserData(CONSTANT_VALUE_MAP_KEY, cachedValue);
+    }
+    Map<PsiElement, Object> map = cachedValue.getValue();
+    Object value = map.get(element);
+    if (value == null) {
+      myValue = null;
       element.accept(this);
+      map.put(element, myValue == null ? NO_VALUE : myValue);
+      return myValue;
+    }
+    else if (value == NO_VALUE) {
+      return null;
     }
 
-    return myValue;
+    return value;
   }
 
   public void visitTypeCastExpression(PsiTypeCastExpression expression) {
@@ -371,7 +395,7 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
   }
 
   public void visitConditionalExpression(PsiConditionalExpression expression) {
-    if (expression.getCondition() == null || expression.getThenExpression() == null || expression.getElseExpression() == null) {
+    if (expression.getThenExpression() == null || expression.getElseExpression() == null) {
       myValue = null;
       return;
     }
@@ -508,33 +532,33 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
     myValue = null;
   }
 
-  protected static boolean isIntegral(Object o) {
+  private static boolean isIntegral(Object o) {
     return o instanceof Long || o instanceof Integer || o instanceof Short || o instanceof Byte || o instanceof Character;
   }
 
-  protected void checkDivisionOverflow(long l, final long r, long minValue, PsiBinaryExpression expression) {
+  private void checkDivisionOverflow(long l, final long r, long minValue, PsiBinaryExpression expression) {
     if (!myThrowExceptionOnOverflow) return;
     if (r == 0) throw new ConstantEvaluationOverflowException(expression);
     if (r == -1 && l == minValue) throw new ConstantEvaluationOverflowException(expression);
   }
 
-  protected void checkMultiplicationOverflow(long result, long l, long r, PsiExpression expression) {
+  private void checkMultiplicationOverflow(long result, long l, long r, PsiExpression expression) {
     if (!myThrowExceptionOnOverflow) return;
     if (r == 0 || l == 0) return;
     if (result / r != l || ((l < 0) ^ (r < 0) != (result < 0))) throw new ConstantEvaluationOverflowException(expression);
   }
 
-  protected void checkAdditionOverflow(boolean resultPositive,
-                                       boolean lPositive,
-                                       boolean rPositive, PsiBinaryExpression expression) {
+  private void checkAdditionOverflow(boolean resultPositive,
+                                     boolean lPositive,
+                                     boolean rPositive, PsiBinaryExpression expression) {
     if (!myThrowExceptionOnOverflow) return;
     boolean overflow = lPositive == rPositive && lPositive != resultPositive;
     if (overflow) throw new ConstantEvaluationOverflowException(expression);
   }
 
-  protected void checkRealNumberOverflow(Object result,
-                                         Object lOperandValue,
-                                         Object rOperandValue, PsiExpression expression) {
+  private void checkRealNumberOverflow(Object result,
+                                       Object lOperandValue,
+                                       Object rOperandValue, PsiExpression expression) {
     if (!myThrowExceptionOnOverflow) return;
     if (lOperandValue instanceof Float && ((Float) lOperandValue).isInfinite()) return;
     if (lOperandValue instanceof Double && ((Double) lOperandValue).isInfinite()) return;
@@ -550,7 +574,7 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
     return _compute(evaluator, expression);
   }
 
-  protected static Object _compute(ConstantExpressionEvaluator evaluator, PsiExpression expression) {
+  private static Object _compute(ConstantExpressionEvaluator evaluator, PsiExpression expression) {
     evaluator.accept(expression);
     return evaluator.getValue();
   }
