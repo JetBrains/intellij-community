@@ -23,14 +23,10 @@ public class OrFilter
 
   public OrFilter(){}
 
-  public OrFilter(ElementFilter[] filters){
+  public OrFilter(ElementFilter... filters){
     for (ElementFilter filter : filters) {
       addFilter(filter);
     }
-  }
-
-  public OrFilter(ElementFilter filter1, ElementFilter filter2){
-    this(new ElementFilter[]{filter1, filter2});
   }
 
   public void addFilter(ElementFilter filter){
