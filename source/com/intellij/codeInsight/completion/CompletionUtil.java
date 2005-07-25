@@ -377,8 +377,9 @@ public class CompletionUtil {
   }
 
   public static String[] getUnserolvedReferences(final PsiElement parentOfType, final boolean referenceOnMethod) {
-    if(parentOfType.getTextLength() > MAX_SCOPE_SIZE_TO_SEARCH_UNRESOLVED) return new String[0];
+    if(parentOfType != null && parentOfType.getTextLength() > MAX_SCOPE_SIZE_TO_SEARCH_UNRESOLVED) return new String[0];
     final List<String> unresolvedRefs = new ArrayList<String>();
+    
     if (parentOfType != null) {
       parentOfType.accept(new PsiRecursiveElementVisitor() {
         public void visitReferenceExpression(PsiReferenceExpression reference) {
