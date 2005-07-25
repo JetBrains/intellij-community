@@ -14,7 +14,9 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.net.HttpConfigurable;
 import org.jdom.Document;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nullable;
@@ -38,28 +40,18 @@ import java.net.URL;
  */
 public final class UpdateChecker implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker");
-  private static final URL UPDATE_URL;
+  private static String UPDATE_URL = null;
 
   private static long checkInterval = 0;
   private static boolean myVeryFirstOpening = true;
 
   static {
-    URL url = null;
-    String downloadUrl;
     if (LicenseManager.getInstance().isEap()) {
-      downloadUrl = "http://www.jetbrains.com/updates/eap-update.xml";
+      UPDATE_URL = "http://www.jetbrains.com/updates/eap-update.xml";
     }
     else {
-      downloadUrl = "http://www.jetbrains.com/updates/update.xml";
+      UPDATE_URL = "http://www.jetbrains.com/updates/update.xml";
     }
-    try {
-      url = new URL(downloadUrl);
-    }
-    catch (MalformedURLException e) {
-      LOG.error(e);
-    }
-
-    UPDATE_URL = url;
   }
 
   public String getComponentName() {
@@ -156,7 +148,8 @@ public final class UpdateChecker implements ApplicationComponent {
     Thread downloadThread = new Thread(new Runnable() {
       public void run() {
         try {
-          final InputStream inputStream = UPDATE_URL.openStream();
+          HttpConfigurable.getInstance().prepareURL(UPDATE_URL);
+          final InputStream inputStream = new URL(UPDATE_URL).openStream();
           try {
             document[0] = JDOMUtil.loadDocument(inputStream);
           }
