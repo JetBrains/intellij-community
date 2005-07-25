@@ -245,6 +245,7 @@ public class JavaCompletionData extends CompletionData{
           END_OF_BLOCK,
           new LeftNeighbour(new OrFilter(
             new TextFilter(MODIFIERS_LIST),
+            new SuperParentFilter(new ClassFilter(PsiAnnotation.class)),
             new TokenTypeFilter(JavaTokenType.GT)))
         )));
 
@@ -268,7 +269,9 @@ public class JavaCompletionData extends CompletionData{
   private void initVariantsInMethodScope() {
     {
 // parameters list completion
-      final CompletionVariant variant = new CompletionVariant(new LeftNeighbour(new TextFilter(new String[]{"(", ",", "final"})));
+      final CompletionVariant variant = new CompletionVariant(
+        new LeftNeighbour(new OrFilter(new TextFilter(new String[]{"(", ",", "final"}),
+                                       new SuperParentFilter(new ClassFilter(PsiAnnotation.class)))));
       variant.includeScopeClass(PsiParameterList.class, true);
       addPrimitiveTypes(variant);
       variant.addCompletion(PsiKeyword.FINAL);
