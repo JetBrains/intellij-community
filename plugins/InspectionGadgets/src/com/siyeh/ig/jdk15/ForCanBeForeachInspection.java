@@ -1115,6 +1115,10 @@ public class ForCanBeForeachInspection extends StatementInspection{
 
     private static boolean expressionIsVariableLookup(PsiExpression expression,
                                                       PsiLocalVariable var){
+        if(expression == null)
+        {
+            return false;
+        }
         final PsiExpression strippedExpression =
                 ParenthesesUtils.stripParentheses(expression);
 
