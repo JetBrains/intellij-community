@@ -113,6 +113,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     final ArrayList<Block> localResult = new ArrayList<Block>();
     processChild(localResult, child, null, null, Indent.getNoneIndent());
     child = child.getTreeNext();
+    Indent childIndent = Indent.getNormalIndent();
     while (child != null) {
       if (child.getElementType() == ElementType.SWITCH_LABEL_STATEMENT || isRBrace(child)) {
         result.add(createCaseSectionBlock(localResult, childAlignment, indent, childWrap));
@@ -120,12 +121,10 @@ public class CodeBlockBlock extends AbstractJavaBlock {
       }
 
       if (!FormatterUtil.containsWhiteSpacesOnly(child)) {
-        Indent childIndent;
+
         if (child.getElementType() == ElementType.BLOCK_STATEMENT) {
           childIndent = Indent.getNoneIndent();
-        } else {
-          childIndent = Indent.getNormalIndent();
-        }
+        } 
         processChild(localResult, child, null, null, childIndent);
       }
       child = child.getTreeNext();
