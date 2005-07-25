@@ -729,10 +729,11 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     myAdditionalHtmlTags = inspectionProfile.myAdditionalHtmlTags;
     
     myUnusedSymbolSettings = inspectionProfile.myUnusedSymbolSettings.copySettings();
-    save(new File(InspectionProfileManager.getProfileDirectory(), myName + ".xml"), myName);
+    myFile = inspectionProfile.myFile;
+    save(myFile != null ? myFile : new File(InspectionProfileManager.getProfileDirectory(), myName + ".xml"), myName);
   }
 
-  private static class ToolState {
+  private static class ToolState {     
     private HighlightDisplayLevel myLevel;
     private boolean myEnabled;
 

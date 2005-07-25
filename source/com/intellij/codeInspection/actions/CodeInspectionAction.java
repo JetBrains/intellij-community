@@ -51,6 +51,11 @@ public class CodeInspectionAction extends BaseAnalysisAction {
         inspectCodeDialog.show();
         if (inspectCodeDialog.isOK()){
           reloadProfiles(profiles, inspectionManager, manager);
+        } else {
+          //if profile was disabled and cancel after apply was pressed
+          final InspectionProfileImpl profile = inspectionManager.getProfile((String)profiles.getSelectedItem());
+          final boolean canExecute = profile != null && profile.isExecutable();
+          dialog.setOKActionEnabled(canExecute);
         }
       }
     });
