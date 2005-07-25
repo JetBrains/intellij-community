@@ -52,14 +52,14 @@ public abstract class BaseRefactoringAction extends AnAction {
 
     Editor editor = (Editor) dataContext.getData(DataConstants.EDITOR);
     PsiFile file = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
-    if (file == null || !isAvailableForFile(file)) {
-      presentation.setEnabled(false);
-      return;
-    }
 
     if (editor != null) {
       PsiElement element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
       if (element == null || !isAvailableForLanguage(element.getLanguage())) {
+        if (file == null || !isAvailableForFile(file)) {
+          presentation.setEnabled(false);
+          return;
+        }
         final int offset = editor.getCaretModel().getOffset();
         element = file.findElementAt(offset);
         if (element == null && offset == file.getTextLength()) {
