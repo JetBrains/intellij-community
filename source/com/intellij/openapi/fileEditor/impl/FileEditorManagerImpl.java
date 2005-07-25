@@ -444,7 +444,6 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
 
       final boolean open = window.isFileOpen(file);
       if (open) {
-        LOG.assertTrue(window.findFileComposite(file) != null);
         // File is already opened. In this case we have to just select existing EditorComposite
         newSelectedComposite = window.findFileComposite(file);
         LOG.assertTrue(newSelectedComposite != null);
