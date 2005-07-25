@@ -37,20 +37,20 @@ import com.intellij.openapi.progress.ProgressIndicator;
 
 public abstract class TextEditorHighlightingPass implements HighlightingPass {
   protected final Document myDocument;
-  private final long myInitalStamp;
+  private final long myInitialStamp;
 
   protected TextEditorHighlightingPass(Document document) {
     myDocument = document;
-    myInitalStamp = document.getModificationStamp();
+    myInitialStamp = document.getModificationStamp();
   }
 
   public final void collectInformation(ProgressIndicator progress) {
-    if (myDocument.getModificationStamp() != myInitalStamp) return; //Document has changed.
+    if (myDocument.getModificationStamp() != myInitialStamp) return; //Document has changed.
     doCollectInformation(progress);
   }
 
   public final void applyInformationToEditor() {
-    if (myDocument.getModificationStamp() != myInitalStamp) return; // Document has changed.
+    if (myDocument.getModificationStamp() != myInitialStamp) return; // Document has changed.
     doApplyInformationToEditor();
   }
 
