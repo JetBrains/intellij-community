@@ -304,7 +304,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
               new NamespaceFilter(XmlUtil.JSP_URI),
               new AndFilter(
                 new ClassFilter(XmlTag.class),
-                new TextFilter("include")
+                new TextFilter("include","forward")
               )
             ),
             new AndFilter(
