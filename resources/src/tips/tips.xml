@@ -66,10 +66,13 @@
   <tip file="CompleteStatement.html"/>
   <tip file="CamelPrefixesInNavigationPopups.html"/>
   <tip file="CtrlShiftI.html"/>             <!--covered-->
+  <tip file="CompletionInHTML.html"/>
   <tip file="CopyPasteReference.html"/>
   <tip file="MoveUpDown.html"/>
   <tip file="SelectRunDebugConfiguration.html"/>
   <tip file="CtrlShiftIForLookup.html"/>    <!--covered-->
   <tip file="PropertiesCompletion.html"/>
   <tip file="ShowAppliedStyles.html"/>
+  <tip file="ImagesLookup.html"/>
+  <tip file="RenameCssSelector.html"/>
 </tips>
