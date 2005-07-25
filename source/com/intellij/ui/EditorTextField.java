@@ -205,7 +205,7 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
     return super.isFocusOwner();
   }
 
-  private void releaseEditor(final Editor editor) {
+  void releaseEditor(final Editor editor) {
     remove(editor.getComponent());
     ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
