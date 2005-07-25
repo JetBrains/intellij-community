@@ -41,6 +41,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -200,6 +201,15 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
 
   public boolean canRepresent(final Object element) {
     if (super.canRepresent(element)) return true;
+    final PackageElement value = getValue();
+    if (element instanceof PackageElement) {
+      final PackageElement packageElement = ((PackageElement)element);
+      final PsiPackage otherPackage = packageElement.getPackage();
+      final PsiPackage aPackage = value.getPackage();
+      if (otherPackage != null && aPackage != null && Comparing.equal(otherPackage.getQualifiedName(), aPackage.getQualifiedName())) {
+        return true;
+      }
+    }
     if (getValue() == null) return true;
     if (element instanceof PsiDirectory) {
       return Arrays.asList(getValue().getPackage().getDirectories()).contains((PsiDirectory)element);
