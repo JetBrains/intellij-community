@@ -1,8 +1,9 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch;
 
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
-import com.intellij.cvsSupport2.cvsoperations.common.CvsOperationOnFiles;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
+import com.intellij.cvsSupport2.cvsoperations.common.CvsOperationOnFiles;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.tag.TagCommand;
@@ -20,6 +21,15 @@ public class TagOperation extends CvsOperationOnFiles{
       addFile(files[i]);
     }
     myRemoveTag = removeTag;
+    myTag = tag;
+    myOverrideExisting = overrideExisting;
+  }
+
+  public TagOperation(FilePath[] files, String tag, boolean overrideExisting) {
+    for (int i = 0; i < files.length; i++) {
+      addFile(files[i].getIOFile());
+    }
+    myRemoveTag = false;
     myTag = tag;
     myOverrideExisting = overrideExisting;
   }

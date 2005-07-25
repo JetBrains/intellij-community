@@ -155,12 +155,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
     final CommandCvsHandler result = new CommandCvsHandler(title, operation, FileSetToBeUpdated.selectedFiles(selectedFiles));
 
     if (tagFilesAfterCommit) {
-      RTagOperation[] rtagOperations = RTagOperation.createOn(selectedFiles,
-                                                              tagName,
-                                                              CvsConfiguration.getInstance(project).OVERRIDE_EXISTING_TAG_FOR_PROJECT);
-      for (RTagOperation rtagOperation : rtagOperations) {
-        result.addOperation(rtagOperation);
-      }
+      result.addOperation(new TagOperation(selectedFiles, tagName, CvsConfiguration.getInstance(project).OVERRIDE_EXISTING_TAG_FOR_PROJECT));
     }
 
     return result;

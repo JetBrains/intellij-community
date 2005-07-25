@@ -1,7 +1,5 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsUpdate.ui;
 
-import com.intellij.cvsSupport2.CvsUtil;
-import com.intellij.cvsSupport2.actions.merge.CvsMergeAction;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.cvsoperations.cvsUpdate.MergedWithConflictProjectOrModuleFile;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,9 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.merge.AbstractMergeAction;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Options;
@@ -23,7 +18,8 @@ import com.intellij.util.Options;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 
 public class CorruptedProjectFilesDialog extends DialogWrapper {
 
@@ -64,7 +60,9 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
   }
 
   protected Action[] createActions() {
-    return new Action[]{new SkipFile(), new GetFile(), new SkipAll(), new GetAll(), new VisualMerge()};
+    return new Action[]{new SkipFile(), new GetFile(), new SkipAll(), new GetAll()
+    //  , new VisualMerge()
+    };
   }
 
   private void showNextFileInfo() {
@@ -152,6 +150,7 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
     }
   }
 
+  /*
   private class VisualMerge extends AbstractAction {
     public VisualMerge() {
       putValue(NAME, "Visual Merge");
@@ -175,6 +174,7 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
     }
 
   }
+  */
 
   private void saveExternally(VirtualFile currentVirtualFile, Document document) {
     FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();

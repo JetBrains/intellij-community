@@ -188,7 +188,10 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
   }
 
   public Entry getEntryFor(VirtualFile file) {
-    return getCvsInfo(CvsVfsUtil.getParentFor(file)).getEntryNamed(file.getName());
+    assert(file != null);
+    final CvsInfo cvsInfo = getCvsInfo(CvsVfsUtil.getParentFor(file));
+    assert(cvsInfo != null);
+    return cvsInfo.getEntryNamed(file.getName());
   }
 
   public void clearCachedEntriesFor(final VirtualFile parent) {
