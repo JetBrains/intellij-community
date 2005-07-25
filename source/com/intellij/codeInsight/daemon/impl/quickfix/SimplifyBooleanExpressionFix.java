@@ -44,6 +44,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    LOG.assertTrue(mySubExpression.isValid());
     PsiExpression expression;
     if (mySubExpressionValue == null) {
       expression = mySubExpression;
