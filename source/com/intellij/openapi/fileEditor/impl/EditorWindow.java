@@ -138,7 +138,7 @@ public class EditorWindow {
     final int currentlySelectedIndex = myTabbedPane.getSelectedIndex();
     if (currentlySelectedIndex != fileIndex) {
       // if the file being closed is not currently selected, keep the currently selected file open
-      return -1;
+      return fileIndex < currentlySelectedIndex ? currentlySelectedIndex - 1 : -1;
     }
     if (UISettings.getInstance().ACTIVATE_MRU_EDITOR_ON_CLOSE) {
       // try to open last visited file
