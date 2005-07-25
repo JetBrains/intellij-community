@@ -584,7 +584,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
       }
       group.addSeparator();
       group.add(
-        new AnAction("Edit Filters", "Edit Filters", IconLoader.getIcon("/general/projectProperties.png")) {
+        new AnAction("Edit Filters", "Edit Filters", IconLoader.getIcon("/general/ideOptions.png")) {
           public void actionPerformed(AnActionEvent e) {
             ShowSettingsUtil.getInstance().editConfigurable(myProject, TodoConfigurable.getInstance());
           }
