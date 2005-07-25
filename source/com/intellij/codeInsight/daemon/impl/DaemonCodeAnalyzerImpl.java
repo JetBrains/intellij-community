@@ -81,34 +81,34 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   private static final Key<LineMarkerInfo[]> MARKERS_IN_EDITOR_DOCUMENT_KEY = Key.create("DaemonCodeAnalyzerImpl.MARKERS_IN_EDITOR_DOCUMENT_KEY");
 
   private final Project myProject;
-  private DaemonCodeAnalyzerSettings mySettings;
+  private final DaemonCodeAnalyzerSettings mySettings;
   private EditorTracker myEditorTracker;
 
   private final DaemonProgress myUpdateProgress = new DaemonProgress();
 
-  private Semaphore myUpdateThreadSemaphore = new Semaphore();
+  private final Semaphore myUpdateThreadSemaphore = new Semaphore();
 
-  private Runnable myUpdateRunnable = createUpdateRunnable();
+  private final Runnable myUpdateRunnable = createUpdateRunnable();
 
-  private Alarm myAlarm = new Alarm();
+  private final Alarm myAlarm = new Alarm();
   private boolean myUpdateByTimerEnabled = true;
-  private Set<VirtualFile> myDisabledHintsFiles = new THashSet<VirtualFile>();
-  private Set<PsiFile> myDisabledHighlightingFiles = new THashSet<PsiFile>();
+  private final Set<VirtualFile> myDisabledHintsFiles = new THashSet<VirtualFile>();
+  private final Set<PsiFile> myDisabledHighlightingFiles = new THashSet<PsiFile>();
 
-  private FileStatusMap myFileStatusMap;
+  private final FileStatusMap myFileStatusMap;
 
   private StatusBarUpdater myStatusBarUpdater;
 
   private DaemonCodeAnalyzerSettings myLastSettings;
 
-  private MyCommandListener myCommandListener = new MyCommandListener();
-  private MyApplicationListener myApplicationListener = new MyApplicationListener();
-  private EditorColorsListener myEditorColorsListener = new MyEditorColorsListener();
-  private AnActionListener myAnActionListener = new MyAnActionListener();
-  private PropertyChangeListener myTodoListener = new MyTodoListener();
-  private ExternalResourceListener myExternalResourceListener = new MyExternalResourceListener();
-  private AntConfigurationListener myAntConfigurationListener = new MyAntConfigurationListener();
-  private EditorMouseMotionListener myEditorMouseMotionListener = new MyEditorMouseMotionListener();
+  private final MyCommandListener myCommandListener = new MyCommandListener();
+  private final MyApplicationListener myApplicationListener = new MyApplicationListener();
+  private final EditorColorsListener myEditorColorsListener = new MyEditorColorsListener();
+  private final AnActionListener myAnActionListener = new MyAnActionListener();
+  private final PropertyChangeListener myTodoListener = new MyTodoListener();
+  private final ExternalResourceListener myExternalResourceListener = new MyExternalResourceListener();
+  private final AntConfigurationListener myAntConfigurationListener = new MyAntConfigurationListener();
+  private final EditorMouseMotionListener myEditorMouseMotionListener = new MyEditorMouseMotionListener();
 
   private final WindowFocusListener myIdeFrameFocusListener = new MyWindowFocusListener();
 

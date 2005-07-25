@@ -111,8 +111,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       LineTooltipRenderer bigRenderer = null;
       final List<MarkSpot> nearestMarkSpots = getNearestMarkSpots(e, width);
       Set<RangeHighlighter> highlighters = new THashSet<RangeHighlighter>();
-      for (int i = 0; i < nearestMarkSpots.size(); i++) {
-        MarkSpot markSpot = nearestMarkSpots.get(i);
+      for (MarkSpot markSpot : nearestMarkSpots) {
         highlighters.addAll(markSpot.highlighters);
       }
       List<HighlightInfo> infos = new SmartList<HighlightInfo>();
@@ -384,10 +383,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       List<MarkSpot> nearestSpots = getNearestMarkSpots(e, width);
       RangeHighlighter nearestMarker = null;
       int yPos = 0;
-      for (int i = 0; i < nearestSpots.size(); i++) {
-        MarkSpot markSpot = nearestSpots.get(i);
-        for (int j = 0; j < markSpot.highlighters.size(); j++) {
-          RangeHighlighter highlighter = markSpot.highlighters.get(j);
+      for (MarkSpot markSpot : nearestSpots) {
+        for (RangeHighlighter highlighter : markSpot.highlighters) {
           final int newYPos = visibleLineToYPosition(offsetToLine(highlighter.getStartOffset()));
 
           if (nearestMarker == null || Math.abs(yPos - e.getY()) > Math.abs(newYPos - e.getY())) {
@@ -401,8 +398,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     private List<MarkSpot> getNearestMarkSpots(final MouseEvent e, final double width) {
       List<MarkSpot> nearestSpot = new SmartList<MarkSpot>();
-      for (int i = 0; i < mySpots.size(); i++) {
-        MarkSpot markSpot = mySpots.get(i);
+      for (MarkSpot markSpot : mySpots) {
         if (markSpot.near(e, width)) {
           nearestSpot.add(markSpot);
         }
@@ -534,7 +530,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               component.showComponent(myEditor, new Point(point.x - dimension.width, point.y));
             }
           });
-          if (DaemonCodeAnalyzer.getInstance(myEditor.getProject()).isHighlightingAvailable((PsiFile)myEditor.getDataContext().getData(DataConstants.PSI_FILE))){
+          PsiFile file = (PsiFile)myEditor.getDataContext().getData(DataConstants.PSI_FILE);
+          if (file != null && DaemonCodeAnalyzer.getInstance(myEditor.getProject()).isHighlightingAvailable(file)){
             popupMenu.show(comp, x, y);
           }
         }
