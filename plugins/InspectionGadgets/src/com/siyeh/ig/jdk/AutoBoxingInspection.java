@@ -150,6 +150,10 @@ public class AutoBoxingInspection extends ExpressionInspection {
             if(expressionType == null){
                 return;
             }
+            if(expressionType.equals(PsiType.VOID))
+            {
+                return;
+            }
             if(!ClassUtils.isPrimitive(expressionType)){
                 return;
             }
