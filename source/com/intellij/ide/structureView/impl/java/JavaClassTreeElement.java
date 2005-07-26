@@ -23,12 +23,13 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
   private Collection<StructureViewTreeElement> getClassChildren() {
     ArrayList<StructureViewTreeElement> array = new ArrayList<StructureViewTreeElement>();
 
-    if (getElement() == null || !getElement().isValid()) return array;
+    final PsiClass aClass = getElement();
+    if (aClass == null) return array;
     
-    List<PsiElement> ownChildren = Arrays.asList(getElement().getChildren());
+    List<PsiElement> ownChildren = Arrays.asList(aClass.getChildren());
     List<PsiElement> inherited = new ArrayList<PsiElement>(ownChildren);
     
-    PsiScopesUtil.processScope(getElement(), new AddAllMembersProcessor(inherited, getElement()), PsiSubstitutor.UNKNOWN, null, getElement());
+    PsiScopesUtil.processScope(aClass, new AddAllMembersProcessor(inherited, aClass), PsiSubstitutor.UNKNOWN, null, aClass);
 
     for (int i = 0; i < inherited.size(); i++) {
       PsiElement child = inherited.get(i);

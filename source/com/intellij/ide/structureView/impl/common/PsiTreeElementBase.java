@@ -100,16 +100,16 @@ public abstract class PsiTreeElementBase <Value extends PsiElement> implements S
   }
 
   public final StructureViewTreeElement[] getChildren() {
-    if (getElement() == null) return StructureViewTreeElement.EMPTY_ARRAY;
-    if (!getElement().isValid()) return StructureViewTreeElement.EMPTY_ARRAY;
+    final Value element = getElement();
+    if (element == null) return StructureViewTreeElement.EMPTY_ARRAY;
     List<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>();
     Collection<StructureViewTreeElement> baseChildren = getChildrenBase();
     result.addAll(baseChildren);
-    StructureViewFactoryEx structureViewFactory = StructureViewFactoryEx.getInstance(getElement().getProject());
-    Class<? extends PsiElement> aClass = getElement().getClass();
+    StructureViewFactoryEx structureViewFactory = StructureViewFactoryEx.getInstance(element.getProject());
+    Class<? extends PsiElement> aClass = element.getClass();
     List<StructureViewExtension> allExtensions = structureViewFactory.getAllExtensions(aClass);
     for (StructureViewExtension extension : allExtensions) {
-      StructureViewTreeElement[] children = extension.getChildren(getElement());
+      StructureViewTreeElement[] children = extension.getChildren(element);
       if (children != null) {
         result.addAll(Arrays.asList(children));
       }

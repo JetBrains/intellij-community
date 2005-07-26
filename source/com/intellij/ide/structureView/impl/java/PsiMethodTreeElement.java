@@ -17,7 +17,7 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> {
     final ArrayList<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>();
     getElement().accept(new PsiRecursiveElementVisitor(){
       public void visitClass(PsiClass aClass) {
-        if (!(aClass instanceof PsiAnonymousClass)) {
+        if (!(aClass instanceof PsiAnonymousClass) && !(aClass instanceof PsiTypeParameter)) {
           result.add(new JavaClassTreeElement(aClass, isInherited()));
         }
 
