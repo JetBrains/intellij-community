@@ -449,11 +449,13 @@ public class DependenciesPanel extends JPanel {
       mySettings.copyToApplicationDependencySettings();
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
+          final AnalysisScope scope = myBuilder.getScope();
+          scope.invalidate();
           if (myBuilder.isBackward()) {
-            new BackwardDependenciesHandler(myProject, myBuilder.getScope()).analyze();
+            new BackwardDependenciesHandler(myProject, scope).analyze();
           }
           else {
-            new AnalyzeDependenciesHandler(myProject, myBuilder.getScope()).analyze();
+            new AnalyzeDependenciesHandler(myProject, scope).analyze();
           }
         }
       });

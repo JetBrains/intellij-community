@@ -390,4 +390,9 @@ public class AnalysisScope {
     if (myFilesSet == null) initFilesSet();
     return myFilesSet.size();
   }
+
+  public void invalidate(){
+    myFilesSet = null;
+  }
+
 }
