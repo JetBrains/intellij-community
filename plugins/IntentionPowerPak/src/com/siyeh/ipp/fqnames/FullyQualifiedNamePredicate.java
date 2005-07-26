@@ -16,24 +16,24 @@
 package com.siyeh.ipp.fqnames;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class FullyQualifiedNamePredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
-        if(!(element instanceof PsiJavaCodeReferenceElement)
-                || element instanceof PsiReferenceExpression){
+        if(!(element instanceof PsiJavaCodeReferenceElement) ||
+           !((PsiJavaCodeReferenceElement)element).isQualified()) {
             return false;
         }
 
-        PsiElement parent = element.getParent();
-        while(parent instanceof PsiJavaCodeReferenceElement){
-            parent = parent.getParent();
-        }
-        if(parent instanceof PsiPackageStatement ||
-                parent instanceof PsiImportStatement){
+        if (PsiTreeUtil.getParentOfType(element, PsiImportStatementBase.class, PsiPackageStatement.class) != null) {
             return false;
         }
-        final String text = element.getText();
-        return text.indexOf((int) '.') >= 0;
+
+        final PsiElement qualifier = ((PsiJavaCodeReferenceElement)element).getQualifier();
+        if (qualifier instanceof PsiJavaCodeReferenceElement) {
+          return ((PsiJavaCodeReferenceElement)qualifier).resolve() instanceof PsiPackage;
+        }
+        return false;
     }
 }
