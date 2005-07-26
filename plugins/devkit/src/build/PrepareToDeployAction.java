@@ -148,6 +148,7 @@ public class PrepareToDeployAction extends AnAction {
       }
     }
     catch (IOException e1) {
+      Messages.showErrorDialog(e1.getMessage(), "Error Occured");
     }
   }
 
