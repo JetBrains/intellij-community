@@ -44,19 +44,13 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-oldcp=$CLASSPATH
-
 CLASSPATH=../lib/idea.jar
 CLASSPATH=$CLASSPATH:../lib/openapi.jar
 CLASSPATH=$CLASSPATH:../lib/jdom.jar
 CLASSPATH=$CLASSPATH:../lib/log4j.jar
 CLASSPATH=$CLASSPATH:../lib/extensions.jar
 CLASSPATH=$CLASSPATH:$IDEA_JDK/lib/tools.jar
-
-# Append old classpath to current classpath
-if [ ! -z "$oldcp" ]; then
-    CLASSPATH=${CLASSPATH}:$oldcp
-fi
+CLASSPATH=$CLASSPATH:$IDEA_CLASSPATH
 
 export CLASSPATH
 
