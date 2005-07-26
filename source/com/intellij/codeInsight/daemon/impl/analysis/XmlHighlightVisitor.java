@@ -329,7 +329,10 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         elementDescriptor = parentDescriptor.getElementDescriptor(tag);
       }
 
-      if (parentDescriptor != null && elementDescriptor == null) {
+      if (parentDescriptor != null && 
+          elementDescriptor == null && 
+          parentTag.getUserData(DO_NOT_VALIDATE_KEY) == null
+         ) {
         addElementsForTag(
           tag,
           "Element " + name + " is not allowed here",
@@ -878,8 +881,12 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   }
 
   public void visitJspElement(JspText text) {
-    final PsiElement parent = text.getParent();
+    PsiElement parent = text.getParent();
 
+    if (parent instanceof XmlText) {
+      parent = parent.getParent();
+    }
+    
     if (!(parent instanceof XmlText) &&
         !(parent instanceof XmlDocument)
         ) { // optimization
