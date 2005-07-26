@@ -35,7 +35,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
   private WeakList<Document> myDocumentsWithFoldingInfo = new WeakList<Document>();
 
-  private final Key FOLDING_INFO_IN_DOCUMENT_KEY = Key.create("FOLDING_INFO_IN_DOCUMENT_KEY");
+  private final Key<DocumentFoldingInfo> FOLDING_INFO_IN_DOCUMENT_KEY = Key.create("FOLDING_INFO_IN_DOCUMENT_KEY");
 
   CodeFoldingManagerImpl(Project project) {
     myProject = project;
@@ -105,6 +105,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
         PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
         if (file == null || !file.isValid()) return;
+        PsiDocumentManager.getInstance(myProject).commitDocument(document);
 
         Editor[] otherEditors = EditorFactory.getInstance().getEditors(document, myProject);
         if (otherEditors.length == 0) {
@@ -232,7 +233,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   }
 
   private DocumentFoldingInfo getDocumentFoldingInfo(Document document) {
-    DocumentFoldingInfo info = (DocumentFoldingInfo)document.getUserData(FOLDING_INFO_IN_DOCUMENT_KEY);
+    DocumentFoldingInfo info = document.getUserData(FOLDING_INFO_IN_DOCUMENT_KEY);
     if (info == null) {
       info = new DocumentFoldingInfo(myProject, document);
       document.putUserData(FOLDING_INFO_IN_DOCUMENT_KEY, info);
