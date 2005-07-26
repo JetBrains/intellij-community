@@ -355,10 +355,6 @@ public class TypedHandler implements TypedActionHandler {
       autoPopupController.autoPopupXmlLookup(editor);
     }
 
-    if (charTyped == ' ' && file instanceof XmlFile) {
-      autoPopupController.autoPopupXmlLookup(editor);
-    }
-
     if (charTyped == '('){
       autoPopupController.autoPopupParameterInfo(editor, null);
     }
