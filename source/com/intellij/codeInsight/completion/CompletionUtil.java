@@ -388,7 +388,7 @@ public class CompletionUtil {
           if(referenceOnMethod && parent instanceof PsiMethodCallExpression && reference == ((PsiMethodCallExpression)parent).getMethodExpression()) {
             if (reference.resolve() == null && reference.getReferenceName() != null) unresolvedRefs.add(reference.getReferenceName());
           }
-          else if(!referenceOnMethod && reference.resolve() == null) unresolvedRefs.add(reference.getReferenceName());
+          else if(!referenceOnMethod && reference.resolve() == null && reference.getReferenceName() != null) unresolvedRefs.add(reference.getReferenceName());
         }
       });
     }
