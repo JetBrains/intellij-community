@@ -26,7 +26,7 @@ public final class ClientEnvironment
   private final IAdminWriter adminWriter;
   private final IIgnoreFileFilter ignoreFileFilter;
   private final IFileReadOnlyHandler fileReadOnlyHandler;
-  private final boolean utf8TextFileTransmission;
+  private final String charset;
   private final ICvsRootProvider cvsRootProvider;
 
   // Setup ==================================================================
@@ -35,16 +35,16 @@ public final class ClientEnvironment
                            ILocalFileReader localFileReader, ILocalFileWriter localFileWriter,
                            IAdminReader adminReader, IAdminWriter adminWriter,
                            IIgnoreFileFilter ignoreFileFilter, IFileReadOnlyHandler fileReadOnlyHandler,
-                           boolean utf8TextFileTransmission) {
+                           String charset) {
     this(connection, localRootDirectory, adminRootDirectory, cvsRoot,localFileReader, localFileWriter ,adminReader, adminWriter,
-        ignoreFileFilter, fileReadOnlyHandler, utf8TextFileTransmission, ICvsRootProvider.DUMMY);
+        ignoreFileFilter, fileReadOnlyHandler, charset, ICvsRootProvider.DUMMY);
   }
 
   public ClientEnvironment(IConnection connection, File localRootDirectory, File adminRootDirectory, CvsRoot cvsRoot,
                            ILocalFileReader localFileReader, ILocalFileWriter localFileWriter,
                            IAdminReader adminReader, IAdminWriter adminWriter,
                            IIgnoreFileFilter ignoreFileFilter, IFileReadOnlyHandler fileReadOnlyHandler,
-                           boolean utf8TextFileTransmission, ICvsRootProvider cvsRootProvider) {
+                           String charset, ICvsRootProvider cvsRootProvider) {
     BugLog.getInstance().assertNotNull(connection);
     BugLog.getInstance().assertNotNull(localRootDirectory);
     BugLog.getInstance().assertNotNull(adminRootDirectory);
@@ -66,7 +66,7 @@ public final class ClientEnvironment
     this.adminWriter = adminWriter;
     this.ignoreFileFilter = ignoreFileFilter;
     this.fileReadOnlyHandler = fileReadOnlyHandler;
-    this.utf8TextFileTransmission = utf8TextFileTransmission;
+    this.charset = charset;
     this.cvsRootProvider = cvsRootProvider;
   }
 
@@ -108,8 +108,8 @@ public final class ClientEnvironment
     return fileReadOnlyHandler;
   }
 
-  public boolean isUtf8TextFileTransmission() {
-    return utf8TextFileTransmission;
+  public String getCharset() {
+    return charset;
   }
 
   public IClientEnvironment createEnvironmentForDirectory(DirectoryObject directory) {
@@ -121,7 +121,7 @@ public final class ClientEnvironment
           cvsFileSystem.getAdminFileSystem().getFile(directory),
           cvsRoot
           , getLocalFileReader(), getLocalFileWriter(), getAdminReader(), getAdminWriter(),
-          getIgnoreFileFilter(), getFileReadOnlyHandler(), isUtf8TextFileTransmission(), cvsRootProvider);
+          getIgnoreFileFilter(), getFileReadOnlyHandler(), getCharset(), cvsRootProvider);
 
   }
 

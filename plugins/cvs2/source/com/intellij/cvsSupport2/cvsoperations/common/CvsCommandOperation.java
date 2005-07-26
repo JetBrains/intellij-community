@@ -178,17 +178,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
     if (message == null) {
       return new CvsException("Unknown Error", cvsRoot);
     }
-    if (!message.startsWith("Cannot convert character ")) {
-      return new CvsException(message, cvsRoot);
-    }
-    if (CvsApplicationLevelConfiguration.getInstance().USE_UTF8) {
-      return new CvsException(message, cvsRoot);
-    }
-    String[] newMessage = new String[]{
-      message,
-      "Try to activate \"Use UTF8 encoding\" option in the CVS global settings"
-    };
-    return new CvsException(Arrays.asList(newMessage), cvsRoot);
+    return new CvsException(message, cvsRoot);
   };
 
 
@@ -232,7 +222,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
                                                                      executionEnvironment);
 
       myUpdatedFilesManager.setCvsFileSystem(clientEnvironment.getCvsFileSystem());
-      final EventManager eventManager = new EventManager();
+      final EventManager eventManager = new EventManager(CvsApplicationLevelConfiguration.getCharset());
       IGlobalOptions globalOptions = command.getIGlobalOptions();
 
 
@@ -322,7 +312,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
                                                        cvsExecutionEnv),
                                  myAdminReader, myAdminWriter,
                                  getIgnoreFileFilter(), new FileReadOnlyHandler(),
-                                 CvsApplicationLevelConfiguration.getInstance().USE_UTF8);
+                                 CvsApplicationLevelConfiguration.getCharset());
   }
 
   protected ILocalFileWriter createLocalFileWriter(String cvsRoot,

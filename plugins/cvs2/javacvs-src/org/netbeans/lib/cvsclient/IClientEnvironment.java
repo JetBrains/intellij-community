@@ -44,5 +44,5 @@ public interface IClientEnvironment {
 
 	IFileReadOnlyHandler getFileReadOnlyHandler();
 
-	boolean isUtf8TextFileTransmission();
+	String getCharset();
 }

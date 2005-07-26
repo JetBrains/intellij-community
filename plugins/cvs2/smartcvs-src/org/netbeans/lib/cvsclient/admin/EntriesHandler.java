@@ -45,24 +45,24 @@ public final class EntriesHandler {
 
 	// Actions ================================================================
 
-	public boolean read() throws IOException {
+	public boolean read(String charsetName) throws IOException {
     synchronized(Entries.class){
-		  entries.read(entriesFile);
+		  entries.read(entriesFile, charsetName);
       return new EntriesDotLog().readAndApply(entriesDotLogFile, entries);
     }
 
 	}
 
-	public void write(String lineSeparator) throws IOException {
+	public void write(String lineSeparator, final String charsetName) throws IOException {
     synchronized(Entries.class){
-		  entries.write(entriesFile, lineSeparator);
+		  entries.write(entriesFile, lineSeparator, charsetName);
       entriesDotLogFile.delete();
     }
 	}
 
-	public void readAndWrite(final String lineSeparator) throws IOException {
-		if (read()) {
-			write(lineSeparator);
+	public void readAndWrite(final String lineSeparator, final String charsetName) throws IOException {
+		if (read(charsetName)) {
+			write(lineSeparator,charsetName);
 		}
 	}
 }

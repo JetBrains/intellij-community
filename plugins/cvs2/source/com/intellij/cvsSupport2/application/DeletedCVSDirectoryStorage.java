@@ -1,6 +1,7 @@
 package com.intellij.cvsSupport2.application;
 
 import com.intellij.cvsSupport2.CvsUtil;
+import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -59,7 +60,7 @@ public class DeletedCVSDirectoryStorage {
   private boolean doesNotContainFileEntry(File directory) throws IOException {
     if (!containsEntriesFile(directory)) return true;
     EntriesHandler entriesHandler = new EntriesHandler(directory);
-    entriesHandler.read();
+    entriesHandler.read(CvsApplicationLevelConfiguration.getCharset());
     Collection entries = entriesHandler.getEntries().getEntries();
     for (Iterator each = entries.iterator(); each.hasNext();) {
       Entry entry = (Entry)each.next();

@@ -14,7 +14,6 @@
  *****************************************************************************/
 package org.netbeans.lib.cvsclient.connection;
 
-import org.netbeans.lib.cvsclient.io.AsciiInputStreamReader;
 import org.netbeans.lib.cvsclient.io.AsciiOutputStreamWriter;
 import org.netbeans.lib.cvsclient.io.IStreamLogger;
 import org.netbeans.lib.cvsclient.io.StreamUtilities;
@@ -51,7 +50,6 @@ public final class PServerConnection
   private Socket socket;
   private InputStream socketInputStream;
   private OutputStream socketOutputStream;
-
   // Setup ==================================================================
 
   public PServerConnection(ConnectionSettings connectionSettings,
@@ -169,7 +167,7 @@ public final class PServerConnection
       println(loggedWriter, postamble);
       loggedWriter.flush();
 
-      String response = StreamUtilities.readLine(new AsciiInputStreamReader(loggingInputStream));
+      String response = new StreamUtilities(null).readLine(loggingInputStream);
       if (response.equals("I LOVE YOU")) {
         error = false;
         return;

@@ -29,11 +29,14 @@ public final class AsciiOutputStreamWriter extends AbstractOutputStreamWriter {
 	// Implemented ============================================================
 
 	protected void writeChar(char chr, OutputStream outputStream) throws IOException {
-		if ((chr & 0xFF00) > 0) {
-			throw new EncodingException("Cannot convert character " + Integer.toHexString(chr));
-		}
+          final int aChar = chr;//(chr & 0xFF00);
+          /*
+          if (aChar > 0) {
+                  throw new EncodingException("Cannot convert character " + Integer.toHexString(chr));
+          }
 
 		final int value = chr & 0xFF;
-		outputStream.write(value);
+          */
+		outputStream.write(aChar);
 	}
 }

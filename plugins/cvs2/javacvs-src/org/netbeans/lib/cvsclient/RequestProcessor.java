@@ -93,7 +93,7 @@ public final class RequestProcessor
 
 		ConnectionStreams connectionStreams = new ConnectionStreams(clientEnvironment.getConnection(),
 			streamLogger,
-			clientEnvironment.isUtf8TextFileTransmission());
+			clientEnvironment.getCharset());
 		boolean exception = true;
 		try {
 			updateValidRequests(connectionStreams);
@@ -118,10 +118,6 @@ public final class RequestProcessor
 
 			if (System.getProperty("os.name").startsWith("Windows") && isValidRequest("Case")) {
 				sendRequest(new CaseRequest(), connectionStreams);
-			}
-
-			if (clientEnvironment.isUtf8TextFileTransmission()) {
-				connectionStreams.setUtf8();
 			}
 
 			exception = false;
@@ -258,7 +254,7 @@ public final class RequestProcessor
 									IResponseHandler responseHandler)
 		throws CommandAbortedException,
 		IOException {
-		final ResponseParser responseParser = new ResponseParser(responseHandler);
+		final ResponseParser responseParser = new ResponseParser(responseHandler, clientEnvironment.getCharset());
 		final StringBuffer responseBuffer = new StringBuffer(32);
 		for (; ;) {
 			final String responseString = readResponse(connectionStreams.getLoggedReader(), responseBuffer);

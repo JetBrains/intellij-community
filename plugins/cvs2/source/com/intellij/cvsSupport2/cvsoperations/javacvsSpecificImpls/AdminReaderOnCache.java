@@ -3,6 +3,7 @@ package com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.cvsstatuses.CvsStatusProvider;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
+import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -27,7 +28,7 @@ public class AdminReaderOnCache implements IAdminReader {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls.AdminReaderOnCache");
 
-  private final static IAdminReader ourStandardAdminReader = new AdminReader();
+  private final IAdminReader ourStandardAdminReader = new AdminReader(CvsApplicationLevelConfiguration.getCharset());
   private final CvsEntriesManager myCvsEntriesManager = CvsEntriesManager.getInstance();
 
   public Entry getEntry(final AbstractFileObject fileObject, final ICvsFileSystem cvsFileSystem) throws IOException {

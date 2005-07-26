@@ -6,12 +6,15 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -38,8 +41,15 @@ public class CvsApplicationLevelConfiguration implements ApplicationComponent, J
   public boolean CHECKOUT_PRUNE_EMPTY_DIRECTORIES = true;
   public String CHECKOUT_KEYWORD_SUBSTITUTION = null;
   public boolean SHOW_RESTORE_DIRECTORIES_CONFIRMATION = true;
-  public boolean USE_UTF8 = false;
+
+  @NotNull public String ENCODING;
+
   public boolean USE_GZIP = false;
+  public static final String DEFAULT = "Default";
+
+  public CvsApplicationLevelConfiguration() {
+    ENCODING = DEFAULT;
+  }
 
 
   public static CvsApplicationLevelConfiguration getInstance() {
@@ -62,6 +72,22 @@ public class CvsApplicationLevelConfiguration implements ApplicationComponent, J
       Element child = (Element)each.next();
       CONFIGURATIONS.add(createConfigurationOn(child));
     }
+
+    if (!encodingExists(ENCODING)) {
+      ENCODING = DEFAULT;
+    }
+
+  }
+
+  private boolean encodingExists(String encoding) {
+    final Charset[] availableCharsets = CharsetToolkit.getAvailableCharsets();
+    for (int i = 0; i < availableCharsets.length; i++) {
+      Charset availableCharset = availableCharsets[i];
+      if (availableCharset.name().equals(encoding)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -134,4 +160,13 @@ public class CvsApplicationLevelConfiguration implements ApplicationComponent, J
   }
 
 
+  @NotNull public static String getCharset() {
+    String value = getInstance().ENCODING;
+    if (DEFAULT.equals(value)) {
+      return CharsetToolkit.getDefaultSystemCharset().name();
+    } else {
+      return value;
+    }
+
+  }
 }

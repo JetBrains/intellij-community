@@ -48,6 +48,14 @@ public class StreamLogger implements IStreamLogger {
         getInputLogStream().flush();
         return result;
       }
+
+      public int read(byte b[], int off, int len) throws IOException {
+        if (len == 0) return 0;
+        final int read = read();
+        if (read == -1) return -1;
+        b[off] = (byte)read;
+        return 1;
+      }
     };
   }
 

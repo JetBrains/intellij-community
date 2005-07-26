@@ -37,8 +37,11 @@ public final class AdminReader
 
 	// Setup ==================================================================
 
-	public AdminReader() {
-	}
+    private final String myCharset;
+
+    public AdminReader(String charset) {
+      myCharset = charset;
+    }
 
 	// Implemented ============================================================
 
@@ -50,7 +53,7 @@ public final class AdminReader
 
 		try {
 			final EntriesHandler entriesHandler = new EntriesHandler(directory);
-			entriesHandler.read();
+			entriesHandler.read(myCharset);
 			return entriesHandler.getEntries().getEntry(fileObject.getName());
 		}
 		catch (FileNotFoundException ex) {
@@ -63,7 +66,7 @@ public final class AdminReader
 
 		try {
 			final EntriesHandler entriesHandler = new EntriesHandler(directory);
-			entriesHandler.read();
+			entriesHandler.read(myCharset);
 			return entriesHandler.getEntries().getEntries();
 		}
 		catch (FileNotFoundException ex) {

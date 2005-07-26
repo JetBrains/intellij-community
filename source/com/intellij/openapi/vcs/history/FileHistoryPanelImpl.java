@@ -34,7 +34,6 @@ import com.intellij.ui.dualView.DualView;
 import com.intellij.util.Alarm;
 import com.intellij.util.Icons;
 import com.intellij.util.TreeItem;
-import com.intellij.util.text.LineReader;
 import com.intellij.util.ui.*;
 
 import javax.swing.*;
@@ -48,7 +47,10 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -106,26 +108,25 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   public static final DualViewColumnInfo MESSAGE = new VcsColumnInfo(COMMIT_MESSAGE_TITLE) {
     protected Comparable getDataOf(Object object) {
       String commitMessage = ((VcsFileRevision)object).getCommitMessage();
-      try {
-        List<byte[]> lines = new LineReader().readLines(new ByteArrayInputStream(commitMessage.getBytes()));
-        if (!lines.isEmpty()) {
-          int lastIndex = lines.size() - 1;
-          if (lines.get(lastIndex).length == 0) lines.remove(lastIndex);
-        }
-        if (lines.isEmpty()) return "";
-        if (lines.size() == 1) {
-          return new String(lines.get(0));
-        }
-        else {
-          return new String(lines.get(0)) + "...";
-        }
-      }
-      catch (IOException e) {
-        LOG.error(e);
+      int index13 = commitMessage.indexOf('\r');
+      int index10 = commitMessage.indexOf('\n');
+
+      if (index10 < 0 && index13 < 0) {
         return commitMessage;
       }
+      else {
+        return commitMessage.substring(0, getSuitableIndex(index10,  index13)) + "...";
+      }
+    }
 
-
+    private int getSuitableIndex(int index10, int index13) {
+      if (index10 < 0) {
+        return index13;
+      } else if (index13 < 0){
+        return index10;
+      } else {
+        return Math.min(index10, index13);
+      }
     }
 
     public TableCellRenderer getRenderer(Object p0) {

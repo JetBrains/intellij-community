@@ -111,6 +111,10 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
           .clearFilter();
       }
     }
+    fileStatusesChanged();
+  }
+
+  private void fileStatusesChanged() {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     for (int i = 0; i < openProjects.length; i++) {
       FileStatusManager.getInstance(openProjects[i]).fileStatusesChanged();
@@ -142,7 +146,7 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
 
     if (isUserHomeCvsIgnoreFile(file)) {
       myUserDirIgnores.clearInfo();
-      fireAllStatusesChanged();
+      fileStatusesChanged();
       return;
     }
 
@@ -372,13 +376,6 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
     return myUserDirIgnores;
   }
 
-  private void fireAllStatusesChanged() {
-    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    for (int i = 0; i < openProjects.length; i++) {
-      FileStatusManager.getInstance(openProjects[i]).fileStatusesChanged();
-    }
-  }
-
   private void fireStatusChanged(VirtualFile file) {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     for (int i = 0; i < openProjects.length; i++) {
@@ -404,6 +401,12 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
 
   public String getStickyTagFor(VirtualFile fileByIoFile) {
     return getCvsInfo(fileByIoFile).getStickyTag();
+  }
+
+  public void encodingChanged() {
+    if (!isActive()) return;
+    clearAll();
+    fileStatusesChanged();
   }
 }
 

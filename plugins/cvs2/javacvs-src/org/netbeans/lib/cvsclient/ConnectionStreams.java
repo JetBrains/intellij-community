@@ -15,7 +15,7 @@ package org.netbeans.lib.cvsclient;
 import org.netbeans.lib.cvsclient.connection.IConnection;
 import org.netbeans.lib.cvsclient.file.IReaderFactory;
 import org.netbeans.lib.cvsclient.file.IWriterFactory;
-import org.netbeans.lib.cvsclient.io.*;
+import org.netbeans.lib.cvsclient.io.IStreamLogger;
 import org.netbeans.lib.cvsclient.util.BugLog;
 
 import java.io.*;
@@ -40,46 +40,33 @@ public final class ConnectionStreams
 	private Writer loggedWriter;
 	private InputStream inputStream;
 	private OutputStream outputStream;
-	private Reader reader;
-	private Writer writer;
 	private DeflaterOutputStream deflaterOutputStream;
-	private boolean utf8;
+	private String myCharset;
 
 	// Setup ==================================================================
 
-	public ConnectionStreams(IConnection connection, IStreamLogger streamLogger) {
-		this(connection, streamLogger, false);
-	}
-
-	public ConnectionStreams(IConnection connection, IStreamLogger streamLogger, boolean utf8) {
+	public ConnectionStreams(IConnection connection, IStreamLogger streamLogger, String charset) {
 		BugLog.getInstance().assertNotNull(connection);
 		BugLog.getInstance().assertNotNull(streamLogger);
 
 		this.connection = connection;
 		this.streamLogger = streamLogger;
-		this.utf8 = utf8;
+		this.myCharset = charset;
 
 		setInputStream(connection.getInputStream());
 		setOutputStream(connection.getOutputStream());
 	}
 
-	// Implemented ============================================================
-
 	public Reader createReader(InputStream inputStream) {
-		if (utf8) {
-            return new Utf8InputStreamReader(inputStream);
-		}
-		else {
-			return new AsciiInputStreamReader(inputStream);
-		}
+		return new InputStreamReader(inputStream);
 	}
 
 	public Writer createWriter(OutputStream outputStream) {
-		if (utf8) {
-            return new Utf8OutputStreamWriter(outputStream);
+		try {
+			return new OutputStreamWriter(outputStream, myCharset);
 		}
-		else {
-			return new AsciiOutputStreamWriter(outputStream);
+		catch (UnsupportedEncodingException e) {
+			return null;
 		}
 	}
 
@@ -117,23 +104,15 @@ public final class ConnectionStreams
 		return outputStream;
 	}
 
-	public Reader getReader() {
-		return reader;
-	}
+  public void flushForReading() throws IOException {
+    loggedWriter.flush();
+    if (deflaterOutputStream != null) {
+      deflaterOutputStream.finish();
 
-	public Writer getWriter() {
-		return writer;
-	}
-
-	public void flushForReading() throws IOException {
-		loggedWriter.flush();
-		if (deflaterOutputStream != null) {
-			deflaterOutputStream.finish();
-
-			println("@until here the content is gzipped@", streamLogger.getOutputLogStream());
-		}
-		loggedOutputStream.flush();
-	}
+      println("@until here the content is gzipped@", streamLogger.getOutputLogStream());
+    }
+    loggedOutputStream.flush();
+  }
 
 	public void close() {
 		try {
@@ -167,6 +146,8 @@ public final class ConnectionStreams
 
 	// Actions ================================================================
 
+	// Actions ================================================================
+
 	public void setGzipped() throws IOException {
 		loggedWriter.flush();
 		loggedOutputStream.flush();
@@ -180,15 +161,10 @@ public final class ConnectionStreams
 		setInputStream(new InflaterInputStream(connection.getInputStream()));
 	}
 
-	public void setUtf8() {
-		this.utf8 = true;
-	}
-
 	// Utils ==================================================================
 
 	private void setInputStream(InputStream inputStream) {
 		this.inputStream = inputStream;
-		this.reader = createReader(inputStream);
 
 		this.loggedInputStream = streamLogger.createLoggingInputStream(inputStream);
 		this.loggedReader = createReader(this.loggedInputStream);
@@ -196,7 +172,6 @@ public final class ConnectionStreams
 
 	private void setOutputStream(OutputStream outputStream) {
 		this.outputStream = outputStream;
-		this.writer = createWriter(outputStream);
 
 		this.loggedOutputStream = streamLogger.createLoggingOutputStream(outputStream);
 		this.loggedWriter = createWriter(this.loggedOutputStream);

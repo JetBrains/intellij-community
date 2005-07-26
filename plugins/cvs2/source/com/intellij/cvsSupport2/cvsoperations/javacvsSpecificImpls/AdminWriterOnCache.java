@@ -1,6 +1,7 @@
 package com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls;
 
 import com.intellij.cvsSupport2.CvsUtil;
+import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.cvsoperations.common.UpdatedFilesManager;
 import com.intellij.cvsSupport2.javacvsImpl.ProjectContentInfoProvider;
@@ -38,7 +39,9 @@ public class AdminWriterOnCache implements IAdminWriter {
                             ProjectContentInfoProvider projectContentInfoProvider) {
     myUpdatedFilesManager = updatedFilesManager;
     myProjectContentInfoProvider = projectContentInfoProvider;
-    myAdminWriter = new AdminWriter(CodeStyleSettingsManager.getInstance().getCurrentSettings().getLineSeparator());    
+    myAdminWriter = new AdminWriter(
+      CodeStyleSettingsManager.getInstance().getCurrentSettings().getLineSeparator(),
+      CvsApplicationLevelConfiguration.getCharset());    
   }
 
   public void ensureCvsDirectory(DirectoryObject directoryObject,

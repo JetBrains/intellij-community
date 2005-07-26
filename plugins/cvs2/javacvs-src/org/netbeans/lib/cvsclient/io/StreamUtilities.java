@@ -14,32 +14,32 @@ package org.netbeans.lib.cvsclient.io;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.Reader;
+import java.io.InputStream;
 
 /**
  * @author Thomas Singer
  */
 public final class StreamUtilities {
-  public static String readLine(Reader reader) throws IOException {
-    return new String(readLineBytes(reader, true));
+
+  private final String myCharset;
+
+  public StreamUtilities(String charset) {
+    this.myCharset = charset;
   }
 
-  public static byte[] readLineBytes(Reader reader, boolean ignoreNegative) throws IOException {
+  public String readLine(InputStream reader) throws IOException {
+    if (myCharset != null) {
+      return new String(readLineBytes(reader), myCharset);
+    } else {
+      return new String(readLineBytes(reader));
+    }
+  }
+
+  public static byte[] readLineBytes(InputStream reader) throws IOException {
     final ByteArrayOutputStream output = new ByteArrayOutputStream();
     for (; ;) {
       int value = reader.read();
-
-      if (ignoreNegative) {
-        if (value < 0) {
-          if (output.size() == 0) {
-            continue;
-          }
-
-          break;
-        }
-      }
-
-      if ((char)value == '\n') {
+      if ((char) value == '\n') {
         break;
       }
 

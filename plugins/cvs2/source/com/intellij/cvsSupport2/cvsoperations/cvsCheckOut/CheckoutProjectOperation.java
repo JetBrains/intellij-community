@@ -45,7 +45,9 @@ public class CheckoutProjectOperation extends CvsCommandOperation {
                                  String alternateCheckoutDirectory,
                                  boolean pruneEmptyDirectories,
                                  KeywordSubstitution keywordSubstitution) {
-    super(new CheckoutAdminReader(), new AdminWriter(CodeStyleSettingsManager.getInstance().getCurrentSettings().getLineSeparator()));
+    super(new CheckoutAdminReader(),
+      new AdminWriter(CodeStyleSettingsManager.getInstance().getCurrentSettings().getLineSeparator(),
+        CvsApplicationLevelConfiguration.getCharset()));
     myModuleNames = moduleNames;
     myEnvironment = environment;
     myMakeNewFilesReadOnly = makeNewFilesReadOnly;

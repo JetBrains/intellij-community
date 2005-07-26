@@ -2,6 +2,7 @@ package com.intellij.cvsSupport2.cvshandlers;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import org.netbeans.lib.cvsclient.admin.EntriesHandler;
 import org.netbeans.lib.cvsclient.admin.Entry;
 
@@ -14,6 +15,7 @@ import java.util.List;
 public class IOFilesBasedDirectoryPruner {
   private final List<File> myFiles = new ArrayList<File>();
   private ProgressIndicator myProgressIndicator;
+  private final String myCharset = CvsApplicationLevelConfiguration.getCharset();
 
   public IOFilesBasedDirectoryPruner(final ProgressIndicator progressIndicator) {
     myProgressIndicator = progressIndicator;
@@ -69,7 +71,7 @@ public class IOFilesBasedDirectoryPruner {
   private boolean containsFileEntries(final File file) {
     final EntriesHandler entriesHandler = new EntriesHandler(file);
     try {
-      entriesHandler.read();
+      entriesHandler.read(myCharset);
     }
     catch (IOException e) {
       return false;

@@ -21,11 +21,7 @@ public interface IConnectionStreams {
 
 	OutputStream getOutputStream();
 
-	Reader getReader();
-
-	Writer getWriter();
-
-	IReaderFactory getReaderFactory();
+  IReaderFactory getReaderFactory();
 
 	IWriterFactory getWriterFactory();
 

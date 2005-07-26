@@ -35,11 +35,13 @@ public final class AdminWriter
         implements IAdminWriter {
 
          private final String myLineSeparator;
+         private final String myCharset;
 
         // Setup ==================================================================
 
-        public AdminWriter(String lineSeparator) {
+        public AdminWriter(String lineSeparator, final String charset) {
           myLineSeparator = lineSeparator;
+          myCharset = charset;
         }
 
         // Implemented ============================================================
@@ -60,10 +62,10 @@ public final class AdminWriter
                 }
 
                 final EntriesHandler entriesHandler = new EntriesHandler(directory);
-                final boolean entriesUpdated = entriesHandler.read();
+                final boolean entriesUpdated = entriesHandler.read(myCharset);
                 final boolean entryRemoved = entriesHandler.getEntries().removeEntry(file.getName());
                 if (entriesUpdated || entryRemoved) {
-                        entriesHandler.write(myLineSeparator);
+                        entriesHandler.write(myLineSeparator, myCharset);
                 }
         }
 
@@ -134,9 +136,9 @@ public final class AdminWriter
                 final File directory = cvsFileSystem.getAdminFileSystem().getFile(directoryObject);
 
                 final EntriesHandler entriesHandler = new EntriesHandler(directory);
-                entriesHandler.read();
+                entriesHandler.read(myCharset);
                 entriesHandler.getEntries().addEntry(entry);
-                entriesHandler.write(myLineSeparator);
+                entriesHandler.write(myLineSeparator, myCharset);
         }
 
         public void writeTemplateFile(DirectoryObject directoryObject, int fileLength, InputStream inputStream, IReaderFactory readerFactory, IClientEnvironment clientEnvironment) throws IOException {
@@ -160,7 +162,7 @@ public final class AdminWriter
                 // now ensure that the Root and Repository files exist
                 FileUtils.writeLine(new File(cvsDirectory, "Root"), cvsRoot);
                 FileUtils.writeLine(new File(cvsDirectory, "Repository"), repositoryPath);
-                new Entries().write(new File(cvsDirectory, "Entries"), myLineSeparator);
+                new Entries().write(new File(cvsDirectory, "Entries"), myLineSeparator, myCharset);
                 setStickyTagForDirectory(directoryObject, stickyTag, cvsFileSystem);
                 addDirectoryToParentEntriesFile(cvsDirectory.getParentFile());
         }
@@ -229,7 +231,7 @@ public final class AdminWriter
                         return;
                 }
 
-                new Entries().write(entriesFile, myLineSeparator);
+                new Entries().write(entriesFile, myLineSeparator, myCharset);
 
                 // need to know if we had to create any directories so that we can
                 // update the CVS/Entries file in the *parent* director
@@ -239,9 +241,9 @@ public final class AdminWriter
         private void addDirectoryToParentEntriesFile(File directory) throws IOException {
                 try {
                         final EntriesHandler entriesHandler = new EntriesHandler(directory.getParentFile());
-                        entriesHandler.read();
+                        entriesHandler.read(myCharset);
                         entriesHandler.getEntries().addEntry(Entry.createDirectoryEntry(directory.getName()));
-                        entriesHandler.write(myLineSeparator);
+                        entriesHandler.write(myLineSeparator, myCharset);
                 }
                 catch (FileNotFoundException ex) {
                         // The Entries file will not exist in the case where this is the top level of the module

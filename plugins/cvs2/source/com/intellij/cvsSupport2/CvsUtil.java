@@ -6,6 +6,7 @@ import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
 import com.intellij.cvsSupport2.cvsstatuses.CvsStatusProvider;
 import com.intellij.cvsSupport2.util.CvsFileUtil;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
+import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
@@ -165,7 +166,7 @@ public class CvsUtil {
   private static EntriesHandler getEntriesHandlerIn(final File dir) {
     EntriesHandler entriesHandler = new EntriesHandler(dir);
     try {
-      entriesHandler.read();
+      entriesHandler.read(CvsApplicationLevelConfiguration.getCharset());
       return entriesHandler;
     }
     catch (Exception ex) {
@@ -186,8 +187,9 @@ public class CvsUtil {
   public static void removeEntryFor(File file) {
     File entriesFile = file.getParentFile();
     EntriesHandler handler = new EntriesHandler(entriesFile);
+    String charset = CvsApplicationLevelConfiguration.getCharset();
     try {
-      handler.read();
+      handler.read(charset);
     }
     catch (IOException e) {
       return;
@@ -196,7 +198,7 @@ public class CvsUtil {
     entries.removeEntry(file.getName());
 
     try {
-      handler.write(getLineSeparator());
+      handler.write(getLineSeparator(), charset);
     }
     catch (IOException e) {
       LOG.error(e);
@@ -224,9 +226,9 @@ public class CvsUtil {
 
   public static void saveEntryForFile(File file, Entry entry) throws IOException {
     EntriesHandler entriesHandler = new EntriesHandler(file.getParentFile());
-    entriesHandler.read();
+    entriesHandler.read(CvsApplicationLevelConfiguration.getCharset());
     entriesHandler.getEntries().addEntry(entry);
-    entriesHandler.write(getLineSeparator());
+    entriesHandler.write(getLineSeparator(), CvsApplicationLevelConfiguration.getCharset());
   }
 
   public static String loadRepositoryFrom(File file) {
@@ -436,7 +438,7 @@ public class CvsUtil {
     entry.parseConflictString(Entry.getLastModifiedDateFormatter().format(date));
     entries.addEntry(entry);
     try {
-      handler.write(getLineSeparator());
+      handler.write(getLineSeparator(), CvsApplicationLevelConfiguration.getCharset());
     }
     catch (IOException e) {
       LOG.error(e);
