@@ -109,6 +109,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
 
       String canonicalText = getCanonicalText();
       XmlNSDescriptor nsDescriptor = (XmlNSDescriptor)document.getMetaData();
+      if (nsDescriptor == null) nsDescriptor = tag.getNSDescriptor(tag.getNamespace(), true);
 
       if (nsDescriptor instanceof XmlNSDescriptorImpl) {
         XmlNSDescriptorImpl xmlNSDescriptor = ((XmlNSDescriptorImpl)nsDescriptor);

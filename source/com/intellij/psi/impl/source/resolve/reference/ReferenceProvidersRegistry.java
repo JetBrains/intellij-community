@@ -404,7 +404,8 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
 
     final PsiReferenceProvider filePathReferenceProvider = new FilePathReferenceProvider();
     registerReferenceProvider(PsiLiteralExpression.class, filePathReferenceProvider);
-    
+
+    final SchemaReferencesProvider schemaReferencesProvider = new SchemaReferencesProvider();
     registerXmlAttributeValueReferenceProvider(
       new String[] {"ref","type","base","name","substitutionGroup","memberTypes"},
       new ScopeFilter(
@@ -412,7 +413,19 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
           new NamespaceFilter(MetaRegistry.SCHEMA_URIS), 2
         )
       ),
-      new SchemaReferencesProvider()
+      schemaReferencesProvider
+    );
+    
+    registerXmlAttributeValueReferenceProvider(
+      new String[] {"xsi:type"},
+      null,
+      schemaReferencesProvider
+    );
+    
+    registerXmlAttributeValueReferenceProvider(
+      new String[] {"xsi:noNamespaceSchemaLocation"},
+      null,
+      uriProvider
     );
     
     registerXmlAttributeValueReferenceProvider(
