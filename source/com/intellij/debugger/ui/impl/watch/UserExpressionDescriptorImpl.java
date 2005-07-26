@@ -51,7 +51,7 @@ public class UserExpressionDescriptorImpl extends EvaluationDescriptor implement
         throw EvaluateExceptionUtil.createEvaluateException("Invalid type name " + typeName);
       }
 
-      return myCodeFragmentFactory.createCodeFragment(getEvaluationText(), psiClass, myProject);
+      return getCodeFragmentFactory().createCodeFragment(getEvaluationText(), psiClass, myProject);
     }
     else {
       throw EvaluateExceptionUtil.createEvaluateException("Object reference expected instead of" + myParentDescriptor.getName());

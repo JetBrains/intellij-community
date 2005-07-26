@@ -56,7 +56,7 @@ public class WatchItemDescriptor extends EvaluationDescriptor {
 
   protected PsiCodeFragment getEvaluationCode(StackFrameContext context) throws EvaluateException {
     final PsiElement psiContext = PositionUtil.getContextElement(context);
-    return myCodeFragmentFactory.createCodeFragment(getEvaluationText(), psiContext, myProject);
+    return getCodeFragmentFactory().createCodeFragment(getEvaluationText(), psiContext, myProject);
   }
 
   public void setAllowBreakpoints(boolean b) {
