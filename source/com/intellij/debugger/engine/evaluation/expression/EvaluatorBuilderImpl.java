@@ -22,6 +22,8 @@ import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 public class EvaluatorBuilderImpl implements EvaluatorBuilder {
   private static final EvaluatorBuilderImpl ourInstance = new EvaluatorBuilderImpl();
@@ -57,8 +59,10 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     private Evaluator myResult = null;
     private PsiClass myContextPsiClass;
     private CodeFragmentEvaluator myCurrentFragmentEvaluator;
+    private Set<PsiCodeFragment> myVisitedFragments = new HashSet<PsiCodeFragment>();
 
     public void visitCodeFragment(PsiCodeFragment codeFragment) {
+      myVisitedFragments.add(codeFragment);
       ArrayList<Evaluator> evaluators = new ArrayList<Evaluator>();
 
       CodeFragmentEvaluator oldFragmentEvaluator = myCurrentFragmentEvaluator;
@@ -337,7 +341,11 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
       if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
         //synthetic variable
-        if(element.getContainingFile() instanceof PsiCodeFragment && myCurrentFragmentEvaluator != null) {
+        final PsiFile containingFile = element.getContainingFile();
+        if(containingFile instanceof PsiCodeFragment && myCurrentFragmentEvaluator != null && myVisitedFragments.contains(((PsiCodeFragment)containingFile))) {
+          // psiVariable may live in PsiCodeFragment not only in debugger editors, for example Fabrique has such variables.
+          // So treat it as synthetic var only when this code fragment is located in DebuggerEditor,
+          // that's why we need to check that containing code fragment is the one we visited
           myResult = new SyntheticVariableEvaluator(myCurrentFragmentEvaluator, ((PsiVariable)element).getName());
           return;
         }
