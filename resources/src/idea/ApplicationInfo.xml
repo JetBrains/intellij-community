@@ -1,6 +1,6 @@
 <component>
   <!--<version name="IntelliJ IDEA (Irida)" major="5" minor="0"/>-->
-  <version name="IntelliJ IDEA 5.0 RC3" />
+  <version name="IntelliJ IDEA 5.0 RC4" />
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <logo url="/idea_logo.png"/>
   <about url="/idea_about.png"/>
