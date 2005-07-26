@@ -3,10 +3,7 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -64,6 +61,8 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
         public void run() {
           String selectionString = editor.getSelectionModel().getSelectedText();
           TemplateImpl template = (TemplateImpl)list.getSelectedValue();
+          if (template == null) return;
+
           if (selectionString != null) {
             if (template.isToReformat()) selectionString = selectionString.trim();
           }
