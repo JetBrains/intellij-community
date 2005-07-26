@@ -221,6 +221,9 @@ public class RepositoryHelper {
         int startPos = usedURL.lastIndexOf("/");
 
         fileName = usedURL.substring(startPos + 1);
+        if (fileName.length() == 0) {
+          return null;
+        }
 
       } else {
         int startIdx = contentDisposition.indexOf(FILENAME);
