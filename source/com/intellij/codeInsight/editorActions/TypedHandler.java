@@ -26,8 +26,8 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.xml.XmlTokenImpl;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
+import com.intellij.psi.impl.source.jsp.jspJava.JspText;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.el.ELExpressionHolder;
 import com.intellij.psi.jsp.el.ELTokenType;
@@ -73,8 +73,8 @@ public class TypedHandler implements TypedActionHandler {
     HtmlQuoteHandler quoteHandler = new HtmlQuoteHandler();
     registerQuoteHandler(StdFileTypes.HTML, quoteHandler);
     registerQuoteHandler(StdFileTypes.XHTML, quoteHandler);
-    registerQuoteHandler(StdFileTypes.JSP, new HtmlQuoteHandler(new JavaQuoteHandler()));
-    registerQuoteHandler(StdFileTypes.JSPX, new JspxQuoteHandler(new JavaQuoteHandler()));
+    registerQuoteHandler(StdFileTypes.JSP, new JspxQuoteHandler());
+    registerQuoteHandler(StdFileTypes.JSPX, new JspxQuoteHandler());
   }
 
   public static class SimpleTokenSetQuoteHandler implements QuoteHandler {
@@ -137,38 +137,36 @@ public class TypedHandler implements TypedActionHandler {
 
   public static class JspxQuoteHandler extends HtmlQuoteHandler {
     private SimpleTokenSetQuoteHandler myElHandler;
+    private static final QuoteHandler ourJavaHandler = new JavaQuoteHandler();
 
-    public JspxQuoteHandler(QuoteHandler _baseHandler) {
-      super(_baseHandler);
-
+    public JspxQuoteHandler() {
       myElHandler = new SimpleTokenSetQuoteHandler(
         new IElementType[] {ELTokenType.JSP_EL_STRING_LITERAL}
       );
     }
 
     public boolean isClosingQuote(HighlighterIterator iterator, int offset) {
-      if (myElHandler.isClosingQuote(iterator, offset)){
-        return true;
-      }
-
-      return super.isClosingQuote(iterator, offset);
+      return myElHandler.isClosingQuote(iterator, offset) ||
+             ourJavaHandler.isClosingQuote(iterator, offset) ||
+             super.isClosingQuote(iterator, offset);
     }
 
     public boolean isOpeningQuote(HighlighterIterator iterator, int offset) {
-      if (myElHandler.isOpeningQuote(iterator, offset)) return true;
-
-      return super.isOpeningQuote(iterator, offset);
+      return myElHandler.isOpeningQuote(iterator, offset) ||
+             ourJavaHandler.isOpeningQuote(iterator, offset) ||
+             super.isOpeningQuote(iterator, offset);
     }
 
     public boolean hasNonClosedLiteral(Editor editor, HighlighterIterator iterator, int offset) {
-      if (myElHandler.isInsideLiteral(iterator)) return true;
-
-      return super.hasNonClosedLiteral(editor, iterator,offset);
+      return myElHandler.hasNonClosedLiteral(editor, iterator, offset) ||
+             ourJavaHandler.hasNonClosedLiteral(editor, iterator, offset) ||
+             super.hasNonClosedLiteral(editor, iterator,offset);
     }
 
     public boolean isInsideLiteral(HighlighterIterator iterator) {
-      if (myElHandler.isInsideLiteral(iterator)) return true;
-      return super.isInsideLiteral(iterator);
+      return myElHandler.isInsideLiteral(iterator) ||
+             ourJavaHandler.isInsideLiteral(iterator) ||
+             super.isInsideLiteral(iterator);
     }
   }
 
@@ -517,6 +515,11 @@ public class TypedHandler implements TypedActionHandler {
     ASTNode prevLeaf = element.getNode();
     if (!"/".equals(prevLeaf.getText())) return;
     while((prevLeaf = TreeUtil.prevLeaf(prevLeaf)) != null && prevLeaf.getElementType() == XmlTokenType.XML_WHITE_SPACE);
+    if(prevLeaf instanceof JspText) {
+      element = file.getDocument().findElementAt(offset - 1);
+      prevLeaf = element.getNode();
+      while((prevLeaf = TreeUtil.prevLeaf(prevLeaf)) != null && prevLeaf.getElementType() == XmlTokenType.XML_WHITE_SPACE);
+    }
     if(prevLeaf == null) return;
 
     XmlTag tag = PsiTreeUtil.getParentOfType(prevLeaf.getPsi(), XmlTag.class);
