@@ -121,7 +121,6 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
         final MenuSelectionManager menuSelectionManager = MenuSelectionManager.defaultManager();
         menuSelectionManager.clearSelectedPath();
         myWindow.setAsCurrentWindow(true);
-        myLastClickedIndex = -1; // pressing any button must invalidate last stored index 
       }
 
       // activate current tabbed pane:
@@ -151,7 +150,10 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
         if (MouseEvent.MOUSE_RELEASED == e.getID()) {
           if (myLastClickedIndex != -1) {
             if (e.getClickCount() == 1 ) {
-              setSelectedIndex(myLastClickedIndex);
+              if (myLastClickedIndex >= 0 && myLastClickedIndex < getTabCount()) {
+                setSelectedIndex(myLastClickedIndex);
+              }
+              myLastClickedIndex = -1;
             }
             else if (e.getClickCount() == 2) { // Left double click invokes Hide All Windows
               HideAllToolWindowsAction.performAction(myProject);
