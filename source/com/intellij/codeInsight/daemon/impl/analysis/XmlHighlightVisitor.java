@@ -159,8 +159,10 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
 
     if (myResult.isEmpty()) {
-      checkTagByDescriptor(tag);
-      
+      checkTagByDescriptor(tag); 
+    }
+    
+    if (myResult.isEmpty()) {
       if (tag.getUserData(DO_NOT_VALIDATE_KEY) == null) {
         if (tag instanceof HtmlTag && tag.getDescriptor() instanceof AnyXmlElementDescriptor) {
           final String name = tag.getName();
@@ -179,7 +181,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         }
   
         checkReferences(tag, QuickFixProvider.NULL);
-      } 
+      }
     }
   }
 
