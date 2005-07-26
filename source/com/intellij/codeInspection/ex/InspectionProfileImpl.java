@@ -185,12 +185,12 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
       return true;
     }
     
-    if (key == HighlightDisplayKey.UNKNOWN_HTML_TAG &&
+    if (key == HighlightDisplayKey.CUSTOM_HTML_TAG &&
         !myBaseProfile.getAdditionalHtmlTags().equals(getAdditionalHtmlTags())) {
       return true;
     }
     
-    if (key == HighlightDisplayKey.UNKNOWN_HTML_ATTRIBUTES &&
+    if (key == HighlightDisplayKey.CUSTOM_HTML_ATTRIBUTE &&
         !myBaseProfile.getAdditionalHtmlAttributes().equals(getAdditionalHtmlAttributes())) {
       return true;
     }
@@ -276,8 +276,8 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     myDisplayLevelMap.put(HighlightDisplayKey.JAVADOC_ERROR, new ToolState(HighlightDisplayLevel.ERROR));
     myDisplayLevelMap.put(HighlightDisplayKey.UNKNOWN_JAVADOC_TAG, new ToolState(HighlightDisplayLevel.ERROR));
     
-    myDisplayLevelMap.put(HighlightDisplayKey.UNKNOWN_HTML_TAG, new ToolState(HighlightDisplayLevel.WARNING));
-    myDisplayLevelMap.put(HighlightDisplayKey.UNKNOWN_HTML_ATTRIBUTES, new ToolState(HighlightDisplayLevel.WARNING));
+    myDisplayLevelMap.put(HighlightDisplayKey.CUSTOM_HTML_TAG, new ToolState(HighlightDisplayLevel.WARNING));
+    myDisplayLevelMap.put(HighlightDisplayKey.CUSTOM_HTML_ATTRIBUTE, new ToolState(HighlightDisplayLevel.WARNING));
     myDisplayLevelMap.put(HighlightDisplayKey.REQUIRED_HTML_ATTRIBUTE, new ToolState(HighlightDisplayLevel.WARNING));
     
     myDisplayLevelMap.put(HighlightDisplayKey.EJB_ERROR, new ToolState(HighlightDisplayLevel.ERROR));

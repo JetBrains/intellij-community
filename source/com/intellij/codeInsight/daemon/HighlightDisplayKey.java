@@ -18,8 +18,8 @@ public class HighlightDisplayKey {
   public static final HighlightDisplayKey JAVADOC_ERROR = register("JAVADOC_ERROR", "JavaDoc errors");   //no suppress
   public static final HighlightDisplayKey UNKNOWN_JAVADOC_TAG = register("UNKNOWN_JAVADOC_TAG", "Unknown javadoc tags");  //no suppress
   
-  public static final HighlightDisplayKey UNKNOWN_HTML_TAG = register("UNKNOWN_HTML_TAG", "Unknown html tags");  //no suppress
-  public static final HighlightDisplayKey UNKNOWN_HTML_ATTRIBUTES = register("UNKNOWN_HTML_ATTRIBUTE", "Unknown html attributes");  //no suppress
+  public static final HighlightDisplayKey CUSTOM_HTML_TAG = register("CUSTOM_HTML_TAG", "Custom html tags");  //no suppress
+  public static final HighlightDisplayKey CUSTOM_HTML_ATTRIBUTE = register("CUSTOM_HTML_ATTRIBUTE", "Custom html attributes");  //no suppress
   public static final HighlightDisplayKey REQUIRED_HTML_ATTRIBUTE = register("REQUIRED_HTML_ATTRIBUTE", "Required html attributes");  //no suppress
   
   public static final HighlightDisplayKey EJB_ERROR = register("EJB_ERROR", "EJB errors");

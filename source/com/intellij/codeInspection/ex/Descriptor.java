@@ -44,8 +44,8 @@ public class Descriptor {
     ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.JAVADOC_ERROR, "Local_JavaDoc.html");
     ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.UNKNOWN_JAVADOC_TAG, "Local_UnknownJavaDocTags.html");
     
-    ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.UNKNOWN_HTML_TAG, "Local_UnknownHtmlTags.html");
-    ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.UNKNOWN_HTML_ATTRIBUTES, "Local_UnknownHtmlAttributes.html");
+    ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.CUSTOM_HTML_TAG, "Local_CustomHtmlTags.html");
+    ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.CUSTOM_HTML_ATTRIBUTE, "Local_CustomHtmlAttributes.html");
     ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.REQUIRED_HTML_ATTRIBUTE, "Local_NotRequiredHtmlAttributes.html");
     
     ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.EJB_ERROR,  "Local_EJBErrors.html");
@@ -137,9 +137,9 @@ public class Descriptor {
 
     if (myKey.equals(HighlightDisplayKey.UNKNOWN_JAVADOC_TAG)){
       myAdditionalConfigPanel = createAdditionalJavadocTagsPanel(inspectionProfile);
-    } else if (myKey.equals(HighlightDisplayKey.UNKNOWN_HTML_TAG)){
+    } else if (myKey.equals(HighlightDisplayKey.CUSTOM_HTML_TAG)){
       myAdditionalConfigPanel = createAdditionalHtmlTagsPanel(inspectionProfile);
-    } else if (myKey.equals(HighlightDisplayKey.UNKNOWN_HTML_ATTRIBUTES)){
+    } else if (myKey.equals(HighlightDisplayKey.CUSTOM_HTML_ATTRIBUTE)){
       myAdditionalConfigPanel = createAdditionalHtmlAttributesPanel(inspectionProfile);
     } else if (myKey.equals(HighlightDisplayKey.REQUIRED_HTML_ATTRIBUTE)){
       myAdditionalConfigPanel = createAdditionalNotRequiredHtmlAttributesPanel(inspectionProfile);
@@ -227,7 +227,7 @@ public class Descriptor {
   }
 
   public static FieldPanel createAdditionalHtmlTagsPanel(final InspectionProfile.ModifiableModel inspectionProfile){
-    FieldPanel additionalTagsPanel = new FieldPanel("Additional Html Tags", "Edit Additional Html Tags", null, null);
+    FieldPanel additionalTagsPanel = new FieldPanel("Custom Html Tags", "Edit Custom Html Tags", null, null);
     additionalTagsPanel.setPreferredSize(new Dimension(150, additionalTagsPanel.getPreferredSize().height));
     additionalTagsPanel.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
@@ -252,7 +252,7 @@ public class Descriptor {
   }
   
   public static FieldPanel createAdditionalHtmlAttributesPanel(final InspectionProfile.ModifiableModel inspectionProfile){
-    FieldPanel additionalAttributesPanel = new FieldPanel("Additional Html Attributes", "Edit Additional Html Attributes", null, null);
+    FieldPanel additionalAttributesPanel = new FieldPanel("Custom Html Attributes", "Edit Custom Html Attributes", null, null);
     
     additionalAttributesPanel.setPreferredSize(new Dimension(150, additionalAttributesPanel.getPreferredSize().height));
     additionalAttributesPanel.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {

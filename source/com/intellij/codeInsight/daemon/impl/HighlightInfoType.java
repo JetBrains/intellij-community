@@ -37,8 +37,8 @@ public interface HighlightInfoType {
   HighlightInfoType JAVADOC_ERROR = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.JAVADOC_ERROR);
   HighlightInfoType UNKNOWN_JAVADOC_TAG = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.UNKNOWN_JAVADOC_TAG);
 
-  HighlightInfoType UNKNOWN_HTML_TAG = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.UNKNOWN_HTML_TAG);
-  HighlightInfoType UNKNOWN_HTML_ATTRIBUTE = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.UNKNOWN_HTML_ATTRIBUTES);
+  HighlightInfoType CUSTOM_HTML_TAG = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.CUSTOM_HTML_TAG);
+  HighlightInfoType CUSTOM_HTML_ATTRIBUTE = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.CUSTOM_HTML_ATTRIBUTE);
   HighlightInfoType REQUIRED_HTML_ATTRIBUTE = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.REQUIRED_HTML_ATTRIBUTE);
 
   /** @fabrique */

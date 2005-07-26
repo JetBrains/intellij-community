@@ -543,12 +543,12 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     if (tag instanceof HtmlTag) {
       final InspectionProfileImpl inspectionProfile = mySettings.getInspectionProfile(tag);
       if(isAdditionallyDeclared(inspectionProfile.getAdditionalHtmlAttributes(),localName)) return;
-      if (!inspectionProfile.isToolEnabled(HighlightDisplayKey.UNKNOWN_HTML_ATTRIBUTES)) return;
-      tagProblemInfoType = HighlightInfoType.UNKNOWN_HTML_ATTRIBUTE;
+      if (!inspectionProfile.isToolEnabled(HighlightDisplayKey.CUSTOM_HTML_ATTRIBUTE)) return;
+      tagProblemInfoType = HighlightInfoType.CUSTOM_HTML_ATTRIBUTE;
 
       quickFixes = new IntentionAction[] {
         new AddHtmlTagOrAttributeToCustoms(localName,tagProblemInfoType),
-        new SwitchOffToolAction(HighlightDisplayKey.UNKNOWN_HTML_ATTRIBUTES)
+        new SwitchOffToolAction(HighlightDisplayKey.CUSTOM_HTML_ATTRIBUTE)
       };
     } else {
       tagProblemInfoType = HighlightInfoType.WRONG_REF; quickFixes = null;
@@ -600,8 +600,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
           "Unknown html tag " + name,
           null,
           mySettings.getInspectionProfile(tag).getAdditionalHtmlTags(),
-          HighlightInfoType.UNKNOWN_HTML_TAG,
-          HighlightDisplayKey.UNKNOWN_HTML_TAG
+          HighlightInfoType.CUSTOM_HTML_TAG,
+          HighlightDisplayKey.CUSTOM_HTML_TAG
         );
 
         return;
