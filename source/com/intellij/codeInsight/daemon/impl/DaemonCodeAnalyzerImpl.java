@@ -80,8 +80,10 @@ import java.util.*;
 public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMExternalizable, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl");
 
-  private static final Key<HighlightInfo[]> HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY = Key.create("DaemonCodeAnalyzerImpl.HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY");
-  private static final Key<LineMarkerInfo[]> MARKERS_IN_EDITOR_DOCUMENT_KEY = Key.create("DaemonCodeAnalyzerImpl.MARKERS_IN_EDITOR_DOCUMENT_KEY");
+  private static final Key<HighlightInfo[]> HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY = Key
+    .create("DaemonCodeAnalyzerImpl.HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY");
+  private static final Key<LineMarkerInfo[]> MARKERS_IN_EDITOR_DOCUMENT_KEY = Key
+    .create("DaemonCodeAnalyzerImpl.MARKERS_IN_EDITOR_DOCUMENT_KEY");
 
   private final Project myProject;
   private final DaemonCodeAnalyzerSettings mySettings;
@@ -144,7 +146,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return "DaemonCodeAnalyzer";
   }
 
-  public void initComponent() { }
+  public void initComponent() {
+  }
 
   public void disposeComponent() {
     myFileStatusMap.markAllFilesDirty();
@@ -200,19 +203,24 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(new PsiChangeHandler(myProject, this));
     ProjectRootManager.getInstance(myProject).addModuleRootListener(new ModuleRootListener() {
-      public void beforeRootsChange(ModuleRootEvent event) {}
+      public void beforeRootsChange(ModuleRootEvent event) {
+      }
 
       public void rootsChanged(ModuleRootEvent event) {
-        final Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
-        if (editor != null) {
-          ApplicationManager.getApplication().invokeLater(new Runnable(){
-            public void run() {
-              final EditorMarkupModel markupModel = (EditorMarkupModel) editor.getMarkupModel();
-              final Document document = editor.getDocument();
-              final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-              markupModel.setErrorStripeRenderer(new RefreshStatusRenderer(myProject, DaemonCodeAnalyzerImpl.this, document, psiFile));
+        final FileEditor[] editors = FileEditorManager.getInstance(myProject).getSelectedEditors();
+        if (editors != null) {
+          for (FileEditor fileEditor : editors) {
+            if (fileEditor instanceof TextEditor) {
+              final Editor editor = ((TextEditor)fileEditor).getEditor();
+              ApplicationManager.getApplication().invokeLater(new Runnable() {
+                public void run() {
+                  final Document document = editor.getDocument();
+                  final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+                  ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeRenderer(new RefreshStatusRenderer(myProject, DaemonCodeAnalyzerImpl.this, document, psiFile));
+                }
+              }, ModalityState.stateForComponent(editor.getComponent()));
             }
-          },ModalityState.stateForComponent(editor.getComponent()));
+          }
         }
       }
     });
@@ -431,7 +439,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return markup.getUserData(HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY);
   }
 
-  @NotNull public static HighlightInfo[] getHighlights(Document document, HighlightSeverity minSeverity, Project project) {
+  @NotNull
+  public static HighlightInfo[] getHighlights(Document document, HighlightSeverity minSeverity, Project project) {
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
     HighlightInfo[] highlights = getHighlights(document, project);
     if (highlights == null) return HighlightInfo.EMPTY_ARRAY;
@@ -444,7 +453,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return array.toArray(new HighlightInfo[array.size()]);
   }
 
-  @Nullable public HighlightInfo findHighlightByOffset(Document document, int offset, boolean includeFixRange) {
+  @Nullable
+  public HighlightInfo findHighlightByOffset(Document document, int offset, boolean includeFixRange) {
     HighlightInfo[] highlights = getHighlights(document, myProject);
     if (highlights == null) return null;
 
@@ -500,7 +510,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     }
   }
 
-  @NotNull private static HighlightInfo[] stripWarningsCoveredByErrors(HighlightInfo[] highlights, MarkupModel markup) {
+  @NotNull
+  private static HighlightInfo[] stripWarningsCoveredByErrors(HighlightInfo[] highlights, MarkupModel markup) {
     List<HighlightInfo> all = new ArrayList<HighlightInfo>(Arrays.asList(highlights));
     List<HighlightInfo> errors = new ArrayList<HighlightInfo>();
     for (HighlightInfo highlight : highlights) {
@@ -546,19 +557,19 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     markup.putUserData(MARKERS_IN_EDITOR_DOCUMENT_KEY, lineMarkers);
   }
 
-  public void setShowPostIntentions (boolean status) {
+  public void setShowPostIntentions(boolean status) {
     myShowPostIntentions = status;
   }
 
-  public boolean showPostIntentions () {
+  public boolean showPostIntentions() {
     return myShowPostIntentions;
   }
 
-  public void setLastIntentionHint (IntentionHintComponent hintComponent) {
+  public void setLastIntentionHint(IntentionHintComponent hintComponent) {
     myLastIntentionHint = hintComponent;
   }
 
-  public IntentionHintComponent getLastIntentionHint () {
+  public IntentionHintComponent getLastIntentionHint() {
     return myLastIntentionHint;
   }
 
