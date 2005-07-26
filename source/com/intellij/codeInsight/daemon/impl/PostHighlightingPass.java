@@ -167,7 +167,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       });
     }
     //Q: here?
-    ErrorStripeRenderer renderer = new RefreshStatusRenderer(myProject, daemonCodeAnalyzer, myDocument);
+    ErrorStripeRenderer renderer = new RefreshStatusRenderer(myProject, daemonCodeAnalyzer, myDocument, myFile);
     Editor[] editors = EditorFactory.getInstance().getEditors(myDocument, myProject);
     for (Editor editor : editors) {
       ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeRenderer(renderer);

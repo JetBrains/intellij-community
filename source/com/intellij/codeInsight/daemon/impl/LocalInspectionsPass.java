@@ -264,7 +264,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
     daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, FileStatusMap.LOCAL_INSPECTIONS);
 
-    ErrorStripeRenderer renderer = new RefreshStatusRenderer(myProject, daemonCodeAnalyzer, myDocument);
+    ErrorStripeRenderer renderer = new RefreshStatusRenderer(myProject, daemonCodeAnalyzer, myDocument, myFile);
     Editor[] editors = EditorFactory.getInstance().getEditors(myDocument, myProject);
     for (Editor editor : editors) {
       ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeRenderer(renderer);

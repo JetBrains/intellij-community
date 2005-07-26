@@ -47,6 +47,9 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.Key;
@@ -189,13 +192,30 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
         PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
         if (file != null) {
           ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeRenderer(
-            new RefreshStatusRenderer(myProject, DaemonCodeAnalyzerImpl.this, document));
+            new RefreshStatusRenderer(myProject, DaemonCodeAnalyzerImpl.this, document, file));
         }
       }
     };
     EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener);
 
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(new PsiChangeHandler(myProject, this));
+    ProjectRootManager.getInstance(myProject).addModuleRootListener(new ModuleRootListener() {
+      public void beforeRootsChange(ModuleRootEvent event) {}
+
+      public void rootsChanged(ModuleRootEvent event) {
+        final Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
+        if (editor != null) {
+          ApplicationManager.getApplication().invokeLater(new Runnable(){
+            public void run() {
+              final EditorMarkupModel markupModel = (EditorMarkupModel) editor.getMarkupModel();
+              final Document document = editor.getDocument();
+              final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+              markupModel.setErrorStripeRenderer(new RefreshStatusRenderer(myProject, DaemonCodeAnalyzerImpl.this, document, psiFile));
+            }
+          },ModalityState.stateForComponent(editor.getComponent()));
+        }
+      }
+    });
 
     CommandProcessor.getInstance().addCommandListener(myCommandListener);
     ApplicationManager.getApplication().addApplicationListener(myApplicationListener);

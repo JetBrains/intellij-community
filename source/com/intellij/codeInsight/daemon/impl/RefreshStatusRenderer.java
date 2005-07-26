@@ -8,9 +8,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,6 +25,7 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
 
   private Project myProject;
   private Document myDocument;
+  private final PsiFile myFile;
   private DaemonCodeAnalyzerImpl myHighlighter;
 
   public static class DaemonCodeAnalyzerStatus {
@@ -39,48 +38,43 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
     public int rootsNumber;
   }
 
-  @Nullable
   protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus() {
     DaemonCodeAnalyzerStatus status = new DaemonCodeAnalyzerStatus();
-    PsiFile file = null;
-    if (myDocument != null){
-      file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
-    }
-    if (file == null || !myHighlighter.isHighlightingAvailable(file)) return null;
+    if (myFile == null || !myHighlighter.isHighlightingAvailable(myFile)) return null;
 
     ArrayList<String> noInspectionRoots = new ArrayList<String>();
     ArrayList<String> noHighlightingRoots = new ArrayList<String>();
-    final PsiFile[] roots = file.getPsiRoots();
-    for (PsiFile root : roots) {
-      if (!HighlightUtil.isRootHighlighted(root)){
-        noHighlightingRoots.add(root.getLanguage().getID());
-      } else if (!HighlightUtil.isRootInspected(root)){
-        noInspectionRoots.add(root.getLanguage().getID());
+    final PsiFile[] roots = myFile.getPsiRoots();
+    for (PsiFile file : roots) {
+      if (!HighlightUtil.isRootHighlighted(file)){
+        noHighlightingRoots.add(file.getLanguage().getID());
+      } else if (!HighlightUtil.isRootInspected(file)){
+        noInspectionRoots.add(file.getLanguage().getID());
       }
     }
     status.noInspectionRoots = noInspectionRoots.isEmpty() ? null : noInspectionRoots.toArray(new String[noInspectionRoots.size()]);
     status.noHighlightingRoots = noHighlightingRoots.isEmpty() ? null : noHighlightingRoots.toArray(new String[noHighlightingRoots.size()]);
     status.rootsNumber = roots.length;
 
-    if (myHighlighter.isErrorAnalyzingFinished(file)) {
+    if (myHighlighter.isErrorAnalyzingFinished(myFile)) {
       status.errorAnalyzingFinished = true;
       HighlightInfo[] infos = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.WARNING, myProject);
       status.warningErrorCount = infos.length;
       infos = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.ERROR, myProject);
       status.errorCount = infos.length;
 
-      status.inspectionFinished = myHighlighter.isInspectionCompleted(file);
+      status.inspectionFinished = myHighlighter.isInspectionCompleted(myFile);
     }
     return status;
   }
 
-  public RefreshStatusRenderer(Project project, DaemonCodeAnalyzerImpl highlighter, Document document) {
+  public RefreshStatusRenderer(Project project, DaemonCodeAnalyzerImpl highlighter, Document document, PsiFile file) {
     myProject = project;
     myHighlighter = highlighter;
     myDocument = document;
+    myFile = file;
   }
 
-  @Nullable
   public String getTooltipMessage() {
     DaemonCodeAnalyzerStatus status = getDaemonCodeAnalyzerStatus();
 
