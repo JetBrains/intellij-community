@@ -28,11 +28,11 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
 import org.tmatesoft.svn.core.wc.SVNCopyClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.util.PathUtil;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -328,7 +328,7 @@ public class RepositoryBrowserDialog extends DialogWrapper implements ActionList
     }
     else if (e.getSource() == myPasteButton) {
       String url1 = myCopiedURL;
-      url = PathUtil.append(url, "CopyOf" + PathUtil.tail(url1));
+      url = SVNPathUtil.append(url, "CopyOf" + SVNPathUtil.tail(url1));
       RepositoryBrowserCommitDialog dialog = new RepositoryBrowserCommitDialog(myProject,
                                                                                RepositoryBrowserCommitDialog.COPY, url1, url,
                                                                                !"/".equals(entry.getPath()));
@@ -347,7 +347,7 @@ public class RepositoryBrowserDialog extends DialogWrapper implements ActionList
       }
     }
     else if (e.getSource() == myMkDirButton) {
-      url = PathUtil.append(url, "NewFolder");
+      url = SVNPathUtil.append(url, "NewFolder");
       RepositoryBrowserCommitDialog dialog = new RepositoryBrowserCommitDialog(myProject,
                                                                                RepositoryBrowserCommitDialog.MKDIR, url, null, false);
       dialog.show();
@@ -441,7 +441,7 @@ public class RepositoryBrowserDialog extends DialogWrapper implements ActionList
       anActionEvent.getPresentation().setIcon(IconLoader.findIcon("/actions/sync.png"));
       String url = (String)myRepositoryBox.getEditor().getItem();
       try {
-        SVNRepositoryLocation.parseURL(url);
+        SVNURL.parseURIEncoded(url);
       }
       catch (SVNException e) {
         url = null;

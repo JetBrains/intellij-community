@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
 import org.tmatesoft.svn.core.auth.*;
+import org.tmatesoft.svn.core.SVNURL;
 
 import javax.swing.*;
 import java.io.File;
@@ -38,7 +39,7 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
   }
 
   public SVNAuthentication requestClientAuthentication(String kind,
-                                                       String url,
+                                                       SVNURL url,
                                                        final String realm,
                                                        String errorMessage,
                                                        final SVNAuthentication previousAuth,
@@ -111,7 +112,7 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
     return result[0];
   }
 
-  public int acceptServerAuthentication(String url, String realm, final Object certificate, final boolean resultMayBeStored) {
+  public int acceptServerAuthentication(SVNURL url, String realm, final Object certificate, final boolean resultMayBeStored) {
     if (!(certificate instanceof X509Certificate)) {
       return ACCEPTED;
     }

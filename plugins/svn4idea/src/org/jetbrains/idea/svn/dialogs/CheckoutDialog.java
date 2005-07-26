@@ -27,8 +27,9 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
-import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -61,7 +62,7 @@ public class CheckoutDialog extends DialogWrapper implements ActionListener {
   public CheckoutDialog(Project project) {
     super(project, true);
     myProject = project;
-    setTitle("Check Out Files");
+    setTitle("Check Out from Repository");
     init();
   }
 
@@ -107,6 +108,10 @@ public class CheckoutDialog extends DialogWrapper implements ActionListener {
         String defaultPath = parent.getPath().replace('/', File.separatorChar);
         myDestinationText.setText(defaultPath);
       }
+    } else {
+      String path = System.getProperty("user.home", "");
+      path = path.replace('/', File.separatorChar);
+      myDestinationText.setText(path);
     }
     myDestinationText.getTextField().selectAll();
     myDestinationText.getTextField().getDocument().addDocumentListener(new DocumentListener() {
@@ -255,12 +260,12 @@ public class CheckoutDialog extends DialogWrapper implements ActionListener {
             String path = myDestinationText.getText();
             if (path != null && path.trim().length() > 0) {
               path = path.replace(File.separatorChar, '/');
-              if (!PathUtil.isEmpty(path)) {
-                path = PathUtil.removeTail(path);
-                path = PathUtil.append(path, PathUtil.decode(PathUtil.tail(url)));
+              if (path != null && !"".equals(path) && !"/".equals(path)) {
+                path = SVNPathUtil.removeTail(path);
+                path = SVNPathUtil.append(path, SVNEncodingUtil.uriDecode(SVNPathUtil.tail(url)));
               }
               else {
-                path = PathUtil.decode(PathUtil.tail(url));
+                path = SVNEncodingUtil.uriDecode(SVNPathUtil.tail(url));
               }
               path = path.replace('/', File.separatorChar);
             }
@@ -352,7 +357,7 @@ public class CheckoutDialog extends DialogWrapper implements ActionListener {
       anActionEvent.getPresentation().setIcon(IconLoader.findIcon("/actions/sync.png"));
       String url = (String)myRepositoryBox.getEditor().getItem();
       try {
-        SVNRepositoryLocation.parseURL(url);
+        SVNURL.parseURIEncoded(url);
       }
       catch (SVNException e) {
         url = null;

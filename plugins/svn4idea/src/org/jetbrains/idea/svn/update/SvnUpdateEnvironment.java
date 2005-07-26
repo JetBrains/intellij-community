@@ -33,6 +33,7 @@ import org.jetbrains.idea.svn.SvnWCRootCrawler;
 import org.jetbrains.idea.svn.actions.MergeAction;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
@@ -271,7 +272,9 @@ public class SvnUpdateEnvironment implements UpdateEnvironment {
 
           SVNDiffClient diffClient = myVcs.createDiffClient();
           diffClient.setEventHandler(myHandler);
-          diffClient.doMerge(url1, url2, rev1, rev2, root, recursive, true, false, dryRun);
+          SVNURL svnURL1 = SVNURL.parseURIEncoded(url1);
+          SVNURL svnURL2 = SVNURL.parseURIEncoded(url2);
+          diffClient.doMerge(svnURL1, rev1, svnURL2, rev2, root, recursive, true, false, dryRun);
         }
         else if (config != null && !config.isUpdate() && url != null) {
           rev = client.doSwitch(root, url, revision, recursive);

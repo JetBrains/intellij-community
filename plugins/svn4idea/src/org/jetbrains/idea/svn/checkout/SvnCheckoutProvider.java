@@ -33,15 +33,9 @@ import org.tmatesoft.svn.core.wc.*;
 import java.io.File;
 
 public class SvnCheckoutProvider implements CheckoutProvider {
+
   public void doCheckout() {
-    Project p;
-    if (ProjectManager.getInstance().getOpenProjects().length > 0) {
-      p = ProjectManager.getInstance().getOpenProjects()[0];
-    }
-    else {
-      p = ProjectManager.getInstance().getDefaultProject();
-    }
-    final Project project = p;
+    final Project project = ProjectManager.getInstance().getDefaultProject();
     CheckoutDialog dialog = new CheckoutDialog(project);
     dialog.show();
     if (!dialog.isOK() || dialog.getSelectedURL() == null || dialog.getSelectedFile() == null) {

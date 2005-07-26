@@ -51,17 +51,17 @@ import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 import org.jetbrains.idea.svn.status.SvnStatusEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
+import org.tmatesoft.svn.core.internal.util.SVNLogInputStream;
+import org.tmatesoft.svn.core.internal.util.SVNLogOutputStream;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.wc.*;
-import org.tmatesoft.svn.util.DebugDefaultLogger;
-import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.LoggingInputStream;
-import org.tmatesoft.svn.util.LoggingOutputStream;
+import org.tmatesoft.svn.util.SVNDebugLoggerAdapter;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 import java.io.File;
 import java.io.InputStream;
@@ -89,7 +89,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
   private SvnEditFileProvider myEditFilesProvider;
 
   static {
-    DebugLog.setLogger(new JavaSVNDebugLogger(Boolean.getBoolean("javasvn.log"), LOG));
+    SVNDebugLog.setLogger(new JavaSVNDebugLogger(Boolean.getBoolean("javasvn.log"), LOG));
 
     DAVRepositoryFactory.setup();
     SVNRepositoryFactoryImpl.setup();
@@ -137,7 +137,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
   }
 
   public SVNRepository createRepository(String url) throws SVNException {
-    SVNRepository repos = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
+    SVNRepository repos = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(url));
     repos.setAuthenticationManager(myConfiguration.getAuthenticationManager(myProject));
     return repos;
   }
@@ -411,7 +411,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     }
   }
 
-  private static class JavaSVNDebugLogger extends DebugDefaultLogger {
+  private static class JavaSVNDebugLogger extends SVNDebugLoggerAdapter {
     private final boolean myLoggingEnabled;
     private final Logger myLog;
 
@@ -420,67 +420,38 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
       myLog = log;
     }
 
-    public void logFine(String message) {
-      if (!myLoggingEnabled) {
-        return;
-      }
-      message = message == null ? "" : message;
-      myLog.info(message);
-    }
-
-    public void logInfo(String message) {
-      if (!myLoggingEnabled) {
-        return;
-      }
-      message = message == null ? "" : message;
-      myLog.info(message);
-    }
-
-    public void logError(String message, Throwable th) {
-      if (!myLoggingEnabled) {
-        return;
-      }
-      message = message == null ? "" : message;
-      if (th != null) {
-        myLog.info(message, th);
-      }
-      else {
+    public void log(String message) {
+      if (myLoggingEnabled) {
         myLog.info(message);
       }
     }
 
-    public boolean isFineEnabled() {
-      return myLoggingEnabled;
-    }
-
-    public boolean isInfoEnabled() {
-      return myLoggingEnabled;
-    }
-
-    public boolean isErrorEnabled() {
-      return myLoggingEnabled;
-    }
-
-    public LoggingInputStream getLoggingInputStream(String protocol, InputStream stream) {
-      protocol = protocol == null ? "svn" : protocol;
-      final boolean enabled = Boolean.getBoolean("javasvn.log." + protocol);
-      return new LoggingInputStream(stream, enabled ? this : null);
-    }
-
-    public LoggingOutputStream getLoggingOutputStream(String protocol, OutputStream stream) {
-      protocol = protocol == null ? "svn" : protocol;
-      final boolean enabled = Boolean.getBoolean("javasvn.log." + protocol);
-      return new LoggingOutputStream(stream, enabled ? this : null);
-    }
-
-    public void logStream(String content, boolean writeNotRead) {
-      if (!myLoggingEnabled) {
-        return;
+    public void log(Throwable th) {
+      if (myLoggingEnabled) {
+        myLog.info(th);
       }
-      content = content == null ? "" : content;
-      content = writeNotRead ? "SENT:" + content : "READ" + content;
-      myLog.info(content);
     }
+
+    public void log(String message, byte[] data) {
+      if (myLoggingEnabled) {
+        myLog.info(message + " : " + new String(data == null ? new byte[0] : data));
+      }
+    }
+
+    public InputStream createLogStream(InputStream is) {
+      if (myLoggingEnabled && Boolean.getBoolean("javasvn.log.trace")) {
+        return new SVNLogInputStream(is, this);
+      }
+      return is;
+    }
+
+    public OutputStream createLogStream(OutputStream os) {
+      if (myLoggingEnabled && Boolean.getBoolean("javasvn.log.trace")) {
+        return new SVNLogOutputStream(os, this);
+      }
+      return os;
+    }
+
   }
 
   public FileStatus[] getProvidedStatuses() {

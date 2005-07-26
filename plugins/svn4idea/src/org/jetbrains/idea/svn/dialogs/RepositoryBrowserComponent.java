@@ -17,8 +17,9 @@ package org.jetbrains.idea.svn.dialogs;
 
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNDirEntry;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.util.PathUtil;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionListener;
@@ -98,9 +99,12 @@ public class RepositoryBrowserComponent extends JPanel implements TreeCellRender
       RepositoryTreeModel model = (RepositoryTreeModel)myRepositoryTree.getModel();
       String rootURL = model.getRootURL();
       if (rootURL != null) {
-        String path = PathUtil.encode(((SVNDirEntry)element).getPath());
-        String url = PathUtil.append(rootURL, path);
-        return PathUtil.removeTrailingSlash(url);
+        String path = SVNEncodingUtil.uriEncode(((SVNDirEntry)element).getPath());
+        String url = SVNPathUtil.append(rootURL, path);
+        if (url != null && url.endsWith("/") && url.length() > 1) {
+          url = url.substring(0, url.length() - 1);
+        }
+        return url;
       }
     }
     return null;

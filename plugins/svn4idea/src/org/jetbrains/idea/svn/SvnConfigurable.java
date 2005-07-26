@@ -81,7 +81,7 @@ public class SvnConfigurable implements Configurable, ActionListener {
     gb.gridy = 0;
     gb.anchor = GridBagConstraints.WEST;
     gb.gridwidth = 3;
-    myUseDefaultCheckBox = new JCheckBox("&Use system default subversion configuration directory");
+    myUseDefaultCheckBox = new JCheckBox("&Use system default Subversion configuration directory");
     DialogUtil.registerMnemonic(myUseDefaultCheckBox);
     add(myUseDefaultCheckBox, gb);
     myUseDefaultCheckBox.addActionListener(this);
@@ -100,7 +100,7 @@ public class SvnConfigurable implements Configurable, ActionListener {
           myBrowserDescriptor = new FileChooserDescriptor(false, true, false, false, false, false);
           myBrowserDescriptor.setShowFileSystemRoots(true);
           myBrowserDescriptor.setTitle("Select Configuration Directory");
-          myBrowserDescriptor.setDescription("Select subversion configuration directory or create new one");
+          myBrowserDescriptor.setDescription("Select Subversion configuration directory or create new one");
           myBrowserDescriptor.setHideIgnored(false);
         }
         String path = myConfigurationDirectoryText.getText().trim();
@@ -227,7 +227,7 @@ public class SvnConfigurable implements Configurable, ActionListener {
     else if (e.getSource() == myClearAuthButton) {
       String path = myConfigurationDirectoryText.getText();
       if (path != null) {
-        int result = Messages.showYesNoDialog(myComponent, "You are about to delete all stored subversion authentication information.\n" +
+        int result = Messages.showYesNoDialog(myComponent, "You are about to delete all stored Subversion authentication information.\n" +
                                                            "Would you like to proceed with deletion?", "Clear Authentication Cache",
                                                            Messages.getWarningIcon());
         if (result == 0) {

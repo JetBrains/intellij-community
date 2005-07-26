@@ -20,10 +20,11 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
-import org.tmatesoft.svn.util.PathUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -76,12 +77,12 @@ public class CopyDialog extends DialogWrapper implements ActionListener {
         revStr = info.getRevision() + "";
         myURL = mySrcURL;
         if (myURL != null) {
-          String dstName = "CopyOf" + PathUtil.tail(myURL);
+          String dstName = "CopyOf" + SVNPathUtil.tail(myURL);
           if (mySrcFile.isDirectory()) {
-            myURL = PathUtil.append(myURL, dstName);
+            myURL = SVNPathUtil.append(myURL, dstName);
           }
           else {
-            myURL = PathUtil.append(PathUtil.removeTail(myURL), dstName);
+            myURL = SVNPathUtil.append(SVNPathUtil.removeTail(myURL), dstName);
           }
         }
       }
@@ -256,14 +257,14 @@ public class CopyDialog extends DialogWrapper implements ActionListener {
     }
     // select repository
     String url = myToURLText.getText();
-    String dstName = PathUtil.tail(myURL);
-    dstName = PathUtil.decode(dstName);
-    SelectLocationDialog dialog = new SelectLocationDialog(myProject, PathUtil.removeTail(url), "Copy &as:", dstName, false);
+    String dstName = SVNPathUtil.tail(myURL);
+    dstName = SVNEncodingUtil.uriDecode(dstName);
+    SelectLocationDialog dialog = new SelectLocationDialog(myProject, SVNPathUtil.removeTail(url), "Copy &as:", dstName, false);
     dialog.show();
     if (dialog.isOK()) {
       url = dialog.getSelectedURL();
       String name = dialog.getDestinationName();
-      url = PathUtil.append(url, PathUtil.encode(name));
+      url = SVNPathUtil.append(url, SVNEncodingUtil.uriEncode(name));
       myToURLText.setText(url);
     }
     getOKAction().setEnabled(isOKActionEnabled());

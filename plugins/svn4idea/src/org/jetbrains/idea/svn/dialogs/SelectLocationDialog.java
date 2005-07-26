@@ -18,7 +18,7 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -156,7 +156,7 @@ public class SelectLocationDialog extends DialogWrapper {
   }
 
   public String getDestinationName() {
-    return PathUtil.encode(myDstText.getText().trim());
+    return SVNEncodingUtil.uriEncode(myDstText.getText().trim());
   }
 
   public String getSelectedURL() {
