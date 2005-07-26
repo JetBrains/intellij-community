@@ -9,6 +9,7 @@
 package com.intellij.codeInspection.redundantCast;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
@@ -366,20 +367,22 @@ public class RedundantCastUtil {
     }
   }
 
-  private static boolean isCastRedundantInRefExpression (PsiReferenceExpression refExpression, final PsiExpression castOperand) {
-    PsiElement resolved = refExpression.resolve();
-    final PsiReferenceExpression copy = (PsiReferenceExpression)refExpression.copy();
+  private static boolean isCastRedundantInRefExpression (final PsiReferenceExpression refExpression, final PsiExpression castOperand) {
+    final PsiElement resolved = refExpression.resolve();
+    final Ref<Boolean> result = new Ref<Boolean>(Boolean.FALSE);
     refExpression.getManager().performActionWithFormatterDisabled(new Runnable() {
       public void run() {
         try {
+          final PsiElementFactory elementFactory = refExpression.getManager().getElementFactory();
+          final PsiReferenceExpression copy = (PsiReferenceExpression)elementFactory.createExpressionFromText(refExpression.getText(), refExpression);
           copy.getQualifierExpression().replace(castOperand);
+          result.set(copy.resolve() == resolved);
         }
         catch (IncorrectOperationException e) {
-          LOG.error(e);
         }
       }
     });
-    return copy.resolve() == resolved;
+    return result.get().booleanValue();
   }
 
   public static boolean isTypeCastSemantical(PsiTypeCastExpression typeCast) {
