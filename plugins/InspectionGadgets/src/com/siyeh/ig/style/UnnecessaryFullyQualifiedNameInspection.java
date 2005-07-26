@@ -140,6 +140,13 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
                 return;
             }
             typeParameters.accept(this);
+            final PsiClass aClass = (PsiClass) psiElement;
+            final PsiClass outerClass =
+                    ClassUtils.getOutermostContainingClass(aClass);
+            final String fqName = outerClass.getQualifiedName();
+            if(!text.startsWith(fqName)){
+                return;
+            }
             PsiClass containingClass =
                     ClassUtils.getContainingClass(reference);
             while(containingClass != null){
