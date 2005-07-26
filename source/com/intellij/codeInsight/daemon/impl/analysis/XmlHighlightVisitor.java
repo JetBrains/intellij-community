@@ -127,7 +127,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_START_TAG_START) {
         PsiElement parent = element.getParent();
 
-        if (parent instanceof XmlTag) {
+        if (parent instanceof XmlTag && !(token.getNextSibling() instanceof JspText)) {
           XmlTag tag = (XmlTag)parent;
           checkTag(tag);
         }
@@ -160,6 +160,26 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
     if (myResult.isEmpty()) {
       checkTagByDescriptor(tag);
+      
+      if (tag.getUserData(DO_NOT_VALIDATE_KEY) == null) {
+        if (tag instanceof HtmlTag && tag.getDescriptor() instanceof AnyXmlElementDescriptor) {
+          final String name = tag.getName();
+          
+          reportOneTagProblem(
+            tag,
+            name,
+            "Unknown html tag " + name,
+            null,
+            mySettings.getInspectionProfile(tag).getAdditionalHtmlTags(),
+            HighlightInfoType.CUSTOM_HTML_TAG,
+            HighlightDisplayKey.CUSTOM_HTML_TAG
+          );
+  
+          return;
+        }
+  
+        checkReferences(tag, QuickFixProvider.NULL);
+      } 
     }
   }
 
@@ -591,24 +611,6 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   }
 
   public void visitXmlTag(XmlTag tag) {
-    if (tag.getUserData(DO_NOT_VALIDATE_KEY) == null) {
-      if (tag instanceof HtmlTag && tag.getDescriptor() instanceof AnyXmlElementDescriptor) {
-        final String name = tag.getName();
-        reportOneTagProblem(
-          tag,
-          name,
-          "Unknown html tag " + name,
-          null,
-          mySettings.getInspectionProfile(tag).getAdditionalHtmlTags(),
-          HighlightInfoType.CUSTOM_HTML_TAG,
-          HighlightDisplayKey.CUSTOM_HTML_TAG
-        );
-
-        return;
-      }
-
-      checkReferences(tag, QuickFixProvider.NULL);
-    }
   }
 
   public void visitXmlAttributeValue(XmlAttributeValue value) {
