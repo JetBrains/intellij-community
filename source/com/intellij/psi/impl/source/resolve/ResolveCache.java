@@ -9,6 +9,8 @@ import com.intellij.util.containers.WeakHashMap;
 
 import java.lang.ref.Reference;
 import java.util.Set;
+import java.util.Collections;
+import java.util.Map;
 
 public class ResolveCache {
   private static final Key<MapPair<PsiReference, SoftReference<JavaResolveResult[]>>> JAVA_RESOLVE_MAP = Key.create("ResolveCache.JAVA_RESOLVE_MAP");
@@ -22,12 +24,12 @@ public class ResolveCache {
 
   private final PsiManagerImpl myManager;
 
-  private final WeakHashMap<PsiVariable, Object> myVarToConstValueMap1;
+  private final Map<PsiVariable,Object> myVarToConstValueMap1;
+  private final Map<PsiVariable,Object> myVarToConstValueMap2;
 
   private final WeakHashMap[] myJavaResolveMaps = new WeakHashMap[4];
   private final WeakHashMap[] myResolveMaps = new WeakHashMap[4];
 
-  private final WeakHashMap<PsiVariable,Object> myVarToConstValueMap2;
 
   public static interface GenericsResolver{
     JavaResolveResult[] resolve(PsiJavaReference ref, boolean incompleteCode);
@@ -36,17 +38,18 @@ public class ResolveCache {
   public static interface Resolver{
     PsiElement resolve(PsiReference ref, boolean incompleteCode);
   }
-  
+
   public ResolveCache(PsiManagerImpl manager) {
     myManager = manager;
 
-    myVarToConstValueMap1 = getOrCreateWeakMap(myManager, VAR_TO_CONST_VALUE_MAP_KEY, true);
+    myVarToConstValueMap1 = Collections.synchronizedMap(getOrCreateWeakMap(myManager, VAR_TO_CONST_VALUE_MAP_KEY, true));
+    myVarToConstValueMap2 = Collections.synchronizedMap(getOrCreateWeakMap(myManager, VAR_TO_CONST_VALUE_MAP_KEY, false));
+
     myJavaResolveMaps[0] = getOrCreateWeakMap(myManager, JAVA_RESOLVE_MAP, true);
     myJavaResolveMaps[1] = getOrCreateWeakMap(myManager, JAVA_RESOLVE_MAP_INCOMPLETE, true);
     myResolveMaps[0] = getOrCreateWeakMap(myManager, RESOLVE_MAP, true);
     myResolveMaps[1] = getOrCreateWeakMap(myManager, RESOLVE_MAP_INCOMPLETE, true);
 
-    myVarToConstValueMap2 = getOrCreateWeakMap(myManager, VAR_TO_CONST_VALUE_MAP_KEY, false);
     myJavaResolveMaps[2] = getOrCreateWeakMap(myManager, JAVA_RESOLVE_MAP, false);
     myJavaResolveMaps[3] = getOrCreateWeakMap(myManager, JAVA_RESOLVE_MAP_INCOMPLETE, false);
 
@@ -121,9 +124,9 @@ public class ResolveCache {
   }
 
   public JavaResolveResult[] resolveWithCaching(PsiJavaReference ref,
-                                            GenericsResolver resolver,
-                                            boolean needToPreventRecursion,
-                                            boolean incompleteCode) {
+                                                GenericsResolver resolver,
+                                                boolean needToPreventRecursion,
+                                                boolean incompleteCode) {
     ProgressManager.getInstance().checkCanceled();
 
     synchronized (PsiLock.LOCK) {

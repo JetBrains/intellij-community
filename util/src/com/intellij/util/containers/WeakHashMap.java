@@ -295,14 +295,8 @@ public final class WeakHashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>
       Object ev = e.getValue();
 
       // optimization:
-      Object key;
-      if (o == null){
-        key = null;
-      }
-      else{
-        myHardKeyInstance.set(o);
-        key = myHardKeyInstance;
-      }
+      myHardKeyInstance.set(o);
+      Object key = myHardKeyInstance;
       //WeakKey key = WeakKey.create(e.getKey());
 
       Object hv = myMap.get(key);

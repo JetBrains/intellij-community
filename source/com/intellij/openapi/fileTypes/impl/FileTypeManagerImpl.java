@@ -51,8 +51,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   private Map<String, FileType> myExtToFileTypeMap = new HashMap<String, FileType>();
   private final Set<String> myIgnoredFileMasksSet = new LinkedHashSet<String>();
-  private final THashSet<String> myNotIgnoredFiles = new THashSet<String>();
-  private final THashSet<String> myIgnoredFiles = new THashSet<String>();
+  private final Set<String> myNotIgnoredFiles = Collections.synchronizedSet(new THashSet<String>());
+  private final Set<String> myIgnoredFiles = Collections.synchronizedSet(new THashSet<String>());
   private final EventDispatcher<FileTypeListener> myDispatcher = EventDispatcher.create(FileTypeListener.class);
   private final THashMap<FileType, SyntaxTable> myDefaultTables = new THashMap<FileType, SyntaxTable>();
   private final Map<String, FileType> myInitialAssociations = new HashMap<String, FileType>();

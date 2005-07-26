@@ -1,9 +1,9 @@
 package com.intellij.psi.impl.source;
 
-import com.intellij.util.CharTable;
-import com.intellij.util.text.CharArrayUtil;
 import com.intellij.openapi.util.text.CharSequenceWithStringHash;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.CharTable;
+import com.intellij.util.text.CharArrayUtil;
 import org.apache.commons.collections.map.ReferenceMap;
 
 import java.lang.ref.Reference;
@@ -18,7 +18,7 @@ import java.util.Map;
  */
 public class CharTableImpl implements CharTable {
   private final static CharTableEntryHashingStrategy HASHER = new CharTableEntryHashingStrategy();
-  private final Map myEntries = new WeakCharEntryMap();
+  private final Map<CharSequence,CharSequence> myEntries = new WeakCharEntryMap();
 
   private char[] myCurrentPage = null;
   private int bufferEnd = 0;
@@ -27,8 +27,8 @@ public class CharTableImpl implements CharTable {
     bufferEnd = PAGE_SIZE;
   }
 
-  public CharSequence intern(final CharSequence text) {
-    CharSequence entry = (CharSequence)myEntries.get(text);
+  public synchronized CharSequence intern(final CharSequence text) {
+    CharSequence entry = myEntries.get(text);
     if (entry == null ) {
       entry = createEntry(text);
       myEntries.put(entry, entry);
