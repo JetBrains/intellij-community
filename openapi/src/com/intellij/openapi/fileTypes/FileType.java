@@ -87,8 +87,8 @@ public interface FileType {
    * @return The highlighter implementation.
    */
 
-  @NotNull
-  SyntaxHighlighter getHighlighter(Project project);
+  @Nullable
+  SyntaxHighlighter getHighlighter(@Nullable Project project);
 
   /**
    * Returns the structure view builder for the specified file.
@@ -98,5 +98,5 @@ public interface FileType {
    */
 
   @Nullable
-  StructureViewBuilder getStructureViewBuilder(VirtualFile file, Project project);
+  StructureViewBuilder getStructureViewBuilder(@NotNull VirtualFile file, @NotNull Project project);
 }

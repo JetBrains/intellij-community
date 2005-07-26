@@ -43,6 +43,8 @@ import java.awt.event.FocusEvent;
 import java.io.IOException;
 import java.util.Vector;
 
+import org.jetbrains.annotations.NotNull;
+
 /*
  * @author: MYakovlev
  * Date: Jul 26, 2002
@@ -59,10 +61,9 @@ public class FileTemplateConfigurable implements Configurable {
   private JTextField myExtensionField;
   private JCheckBox myAdjustBox;
   private JPanel myTopPanel;
-  private Splitter mySplitter;
   private JEditorPane myDescriptionComponent;
   private boolean myModified = false;
-  private Vector myChangeListeners = new Vector();
+  private Vector<ChangeListener> myChangeListeners = new Vector<ChangeListener>();
   private VirtualFile myDefaultDescription;
 
   public FileTemplate getTemplate() {
@@ -128,7 +129,7 @@ public class FileTemplateConfigurable implements Configurable {
     myTemplateEditor = createEditor();
     myNameField = new JTextField();
     myExtensionField = new JTextField();
-    mySplitter = new Splitter(true, 0.66f);
+    final Splitter splitter = new Splitter(true, 0.66f);
 
     myDescriptionComponent = new JEditorPane("text/html", "<html></html>");
     myDescriptionComponent.setEditable(false);
@@ -155,11 +156,11 @@ public class FileTemplateConfigurable implements Configurable {
     myMainPanel.add(myAdjustBox,
                     new GridBagConstraints(0, 1, 4, 1, 0.0, 0.0, GridBagConstraints.WEST,
                                            GridBagConstraints.HORIZONTAL, new Insets(2, 0, 2, 0), 0, 0));
-    myMainPanel.add(mySplitter,
+    myMainPanel.add(splitter,
                     new GridBagConstraints(0, 2, 4, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                                            new Insets(2, 0, 0, 0), 0, 0));
-    mySplitter.setFirstComponent(myTemplateEditor.getComponent());
-    mySplitter.setSecondComponent(secondPanel);
+    splitter.setFirstComponent(myTemplateEditor.getComponent());
+    splitter.setSecondComponent(secondPanel);
     setShowInternalMessage(null);
     myTemplateEditor.getDocument().addDocumentListener(new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
@@ -213,7 +214,7 @@ public class FileTemplateConfigurable implements Configurable {
   private void onNameChanged() {
     ChangeEvent event = new ChangeEvent(this);
     for (int i = 0; i < myChangeListeners.size(); i++) {
-      ChangeListener changeListener = (ChangeListener)myChangeListeners.elementAt(i);
+      ChangeListener changeListener = myChangeListeners.elementAt(i);
       changeListener.stateChanged(event);
     }
   }
@@ -281,7 +282,7 @@ public class FileTemplateConfigurable implements Configurable {
         LOG.error(e);
       }
     }
-    boolean adjust = (myTemplate == null) ? false : myTemplate.isAdjust();
+    boolean adjust = (myTemplate != null) && myTemplate.isAdjust();
     setHighlighter();
     myNameField.setText(name);
     myExtensionField.setText(extension);
@@ -341,6 +342,7 @@ public class FileTemplateConfigurable implements Configurable {
     }
 
     SyntaxHighlighter originalHighlighter = fileType.getHighlighter(null);
+    if (originalHighlighter == null) originalHighlighter = new PlainSyntaxHighlighter();
     LexerEditorHighlighter highlighter = new LexerEditorHighlighter(new TemplateHighlighter(originalHighlighter), EditorColorsManager.getInstance().getGlobalScheme());
     ((EditorEx)myTemplateEditor).setHighlighter(highlighter);
     ((EditorEx)myTemplateEditor).repaint(0, myTemplateEditor.getDocument().getTextLength());
@@ -370,10 +372,12 @@ public class FileTemplateConfigurable implements Configurable {
       };
     }
 
+    @NotNull
     public Lexer getHighlightingLexer() {
       return myLexer;
     }
 
+    @NotNull
     public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
       if (tokenType == FileTemplateTokenType.MACRO) {
         return pack(myOriginalHighlighter.getTokenHighlights(tokenType), TemplateColors.TEMPLATE_VARIABLE_ATTRIBUTES);
