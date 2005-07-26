@@ -4,6 +4,7 @@ import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 
 import java.util.ArrayList;
 
@@ -31,7 +32,8 @@ public class IterableVariableMacro extends VariableTypeMacroBase {
     PsiVariable[] variables = MacroUtil.getVariablesVisibleAt(place, "");
     PsiType iterableType = PsiManager.getInstance(project).getElementFactory().createTypeByFQClassName("java.lang.Iterable", file.getResolveScope());
     for (PsiVariable var : variables) {
-      if (var.getParent() instanceof PsiForeachStatement && var.getParent().getTextRange().contains(offset)) {
+      if (var.getParent() instanceof PsiForeachStatement
+          && var.getParent() == PsiTreeUtil.getParentOfType(place, PsiForeachStatement.class)) {
         continue;
       }
       PsiType type = var.getType();
