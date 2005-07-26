@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -69,6 +70,13 @@ public class BuildJarActionDialog extends DialogWrapper {
 
     setTitle("Build Jars");
     init();
+  }
+
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp("editing.generateJarFiles");
+  }
+  protected Action[] createActions() {
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
   public static Collection<Module> getModulesToJar(Project project) {
