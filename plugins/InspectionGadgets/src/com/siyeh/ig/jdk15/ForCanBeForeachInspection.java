@@ -625,7 +625,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
                                                String containerName){
             final CodeStyleManager codeStyleManager =
                     CodeStyleManager.getInstance(project);
-            final String baseName;
+            String baseName;
             if(containerName != null){
                 baseName = StringUtils.createSingularFromName(containerName);
             } else{
@@ -641,6 +641,10 @@ public class ForCanBeForeachInspection extends StatementInspection{
                 } else{
                     baseName = "value";
                 }
+            }
+
+            if(baseName == null || baseName.length() == 0){
+                baseName = "value";
             }
             return codeStyleManager.suggestUniqueVariableName(baseName, scope,
                                                               true);

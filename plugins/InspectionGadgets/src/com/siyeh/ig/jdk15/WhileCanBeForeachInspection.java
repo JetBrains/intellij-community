@@ -259,7 +259,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
                 return false;
             }
             final PsiExpression[] args = argumentList.getExpressions();
-            if(args == null || args.length != 0){
+            if(args.length != 0){
                 return false;
             }
             final PsiReferenceExpression reference =
@@ -282,7 +282,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
                                         PsiType type, String containerName){
             final CodeStyleManager codeStyleManager =
                     CodeStyleManager.getInstance(project);
-            final String baseName;
+            String baseName;
             if(containerName != null){
                 baseName = StringUtils.createSingularFromName(containerName);
             } else{
@@ -296,6 +296,10 @@ public class WhileCanBeForeachInspection extends StatementInspection{
                 } else{
                     baseName = "value";
                 }
+            }
+            if(baseName == null || baseName.length() == 0)
+            {
+                baseName = "value";
             }
             return codeStyleManager.suggestUniqueVariableName(baseName, scope,
                                                               true);
@@ -352,6 +356,10 @@ public class WhileCanBeForeachInspection extends StatementInspection{
         }
         final PsiLocalVariable declaredVar =
                 (PsiLocalVariable) declaration.getDeclaredElements()[0];
+        if(declaredVar.getName() == null)
+        {
+            return false;
+        }
 
         final PsiType declaredVarType = declaredVar.getType();
         if(!(declaredVarType instanceof PsiClassType)){
