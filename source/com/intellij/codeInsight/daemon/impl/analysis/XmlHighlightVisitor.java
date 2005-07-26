@@ -499,11 +499,13 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     if (attribute.isNamespaceDeclaration()) {
       checkNamespaceAttribute(attribute);
       return;
-    } else if (attribute.getName().endsWith("Location")) {
-      String namespace = attribute.getNamespace();
+    } else {
+      final String namespace = attribute.getNamespace();
 
-      if (namespace.equals(XmlUtil.XML_SCHEMA_INSTANCE_URI)) {
-        checkSchemaLocationAttribute(attribute);
+      if (XmlUtil.XML_SCHEMA_INSTANCE_URI.equals(namespace)) {
+        if (attribute.getName().endsWith("Location")) { 
+          checkSchemaLocationAttribute(attribute);
+        }
         return;
       }
     }
