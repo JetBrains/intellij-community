@@ -342,26 +342,28 @@ public class LineStatusTracker implements EditorColorsListener {
 
       shiftRanges(rangesAfterChange, linesShift);
 
-      replaceRanges(changedRanges, newChangedRanges);
+      if (!changedRanges.equals(newChangedRanges)) {
+        replaceRanges(changedRanges, newChangedRanges);
 
-      myRanges = new ArrayList<Range>();
+        myRanges = new ArrayList<Range>();
 
-      myRanges.addAll(rangesBeforeChange);
-      myRanges.addAll(newChangedRanges);
-      myRanges.addAll(rangesAfterChange);
+        myRanges.addAll(rangesBeforeChange);
+        myRanges.addAll(newChangedRanges);
+        myRanges.addAll(rangesAfterChange);
 
-      LOG.assertTrue(myHighlighterCount == myRanges.size(),
-                     "Highlighters: " + myHighlighterCount + ", ranges: " + myRanges.size());
+        LOG.assertTrue(myHighlighterCount == myRanges.size(),
+                       "Highlighters: " + myHighlighterCount + ", ranges: " + myRanges.size());
 
-      myRanges = mergeRanges(myRanges);
+        myRanges = mergeRanges(myRanges);
 
-      for (Range range : myRanges) {
-        if (!range.hasHighlighter()) range.setHighlighter(createHighlighter(range));
+        for (Range range : myRanges) {
+          if (!range.hasHighlighter()) range.setHighlighter(createHighlighter(range));
 
+        }
+
+        LOG.assertTrue(myHighlighterCount == myRanges.size(),
+                       "Highlighters: " + myHighlighterCount + ", ranges: " + myRanges.size());
       }
-
-      LOG.assertTrue(myHighlighterCount == myRanges.size(),
-                     "Highlighters: " + myHighlighterCount + ", ranges: " + myRanges.size());
 
     }
 
