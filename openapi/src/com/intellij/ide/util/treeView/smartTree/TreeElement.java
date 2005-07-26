@@ -17,7 +17,24 @@ package com.intellij.ide.util.treeView.smartTree;
 
 import com.intellij.navigation.ItemPresentation;
 
+/**
+ * An element in a generic tree control displayed in the IDEA user interface.
+ *
+ * @see com.intellij.ide.util.treeView.smartTree.TreeModel#getRoot()
+ */
+
 public interface TreeElement {
+  /**
+   * Returns the presentation of the tree element.
+   *
+   * @return the element presentation.
+   */
   ItemPresentation getPresentation();
+
+  /**
+   * Returns the list of children of the tree element.
+   *
+   * @return the list of children.
+   */
   TreeElement[] getChildren();
 }

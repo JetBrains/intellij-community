@@ -17,7 +17,32 @@ package com.intellij.navigation;
 
 import com.intellij.openapi.project.Project;
 
+/**
+ * Allows a plugin to add items to "Goto Class" and "Goto Symbol" lists.
+ *
+ * @see ChooseByNameRegistry
+ */
+
 public interface ChooseByNameContributor {
+  /**
+   * Returns the list of names for the specified project to which it is possible to navigate
+   * by name.
+   *
+   * @param project                the project in which the navigation is performed.
+   * @param includeNonProjectItems if true, the names of non-project items (for example,
+   *                               library classes) should be included in the returned array.
+   * @return the array of names.
+   */
   String[] getNames(Project project, boolean includeNonProjectItems);
+
+  /**
+   * Returns the list of navigation items matching the specified name.
+   *
+   * @param name                   the name selected from the list.
+   * @param project                the project in which the navigation is performed.
+   * @param includeNonProjectItems if true, the navigation items for non-project items (for example,
+   *                               library classes) should be included in the returned array.
+   * @return the array of navigation items.
+   */
   NavigationItem[] getItemsByName(String name, Project project, boolean includeNonProjectItems);
 }

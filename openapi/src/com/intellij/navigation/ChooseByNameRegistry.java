@@ -21,31 +21,67 @@ import com.intellij.openapi.components.ApplicationComponent;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Registry of components which contribute items to "Goto Class" and "Goto Symbol" lists.
+ */
+
 public class ChooseByNameRegistry implements ApplicationComponent {
   private List<ChooseByNameContributor> myGotoClassContributors = new ArrayList<ChooseByNameContributor>();
   private List<ChooseByNameContributor> myGotoSymbolContributors = new ArrayList<ChooseByNameContributor>();
 
+  /**
+   * Returns the singleton instance of the registry.
+   *
+   * @return the registry instance.
+   */
   public static ChooseByNameRegistry getInstance() {
     return ApplicationManager.getApplication().getComponent(ChooseByNameRegistry.class);
   }
 
+  /**
+   * Registers a component which contributes items to the "Goto Class" list.
+   *
+   * @param contributor the contributor instance.
+   * @see #removeContributor(ChooseByNameContributor)
+   */
   public void contributeToClasses(ChooseByNameContributor contributor) {
     myGotoClassContributors.add(contributor);
   }
 
+  /**
+   * Registers a component which contributes items to the "Goto Symbol" list.
+   *
+   * @param contributor the contributor instance.
+   * @see #removeContributor(ChooseByNameContributor)
+   */
   public void contributeToSymbols(ChooseByNameContributor contributor) {
     myGotoSymbolContributors.add(contributor);
   }
 
+  /**
+   * Unregisters a contributor for "Goto Class" and "Goto Symbol" lists.
+   *
+   * @param contributor the contributor instance.
+   */
   public void removeContributor(ChooseByNameContributor contributor) {
     myGotoClassContributors.remove(contributor);
     myGotoSymbolContributors.remove(contributor);
   }
 
+  /**
+   * Returns the list of registered contributors for the "Goto Class" list.
+   *
+   * @return the array of contributors.
+   */
   public ChooseByNameContributor[] getClassModelContributors() {
     return myGotoClassContributors.toArray(new ChooseByNameContributor[myGotoClassContributors.size()]);
   }
 
+  /**
+   * Returns the list of registered contributors for the "Goto Symbol" list.
+   *
+   * @return the array of contributors.
+   */
   public ChooseByNameContributor[] getSymbolModelContributors() {
     return myGotoSymbolContributors.toArray(new ChooseByNameContributor[myGotoSymbolContributors.size()]);
   }

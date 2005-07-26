@@ -15,6 +15,17 @@
  */
 package com.intellij.ide.structureView;
 
+/**
+ * The listener interface which allows the structure view to receive notifications about
+ * changes to the editor selection.
+ *
+ * @see StructureViewModel#addEditorPositionListener(FileEditorPositionListener)
+ * @see StructureViewModel#removeEditorPositionListener(FileEditorPositionListener)
+ */
 public interface FileEditorPositionListener {
+  /**
+   * Invoked when the selection in the editor linked to the structure view moves to
+   * a different element visible in the structure view.
+   */
   void onCurrentElementChanged();
 }

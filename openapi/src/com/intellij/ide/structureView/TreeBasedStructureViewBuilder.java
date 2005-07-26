@@ -20,7 +20,24 @@ import com.intellij.openapi.project.Project;
 import com.intellij.peer.PeerFactory;
 
 
-public abstract class TreeBasedStructureViewBuilder implements StructureViewBuilder{
+/**
+ * Default implementation of the {@link StructureViewBuilder} interface which uses the
+ * standard IDEA implementation of the {@link StructureView} component and allows to
+ * customize the data displayed in the structure view.
+ *
+ * @see StructureViewModel
+ * @see TextEditorBasedStructureViewModel
+ * @see com.intellij.lang.Language#getStructureViewBuilder(com.intellij.psi.PsiFile)
+ * @see com.intellij.openapi.fileTypes.FileType#getStructureViewBuilder(com.intellij.openapi.vfs.VirtualFile, com.intellij.openapi.project.Project)
+ */
+public abstract class TreeBasedStructureViewBuilder implements StructureViewBuilder {
+  /**
+   * Returns the structure view model defining the data displayed in the structure view
+   * for a specific file.
+   *
+   * @return the structure view model instance.
+   * @see TextEditorBasedStructureViewModel
+   */
   public abstract StructureViewModel createStructureViewModel();
 
   public StructureView createStructureView(FileEditor fileEditor, Project project) {

@@ -27,12 +27,25 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * A node in the project view tree.
+ *
+ * @see TreeStructureProvider#modify(com.intellij.ide.util.treeView.AbstractTreeNode, java.util.Collection, com.intellij.ide.projectView.ViewSettings)
+ */
+
 public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.TreeNode");
 
   private ViewSettings mySettings;
 
+  /**
+   * Creates an instance of the project view node.
+   *
+   * @param project      the project containing the node.
+   * @param value        the object (for example, a PSI element) represented by the project view node
+   * @param viewSettings the settings of the project view.
+   */
   protected ProjectViewNode(Project project, Value value, ViewSettings viewSettings) {
     super(project, value);
     mySettings = viewSettings;
@@ -46,6 +59,12 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
     return false;
   }
 
+  /**
+   * Checks if this node or one of its children represents the specified virtual file.
+   *
+   * @param file the file to check for.
+   * @return true if the file is found in the subtree, false otherwise.
+   */
   public abstract boolean contains(VirtualFile file);
 
   public final ViewSettings getSettings() {

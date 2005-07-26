@@ -20,13 +20,29 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 
 import javax.swing.*;
 
-public class PresentationData implements ItemPresentation{
+/**
+ * Default implementation of the {@link ItemPresentation} interface.
+ */
+
+public class PresentationData implements ItemPresentation {
   private Icon myClosedIcon;
   private Icon myOpenIcon;
   private String myLocationString;
   private String myPresentableText;
   private TextAttributesKey myAttributesKey;
 
+  /**
+   * Creates an instance with the specified parameters.
+   *
+   * @param presentableText the name of the object to be presented in most renderers across the program.
+   * @param locationString  the location of the object (for example, the package of a class). The location
+   *                        string is used by some renderers and usually displayed as grayed text next to
+   *                        the item name.
+   * @param openIcon        the icon shown for the node when it is expanded in the tree.
+   * @param closedIcon      the icon shown for the node when it is collapsed in a tree, or when it is displayed
+   *                        in a non-tree view.
+   * @param attributesKey   the attributes for rendering the item text.
+   */
   public PresentationData(String presentableText, String locationString, Icon openIcon, Icon closedIcon,TextAttributesKey attributesKey) {
     myClosedIcon = closedIcon;
     myLocationString = locationString;
@@ -35,6 +51,9 @@ public class PresentationData implements ItemPresentation{
     myAttributesKey = attributesKey;
   }
 
+  /**
+   * Creates an instance with no parameters specified.
+   */
   public PresentationData() {
   }
 
@@ -50,27 +69,67 @@ public class PresentationData implements ItemPresentation{
     return myPresentableText;
   }
 
+  /**
+   * Sets the icon shown for the node when it is collapsed in a tree, or when it is displayed
+   * in a non-tree view.
+   *
+   * @param closedIcon the closed icon for the node.
+   * @see #setIcons(javax.swing.Icon)
+   */
+
   public void setClosedIcon(Icon closedIcon) {
     myClosedIcon = closedIcon;
   }
+
+  /**
+   * Sets the location of the object (for example, the package of a class). The location
+   * string is used by some renderers and usually displayed as grayed text next to the item name.
+   *
+   * @param locationString the location of the object.
+   */
 
   public void setLocationString(String locationString) {
     myLocationString = locationString;
   }
 
+  /**
+   * Sets the icon shown for the node when it is expanded in the tree.
+   *
+   * @param openIcon the open icon for the node.
+   * @see #setIcons(javax.swing.Icon)
+   */
+
   public void setOpenIcon(Icon openIcon) {
     myOpenIcon = openIcon;
   }
 
+  /**
+   * Sets the name of the object to be presented in most renderers across the program.
+   *
+   * @param presentableText the name of the object.
+   */
   public void setPresentableText(String presentableText) {
     myPresentableText = presentableText;
   }
+
+  /**
+   * Sets both the open and closed icons of the node to the specified icon.
+   *
+   * @param icon the icon for the node.
+   * @see #setOpenIcon(javax.swing.Icon)
+   * @see #setClosedIcon(javax.swing.Icon)
+   */
 
   public void setIcons(Icon icon) {
     setClosedIcon(icon);
     setOpenIcon(icon);
   }
 
+  /**
+   * Copies the presentation parameters from the specified presentation instance.
+   *
+   * @param presentation the instance to copy the parameters from.
+   */
   public void updateFrom(ItemPresentation presentation) {
     setClosedIcon(presentation.getIcon(false));
     setOpenIcon(presentation.getIcon(true));
@@ -83,6 +142,11 @@ public class PresentationData implements ItemPresentation{
     return myAttributesKey;
   }
 
+  /**
+   * Sets the attributes for rendering the item text.
+   *
+   * @param attributesKey the attributes for rendering the item text.
+   */
   public void setAttributesKey(final TextAttributesKey attributesKey) {
     myAttributesKey = attributesKey;
   }

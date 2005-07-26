@@ -16,16 +16,43 @@
 package com.intellij.ide.util.treeView;
 
 /**
+ * Common view settings for trees like the project view and packages view tree.
+ *
  * @author Eugene Zhuravlev
- * Date: Oct 7, 2003
- * Time: 1:19:41 PM
+ * @see com.intellij.ide.projectView.ViewSettings
  */
 public interface NodeOptions {
+  /**
+   * Gets the value of the "Flatten Packages" option.
+   *
+   * @return the value of the "Flatten Packages" option.
+   */
   boolean isFlattenPackages();
+
+  /**
+   * Gets the value of the "Abbreviate Qualified Package Names" option.
+   *
+   * @return the value of the "Abbreviate Qualified Package Names" option.
+   */
   boolean isAbbreviatePackageNames();
+
+  /**
+   * Gets the value of the "Compact Empty Middle Packages" option.
+   *
+   * @return the value of the "Compact Empty Middle Packages" option.
+   */
   boolean isHideEmptyMiddlePackages();
+
+  /**
+   * Gets the value of the "Show/Hide Library Contents" option.
+   *
+   * @return true if the library contents are shown, false otherwise.
+   */
   boolean isShowLibraryContents();
 
+  /**
+   * The default tree view settings.
+   */
   NodeOptions DEFAULT_OPTIONS = new NodeOptions() {
     public boolean isFlattenPackages() {
       return false;

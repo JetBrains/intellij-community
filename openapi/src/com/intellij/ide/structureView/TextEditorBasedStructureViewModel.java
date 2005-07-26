@@ -31,15 +31,32 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The standard {@link StructureViewModel} implementation which is linked to a text editor.
+ *
+ * @see com.intellij.ide.structureView.TreeBasedStructureViewBuilder#createStructureViewModel()
+ */
+
 public abstract class TextEditorBasedStructureViewModel implements StructureViewModel {
   private final Editor myEditor;
   private final CaretListener myCaretListener;
   private final List<FileEditorPositionListener> myListeners = new ArrayList<FileEditorPositionListener>();
 
-  protected TextEditorBasedStructureViewModel(PsiFile psiFile) {
+  /**
+   * Creates a structure view model instance linked to a text editor displaying the specified
+   * file.
+   *
+   * @param psiFile the file for which the structure view model is requested.
+   */
+  protected TextEditorBasedStructureViewModel(@NotNull PsiFile psiFile) {
     this(getEditorForFile(psiFile));
   }
 
+  /**
+   * Creates a structure view model instance linked to the specified text editor.
+   *
+   * @param editor the editor for which the structure view model is requested.
+   */
   protected TextEditorBasedStructureViewModel(final Editor editor) {
     myEditor = editor;
     myCaretListener = new CaretListener() {
@@ -60,7 +77,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
     EditorFactory.getInstance().getEventMulticaster().addCaretListener(myCaretListener);
   }
 
-  private static Editor getEditorForFile(final PsiFile psiFile) {
+  private static Editor getEditorForFile(@NotNull final PsiFile psiFile) {
     VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) {
       PsiFile originalFile = psiFile.getOriginalFile();
@@ -100,7 +117,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
     return element;
   }
 
-  protected abstract PsiFile getPsiFile();
+  protected abstract PsiFile getPsiFile();   // TODO: change abstract method to constructor parameter?
 
   protected boolean isSuitable(final PsiElement element) {
     if (element == null) return false;
@@ -119,7 +136,14 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
 
   }
 
-  @NotNull protected abstract Class[] getSuitableClasses();
+  /**
+   * Returns the list of PSI element classes which are shown as structure view elements.
+   * When determining the current editor element, the PSI tree is walked up until an element
+   * matching one of these classes is found.
+   *
+   * @return the list of classes
+   */
+  @NotNull protected abstract Class[] getSuitableClasses();   // TODO: Class<PsiElement>?
 
   protected Editor getEditor() {
     return myEditor;

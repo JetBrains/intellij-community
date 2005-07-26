@@ -18,7 +18,20 @@ package com.intellij.ide.structureView;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 
+/**
+ * Factory interface for creating instances of the standard structure view component.
+ *
+ * @see com.intellij.peer.PeerFactory#getStructureViewFactory()
+ */
 public interface StructureViewFactory {
+  /**
+   * Creates a structure view component instance for the specified editor.
+   *
+   * @param fileEditor the editor to which the structure view is linked.
+   * @param treeModel  the model defining the data shown in the structure view.
+   * @param project    the project containing the file for which the structure view is requested.
+   * @return the structure view instance.
+   */
   StructureView createStructureView(FileEditor fileEditor,
                                     StructureViewModel treeModel,
                                     Project project); 

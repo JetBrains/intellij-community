@@ -17,8 +17,14 @@ package com.intellij.ide.projectView;
 
 import com.intellij.ide.util.treeView.NodeOptions;
 
+/**
+ * The view settings for the project view.
+ */
 public interface ViewSettings extends NodeOptions {
 
+  /**
+   * The default view settings for the project view.
+   */
   ViewSettings DEFAULT = new ViewSettings() {
     public boolean isShowMembers() {
       return false;
@@ -49,9 +55,24 @@ public interface ViewSettings extends NodeOptions {
     }
   };
 
+  /**
+   * Checks if the project view displays members of classes.
+   *
+   * @return true if class members are displayed, false otherwise.
+   */
   boolean isShowMembers();
 
+  /**
+   * Checks if the project view displays the structure view pane.
+   *
+   * @return true if the structure view is displayed, false otherwise.
+   */
   boolean isStructureView();
 
+  /**
+   * Checks if modules are shown on the "Packages" tab of the project view.
+   *
+   * @return true if the modules are shown, false otherwise.
+   */
   boolean isShowModules();
 }

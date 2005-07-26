@@ -19,7 +19,23 @@ import com.intellij.navigation.ItemPresentation;
 
 import java.util.Collection;
 
+/**
+ * A group of items in a generic tree.
+ *
+ * @see Grouper#group(com.intellij.ide.util.treeView.AbstractTreeNode, java.util.Collection<com.intellij.ide.util.treeView.smartTree.TreeElement>)
+ */
 public interface Group {
+  /**
+   * Returns the presentation information for the group.
+   *
+   * @return the group presentation.
+   */
   ItemPresentation getPresentation();
+
+  /**
+   * Returns the list of nodes in the group.
+   *
+   * @return the list of nodes.
+   */
   Collection<TreeElement> getChildren();
 }

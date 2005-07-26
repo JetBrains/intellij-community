@@ -16,11 +16,26 @@
 package com.intellij.ide.util.treeView.smartTree;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public interface Grouper extends TreeAction{
+/**
+ * Action for grouping items in a generic tree.
+ *
+ * @see com.intellij.ide.util.treeView.smartTree.TreeModel#getGroupers()
+ */
+
+public interface Grouper extends TreeAction {
   Grouper[] EMPTY_ARRAY = new Grouper[0];
 
-  Collection<Group> group(final AbstractTreeNode parent, Collection<TreeElement> children);
+  /**
+   * Returns the collection of groups into which the children of the specified parent node
+   * are grouped.
+   *
+   * @param parent   the parent node.
+   * @param children the children of the parent node.
+   * @return the collection of groups
+   */
+  @NotNull Collection<Group> group(final AbstractTreeNode parent, Collection<TreeElement> children);
 }

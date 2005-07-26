@@ -16,19 +16,67 @@
 package com.intellij.ide.structureView;
 
 import com.intellij.ide.util.treeView.smartTree.TreeModel;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public interface StructureViewModel extends TreeModel{
-  Object getCurrentEditorElement();
+/**
+ * Defines the model for the data displayed in the standard structure view or file structure
+ * popup component. The model of the standard structure view is represented as a tree of elements.
+ *
+ * @see com.intellij.ide.structureView.TreeBasedStructureViewBuilder#createStructureViewModel()
+ * @see TextEditorBasedStructureViewModel
+ */
+public interface StructureViewModel extends TreeModel {
+  /**
+   * Returns the element currently selected in the editor linked to the structure view.
+   *
+   * @return the selected element, or null if the current editor position does not
+   * correspond to any element that can be shown in the structure view.
+   */
+  @Nullable Object getCurrentEditorElement();
 
+  /**
+   * Adds a listener which gets notified when the selection in the editor linked to the
+   * structure view moves to a different element visible in the structure view.
+   *
+   * @param listener the listener to add.
+   */
   void addEditorPositionListener(FileEditorPositionListener listener);
 
+  /**
+   * Removes a listener which gets notified when the selection in the editor linked to the
+   * structure view moves to a different element visible in the structure view.
+   *
+   * @param listener the listener to remove.
+   */
   void removeEditorPositionListener(FileEditorPositionListener listener);
 
+  /**
+   * Adds a listener which gets notified when the data represented by the structure view
+   * is changed and the structure view needs to be rebuilt.
+   *
+   * @param modelListener the listener to add.
+   */
   void addModelListener(ModelListener modelListener);
-  
+
+  /**
+   * Removes a listener which gets notified when the data represented by the structure view
+   * is changed and the structure view needs to be rebuilt.
+   *
+   * @param modelListener the listener to remove.
+   */
   void removeModelListener(ModelListener modelListener);
 
+  /**
+   * Returns the root element of the structure view tree.
+   *
+   * @return the structure view root.
+   */
+  @NotNull
   StructureViewTreeElement getRoot();
 
+  /**
+   * Disposes of the model.
+   */
   void dispose();
 }

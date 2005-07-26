@@ -17,8 +17,34 @@ package com.intellij.ide.util.treeView.smartTree;
 
 import javax.swing.*;
 
+/**
+ * The presentation information for a grouping, sorting or filtering action displayed in
+ * a generic tree.
+ *
+ * @see TreeAction#getPresentation()
+ * @see ActionPresentationData
+ */
+
 public interface ActionPresentation {
+  /**
+   * Returns the name of the action, displayed in the tooltip for the toolbar button.
+   *
+   * @return the action name.
+   */
   String getText();
+
+  /**
+   * Returns the description of the action, displayed in the status bar when the mouse
+   * is over the toolbar button.
+   *
+   * @return the action description.
+   */
   String getDescription();
+
+  /**
+   * Returns the icon for the action, displayed on the toolbar button.
+   *
+   * @return the action icon.
+   */
   Icon getIcon();
 }

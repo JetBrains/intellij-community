@@ -16,16 +16,30 @@
 package com.intellij.ide.util.treeView.smartTree;
 
 import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 
+/**
+ * Action for sorting items in a generic tree.
+ *
+ * @see com.intellij.ide.util.treeView.smartTree.TreeModel#getSorters()
+ */
 public interface Sorter extends TreeAction {
   Sorter[] EMPTY_ARRAY = new Sorter[0];
 
+  /**
+   * Returns the comparator used for comparing nodes in the tree.
+   *
+   * @return the comparator for comparing nodes.
+   */
   Comparator getComparator();
 
   String ALPHA_SORTER_ID = "ALPHA_COMPARATOR";
 
+  /**
+   * The default sorter which sorts the tree nodes alphabetically.
+   */
   Sorter ALPHA_SORTER = new Sorter() {
     public Comparator getComparator() {
       return new Comparator() {
@@ -47,10 +61,12 @@ public interface Sorter extends TreeAction {
       };
     }
 
+    @NotNull
     public ActionPresentation getPresentation() {
       return new ActionPresentationData("Sort Alphabetically", "Sort Alphabetically", IconLoader.getIcon("/objectBrowser/sorted.png"));
     }
 
+    @NotNull
     public String getName() {
       return ALPHA_SORTER_ID;
     }

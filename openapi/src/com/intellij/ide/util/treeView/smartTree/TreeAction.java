@@ -17,7 +17,27 @@ package com.intellij.ide.util.treeView.smartTree;
 
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * A grouping, sorting or filtering action which can be applied to a generic tree.
+ *
+ * @see com.intellij.ide.util.treeView.smartTree.TreeModel#getFilters()
+ * @see com.intellij.ide.util.treeView.smartTree.TreeModel#getGroupers()
+ * @see com.intellij.ide.util.treeView.smartTree.TreeModel#getSorters()
+ */
+
 public interface TreeAction {
+  /**
+   * Returns the presentation for the action.
+   *
+   * @return the action presentation.
+   * @see ActionPresentationData#ActionPresentationData(String, String, javax.swing.Icon)
+   */
   @NotNull ActionPresentation getPresentation();
+
+  /**
+   * Returns a unique identifier for the action.
+   *
+   * @return the action identifier.
+   */
   @NotNull String getName();
 }

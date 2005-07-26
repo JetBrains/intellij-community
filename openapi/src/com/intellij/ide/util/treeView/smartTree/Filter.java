@@ -15,15 +15,29 @@
  */
 package com.intellij.ide.util.treeView.smartTree;
 
-public interface Filter extends TreeAction{
+/**
+ * Action for filtering items in a generic tree.
+ *
+ * @see com.intellij.ide.util.treeView.smartTree.TreeModel#getFilters()
+ */
+
+public interface Filter extends TreeAction {
   Filter[] EMPTY_ARRAY = new Filter[0];
 
+  /**
+   * Checks if the specified tree element is accepted by the filter.
+   *
+   * @param treeNode the node to filter.
+   * @return true if the node is visible, false otherwise.
+   */
   boolean isVisible(TreeElement treeNode);
 
   /**
+   * Checks if the filter is applied when the corresponding toolbar button is pressed or released.
+   * For example, the "Show fields" filter works when the corresponding toolbar button is not pressed.
    *
-   * @return this means the filter will work when it is disabled (for example "Show fields" filter is filter hiding fields, but reverted)
+   * @return false if the filter works when the button is pressed, true if the filter works when the
+   * button is released.
    */
-  
   boolean isReverted();
 }

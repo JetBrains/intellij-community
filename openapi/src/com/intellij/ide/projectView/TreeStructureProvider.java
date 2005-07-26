@@ -20,9 +20,35 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public interface TreeStructureProvider {
+/**
+ * Allows a plugin to modify the structure of a project as displayed in the project view.
+ * Plugin implementations of this interface must be registered as project components in the
+ * plugin.xml file.
+ */
 
+public interface TreeStructureProvider {
+  /**
+   * Allows a plugin to modify the list of children displayed for the specified node in the
+   * project view.
+   *
+   * @param parent   the parent node.
+   * @param children the list of child nodes according to the default project structure.
+   *                 Elements of the collection are of type {@link ProjectViewNode}.
+   * @param settings the current project view settings.
+   * @return the modified collection of child nodes, or <code>children</code> if no modifications
+   * are required.
+   */
   Collection<AbstractTreeNode> modify(AbstractTreeNode parent, Collection<AbstractTreeNode> children, ViewSettings settings);
 
+  /**
+   * Returns a user data object of the specified type for the specified selection in the
+   * project view.
+   *
+   * @param selected the list of nodes currently selected in the project view.
+   * @param dataName the identifier of the requested data object (for example, as defined in
+   * {@link com.intellij.openapi.actionSystem.DataConstants})
+   * @return the data object, or null if no data object can be returned by this provider.
+   * @see com.intellij.openapi.actionSystem.DataProvider
+   */
   @Nullable Object getData(Collection<AbstractTreeNode> selected, String dataName);
 }

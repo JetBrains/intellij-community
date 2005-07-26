@@ -15,6 +15,17 @@
  */
 package com.intellij.ide.structureView;
 
+/**
+ * The listener interface which allows the structure view to receive notification about
+ * changes to data shown in the structure view.
+ *
+ * @see StructureViewModel#addModelListener(ModelListener)
+ * @see StructureViewModel#removeModelListener(ModelListener)
+ */
 public interface ModelListener {
+  /**
+   * Invoked when the data represented by the structure view
+   * is changed and the structure view needs to be rebuilt.
+   */
   void onModelChanged();
 }

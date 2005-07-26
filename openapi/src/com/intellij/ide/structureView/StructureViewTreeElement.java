@@ -18,10 +18,22 @@ package com.intellij.ide.structureView;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.pom.Navigatable;
 
+/**
+ * An element in the structure view tree model.
+ *
+ * @see com.intellij.ide.structureView.StructureViewModel#getRoot()
+ */
+
 public interface StructureViewTreeElement<V> extends TreeElement, Navigatable{
   StructureViewTreeElement[] EMPTY_ARRAY = new StructureViewTreeElement[0];
 
+  /**
+   * Returns the data object (usually a PSI element) corresponding to the
+   * structure view element.
+   *
+   * @return the data object instance.
+   */
   V getValue();
-  StructureViewTreeElement[] getChildren();
 
+  StructureViewTreeElement[] getChildren();
 }

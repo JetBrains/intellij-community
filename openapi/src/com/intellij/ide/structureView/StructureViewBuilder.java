@@ -20,7 +20,11 @@ import com.intellij.openapi.project.Project;
 
 /**
  * Defines the implementation of Structure View and the file structure popup for
- * a file type.
+ * a file type. This class allows to replace the entire Structure View component
+ * implementation. If it is acceptable to have the standard component implementation
+ * and to customize only how the Structure View is populated with the file data,
+ * the standard implementation of this interface - {@link TreeBasedStructureViewBuilder} -
+ * should be used.
  *
  * @see com.intellij.lang.Language#getStructureViewBuilder(com.intellij.psi.PsiFile)
  * @see com.intellij.openapi.fileTypes.FileType#getStructureViewBuilder(com.intellij.openapi.vfs.VirtualFile, com.intellij.openapi.project.Project) 

@@ -17,10 +17,23 @@ package com.intellij.ide.util.treeView.smartTree;
 
 import javax.swing.*;
 
-public class ActionPresentationData implements ActionPresentation{
+/**
+ * The default implementation of the ActionPresentation interface, specifying the presentation
+ * information for a grouping, sorting or filtering action displayed in a generic tree.
+ */
+
+public class ActionPresentationData implements ActionPresentation {
   private final String myText;
   private final String myDescription;
   private final Icon myIcon;
+
+  /**
+   * Creates an action presentation with the specified text, description and icon.
+   * @param text        the name of the action, displayed in the tooltip for the toolbar button.
+   * @param description the description of the action, displayed in the status bar when the mouse
+   *                    is over the toolbar button.
+   * @param icon        the icon for the action, displayed on the toolbar button.
+   */
 
   public ActionPresentationData(String text, String description, Icon icon) {
     myText = text;
