@@ -22,7 +22,7 @@ public class RemoveBracesPredicate implements PsiElementPredicate
 {
 	public boolean satisfiedBy(PsiElement element)
 	{
-		if (!(element instanceof PsiBlockStatement))
+        if (!(element instanceof PsiBlockStatement))
 		{
 			return false;
 		}
@@ -36,6 +36,12 @@ public class RemoveBracesPredicate implements PsiElementPredicate
 		}
 		final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
 		final PsiStatement[] statements = codeBlock.getStatements();
-		return statements.length == 1;
-	}
+        if(statements.length != 1){
+            return false;
+        }
+        final PsiFile file = element.getContainingFile();
+        //this intention doesn't work in JSP files, as it can't tell about tags
+        // inside the braeces
+        return file instanceof PsiJavaFile;
+    }
 }
