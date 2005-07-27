@@ -374,8 +374,8 @@ public class TypedHandler implements TypedActionHandler {
       originalFileType = fileType = FileTypeManager.getInstance().getFileTypeByFile(virtualFile);
       if (fileType == StdFileTypes.ASPECT) fileType = StdFileTypes.JAVA;
     }
-    else{
-      fileType = file instanceof PsiCodeFragment ? StdFileTypes.JAVA : null;
+    else {
+      fileType = file.getFileType();
     }
 
     if ('>' == charTyped){
