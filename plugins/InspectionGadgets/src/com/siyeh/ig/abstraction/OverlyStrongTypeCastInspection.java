@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
@@ -99,10 +100,12 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
             if (expectedType.equals(type)) {
                 return;
             }
-            final String expectedTypeText = expectedType.getCanonicalText();
-            if ("_Dummy_.__Array__".equals(expectedTypeText)) {
+
+            PsiClass resolved = PsiUtil.resolveClassInType(expectedType);
+            if (resolved != null && !resolved.isPhysical()) {
                 return;
             }
+            final String expectedTypeText = expectedType.getCanonicalText();
             if (expectedType.isAssignableFrom(operandType)) {
                 return;     //then it's redundant, and caught by the built-in exception
             }
