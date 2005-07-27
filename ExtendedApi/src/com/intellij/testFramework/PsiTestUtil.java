@@ -24,11 +24,11 @@ public class PsiTestUtil {
   public static VirtualFile createTestProjectStructure(Project project,
                                                        Module module,
                                                        String rootPath,
-                                                       List filesToDelete) throws Exception {
+                                                       List<File> filesToDelete) throws Exception {
     return createTestProjectStructure(project, module, rootPath, filesToDelete, true);
   }
 
-  public static VirtualFile createTestProjectStructure(Project project, Module module, List filesToDelete)
+  public static VirtualFile createTestProjectStructure(Project project, Module module, List<File> filesToDelete)
     throws Exception {
     return createTestProjectStructure(project, module, null, filesToDelete, true);
   }
@@ -36,12 +36,23 @@ public class PsiTestUtil {
   public static VirtualFile createTestProjectStructure(Project project,
                                                        Module module,
                                                        String rootPath,
-                                                       List filesToDelete,
+                                                       List<File> filesToDelete,
                                                        boolean addProjectRoots) throws Exception {
+    VirtualFile vDir = createTestProjectStructure(module, rootPath, filesToDelete, addProjectRoots);
+
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+
+    return vDir;
+  }
+
+  public static VirtualFile createTestProjectStructure(final Module module,
+                                                       final String rootPath,
+                                                       final List<File> filesToDelete, final boolean addProjectRoots
+  ) throws Exception {
     File dir = FileUtil.createTempDirectory("unitTest", null);
     filesToDelete.add(dir);
 
-    VirtualFile vDir2 = LocalFileSystem.getInstance().refreshAndFindFileByPath(
+    VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(
       dir.getCanonicalPath().replace(File.separatorChar, '/'));
 
     if (rootPath != null) {
@@ -49,16 +60,12 @@ public class PsiTestUtil {
       if (vDir1 == null) {
         throw new Exception(rootPath + " not found");
       }
-      VfsUtil.copyDirectory(null, vDir1, vDir2, null);
+      VfsUtil.copyDirectory(null, vDir1, vDir, null);
     }
 
-    VirtualFile vDir = vDir2;
     if (addProjectRoots) {
       addSourceContentToRoots(module, vDir);
     }
-
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
     return vDir;
   }
 
