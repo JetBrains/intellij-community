@@ -374,9 +374,15 @@ public class RedundantCastUtil {
       public void run() {
         try {
           final PsiElementFactory elementFactory = refExpression.getManager().getElementFactory();
-          final PsiReferenceExpression copy = (PsiReferenceExpression)elementFactory.createExpressionFromText(refExpression.getText(), refExpression);
-          copy.getQualifierExpression().replace(castOperand);
-          result.set(copy.resolve() == resolved);
+          final PsiExpression copyExpression = elementFactory.createExpressionFromText(refExpression.getText(), refExpression);
+          if (copyExpression instanceof PsiReferenceExpression) {
+            final PsiReferenceExpression copy = (PsiReferenceExpression)copyExpression;
+            final PsiExpression qualifier = copy.getQualifierExpression();
+            if (qualifier != null) {
+              qualifier.replace(castOperand);
+              result.set(copy.resolve() == resolved);
+            }
+          }
         }
         catch (IncorrectOperationException e) {
         }
