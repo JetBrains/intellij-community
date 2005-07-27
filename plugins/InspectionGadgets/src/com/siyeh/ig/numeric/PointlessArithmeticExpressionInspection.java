@@ -147,6 +147,12 @@ public class PointlessArithmeticExpressionInspection
             }
             final PsiExpression rhs = expression.getROperand();
             final PsiExpression lhs = expression.getLOperand();
+
+            if (rhs == null)
+            {
+                return;
+            }
+
             final boolean isPointless;
             if(tokenType.equals(JavaTokenType.PLUS)){
                 isPointless = additionExpressionIsPointless(lhs, rhs);
@@ -162,6 +168,11 @@ public class PointlessArithmeticExpressionInspection
             if(!isPointless){
                 return;
             }
+
+            if (rhs.getType() != expression.getType() || lhs.getType() != expression.getType()) {
+                return; // A bit rude way to avoid false positive of 'int sum = 5, n = 6; float p = (1.0f * sum) / n;'
+            }
+
             registerError(expression);
         }
     }
