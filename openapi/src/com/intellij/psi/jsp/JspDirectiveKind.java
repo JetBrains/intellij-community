@@ -22,7 +22,6 @@ public enum JspDirectiveKind {
   PAGE,
   INCLUDE,
   TAGLIB,
-  TAG,
   ATTRIBUTE,
-  VARIABLE;
+  VARIABLE
 }
