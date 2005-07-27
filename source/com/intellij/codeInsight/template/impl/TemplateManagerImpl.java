@@ -226,7 +226,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
 
     if (fileType == StdFileTypes.JSP || fileType == StdFileTypes.JSPX) {
       final Language language = PsiUtil.getLanguageAtOffset(file, offset);
-      if (language != null && language.equals(StdLanguages.JAVA)) return TemplateContext.JAVA_CODE_CONTEXT;
+      if (language.equals(StdLanguages.JAVA)) return TemplateContext.JAVA_CODE_CONTEXT;
       return TemplateContext.JSP_CONTEXT;
     }
 
