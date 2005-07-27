@@ -5,16 +5,16 @@
 package com.intellij.debugger.actions;
 
 
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerStateManager;
-import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.ui.impl.DebuggerPanel;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
@@ -26,14 +26,17 @@ import java.util.List;
 public abstract class DebuggerAction extends AnAction {
   private static DebuggerTreeNodeImpl[] EMPTY_TREE_NODE_ARRAY = new DebuggerTreeNodeImpl[0];
 
+  @Nullable
   public static DebuggerTree getTree(DataContext dataContext){
     return (DebuggerTree)dataContext.getData(DebuggerActions.DEBUGGER_TREE);
   }
 
+  @Nullable
   public static DebuggerPanel getPanel(DataContext dataContext){
     return (DebuggerPanel)dataContext.getData(DebuggerActions.DEBUGGER_PANEL);
   }
 
+  @Nullable
   public static DebuggerTreeNodeImpl getSelectedNode(DataContext dataContext) {
     DebuggerTree tree = getTree(dataContext);
     if(tree == null) return null;
@@ -52,6 +55,7 @@ public abstract class DebuggerAction extends AnAction {
     return (DebuggerTreeNodeImpl)component;
   }
 
+  @Nullable
   public static DebuggerTreeNodeImpl[] getSelectedNodes(DataContext dataContext) {
     DebuggerTree tree = getTree(dataContext);
     if(tree == null) return null;
@@ -79,6 +83,7 @@ public abstract class DebuggerAction extends AnAction {
     }
   }
 
+  @Nullable
   public static DebuggerStateManager getContextManager(DataContext dataContext) {
     DebuggerPanel panel = getPanel(dataContext);
     return panel == null ? null : panel.getContextManager();

@@ -2,12 +2,11 @@ package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
-import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
-import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 
 /**
@@ -21,7 +20,7 @@ public class ResumeThreadAction extends DebuggerAction{
     final DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
     final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
 
-
+    //noinspection ConstantConditions
     for (int i = 0; i < selectedNode.length; i++) {
       final DebuggerTreeNodeImpl debuggerTreeNode = selectedNode[i];
       ThreadDescriptorImpl threadDescriptor = ((ThreadDescriptorImpl)debuggerTreeNode.getDescriptor());
@@ -39,14 +38,14 @@ public class ResumeThreadAction extends DebuggerAction{
   }
 
   public void update(AnActionEvent e) {
-    DebuggerTreeNodeImpl[] selectedNode = getSelectedNodes(e.getDataContext());
+    DebuggerTreeNodeImpl[] selectedNodes = getSelectedNodes(e.getDataContext());
 
     boolean visible = false;
 
-    if(selectedNode.length > 0){
+    if(selectedNodes != null && selectedNodes.length > 0){
       visible = true;
-      for (int i = 0; i < selectedNode.length; i++) {
-        NodeDescriptorImpl threadDescriptor = selectedNode[i].getDescriptor();
+      for (int i = 0; i < selectedNodes.length; i++) {
+        NodeDescriptorImpl threadDescriptor = selectedNodes[i].getDescriptor();
         if(!(threadDescriptor instanceof ThreadDescriptorImpl) ||
            !((ThreadDescriptorImpl)threadDescriptor).isSuspended()) {
           visible = false;
