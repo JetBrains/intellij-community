@@ -29,6 +29,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -106,11 +107,11 @@ public class OverrideImplementUtil {
         PsiMethod abstractOne = entry.getValue();
         PsiMethod concrete = concretes.get(signature);
         if (concrete == null ||
-                                PsiUtil.getAccessLevel(concrete.getModifierList()) < PsiUtil
-                                  .getAccessLevel(abstractOne.getModifierList()) ||
-                                                                                 (!abstractOne.getContainingClass().isInterface() &&
-                                                                                  abstractOne.getContainingClass()
-                                                                                    .isInheritor(concrete.getContainingClass(), true))) {
+            PsiUtil.getAccessLevel(concrete.getModifierList()) < PsiUtil
+              .getAccessLevel(abstractOne.getModifierList()) ||
+                                                             (!abstractOne.getContainingClass().isInterface() &&
+                                                              abstractOne.getContainingClass()
+                                                                .isInheritor(concrete.getContainingClass(), true))) {
           if (finals.get(signature) == null) {
             PsiSubstitutor substitutor = GenerateMembersUtil.correctSubstitutor(abstractOne,
                                                                                 substitutors.get(abstractOne.getContainingClass()));
@@ -158,7 +159,7 @@ public class OverrideImplementUtil {
   public static PsiMethod[] overrideOrImplementMethod(PsiClass aClass, PsiMethod method, boolean toCopyJavaDoc) throws IncorrectOperationException {
     final PsiClass containingClass = method.getContainingClass();
     PsiSubstitutor substitutor = aClass.isInheritor(containingClass, true) ?
-        TypeConversionUtil.getSuperClassSubstitutor(containingClass, aClass, PsiSubstitutor.EMPTY) : PsiSubstitutor.EMPTY;
+                                 TypeConversionUtil.getSuperClassSubstitutor(containingClass, aClass, PsiSubstitutor.EMPTY) : PsiSubstitutor.EMPTY;
     return overrideOrImplementMethod(aClass, method, substitutor, toCopyJavaDoc, false);
   }
 
@@ -167,13 +168,13 @@ public class OverrideImplementUtil {
                                                        PsiSubstitutor substitutor,
                                                        boolean toCopyJavaDoc,
                                                        boolean insertAtOverride) throws IncorrectOperationException {
-    if (!method.isValid() || !substitutor.isValid()) return PsiMethod.EMPTY_ARRAY;   
+    if (!method.isValid() || !substitutor.isValid()) return PsiMethod.EMPTY_ARRAY;
 
     PsiMethod[] results = EjbUtil.suggestImplementations(method);
 
     if (results.length == 0){
       PsiMethod method1 = substitutor != PsiSubstitutor.EMPTY ?
-          GenerateMembersUtil.substituteGenericMethod(method, substitutor) : method;
+                          GenerateMembersUtil.substituteGenericMethod(method, substitutor) : method;
 
       PsiElementFactory factory = method.getManager().getElementFactory();
       PsiMethod result = (PsiMethod)factory.createClass("Dummy").add(method1);
@@ -429,7 +430,7 @@ public class OverrideImplementUtil {
     return null;
   }
 
-  public static void overrideOrImplement(PsiClass psiClass, PsiMethod baseMethod) throws IncorrectOperationException {
+  public static void overrideOrImplement(PsiClass psiClass, @NotNull PsiMethod baseMethod) throws IncorrectOperationException {
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(baseMethod.getProject());
 
     PsiMethod[] prototypes = overrideOrImplementMethod(psiClass, baseMethod, false);

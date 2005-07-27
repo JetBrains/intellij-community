@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.PopupHandler;
@@ -21,7 +22,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -92,7 +93,7 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
 
     JLabel label;
     final GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.WEST,
-                                                   GridBagConstraints.HORIZONTAL, new Insets(3, 5, 0, 5), 0, 0);
+                                                         GridBagConstraints.HORIZONTAL, new Insets(3, 5, 0, 5), 0, 0);
 
     label =
     new JLabel("method is defined in the class", IconLoader.getIcon("/hierarchy/methodDefined.png"),
@@ -237,7 +238,7 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
     actionGroup.add(new ToolbarHelpAction(HELP_ID));
 
     final ActionToolbar toolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.METHOD_HIERARCHY_VIEW_TOOLBAR,
-                                                                            actionGroup, true);
+                                                                                  actionGroup, true);
     return toolBar;
   }
 
@@ -535,6 +536,7 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
     return list.toArray(new MethodHierarchyNodeDescriptor[list.size()]);
   }
 
+  @Nullable
   public final PsiMethod getBaseMethod() {
     final HierarchyTreeBuilder builder = myBuilders.get(myCurrentViewName);
     final MethodHierarchyTreeStructure treeStructure = (MethodHierarchyTreeStructure)builder.getTreeStructure();

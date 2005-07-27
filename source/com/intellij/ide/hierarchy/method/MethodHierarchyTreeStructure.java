@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -133,6 +134,7 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
     return containingClass;
   }
 
+  @Nullable
   public final PsiMethod getBaseMethod() {
     final PsiElement element = myMethod.getElement();
     return element instanceof PsiMethod ? (PsiMethod)element : null;
@@ -152,13 +154,13 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
           continue;
         }
       }
-      
+
       final MethodHierarchyNodeDescriptor d = new MethodHierarchyNodeDescriptor(myProject, descriptor, aClass, false, this);
       descriptors.add(d);
     }
     return descriptors.toArray(new HierarchyNodeDescriptor[descriptors.size()]);
   }
-  
+
   private PsiClass[] getSubclasses(final PsiClass psiClass) {
     if (psiClass instanceof PsiAnonymousClass) {
       return PsiClass.EMPTY_ARRAY;
@@ -176,16 +178,16 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
       final PsiClass[] implementations = role.findImplementations();
       classes.addAll(Arrays.asList(implementations));
     }
-    
+
     return (PsiClass[])classes.toArray(new PsiClass[classes.size()]);
   }
-  
+
   private boolean shouldHideClass(final PsiClass psiClass) {
     final PsiMethod method = getMethod(psiClass, false);
     if (method != null) {
       return false;
     }
-      
+
     if (isSuperClassForBaseClass(psiClass)) {
       return false;
     }
@@ -224,7 +226,7 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
   private PsiMethod getMethod(final PsiClass aClass, final boolean checkBases) {
     return MethodHierarchyUtil.findBaseMethodInClass(getBaseMethod(), aClass, checkBases);
   }
-  
+
   boolean isSuperClassForBaseClass(final PsiClass aClass) {
     final PsiMethod baseMethod = getBaseMethod();
     if (baseMethod == null) {

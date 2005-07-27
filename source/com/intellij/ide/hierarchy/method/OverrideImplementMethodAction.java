@@ -133,6 +133,7 @@ abstract class OverrideImplementMethodAction extends AnAction {
     final PsiClass psiClass = descriptor.getPsiClass();
     if (psiClass == null) return false;
     final PsiMethod baseMethod = methodHierarchyBrowser.getBaseMethod();
+    if (baseMethod == null) return false;
     final MethodSignature signature = baseMethod.getSignature(PsiSubstitutor.EMPTY);
 
     final MethodSignature[] allOriginalSignatures = toImplement ? OverrideImplementUtil.getMethodSignaturesToImplement(psiClass) : OverrideImplementUtil.getMethodSignaturesToOverride(psiClass);
