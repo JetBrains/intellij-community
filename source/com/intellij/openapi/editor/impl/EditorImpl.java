@@ -39,6 +39,7 @@ import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.ScrollBarUI;
@@ -285,26 +286,32 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     return myVirtualFile;
   }
 
+  @NotNull
   public SelectionModel getSelectionModel() {
     return mySelectionModel;
   }
 
+  @NotNull
   public MarkupModel getMarkupModel() {
     return myMarkupModel;
   }
 
+  @NotNull
   public FoldingModel getFoldingModel() {
     return myFoldingModel;
   }
 
+  @NotNull
   public CaretModel getCaretModel() {
     return myCaretModel;
   }
 
+  @NotNull
   public ScrollingModel getScrollingModel() {
     return myScrollingModel;
   }
 
+  @NotNull
   public EditorSettings getSettings() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return mySettings;
@@ -530,6 +537,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     return myHighlighter;
   }
 
+  @NotNull
   public JComponent getContentComponent() {
     return myEditorComponent;
   }
@@ -588,6 +596,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     return width > 0 ? width : 1;
   }
 
+  @NotNull
   public VisualPosition xyToVisualPosition(Point p) {
     int line = yPositionToVisibleLineNumber(p.y);
 
@@ -677,16 +686,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     return new VisualPosition(line, column);
   }
 
+  @NotNull
   public VisualPosition offsetToVisualPosition(int offset) {
     return logicalToVisualPosition(offsetToLogicalPosition(offset));
   }
 
+  @NotNull
   public LogicalPosition offsetToLogicalPosition(int offset) {
     int line = calcLogicalLineNumber(offset);
     int column = calcColumnNumber(offset, line);
     return new LogicalPosition(line, column);
   }
 
+  @NotNull
   public LogicalPosition xyToLogicalPosition(Point p) {
     final Point pp;
     if (p.x >= 0 && p.y >= 0) {
@@ -699,6 +711,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     return visualToLogicalPosition(xyToVisualPosition(pp));
   }
 
+  @NotNull
   public Point logicalPositionToXY(LogicalPosition pos) {
     VisualPosition visible = logicalToVisualPosition(pos);
     int y = visibleLineNumberToYPosition(visible.line);
@@ -721,6 +734,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     return new Point(x, y);
   }
 
+  @NotNull
   public Point visualPositionToXY(VisualPosition visible) {
     int y = visibleLineNumberToYPosition(visible.line);
     int logLine = visualToLogicalPosition(new VisualPosition(visible.line, 0)).line;
@@ -934,10 +948,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     myGutterComponent.repaint();
   }
 
+  @NotNull
   public Document getDocument() {
     return myDocument;
   }
 
+  @NotNull
   public JComponent getComponent() {
     return myPanel;
   }
@@ -1820,6 +1836,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     return line;
   }
 
+  @NotNull
   public VisualPosition logicalToVisualPosition(LogicalPosition logicalPos) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!myFoldingModel.isFoldingEnabled()) return new VisualPosition(logicalPos.line, logicalPos.column);
@@ -1928,6 +1945,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     return null;
   }
 
+  @NotNull
   public LogicalPosition visualToLogicalPosition(VisualPosition visiblePos) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!myFoldingModel.isFoldingEnabled()) return new LogicalPosition(visiblePos.line, visiblePos.column);
@@ -2956,6 +2974,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     reinitSettings();
   }
 
+  @NotNull
   public EditorColorsScheme getColorsScheme() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return myScheme;
@@ -3836,6 +3855,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     }
   }
 
+  @NotNull
   public EditorGutter getGutter() {
     return getGutterComponentEx();
   }
