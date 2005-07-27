@@ -18,6 +18,7 @@ package com.intellij.openapi.compiler;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileTypes.FileType;
 
 /**
  * A "root" class in compiler subsystem - allows one to register a custom compiler or a compilation task, register/unregister a compilation listener
@@ -41,6 +42,24 @@ public abstract class CompilerManager {
    * @return all registered compilers of the specified class
    */
   public abstract Compiler[] getCompilers(Class compilerClass);
+
+  /**
+   * @param type - registers the type as a compilable type so that Compile action will be enabled on files of this type
+   */
+  public abstract void addCompilableFileType(FileType type);
+
+  /**
+   * @param type - unregisters the type as a compilable type so that Compile action will be disabled on files of this type
+   */
+  public abstract void removeCompilableFileType(FileType type);
+
+  /**
+   * @param type
+   * @return true if files of this type can be compiled by one of registered compilers. If compiler can process files of certain type, it
+   *  should register this file type within the CompilerManager as a compilable file type.
+   * @see com.intellij.openapi.compiler.CompilerManager#addCompilableFileType(FileType)
+   */
+  public abstract boolean isCompilableFileType(FileType type);
 
   /**
    * Register compiler tast that will be executed before the compilation

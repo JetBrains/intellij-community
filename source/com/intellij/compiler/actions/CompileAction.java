@@ -91,7 +91,7 @@ public class CompileAction extends CompileActionBase {
       else if (files.length == 1) {
         final VirtualFile file = files[0];
         FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
-        if(StdFileTypes.JAVA.equals(fileType) || compilerConfiguration.isResourceFile(file.getName())) {
+        if(CompilerManager.getInstance(project).isCompilableFileType(fileType) || compilerConfiguration.isResourceFile(file.getName())) {
           elementDescription = "'" + file.getName() + "'";
         }
         else  {
@@ -142,16 +142,16 @@ public class CompileAction extends CompileActionBase {
     final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(project);
     final FileTypeManager typeManager = FileTypeManager.getInstance();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    final CompilerManager compilerManager = CompilerManager.getInstance(project);
     final List<VirtualFile> filesToCompile = new ArrayList<VirtualFile>();
-    for (int idx = 0; idx < files.length; idx++) {
-      final VirtualFile file = files[idx];
+    for (final VirtualFile file : files) {
       if (!fileIndex.isInSourceContent(file)) {
         continue;
       }
       if (!(file.getFileSystem() instanceof LocalFileSystem)) {
         continue;
       }
-      if(file.isDirectory()) {
+      if (file.isDirectory()) {
         final PsiDirectory directory = psiManager.findDirectory(file);
         if (directory == null || directory.getPackage() == null) {
           continue;
@@ -159,7 +159,7 @@ public class CompileAction extends CompileActionBase {
       }
       else {
         FileType fileType = typeManager.getFileTypeByFile(file);
-        if(!(StdFileTypes.JAVA.equals(fileType) || compilerConfiguration.isResourceFile(file.getName()))) {
+        if (!(compilerManager.isCompilableFileType(fileType) || compilerConfiguration.isResourceFile(file.getName()))) {
           continue;
         }
       }

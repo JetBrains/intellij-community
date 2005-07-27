@@ -13,11 +13,11 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.util.EventDispatcher;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 public class CompilerManagerImpl extends CompilerManager implements ProjectComponent{
   private final Project myProject;
@@ -25,6 +25,7 @@ public class CompilerManagerImpl extends CompilerManager implements ProjectCompo
   private List<Compiler> myCompilers = new ArrayList<Compiler>();
   private List<CompileTask> myBeforeTasks = new ArrayList<CompileTask>();
   private List<CompileTask> myAfterTasks = new ArrayList<CompileTask>();
+  private Set<FileType> myCompilableTypes = new HashSet<FileType>();
   private EventDispatcher<CompilationStatusListener> myEventDispatcher = EventDispatcher.create(CompilationStatusListener.class);
 
   public CompilerManagerImpl(Project project, CompilerConfiguration compilerConfiguration) {
@@ -34,6 +35,8 @@ public class CompilerManagerImpl extends CompilerManager implements ProjectCompo
     addCompiler(new JavaCompiler(myProject));
     addCompiler(new ResourceCompiler(myProject, compilerConfiguration));
     addCompiler(new RmicCompiler(myProject));
+
+    addCompilableFileType(StdFileTypes.JAVA);
     //
     //addCompiler(new DummyTransformingCompiler()); // this one is for testing purposes only
     //addCompiler(new DummySourceGeneratingCompiler(myProject)); // this one is for testing purposes only
@@ -67,6 +70,18 @@ public class CompilerManagerImpl extends CompilerManager implements ProjectCompo
       }
     }
     return (Compiler[])compilers.toArray(new Compiler[compilers.size()]);
+  }
+
+  public void addCompilableFileType(FileType type) {
+    myCompilableTypes.add(type);
+  }
+
+  public void removeCompilableFileType(FileType type) {
+    myCompilableTypes.remove(type);
+  }
+
+  public boolean isCompilableFileType(FileType type) {
+    return myCompilableTypes.contains(type);
   }
 
   public final void addBeforeTask(CompileTask task) {
