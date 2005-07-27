@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -45,16 +46,20 @@ public class CreateConstructorFromCallAction extends CreateFromUsageBaseAction {
 
       startTemplate(editor, template, project, new TemplateStateListener() {
         public void templateFinished(Template template) {
-          try {
-            PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-            final int offset = editor.getCaretModel().getOffset();
-            PsiMethod constructor = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiMethod.class, false);
-            CreateFromUsageUtils.setupMethodBody(constructor);
-            CreateFromUsageUtils.setupEditor(constructor, editor);
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              try {
+                PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+                final int offset = editor.getCaretModel().getOffset();
+                PsiMethod constructor = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiMethod.class, false);
+                CreateFromUsageUtils.setupMethodBody(constructor);
+                CreateFromUsageUtils.setupEditor(constructor, editor);
+              }
+              catch (IncorrectOperationException e) {
+                LOG.error(e);
+              }
+            }
+          });
         }
       });
     }

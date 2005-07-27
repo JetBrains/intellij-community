@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.EnterAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -149,15 +150,19 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
 
       CreateFromUsageBaseAction.startTemplate(newEditor, template, project, new TemplateStateListener() {
         public void templateFinished(Template template) {
-          PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
 
-          CaretModel caretModel = editor.getCaretModel();
-          PsiElement elementAt = file.findElementAt(caretModel.getOffset());
-          PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(elementAt, PsiDeclarationStatement.class);
-          if (declarationStatement != null) {
-            caretModel.moveToOffset(declarationStatement.getTextRange().getEndOffset());
-          }
-          new EnterAction().actionPerformed(editor, DataManager.getInstance().getDataContext());
+              CaretModel caretModel = editor.getCaretModel();
+              PsiElement elementAt = file.findElementAt(caretModel.getOffset());
+              PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(elementAt, PsiDeclarationStatement.class);
+              if (declarationStatement != null) {
+                caretModel.moveToOffset(declarationStatement.getTextRange().getEndOffset());
+              }
+              new EnterAction().actionPerformed(editor, DataManager.getInstance().getDataContext());
+            }
+          });
         }
       });
     }
