@@ -932,12 +932,13 @@ public final class PsiUtil {
   public static Language getLanguageAtOffset (PsiFile file, int offset) {
     final PsiElement elt = file.findElementAt(offset);
     if (elt == null) return file.getLanguage();
-    if (file instanceof JspFile) {
+    final Language language = elt.getLanguage();
+    if (file instanceof JspFile && language == StdLanguages.XML) {
       ASTNode root = getRoot(elt.getNode());
       return root.getPsi().getLanguage();
     }
 
-    return elt.getLanguage();
+    return language;
   }
 
   @NotNull
