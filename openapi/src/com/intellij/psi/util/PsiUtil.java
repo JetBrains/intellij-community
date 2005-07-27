@@ -35,6 +35,7 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
@@ -926,4 +927,28 @@ public final class PsiUtil {
     }
     return false;
   }
+
+  @NotNull
+  public static Language getLanguageAtOffset (PsiFile file, int offset) {
+    final PsiElement elt = file.findElementAt(offset);
+    if (elt == null) return file.getLanguage();
+    if (file instanceof JspFile) {
+      ASTNode root = getRoot(elt.getNode());
+      return root.getPsi().getLanguage();
+    }
+
+    return elt.getLanguage();
+  }
+
+  @NotNull
+  private static ASTNode getRoot(@NotNull ASTNode node) {
+    ASTNode child = node;
+    do {
+      final ASTNode parent = child.getTreeParent();
+      if (parent == null) return child;
+      child = parent;
+    }
+    while (true);
+  }
+
 }

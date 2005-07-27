@@ -4,6 +4,8 @@ import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.TemplateStateListener;
+import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
@@ -13,12 +15,11 @@ import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nullable;
 
 public class TemplateManagerImpl extends TemplateManager implements ProjectComponent {
@@ -214,14 +215,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   }
 
   public int getContextType(PsiFile file, int offset) {
-    VirtualFile vFile = file.getVirtualFile();
-    FileType fileType;
-    if (file instanceof PsiCodeFragment) {
-      fileType = StdFileTypes.JAVA;
-    }
-    else {
-      fileType = FileTypeManager.getInstance().getFileTypeByFile(vFile);
-    }
+    FileType fileType = file.getFileType();
 
     if (fileType == StdFileTypes.XML) {
       return TemplateContext.XML_CONTEXT;
@@ -231,6 +225,8 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     }
 
     if (fileType == StdFileTypes.JSP || fileType == StdFileTypes.JSPX) {
+      final Language language = PsiUtil.getLanguageAtOffset(file, offset);
+      if (language != null && language.equals(StdLanguages.JAVA)) return TemplateContext.JAVA_CODE_CONTEXT;
       return TemplateContext.JSP_CONTEXT;
     }
 

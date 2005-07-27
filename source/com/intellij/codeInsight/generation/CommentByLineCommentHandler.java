@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.Indent;
@@ -206,25 +207,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
 
     int offset = myDocument.getLineStartOffset(line);
     offset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), offset, " \t");
-    final PsiElement elt = myFile.findElementAt(offset);
-    if (elt == null) return null;
-    Language lang = elt.getLanguage();
-    if (myFile instanceof JspFile && lang == StdLanguages.XML) {
-      ASTNode root = getRoot(elt.getNode());
-      lang = root.getPsi().getLanguage();
-    }
-
-    return lang.getCommenter();
-  }
-
-  private @NotNull ASTNode getRoot(@NotNull ASTNode node) {
-    ASTNode child = node;
-    do {
-      final ASTNode parent = child.getTreeParent();
-      if (parent == null) return child;
-      child = parent;
-    }
-    while (true);
+    return PsiUtil.getLanguageAtOffset(myFile, offset).getCommenter();
   }
 
   private Indent computeMinIndent(int line1, int line2, CharSequence chars, CodeStyleManager codeStyleManager, FileType fileType) {
