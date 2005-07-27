@@ -447,7 +447,9 @@ public class ElementsChooser<T> extends JPanel {
       if (component instanceof JLabel) {
         ((JLabel)component).setIcon(properties != null? properties.getIcon() : null);
       }
-      component.setForeground(properties != null? properties.getColor() : null);
+      component.setForeground(properties != null && properties.getColor() != null ?
+                              properties.getColor() :
+                              (isSelected ? table.getSelectionForeground() : table.getForeground()));
       return component;
     }
   }
