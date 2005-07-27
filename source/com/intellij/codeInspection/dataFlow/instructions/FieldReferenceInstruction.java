@@ -14,9 +14,11 @@ import com.intellij.psi.PsiVariable;
  */
 public class FieldReferenceInstruction extends Instruction {
   private PsiExpression myExpression;
+  private boolean myIsPhysical;
 
   public FieldReferenceInstruction(PsiReferenceExpression expression) {
     myExpression = expression;
+    myIsPhysical = expression.isPhysical();
   }
 
   public FieldReferenceInstruction(PsiArrayAccessExpression expression) {
@@ -25,7 +27,7 @@ public class FieldReferenceInstruction extends Instruction {
 
   public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
     final DfaValue qualifier = memState.pop();
-    if (!memState.applyNotNull(qualifier)) {
+    if (myIsPhysical && !memState.applyNotNull(qualifier)) {
       runner.onInstructionProducesNPE(this);
       return new DfaInstructionState[0];
     }
