@@ -98,7 +98,7 @@ public class TodoPackageUtil {
     GlobalSearchScope scope = module != null ? GlobalSearchScope.moduleScope(module) : GlobalSearchScope.projectScope(project);
     ArrayList<PsiPackage> packages = new ArrayList<PsiPackage>();
     for (PsiPackage psiPackage : topLevelPackages) {
-      final PsiPackage aPackage = findNonEmptyPackages(psiPackage, module, project, builder, scope, packages);
+      final PsiPackage aPackage = findNonEmptyPackage(psiPackage, module, project, builder, scope);
       if (aPackage != null){
         packages.add(aPackage);
       }
@@ -126,36 +126,32 @@ public class TodoPackageUtil {
   }
 
   @Nullable
-  private static PsiPackage findNonEmptyPackages(PsiPackage psiPackage, Module module, Project project, TodoTreeBuilder builder, GlobalSearchScope scope, List<PsiPackage> packages){
-    if (!isPackageEmpty(new PackageElement(module, psiPackage, false), builder, project)){
-      return psiPackage;
+  private static PsiPackage findNonEmptyPackage(PsiPackage rootPackage, Module module, Project project, TodoTreeBuilder builder, GlobalSearchScope scope){
+    if (!isPackageEmpty(new PackageElement(module, rootPackage, false), builder, project)){
+      return rootPackage;
     }
-    final PsiPackage[] subPackages = psiPackage.getSubPackages(scope);
-    ArrayList<PsiPackage> nonEmptyPackages = new ArrayList<PsiPackage>();
+    final PsiPackage[] subPackages = rootPackage.getSubPackages(scope);
+    PsiPackage suggestedNonEmptyPackage = null;
+    int count = 0;
     for (PsiPackage aPackage : subPackages) {
       if (!isPackageEmpty(new PackageElement(module, aPackage, false), builder, project)){
-        nonEmptyPackages.add(aPackage);
+        if (++ count > 1) return rootPackage;
+        suggestedNonEmptyPackage = aPackage;
       }
     }
-    if (nonEmptyPackages.size() > 1){
-      return psiPackage;
-    } else {
-      int count = nonEmptyPackages.size();
-      PsiPackage pack = count > 0 ? nonEmptyPackages.get(0) : null;
-      for (PsiPackage aPackage : subPackages) {
-        if (!nonEmptyPackages.contains(aPackage)) {
-          PsiPackage pack1 = findNonEmptyPackages(aPackage, module, project, builder, scope, packages);
-          if (pack1 != null){
-            if (count > 0){
-              return psiPackage;
-            } else {
-              count ++;
-              pack = pack1;
-            }
+    for (PsiPackage aPackage : subPackages) {
+      if (aPackage != suggestedNonEmptyPackage) {
+        PsiPackage subPackage = findNonEmptyPackage(aPackage, module, project, builder, scope);
+        if (subPackage != null){
+          if (count > 0){
+            return rootPackage;
+          } else {
+            count ++;
+            suggestedNonEmptyPackage = subPackage;
           }
         }
       }
-      return pack;
     }
+    return suggestedNonEmptyPackage;
   }
 }
