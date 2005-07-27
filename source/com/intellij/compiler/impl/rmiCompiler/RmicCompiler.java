@@ -158,10 +158,15 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
       }
       // update state so that the latest timestamps are recorded by make
       final ProcessingItem[] processedItems = processed.toArray(new ProcessingItem[processed.size()]);
-      for (int idx = 0; idx < processedItems.length; idx++) {
-        RmicProcessingItem item = (RmicProcessingItem)processedItems[idx];
+      final List<File> filesToRefresh = new ArrayList<File>(processedItems.length * 3);
+      for (ProcessingItem processedItem : processedItems) {
+        RmicProcessingItem item = (RmicProcessingItem)processedItem;
         item.updateState();
+        filesToRefresh.add(item.myStub);
+        filesToRefresh.add(item.mySkel);
+        filesToRefresh.add(item.myTie);
       }
+      CompilerUtil.refreshIOFiles((File[])filesToRefresh.toArray(new File[filesToRefresh.size()]));
       return processedItems;
     }
     finally {
@@ -423,6 +428,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
         mySkel.exists()? mySkel.lastModified() : -1L,
         myTie.exists()? myTie.lastModified() : -1L
       );
+
     }
 
     public void deleteGeneratedFiles() {
