@@ -17,37 +17,37 @@ package com.intellij.openapi.actionSystem;
 
 public interface DataConstants {
   /**
-   * Returns com.intellij.openapi.project.Project
+   * Returns {@link com.intellij.openapi.project.Project}
    */
   String PROJECT = "project";
 
   /**
-   * Returns com.intellij.openapi.module.Module
+   * Returns {@link com.intellij.openapi.module.Module}
    */
   String MODULE = "module";
 
   /**
-   * Returns com.intellij.openapi.vfs.VirtualFile
+   * Returns {@link com.intellij.openapi.vfs.VirtualFile}
    */
   String VIRTUAL_FILE = "virtualFile";
 
   /**
-   * Returns array of com.intellij.openapi.vfs.VirtualFile
+   * Returns array of {@link com.intellij.openapi.vfs.VirtualFile}
    */
   String VIRTUAL_FILE_ARRAY = "virtualFileArray";
 
   /**
-   * Returns com.intellij.openapi.editor.Editor
+   * Returns {@link com.intellij.openapi.editor.Editor}
    */
   String EDITOR = "editor";
 
   /**
-   * Returns com.intellij.openapi.fileEditor.FileEditor
+   * Returns {@link com.intellij.openapi.fileEditor.FileEditor}
    */
   String FILE_EDITOR = "fileEditor";
 
   /**
-   * Returns com.intellij.openapi.fileEditor.OpenFileDescriptor
+   * Returns {@link com.intellij.openapi.fileEditor.OpenFileDescriptor}
    * @deprecated {@link #NAVIGATABLE} should be used instead
    */
   String OPEN_FILE_DESCRIPTOR = "openFileDescriptor";
@@ -86,17 +86,25 @@ public interface DataConstants {
    * Returns {@link com.intellij.pom.Navigatable}
    */
   String NAVIGATABLE = "Navigatable";
-  String NAVIGATABLE_ARRAY = "NavigatableArray";
+
   /**
-   * Returns ExporterToTextFile
+   * Returns an array of {@link com.intellij.pom.Navigatable}
    */
-  String EXPORTER_TO_TEXT_FILE = "exporterToTextFile";
+  String NAVIGATABLE_ARRAY = "NavigatableArray";
+
   /**
-   * Returns com.intellij.psi.PsiElement
+   * Returns {@link com.intellij.ide.ExporterToTextFile}
+   */
+
+  String EXPORTER_TO_TEXT_FILE = "exporterToTextFile";
+
+  /**
+   * Returns {@link com.intellij.psi.PsiElement}
    */
   String PSI_ELEMENT = "psi.Element";
+
   /**
-   * Returns com.intellij.psi.PsiFile
+   * Returns {@link com.intellij.psi.PsiFile}
    */
   String PSI_FILE = "psi.File";
 }
