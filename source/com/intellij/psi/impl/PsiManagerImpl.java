@@ -1,13 +1,13 @@
 package com.intellij.psi.impl;
 
+import com.intellij.formatting.FormatterEx;
+import com.intellij.formatting.FormatterImpl;
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.j2ee.extResources.ExternalResourceListener;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
-import com.intellij.formatting.FormatterEx;
-import com.intellij.formatting.FormatterImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -49,17 +49,16 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlElementDecl;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.*;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiManagerImpl");
@@ -1073,13 +1072,17 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
 
     public PsiPackage[] getSubPackages(PsiPackage psiPackage, GlobalSearchScope scope) {
       final Map<String, PsiPackage> packagesMap = new HashMap<String, PsiPackage>();
+      final String qualifiedName = psiPackage.getQualifiedName();
       final PsiDirectory[] dirs = psiPackage.getDirectories(scope);
       for (PsiDirectory dir : dirs) {
         PsiDirectory[] subdirs = dir.getSubdirectories();
         for (PsiDirectory subdir : subdirs) {
           final PsiPackage aPackage = subdir.getPackage();
-          if (aPackage != null && !packagesMap.containsKey(aPackage.getQualifiedName())) {
-            packagesMap.put(aPackage.getQualifiedName(), aPackage);
+          if (aPackage != null) {
+            final String subQualifiedName = aPackage.getQualifiedName();
+            if (subQualifiedName.startsWith(qualifiedName) && !packagesMap.containsKey(subQualifiedName)) {
+              packagesMap.put(aPackage.getQualifiedName(), aPackage);
+            }
           }
         }
       }
