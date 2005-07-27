@@ -3,22 +3,24 @@ package com.intellij.debugger.ui.impl.watch;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.EvaluatingComputable;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.Modifier;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionCodeFragment;
-import com.sun.jdi.Value;
 import com.sun.jdi.ObjectReference;
+import com.sun.jdi.Value;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -33,7 +35,6 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
   private Modifier myModifier;
   protected TextWithImports myText;
   private CodeFragmentFactory myCodeFragmentFactory = null; // used to force specific context, e.g. from evaluation
-  private CodeFragmentFactory myContextCodeFragmentFactory = DefaultCodeFragmentFactory.getInstance(); // anways non-null
 
   protected EvaluationDescriptor(TextWithImports text, Project project, Value value) {
     super(project, value);
@@ -46,22 +47,23 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
     myText = text;
   }
 
-  public void setCodeFragmentFactory(CodeFragmentFactory codeFragmentFactory) {
+  public final void setCodeFragmentFactory(CodeFragmentFactory codeFragmentFactory) {
     myCodeFragmentFactory = codeFragmentFactory;
   }
 
-  public CodeFragmentFactory getCodeFragmentFactory() {
-    return myCodeFragmentFactory != null? myCodeFragmentFactory : myContextCodeFragmentFactory;
+  public final @Nullable CodeFragmentFactory getCodeFragmentFactory() {
+    return myCodeFragmentFactory;
   }
 
-  public void setContext(final EvaluationContextImpl evaluationContext) {
-    super.setContext(evaluationContext);
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        final PsiElement contextElement = PositionUtil.getContextElement(evaluationContext.getSuspendContext());
-        final List<CodeFragmentFactory> codeFragmentFactories = DebuggerUtilsEx.getCodeFragmentFactories(contextElement);
+  protected final @NotNull CodeFragmentFactory getEffectiveCodeFragmentFactory(final PsiElement psiContext) {
+    if (myCodeFragmentFactory != null) {
+      return myCodeFragmentFactory;
+    }
+    return ApplicationManager.getApplication().runReadAction(new Computable<CodeFragmentFactory>() {
+      public CodeFragmentFactory compute() {
+        final List<CodeFragmentFactory> codeFragmentFactories = DebuggerUtilsEx.getCodeFragmentFactories(psiContext);
         // the list always contains at least DefaultCodeFragmentFactory
-        myContextCodeFragmentFactory = codeFragmentFactories.get(0);
+        return codeFragmentFactories.get(0);
       }
     });
   }

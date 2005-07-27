@@ -5,7 +5,9 @@
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.engine.StackFrameContext;
-import com.intellij.debugger.engine.evaluation.*;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -56,7 +58,7 @@ public class WatchItemDescriptor extends EvaluationDescriptor {
 
   protected PsiCodeFragment getEvaluationCode(StackFrameContext context) throws EvaluateException {
     final PsiElement psiContext = PositionUtil.getContextElement(context);
-    return getCodeFragmentFactory().createCodeFragment(getEvaluationText(), psiContext, myProject);
+    return getEffectiveCodeFragmentFactory(psiContext).createCodeFragment(getEvaluationText(), psiContext, myProject);
   }
 
   public void setAllowBreakpoints(boolean b) {

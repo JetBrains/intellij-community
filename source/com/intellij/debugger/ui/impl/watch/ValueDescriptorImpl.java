@@ -1,17 +1,18 @@
 package com.intellij.debugger.ui.impl.watch;
 
+import com.intellij.Patches;
 import com.intellij.debugger.DebuggerContext;
-import com.intellij.debugger.jdi.ObjectReferenceCachingProxy;
-import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.ui.tree.ValueDescriptor;
+import com.intellij.debugger.jdi.ObjectReferenceCachingProxy;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
+import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiExpression;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.Patches;
 import com.sun.jdi.*;
 
 public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements ValueDescriptor{
@@ -104,7 +104,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   public abstract Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException;
 
-  public void setContext(EvaluationContextImpl evaluationContext) {
+  public final void setContext(EvaluationContextImpl evaluationContext) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
       myStoredEvaluationContext = evaluationContext;
