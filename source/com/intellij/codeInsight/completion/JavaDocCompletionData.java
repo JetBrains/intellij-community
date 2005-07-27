@@ -168,9 +168,10 @@ public class JavaDocCompletionData extends CompletionData {
       if (!(item.getObject() instanceof PsiMethod)) {
         return;
       }
-
+      PsiDocumentManager.getInstance(context.project).commitDocument(context.editor.getDocument());
       final Editor editor = context.editor;
       final PsiMethod method = (PsiMethod)item.getObject();
+
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       final StringBuffer buffer = new StringBuffer();
 
@@ -180,7 +181,6 @@ public class JavaDocCompletionData extends CompletionData {
       int afterSharp = CharArrayUtil.shiftBackwardUntil(chars, endOffset, "#") + 1;
       int signatureOffset = afterSharp;
 
-      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
       PsiElement element = context.file.findElementAt(signatureOffset - 1);
       final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(element.getProject());
       PsiDocTag tag = PsiTreeUtil.getParentOfType(element, PsiDocTag.class);
@@ -192,7 +192,6 @@ public class JavaDocCompletionData extends CompletionData {
       editor.getCaretModel().moveToOffset(signatureOffset);
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       editor.getSelectionModel().removeSelection();
-      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
       buffer.append(method.getName() + "(");
       final int afterParenth = afterSharp + buffer.length();
       for (int i = 0; i < parameters.length; i++) {
@@ -221,6 +220,7 @@ public class JavaDocCompletionData extends CompletionData {
       EditorModificationUtil.insertStringAtCaret(editor, insertString);
       editor.getCaretModel().moveToOffset(afterSharp + buffer.length());
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
 
       shortenReferences(project, editor, context, afterParenth);
     }
