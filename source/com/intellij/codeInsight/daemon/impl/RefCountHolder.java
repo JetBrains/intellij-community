@@ -16,12 +16,13 @@ public class RefCountHolder {
 
   private final PsiFile myFile;
 
-  private BidirectionalMap<PsiReference,PsiElement> myLocalRefsMap = new BidirectionalMap<PsiReference, PsiElement>();
+  private final BidirectionalMap<PsiReference,PsiElement> myLocalRefsMap = new BidirectionalMap<PsiReference, PsiElement>();
 
-  private HashMap<PsiNamedElement,Boolean> myDclsUsedMap = new HashMap<PsiNamedElement,Boolean>();
-  private HashMap<String,XmlTag> myXmlId2TagMap = new HashMap<String,XmlTag>();
-  private Map<PsiReference, PsiImportStatementBase> myImportStatements = new HashMap<PsiReference, PsiImportStatementBase>();
-  private Set<PsiNamedElement> myUsedElements = new HashSet<PsiNamedElement>();
+  private final Map<PsiNamedElement, Boolean> myDclsUsedMap = Collections.synchronizedMap(new HashMap<PsiNamedElement, Boolean>());
+  private final Map<String, XmlTag> myXmlId2TagMap = Collections.synchronizedMap(new HashMap<String, XmlTag>());
+  private final Map<PsiReference, PsiImportStatementBase> myImportStatements =
+    Collections .synchronizedMap(new HashMap<PsiReference, PsiImportStatementBase>());
+  private final Set<PsiNamedElement> myUsedElements = Collections.synchronizedSet(new HashSet<PsiNamedElement>());
 
   public RefCountHolder(PsiFile file) {
     myFile = file;
@@ -77,7 +78,7 @@ public class RefCountHolder {
   }
 
   public boolean isRedundant(PsiImportStatementBase importStatement) {
-    return !myImportStatements.values().contains(importStatement);
+    return !myImportStatements.containsValue(importStatement);
   }
 
   private void registerLocalRef(PsiReference ref, PsiElement refElement) {
