@@ -18,7 +18,10 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
   private static final Key<CachedValue<Map<PsiElement,Object>>> CONSTANT_VALUE_MAP_KEY = new Key<CachedValue<Map<PsiElement, Object>>>("CONSTANT_VALUE_MAP_KEY");
   private static final Object NO_VALUE = new Object();
 
-  private ConstantExpressionEvaluator(Set<PsiVariable> visitedVars, boolean throwExceptionOnOverflow) {
+  /**
+   * used in Fabrique
+   */
+  protected ConstantExpressionEvaluator(Set<PsiVariable> visitedVars, boolean throwExceptionOnOverflow) {
     myVisitedVars = visitedVars;
     myThrowExceptionOnOverflow = throwExceptionOnOverflow;
   }
@@ -570,7 +573,10 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
     return _compute(evaluator, expression);
   }
 
-  private static Object _compute(ConstantExpressionEvaluator evaluator, PsiExpression expression) {
+  /**
+   * used in Fabrique
+   */
+  protected static Object _compute(ConstantExpressionEvaluator evaluator, PsiExpression expression) {
     return evaluator.accept(expression);
   }
 
