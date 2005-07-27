@@ -419,8 +419,7 @@ public class HighlightMethodUtil {
         else {
           PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
           PsiReferenceParameterList typeArgumentList = methodCall.getTypeArgumentList();
-          if ((typeArgumentList == null || typeArgumentList.getTypeArguments().length == 0) &&
-              resolvedMethod.getTypeParameters().length > 0) {
+          if (typeArgumentList.getTypeArguments().length == 0 && resolvedMethod.getTypeParameters().length > 0) {
             highlightInfo = GenericsHighlightUtil.checkInferredTypeArguments(resolvedMethod, methodCall, resolveResult.getSubstitutor());
           }
           else {
@@ -1259,10 +1258,9 @@ public class HighlightMethodUtil {
         accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass(qualifier).getElement();
       }
     }
-    if (!resolveHelper.isAccessible(aClass, constructorCall, accessObjectClass)) {
+    if (classReference != null && !resolveHelper.isAccessible(aClass, constructorCall, accessObjectClass)) {
       String description = HighlightUtil.buildProblemWithAccessDescription(classReference, typeResolveResult);
-      HighlightInfo info = HighlightInfo
-        .createHighlightInfo(HighlightInfoType.ERROR, classReference.getReferenceNameElement(), description);
+      HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, classReference.getReferenceNameElement(), description);
       HighlightUtil.registerAccessQuickFixAction(aClass, classReference, info, null);
       return info;
     }
