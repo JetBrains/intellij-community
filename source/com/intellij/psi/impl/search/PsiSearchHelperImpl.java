@@ -166,6 +166,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     else if (element instanceof PsiParameter) {
       return new LocalSearchScope(((PsiParameter)element).getDeclarationScope());
     }
+    else if (element instanceof PsiLabeledStatement) {
+      return new LocalSearchScope(element);
+    }
     else if (element instanceof PsiAntElement) {
       return ((PsiAntElement)element).getSearchScope();
     }

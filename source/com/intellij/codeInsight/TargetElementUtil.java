@@ -98,6 +98,9 @@ public class TargetElementUtil {
         else if (parent instanceof PsiPointcutDef && element.equals(((PsiPointcutDef) parent).getNameIdentifier())) {
           return parent;
         }
+        else if (parent instanceof PsiLabeledStatement && element.equals(((PsiLabeledStatement)parent).getLabelIdentifier())) {
+          return parent;
+        }
       }
       else if (parent instanceof PsiNamedElement) { // A bit hacky depends on navigation offset correctly overriden
         if (parent instanceof XmlElementDecl) {

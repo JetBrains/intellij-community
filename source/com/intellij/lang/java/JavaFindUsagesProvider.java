@@ -30,6 +30,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
            element instanceof PsiVariable ||
            element instanceof PsiMethod ||
            element instanceof PsiPackage ||
+           element instanceof PsiLabeledStatement ||
            ThrowSearchUtil.isSearchable(element);
   }
 
@@ -75,6 +76,9 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     if (element instanceof PsiPackage) {
       return "package";
     }
+    if (element instanceof PsiLabeledStatement) {
+      return "label";
+    }
     if (element instanceof PsiClass) {
       if (((PsiClass)element).isAnnotationType()) {
         return "@interface";
@@ -119,6 +123,9 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     }
     else if (element instanceof PsiFile) {
       return ((PsiFile)element).getVirtualFile().getPresentableUrl();
+    }
+    else if (element instanceof PsiLabeledStatement) {
+      return ((PsiLabeledStatement)element).getLabelIdentifier().getText();
     }
     else if (element instanceof PsiClass) {
       if (element instanceof PsiAnonymousClass) {
@@ -187,6 +194,9 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     }
     if (element instanceof PsiFile) {
       return useFullName ? ((PsiFile)element).getVirtualFile().getPresentableUrl() : ((PsiFile)element).getName();
+    }
+    if (element instanceof PsiLabeledStatement) {
+      return ((PsiLabeledStatement)element).getLabelIdentifier().getText();
     }
     if (ThrowSearchUtil.isSearchable(element)) {
       return ThrowSearchUtil.getSearchableTypeName(element);
