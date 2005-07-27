@@ -461,12 +461,13 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
           );
 
           myResult.add(highlightInfo);
+          final JspFile jspFile = (JspFile)tag.getContainingFile();
           QuickFixAction.registerQuickFixAction(
             highlightInfo,
             new InsertRequiredAttributeIntention(
               tag,
               "uri",
-              JspManager.getPossibleTldUris((JspFile)tag.getContainingFile())
+              JspManager.getInstance(jspFile.getProject()).getPossibleTldUris(jspFile)
             ),
             null
           );
