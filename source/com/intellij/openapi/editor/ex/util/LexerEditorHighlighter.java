@@ -92,7 +92,7 @@ public class LexerEditorHighlighter extends DocumentAdapter implements EditorHig
     CharSequence text = document.getCharsSequence();
     int oldStartOffset = e.getOffset();
 
-    final int oldStartIndex = mySegments.findSegmentIndex(oldStartOffset);
+    final int oldStartIndex = Math.max(0, mySegments.findSegmentIndex(oldStartOffset) - 2);
     int startIndex = oldStartIndex;
 
     int data;
@@ -193,8 +193,6 @@ public class LexerEditorHighlighter extends DocumentAdapter implements EditorHig
         oldEndIndex == startIndex + 1 && insertSegmentCount == 1 && data == mySegments.getSegmentData(startIndex)) {
       return;
     }
-
-
 
     ((EditorEx) myEditor).repaint(startOffset, repaintEnd);
   }
