@@ -17,6 +17,20 @@ package com.intellij.openapi.actionSystem;
 
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Allows an action to retrieve information about the context in which it was invoked.
+ *
+ * @see com.intellij.openapi.actionSystem.AnActionEvent#getDataContext()
+ * @see DataConstants
+ * @see DataProvider
+ */
 public interface DataContext {
+  /**
+   * Returns the object corresponding to the specified data identifier. Some of the supported
+   * data identifiers are defined in the {@link DataConstants} class.
+   *
+   * @param dataId the data identifier for which the value is requested.
+   * @return the value, or null if no value is available in the current context for this identifier.
+   */
   @Nullable Object getData(String dataId);
 }

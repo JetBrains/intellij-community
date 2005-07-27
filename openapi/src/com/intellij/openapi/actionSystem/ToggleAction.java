@@ -17,6 +17,10 @@ package com.intellij.openapi.actionSystem;
 
 import javax.swing.*;
 
+/**
+ * An action which has a selected state, and which toggles its selected state when performed.
+ * Can be used to represent a menu item with a checkbox, or a toolbar button which keeps its pressed state.
+ */
 public abstract class ToggleAction extends AnAction {
   public static final String SELECTED_PROPERTY = "selected";
 
@@ -39,8 +43,18 @@ public abstract class ToggleAction extends AnAction {
     presentation.putClientProperty(SELECTED_PROPERTY, selected);
   }
 
+  /**
+   * Returns the selected (checked, pressed) state of the action.
+   * @param e the action event representing the place and context in which the selected state is queried.
+   * @return true if the action is selected, false otherwise
+   */
   public abstract boolean isSelected(AnActionEvent e);
 
+  /**
+   * Sets the selected state of the action to the specified value.
+   * @param e     the action event which caused the state change.
+   * @param state the new selected state of the action.
+   */
   public abstract void setSelected(AnActionEvent e, boolean state);
 
   public void update(final AnActionEvent e){

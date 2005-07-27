@@ -19,6 +19,8 @@ import javax.swing.*;
 
 /**
  * Represents a popup menu with a visual presentation.
+ *
+ * @see ActionManager#createActionPopupMenu(String, ActionGroup) 
  */
 public interface ActionPopupMenu {
   /**

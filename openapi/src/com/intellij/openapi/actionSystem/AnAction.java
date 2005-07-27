@@ -118,8 +118,8 @@ public abstract class AnAction {
    * is the ancestor of focused component. Note that the action doesn't have
    * to be registered in action manager in order for that shorcut to work.
    *
-   * @param shortcutSet
-   * @param component
+   * @param shortcutSet the shortcuts for the action.
+   * @param component   the component for which the shortcuts will be active.
    */
   public final void registerCustomShortcutSet(ShortcutSet shortcutSet, JComponent component){
     myShortcutSet = shortcutSet;
@@ -161,8 +161,6 @@ public abstract class AnAction {
     myShortcutSet = sourceAction.myShortcutSet;
   }
 
-
-
   public final boolean isEnabledInModalContext() {
     return myEnabledInModalContext;
   }
@@ -187,7 +185,7 @@ public abstract class AnAction {
    *
    * @param e Carries information on the invocation place and data available
    */
-  public void update(AnActionEvent e){
+  public void update(AnActionEvent e) {
   }
 
   /**
@@ -196,7 +194,7 @@ public abstract class AnAction {
    *
    * @return template presentation
    */
-  public final Presentation getTemplatePresentation(){
+  public final Presentation getTemplatePresentation() {
     if (myTemplatePresentation == null){
       myTemplatePresentation = new Presentation();
     }
@@ -226,10 +224,18 @@ public abstract class AnAction {
     return toolTipText;
   }
 
+  /**
+   * Sets the flag indicating whether the action has an internal or a user-customized icon.
+   * @param isDefaultIconSet true if the icon is internal, false if the icon is customized by the user.
+   */
   public void setDefaultIcon(boolean isDefaultIconSet) {
     myIsDefaultIcon = isDefaultIconSet;
   }
 
+  /**
+   * Returns true if the action has an internal, not user-customized icon.
+   * @return true if the icon is internal, false if the icon is customized by the user.
+   */
   public boolean isDefaultIcon() {
     return myIsDefaultIcon;
   }

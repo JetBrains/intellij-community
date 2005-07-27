@@ -19,6 +19,8 @@ import javax.swing.*;
 
 /**
  * Represents a toolbar with a visual presentation.
+ *
+ * @see ActionManager#createActionToolbar(String, ActionGroup, boolean) 
  */
 public interface ActionToolbar {
 

@@ -15,6 +15,11 @@
  */
 package com.intellij.openapi.actionSystem;
 
+/**
+ * A keyboard or mouse shortcut which can be used for invoking an action.
+ *
+ * @see ShortcutSet
+ */
 public abstract class Shortcut {
   Shortcut(){
   }

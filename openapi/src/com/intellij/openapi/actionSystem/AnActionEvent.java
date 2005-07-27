@@ -17,6 +17,13 @@ package com.intellij.openapi.actionSystem;
 
 import java.awt.event.InputEvent;
 
+/**
+ * Container for the information necessary to execute or update an {@link AnAction}.
+ *
+ * @see AnAction#actionPerformed(AnActionEvent)
+ * @see AnAction#update(AnActionEvent)
+ */
+
 public final class AnActionEvent {
   private final InputEvent myInputEvent;
   private final ActionManager myActionManager;
@@ -56,29 +63,50 @@ public final class AnActionEvent {
   }
 
   /**
-   * @return <code>InputEvent</code> which causes invocation of the action. It might be
-   * <code>KeyEvent</code>, <code>MouseEvent</code>
+   * Returns the <code>InputEvent</code> which causes invocation of the action. It might be
+   * <code>KeyEvent</code>, <code>MouseEvent</code>.
+   * @return the <code>InputEvent</code> instance.
    */
-  public InputEvent getInputEvent(){
+  public InputEvent getInputEvent() {
     return myInputEvent;
   }
 
-  public DataContext getDataContext(){
+  /**
+   * Returns the context which allows to retrieve information about the state of IDEA related to
+   * the action invocation (active editor, selection and so on).
+   *
+   * @return the data context instance.
+   */
+  public DataContext getDataContext() {
     return myDataContext;
   }
 
-  public String getPlace(){
+  /**
+   * Returns the identifier of the place in the IDEA user interface from where the action is invoked
+   * or updated.
+   *
+   * @return the place identifier
+   * @see ActionPlaces
+   */
+  public String getPlace() {
     return myPlace;
   }
 
+  /**
+   * Returns the presentation which represents the action in the place from where it is invoked
+   * or updated.
+   *
+   * @return the presentation instance.
+   */
   public Presentation getPresentation() {
     return myPresentation;
   }
 
   /**
-   * @return the modifier keys held down during this action event
+   * Returns the modifier keys held down during this action event.
+   * @return the modifier keys.
    */
-  public int getModifiers(){
+  public int getModifiers() {
     return myModifiers;
   }
 

@@ -19,6 +19,10 @@ import com.intellij.openapi.util.Comparing;
 
 import javax.swing.*;
 
+/**
+ * A keyboard shortcut, which can consist of one or two invidivual key strokes.
+ */
+
 public final class KeyboardShortcut extends Shortcut{
   private final KeyStroke myFirstKeyStroke;
   private final KeyStroke mySecondKeyStroke;

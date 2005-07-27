@@ -18,6 +18,10 @@ package com.intellij.openapi.actionSystem;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 
+/**
+ * A mouse shortcut, which can consist of a specific mouse button, click count and modifier keys
+ * (Shift, Ctrl or Alt).
+ */
 public final class MouseShortcut extends Shortcut {
   private final int myButton;
   private final int myModifiers;

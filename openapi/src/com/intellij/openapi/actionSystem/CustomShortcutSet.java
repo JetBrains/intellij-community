@@ -17,6 +17,10 @@ package com.intellij.openapi.actionSystem;
 
 import javax.swing.*;
 
+/**
+ * Default implementation of the {@link ShortcutSet} interface.
+ */
+
 public final class CustomShortcutSet implements ShortcutSet {
   private final Shortcut[] myShortcuts;
 

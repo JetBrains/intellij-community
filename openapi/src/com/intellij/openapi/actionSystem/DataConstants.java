@@ -15,6 +15,11 @@
  */
 package com.intellij.openapi.actionSystem;
 
+/**
+ * Identifiers for data items which can be returned from {@link DataContext#getData(String)} and
+ * {@link DataProvider#getData(String)}.
+ */
+
 public interface DataConstants {
   /**
    * Returns {@link com.intellij.openapi.project.Project}

@@ -21,6 +21,13 @@ import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
+/**
+ * The presentation of an action in a specific place in the user interface.
+ *
+ * @see AnAction
+ * @see ActionPlaces
+ */
+
 public final class Presentation implements Cloneable {
   private THashMap myUserMap;
   /**

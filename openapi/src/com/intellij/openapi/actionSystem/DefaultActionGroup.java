@@ -142,7 +142,7 @@ public class DefaultActionGroup extends ActionGroup {
     }
   }
 
-  private final boolean addToSortedList(AnAction action, Constraints constraint, ActionManager actionManager){
+  private boolean addToSortedList(AnAction action, Constraints constraint, ActionManager actionManager){
     int index = findIndex(constraint.myRelativeToActionId, mySortedChildren, actionManager);
     if (index == -1){
       return false;
@@ -156,7 +156,7 @@ public class DefaultActionGroup extends ActionGroup {
     return true;
   }
 
-  private final int findIndex(String actionId, ArrayList<AnAction> actions, ActionManager actionManager){
+  private int findIndex(String actionId, ArrayList<AnAction> actions, ActionManager actionManager){
     for(int i = 0; i < actions.size(); i++){
       AnAction action = actions.get(i);
       if(action instanceof ActionStub){

@@ -15,6 +15,12 @@
  */
 package com.intellij.openapi.actionSystem;
 
+/**
+ * Represents a set of keyboard and/or mouse shortcuts.
+ * 
+ * @see AnAction#getShortcutSet()
+ * @see AnAction#setShortcutSet(ShortcutSet)
+ */
 public interface ShortcutSet {
   /**
    * @return array of keyboard <code>Shortcut</code>s that are in the set.

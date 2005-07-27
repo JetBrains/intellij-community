@@ -17,10 +17,14 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginId;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A manager for actions. Used to register and unregister actions, also
- * contains util methods to easily fetch action by id and id by action.
+ * contains utility methods to easily fetch action by id and id by action.
+ *
+ * @see AnAction
  */
 public abstract class ActionManager {
 
@@ -38,7 +42,7 @@ public abstract class ActionManager {
    * @param place Determines the place that will be set for {@link AnActionEvent} passed
    *  when an action from the group is either performed or updated
    *
-   * @param group Group to associate with the created popup menu
+   * @param group Group from which the actions for the menu are taken.
    *
    * @return An instance of <code>ActionPopupMenu</code>
    */
@@ -51,7 +55,9 @@ public abstract class ActionManager {
    * @param place Determines the place that will be set for {@link AnActionEvent} passed
    *  when an action from the group is either performed or updated
    *
-   * @param group Group to associate with the created toolbar
+   * @param group Group from which the actions for the toolbar are taken.
+   *
+   * @param horizontal The orientation of the toolbar (true - horizontal, false - vertical)
    *
    * @return An instance of <code>ActionToolbar</code>
    */
@@ -67,7 +73,7 @@ public abstract class ActionManager {
    *
    * @exception java.lang.IllegalArgumentException if <code>actionId</code> is <code>null</code>
    */
-  public abstract AnAction getAction(String actionId);
+  public abstract AnAction getAction(@NotNull String actionId);
 
   /**
    * Returns actionId associated with the specified action.
@@ -77,7 +83,7 @@ public abstract class ActionManager {
    *
    * @exception java.lang.IllegalArgumentException if <code>action</code> is <code>null</code>
    */
-  public abstract String getId(AnAction action);
+  public abstract String getId(@NotNull AnAction action);
 
   /**
    * Registers the specified action with the specified id. Note that IDEA's keymaps
@@ -86,23 +92,23 @@ public abstract class ActionManager {
    * @param actionId Id to associate with the action
    * @param action Action to register
    */
-  public abstract void registerAction(String actionId, AnAction action);
+  public abstract void registerAction(@NotNull String actionId, @NotNull AnAction action);
 
   /**
-     * Registers the specified action with the specified id.
-     *
-     * @param actionId Id to associate with the action
-   * @param action Action to register
+   * Registers the specified action with the specified id.
+   *
+   * @param actionId Id to associate with the action
+   * @param action   Action to register
+   * @param pluginId Identifier of the plugin owning the action. Used to show the actions in the
+   *                 correct place under the "Plugins" node in the "Keymap" settings pane and similar dialogs.
    */
-
-  public abstract void registerAction(String actionId, AnAction action, PluginId pluginId);
-
+  public abstract void registerAction(@NotNull String actionId, @NotNull AnAction action, @Nullable PluginId pluginId);
 
   /**
    * Unregisters the action with the specified actionId.
    *
    * @param actionId Id of the action to be unregistered
    */
-  public abstract void unregisterAction(String actionId);
+  public abstract void unregisterAction(@NotNull String actionId);
 
 }

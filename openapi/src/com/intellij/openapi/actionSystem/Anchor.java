@@ -15,6 +15,10 @@
  */
 package com.intellij.openapi.actionSystem;
 
+/**
+ * Defines possible positions of an action relative to another action.
+ */
+
 public class Anchor {
   /**
    * Anchor type that specifies the action to be the first in the list at the
