@@ -11,10 +11,14 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
+import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.javadoc.CommentFormatter;
 import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.util.IncorrectOperationException;
 
 public class CodeFormatterFacade implements Constants {
@@ -71,7 +75,7 @@ public class CodeFormatterFacade implements Constants {
       TextRange range = formatComments(element, startOffset, endOffset);
       final SmartPsiElementPointer pointer = SmartPointerManager.getInstance(psiElement.getProject()).createSmartPsiElementPointer(psiElement);
       final PsiFile containingFile = psiElement.getContainingFile();
-      final FormattingModel model = builder.createModel(containingFile, mySettings);
+      final FormattingModel model = createModel(builder, containingFile, element, startOffset, endOffset);
       if (containingFile.getTextLength() > 0) {
         try {
           FormatterEx.getInstanceEx().format(model, mySettings,
@@ -88,6 +92,41 @@ public class CodeFormatterFacade implements Constants {
     }
 
     return element;
+  }
+
+  private FormattingModel createModel(FormattingModelBuilder builder, PsiFile containingFile, ASTNode element,
+                                      int startOffset, int endOffset) {
+    FormattingModel baseModel = builder.createModel(containingFile, mySettings);
+    if (baseModel instanceof PsiBasedFormattingModel) {
+      ASTNode fileElement = findSuitableTreeElement(element, containingFile, startOffset, endOffset);
+      return new PsiBasedFormattingModel(fileElement, containingFile.getProject(),
+        baseModel.getDocumentModel(), baseModel.getRootBlock());
+    } else {
+      return baseModel;
+    }
+
+  }
+
+  private ASTNode findSuitableTreeElement(ASTNode element, PsiFile containingFile, int startOffset, int endOffset) {
+    TextRange fileRange = containingFile.getTextRange();
+    if (element.getTextRange().equals(fileRange)) {
+      if (startOffset == 0 && endOffset == fileRange.getEndOffset()) {
+        return element;
+      }
+      PsiElement psi = element.getPsi();
+      PsiElement elem = psi.findElementAt(startOffset);
+      if (elem != null) {
+        return TreeUtil.getFileElement((TreeElement) elem.getNode());
+      }
+
+      elem = psi.findElementAt(endOffset);
+      if (elem != null) {
+        return TreeUtil.getFileElement((TreeElement) elem.getNode());
+      }
+
+    }
+
+    return TreeUtil.getFileElement((TreeElement) element);
   }
 
   public void processText(final PsiFile file, final int startOffset, final int endOffset) {

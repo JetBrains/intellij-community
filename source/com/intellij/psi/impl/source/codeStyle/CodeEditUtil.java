@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -569,7 +570,11 @@ public class CodeEditUtil {
           final int startOffset = firstNonSpaceLeaf.getStartOffset();
           final int endOffset = first.getTextRange().getEndOffset();
           if (startOffset < endOffset) {
-            FormatterEx.getInstanceEx().adjustTextRange(builder.createModel(file, settings), settings,
+            FormattingModel model = builder.createModel(file, settings);
+            PsiBasedFormattingModel formattingModelWrapper =
+              new PsiBasedFormattingModel(TreeUtil.getFileElement((TreeElement) first), file.getProject(),
+                model.getDocumentModel(), model.getRootBlock());
+            FormatterEx.getInstanceEx().adjustTextRange(formattingModelWrapper, settings,
               settings.getIndentOptions(file.getFileType()),
               new TextRange(startOffset, endOffset),
               keepBlankLines,

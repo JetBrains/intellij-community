@@ -652,6 +652,8 @@ public class Helper {
            || leaf.getElementType() == ElementType.WHITE_SPACE
            || leaf.getElementType() == ElementType.JSP_TEMPLATE_DATA
            || leaf.getElementType() == ElementType.XML_DATA_CHARACTERS
+           || leaf.getElementType() == ElementType.JAVA_CODE
+           || leaf.getElementType() == ElementType.JSP_SCRIPTLET
            || leaf.getElementType() == ElementType.XML_ATTRIBUTE_VALUE_TOKEN;
   }
 
