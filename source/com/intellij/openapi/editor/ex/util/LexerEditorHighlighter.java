@@ -1,5 +1,6 @@
 package com.intellij.openapi.editor.ex.util;
 
+import com.intellij.codeHighlighting.CopyCreatorLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -20,7 +21,6 @@ import com.intellij.psi.impl.source.parsing.jsp.JspHighlightLexer;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.codeHighlighting.CopyCreatorLexer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -162,6 +162,19 @@ public class LexerEditorHighlighter extends DocumentAdapter implements EditorHig
       myLexer.advance();
     }
 
+    final int shift = e.getNewLength() - e.getOldLength();
+    if (repaintEnd > 0) {
+      while (insertSegmentCount > 0 && oldEndIndex > startIndex) {
+        if (!segmentsEqual(mySegments, oldEndIndex - 1, insertSegments, insertSegmentCount - 1, shift)) {
+          break;
+        }
+        insertSegmentCount--;
+        oldEndIndex--;
+        repaintEnd = insertSegments.getSegmentStart(insertSegmentCount);
+        insertSegments.remove(insertSegmentCount, insertSegmentCount + 1);
+      }
+    }
+
     if(repaintEnd == -1) {
       repaintEnd = text.length();
     }
@@ -169,7 +182,7 @@ public class LexerEditorHighlighter extends DocumentAdapter implements EditorHig
     if (oldEndIndex < 0){
       oldEndIndex = mySegments.getSegmentCount();
     }
-    mySegments.shiftSegments(oldEndIndex, e.getNewLength() - e.getOldLength());
+    mySegments.shiftSegments(oldEndIndex, shift);
     mySegments.remove(startIndex, oldEndIndex);
     mySegments.insert(insertSegments, startIndex);
 
@@ -182,6 +195,12 @@ public class LexerEditorHighlighter extends DocumentAdapter implements EditorHig
     }
 
     ((EditorEx) myEditor).repaint(startOffset, repaintEnd);
+  }
+
+  private boolean segmentsEqual(SegmentArrayWithData a1, int idx1, SegmentArrayWithData a2, int idx2, final int offsetShift) {
+    return a1.getSegmentStart(idx1) + offsetShift == a2.getSegmentStart(idx2) &&
+           a1.getSegmentEnd(idx1) + offsetShift == a2.getSegmentEnd(idx2) &&
+           a1.getSegmentData(idx1) == a2.getSegmentData(idx2);
   }
 
   private void checkUpdateCorrect(int lastDocOffset) {
