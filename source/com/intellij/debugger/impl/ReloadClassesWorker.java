@@ -83,7 +83,7 @@ class ReloadClassesWorker {
                           }
 
                           MethodSignature sig = method.getSignature(PsiSubstitutor.EMPTY);
-                          myProgress.addMessage(MessageCategory.WARNING, sig + " : Breakpoints will be ignored for the obsolete version of the method. ");
+                          myProgress.addMessage(MessageCategory.WARNING, getPresentableSignatureText(sig) + " : Breakpoints will be ignored for the obsolete version of the method. ");
                         }
                       }
                     }
@@ -99,6 +99,32 @@ class ReloadClassesWorker {
         }
       });
     }
+
+  private String getPresentableSignatureText(final MethodSignature sig) {
+    StringBuffer buf = new StringBuffer();
+    final PsiTypeParameter[] typeParameters = sig.getTypeParameters();
+    if (typeParameters.length != 0) {
+      String sep = "<";
+      for (PsiTypeParameter typeParameter : typeParameters) {
+        buf.append(sep).append(typeParameter.getName());
+        sep = ", ";
+      }
+      buf.append(">");
+    }
+
+    buf.append(sig.getName()).append("(");
+    final PsiType[] types = sig.getParameterTypes();
+    for (int i = 0; i < types.length; i++) {
+      PsiType type = types[i];
+      if (i > 0) {
+        buf.append(", ");
+      }
+      buf.append(type.getPresentableText());
+    }
+    buf.append(')');
+
+    return buf.toString();
+  }
 
   private Map<ThreadReferenceProxyImpl, PsiMethod[]> getMethodsOnTheStack() {
     final Map<ThreadReferenceProxyImpl, PsiMethod[]> myThreadsToMethods = new HashMap<ThreadReferenceProxyImpl, PsiMethod[]>();
