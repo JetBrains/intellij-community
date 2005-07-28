@@ -119,7 +119,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
 
   public PsiManagerImpl(Project project,
                         PsiManagerConfiguration psiManagerConfiguration,
-                        ProjectRootManagerEx projectRootManagerEx,
+                        final ProjectRootManagerEx projectRootManagerEx,
                         ExternalResourceManagerEx externalResourceManagerEx,
                         StartupManagerEx startupManagerEx,
                         FileTypeManager fileTypeManager,
@@ -184,6 +184,9 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
       startupManagerEx.registerPreStartupActivity(
         new Runnable() {
           public void run() {
+            // update effective language level before the project is opened because it might be changed
+            // e.g. while setting up newly created project
+            myLanguageLevel = projectRootManagerEx.getLanguageLevel();
             runStartupActivity();
           }
         }
