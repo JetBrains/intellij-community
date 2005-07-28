@@ -10,10 +10,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
-import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.JavaDocElementType;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -147,9 +144,11 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
       return;
     }
     if (myRole2 == ChildRole.LBRACE) {
+      PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
+      int dependanceStart = nameIdentifier == null ? myParent.getTextRange().getStartOffset() : nameIdentifier.getTextRange().getStartOffset();
       myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_CLASS_LBRACE, mySettings.CLASS_BRACE_STYLE,
-                                      new TextRange(myParent.getTextRange().getStartOffset(),
-                                                    myChild2.getTextRange().getStartOffset()),
+                                      new TextRange(dependanceStart,
+                                                    myChild1.getTextRange().getEndOffset()),
                                       false);
     }
     else if (myRole1 == ChildRole.LBRACE) {
@@ -304,7 +303,7 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
     else if (myRole2 == ChildRole.LOOP_BODY) {
       myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_WHILE_LBRACE, mySettings.BRACE_STYLE,
                                       new TextRange(myParent.getTextRange().getStartOffset(),
-                                                    myChild2.getTextRange().getStartOffset()),
+                                                    myChild1.getTextRange().getEndOffset()),
                                       mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
     }
 
@@ -372,7 +371,7 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
       if (myChild2.getElementType() == ElementType.BLOCK_STATEMENT) {
         myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_FOR_LBRACE, mySettings.BRACE_STYLE,
                                         new TextRange(myParent.getTextRange().getStartOffset(),
-                                                      myChild2.getTextRange().getStartOffset()),
+                                                      myChild1.getTextRange().getEndOffset()),
                                         mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
       }
       else if (mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE) {
@@ -506,7 +505,7 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
     else if (myChild2.getElementType() == ElementType.BLOCK_STATEMENT) {
       boolean space = myRole2 == ChildRole.ELSE_BRANCH ? mySettings.SPACE_BEFORE_ELSE_LBRACE : mySettings.SPACE_BEFORE_IF_LBRACE;
       myResult = getSpaceBeforeLBrace(space, mySettings.BRACE_STYLE, new TextRange(myParent.getTextRange().getStartOffset(),
-                                                                                   myChild2.getTextRange().getStartOffset()),
+                                                                                   myChild1.getTextRange().getEndOffset()),
                                       mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
     }
     else if (myRole2 == ChildRole.LPARENTH) {
@@ -645,9 +644,11 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
       createSpaceInCode(true);
     }
     else if (myRole2 == ChildRole.METHOD_BODY) {
+      PsiElement methodName = method.getNameIdentifier();
+      int dependancyStart = methodName == null ? myParent.getTextRange().getStartOffset() : methodName.getTextRange().getStartOffset();
       myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_METHOD_LBRACE, mySettings.METHOD_BRACE_STYLE,
-                                      new TextRange(myParent.getTextRange().getStartOffset(),
-                                                    myChild2.getTextRange().getStartOffset()),
+                                      new TextRange(dependancyStart,
+                                                    myChild1.getTextRange().getEndOffset()),
                                       mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE);
     }
     else if (myRole1 == ChildRole.MODIFIER_LIST) {
@@ -807,7 +808,7 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
       if (myChild2.getElementType() == ElementType.BLOCK_STATEMENT) {
         myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_FOR_LBRACE, mySettings.BRACE_STYLE,
                                         new TextRange(myParent.getTextRange().getStartOffset(),
-                                                      myChild2.getTextRange().getStartOffset()),
+                                                      myChild1.getTextRange().getEndOffset()),
                                         mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
       }
       else if (mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE) {
