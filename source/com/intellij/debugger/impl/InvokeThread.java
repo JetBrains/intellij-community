@@ -23,6 +23,7 @@ public abstract class InvokeThread<E> {
 
     protected WorkerThread(InvokeThread<E> owner, String name) {
       super(name + (N ++));
+      setPriority(Thread.NORM_PRIORITY);
       myOwner = owner;
     }
 
@@ -38,7 +39,7 @@ public abstract class InvokeThread<E> {
     public InvokeThread<E> getOwner() {
       return myOwner;
     }
-  };
+  }
 
   protected final EventQueue<E> myEvents;
 

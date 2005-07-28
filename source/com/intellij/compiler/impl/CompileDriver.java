@@ -300,7 +300,7 @@ public class CompileDriver {
 
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    new Thread("Compile Thread") {
+    final Thread compileThread = new Thread("Compile Thread") {
       public void run() {
         synchronized (CompilerManager.getInstance(myProject)) {
           ProgressManager.getInstance().runProcess(new Runnable() {
@@ -320,7 +320,9 @@ public class CompileDriver {
           }, compileContext.getProgressIndicator());
         }
       }
-    }.start();
+    };
+    compileThread.setPriority(Thread.NORM_PRIORITY);
+    compileThread.start();
   }
 
   private void doCompile(final CompileContextImpl compileContext,
