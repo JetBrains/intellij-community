@@ -155,7 +155,7 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
       myResult = Spacing.createSpacing(0, 0, mySettings.BLANK_LINES_AFTER_CLASS_HEADER + 1,
                                        mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
     }
-    else if (myRole2 == ChildRole.METHOD || myRole2 == ChildRole.CLASS_INITIALIZER) {
+    else if (myRole2 == ChildRole.METHOD || myChild2.getElementType() == ElementType.METHOD || myRole2 == ChildRole.CLASS_INITIALIZER) {
       if (myRole1 == ChildRole.LBRACE) {
         myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, 0);
       }
@@ -165,7 +165,7 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
           .createSpacing(0, 0, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
       }
     }
-    else if (myRole1 == ChildRole.METHOD || myRole1 == ChildRole.CLASS_INITIALIZER) {
+    else if (myRole1 == ChildRole.METHOD || myChild1.getElementType() == ElementType.METHOD || myRole1 == ChildRole.CLASS_INITIALIZER) {
       if (myRole2 == ChildRole.RBRACE) {
         myResult = Spacing
           .createSpacing(0, Integer.MAX_VALUE, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);

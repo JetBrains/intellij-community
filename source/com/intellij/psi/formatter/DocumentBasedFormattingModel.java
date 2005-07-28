@@ -52,7 +52,7 @@ public class DocumentBasedFormattingModel implements FormattingModel {
   }
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.DocumentBasedFormattingModel");
-  public void replaceWhiteSpace(TextRange textRange, String whiteSpace) {
+  public TextRange replaceWhiteSpace(TextRange textRange, String whiteSpace) {
     if (textRange.getLength() > 0) {
       final CharSequence current = myDocument.getCharsSequence().subSequence(textRange.getStartOffset(), textRange.getEndOffset());
       final String ws = current.toString();
@@ -61,6 +61,8 @@ public class DocumentBasedFormattingModel implements FormattingModel {
     myDocument.replaceString(textRange.getStartOffset(),
                              textRange.getEndOffset(),
                              whiteSpace);
+
+    return new TextRange(textRange.getStartOffset(), textRange.getStartOffset() + whiteSpace.length());
   }
 
   public TextRange shiftIndentInsideRange(TextRange range, int indent) {

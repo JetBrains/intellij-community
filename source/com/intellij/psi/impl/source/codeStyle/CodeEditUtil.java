@@ -19,7 +19,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -80,7 +79,6 @@ public class CodeEditUtil {
       boolean keepFirstIndent = keepFirstIndent(parent, anchorBefore, first, lastChild);
 
       parent.addChildren(first, lastChild, anchorBefore);
-      checkAllTrees(parent.getPsi().getContainingFile());
 
       treePrev = getPreviousElements(first);
       if (!FormatterUtil.join(TreeUtil.prevLeaf(first), first)) {
@@ -112,13 +110,6 @@ public class CodeEditUtil {
       result = current;
     }
     return result;
-  }
-
-  private static void checkAllTrees(final PsiFile containingFile) {
-    final PsiFile[] psiRoots = containingFile.getPsiRoots();
-    for (int i = 0; i + 1 < psiRoots.length; i++) {
-      LOG.assertTrue(psiRoots[i].getText().equals(psiRoots[i + 1].getText()));
-    }
   }
 
   private static boolean keepFirstIndent(final CompositeElement parent,
@@ -260,6 +251,10 @@ public class CodeEditUtil {
       }
 
       parent.removeRange(first, lastChild);
+
+      if (nextElement != null && !nextElement.getPsi().isValid()) {
+        nextElement = findElementAfter(last == null ? parent : last, false);
+      }
 
       if (!adjustWSBefore && parent.getTextLength() == 0 && prevElement != null && isWS(prevElement) && !prevElement.textContains('\n')) {
         adjustWSBefore = true;
@@ -570,11 +565,7 @@ public class CodeEditUtil {
           final int startOffset = firstNonSpaceLeaf.getStartOffset();
           final int endOffset = first.getTextRange().getEndOffset();
           if (startOffset < endOffset) {
-            FormattingModel model = builder.createModel(file, settings);
-            PsiBasedFormattingModel formattingModelWrapper =
-              new PsiBasedFormattingModel(TreeUtil.getFileElement((TreeElement) first), file.getProject(),
-                model.getDocumentModel(), model.getRootBlock());
-            FormatterEx.getInstanceEx().adjustTextRange(formattingModelWrapper, settings,
+            FormatterEx.getInstanceEx().adjustTextRange(builder.createModel(file, settings), settings,
               settings.getIndentOptions(file.getFileType()),
               new TextRange(startOffset, endOffset),
               keepBlankLines,

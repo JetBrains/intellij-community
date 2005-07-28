@@ -32,20 +32,19 @@
 package com.intellij.codeFormatting.general;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.PomModel;
-import com.intellij.pom.event.PomModelEvent;
-import com.intellij.pom.impl.PomTransactionBase;
-import com.intellij.pom.tree.TreeAspect;
 import com.intellij.psi.impl.source.codeStyle.Helper;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.tree.IChameleonElementType;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
@@ -219,9 +218,12 @@ public class FormatterUtil {
   }
 
   private static ASTNode findPreviousWhiteSpace(final ASTNode leafElement) {
-    final ASTNode treeElement = TreeUtil.prevLeaf(leafElement);
-    if (treeElement != null && treeElement.getElementType() == ElementType.WHITE_SPACE)
-      return treeElement;
+    final int offset = leafElement.getTextRange().getStartOffset() - 1;
+    if (offset < 0) return null;
+    final PsiElement found = SourceTreeToPsiMap.treeElementToPsi(leafElement).getContainingFile().findElementAt(offset);
+    if (found == null) return null;
+    final ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(found);
+    if (treeElement.getElementType() == ElementType.WHITE_SPACE) return treeElement;
     return null;
   }
 
@@ -409,74 +411,5 @@ public class FormatterUtil {
       return false;
     }
     return true;
-  }
-
-  public static void replaceTokenText(final ASTNode leaf, String whiteSpace, TextRange textRange) {
-    TextRange elementRange = leaf.getTextRange();
-    String elementText = leaf.getText();
-
-    int changeStart = textRange.getStartOffset() - elementRange.getStartOffset();
-    int changeEnd = textRange.getEndOffset() - elementRange.getStartOffset();
-
-    String token1Data = elementText.substring(0, changeStart);
-    String token2Data = elementText.substring(changeEnd);
-
-    if (canInsertWhiteSpaceInto(leaf)) {
-      StringBuffer buf = new StringBuffer(token1Data.length() + whiteSpace.length() + token2Data.length());
-      buf.append(token1Data).append(whiteSpace).append(token2Data);
-      final LeafElement singleLeafElement = Factory.createSingleLeafElement(leaf.getElementType(),
-        buf.toString().toCharArray(), 0,
-        buf.length(), SharedImplUtil.findCharTableByTree(leaf), leaf.getPsi().getManager());
-      leaf.getTreeParent().replaceChild(leaf, singleLeafElement);
-    } else {
-      LOG.assertTrue(token1Data.length() > 0);
-      LOG.assertTrue(token2Data.length() > 0);
-
-      final LeafElement leaf1 = Factory.createSingleLeafElement(leaf.getElementType(),
-        token1Data.toCharArray(), 0,
-        token1Data.length(), SharedImplUtil.findCharTableByTree(leaf), leaf.getPsi().getManager());
-
-      final LeafElement leaf2 = Factory.createSingleLeafElement(leaf.getElementType(),
-        token2Data.toCharArray(), 0,
-        token2Data.length(), SharedImplUtil.findCharTableByTree(leaf), leaf.getPsi().getManager());
-
-
-      final LeafElement ws = Factory.createSingleLeafElement(ElementType.WHITE_SPACE,
-        whiteSpace.toCharArray(), 0,
-        whiteSpace.length(), SharedImplUtil.findCharTableByTree(leaf), leaf.getPsi().getManager());
-
-      Project project = leaf.getPsi().getProject();
-      final PomModel model = project.getModel();
-      final ASTNode treeParent = leaf.getTreeParent();
-      final TreeAspect aspect = model.getModelAspect(TreeAspect.class);
-      try {
-        model.runTransaction(new PomTransactionBase(treeParent.getPsi(), aspect) {
-          public PomModelEvent runInner(){
-            treeParent.replaceChild(leaf,  leaf1);
-            treeParent.addChild(ws, leaf1.getTreeNext());
-            treeParent.addChild(leaf2, ws.getTreeNext());
-            return getAccumulatedEvent();
-          }
-        });
-      } catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
-
-
-    }
-  }
-
-  public static boolean canInsertWhiteSpaceInto(ASTNode wsElement) {
-    if (wsElement.getElementType() == ElementType.JAVA_CODE) {
-      return true;
-    }
-    if (wsElement.getElementType() != ElementType.XML_DATA_CHARACTERS) {
-      return false;
-    }
-    ASTNode treeParent = wsElement.getTreeParent();
-    if (treeParent == null) {
-      return false;
-    }
-    return  treeParent.getElementType() == ElementType.XML_CDATA;
   }
 }

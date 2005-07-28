@@ -61,7 +61,7 @@ public interface FormattingModel {
    * @param textRange  the text range to replace with whitespace.
    * @param whiteSpace the whitespace to replace with.
    */
-  void replaceWhiteSpace(TextRange textRange, String whiteSpace);
+  TextRange replaceWhiteSpace(TextRange textRange, String whiteSpace);
 
   /**
    * Indents every line except for the first in the specified text range representing a multiline block

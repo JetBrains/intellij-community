@@ -178,9 +178,9 @@ class FormatProcessor {
     final WhiteSpace whiteSpace = block.getWhiteSpace();
     final TextRange textRange = whiteSpace.getTextRange();
     final TextRange wsRange = shiftRange(textRange, shift);
-    model.replaceWhiteSpace(wsRange, newWhiteSpace);
+    TextRange newWhiteSpaceRange = model.replaceWhiteSpace(wsRange, newWhiteSpace);
 
-    shift += (newWhiteSpace.length() - (textRange.getLength()));
+    shift += (newWhiteSpaceRange.getLength() - (textRange.getLength()));
 
     if (block.isLeaf() && whiteSpace.containsLineFeeds() && block.containsLineFeeds()) {
       final TextRange currentBlockRange = shiftRange(block.getTextRange(), shift);
