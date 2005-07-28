@@ -113,11 +113,7 @@ public class CastConflictsWithInstanceofInspection extends ExpressionInspection{
                 return false;
             }
             final PsiType type = typeElement.getType();
-            if(type == null){
-                return false;
-            }
-            return !type
-                    .equals(castType);   //TODO: should this take inheritance into account
+            return !castType.isAssignableFrom(type);
         }
 
         private boolean isConfirming(PsiInstanceOfExpression condition,
@@ -134,11 +130,7 @@ public class CastConflictsWithInstanceofInspection extends ExpressionInspection{
                 return false;
             }
             final PsiType type = typeElement.getType();
-            if(type == null){
-                return false;
-            }
-            return type
-                    .equals(castType);   //TODO: should this take inheritance into account
+            return castType.isAssignableFrom(type);   //TODO: should this take inheritance into account
         }
     }
 }
