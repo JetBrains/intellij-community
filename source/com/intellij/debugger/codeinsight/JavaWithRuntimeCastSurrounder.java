@@ -109,7 +109,7 @@ public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
             getEditor().getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
           }
           catch (IncorrectOperationException e) {
-            LOG.error(e);
+            // OK here. Can be caused by invalid type like one for proxy starts with . '.Proxy34'
           }
           finally{
             release();
