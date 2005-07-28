@@ -26,6 +26,7 @@ public class PsiBasedFormattingModel implements FormattingModel {
   private final Block myRootBlock;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.PsiBasedFormattingModel");
+  private boolean myCanModifyAllWhiteSpaces = false;
 
 
   public PsiBasedFormattingModel(final PsiFile file,
@@ -75,13 +76,15 @@ public class PsiBasedFormattingModel implements FormattingModel {
     final int offset = textRange.getEndOffset();
     final ASTNode leafElement = findElementAt(offset);
       if (leafElement != null) {
-        if (leafElement.getElementType() == ElementType.WHITE_SPACE) return false;
-        if (isNonEmptyWhiteSpace(leafElement)) return false;
-        LOG.assertTrue(leafElement.getPsi().isValid());
-        ASTNode prevNode = TreeUtil.prevLeaf(leafElement);
-        if (prevNode != null && prevNode.getElementType() == ElementType.XML_CDATA_END) return false;
-        if (isNonEmptyWhiteSpace(prevNode)) {
-          return false;
+        if (!myCanModifyAllWhiteSpaces) {
+          if (leafElement.getElementType() == ElementType.WHITE_SPACE) return false;
+          if (isNonEmptyWhiteSpace(leafElement)) return false;
+          LOG.assertTrue(leafElement.getPsi().isValid());
+          ASTNode prevNode = TreeUtil.prevLeaf(leafElement);
+          if (prevNode != null && prevNode.getElementType() == ElementType.XML_CDATA_END) return false;
+          if (isNonEmptyWhiteSpace(prevNode)) {
+            return false;
+          }
         }
         changeWhiteSpaceBeforeLeaf(whiteSpace, leafElement, textRange);
         return true;
@@ -113,7 +116,7 @@ public class PsiBasedFormattingModel implements FormattingModel {
       PsiElement psiRoot = psiRoots[i];
       final ASTNode found = psiRoot.getNode().findLeafElementAt(offset);
       if (found != null) {
-        if (found.getElementType() == ElementType.WHITE_SPACE) return found;
+        if (!myCanModifyAllWhiteSpaces && found.getElementType() == ElementType.WHITE_SPACE) return found;
         if (!(found.getPsi()instanceof JspText) && found.getTextRange().getStartOffset() == offset) {
           if (found.getElementType() == ElementType.XML_COMMENT_START) {
             return found.getTreeParent();
@@ -139,5 +142,9 @@ public class PsiBasedFormattingModel implements FormattingModel {
   @NotNull
   public Block getRootBlock() {
     return myRootBlock;
+  }
+
+  public void canModifyAllWhiteSpaces() {
+    myCanModifyAllWhiteSpaces = true;
   }
 }

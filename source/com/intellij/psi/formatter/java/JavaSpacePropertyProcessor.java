@@ -152,8 +152,13 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
                                       false);
     }
     else if (myRole1 == ChildRole.LBRACE) {
-      myResult = Spacing.createSpacing(0, 0, mySettings.BLANK_LINES_AFTER_CLASS_HEADER + 1,
-                                       mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+      if (!(aClass instanceof PsiAnonymousClass)) {
+        myResult = Spacing.createSpacing(0, 0, mySettings.BLANK_LINES_AFTER_CLASS_HEADER + 1,
+                                         mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+      } else {
+        myResult = Spacing.createSpacing(0, 0, 1,
+                                         mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+      }
     }
     else if (myRole2 == ChildRole.METHOD || myChild2.getElementType() == ElementType.METHOD || myRole2 == ChildRole.CLASS_INITIALIZER) {
       if (myRole1 == ChildRole.LBRACE) {

@@ -123,7 +123,8 @@ public final class RequestProcessor
 			exception = false;
 			return connectionStreams;
 		} catch (IOException ex) {
-			throw new IOCommandException(ex);
+                        BugLog.getInstance().showException(ex);
+                        throw new IOCommandException(ex);
 		} finally {
 			if (exception) {
 				connectionStreams.close();

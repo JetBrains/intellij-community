@@ -155,6 +155,9 @@ public class FormatterImpl extends FormatterEx
                               final int offset,
                               final TextRange affectedRange) throws IncorrectOperationException {
     disableFormatting();
+    if (model instanceof PsiBasedFormattingModel) {
+      ((PsiBasedFormattingModel)model).canModifyAllWhiteSpaces();
+    }
     try {
       final FormattingDocumentModel documentModel = model.getDocumentModel();
       final Block block = model.getRootBlock();
