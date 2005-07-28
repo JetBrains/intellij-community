@@ -51,7 +51,7 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
 
 
   public RollbackProvider createRollbackProviderOn(AbstractRevisions[] selectedRevisions, final boolean containsExcluded) {
-    return new CvsRollbackProvider(myProject, selectedRevisions, containsExcluded);
+    return new CvsRollbackProvider(myProject, selectedRevisions);
   }
 
   public DifferenceType[] getAdditionalDifferenceTypes() {
