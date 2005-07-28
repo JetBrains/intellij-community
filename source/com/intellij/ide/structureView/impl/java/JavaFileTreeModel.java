@@ -35,7 +35,7 @@ public class JavaFileTreeModel extends TextEditorBasedStructureViewModel {
 
   @NotNull
   public Sorter[] getSorters() {
-    return new Sorter[]{KindSorter.INSTANCE, Sorter.ALPHA_SORTER, VisibilitySorter.INSTANCE};
+    return new Sorter[]{KindSorter.INSTANCE, VisibilitySorter.INSTANCE, Sorter.ALPHA_SORTER};
   }
 
   protected PsiFile getPsiFile() {
