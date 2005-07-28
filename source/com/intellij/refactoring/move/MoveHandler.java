@@ -98,7 +98,8 @@ public class MoveHandler implements RefactoringActionHandler {
   }
 
   private boolean tryToMoveElement(final PsiElement element, final Project project, final DataContext dataContext) {
-    if (element instanceof PsiFile || element instanceof PsiDirectory) {
+    if ((element instanceof PsiFile && ((PsiFile)element).getVirtualFile() != null)
+        || element instanceof PsiDirectory) {
       final PsiDirectory targetContainer = (PsiDirectory)myTargetContainerFinder.getTargetContainer(dataContext);
       MoveFilesOrDirectoriesUtil.doMove(project, new PsiElement[]{element}, targetContainer, null);
       return true;
