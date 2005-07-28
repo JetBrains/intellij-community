@@ -13,7 +13,6 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Enumeration;
-import java.util.Iterator;
 
 /**
  * Created by IntelliJ IDEA.
@@ -31,14 +30,16 @@ public class ActionMacroConfigurationPanel {
   private JList myMacroActionsList;
 
   final DefaultListModel myMacrosModel = new DefaultListModel();
-  private ActionMacro mySelectedMacro;
-
   public ActionMacroConfigurationPanel() {
     ListUtil.addRemoveListener(myDeleteButton, myMacrosList);
 
     myMacrosList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myMacroActionsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
+    myRenameButton.setEnabled(false);
+    myDeleteButton.setEnabled(false);
+    myExcludeActionButton.setEnabled(false);
+    
     myMacrosList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
         final int selIndex = myMacrosList.getSelectedIndex();
@@ -89,8 +90,7 @@ public class ActionMacroConfigurationPanel {
 
   public void reset() {
     final ActionMacro[] allMacros = ActionMacroManager.getInstance().getAllMacros();
-    for (int i = 0; i < allMacros.length; i++) {
-      ActionMacro macro = allMacros[i];
+    for (ActionMacro macro : allMacros) {
       myMacrosModel.addElement(macro.clone());
     }
     myMacrosList.setModel(myMacrosModel);
@@ -101,8 +101,8 @@ public class ActionMacroConfigurationPanel {
     final ActionMacroManager manager = ActionMacroManager.getInstance();
     ActionMacro[] macros = manager.getAllMacros();
     HashSet<String> removedIds = new HashSet<String>();
-    for (int i = 0; i < macros.length; i++) {
-      removedIds.add(macros[i].getActionId());
+    for (ActionMacro macro1 : macros) {
+      removedIds.add(macro1.getActionId());
     }
 
     manager.removeAllMacros();
@@ -115,11 +115,9 @@ public class ActionMacroConfigurationPanel {
     }
     manager.registerActions();
 
-    for (Iterator<String> iterator = removedIds.iterator(); iterator.hasNext();) {
-      String id = iterator.next();
+    for (String id : removedIds) {
       Keymap[] allKeymaps = KeymapManagerEx.getInstanceEx().getAllKeymaps();
-      for (int i = 0; i < allKeymaps.length; i++) {
-        Keymap keymap = allKeymaps[i];
+      for (Keymap keymap : allKeymaps) {
         keymap.removeAllActionShortcuts(id);
       }
     }
@@ -137,11 +135,9 @@ public class ActionMacroConfigurationPanel {
   }
 
   private void initActionList(ActionMacro macro) {
-    mySelectedMacro = macro;
     DefaultListModel actionModel = new DefaultListModel();
     final ActionMacro.ActionDescriptor[] actions = macro.getActions();
-    for (int i = 0; i < actions.length; i++) {
-      ActionMacro.ActionDescriptor action = actions[i];
+    for (ActionMacro.ActionDescriptor action : actions) {
       actionModel.addElement(action);
     }
     myMacroActionsList.setModel(actionModel);

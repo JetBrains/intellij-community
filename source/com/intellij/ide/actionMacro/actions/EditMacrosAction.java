@@ -1,5 +1,7 @@
 package com.intellij.ide.actionMacro.actions;
 
+import com.intellij.ide.actionMacro.ActionMacro;
+import com.intellij.ide.actionMacro.ActionMacroManager;
 import com.intellij.ide.actionMacro.EditMacrosDialog;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -17,5 +19,11 @@ public class EditMacrosAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     EditMacrosDialog dialog = new EditMacrosDialog((Project)e.getDataContext().getData(DataConstants.PROJECT));
     dialog.show();
+  }
+
+  public void update(AnActionEvent e) {
+    final ActionMacroManager manager = ActionMacroManager.getInstance();
+    ActionMacro[] macros = manager.getAllMacros();
+    e.getPresentation().setEnabled(macros != null && macros.length > 0);
   }
 }
