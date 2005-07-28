@@ -50,8 +50,6 @@ public class SdkEditor implements Configurable{
   private JPanel myMainPanel;
   private JTextField myNameField;
   private TabbedPaneWrapper myTabbedPane;
-  private static final String EMPTY_AREA = "component0";
-  private static final String LAYOUT_ID_PROPERTY_NAME = "layout_id";
   private final NotifiableSdkModel mySdkModel;
   private JLabel myHomeFieldLabel;
   private String myVersionString;
@@ -127,9 +125,8 @@ public class SdkEditor implements Configurable{
     myMainPanel.add(myHomeFieldLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(2, 0, 2, 2), 0, 0));
     myMainPanel.add(myHomeComponent, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 2, 0), 0, 0));
 
-    myAdditionalDataPanel = new JPanel(new CardLayout());
-    myAdditionalDataPanel.add(new JPanel(), EMPTY_AREA);
-    myMainPanel.add(myAdditionalDataPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(2, 0, 0, 0), 0, 0));
+    myAdditionalDataPanel = new JPanel(new BorderLayout());
+    myMainPanel.add(myAdditionalDataPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(2, 0, 0, 0), 0, 0));
 
     myMainPanel.add(myTabbedPane.getComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(2, 0, 0, 0), 0, 0));
 
@@ -397,22 +394,16 @@ public class SdkEditor implements Configurable{
   }
 
   private void updateAdditionalDataComponent() {
+    myAdditionalDataPanel.removeAll();
     final AdditionalDataConfigurable configurable = getAdditionalDataConfigurable();
-    String layoutId = EMPTY_AREA;
     if (configurable != null) {
       JComponent component = myAdditionalDataComponents.get(configurable);
       if (component == null) {
         component = configurable.createComponent();
         myAdditionalDataComponents.put(configurable, component);
-        layoutId = "component" + Integer.toString(myAdditionalDataComponents.size());
-        component.putClientProperty(LAYOUT_ID_PROPERTY_NAME, layoutId);
-        myAdditionalDataPanel.add(component, layoutId);
-      }
-      else {
-        layoutId = (String)component.getClientProperty(LAYOUT_ID_PROPERTY_NAME);
-      }
+      }      
+      myAdditionalDataPanel.add(component, BorderLayout.CENTER);
     }
-    ((CardLayout)myAdditionalDataPanel.getLayout()).show(myAdditionalDataPanel, layoutId);
   }
 
   private AdditionalDataConfigurable getAdditionalDataConfigurable() {

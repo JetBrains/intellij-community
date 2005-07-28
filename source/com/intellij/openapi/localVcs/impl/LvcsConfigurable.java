@@ -51,9 +51,8 @@ public class LvcsConfigurable extends BaseConfigurable implements ApplicationCom
   }
 
   public JComponent createComponent() {
-    myPanel = new JPanel();
-
-    myPanel.setLayout(new BoxLayout(myPanel, BoxLayout.Y_AXIS));
+    myPanel = new JPanel(new GridBagLayout());
+    GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0,0);
 
     myCbEnabled = createCheckBox();
     myCbEnabled.setText("Enable Local History");
@@ -64,90 +63,92 @@ public class LvcsConfigurable extends BaseConfigurable implements ApplicationCom
         updateEnabled();
       }
     });
-    myPanel.add(myCbEnabled);
-    myPanel.add(Box.createVerticalStrut(10));
+    myPanel.add(myCbEnabled, gc);
 
-    JPanel historyPanel = new JPanel();
-    historyPanel.setLayout(new BoxLayout(historyPanel, BoxLayout.X_AXIS));
-    historyPanel.setBorder(BorderFactory.createCompoundBorder(
-      IdeBorderFactory.createTitledBorder("History"),
-      BorderFactory.createEmptyBorder(2, 2, 2, 2)
-    ));
-    historyPanel.setAlignmentX(0);
+    gc.insets.top = 10;
+    createHistoryPanel(gc);
+
+    createLabelsPanel(gc);
+
+    gc.weighty = 1.0;
+    myPanel.add(Box.createVerticalBox(), gc);
+
+    gc.gridx = 1;
+    gc.gridheight = 3;
+    gc.weightx = 1.0;
+    gc.fill = GridBagConstraints.BOTH;
+    myPanel.add(Box.createHorizontalBox(), gc);
+
+    return myPanel;
+  }
+
+  private void createHistoryPanel(final GridBagConstraints wholePanelGC) {
+    JPanel historyPanel = createPanel("History");
 
     myFieldHistoryLength = new JTextField();
 
     myHistoryLengthLabel = new JLabel("Keep local history for (active working days) ");
     myHistoryLengthLabel.setDisplayedMnemonic('H');
     myHistoryLengthLabel.setLabelFor(myFieldHistoryLength);
-    historyPanel.add(myHistoryLengthLabel);
+    GridBagConstraints gc = new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,5), 0, 0);
+    historyPanel.add(myHistoryLengthLabel, gc);
 
     final Dimension size = new Dimension(30, myFieldHistoryLength.getPreferredSize().height);
+    myFieldHistoryLength.setMinimumSize(size);
     myFieldHistoryLength.setPreferredSize(size);
     myFieldHistoryLength.setMaximumSize(size);
     myFieldHistoryLength.setDocument(new MyDocument());
-    historyPanel.add(Box.createHorizontalStrut(5));
-    historyPanel.add(myFieldHistoryLength);
-
-    historyPanel.setMaximumSize(new Dimension(300, 0));
-    myPanel.add(historyPanel);
-    myPanel.add(Box.createVerticalStrut(4));
-
-    createLabelsPanel();
-
-    myPanel.add(Box.createVerticalGlue());
-
-    return myPanel;
+    gc.fill = GridBagConstraints.HORIZONTAL;
+    gc.weightx = 1.0;
+    historyPanel.add(myFieldHistoryLength, gc);
+    myPanel.add(historyPanel, wholePanelGC);
   }
 
-  private void createLabelsPanel() {
+  private void createLabelsPanel(GridBagConstraints wholePanelGC) {
     JPanel labelsPanel = createPanel("Automatic Labeling on");
+
+    GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1,1,1.0,0.0,GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0,0,0,0),0,0);
 
     myCbProjectOpen = createCheckBox();
     myCbProjectOpen.setText("Project opening");
-    labelsPanel.add(myCbProjectOpen);
+    labelsPanel.add(myCbProjectOpen, gc);
 
     myCbProjectCompile = createCheckBox();
     myCbProjectCompile.setText("Project compilation");
-    labelsPanel.add(myCbProjectCompile);
+    labelsPanel.add(myCbProjectCompile, gc);
 
     myCbFileCompile = createCheckBox();
     myCbFileCompile.setText("File/package compilation");
-    labelsPanel.add(myCbFileCompile);
+    labelsPanel.add(myCbFileCompile, gc);
 
     myCbProjectMake = createCheckBox();
     myCbProjectMake.setText("Project make");
-    labelsPanel.add(myCbProjectMake);
+    labelsPanel.add(myCbProjectMake, gc);
 
     myCbRunning = createCheckBox();
     myCbRunning.setText("Running/Debugging");
-    labelsPanel.add(myCbRunning);
+    labelsPanel.add(myCbRunning, gc);
 
     myCbUnitTestsPassed = createCheckBox();
     myCbUnitTestsPassed.setText("Unit tests passed");
-    labelsPanel.add(myCbUnitTestsPassed);
+    labelsPanel.add(myCbUnitTestsPassed, gc);
 
     myCbUnitTestsFailed = createCheckBox();
     myCbUnitTestsFailed.setText("Unit tests failed");
-    labelsPanel.add(myCbUnitTestsFailed);
+    labelsPanel.add(myCbUnitTestsFailed, gc);
 
-    addPanel(labelsPanel);
-  }
+    labelsPanel.add(Box.createVerticalGlue(), gc);
 
-  private void addPanel(JPanel labelsPanel) {
-    labelsPanel.setMaximumSize(new Dimension(300, labelsPanel.getMaximumSize().height));
-    myPanel.add(labelsPanel);
+    myPanel.add(labelsPanel, wholePanelGC);
   }
 
   private JPanel createPanel(String panelTitle) {
-    JPanel labelsPanel = new JPanel();
-    labelsPanel.setLayout(new BoxLayout(labelsPanel, BoxLayout.Y_AXIS));
+    JPanel labelsPanel = new JPanel(new GridBagLayout());
     labelsPanel.setBorder(
       BorderFactory.createCompoundBorder(
         IdeBorderFactory.createTitledBorder(panelTitle),
         BorderFactory.createEmptyBorder(2, 2, 2, 2)
       ));
-    labelsPanel.setAlignmentX(0);
     return labelsPanel;
   }
 
