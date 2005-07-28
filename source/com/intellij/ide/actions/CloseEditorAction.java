@@ -50,7 +50,7 @@ public class CloseEditorAction extends AnAction {
       return;
     }
     if (ActionPlaces.EDITOR_POPUP.equals(event.getPlace()) || ActionPlaces.EDITOR_TAB_POPUP.equals(event.getPlace())) {
-      presentation.setText("Close");
+      presentation.setText("_Close");
     }
     EditorWindow window = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
     if (window == null) {

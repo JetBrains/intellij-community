@@ -572,23 +572,23 @@
         <group id="ToolWindowsGroup" class="com.intellij.ide.actions.ToolWindowsGroup" popup="true" text="_Tool Windows"/>
         <separator/>
         <action id="StoreDefaultLayout" class="com.intellij.ide.actions.StoreDefaultLayoutAction" text="Store Current La_yout as Default" description="Store current layout as default"/>
-        <action id="RestoreDefaultLayout" class="com.intellij.ide.actions.RestoreDefaultLayoutAction" text="Restore Default Layout" description="Restore default layout"/>
+        <action id="RestoreDefaultLayout" class="com.intellij.ide.actions.RestoreDefaultLayoutAction" text="Restore De_fault Layout" description="Restore default layout"/>
         <separator/>
-        <action id="HideActiveWindow" class="com.intellij.ide.actions.HideToolWindowAction" text="Hide Active Window" description="Hide active tool window"/>
-        <action id="HideAllWindows" class="com.intellij.ide.actions.HideAllToolWindowsAction" text="Hide All Windows" description="Hide all tool windows"/>
-        <action id="JumpToLastWindow" class="com.intellij.ide.actions.JumpToLastWindowAction" text="Jump to Last Window" description="Activate last focused tool window"/>
+        <action id="HideActiveWindow" class="com.intellij.ide.actions.HideToolWindowAction" text="Hi_de Active Window" description="Hide active tool window"/>
+        <action id="HideAllWindows" class="com.intellij.ide.actions.HideAllToolWindowsAction" text="Hide All _Windows" description="Hide all tool windows"/>
+        <action id="JumpToLastWindow" class="com.intellij.ide.actions.JumpToLastWindowAction" text="_Jump to Last Window" description="Activate last focused tool window"/>
         <separator/>
         <action id="TogglePinnedMode" class="com.intellij.ide.actions.TogglePinnedModeAction" text="_Pinned Mode" description="Pin/unpin active tool window"/>
         <action id="ToggleDockMode" class="com.intellij.ide.actions.ToggleDockModeAction" text="Dock_ed Mode" description="Dock/undock active tool window"/>
-        <action id="ToggleFloatingMode" class="com.intellij.ide.actions.ToggleFloatingModeAction" text="_Floating Mode" description="Float/unfloat active tool window"/>
+        <action id="ToggleFloatingMode" class="com.intellij.ide.actions.ToggleFloatingModeAction" text="Floating _Mode" description="Float/unfloat active tool window"/>
         <separator/>
-        <action id="NextTab" class="com.intellij.ide.actions.NextTabAction" text="Select Next Tab" description="Activate next tab"/>
-        <action id="PreviousTab" class="com.intellij.ide.actions.PreviousTabAction" text="Select Previous Tab" description="Activate previous tab"/>
-        <action id="CloseActiveTab" class="com.intellij.ide.actions.CloseActiveTabAction" text="Close Active Tab" description="Close active tool window tab"/>
+        <action id="NextTab" class="com.intellij.ide.actions.NextTabAction" text="Select Ne_xt Tab" description="Activate next tab"/>
+        <action id="PreviousTab" class="com.intellij.ide.actions.PreviousTabAction" text="Se_lect Previous Tab" description="Activate previous tab"/>
+        <action id="CloseActiveTab" class="com.intellij.ide.actions.CloseActiveTabAction" text="Cl_ose Active Tab" description="Close active tool window tab"/>
         <action id="PinActiveTab" class="com.intellij.ide.actions.PinActiveTabAction" text="P_in Active Tab" description="Pin active tool window or editor tab"/>
         <separator/>
-        <action id="CloseEditor" class="com.intellij.ide.actions.CloseEditorAction" text="Close Active Editor" description="Close active editor"/>
-        <action id="CloseAllEditors" class="com.intellij.ide.actions.CloseAllEditorsAction" text="Close A_ll Editors" description="Close all editors in active tab group"/>
+        <action id="CloseEditor" class="com.intellij.ide.actions.CloseEditorAction" text="_Close Active Editor" description="Close active editor"/>
+        <action id="CloseAllEditors" class="com.intellij.ide.actions.CloseAllEditorsAction" text="Close _All Editors" description="Close all editors in active tab group"/>
         <action id="CloseAllEditorsButActive" class="com.intellij.ide.actions.CloseAllEditorsButActiveAction" text="Close All Editors _But Active" description="Close all open editors except the active one"/>
         <action id="CloseAllUnmodifiedEditors" class="com.intellij.ide.actions.CloseAllUnmodifiedEditorsAction" text="Close All _Unmodified Editors" description="Close all nonmodified editors"/>
         <separator/>
@@ -597,7 +597,7 @@
         <action id="ChangeSplitOrientation" class="com.intellij.ide.actions.ChangeSplitterOrientationAction" text="Change Splitter O_rientation" description="Changes orientation of splitter"/>
         <action id="Unsplit"                class="com.intellij.ide.actions.UnsplitAction"         text="Un_split"     description="Unsplit Window"/>
         <action id="UnsplitAll"             class="com.intellij.ide.actions.UnsplitAllAction"      text="U_nsplit All" description="Remove all splitters"/>
-        <action id="NextSplitter"           class="com.intellij.ide.actions.NextSplitAction"       text="Goto Next Splitter"     description="Goto next splitter window"/>
+        <action id="NextSplitter"           class="com.intellij.ide.actions.NextSplitAction"       text="_Goto Next Splitter"     description="Goto next splitter window"/>
         <action id="PrevSplitter"           class="com.intellij.ide.actions.PrevSplitAction"       text="Goto Previons Splitter"     description="Goto previous splitter window"/>
       </group>
 

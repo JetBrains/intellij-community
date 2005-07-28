@@ -66,7 +66,7 @@ public class HideAllToolWindowsAction extends AnAction {
     for (String id : ids) {
       if (toolWindowManager.getToolWindow(id).isVisible()) {
         presentation.setEnabled(true);
-        presentation.setText("Hide All Windows", true);
+        presentation.setText("Hide All _Windows", true);
         return;
       }
     }
@@ -74,7 +74,7 @@ public class HideAllToolWindowsAction extends AnAction {
     final DesktopLayout layout = toolWindowManager.getLayoutToRestoreLater();
     if (layout != null) {
       presentation.setEnabled(true);
-      presentation.setText("Restore Windows");
+      presentation.setText("Restore _Windows");
       return;
     }
 
