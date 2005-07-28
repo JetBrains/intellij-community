@@ -16,6 +16,7 @@
 package com.siyeh.ipp.braces;
 
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 public class RemoveBracesPredicate implements PsiElementPredicate
@@ -36,12 +37,12 @@ public class RemoveBracesPredicate implements PsiElementPredicate
 		}
 		final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
 		final PsiStatement[] statements = codeBlock.getStatements();
-        if(statements.length != 1){
+        if(statements.length != 1 || statements[0] instanceof PsiDeclarationStatement){
             return false;
         }
         final PsiFile file = element.getContainingFile();
         //this intention doesn't work in JSP files, as it can't tell about tags
         // inside the braeces
-        return file instanceof PsiJavaFile;
+        return !(file instanceof JspFile);
     }
 }
