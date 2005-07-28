@@ -61,13 +61,21 @@ public class ITNReporter extends ErrorReportSubmitter {
         EAPSendErrorDialog dlg = new EAPSendErrorDialog();
         dlg.show();
 
-        notifierBean.setItnLogin(ErrorReportConfigurable.getInstance().ITN_LOGIN);
-        notifierBean.setItnPassword(ErrorReportConfigurable.getInstance().getPlainItnPassword());
+        boolean anonymousLogin = false;
+        String itnLogin = ErrorReportConfigurable.getInstance().ITN_LOGIN;
+        String itnPassword = ErrorReportConfigurable.getInstance().getPlainItnPassword();
+        if (itnLogin.trim().length() == 0 && itnPassword.trim().length() == 0) {
+          anonymousLogin = true;
+          itnLogin = "idea_anonymous";
+          itnPassword = "guest";
+        }
+        notifierBean.setItnLogin(itnLogin);
+        notifierBean.setItnPassword(itnPassword);
 
         String description = dlg.getErrorDescription();
         String message = event.getMessage();
 
-        errorBean.setDescription("User description: " + description + "\n" +
+        errorBean.setDescription((description.length() > 0 ? "User description: " + description + "\n" : "")+
                                  (message != null ? "Error message: " + message + "\n" : ""));
 
         if (dlg.isShouldSend()) {
@@ -91,16 +99,23 @@ public class ITNReporter extends ErrorReportSubmitter {
           wasException = true;
           submissionStatus = SubmittedReportInfo.SubmissionStatus.NEW_ISSUE;
 
-          if (Messages.showYesNoDialog(parentComponent,
-                                       "Error report successfuly sent. \nRequest #" + threadId +
-                                       " created. Do you want to open the related request in ITN?",
-                                       ReportMessages.ERROR_REPORT, Messages.getQuestionIcon()) == 0) {
-            try {
-              BrowserUtil.launchBrowser(URL_HEADER + threadId);
-            }
-            catch (IllegalThreadStateException e) {
-              // it's OK
-              // browser is not exited
+          if (anonymousLogin) {
+            Messages.showInfoMessage(parentComponent,
+                                     "Error report successfully sent. Thank you for your feedback!",
+                                     ReportMessages.ERROR_REPORT);
+          }
+          else {
+            if (Messages.showYesNoDialog(parentComponent,
+                                         "Error report successfully sent. \nRequest #" + threadId +
+                                         " created. Do you want to open the related request in ITN?",
+                                         ReportMessages.ERROR_REPORT, Messages.getQuestionIcon()) == 0) {
+              try {
+                BrowserUtil.launchBrowser(URL_HEADER + threadId);
+              }
+              catch (IllegalThreadStateException e) {
+                // it's OK
+                // browser is not exited
+              }
             }
           }
           break;

@@ -1,16 +1,15 @@
 package com.intellij.diagnostic;
 
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.util.net.HTTPProxySettingsDialog;
 
 import javax.swing.*;
-import javax.swing.text.Keymap;
-import javax.swing.event.UndoableEditListener;
 import javax.swing.event.UndoableEditEvent;
+import javax.swing.event.UndoableEditListener;
+import javax.swing.text.Keymap;
 import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -71,13 +70,6 @@ public class EAPSendErrorDialog extends DialogWrapper {
     getContentPane().add(myMainPanel);
     mySendAction = new AbstractAction("&Send") {
       public void actionPerformed(ActionEvent e) {
-        if (myErrorDescriptionTextArea.getText().trim().length() == 0) {
-          Messages.showMessageDialog(myMainPanel,
-                                        "Please fill in error description",
-                                        ReportMessages.ERROR_REPORT,
-                                        Messages.getErrorIcon());
-          return;
-        }
         myShouldSend = true;
         storeInfo();
         dispose();
