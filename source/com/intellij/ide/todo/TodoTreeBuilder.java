@@ -702,7 +702,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
         updateTree(true);
         return;
       }
-      else if (e.getChild() instanceof PsiFile) { // file was moved
+      if (e.getChild() instanceof PsiFile) { // file was moved
         PsiFile psiFile = (PsiFile)e.getChild();
         if (!canContainTodoItems(psiFile)) { // moved file doesn't contain TODOs
           return;
@@ -729,9 +729,18 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
       }
     }
 
+    public void childReplaced(PsiTreeChangeEvent e) {
+      if (e.getFile() != null) {
+        markFileAsDirty(e.getFile());
+        updateTree(true);
+      }
+    }
+
     public void childrenChanged(PsiTreeChangeEvent e) {
-      markFileAsDirty(e.getFile());
-      updateTree(true);
+      if (e.getFile() != null) {
+        markFileAsDirty(e.getFile());
+        updateTree(true);
+      }
     }
 
     public void propertyChanged(PsiTreeChangeEvent e) {
