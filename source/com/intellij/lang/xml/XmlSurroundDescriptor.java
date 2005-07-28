@@ -7,9 +7,12 @@ import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTagChild;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,7 +25,14 @@ import java.util.List;
 public class XmlSurroundDescriptor implements SurroundDescriptor {
   @NotNull public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
     final Pair<XmlTagChild, XmlTagChild> childrenInRange = XmlUtil.findTagChildrenInRange(file, startOffset, endOffset);
-    if (childrenInRange == null) return PsiElement.EMPTY_ARRAY;
+    if (childrenInRange == null) {
+      final PsiElement elementAt = file.findElementAt(startOffset);
+      if (elementAt instanceof XmlToken && ((XmlToken)elementAt).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS &&
+        elementAt.getTextRange().equals(new TextRange(startOffset, endOffset))) {
+        return new PsiElement[] {elementAt};
+      }
+      return PsiElement.EMPTY_ARRAY;
+    }
     List<PsiElement> result = new ArrayList<PsiElement>();
     PsiElement first = childrenInRange.getFirst();
     PsiElement last = childrenInRange.getSecond();

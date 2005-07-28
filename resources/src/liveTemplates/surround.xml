@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templateSet group="surround">
-  <template description="Surround with {}" name="B" toReformat="true" toShortenFQNames="true" value="{$SELECTION$}&#13;&#10;">
+  <template description="Surround with {}" name="B" toReformat="true" toShortenFQNames="true" value="{$SELECTION$}">
     <variable alwaysStopAt="false" defaultValue="" expression="" name="SELECTION" />
     <context>
       <option name="JAVA_CODE" value="true" />
@@ -26,7 +26,7 @@
       <option name="OTHER" value="false" />
     </context>
   </template>
-  <template description="Surround with &lt;tag&gt;&lt;/tag&gt;" name="T" toReformat="true" toShortenFQNames="true" value="&lt;$TAGNAME$&gt;$SELECTION$&lt;/$TAGNAME$&gt;&#13;&#10;">
+  <template description="Surround with &lt;tag&gt;&lt;/tag&gt;" name="T" toReformat="true" toShortenFQNames="true" value="&lt;$TAGNAME$&gt;$SELECTION$&lt;/$TAGNAME$&gt;">
     <variable alwaysStopAt="true" defaultValue="" expression="" name="TAGNAME" />
     <variable alwaysStopAt="false" defaultValue="" expression="" name="SELECTION" />
     <context>

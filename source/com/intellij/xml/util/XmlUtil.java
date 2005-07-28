@@ -736,20 +736,24 @@ public class XmlUtil {
     XmlTagChild first = PsiTreeUtil.getParentOfType(elementAtStart, XmlTagChild.class);
     if (first == null) return null;
 
+    if (first.getTextRange().getStartOffset() != startOffset) {
+      //Probably 'first' starts with whitespace
+      PsiElement elementAt = file.findElementAt(first.getTextRange().getStartOffset());
+      if (!(elementAt instanceof PsiWhiteSpace) || elementAt.getTextRange().getEndOffset() != startOffset) return null;
+    }
+
     XmlTagChild last = first;
     while (last != null && last.getTextRange().getEndOffset() < endOffset) {
       last = PsiTreeUtil.getNextSiblingOfType(last, XmlTagChild.class);
     }
 
-    if (last == null/* || last.getTextRange().getEndOffset() != elementAtEnd.getTextRange().getEndOffset()*/) return null;
+    if (last == null) return null;
     if (last.getTextRange().getEndOffset() != elementAtEnd.getTextRange().getEndOffset()) {
       //Probably 'last' ends with whitespace
       PsiElement elementAt = file.findElementAt(last.getTextRange().getEndOffset() - 1);
-      if (elementAt instanceof PsiWhiteSpace) {
-        elementAt = file.findElementAt(elementAt.getTextRange().getStartOffset());
+      if (!(elementAt instanceof PsiWhiteSpace) || elementAt.getTextRange().getStartOffset() != endOffset) {
+        return null;
       }
-
-      if (elementAt.getTextRange().getStartOffset() != endOffset) return null;
     }
 
     return new Pair<XmlTagChild, XmlTagChild>(first, last);
