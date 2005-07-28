@@ -28,6 +28,7 @@ public abstract class CompilerParsingThread extends Thread implements OutputPars
 
   
   public CompilerParsingThread(Process process, OutputParser outputParser, final boolean readErrorStream) {
+    super("CompilerParsingThread");
     myProcess = process;
     myOutputParser = outputParser;
     myCompilerOutStreamReader = new BufferedReader(new InputStreamReader(readErrorStream? process.getErrorStream() : process.getInputStream()), 16384);

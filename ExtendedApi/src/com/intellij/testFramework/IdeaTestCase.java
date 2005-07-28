@@ -287,7 +287,7 @@ public abstract class IdeaTestCase extends TestCase implements DataProvider {
           resetAllFields();
         }
       }
-    });
+    }, "IDEA Test Case Thread");
     thread.start();
     thread.join();
 

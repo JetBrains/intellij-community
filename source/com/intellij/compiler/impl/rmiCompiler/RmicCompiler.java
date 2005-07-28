@@ -95,10 +95,8 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
 
             LOG.assertTrue(VfsUtil.isAncestor(outputDir, outputClassFile, true));
 
-            final RmicProcessingItem item = new RmicProcessingItem(
-              module, outputClassFile, new File(outputDir.getPath()), dependencyCache.resolve(className)
-            );
-            item.setIsRemoteObject(isRemoteObject);
+            final ProcessingItem item = createProcessingItem(module, outputClassFile, outputDir,
+                                                             isRemoteObject, dependencyCache.resolve(className));
             items.add(item);
           }
         }
@@ -109,6 +107,17 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
     });
 
     return items.toArray(new ProcessingItem[items.size()]);
+  }
+
+  public ProcessingItem createProcessingItem(final Module module,
+                                             final VirtualFile outputClassFile,
+                                             final VirtualFile outputDir,
+                                             final boolean remoteObject, String qName) throws CacheCorruptedException {
+    final RmicProcessingItem item = new RmicProcessingItem(
+      module, outputClassFile, new File(outputDir.getPath()), qName
+    );
+    item.setIsRemoteObject(remoteObject);
+    return item;
   }
 
   public ProcessingItem[] process(CompileContext context, ProcessingItem[] items) {
