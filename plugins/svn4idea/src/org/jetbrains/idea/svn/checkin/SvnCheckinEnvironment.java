@@ -64,7 +64,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   public RollbackProvider createRollbackProviderOn(AbstractRevisions[] selectedRevisions, final boolean containsExcluded) {
-    return new SvnRollbackProvider(selectedRevisions, mySvnVcs, containsExcluded);
+    return new SvnRollbackProvider(selectedRevisions, mySvnVcs);
   }
 
   public DifferenceType[] getAdditionalDifferenceTypes() {
