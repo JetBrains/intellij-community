@@ -2,12 +2,13 @@ package com.intellij.lang.properties.structureView;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.*;
+import com.intellij.lang.properties.editor.ResourceBundlePropertyStructureViewElement;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.lang.properties.psi.Property;
-import com.intellij.lang.properties.editor.ResourceBundlePropertyStructureViewElement;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -31,6 +32,7 @@ public class GroupByWordPrefixes implements Grouper {
     return mySeparator;
   }
 
+  @NotNull
   public Collection<Group> group(final AbstractTreeNode parent, Collection<TreeElement> children) {
     List<Key> keys = new ArrayList<Key>();
 
@@ -116,8 +118,8 @@ public class GroupByWordPrefixes implements Grouper {
   }
 
   private static boolean isEndOfGroup(final int i,
-                               final List<Key> keys,
-                               final int parentPrefixLength) {
+                                      final List<Key> keys,
+                                      final int parentPrefixLength) {
     if (i == keys.size()) return true;
     if (i == 0) return false;
     List<String> words = keys.get(i).words;
@@ -127,12 +129,14 @@ public class GroupByWordPrefixes implements Grouper {
     return !Comparing.strEqual(words.get(parentPrefixLength), prevWords.get(parentPrefixLength));
   }
 
+  @NotNull
   public ActionPresentation getPresentation() {
     return new ActionPresentationData("Group By Prefixes",
                                       "Groups properties by common key prefixes",
                                       IconLoader.getIcon("/actions/fileStatus.png"));
   }
 
+  @NotNull
   public String getName() {
     return ID;
   }
