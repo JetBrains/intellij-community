@@ -40,6 +40,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -64,9 +65,10 @@ public class VcsConfigurationsDialog extends DialogWrapper{
   };
   private JScrollPane myVcsesScrollPane;
 
+  @Nullable
   private JComboBox myVcsesToUpdate;
 
-  public VcsConfigurationsDialog(Project project, JComboBox vcses, AbstractVcs selectedVcs) {
+  public VcsConfigurationsDialog(Project project, @Nullable JComboBox vcses, AbstractVcs selectedVcs) {
     super(project, false);
     myProject = project;
 
@@ -157,24 +159,29 @@ public class VcsConfigurationsDialog extends DialogWrapper{
   protected void doOKAction() {
     for (String vcsName : myVcsNameToConfigurableMap.keySet()) {
       Configurable configurable = myVcsNameToConfigurableMap.get(vcsName);
-      if (configurable != null && configurable.isModified()) try {
-        configurable.apply();
-      }
-      catch (ConfigurationException e) {
-        Messages.showErrorDialog("Unable to save settings. " + e.getMessage(), "Unable To Save Settings");
+      if (configurable != null && configurable.isModified()) {
+        try {
+          configurable.apply();
+        }
+        catch (ConfigurationException e) {
+          Messages.showErrorDialog("Unable to save settings. " + e.getMessage(), "Unable To Save Settings");
+        }
       }
     }
 
-    final VcsWrapper wrapper = new VcsWrapper((AbstractVcs)myVcses.getSelectedValue());
-    myVcsesToUpdate.setSelectedItem(wrapper);
-    final ComboBoxModel model = myVcsesToUpdate.getModel();
-    for(int i = 0; i < model.getSize(); i++){
-      final Object vcsWrapper = model.getElementAt(i);
-      if (vcsWrapper instanceof DefaultVcsWrapper){
-        final DefaultVcsWrapper defaultVcsWrapper = (DefaultVcsWrapper)vcsWrapper;
-        if (new VcsWrapper(defaultVcsWrapper.getDefaultVcs()).equals(wrapper)){
-          myVcsesToUpdate.setSelectedIndex(i);
-          break;
+    final JComboBox vcsesToUpdate = myVcsesToUpdate;
+    if (vcsesToUpdate != null) {
+      final VcsWrapper wrapper = new VcsWrapper((AbstractVcs)myVcses.getSelectedValue());
+      vcsesToUpdate.setSelectedItem(wrapper);
+      final ComboBoxModel model = vcsesToUpdate.getModel();
+      for(int i = 0; i < model.getSize(); i++){
+        final Object vcsWrapper = model.getElementAt(i);
+        if (vcsWrapper instanceof DefaultVcsWrapper){
+          final DefaultVcsWrapper defaultVcsWrapper = (DefaultVcsWrapper)vcsWrapper;
+          if (new VcsWrapper(defaultVcsWrapper.getDefaultVcs()).equals(wrapper)){
+            vcsesToUpdate.setSelectedIndex(i);
+            break;
+          }
         }
       }
     }
