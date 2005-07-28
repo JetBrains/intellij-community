@@ -261,7 +261,6 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
 
     public void actionPerformed(AnActionEvent e) {
       final InspectionManagerEx manager = ((InspectionManagerEx)InspectionManagerEx.getInstance(myProject));
-      final String currentProfileName = manager.getCurrentProfile().getName();
       manager.setExternalProfile(myInspectionProfile);
       final InspectionCodeSettingsPanel dlg = new InspectionCodeSettingsPanel(manager, myScope);
       final InspectionTool selectedTool = getSelectedTool();
@@ -271,10 +270,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       dlg.show();
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          manager.setExternalProfile(null);
           if (dlg.isOK()) {
-            myInspectionProfile = manager.getCurrentProfile();
-            manager.setProfile(InspectionProfileManager.getInstance().getProfile(currentProfileName));
             InspectionResultsView.this.update();
           }
         }
