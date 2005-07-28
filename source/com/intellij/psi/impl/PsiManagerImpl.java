@@ -186,7 +186,9 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
           public void run() {
             // update effective language level before the project is opened because it might be changed
             // e.g. while setting up newly created project
-            myLanguageLevel = projectRootManagerEx.getLanguageLevel();
+            if (!ApplicationManager.getApplication().isUnitTestMode()) {
+              myLanguageLevel = projectRootManagerEx.getLanguageLevel();
+            }
             runStartupActivity();
           }
         }
