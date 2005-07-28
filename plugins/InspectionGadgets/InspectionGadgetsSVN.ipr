@@ -195,7 +195,7 @@
       <module fileurl="file://$PROJECT_DIR$/InspectionGadgetsSVN.iml" filepath="$PROJECT_DIR$/InspectionGadgetsSVN.iml" />
     </modules>
   </component>
-  <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="true" project-jdk-name="IDEA 3415" />
+  <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="true" project-jdk-name="IDEA 3425" />
   <component name="RmicSettings">
     <option name="IS_EANABLED" value="false" />
     <option name="DEBUGGING_INFO" value="true" />

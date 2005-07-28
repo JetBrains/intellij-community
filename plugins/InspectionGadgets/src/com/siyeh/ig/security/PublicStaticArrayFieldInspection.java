@@ -42,8 +42,11 @@ public class PublicStaticArrayFieldInspection extends FieldInspection {
     private static class PublicStaticArrayFieldVisitor extends BaseInspectionVisitor {
         public void visitField(@NotNull PsiField field){
             super.visitField(field);
-            if(!field.hasModifierProperty(PsiModifier.PUBLIC)
-                &&!field.hasModifierProperty(PsiModifier.STATIC))
+            if(!field.hasModifierProperty(PsiModifier.PUBLIC))
+            {
+                return;
+            }
+            if(!field.hasModifierProperty(PsiModifier.STATIC))
             {
                 return;
             }
