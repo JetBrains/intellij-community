@@ -9,12 +9,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nullable;
 
 public class DiffContentFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.ex.DiffContentFactory");
 
   private DiffContentFactory() {}
 
+  @Nullable
   public static DiffContent fromPsiElement(PsiElement psiElement) {
     if (psiElement instanceof PsiFile) {
       return DiffContent.fromFile(psiElement.getProject(), ((PsiFile)psiElement).getVirtualFile());
@@ -27,11 +29,12 @@ public class DiffContentFactory {
       return text != null ? new SimpleContent(text) : null;
     }
     DiffContent wholeFileContent = DiffContent.fromFile(psiElement.getProject(), containingFile.getVirtualFile());
-    if (wholeFileContent == null) return null;
+    if (wholeFileContent == null || wholeFileContent.getDocument() == null) return null;
     Project project = psiElement.getProject();
     return new FragmentContent(wholeFileContent, psiElement.getTextRange(), project);
   }
 
+  @Nullable
   public static SimpleDiffRequest comparePsiElements(PsiElement psiElement1, PsiElement psiElement2, String title) {
     if (!psiElement1.isValid() || !psiElement2.isValid()) return null;
     Project project = psiElement1.getProject();
