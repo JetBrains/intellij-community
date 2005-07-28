@@ -275,8 +275,9 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     SVNStatusHolder value = (SVNStatusHolder) vFile.getUserData(STATUS_KEY);
     File file = new File(vFile.getPath());
     File entriesFile = getEntriesFile(file);
+    File lockFile = new File(entriesFile.getParentFile(), "lock");
     if (value != null && value.getEntriesTimestamp() == entriesFile.lastModified() &&
-      value.getFileTimestamp() == vFile.getTimeStamp()) {
+      value.getFileTimestamp() == vFile.getTimeStamp() && value.isLocked() == lockFile.exists()) {
       return value;
     }
     return null;
@@ -366,11 +367,13 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     private SVNStatus myValue;
     private long myEntriesTimestamp;
     private long myFileTimestamp;
+    private boolean myIsLocked;
 
     public SVNStatusHolder(long entriesStamp, long fileStamp, SVNStatus value) {
       myValue = value;
       myEntriesTimestamp = entriesStamp;
       myFileTimestamp = fileStamp;
+      myIsLocked = value.isLocked();
     }
 
     public long getEntriesTimestamp() {
@@ -379,6 +382,10 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
 
     public long getFileTimestamp() {
       return myFileTimestamp;
+    }
+
+    public boolean isLocked() {
+      return myIsLocked;
     }
 
     public SVNStatus getStatus() {

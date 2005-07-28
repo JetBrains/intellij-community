@@ -327,7 +327,11 @@ public class SvnUpdateEnvironment implements UpdateEnvironment {
                 myPostUpdateFiles.getGroupById(FileGroup.LOCALLY_ADDED_ID).add(path);
               }
               else if (status.getContentsStatus() == SVNStatusType.STATUS_CONFLICTED) {
-                myPostUpdateFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).add(path);
+                  // may conflict with update status.
+                FileGroup group = myPostUpdateFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID);
+                if (group != null && (group.getFiles() == null || !group.getFiles().contains(path))) {
+                  group.add(path);
+                }
               }
               else if (status.getContentsStatus() == SVNStatusType.STATUS_DELETED) {
                 myPostUpdateFiles.getGroupById(FileGroup.LOCALLY_REMOVED_ID).add(path);
