@@ -150,6 +150,7 @@ public class OSProcessHandler extends ProcessHandler {
         }
 
         myWaitFor.detach();
+        notifyProcessDetached();
       }
     }).start();
   }
