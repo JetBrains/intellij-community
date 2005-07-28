@@ -61,7 +61,7 @@ public class WelcomeScreen {
   private static final int MAIN_GROUP = 0;
   private static final int PLUGINS_GROUP = 1;
   private static final int COLUMNS_IN_MAIN = 2;
-  private static final int PLUGIN_DSC_MAX_WIDTH = 180;
+  private static final int PLUGIN_DSC_MAX_WIDTH = 260;
   private static final int PLUGIN_DSC_MAX_ROWS = 2;
   private static final int PLUGIN_NAME_MAX_WIDTH = 180;
   private static final int PLUGIN_NAME_MAX_ROWS = 2;
@@ -571,25 +571,7 @@ public class WelcomeScreen {
     }
 
     if (!StringUtil.isEmptyOrSpaces(url)) {
-      gBC = new GridBagConstraints(2, y, 1, 2, 0, 0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 7, 0, 0), 0, 0);
-      JLabel label = new JLabel("<html><nobr><u>Learn More...</u></nobr></html>");
-      label.setFont(TEXT_FONT);
-      label.setForeground(CAPTION_COLOR);
-      label.setToolTipText(url);
-      label.addMouseListener(new MouseAdapter() {
-        public void mouseClicked(MouseEvent e) {
-          try {
-            BrowserUtil.launchBrowser(url);
-          }
-          catch (IllegalThreadStateException ex) {
-            // it's not a problem
-          }
-        }
-      });
-      label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      panel.add(label, gBC);
-
-      gBC = new GridBagConstraints(3, y, 1, 2, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 7, 0, 10), 0, 0);
+      gBC = new GridBagConstraints(2, y + 1, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 7, 0, 10), 0, 0);
       MyActionButton learnMore = new PluginsActionButton(LEARN_MORE_ICON, null) {
         protected void onPress(InputEvent e) {
           try {
@@ -601,6 +583,7 @@ public class WelcomeScreen {
         }
       };
       learnMore.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      learnMore.setToolTipText("Learn more...");
       panel.add(learnMore, gBC);
       learnMore.setupWithinPanel(myPluginsPanel, PLUGINS_GROUP, myPluginsButtonsCount, 0);
       myPluginsButtonsCount++;
@@ -615,10 +598,11 @@ public class WelcomeScreen {
 
   /**
    * This method checks the width of the given string with given font applied, breaks the string into the specified number of lines if necessary,
-   * and/or cuts it, so that the string does not exceed the given width (with ellipsis concatenated at the end if needed).
-   * Returns the resulting or original string surrounded by html tags.
+   * and/or cuts it, so that the string does not exceed the given width (with ellipsis concatenated at the end if needed).<br>
+   * It also removes all of the formatting HTML tags, except <b>&lt;br&gt;</b> and <b>&lt;li&gt;</b> (they are used for correct line breaks).
+   * Returns the resulting or original string surrounded by <b>&lt;html&gt;</b> tags.
    * @param string not <code>null</code> {@link String String} value, otherwise the "Not specified." string is returned.
-   * @return the resulting or original string ({@link String String}) surrounded by <code>html</html> tags.
+   * @return the resulting or original string ({@link String String}) surrounded by <b>&lt;html&gt;</b> tags.
    * @param font not <code>null</code> {@link Font Font} object.
    * @param isAntiAliased <code>boolean</code> value to denote whether the font is antialiased or not.
    * @param maxWidth <code>int</code> value specifying maximum width of the resulting string in pixels.
@@ -632,16 +616,21 @@ public class WelcomeScreen {
                                            final int maxWidth,
                                            final int maxRows) {
 
-    String modifiedString = string.trim();
-    if (StringUtil.isEmpty(modifiedString)) {
+    string = string.trim();
+    if (StringUtil.isEmpty(string)) {
       return "<html>Not specified</html>";
     }
+
+    string = string.replaceAll("<li>", " <>&gt; ");
+    string = string.replaceAll("<br>", " <>");
+    string = string.replaceAll("(<[^>]+?>)", " ");
+    string = string.replaceAll("[\\s]{2,}", " ");
     Rectangle2D r = font.getStringBounds(string, new FontRenderContext(new AffineTransform(), isAntiAliased, false));
 
     if (r.getWidth() > maxWidth) {
 
       String prefix = "";
-      String suffix = string.trim();
+      String suffix = string;
       int maxIdxPerLine = (int)(maxWidth / r.getWidth() * string.length());
       int lengthLeft = string.length();
       int rows = maxRows;
@@ -681,14 +670,28 @@ public class WelcomeScreen {
         suffix = suffix.substring(0, maxIdxPerLine - 3);
         for (int i = suffix.length() - 1; i > 0; i--) {
           if (suffix.charAt(i) == ' ') {
-            suffix = suffix.substring(0, i) + "...";
-            break;
+            if ("...".equals(suffix.substring(i - 3, i))) {
+              suffix = suffix.substring(0, i - 1);
+              break;
+            }
+            else if (suffix.charAt(i - 1) == '>') {
+              i--;
+            }
+            else if (suffix.charAt(i - 1) == '.') {
+              suffix = suffix.substring(0, i) + "..";
+              break;
+            }
+            else {
+              suffix = suffix.substring(0, i) + "...";
+              break;
+            }
           }
         }
       }
-      modifiedString = prefix + suffix;
+      string = prefix + suffix;
     }
-    return "<html>" + modifiedString + "</html>";
+    string = string.replaceAll(" <>", "<br>");
+    return "<html>" + string + "</html>";
   }
 
   private abstract class MyActionButton extends JComponent implements ActionButtonComponent {
