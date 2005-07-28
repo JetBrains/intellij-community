@@ -60,6 +60,7 @@ public interface FormattingModel {
    *
    * @param textRange  the text range to replace with whitespace.
    * @param whiteSpace the whitespace to replace with.
+   * @return new white space text range
    */
   TextRange replaceWhiteSpace(TextRange textRange, String whiteSpace);
 
