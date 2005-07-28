@@ -10,6 +10,7 @@ import gnu.trove.THashSet;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.Collections;
 
 public class ConstantExpressionEvaluator extends PsiElementVisitor {
   private Set<PsiVariable> myVisitedVars;
@@ -360,7 +361,8 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
     if (cachedValue == null) {
       cachedValue = PsiManager.getInstance(project).getCachedValuesManager().createCachedValue(new CachedValueProvider<Map<PsiElement,Object>>() {
         public CachedValueProvider.Result<Map<PsiElement,Object>> compute() {
-          return new Result<Map<PsiElement, Object>>(new SoftHashMap<PsiElement, Object>(),new Object[]{PsiModificationTracker.MODIFICATION_COUNT});
+          Map<PsiElement, Object> value = Collections.synchronizedMap(new SoftHashMap<PsiElement, Object>());
+          return new Result<Map<PsiElement, Object>>(value, new Object[]{PsiModificationTracker.MODIFICATION_COUNT});
         }
       }, false);
       project.putUserData(CONSTANT_VALUE_MAP_KEY, cachedValue);
