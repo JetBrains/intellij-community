@@ -81,17 +81,19 @@ public class IdeFrame extends JFrame implements DataProvider {
       new WindowAdapter() {
         public void windowClosing(final WindowEvent e) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
-                    public void run() {
-                      final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-                      if (openProjects.length > 1) {
-                        ProjectUtil.closeProject(myProject);
-                        RecentProjectsManager.getInstance().updateLastProjectPath();
-                      }
-                      else {
-                        ApplicationManagerEx.getApplicationEx().exit();
-                      }
-                    }
-                  }, ModalityState.NON_MMODAL);
+            public void run() {
+              final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+              if (openProjects.length > 1) {
+                if (myProject != null && myProject.isOpen()) {
+                  ProjectUtil.closeProject(myProject);
+                }
+                RecentProjectsManager.getInstance().updateLastProjectPath();
+              }
+              else {
+                ApplicationManagerEx.getApplicationEx().exit();
+              }
+            }
+          }, ModalityState.NON_MMODAL);
         }
       }
     );
