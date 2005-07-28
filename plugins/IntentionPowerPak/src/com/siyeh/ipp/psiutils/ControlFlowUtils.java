@@ -130,6 +130,10 @@ public class ControlFlowUtils{
     }
 
     private static boolean codeBlockMayCompleteNormally(PsiCodeBlock block){
+        if(block == null)
+        {
+            return true;
+        }
         final PsiStatement[] statements = block.getStatements();
         for(final PsiStatement statement : statements){
             if(!statementMayCompleteNormally(statement)){

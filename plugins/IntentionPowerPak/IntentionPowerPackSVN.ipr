@@ -61,7 +61,6 @@
     <option name="DEPRECATION" value="true" />
     <option name="ADDITIONAL_OPTIONS_STRING" value="" />
     <option name="MAXIMUM_HEAP_SIZE" value="128" />
-    <option name="USE_GENERICS_COMPILER" value="false" />
   </component>
   <component name="JavadocGenerationManager">
     <option name="OUTPUT_DIRECTORY" />
@@ -197,7 +196,7 @@
       <module fileurl="file://$PROJECT_DIR$/IntentionPowerPackSVN.iml" filepath="$PROJECT_DIR$/IntentionPowerPackSVN.iml" />
     </modules>
   </component>
-  <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="true" project-jdk-name="IDEA 3354" />
+  <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="true" project-jdk-name="IDEA 3425" />
   <component name="RmicSettings">
     <option name="IS_EANABLED" value="false" />
     <option name="DEBUGGING_INFO" value="true" />
@@ -212,6 +211,7 @@
   <component name="com.siyeh.metrics.MetricsReloaded">
     <option name="selectedProfile" value="Default" />
     <option name="autoscroll" value="false" />
+    <option name="calculateMetrics" value="false" />
     <option name="includeTestClasses" value="false" />
     <option name="flattenInnerClasses" value="false" />
     <option name="cycleTableSpecificationString" value="" />
