@@ -17,6 +17,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Collections;
 
 public class ResourceBundleImpl implements ResourceBundle {
   private final @NotNull VirtualFile myBaseDirectory;
@@ -26,6 +27,18 @@ public class ResourceBundleImpl implements ResourceBundle {
     myBaseDirectory = baseDirectory;
     myBaseName = baseName;
   }
+
+  public static final ResourceBundle NULL = new ResourceBundle() {
+    @NotNull
+    public List<PropertiesFile> getPropertiesFiles(final Project project) {
+      return Collections.EMPTY_LIST;
+    }
+
+    @NotNull
+    public String getBaseName() {
+      return "";
+    }
+  };
 
   static {
     RenameHandlerRegistry.getInstance().registerHandler(ResourceBundleRenameHandler.INSTANCE);

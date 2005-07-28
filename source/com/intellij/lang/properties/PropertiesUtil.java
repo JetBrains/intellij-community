@@ -83,7 +83,7 @@ public class PropertiesUtil {
   }
 
   @NotNull
-  public static String getBaseName(VirtualFile virtualFile) {
+  public static String getBaseName(@NotNull VirtualFile virtualFile) {
     String name = virtualFile.getNameWithoutExtension();
 
     String[] parts = name.split("_");

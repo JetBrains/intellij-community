@@ -100,7 +100,11 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
 
   @NotNull
   public ResourceBundle getResourceBundle() {
-    String baseName = PropertiesUtil.getBaseName(getVirtualFile());
+    VirtualFile virtualFile = getVirtualFile();
+    if (!isValid() || virtualFile == null) {
+      return ResourceBundleImpl.NULL;
+    }
+    String baseName = PropertiesUtil.getBaseName(virtualFile);
     return new ResourceBundleImpl(getContainingFile().getContainingDirectory().getVirtualFile(), baseName);
   }
 
