@@ -639,7 +639,10 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       return;
     }
 
-    if (myRefCountHolder != null && attributeDescriptor.hasIdType()) {
+    if (myRefCountHolder != null && 
+        attributeDescriptor.hasIdType() &&
+        tag.getParent().getUserData(DO_NOT_VALIDATE_KEY) == null
+      ) {
       final String unquotedValue = getUnquotedValue(value, tag);
 
       if (XmlUtil.isSimpleXmlAttributeValue(unquotedValue)) {
@@ -883,11 +886,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       parent = parent.getParent();
     }
 
-    if (!(parent instanceof XmlText) &&
-        !(parent instanceof XmlDocument)
-        ) { // optimization
-      parent.putUserData(DO_NOT_VALIDATE_KEY, "");
-    }
+    parent.putUserData(DO_NOT_VALIDATE_KEY, "");
   }
 
   private static class InsertRequiredAttributeIntention implements IntentionAction {
