@@ -21,6 +21,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.*;
@@ -30,7 +31,7 @@ import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnWCRootCrawler;
-import org.jetbrains.idea.svn.actions.MergeAction;
+import org.jetbrains.idea.svn.actions.SvnMergeProvider;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -97,8 +98,9 @@ public class SvnUpdateEnvironment implements UpdateEnvironment {
                 }
               }
               if (!vfFiles.isEmpty()) {
-                final MergeAction mergeAction = new MergeAction(vfFiles, myVcs.getProject());
-                mergeAction.execute(null);
+                AbstractVcsHelper.getInstance(myVcs.getProject()).showMergeDialog(vfFiles,
+                                                                                  new SvnMergeProvider(myVcs.getProject()),
+                                                                                  null);
               }
             }
           }

@@ -98,8 +98,7 @@ public class ResolveAction extends BasicAction {
   protected void batchPerform(Project project, SvnVcs activeVcs, VirtualFile[] file, DataContext context, AbstractVcsHelper helper)
     throws VcsException {
     List<VirtualFile> files = Arrays.asList(file);
-    MergeAction action = new MergeAction(files, project);
-    action.execute(null);
+    AbstractVcsHelper.getInstance(project).showMergeDialog(files, new SvnMergeProvider(project), null);
   }
 
   protected boolean isBatchAction() {
