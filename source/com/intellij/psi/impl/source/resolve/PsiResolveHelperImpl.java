@@ -170,7 +170,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
     if (arg instanceof PsiWildcardType) {
       return captureWildcard ? arg : PsiType.NULL;
     } else {
-      if (arg == null || arg.getDeepComponentType() instanceof PsiPrimitiveType ||
+      if (arg == null || arg.getDeepComponentType() instanceof PsiPrimitiveType || arg instanceof PsiCapturedWildcardType ||
           PsiUtil.resolveClassInType(arg) != null || arg instanceof PsiTypeVariable) {
         return arg;
       }
@@ -270,8 +270,15 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
             return processArgType(arg, captureWildcard);
           }
           else {
-            if (arg instanceof PsiWildcardType) arg = ((PsiWildcardType)arg).getBound();
-            if (arg != null) return PsiWildcardType.createExtends(wildcardParam.getManager(), arg);
+            if (arg instanceof PsiWildcardType) {
+              if (((PsiWildcardType)arg).isSuper()) {
+                PsiType guess = getSubstitutionForTypeParameterInner(paramBound, ((PsiWildcardType)arg).getBound(), patternType, captureWildcard);
+                if (guess != PsiType.NULL) return guess;
+              }
+            } else {
+              PsiType guess =  getSubstitutionForTypeParameterInner(paramBound, arg, patternType, captureWildcard);
+              if (guess != PsiType.NULL) return guess;
+            }
           }
         }
       }
