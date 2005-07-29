@@ -14,45 +14,57 @@ import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.openapi.Disposable;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.Alarm;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 
 public abstract class DebuggerPanel extends JPanel implements DataProvider{
   private final Project myProject;
   private final DebuggerTree myTree;
   private final DebuggerStateManager myStateManager;
-  private final DebuggerContextListener myContextListener;
   private int myEvent = DebuggerSession.EVENT_REFRESH;
   private boolean myNeedsRefresh = true;
+  private final java.util.List<Disposable> myDisposables = new ArrayList<Disposable>();
 
   public DebuggerPanel(Project project, DebuggerStateManager stateManager) {
     super(new BorderLayout());
     myProject = project;
     myStateManager = stateManager;
     myTree = createTreeView();
-    myContextListener = new DebuggerContextListener() {
-      public void changeEvent(DebuggerContextImpl newContext, int event) {
-        DebuggerPanel.this.changeEvent(newContext, event);
-      }
-    };
 
-    myTree.addMouseListener(new PopupHandler(){
-      public void invokePopup(Component comp,int x,int y){
+    final PopupHandler popupHandler = new PopupHandler() {
+      public void invokePopup(Component comp, int x, int y) {
         ActionPopupMenu popupMenu = createPopupMenu();
         if (popupMenu != null) {
           popupMenu.getComponent().show(comp, x, y);
         }
       }
-    });
+    };
+    myTree.addMouseListener(popupHandler);
+
     setFocusTraversalPolicy(new IdeFocusTraversalPolicy() {
       public Component getDefaultComponentImpl(Container focusCycleRoot) {
         return myTree;
       }
     });
-    myStateManager.addListener(myContextListener);
+
+    final DebuggerContextListener contextListener = new DebuggerContextListener() {
+      public void changeEvent(DebuggerContextImpl newContext, int event) {
+        DebuggerPanel.this.changeEvent(newContext, event);
+      }
+    };
+    myStateManager.addListener(contextListener);
+
+    registerDisposable(new Disposable() {
+      public void dispose() {
+        myTree.removeMouseListener(popupHandler);
+        myStateManager.removeListener(contextListener);
+      }
+    });
   }
 
   protected abstract DebuggerTree createTreeView();
@@ -109,8 +121,15 @@ public abstract class DebuggerPanel extends JPanel implements DataProvider{
     myTree.showMessage(descriptor);
   }
 
+  protected final void registerDisposable(Disposable disposable) {
+    myDisposables.add(disposable);
+  }
+
   public void dispose() {
-    myStateManager.removeListener(myContextListener);
+    for (Disposable disposable : myDisposables) {
+      disposable.dispose();
+    }
+    myDisposables.clear();
     myTree.dispose();
   }
 

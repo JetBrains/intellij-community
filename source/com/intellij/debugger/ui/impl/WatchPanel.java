@@ -16,6 +16,7 @@ import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.Disposable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,7 +26,8 @@ public abstract class WatchPanel extends DebuggerPanel {
   public WatchPanel(Project project, DebuggerStateManager stateManager) {
     super(project, stateManager);
     add(new JScrollPane(getWatchTree()), BorderLayout.CENTER);
-    DebuggerAction.installEditAction(getWatchTree(), DebuggerActions.EDIT_NODE_SOURCE);
+    final Disposable disposable = DebuggerAction.installEditAction(getWatchTree(), DebuggerActions.EDIT_NODE_SOURCE);
+    registerDisposable(disposable);
   }
 
   protected DebuggerTree createTreeView() {

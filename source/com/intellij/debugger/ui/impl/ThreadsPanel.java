@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.Disposable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,7 +27,8 @@ public class ThreadsPanel extends DebuggerPanel implements DataProvider {
   public ThreadsPanel(Project project, DebuggerStateManager stateManager) {
     super(project, stateManager);
 
-    DebuggerAction.installEditAction(getThreadsTree(), DebuggerActions.EDIT_FRAME_SOURCE);
+    final Disposable disposable = DebuggerAction.installEditAction(getThreadsTree(), DebuggerActions.EDIT_FRAME_SOURCE);
+    registerDisposable(disposable);
 
     getThreadsTree().addKeyListener(new KeyAdapter() {
       public void keyPressed(KeyEvent e) {

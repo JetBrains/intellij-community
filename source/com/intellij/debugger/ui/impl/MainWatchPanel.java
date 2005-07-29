@@ -19,6 +19,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.Disposable;
 import com.intellij.ui.ListenerUtil;
 
 import javax.swing.*;
@@ -33,27 +34,38 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
 
   public MainWatchPanel(Project project, DebuggerStateManager stateManager) {
     super(project,stateManager);
-    AnAction removeWatchesAction = ActionManager.getInstance().getAction(DebuggerActions.REMOVE_WATCH);
-    removeWatchesAction.registerCustomShortcutSet(new CustomShortcutSet(myRemoveWatchAccelerator), getWatchTree());
+    final WatchDebuggerTree watchTree = getWatchTree();
 
-    AnAction newWatchAction  = ActionManager.getInstance().getAction(DebuggerActions.NEW_WATCH);
-    newWatchAction.registerCustomShortcutSet(new CustomShortcutSet(myNewWatchAccelerator), getWatchTree());
+    final AnAction removeWatchesAction = ActionManager.getInstance().getAction(DebuggerActions.REMOVE_WATCH);
+    removeWatchesAction.registerCustomShortcutSet(new CustomShortcutSet(myRemoveWatchAccelerator), watchTree);
 
-    ListenerUtil.addMouseListener(getWatchTree(), new MouseAdapter(){
+    final AnAction newWatchAction  = ActionManager.getInstance().getAction(DebuggerActions.NEW_WATCH);
+    newWatchAction.registerCustomShortcutSet(new CustomShortcutSet(myNewWatchAccelerator), watchTree);
+
+    final MouseAdapter mouseListener = new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
-        if(e.getButton() == MouseEvent.BUTTON1 &&  e.getClickCount() == 2) {
-          AnAction editWatchAction  = ActionManager.getInstance().getAction(DebuggerActions.EDIT_WATCH);
+        if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2) {
+          AnAction editWatchAction = ActionManager.getInstance().getAction(DebuggerActions.EDIT_WATCH);
           Presentation presentation = (Presentation)editWatchAction.getTemplatePresentation().clone();
-          DataContext context = DataManager.getInstance().getDataContext(getWatchTree());
+          DataContext context = DataManager.getInstance().getDataContext(watchTree);
 
           AnActionEvent actionEvent = new AnActionEvent(null, context, "WATCH_TREE", presentation, ActionManager.getInstance(), 0);
           editWatchAction.actionPerformed(actionEvent);
         }
       }
-    });
+    };
+    ListenerUtil.addMouseListener(watchTree, mouseListener);
 
-    AnAction editWatchAction  = ActionManager.getInstance().getAction(DebuggerActions.EDIT_WATCH);
-    editWatchAction.registerCustomShortcutSet(new CustomShortcutSet(myEditWatchAccelerator), getWatchTree());
+    final AnAction editWatchAction  = ActionManager.getInstance().getAction(DebuggerActions.EDIT_WATCH);
+    editWatchAction.registerCustomShortcutSet(new CustomShortcutSet(myEditWatchAccelerator), watchTree);
+    registerDisposable(new Disposable() {
+      public void dispose() {
+        ListenerUtil.removeMouseListener(watchTree, mouseListener);
+        removeWatchesAction.unregisterCustomShortcutSet(watchTree);
+        newWatchAction.unregisterCustomShortcutSet(watchTree);
+        editWatchAction.unregisterCustomShortcutSet(watchTree);
+      }
+    });
   }
 
   protected ActionPopupMenu createPopupMenu() {

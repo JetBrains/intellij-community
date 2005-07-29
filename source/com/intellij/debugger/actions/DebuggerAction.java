@@ -14,6 +14,7 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -96,16 +97,26 @@ public abstract class DebuggerAction extends AnAction {
            DebuggerActions.INSPECT_PANEL_POPUP.equals(e.getPlace());
   }
 
-  public static void installEditAction(final JTree tree, String actionName) {
-    tree.addMouseListener(new MouseAdapter(){
+  public static Disposable installEditAction(final JTree tree, String actionName) {
+    final MouseAdapter mouseListener = new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
         if (e.getClickCount() != 2) return;
         if (tree.getPathForLocation(e.getX(), e.getY()) == null) return;
         DataContext dataContext = DataManager.getInstance().getDataContext(tree);
         GotoFrameSourceAction.doAction(dataContext);
       }
-    });
-    ActionManager.getInstance().getAction(actionName).registerCustomShortcutSet(CommonShortcuts.getEditSource(), tree);
+    };
+    tree.addMouseListener(mouseListener);
+    
+    final AnAction action = ActionManager.getInstance().getAction(actionName);
+    action.registerCustomShortcutSet(CommonShortcuts.getEditSource(), tree);
+
+    return new Disposable() {
+      public void dispose() {
+        tree.removeMouseListener(mouseListener);
+        action.unregisterCustomShortcutSet(tree);
+      }
+    };
   }
 
   public static boolean isFirstStart(final AnActionEvent event) {

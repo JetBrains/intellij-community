@@ -7,15 +7,15 @@ import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.ui.impl.WatchPanel;
+import com.intellij.debugger.ui.impl.WatchDebuggerTree;
 import com.intellij.debugger.ui.impl.watch.EvaluationDescriptor;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.Disposable;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.EventDispatcher;
 
@@ -23,6 +23,7 @@ import javax.swing.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -154,8 +155,16 @@ public abstract class EvaluationDialog extends DialogWrapper {
   protected class MyEvaluationPanel extends WatchPanel {
     public MyEvaluationPanel(final Project project) {
       super(project, (DebuggerManagerEx.getInstanceEx(project)).getContextManager());
-      getWatchTree().setEvaluationPriority(DebuggerManagerThreadImpl.HIGH_PRIORITY);
-      getWatchTree().setAllowBreakpoints(true);
+      final WatchDebuggerTree watchTree = getWatchTree();
+      watchTree.setEvaluationPriority(DebuggerManagerThreadImpl.HIGH_PRIORITY);
+      watchTree.setAllowBreakpoints(true);
+      final AnAction setValueAction  = ActionManager.getInstance().getAction(DebuggerActions.SET_VALUE);
+      setValueAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)), watchTree);
+      registerDisposable(new Disposable() {
+        public void dispose() {
+          setValueAction.unregisterCustomShortcutSet(watchTree);
+        }
+      });
     }
 
     protected ActionPopupMenu createPopupMenu() {

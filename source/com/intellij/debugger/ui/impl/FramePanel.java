@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.Disposable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -56,12 +57,19 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
 
     this.add(splitter, BorderLayout.NORTH);
 
-    add(new JScrollPane(getFrameTree()), BorderLayout.CENTER);
+    final FrameDebuggerTree frameTree = getFrameTree();
+    add(new JScrollPane(frameTree), BorderLayout.CENTER);
 
-    DebuggerAction.installEditAction(getFrameTree(), DebuggerActions.EDIT_NODE_SOURCE);
+    final Disposable disposable = DebuggerAction.installEditAction(frameTree, DebuggerActions.EDIT_NODE_SOURCE);
+    registerDisposable(disposable);
 
     final AnAction setValueAction  = ActionManager.getInstance().getAction(DebuggerActions.SET_VALUE);
-    setValueAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)), getFrameTree());
+    setValueAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)), frameTree);
+    registerDisposable(new Disposable() {
+      public void dispose() {
+        setValueAction.unregisterCustomShortcutSet(frameTree);
+      }
+    });
   }
 
   protected void rebuild(int event) {
