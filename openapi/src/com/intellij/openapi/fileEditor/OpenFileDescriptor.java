@@ -28,11 +28,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class OpenFileDescriptor implements Navigatable {
-  private final VirtualFile myFile;
+  @NotNull private final VirtualFile myFile;
   private final int myOffset;
   private final int myLine;
   private final int myColumn;
@@ -107,13 +108,14 @@ public class OpenFileDescriptor implements Navigatable {
             return myProject;
           }
 
+          @NotNull
           public VirtualFile getVirtualFile() {
             return myFile;
           }
 
           @Nullable
           public Object getSelectorInFile() {
-            return PsiManager.getInstance(myProject).findFile(myFile);
+            return myFile.isValid() ? PsiManager.getInstance(myProject).findFile(myFile) : null;
           }
 
           @Nullable
