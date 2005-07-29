@@ -170,7 +170,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
     if (arg instanceof PsiWildcardType) {
       return captureWildcard ? arg : PsiType.NULL;
     } else {
-      if (arg == null || arg.getDeepComponentType() instanceof PsiPrimitiveType || arg instanceof PsiCapturedWildcardType ||
+      if (arg == null || arg.getDeepComponentType() instanceof PsiPrimitiveType ||
           PsiUtil.resolveClassInType(arg) != null || arg instanceof PsiTypeVariable) {
         return arg;
       }
