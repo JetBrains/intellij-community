@@ -233,8 +233,10 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
 
   public XmlElementDescriptor getElementDescriptor(XmlTag element){
     XmlElementDescriptor elementDescriptor = getElementDescriptor(element.getLocalName(), element.getNamespace(), (XmlElement)element.getParent());
-    if(elementDescriptor == null){
-      elementDescriptor = XmlUtil.findXmlDescriptorByType(element);
+    
+    if(elementDescriptor == null || element.getAttributeValue("xsi:type") != null){
+      final XmlElementDescriptor xmlDescriptorByType = XmlUtil.findXmlDescriptorByType(element);
+      if (xmlDescriptorByType != null) elementDescriptor = xmlDescriptorByType;
     }
     return elementDescriptor;
   }
