@@ -19,7 +19,6 @@ import com.intellij.xml.actions.ValidateXmlActionHandler;
 import org.xml.sax.SAXParseException;
 
 import java.lang.ref.WeakReference;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -39,7 +38,7 @@ public class ExternalDocumentValidator {
   private long myModificationStamp;
   private PsiFile myFile;
 
-  class ValidationInfo {
+  private static class ValidationInfo {
     PsiElement element;
     String message;
     int type;
@@ -131,7 +130,6 @@ public class ExternalDocumentValidator {
                 //return;
               } else if (localizedMessage.startsWith("Value ")) {
                 addProblemToTagName(currentElement, originalElement, localizedMessage, warning);
-                return;
               } else if (localizedMessage.startsWith("Attribute ")) {
                 currentElement = PsiTreeUtil.getParentOfType(currentElement,XmlAttribute.class,false);
                 final int messagePrefixLength = "Attribute ".length();
@@ -139,7 +137,7 @@ public class ExternalDocumentValidator {
                 if (currentElement==null && localizedMessage.charAt(messagePrefixLength) == '"') {
                   // extract the attribute name from message and get it from tag!
                   final int nextQuoteIndex = localizedMessage.indexOf('"', messagePrefixLength + 1);
-                  String attrName = (nextQuoteIndex!=-1)?localizedMessage.substring(messagePrefixLength + 1, nextQuoteIndex):null;
+                  String attrName = nextQuoteIndex == -1 ? null : localizedMessage.substring(messagePrefixLength + 1, nextQuoteIndex);
 
                   XmlTag parent = PsiTreeUtil.getParentOfType(originalElement,XmlTag.class);
                   currentElement = parent.getAttribute(attrName,null);
@@ -159,7 +157,6 @@ public class ExternalDocumentValidator {
                 } else {
                   addProblemToTagName(originalElement, originalElement, localizedMessage, warning);
                 }
-                return;
               } else {
                 currentElement = getNodeForMessage(currentElement);
                 assertValidElement(currentElement, originalElement,localizedMessage);
@@ -187,7 +184,7 @@ public class ExternalDocumentValidator {
     addAllInfos(host,results);
   }
 
-  private static Class[] parentClasses = new Class[]{
+  private static final Class<? extends XmlElement>[] parentClasses = new Class[]{
     XmlTag.class,
     XmlProcessingInstruction.class,
     XmlElementDecl.class,
@@ -196,7 +193,7 @@ public class ExternalDocumentValidator {
     XmlDoctype.class
   };
 
-  private PsiElement getNodeForMessage(final PsiElement currentElement) {
+  private static PsiElement getNodeForMessage(final PsiElement currentElement) {
     PsiElement parentOfType = PsiTreeUtil.getParentOfType(
         currentElement,
         parentClasses,
@@ -214,10 +211,9 @@ public class ExternalDocumentValidator {
     return parentOfType;
   }
 
-  private void addAllInfos(Validator.ValidationHost host,List<ValidationInfo> highlightInfos) {
-    for (Iterator<ValidationInfo> iterator = highlightInfos.iterator(); iterator.hasNext();) {
-      ValidationInfo info = iterator.next();
-      host.addMessage(info.element,info.message, info.type);
+  private static void addAllInfos(Validator.ValidationHost host,List<ValidationInfo> highlightInfos) {
+    for (ValidationInfo info : highlightInfos) {
+      host.addMessage(info.element, info.message, info.type);
     }
   }
 
@@ -247,7 +243,7 @@ public class ExternalDocumentValidator {
         "initial element:"+originalElement.getText()+",\n"+
         "parent:" + originalElement.getParent()+",\n" +
         "tag:" + (tag != null? tag.getText():"null") + ",\n" +
-        "offset in tag: " + (originalElement.getTextOffset() - ((tag!=null)?tag.getTextOffset():0))
+        "offset in tag: " + (originalElement.getTextOffset() - (tag == null ? 0 : tag.getTextOffset()))
       );
     }
   }

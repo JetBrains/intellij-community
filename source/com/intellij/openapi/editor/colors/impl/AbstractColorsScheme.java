@@ -14,6 +14,8 @@ import com.intellij.openapi.util.WriteExternalException;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import com.intellij.util.containers.HashMap;
+import com.intellij.codeInsight.CodeInsightColors;
+
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -204,7 +206,25 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
       Element value = e.getChild("value");
       attr.readExternal(value);
       myAttributesMap.put(name, attr);
+      migrateErrorStripeColorFrom45(name, attr);
     }
+  }
+
+  private void migrateErrorStripeColorFrom45(final TextAttributesKey name, final TextAttributes attr) {
+    if (myVersion != 0) return;
+    Color defaultColor = DEFAULT_ERROR_STRIPE_COLOR.get(name.getExternalName());
+    if (defaultColor != null && attr.getErrorStripeColor() == null) {
+      attr.setErrorStripeColor(defaultColor);
+    }
+  }
+  private static final Map<String, Color> DEFAULT_ERROR_STRIPE_COLOR = new THashMap<String, Color>();
+  static {
+    DEFAULT_ERROR_STRIPE_COLOR.put(CodeInsightColors.ERRORS_ATTRIBUTES.getExternalName(), Color.red);
+    DEFAULT_ERROR_STRIPE_COLOR.put(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES.getExternalName(), Color.red);
+    DEFAULT_ERROR_STRIPE_COLOR.put(CodeInsightColors.WARNINGS_ATTRIBUTES.getExternalName(), Color.yellow);
+    DEFAULT_ERROR_STRIPE_COLOR.put(CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES.getExternalName(), Color.yellow);
+    DEFAULT_ERROR_STRIPE_COLOR.put(CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES.getExternalName(), Color.yellow);
+    DEFAULT_ERROR_STRIPE_COLOR.put(CodeInsightColors.DEPRECATED_ATTRIBUTES.getExternalName(), Color.yellow);
   }
 
   private void readColors(Element childNode) {
@@ -239,9 +259,11 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     String value = childNode.getAttributeValue("value");
     if ("LINE_SPACING".equals(name)) {
       myLineSpacing = Float.parseFloat(value);
-    } else if ("EDITOR_FONT_SIZE".equals(name)) {
+    }
+    else if ("EDITOR_FONT_SIZE".equals(name)) {
       myEditorFontSize = Integer.parseInt(value);
-    } else if ("EDITOR_FONT_NAME".equals(name)) {
+    }
+    else if ("EDITOR_FONT_NAME".equals(name)) {
       setEditorFontName(value);
     }
   }

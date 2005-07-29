@@ -908,7 +908,10 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     myXmlVisitor.setRefCountHolder(myRefCountHolder);
     element.accept(myXmlVisitor);
 
-    myHolder.addAll(myXmlVisitor.getResult());
+    List<HighlightInfo> result = myXmlVisitor.getResult();
+    synchronized(result) {
+      myHolder.addAll(result);
+    }
     myXmlVisitor.clearResult();
   }
 }
