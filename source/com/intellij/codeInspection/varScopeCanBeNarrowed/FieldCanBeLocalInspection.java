@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -55,8 +56,10 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
     NextField:
     for (PsiField field : fields) {
       if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
+        if (HighlightUtil.isSerializationImplicitlyUsedField(field)) continue;
         final PsiReference[] refs = psiManager.getSearchHelper().findReferences(field, new LocalSearchScope(field.getContainingFile()),
                                                                                 true);
+        if (refs.length == 0) continue;
         for (PsiReference ref : refs) {
           PsiElement element = ref.getElement();
           final PsiMember parentOfType = PsiTreeUtil.getParentOfType(element, PsiMember.class);
