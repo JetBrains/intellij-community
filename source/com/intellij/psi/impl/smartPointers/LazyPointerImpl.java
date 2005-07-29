@@ -57,9 +57,13 @@ public class LazyPointerImpl implements SmartPointerEx {
 
   public void fastenBelt() {
     if (myAnchor != null) {
-      myPointer = setupPointer(myAnchor.retrieve());
-      ((SmartPointerEx)myPointer).fastenBelt();
-      myAnchor = null;
+      final PsiElement element = myAnchor.retrieve();
+      if (element != null) {
+        myPointer = setupPointer(element);
+        ((SmartPointerEx)myPointer).fastenBelt();
+        myAnchor = null;
+      }
+      else myAnchor = null;
     }
   }
 
