@@ -113,17 +113,19 @@ public class LexerEditorHighlighter extends DocumentAdapter implements EditorHig
     int repaintEnd = -1;
 
     int lastTokenStart = -1;
+    int lastLexerState = -1;
 
     while (myLexer.getTokenType() != null) {
       if (startIndex >= oldStartIndex) break;
 
       int tokenStart = myLexer.getTokenStart();
-      if (tokenStart == lastTokenStart) {
+      int lexerState = myLexer.getState();
+
+      if (tokenStart == lastTokenStart && lexerState == lastLexerState) {
         throw new IllegalStateException("Error while updating lexer: " + e + " document text: " + e.getDocument().getText());
       }
 
       int tokenEnd = myLexer.getTokenEnd();
-      int lexerState = myLexer.getState();
       data = packData(myLexer.getTokenType(), lexerState);
       if (mySegments.getSegmentStart(startIndex) != tokenStart ||
           mySegments.getSegmentEnd(startIndex) != tokenEnd ||
@@ -133,20 +135,23 @@ public class LexerEditorHighlighter extends DocumentAdapter implements EditorHig
       startIndex++;
       myLexer.advance();
       lastTokenStart = tokenStart;
+      lastLexerState = lexerState;
     }
 
     startOffset = mySegments.getSegmentStart(startIndex);
 
     while(myLexer.getTokenType() != null) {
       int tokenStart = myLexer.getTokenStart();
-      if (tokenStart == lastTokenStart) {
+      int lexerState = myLexer.getState();
+
+      if (tokenStart == lastTokenStart && lexerState == lastLexerState) {
         throw new IllegalStateException("Error while updating lexer: " + e + " document text: " + e.getDocument().getText());
       }
 
       lastTokenStart = tokenStart;
+      lastLexerState = lexerState;
 
       int tokenEnd = myLexer.getTokenEnd();
-      int lexerState = myLexer.getState();
       data = packData(myLexer.getTokenType(), lexerState);
       if(tokenStart >= newEndOffset && lexerState == myInitialState) {
         int shiftedTokenStart = tokenStart - e.getNewLength() + e.getOldLength();
