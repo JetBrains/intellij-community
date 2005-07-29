@@ -2776,7 +2776,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
                                         }
                                       }
                                       if (newSelection < 0) newSelection = newCaretOffset;
-                                      mySelectionModel.setSelection(mySavedSelectionEnd, newSelection);
+                                      mySelectionModel.setSelection(validateOffset(mySavedSelectionEnd), newSelection);
                                       getCaretModel().moveToOffset(newSelection);
                                     }
                                     else {
@@ -2791,7 +2791,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
                                         }
                                       }
                                       if (newSelection < 0) newSelection = newCaretOffset;
-                                      mySelectionModel.setSelection(mySavedSelectionStart, newSelection);
+                                      mySelectionModel.setSelection(validateOffset(mySavedSelectionStart), newSelection);
                                       getCaretModel().moveToOffset(newSelection);
                                     }
                                     return;
@@ -2819,6 +2819,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
       }
     }
 
+    private int validateOffset(int offset) {
+      if (offset < 0) return 0;
+      if (offset > myDocument.getTextLength()) return myDocument.getTextLength();
+      return offset;
+    }
   }
 
   class MyScrollBar extends JScrollBar {
