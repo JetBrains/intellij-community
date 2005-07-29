@@ -103,6 +103,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   private Sdk getInternalJavaSdk(final String sdkHome) {
     if (myInternalJdk == null) {
       String jreHome;
+      myToolsPath = null;
       if (SystemInfo.isLinux || SystemInfo.isWindows) {
         jreHome = sdkHome + File.separator + "jre";
         if (!new File(jreHome).exists()) {
@@ -120,13 +121,18 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
         jreHome = System.getProperty("java.home");
       }
       myInternalJdk = JavaSdk.getInstance().createJdk("", jreHome);
-      myToolsPath = myToolsPath != null ? myToolsPath : myInternalJdk.getToolsPath();
-      myRtPath = jreHome + File.separator + "lib" + File.separator + "rt.jar";
-      final VirtualFile tools = LocalFileSystem.getInstance().findFileByPath(myToolsPath.replace(File.separatorChar, '/'));
-      if (tools != null) {
-        final SdkModificator sdkModificator = myInternalJdk.getSdkModificator();
-        sdkModificator.addRoot(tools, ProjectRootType.CLASS);
-        sdkModificator.commitChanges();
+      if (myInternalJdk.getVersionString() != null){ //internal jdk is valid
+        myToolsPath = myToolsPath != null ? myToolsPath : myInternalJdk.getToolsPath();
+        myRtPath = jreHome + File.separator + "lib" + File.separator + "rt.jar";
+        final VirtualFile tools = LocalFileSystem.getInstance().findFileByPath(myToolsPath.replace(File.separatorChar, '/'));
+        if (tools != null) {
+          final SdkModificator sdkModificator = myInternalJdk.getSdkModificator();
+          sdkModificator.addRoot(tools, ProjectRootType.CLASS);
+          sdkModificator.commitChanges();
+        }
+      } else {
+        myToolsPath = null;
+        myRtPath = null;
       }
     }
     return myInternalJdk;
