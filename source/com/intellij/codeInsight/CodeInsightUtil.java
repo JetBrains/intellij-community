@@ -388,27 +388,27 @@ public class CodeInsightUtil {
                                          final PsiElement last,
                                          final List<Pair<PsiElement, PsiElement>> result) {
     final PsiElement[] children = getFilteredChildren(scope);
+    NextChild:
     for (int i = 0; i < children.length;) {
       PsiElement child = children[i];
-      int j = i;
-      PsiElement next = first;
-      do {
-        if (!areElementsEquivalent(children[j], next)) break;
-        j++;
-        if (next == last) break;
-        next = PsiTreeUtil.skipSiblingsForward(next, new Class[]{PsiWhiteSpace.class});
-      }
-      while (true);
-
-      if (next == last && j > i) {
-        if (child != first) {
-          result.add(new Pair<PsiElement, PsiElement>(child, children[j - 1]));
+      if (child != first) {
+        int j = i;
+        PsiElement next = first;
+        do {
+          if (!areElementsEquivalent(children[j], next)) break;
+          j++;
+          if (next == last) {
+            result.add(new Pair<PsiElement, PsiElement>(child, children[j - 1]));
+            i = j + 1;
+            continue NextChild;
+          }
+          next = PsiTreeUtil.skipSiblingsForward(next, new Class[]{PsiWhiteSpace.class});
         }
-        i = j + 1;
-        continue;
-      }
-      else if (i == j) {
-        addRangeDuplicates(child, first, last, result);
+        while (true);
+
+        if (i == j) {
+          addRangeDuplicates(child, first, last, result);
+        }
       }
 
       i++;

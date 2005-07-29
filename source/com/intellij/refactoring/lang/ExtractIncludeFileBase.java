@@ -145,14 +145,7 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
       return;
     }
 
-    Language language = children.getFirst().getLanguage();
-    if (language == null) {
-      String message = "Cannot determine the language for selected elements";
-      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_INCLUDE, project);
-      return;
-    }
-
-    final FileType fileType = getFileType(language);
+    final FileType fileType = getFileType(file.getLanguage());
     if (!(fileType instanceof LanguageFileType)) {
       String message = "The language for selected elements has no associated file type";
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_INCLUDE, project);
