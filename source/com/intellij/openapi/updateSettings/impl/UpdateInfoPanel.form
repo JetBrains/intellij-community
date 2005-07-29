@@ -156,16 +156,20 @@
         <properties>
           <iconTextGap value="0"/>
           <text value="&lt;html&gt;&lt;b&gt;&lt;u&gt;Updates&lt;/u&gt;&lt;/b&gt;&lt;/HTML&gt;"/>
+          <verticalAlignment value="1"/>
+          <verticalTextPosition value="1"/>
         </properties>
       </component>
       <component id="1b456" class="javax.swing.JLabel">
         <constraints>
-          <xy x="119" y="238" width="131" height="14"/>
+          <xy x="83" y="238" width="131" height="14"/>
           <grid row="6" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0"/>
         </constraints>
         <properties>
           <iconTextGap value="0"/>
           <text value="&lt;html&gt;dialog of your IDE settings.&lt;br&gt;&lt;/html&gt;"/>
+          <verticalAlignment value="1"/>
+          <verticalTextPosition value="1"/>
         </properties>
       </component>
       <component id="969e3" class="javax.swing.JLabel">
@@ -185,7 +189,7 @@
       </hspacer>
       <vspacer id="bcf1f">
         <constraints>
-          <xy x="197" y="6" width="11" height="20"/>
+          <xy x="179" y="6" width="11" height="20"/>
           <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="1" anchor="0" fill="2">
             <minimum-size width="-1" height="20"/>
             <preferred-size width="-1" height="20"/>
@@ -195,7 +199,7 @@
       </vspacer>
       <vspacer id="210e7">
         <constraints>
-          <xy x="197" y="316" width="11" height="20"/>
+          <xy x="179" y="316" width="11" height="20"/>
           <grid row="8" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="1" anchor="0" fill="2">
             <minimum-size width="-1" height="20"/>
             <preferred-size width="-1" height="20"/>
