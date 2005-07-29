@@ -50,6 +50,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Collection;
 
+import org.jetbrains.annotations.Nullable;
+
 public abstract class PsiTreeElementBase <Value extends PsiElement> implements StructureViewTreeElement<Value>, ItemPresentation {
   private final SmartPsiElementPointer mySmartPsiElementPointer;
 
@@ -61,7 +63,7 @@ public abstract class PsiTreeElementBase <Value extends PsiElement> implements S
     return this;
   }
 
-  public final Value getElement() {
+  public @Nullable final Value getElement() {
     return (Value)mySmartPsiElementPointer.getElement();
   }
 
@@ -84,7 +86,8 @@ public abstract class PsiTreeElementBase <Value extends PsiElement> implements S
   }
 
   public String toString() {
-    return getElement().toString();
+    final Value element = getElement();
+    return (element != null) ? element.toString() : "";
   }
 
   public TextAttributesKey getTextAttributesKey() {
@@ -118,7 +121,10 @@ public abstract class PsiTreeElementBase <Value extends PsiElement> implements S
   }
 
   public void navigate(boolean requestFocus) {
-    ((Navigatable)getElement()).navigate(requestFocus);
+    final Value element = getElement();
+    if (element != null) {
+      ((Navigatable)element).navigate(requestFocus);
+    }
   }
 
   public boolean canNavigate() {

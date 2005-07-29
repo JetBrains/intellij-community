@@ -17,6 +17,7 @@ package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.util.*;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.psi.PsiElement;
 import org.jdom.Element;
 
 import javax.swing.*;
@@ -51,8 +52,8 @@ public class TreeState implements JDOMExternalizable {
     }
 
     public boolean matchedWith(NodeDescriptor nodeDescriptor) {
-      return Comparing.equal(myItemId, nodeDescriptor.toString()) &&
-             Comparing.equal(myItemType, nodeDescriptor.getClass().getName());
+      return Comparing.equal(myItemId, getDescriptorKey(nodeDescriptor)) &&
+             Comparing.equal(myItemType, getDescriptorType(nodeDescriptor));
     }
 
     public boolean matchedWithByIndex(NodeDescriptor nodeDescriptor) {
@@ -177,9 +178,7 @@ public class TreeState implements JDOMExternalizable {
         if (userObject instanceof NodeDescriptor) {
           final NodeDescriptor nodeDescriptor = ((NodeDescriptor)userObject);
           //nodeDescriptor.update();
-          final String key = nodeDescriptor.toString();
-          final String type = nodeDescriptor.getClass().getName();
-          result.add(new PathElement(key, type, nodeDescriptor.getIndex(), nodeDescriptor));
+          result.add(new PathElement(getDescriptorKey(nodeDescriptor), getDescriptorType(nodeDescriptor), nodeDescriptor.getIndex(), nodeDescriptor));
         }
         else {
           return null;
@@ -190,6 +189,21 @@ public class TreeState implements JDOMExternalizable {
       }
     }
     return result;
+  }
+
+  private static String getDescriptorKey(final NodeDescriptor nodeDescriptor) {
+    if (nodeDescriptor instanceof AbstractTreeNode) {
+      final Object value = ((AbstractTreeNode)nodeDescriptor).getValue();
+      if (value instanceof PsiElement) {
+        // for PsiElements only since they define toString() correctly
+        return value.toString();
+      }
+    }
+    return nodeDescriptor.toString();
+  }
+
+  private static String getDescriptorType(final NodeDescriptor nodeDescriptor) {
+    return nodeDescriptor.getClass().getName();
   }
 
   public void applyTo(JTree tree) {
