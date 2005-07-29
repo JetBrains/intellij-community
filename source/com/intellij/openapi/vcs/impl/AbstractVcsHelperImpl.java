@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.impl;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,6 +32,8 @@ import com.intellij.openapi.vcs.checkin.VcsOperation;
 import com.intellij.openapi.vcs.history.CurrentRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.impl.checkin.CheckinHandler;
+import com.intellij.openapi.vcs.merge.AbstractMergeAction;
+import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.impl.CheckinProjectPanelImpl;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowser;
@@ -48,9 +51,9 @@ import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.MessageView;
-import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.ContentManagerListener;
+import com.intellij.ui.content.MessageView;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.ErrorTreeView;
@@ -464,6 +467,13 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     frameWrapper.setImage(ImageLoader.loadFromResource("/diff/Diff.png"));
     frameWrapper.closeOnEsc();
     frameWrapper.show();
+  }
+
+  public void showMergeDialog(List<VirtualFile> files, MergeProvider provider, final AnActionEvent e) {
+    if (files.isEmpty()) return;
+    new AbstractMergeAction(myProject,
+                            files,
+                            provider).actionPerformed(e);
   }
 
   private DiffContent getContentForVersion(final VcsFileRevision version, final File file) throws IOException {

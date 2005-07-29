@@ -389,12 +389,12 @@ public class CvsUtil {
     }
   }
 
-  public static String getStoredContentForFile(VirtualFile file, final String originalRevision) {
+  public static byte[] getStoredContentForFile(VirtualFile file, final String originalRevision) {
     File ioFile = CvsVfsUtil.getFileFor(file);
     try {
       File storedRevisionFile = new File(ioFile.getParentFile(), ".#" + ioFile.getName() + "." + originalRevision);
       if (!storedRevisionFile.isFile()) return null;
-      return new String(FileUtil.loadFileBytes(storedRevisionFile), file.getCharset().name());
+      return FileUtil.loadFileBytes(storedRevisionFile);
     }
     catch (IOException e) {
       LOG.error(e);
@@ -402,12 +402,12 @@ public class CvsUtil {
     }
   }
 
-  public static String getStoredContentForFile(VirtualFile file) {
+  public static byte[]  getStoredContentForFile(VirtualFile file) {
     File ioFile = CvsVfsUtil.getFileFor(file);
     try {
       File storedRevisionFile = new File(ioFile.getParentFile(), ".#" + ioFile.getName() + "." + getAllRevisionsForFile(file).get(0));
       if (!storedRevisionFile.isFile()) return null;
-      return new String(FileUtil.loadFileBytes(storedRevisionFile), file.getCharset().name());
+      return FileUtil.loadFileBytes(storedRevisionFile);
     }
     catch (IOException e) {
       LOG.error(e);

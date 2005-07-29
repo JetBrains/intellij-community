@@ -22,7 +22,9 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.versionBrowser.VersionsProvider;
 import com.intellij.openapi.vcs.versions.AbstractRevisions;
+import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 
 import java.io.File;
 import java.util.Arrays;
@@ -84,4 +86,6 @@ public abstract class AbstractVcsHelper {
   public abstract void showChangesBrowser(VersionsProvider versionsProvider);
 
   public abstract void showRevisions(List<AbstractRevisions> revisions, final String title);
+
+  public abstract void showMergeDialog(List<VirtualFile> files, MergeProvider provider, final AnActionEvent e);
 }

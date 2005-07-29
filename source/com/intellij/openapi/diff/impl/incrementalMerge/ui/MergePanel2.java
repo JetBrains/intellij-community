@@ -264,6 +264,10 @@ public class MergePanel2 implements DiffViewer {
     return true;
   }
 
+  public DialogBuilder getBuilder() {
+    return myBuilder;
+  }
+
   private class MyEditingSides implements EditingSides {
     private final FragmentSide mySide;
 

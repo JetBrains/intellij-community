@@ -1,22 +1,22 @@
 package com.intellij.cvsSupport2.actions.merge;
 
-import com.intellij.openapi.vcs.merge.AbstractMergeAction;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.SelectFromListDialog;
-import com.intellij.openapi.project.Project;
-import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetFileContentOperation;
-import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.SimpleRevision;
-import com.intellij.cvsSupport2.cvsoperations.common.CompositeOperaton;
+import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
+import com.intellij.cvsSupport2.cvsoperations.common.CompositeOperaton;
+import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetFileContentOperation;
+import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.SimpleRevision;
 import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
-import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.SelectFromListDialog;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.merge.MergeData;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -68,7 +68,7 @@ class MergeInfo implements MergeDataProvider{
     return myResultRevision;
   }
 
-  public AbstractMergeAction.MergeData createData() throws VcsException {
+  public MergeData createData() throws VcsException {
     return loadRevisionsInternal(getOriginalRevision(),
                                  getLastRevision());
   }
@@ -92,9 +92,9 @@ class MergeInfo implements MergeDataProvider{
       if (isUseStoredRevision()) {
         String revision = getResultRevision();
 
-        final String result = CvsUtil.getStoredContentForFile(myFile, revision);
+        final byte[] result = CvsUtil.getStoredContentForFile(myFile, revision);
 
-        if (result != null) return result.getBytes();
+        if (result != null) return result;
 
         VirtualFile[] storedFiles = getStoredFiles();
 
@@ -169,7 +169,7 @@ class MergeInfo implements MergeDataProvider{
   }
 
 
-  private AbstractMergeAction.MergeData loadRevisionsInternal(final String firstRevision, final String secondRevision) throws VcsException {
+  private MergeData loadRevisionsInternal(final String firstRevision, final String secondRevision) throws VcsException {
     try {
       final GetFileContentOperation fileToMergeWithContentOperation = GetFileContentOperation.
         createForFile(myFile, new SimpleRevision(firstRevision));
@@ -194,7 +194,7 @@ class MergeInfo implements MergeDataProvider{
                                    public void executionFinishedSuccessfully() {
                                    }
                                  });
-      final AbstractMergeAction.MergeData result = new AbstractMergeAction.MergeData();
+      final MergeData result = new MergeData();
       result.CURRENT = getStoredContent();
       result.ORIGINAL = originalFileContentOperation.getFileBytes();
       result.LAST = fileToMergeWithContentOperation.getFileBytes();

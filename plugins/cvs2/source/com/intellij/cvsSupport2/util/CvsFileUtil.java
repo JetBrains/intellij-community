@@ -1,6 +1,7 @@
 package com.intellij.cvsSupport2.util;
 
 import com.intellij.cvsSupport2.javacvsImpl.FileReadOnlyHandler;
+import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -17,7 +18,7 @@ public class CvsFileUtil {
   public static List<String> readLinesFrom(File file) throws IOException {
     if (!file.exists()) file.createNewFile();
     ArrayList<String> result = new ArrayList<String>();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), CvsApplicationLevelConfiguration.getCharset()));
     try {
       String line;
       while ((line = reader.readLine()) != null) result.add(line);
@@ -44,20 +45,20 @@ public class CvsFileUtil {
 
     if (!file.exists()) file.createNewFile();
 
-    PrintStream writer;
+    Writer writer;
     if (!file.exists()) {
       file.createNewFile();
     }
     if (!file.canWrite()) {
       new FileReadOnlyHandler().setFileReadOnly(file, false);
     }
-    writer = new PrintStream(new BufferedOutputStream(new FileOutputStream(file)));
+    writer = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(file)), CvsApplicationLevelConfiguration.getCharset());
 
     try {
       for (Iterator each = lines.iterator(); each.hasNext();) {
         String line = (String)each.next();
-        writer.print(line);
-        writer.print(separator);
+        writer.write(line);
+        writer.write(separator);
       }
     }
     finally {

@@ -1,7 +1,7 @@
 package com.intellij.cvsSupport2.actions.merge;
 
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.merge.AbstractMergeAction;
+import com.intellij.openapi.vcs.merge.MergeData;
 
 /**
  * Created by IntelliJ IDEA.
@@ -12,5 +12,5 @@ import com.intellij.openapi.vcs.merge.AbstractMergeAction;
  */
 
 interface MergeDataProvider {
-  AbstractMergeAction.MergeData createData() throws VcsException;
+  MergeData createData() throws VcsException;
 }

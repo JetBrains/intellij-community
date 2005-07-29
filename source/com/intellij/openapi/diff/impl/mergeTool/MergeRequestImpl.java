@@ -49,8 +49,12 @@ public class MergeRequestImpl extends MergeRequest {
   public void setWindowTitle(String windowTitle) { myWindowTitle = windowTitle; }
 
   public void setResult(int result) {
-    if (result == DialogWrapper.OK_EXIT_CODE) getMergeContent().applyChanges();
+    if (result == DialogWrapper.OK_EXIT_CODE) applyChanges();
     myResult = result;
+  }
+
+  public void applyChanges() {
+    getMergeContent().applyChanges();
   }
 
   public int getResult() { return myResult; }
@@ -111,6 +115,10 @@ public class MergeRequestImpl extends MergeRequest {
 
   public void setHelpId(String helpId) {
     myHelpId = helpId;
+  }
+
+  public VirtualFile getVirtualFile() {
+    return getMergeContent().getFile();
   }
 
   private class MergeContent extends DiffContent {

@@ -31,7 +31,7 @@
  */
 package com.intellij.cvsSupport2;
 
-import com.intellij.cvsSupport2.actions.merge.CvsMergeAction;
+import com.intellij.cvsSupport2.actions.merge.CvsMergeProvider;
 import com.intellij.cvsSupport2.actions.update.UpdateSettingsOnCvsConfiguration;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
@@ -49,7 +49,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.merge.AbstractMergeAction;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.update.*;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -129,7 +129,7 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
 
     if (!fileToRevisions.isEmpty()) {
       final List<VirtualFile> mergedFiles = new ArrayList<VirtualFile>(fileToRevisions.keySet());
-      new CvsMergeAction(mergedFiles.get(0), project, fileToRevisions, new AbstractMergeAction.FileValueHolder()).execute(null);
+      AbstractVcsHelper.getInstance(project).showMergeDialog(mergedFiles, new CvsMergeProvider(fileToRevisions, project), null);
     }
 
   }
