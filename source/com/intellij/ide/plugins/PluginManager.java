@@ -82,10 +82,9 @@ public class PluginManager {
   /**
    * do not call this method during bootstrap, should be called in a copy of PluginManager, loaded by IdeaClassLoader
    */
-  public static PluginDescriptor[] getPlugins() {
+  public synchronized static PluginDescriptor[] getPlugins() {
     if (ourPlugins == null) {
       initializePlugins();
-
     }
     return ourPlugins;
   }
