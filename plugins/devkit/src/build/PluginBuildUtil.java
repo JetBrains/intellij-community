@@ -40,7 +40,6 @@ import java.util.Set;
  * Date: Nov 24, 2004
  */
 public class PluginBuildUtil {
-
   @Nullable public static String getPluginExPath(Module module) {
     final ProjectJdk jdk = ModuleRootManager.getInstance(module).getJdk();
     if (jdk == null || !(jdk.getSdkType() instanceof IdeaJdk)) {
