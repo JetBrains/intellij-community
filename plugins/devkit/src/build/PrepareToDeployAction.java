@@ -30,6 +30,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.util.io.ZipUtil;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
@@ -37,6 +39,7 @@ import java.io.*;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.HashMap;
 import java.util.jar.Attributes;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
@@ -50,110 +53,126 @@ public class PrepareToDeployAction extends AnAction {
   public void actionPerformed(final AnActionEvent e) {
     final Module module = (Module)e.getDataContext().getData(DataConstants.MODULE);
     if (module == null) return;
-    try {
+    final String name = module.getName();
+    final String defaultPath = new File(module.getModuleFilePath()).getParent() + File.separator + name;
+    final HashMap<String, String> map = new HashMap<String, String>();
+    final boolean isOk = ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        try {
+          HashSet<Module> modules = new HashSet<Module>();
+          PluginBuildUtil.getDependencies(module, modules);
+          modules.add(module);
 
-      HashSet<Module> modules = new HashSet<Module>();
-      PluginBuildUtil.getDependencies(module, modules);
-      modules.add(module);
+          File jarFile = preparePluginsJar(module, modules);
 
-      File jarFile = preparePluginsJar(module, modules);
-
-      HashSet<Library> libs = new HashSet<Library>();
-      PluginBuildUtil.getLibraries(module, libs);
-      for (Iterator<Module> iterator = modules.iterator(); iterator.hasNext();) {
-        Module module1 = iterator.next();
-        PluginBuildUtil.getLibraries(module1, libs);
-      }
-
-      final String name = module.getName();
-      final String defaultPath = new File(module.getModuleFilePath()).getParent() + File.separator + name;
-      final String zipPath = defaultPath + ".zip";
-      final File zipFile = new File(zipPath);
-      if (libs.size() == 0) {
-        if (new File(zipPath).exists()) {
-          if (Messages.showYesNoDialog(module.getProject(), "Do you want to delete \'" + zipPath + "\'?", "Info",
-                                       Messages.getInformationIcon()) == DialogWrapper.OK_EXIT_CODE) {
-            FileUtil.delete(zipFile);
+          HashSet<Library> libs = new HashSet<Library>();
+          PluginBuildUtil.getLibraries(module, libs);
+          for (Iterator<Module> iterator = modules.iterator(); iterator.hasNext();) {
+            Module module1 = iterator.next();
+            PluginBuildUtil.getLibraries(module1, libs);
           }
-        }
-        FileUtil.copy(jarFile, new File(defaultPath + ".jar"));
-        return;
-      }
 
-      if (zipFile.exists() || zipFile.createNewFile()) {
-        if (new File(defaultPath + ".jar").exists()) {
-          if (Messages.showYesNoDialog(module.getProject(), "Do you want to delete \'" + defaultPath + ".jar\'?", "Info",
-                                       Messages.getInformationIcon()) == DialogWrapper.OK_EXIT_CODE) {
-            FileUtil.delete(new File(defaultPath + ".jar"));
-          }
-        }
-        final ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
-        ZipUtil.addFileToZip(zos, jarFile, "/" + name + "/lib/" + name + ".jar", new HashSet<String>(), new FileFilter() {
-          public boolean accept(File pathname) {
-            return true;
-          }
-        });
-        Set<String> names = new HashSet<String>();
-        for (Library library : libs) {
-          String libraryName = null;
-          final VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
-          final HashSet<String> libraryWrittenItems = new HashSet<String>();
-          File libraryJar = FileUtil.createTempFile("temp", ".jar");
-          libraryJar.deleteOnExit();
-          ZipOutputStream jar = null;
-          for (VirtualFile virtualFile : files) {
-            File ioFile = VfsUtil.virtualToIoFile(virtualFile);
-            if (!(virtualFile.getFileSystem() instanceof JarFileSystem)) {
-              if (jar == null) {
-                jar = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(libraryJar)));
-              }
-              ZipUtil.addFileOrDirRecursively(jar, libraryJar, VfsUtil.virtualToIoFile(virtualFile), "", new FileFilter() {
-                public boolean accept(File pathname) {
-                  return true;
-                }
-              }, libraryWrittenItems);
-              if (libraryName == null) {
-                libraryName = library.getName() != null ? library.getName() : virtualFile.getName();
-                if (names.contains(libraryName)) {
-                  int i = 1;
-                  while (true) {
-                    if (!names.contains(libraryName + i)) {
-                      libraryName = libraryName + i;
-                      break;
-                    }
-                    i++;
-                  }
-                }
-                names.add(libraryName);
+          final String zipPath = defaultPath + ".zip";
+          final File zipFile = new File(zipPath);
+          if (libs.size() == 0) {
+            if (new File(zipPath).exists()) {
+              if (Messages.showYesNoDialog(module.getProject(), "Do you want to delete \'" + zipPath + "\'?", "Info",
+                                           Messages.getInformationIcon()) == DialogWrapper.OK_EXIT_CODE) {
+                FileUtil.delete(zipFile);
               }
             }
-            else {
-              ZipUtil.addFileOrDirRecursively(zos, jarFile, ioFile, "/" + name + "/lib/" + ioFile.getName(), new FileFilter() {
-                public boolean accept(File pathname) {
-                  return true;
-                }
-              }, new HashSet<String>());
-            }
+            FileUtil.copy(jarFile, new File(defaultPath + ".jar"));
+            map.put("zip", "jar");
+            return;
           }
-          if (libraryName != null) {
-            jar.close();
-            ZipUtil.addFileOrDirRecursively(zos, jarFile, libraryJar, "/" + name + "/lib/" + libraryName + ".jar", new FileFilter() {
+
+          if (zipFile.exists() || zipFile.createNewFile()) {
+            if (new File(defaultPath + ".jar").exists()) {
+              if (Messages.showYesNoDialog(module.getProject(), "Do you want to delete \'" + defaultPath + ".jar\'?", "Info",
+                                           Messages.getInformationIcon()) == DialogWrapper.OK_EXIT_CODE) {
+                FileUtil.delete(new File(defaultPath + ".jar"));
+              }
+            }
+            final ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
+            ZipUtil.addFileToZip(zos, jarFile, "/" + name + "/lib/" + name + ".jar", new HashSet<String>(), new FileFilter() {
               public boolean accept(File pathname) {
                 return true;
               }
-            }, new HashSet<String>());
+            });
+            Set<String> names = new HashSet<String>();
+            for (Library library : libs) {
+              String libraryName = null;
+              final VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
+              final HashSet<String> libraryWrittenItems = new HashSet<String>();
+              File libraryJar = FileUtil.createTempFile("temp", ".jar");
+              libraryJar.deleteOnExit();
+              ZipOutputStream jar = null;
+              for (VirtualFile virtualFile : files) {
+                File ioFile = VfsUtil.virtualToIoFile(virtualFile);
+                if (!(virtualFile.getFileSystem() instanceof JarFileSystem)) {
+                  if (jar == null) {
+                    jar = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(libraryJar)));
+                  }
+                  ZipUtil.addFileOrDirRecursively(jar, libraryJar, VfsUtil.virtualToIoFile(virtualFile), "", new FileFilter() {
+                    public boolean accept(File pathname) {
+                      return true;
+                    }
+                  }, libraryWrittenItems);
+                  if (libraryName == null) {
+                    libraryName = library.getName() != null ? library.getName() : virtualFile.getName();
+                    if (names.contains(libraryName)) {
+                      int i = 1;
+                      while (true) {
+                        if (!names.contains(libraryName + i)) {
+                          libraryName = libraryName + i;
+                          break;
+                        }
+                        i++;
+                      }
+                    }
+                    names.add(libraryName);
+                  }
+                }
+                else {
+                  ZipUtil.addFileOrDirRecursively(zos, jarFile, ioFile, "/" + name + "/lib/" + ioFile.getName(), new FileFilter() {
+                    public boolean accept(File pathname) {
+                      return true;
+                    }
+                  }, new HashSet<String>());
+                }
+              }
+              if (libraryName != null) {
+                jar.close();
+                ZipUtil.addFileOrDirRecursively(zos, jarFile, libraryJar, "/" + name + "/lib/" + libraryName + ".jar", new FileFilter() {
+                  public boolean accept(File pathname) {
+                    return true;
+                  }
+                }, new HashSet<String>());
+              }
+            }
+            zos.close();
           }
         }
-        zos.close();
+        catch (final IOException e1) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              map.put("error", "error");
+              Messages.showErrorDialog(e1.getMessage(), "Error Occured");
+            }
+          }, ModalityState.NON_MMODAL);
+        }
       }
-    }
-    catch (IOException e1) {
-      Messages.showErrorDialog(e1.getMessage(), "Error Occured");
+    }, "Prepare Plugin Module \'" + module.getName() + "\' for Deployment", true, module.getProject());
+
+    if (isOk && map.get("error") == null) {
+      final boolean isZip = map.get("zip") == null;
+      Messages.showInfoMessage((isZip ? "Zip" : "Jar") + " for module \'" + module.getName() + "\' was saved to " +  defaultPath + (isZip ? ".zip" : ".jar") , "Plugin Module \'" + module.getName() + "\' Successfully Prepared For Deployment");
     }
   }
 
   private File preparePluginsJar(Module module, final HashSet<Module> modules) throws IOException {
-    final PluginModuleBuildProperties pluginModuleBuildProperties = ((PluginModuleBuildProperties)ModuleBuildProperties.getInstance(module));
+    final PluginModuleBuildProperties pluginModuleBuildProperties = ((PluginModuleBuildProperties)ModuleBuildProperties
+      .getInstance(module));
     File jarFile = FileUtil.createTempFile("temp", "jar");
     jarFile.deleteOnExit();
     final Manifest manifest = new Manifest();
@@ -162,7 +181,8 @@ public class PrepareToDeployAction extends AnAction {
       InputStream in = new BufferedInputStream(new FileInputStream(new File(pluginModuleBuildProperties.getManifestPath())));
       manifest.read(in);
       in.close();
-    } else {
+    }
+    else {
       Attributes mainAttributes = manifest.getMainAttributes();
       ManifestBuilder.setGlobalAttributes(mainAttributes);
     }
