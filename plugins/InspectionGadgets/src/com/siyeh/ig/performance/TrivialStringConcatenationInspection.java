@@ -75,7 +75,7 @@ public class TrivialStringConcatenationInspection extends ExpressionInspection{
         }
         assert replacement != null;
         final PsiType type = replacement.getType();
-        final String text = type.getCanonicalText();
+        final String text = type == null ? "" : type.getCanonicalText();
         if(s_typeToWrapperMap.containsKey(text)){
             return s_typeToWrapperMap.get(text) + ".toString(" +
                     replacement.getText() + ')';
