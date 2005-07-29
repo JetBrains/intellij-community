@@ -673,7 +673,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
                 myDirtyFiles.add(path);
               }
             }
-            else if (changeType == FileWatcher.FILE_ADDED) {
+            else if (changeType == FileWatcher.FILE_ADDED || changeType == FileWatcher.FILE_RENAMED_NEW_NAME) {
               synchronized (myDirtyFiles) {
                 String parent = new File(path).getParent();
                 if (parent != null) {

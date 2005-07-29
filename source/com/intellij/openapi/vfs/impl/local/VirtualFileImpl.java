@@ -733,7 +733,8 @@ public class VirtualFileImpl extends VirtualFile {
         }
         else {
           for (int j = 0; j < children.length; j++) {
-            if (children[j].myName.equals(name)) {
+            final VirtualFileImpl child = children[j];
+            if (child.nameEquals(name)) {
               index = j;
               break;
             }
