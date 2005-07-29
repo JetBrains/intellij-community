@@ -317,7 +317,7 @@ public class XmlCompletionData extends CompletionData {
     }
 
     private boolean isTagNameToken(PsiElement token) {
-      return ((XmlToken)token).getTokenType() == XmlTokenType.XML_NAME;
+      return token.getNode().getElementType() == XmlTokenType.XML_NAME;
     }
   }
 
