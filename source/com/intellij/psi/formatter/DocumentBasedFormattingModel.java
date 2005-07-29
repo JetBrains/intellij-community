@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,13 +33,14 @@ public class DocumentBasedFormattingModel implements FormattingModel {
                                       final Document document,
                                       final Project project,
                                       final CodeStyleSettings settings,
-                                      final FileType fileType) {
+                                      final FileType fileType,
+                                      final PsiFile file) {
     myRootBlock = rootBlock;
     myDocument = document;
     myProject = project;
     mySettings = settings;
     myFileType = fileType;
-    myDocumentModel = new FormattingDocumentModelImpl(document);
+    myDocumentModel = new FormattingDocumentModelImpl(document,file);
   }
 
   @NotNull

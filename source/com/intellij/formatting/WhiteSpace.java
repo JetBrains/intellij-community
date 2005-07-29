@@ -43,7 +43,7 @@ class WhiteSpace {
     final int oldEndOffset = myTextRange.getEndOffset();
     if (newEndOffset == oldEndOffset) return;
     if (myTextRange.getStartOffset() >= newEndOffset) {
-      LOG.assertTrue(false, model.getText(new TextRange(0, model.getTextLength())).toString());
+      InitialInfoBuilder.assertInvalidRanges(myTextRange.getStartOffset(), newEndOffset, model);
     }
     myTextRange = new TextRange(myTextRange.getStartOffset(), newEndOffset);
     myInitial = model.getText(myTextRange);

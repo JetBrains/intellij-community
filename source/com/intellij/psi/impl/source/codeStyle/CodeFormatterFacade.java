@@ -103,7 +103,7 @@ public class CodeFormatterFacade implements Constants {
           Project project = file.getProject();
           final FormattingModel model = new DocumentBasedFormattingModel(originalModel.getRootBlock(),
             PsiDocumentManager.getInstance(project).getDocument(file),
-            project, mySettings, fileType);
+            project, mySettings, fileType, file);
 
           FormatterEx.getInstanceEx().format(model, mySettings,
                                              mySettings.getIndentOptions(fileType), range);

@@ -69,7 +69,7 @@ public class DebugUtil {
     }
   }
 
-  private static void treeToBuffer(StringBuffer buffer, ASTNode root, int indent, boolean skipWhiteSpaces, boolean showRanges) {
+  public static void treeToBuffer(StringBuffer buffer, ASTNode root, int indent, boolean skipWhiteSpaces, boolean showRanges) {
     if (skipWhiteSpaces && root.getElementType() == ElementType.WHITE_SPACE) return;
 
     for (int i = 0; i < indent; i++) {

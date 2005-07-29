@@ -3,6 +3,8 @@ package com.intellij.formatting;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.formatter.FormattingDocumentModelImpl;
+import com.intellij.psi.impl.DebugUtil;
 
 import java.util.*;
 
@@ -52,10 +54,10 @@ class InitialInfoBuilder {
 
     if (parent != null) {
       if (textRange.getStartOffset() < parent.getTextRange().getStartOffset()) {
-        LOG.assertTrue(false, FormatterImpl.getText(myModel));
+        assertInvalidRanges(textRange.getStartOffset(), parent.getTextRange().getStartOffset(), myModel);
       }
       if (textRange.getEndOffset() > parent.getTextRange().getEndOffset()) {
-        LOG.assertTrue(false, FormatterImpl.getText(myModel));
+        assertInvalidRanges(textRange.getEndOffset(), parent.getTextRange().getEndOffset(), myModel);
       }
     }
 
@@ -183,5 +185,26 @@ class InitialInfoBuilder {
 
   public LeafBlockWrapper getLastTokenBlock() {
     return myLastTokenBlock;
+  }
+
+  public static void assertInvalidRanges(final int startOffset, final int newEndOffset, FormattingDocumentModel model) {
+    final StringBuffer message = new StringBuffer();
+    message.append("Invalid formatting blocks");
+    message.append('\n');
+    if (model instanceof FormattingDocumentModelImpl) {
+      final FormattingDocumentModelImpl modelImpl = ((FormattingDocumentModelImpl)model);
+      message.append("Psi Tree:");
+      message.append('\n');
+      DebugUtil.treeToBuffer(message, modelImpl.getFile().getNode(), 0, false, true);
+      message.append('\n');
+    }
+    message.append("Start Offset:");
+    message.append(startOffset);
+    message.append(newEndOffset);
+    message.append(newEndOffset);
+    message.append("File text:");
+    message.append('\n');
+    message.append(model.getText(new TextRange(0, model.getTextLength())).toString());
+    LOG.assertTrue(false, message.toString());
   }
 }

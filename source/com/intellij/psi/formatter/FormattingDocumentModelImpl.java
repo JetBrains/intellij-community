@@ -15,10 +15,12 @@ import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 public class FormattingDocumentModelImpl implements FormattingDocumentModel{
 
   private final Document myDocument;
+  private final PsiFile myFile;
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.FormattingDocumentModelImpl");
 
-  public FormattingDocumentModelImpl(final Document document) {
+  public FormattingDocumentModelImpl(final Document document, PsiFile file) {
     myDocument = document;
+    myFile = file;
   }
 
   public static FormattingDocumentModelImpl createOn(PsiFile file) {
@@ -30,10 +32,10 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel{
       if (!document.getText().equals(file.getText())) {
         LOG.assertTrue(false, "Document and psi file texts should be equal");
       }
-      return new FormattingDocumentModelImpl(document);
+      return new FormattingDocumentModelImpl(document, file);
     }
     else {
-      return new FormattingDocumentModelImpl(new DocumentImpl(file.getText()));
+      return new FormattingDocumentModelImpl(new DocumentImpl(file.getText()), file);
     }
 
   }
@@ -70,5 +72,9 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel{
 
   public Document getDocument() {
     return myDocument;
+  }
+
+  public PsiFile getFile() {
+    return myFile;
   }
 }
