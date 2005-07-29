@@ -161,4 +161,14 @@ public abstract class AbstractSyntheticBlock implements Block{
   public boolean isLeaf() {
     return false;
   }
+
+  public boolean startsWithCDATA() {
+    final ASTNode child = myStartTreeNode.getFirstChildNode();
+    return child != null && child.getElementType() == ElementType.XML_CDATA;
+  }
+
+  public boolean endsWithCDATA() {
+    final ASTNode child = myStartTreeNode.getLastChildNode();
+    return child != null && child.getElementType() == ElementType.XML_CDATA;
+  }
 }

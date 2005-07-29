@@ -171,6 +171,10 @@ public class XmlTagBlock extends AbstractXmlBlock{
     final AbstractSyntheticBlock syntheticBlock1 = ((AbstractSyntheticBlock)child1);
     final AbstractSyntheticBlock syntheticBlock2 = ((AbstractSyntheticBlock)child2);
 
+    if (syntheticBlock2.startsWithCDATA() || syntheticBlock1.endsWithCDATA()) {
+      return Spacing.getReadOnlySpacing();
+    }
+
     if (syntheticBlock2.isJspTextBlock() || syntheticBlock1.isJspTextBlock()) {
       return Spacing.createSafeSpacing(myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
     }
