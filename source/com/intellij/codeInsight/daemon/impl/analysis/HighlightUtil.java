@@ -2223,4 +2223,19 @@ public class HighlightUtil {
            annotation.getSeverity() == HighlightSeverity.WARNING ? HighlightInfoType.WARNING :
            HighlightInfoType.INFORMATION;
   }
+
+  public static boolean isSerializable(PsiClass aClass) {
+    PsiManager manager = aClass.getManager();
+    PsiClass serializableClass = manager.findClass("java.io.Serializable", aClass.getResolveScope());
+    if (serializableClass == null) return false;
+    return aClass.isInheritor(serializableClass, true);
+  }
+
+  public static boolean isSerializationImplicitlyUsedField(PsiField field) {
+    final String name = field.getName();
+    if (!name.equals("serialVersionUID") && !name.equals("serialPersistentFields")) return false;
+    if (!field.hasModifierProperty(PsiModifier.STATIC)) return false;
+    PsiClass aClass = field.getContainingClass();
+    return aClass == null || isSerializable(aClass);
+  }
 }

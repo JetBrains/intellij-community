@@ -312,7 +312,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
       final int refCount = myRefCountHolder.getRefCount(field);
       if (refCount == 0) {
-        if (isSerializationImplicitlyUsedField(field)) {
+        if (HighlightUtil.isSerializationImplicitlyUsedField(field)) {
           return null;
         }
         String message = MessageFormat.format(PRIVATE_FIELD_IS_NOT_USED, new Object[]{identifier.getText()});
@@ -528,21 +528,6 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return status == FileStatus.NOT_CHANGED;
   }
 
-  private static boolean isSerializable(PsiClass aClass) {
-    PsiManager manager = aClass.getManager();
-    PsiClass serializableClass = manager.findClass("java.io.Serializable", aClass.getResolveScope());
-    if (serializableClass == null) return false;
-    return aClass.isInheritor(serializableClass, true);
-  }
-
-  private static boolean isSerializationImplicitlyUsedField(PsiField field) {
-    final String name = field.getName();
-    if (!name.equals("serialVersionUID") && !name.equals("serialPersistentFields")) return false;
-    if (!field.hasModifierProperty(PsiModifier.STATIC)) return false;
-    PsiClass aClass = field.getContainingClass();
-    return aClass == null || isSerializable(aClass);
-  }
-
   private static boolean isWriteObjectMethod(PsiMethod method) {
     if (!method.getName().equals("writeObject")) return false;
     PsiType returnType = method.getReturnType();
@@ -552,7 +537,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (!parameters[0].getType().equalsToText("java.io.ObjectOutputStream")) return false;
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
     PsiClass aClass = method.getContainingClass();
-    return aClass == null || isSerializable(aClass);
+    return aClass == null || HighlightUtil.isSerializable(aClass);
   }
 
   private static boolean isWriteReplaceMethod(PsiMethod method) {
@@ -563,7 +548,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (parameters.length != 0) return false;
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
     PsiClass aClass = method.getContainingClass();
-    return aClass == null || isSerializable(aClass);
+    return aClass == null || HighlightUtil.isSerializable(aClass);
   }
 
   private static boolean isReadResolveMethod(PsiMethod method) {
@@ -574,7 +559,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     PsiType returnType = method.getReturnType();
     if (returnType == null || !returnType.equalsToText("java.lang.Object")) return false;
     PsiClass aClass = method.getContainingClass();
-    return aClass == null || isSerializable(aClass);
+    return aClass == null || HighlightUtil.isSerializable(aClass);
   }
 
   private static boolean isReadObjectMethod(PsiMethod method) {
@@ -588,7 +573,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (!TypeConversionUtil.isVoidType(returnType)) return false;
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
     PsiClass aClass = method.getContainingClass();
-    return aClass == null || isSerializable(aClass);
+    return aClass == null || HighlightUtil.isSerializable(aClass);
   }
 
   private static boolean isReadObjectNoDataMethod(PsiMethod method) {
@@ -599,7 +584,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (!TypeConversionUtil.isVoidType(returnType)) return false;
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
     PsiClass aClass = method.getContainingClass();
-    return aClass == null || isSerializable(aClass);
+    return aClass == null || HighlightUtil.isSerializable(aClass);
   }
 
   private static boolean isMainMethod(PsiMethod method) {
