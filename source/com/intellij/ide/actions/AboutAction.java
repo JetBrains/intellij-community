@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.AnimatingSurface;
 import com.intellij.util.ImageLoader;
@@ -20,8 +21,7 @@ import com.intellij.util.ImageLoader;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Calendar;
-import java.util.Properties;
+import java.util.*;
 
 public class AboutAction extends AnAction {
   private static final String[] months = new String[]{"January", "February", "March", "April", "May", "June", "July",
@@ -30,7 +30,7 @@ public class AboutAction extends AnAction {
   public void update(AnActionEvent e) {
     e.getPresentation().setVisible(!SystemInfo.isMacSystemMenu);
   }
-  
+
   public void actionPerformed(AnActionEvent e) {
     Window window = WindowManager.getInstance().suggestParentWindow((Project)e.getDataContext().getData(DataConstants.PROJECT));
 
@@ -220,16 +220,39 @@ public class AboutAction extends AnAction {
              FontMetrics metrics = g2.getFontMetrics(font);
              linkWidth = metrics.stringWidth (s);
           }
-          for (int j = 0; j != s.length (); ++ j) {
-            final char c = s.charAt (j);
-            final int cW = fontmetrics.charWidth(c);
-            if (x +cW >= w) {
-              lineFeed(indentX);
-            }
-            g2.drawChars (new char[]{c}, 0, 1, xBase + x, yBase + y);
-            x += cW;
-          }
+          renderString(s, indentX);
           lineFeed (indentX);
+        }
+      }
+
+      private void renderString(final String s, final int indentX) throws Overflow {
+        final java.util.List<String> words = StringUtil.split(s, " ");
+        for (String word : words) {
+          int wordWidth = fontmetrics.stringWidth(word);
+          if (x + wordWidth >= w) {
+            lineFeed(indentX);
+          }
+          else {
+            char c = ' ';
+            final int cW = fontmetrics.charWidth(c);
+            if (x + cW < w) {
+              g2.drawChars(new char[]{c}, 0, 1, xBase + x, yBase + y);
+              x += cW;
+            }
+          }
+          renderWord(word, indentX);
+        }
+      }
+
+      private void renderWord(final String s, final int indentX) throws Overflow {
+        for (int j = 0; j != s.length(); ++ j) {
+          final char c = s.charAt(j);
+          final int cW = fontmetrics.charWidth(c);
+          if (x + cW >= w) {
+            lineFeed(indentX);
+          }
+          g2.drawChars(new char[]{c}, 0, 1, xBase + x, yBase + y);
+          x += cW;
         }
       }
 
