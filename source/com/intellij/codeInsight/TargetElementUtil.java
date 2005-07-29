@@ -64,7 +64,8 @@ public class TargetElementUtil {
 
     Lookup activeLookup = LookupManager.getInstance(project).getActiveLookup();
     if (activeLookup != null && (flags & LOOKUP_ITEM_ACCEPTED) != 0) {
-      return getLookupItem(activeLookup);
+      final PsiElement lookupItem = getLookupItem(activeLookup);
+      return lookupItem != null && lookupItem.isValid() ? lookupItem : null;
     }
 
     Document document = editor.getDocument();
@@ -169,7 +170,7 @@ public class TargetElementUtil {
       if (referenceOrReferencedElement == null) {
         return getReferenceOrReferencedElement(file, editor, flags, offset);
       }
-      return referenceOrReferencedElement;
+      return referenceOrReferencedElement != null && referenceOrReferencedElement.isValid() ? referenceOrReferencedElement : null;
     }
 
     return null;
