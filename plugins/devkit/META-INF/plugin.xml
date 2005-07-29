@@ -48,6 +48,7 @@
     <group>
       <action class="org.jetbrains.idea.devkit.build.PrepareToDeployAction" text="Prepare To Deploy" id="MakeJarAction" />
       <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="Compile"/>
+      <add-to-group anchor="after" group-id="BuildMenu" relative-to-action="BuildJar"/>
     </group>
   </actions>
 </idea-plugin>
