@@ -27,6 +27,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Element;
@@ -135,10 +136,14 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
     myPluginXML = DeploymentDescriptorFactory.getInstance().createDeploymentItem(myModule, new PluginDescriptorMetaData());
     myPluginXML.setUrl(VfsUtil.pathToUrl(pluginXMLUrl.replace(File.separatorChar, '/')));
     myPluginXML.createIfNotExists();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        myPluginXMLPointer = VirtualFilePointerManager.getInstance().create(LocalFileSystem.getInstance().refreshAndFindFileByPath(pluginXMLUrl.replace(File.separatorChar, '/')),
-                                                                              null);
+        final VirtualFile pluginXML = LocalFileSystem.getInstance().findFileByPath(pluginXMLUrl.replace(File.separatorChar, '/'));
+        if (pluginXML != null) {
+          myPluginXMLPointer = VirtualFilePointerManager.getInstance().create(pluginXML, null);
+        } else {
+          myPluginXMLPointer = VirtualFilePointerManager.getInstance().create(VfsUtil.pathToUrl(pluginXMLUrl), null);
+        }
       }
     });
   }
@@ -146,12 +151,13 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
   public void setManifestUrl(final String manifestUrl) {
     if (manifestUrl == null || manifestUrl.length() == 0){
       myManifestFilePointer = null;
-      
     } else {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
-          myManifestFilePointer = VirtualFilePointerManager.getInstance().create(LocalFileSystem.getInstance().refreshAndFindFileByPath(manifestUrl.replace(File.separatorChar, '/')),
-                                                                                 null);
+          final VirtualFile manifest = LocalFileSystem.getInstance().findFileByPath(manifestUrl.replace(File.separatorChar, '/'));
+          if (manifest != null) {
+            myManifestFilePointer = VirtualFilePointerManager.getInstance().create(manifest, null);
+          }
         }
       });
     }
