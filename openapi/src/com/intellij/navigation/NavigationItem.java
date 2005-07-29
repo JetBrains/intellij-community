@@ -17,9 +17,12 @@ package com.intellij.navigation;
 
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.Nullable;
 
 public interface NavigationItem extends Navigatable {
+  @Nullable
   String getName();
+  @Nullable
   ItemPresentation getPresentation();
   FileStatus getFileStatus();
 }
