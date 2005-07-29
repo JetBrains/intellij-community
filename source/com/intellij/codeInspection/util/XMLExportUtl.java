@@ -54,7 +54,7 @@ public class XMLExportUtl {
       RefClass refClass = (RefClass)refElement;
       appendClass(refClass, problem);
     } else {
-      LOG.error("Unknown refElement");
+      LOG.info("Unknown refElement: " + refElement);
     }
     parentNode.addContent(problem);
 
