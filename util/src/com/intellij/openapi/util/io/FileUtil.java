@@ -379,6 +379,8 @@ public class FileUtil {
   }
 
   public static void rename(final File source, final File target) throws IOException {
+    if (source.renameTo(target)) return;
+
     copy(source, target);
     delete(source);
   }

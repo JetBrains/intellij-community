@@ -16,7 +16,6 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import gnu.trove.TIntObjectHashMap;
 import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -24,6 +23,7 @@ import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
+import org.jetbrains.annotations.Nullable;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -162,13 +162,21 @@ public class JDOMUtil {
     return xmlOutputter;
   }
 
-  private static final TIntObjectHashMap ourCharToQuotationMap = new TIntObjectHashMap();
-  static {
-    ourCharToQuotationMap.put('<', "&lt;");
-    ourCharToQuotationMap.put('>', "&gt;");
-    //ourCharToQuotationMap.put('\'', "&apos;");
-    ourCharToQuotationMap.put('\"', "&quot;");
-    ourCharToQuotationMap.put('&', "&amp;");
+  /**
+   * Returns null if no escapement necessary.
+   */
+  @Nullable
+  private static String escapeChar(char c, boolean escapeLineEnds) {
+    switch (c) {
+      case '\n': return escapeLineEnds ? "&#10;" : null;
+      case '\r': return escapeLineEnds ? "&#13;" : null;
+      case '\t': return escapeLineEnds ? "&#9;" : null;
+      case '<':  return "&lt;";
+      case '>':  return "&gt;";
+      case '\"': return "&quot;";
+      case '&':  return "&amp;";
+    }
+    return null;
   }
 
   public static String escapeText(String text) {
@@ -179,18 +187,8 @@ public class JDOMUtil {
     StringBuffer buffer = null;
     for (int i = 0; i < text.length(); i++) {
       final char ch = text.charAt(i);
-      final String quotation;
-      if (escapeLineEnds) {
-        switch (ch) {
-          case '\n': quotation = "&#10;"; break;
-          case '\r': quotation = "&#13;"; break;
-          case '\t': quotation = "&#9;"; break;
-          default : quotation = (String)ourCharToQuotationMap.get(ch); break;
-        }
-      }
-      else {
-        quotation = (String)ourCharToQuotationMap.get(ch);
-      }
+      final String quotation = escapeChar(ch, escapeLineEnds);
+
       if (buffer == null) {
         if (quotation != null) {
           // An quotation occurred, so we'll have to use StringBuffer
