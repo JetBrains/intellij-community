@@ -222,7 +222,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   private void detectPackageLocalsMoved(final UsageInfo[] usages, final ArrayList<String> conflicts) {
 //    final HashSet reportedPackageLocalUsed = new HashSet();
     final HashSet<PsiClass> movedClasses = new HashSet<PsiClass>();
-    final HashMap<PsiClass,HashSet> reportedClassToContainers = new com.intellij.util.containers.HashMap<PsiClass, HashSet>();
+    final HashMap<PsiClass,HashSet<PsiElement>> reportedClassToContainers = new com.intellij.util.containers.HashMap<PsiClass, HashSet<PsiElement>>();
     final PackageWrapper aPackage = myTargetPackage;
     for (UsageInfo usage : usages) {
       if (usage instanceof MoveRenameUsageInfo && !(usage instanceof NonCodeUsageInfo) &&
@@ -233,15 +233,17 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         }
         String visibility = VisibilityUtil.getVisibilityModifier(aClass.getModifierList());
         if (PsiModifier.PACKAGE_LOCAL.equals(visibility)) {
-          PsiElement container = ConflictsUtil.getContainer(usage.getElement());
           if (PsiTreeUtil.getParentOfType(usage.getElement(), PsiImportStatement.class) != null) continue;
-          HashSet reported = reportedClassToContainers.get(aClass);
+          PsiElement container = ConflictsUtil.getContainer(usage.getElement());
+          if (container == null) continue;
+          HashSet<PsiElement> reported = reportedClassToContainers.get(aClass);
           if (reported == null) {
-            reported = new HashSet();
+            reported = new HashSet<PsiElement>();
             reportedClassToContainers.put(aClass, reported);
           }
 
           if (!reported.contains(container)) {
+            reported.add(container);
             PsiFile containingFile = usage.getElement().getContainingFile();
             if (containingFile != null && !isInsideMoved(usage.getElement())) {
               PsiDirectory directory = containingFile.getContainingDirectory();
