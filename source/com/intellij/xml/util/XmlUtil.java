@@ -58,9 +58,18 @@ public class XmlUtil {
   public static final String JSP_URI = "http://java.sun.com/JSP/Page";
   public static final String ANY_URI = "http://www.intellij.net/ns/any";
   
-  public static final String JSTL_CORE_URI = "http://java.sun.com/jsp/jstl/core";
+  private static final String JSTL_CORE_URI = "http://java.sun.com/jsp/jstl/core";
+  private static final String JSTL_CORE_URI2 = "http://java.sun.com/jstl/core";
+  private static final String JSTL_CORE_URI3 = "http://java.sun.com/jstl/core_rt";
+  public static final String[] JSTL_CORE_URIS = { JSTL_CORE_URI, JSTL_CORE_URI2, JSTL_CORE_URI3 };
+  
   public static final String JSF_HTML_URI = "http://java.sun.com/jsf/html";
-  public static final String JSTL_FORMAT_URI = "http://java.sun.com/jsp/jstl/fmt";
+  
+  private static final String JSTL_FORMAT_URI = "http://java.sun.com/jsp/jstl/fmt";
+  private static final String JSTL_FORMAT_URI2 = "http://java.sun.com/jstl/fmt";
+  private static final String JSTL_FORMAT_URI3 = "http://java.sun.com/jstl/fmt_rt";
+  public static final String[] JSTL_FORMAT_URIS = { JSTL_FORMAT_URI, JSTL_FORMAT_URI2, JSTL_FORMAT_URI3 };
+  
   public static final String SPRING_URI = "http://www.springframework.org/tags";
   public static final String STRUTS_BEAN_URI = "http://struts.apache.org/tags-bean";
   public static final String STRUTS_LOGIC_URI = "http://struts.apache.org/tags-logic";

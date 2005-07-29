@@ -222,7 +222,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       new ScopeFilter(
         new ParentElementFilter(
           new AndFilter(
-            new NamespaceFilter(XmlUtil.JSTL_CORE_URI),
+            new NamespaceFilter(XmlUtil.JSTL_CORE_URIS),
             new AndFilter(
               new ClassFilter(XmlTag.class),
               new TextFilter("url")
@@ -237,7 +237,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       new ScopeFilter(
         new ParentElementFilter(
           new AndFilter(
-            new NamespaceFilter(XmlUtil.JSTL_CORE_URI),
+            new NamespaceFilter(XmlUtil.JSTL_CORE_URIS),
             new AndFilter(
               new ClassFilter(XmlTag.class),
               new OrFilter(
@@ -256,7 +256,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
         new ParentElementFilter(
           new AndFilter(
             new OrFilter(
-              new NamespaceFilter(XmlUtil.JSTL_FORMAT_URI),
+              new NamespaceFilter(XmlUtil.JSTL_FORMAT_URIS),
               new NamespaceFilter(XmlUtil.STRUTS_BEAN_URI)
             ),
             new AndFilter(
@@ -477,7 +477,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
         new ParentElementFilter(
           new AndFilter(
             new ClassFilter(XmlTag.class),
-            new NamespaceFilter(XmlUtil.JSTL_CORE_URI)
+            new NamespaceFilter(XmlUtil.JSTL_CORE_URIS)
           ), 2
         )
       ),
