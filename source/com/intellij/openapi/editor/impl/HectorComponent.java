@@ -59,6 +59,7 @@ public class HectorComponent extends JPanel {
   private boolean myUseProfile;
   private LightweightHint myHint;
 
+  private final String myTitle = "Highlighting Level";
 
   public HectorComponent(PsiFile file) {
     super(new GridBagLayout());
@@ -146,7 +147,8 @@ public class HectorComponent extends JPanel {
     inspectionProfilePanel.setVisible(notInLibrary);
 
     JPanel panel = new JPanel(new GridBagLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorder("Highlighting Level"));
+
+    panel.setBorder(IdeBorderFactory.createTitledBorder(myTitle));
     final boolean addLabel = mySliders.length > 1;
     if (addLabel) {
       layoutVertical(panel);
@@ -159,6 +161,15 @@ public class HectorComponent extends JPanel {
     gc.weighty = 1.0;
     gc.fill = GridBagConstraints.BOTH;
     add(panel, gc);
+  }
+
+  public Dimension getPreferredSize() {
+    final Dimension preferredSize = super.getPreferredSize();
+    final int width = getFontMetrics(getFont()).stringWidth(myTitle) + 60;
+    if (preferredSize.width < width){
+      preferredSize.width = width;
+    }
+    return preferredSize;
   }
 
   private JPanel createInspectionProfilePanel() {
