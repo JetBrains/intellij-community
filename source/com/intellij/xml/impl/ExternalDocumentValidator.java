@@ -157,7 +157,12 @@ public class ExternalDocumentValidator {
                 } else {
                   addProblemToTagName(originalElement, originalElement, localizedMessage, warning);
                 }
-              } else {
+              } else if (localizedMessage.startsWith("The string")) {
+                if (currentElement != null) {
+                  myHost.addMessage(currentElement,localizedMessage,Validator.ValidationHost.WARNING);
+                }
+              }
+              else {
                 currentElement = getNodeForMessage(currentElement);
                 assertValidElement(currentElement, originalElement,localizedMessage);
                 if (currentElement!=null) {

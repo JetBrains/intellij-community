@@ -44,7 +44,11 @@ public class XMLExternalAnnotator implements ExternalAnnotator, Validator.Valida
         addMessagesForTag((XmlTag)context, message, type);
       }
       else {
-        myHolder.createErrorAnnotation(context, message);
+        if (type == Validator.ValidationHost.ERROR) {
+          myHolder.createErrorAnnotation(context, message);
+        } else {
+          myHolder.createWarningAnnotation(context, message);
+        }
       }
     }
   }
