@@ -860,13 +860,15 @@ public abstract class DebugProcessImpl implements DebugProcess {
       }
 
       Set<SuspendContextImpl> suspendingContexts = SuspendManagerUtil.getSuspendingContexts(getSuspendManager(), invokeThread);
-      for (Iterator<SuspendContextImpl> iterator = suspendingContexts.iterator(); iterator.hasNext();) {
-        SuspendContextImpl suspendingContext = iterator.next();
-        if (suspendingContext.getThread() != invokeThread) {
+      final ThreadReference invokeThreadRef = invokeThread.getThreadReference();
+      for (final SuspendContextImpl suspendingContext : suspendingContexts) {
+        final ThreadReferenceProxyImpl suspendContextThread = suspendingContext.getThread();
+        if (suspendContextThread != invokeThread) {
           if (LOG.isDebugEnabled()) {
-            LOG.debug("Resuming " + invokeThread + "that is paused by " + suspendingContext.getThread());
+            LOG.debug("Resuming " + invokeThread + " that is paused by " + suspendContextThread);
           }
-          LOG.assertTrue(!suspendingContext.getThread().getThreadReference().equals(invokeThread.getThreadReference()));
+          LOG.assertTrue(suspendContextThread != null);
+          LOG.assertTrue(!invokeThreadRef.equals(suspendContextThread.getThreadReference()));
           getSuspendManager().resumeThread(suspendingContext, invokeThread);
         }
       }
