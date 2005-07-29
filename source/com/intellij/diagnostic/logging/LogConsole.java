@@ -8,6 +8,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
@@ -98,13 +99,14 @@ public abstract class LogConsole extends JPanel implements Disposable{
           myFileStream = new BufferedReader(new FileReader(file));
         }
         catch (FileNotFoundException e) {
+          FileUtil.createParentDirs(file);
           if (!file.createNewFile()) return;
           myFileStream = new BufferedReader(new FileReader(file));
         }
         myFileStream.skip(file.length());
       }
-      catch (IOException e) {
-        LOG.error(e);
+      catch (Throwable e) {
+        myFileStream = null;
       }
     }
 
