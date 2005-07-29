@@ -103,7 +103,7 @@ public class BrowserUtil {
     File redirect = File.createTempFile("redirect", ".html");
     redirect.deleteOnExit();
     FileWriter writer = new FileWriter(redirect);
-    writer.write("<html><head><meta http-equiv=\"Refresh\" content=\"0; " + url + "\"></head><body></body></html>");
+    writer.write("<html><head></head><body><script type=\"text/javascript\">window.location=\"" + url + "\";</script></body></html>");
     writer.close();
     return VfsUtil.pathToUrl(redirect.getAbsolutePath());
   }
