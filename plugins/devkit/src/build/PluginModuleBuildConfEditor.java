@@ -35,7 +35,6 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.io.File;
-import java.util.HashSet;
 
 /**
  * User: anna
@@ -53,7 +52,6 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
 
   private PluginModuleBuildProperties myBuildProperties;
 
-  private HashSet<String> mySetDependencyOnPluginModule = new HashSet<String>();
   private Module myModule;
   public PluginModuleBuildConfEditor(ModuleConfigurationState state) {
     myModule = state.getRootModel().getModule();
@@ -102,9 +100,6 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
   }
 
   public void apply() throws ConfigurationException {
-    if (!mySetDependencyOnPluginModule.isEmpty()) {
-      throw new ConfigurationException("Unable to set dependency on plugin module.");
-    }
     final File plugin = myBuildProperties.getPluginXmlPath() != null ? new File(myBuildProperties.getPluginXmlPath()) : null;
     final String newPluginPath = myPluginXML.getText() + File.separator + "META-INF" + File.separator + "plugin.xml";
     if (plugin != null &&
@@ -149,7 +144,7 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
   }
 
   public String getHelpTopic() {
-    return null; //todo
+    return "plugin.configuring";
   }
 
   public void moduleStateChanged() {
