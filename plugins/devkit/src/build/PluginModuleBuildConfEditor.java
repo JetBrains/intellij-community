@@ -43,7 +43,7 @@ import java.util.HashSet;
  */
 public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
   private JPanel myWholePanel = new JPanel(new GridBagLayout());
-  private JLabel myPluginXMLLabel = new JLabel("Choose directory to contain META-INF" + File.separator + "plugin.xml:");
+  private JLabel myPluginXMLLabel = new JLabel("Path to META-INF" + File.separator + "plugin.xml:");
   private TextFieldWithBrowseButton myPluginXML = new TextFieldWithBrowseButton();
 
   private TextFieldWithBrowseButton myManifest = new TextFieldWithBrowseButton();
