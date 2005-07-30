@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -129,6 +130,7 @@ public class DeleteHandler {
       if (result != 0) return;
     }
 
+    final FileTypeManager ftManager = FileTypeManager.getInstance();
     CommandProcessor.getInstance().executeCommand(
       project, new Runnable() {
         public void run() {
@@ -140,7 +142,7 @@ public class DeleteHandler {
               if (virtualFile.getFileSystem() instanceof LocalFileSystem) {
 
                 ArrayList<VirtualFile> readOnlyFiles = new ArrayList<VirtualFile>();
-                getReadOnlyVirtualFiles(virtualFile, readOnlyFiles);
+                getReadOnlyVirtualFiles(virtualFile, readOnlyFiles, ftManager);
 
                 if (readOnlyFiles.size() > 0) {
                   int _result = Messages.showOkCancelDialog(
@@ -238,14 +240,15 @@ public class DeleteHandler {
   /**
    * Fills readOnlyFiles with VirtualFiles
    */
-  private static void getReadOnlyVirtualFiles(VirtualFile file, ArrayList<VirtualFile> readOnlyFiles) {
+  private static void getReadOnlyVirtualFiles(VirtualFile file, ArrayList<VirtualFile> readOnlyFiles, final FileTypeManager ftManager) {
+    if (ftManager.isFileIgnored(file.getName())) return;
     if (!file.isWritable()) {
       readOnlyFiles.add(file);
     }
     if (file.isDirectory()) {
       VirtualFile[] children = file.getChildren();
       for (VirtualFile child : children) {
-        getReadOnlyVirtualFiles(child, readOnlyFiles);
+        getReadOnlyVirtualFiles(child, readOnlyFiles, ftManager);
       }
     }
   }
