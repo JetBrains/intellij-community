@@ -87,19 +87,6 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
     return ResolveUtil.isAccessible(member, member.getContainingClass(), modifierList, place, accessObjectClass, currentFileResolveScope);
   }
 
-  class InnerClass {
-    void foo() {}
-
-    class Inner {
-        void foo(int i) {}
-
-        void bar() {
-//            foo();
-        }
-    }
-
-}
-
   public CandidateInfo[] getReferencedMethodCandidates(PsiCallExpression expr, boolean dummyImplicitConstructor) {
     final MethodCandidatesProcessor processor = new MethodCandidatesProcessor(expr);
     try {
