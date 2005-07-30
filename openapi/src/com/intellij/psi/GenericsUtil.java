@@ -22,6 +22,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -37,7 +38,7 @@ public class GenericsUtil {
     return PsiIntersectionType.createIntersection(type1, type2);
   }
 
-  @NotNull
+  @Nullable
   public static PsiType getLeastUpperBound(PsiType type1, PsiType type2, PsiManager manager) {
     if (TypeConversionUtil.isPrimitiveAndNotNull(type1) || TypeConversionUtil.isPrimitiveAndNotNull(type2)) return null;
     if (TypeConversionUtil.isNullType(type1)) return type2;
@@ -129,22 +130,26 @@ public class GenericsUtil {
     try {
       if (type1 instanceof PsiWildcardType) {
         PsiWildcardType wild1 = (PsiWildcardType)type1;
+        final PsiType bound1 = wild1.getBound();
+        if (bound1 == null) return type2;
         if (type2 instanceof PsiWildcardType) {
           PsiWildcardType wild2 = (PsiWildcardType)type2;
+          final PsiType bound2 = wild2.getBound();
+          if (bound2 == null) return wild1;
           if (wild1.isExtends() == wild2.isExtends()) {
             return wild1.isExtends() ? PsiWildcardType.createExtends(manager,
-                                                                     getLeastUpperBound(wild1.getBound(), wild2.getBound(), compared,
+                                                                     getLeastUpperBound(bound1, bound2, compared,
                                                                                         manager)) :
-                                                                                                  wild1.isSuper() ? PsiWildcardType.createSuper(manager, getGreatestLowerBound(wild1.getBound(), wild2.getBound())) :
+                                                                                                  wild1.isSuper() ? PsiWildcardType.createSuper(manager, getGreatestLowerBound(bound1, bound2)) :
                                                                                                   wild1;
           }
           else {
-            return wild1.getBound().equals(wild2.getBound()) ? wild1.getBound() : PsiWildcardType.createUnbounded(manager);
+            return bound1.equals(bound2) ? bound1 : PsiWildcardType.createUnbounded(manager);
           }
         }
         else {
-          return wild1.isExtends() ? PsiWildcardType.createExtends(manager, getLeastUpperBound(wild1.getBound(), type2, compared, manager)) :
-                 wild1.isSuper() ? PsiWildcardType.createSuper(manager, getGreatestLowerBound(wild1.getBound(), type2)) :
+          return wild1.isExtends() ? PsiWildcardType.createExtends(manager, getLeastUpperBound(bound1, type2, compared, manager)) :
+                 wild1.isSuper() ? PsiWildcardType.createSuper(manager, getGreatestLowerBound(bound1, type2)) :
                  wild1;
         }
       }

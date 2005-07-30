@@ -146,16 +146,9 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
           substitution = currentSubstitution;
           continue;
         }
-        if (!substitution.equals(currentSubstitution) && !substitution.isAssignableFrom(currentSubstitution)) {
-          if (!currentSubstitution.isAssignableFrom(substitution)) {
-            substitution = GenericsUtil.getLeastUpperBound(substitution, currentSubstitution, typeParameter.getManager());
-            if (substitution == null) {
-              break;
-            }
-          }
-          else {
-            substitution = currentSubstitution;
-          }
+        if (!substitution.equals(currentSubstitution)) {
+          substitution = GenericsUtil.getLeastUpperBound(substitution, currentSubstitution, typeParameter.getManager());
+          if (substitution == null) break;
         }
       }
     }
