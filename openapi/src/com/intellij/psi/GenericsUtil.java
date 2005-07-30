@@ -137,11 +137,9 @@ public class GenericsUtil {
           final PsiType bound2 = wild2.getBound();
           if (bound2 == null) return wild1;
           if (wild1.isExtends() == wild2.isExtends()) {
-            return wild1.isExtends() ? PsiWildcardType.createExtends(manager,
-                                                                     getLeastUpperBound(bound1, bound2, compared,
-                                                                                        manager)) :
-                                                                                                  wild1.isSuper() ? PsiWildcardType.createSuper(manager, getGreatestLowerBound(bound1, bound2)) :
-                                                                                                  wild1;
+            return wild1.isExtends() ?
+                   PsiWildcardType.createExtends(manager, getLeastUpperBound(bound1, bound2, compared, manager)) :
+                   PsiWildcardType.createSuper(manager, getGreatestLowerBound(bound1, bound2));
           }
           else {
             return bound1.equals(bound2) ? bound1 : PsiWildcardType.createUnbounded(manager);
