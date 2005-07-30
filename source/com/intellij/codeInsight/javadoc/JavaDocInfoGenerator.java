@@ -368,10 +368,14 @@ class JavaDocInfoGenerator {
   }
 
   private void generateAnnotations (StringBuffer buffer, PsiDocCommentOwner owner) {
-    final PsiAnnotation[] annotations = owner.getModifierList().getAnnotations();
+    final PsiModifierList ownerModifierList = owner.getModifierList();
+    if (ownerModifierList == null) return;
+    final PsiAnnotation[] annotations = ownerModifierList.getAnnotations();
     PsiManager manager = owner.getManager();
     for (PsiAnnotation annotation : annotations) {
-      final PsiElement resolved = annotation.getNameReferenceElement().resolve();
+      final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
+      if (nameReferenceElement == null) continue;
+      final PsiElement resolved = nameReferenceElement.resolve();
       if (resolved instanceof PsiClass) {
         final PsiClass annotationType = (PsiClass)resolved;
         final PsiModifierList modifierList = annotationType.getModifierList();
@@ -385,6 +389,7 @@ class JavaDocInfoGenerator {
             buffer.append("(");
             for (PsiNameValuePair pair : attributes) {
               if (!first) buffer.append("&nbsp;");
+              first = false;
               final String name = pair.getName();
               if (name != null) {
                 buffer.append(name);
