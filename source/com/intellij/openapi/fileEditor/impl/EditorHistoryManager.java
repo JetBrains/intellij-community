@@ -28,7 +28,7 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
     return project.getComponent(EditorHistoryManager.class);
   }
 
-  private final Project myProject; 
+  private final Project myProject;
   /**
    * State corresponding to the most recent file is the last
    */
@@ -91,7 +91,7 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
 
   /**
    * Makes file most recent one
-   */ 
+   */
   private void fileOpenedImpl(final VirtualFile file){
     if (file == null){
       throw new IllegalArgumentException("file cannot be null");
@@ -131,9 +131,17 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
       trimToSize();
     }
   }
-  
+
   private void updateHistoryEntry(final VirtualFile file, final boolean changeOrder){
     if (file == null){
+      return;
+    }
+    final FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(myProject);
+    final Pair<FileEditor[], FileEditorProvider[]> editorsWithProviders = editorManager.getEditorsWithProviders(file);
+    final FileEditor[]   editors = editorsWithProviders.getFirst();
+    if (editors.length == 0) {
+      // obviously not opened in any editor at the moment,
+      // makes no sense to put the file in the history
       return;
     }
     final HistoryEntry entry = getEntry(file);
@@ -145,11 +153,8 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
       }
       return;
     }
-    
+
     boolean changed=false;
-    final FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(myProject);
-    final Pair<FileEditor[], FileEditorProvider[]> editorsWithProviders = editorManager.getEditorsWithProviders(file);
-    final FileEditor         []   editors = editorsWithProviders.getFirst();
     final FileEditorProvider [] providers = editorsWithProviders.getSecond();
     //LOG.assertTrue(editors.length > 0);
     for (int i = editors.length - 1; i >= 0; i--) {
@@ -205,7 +210,7 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
     }
     return result;
   }
-  
+
   /**
    * Removes specified <code>file</code> from history. The method does
    * nothing if <code>file</code> is not in the history.
@@ -222,22 +227,22 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
       myEntriesList.remove(entry);
     }
   }
-  
+
   public FileEditorState getState(final VirtualFile file, final FileEditorProvider provider) {
     validateEntries();
     final HistoryEntry entry = getEntry(file);
-    return entry != null ? entry.getState(provider) : null; 
+    return entry != null ? entry.getState(provider) : null;
   }
 
   /**
    * @return may be null
-   */ 
+   */
   public FileEditorProvider getSelectedProvider(final VirtualFile file) {
     validateEntries();
     final HistoryEntry entry = getEntry(file);
-    return entry != null ? entry.mySelectedProvider : null; 
+    return entry != null ? entry.mySelectedProvider : null;
   }
-  
+
   private HistoryEntry getEntry(final VirtualFile file){
     validateEntries();
     for (int i = myEntriesList.size() - 1; i >= 0; i--) {
