@@ -30,7 +30,6 @@
             <constraints/>
             <properties>
               <columns value="40"/>
-              <focusTraversalPolicyProvider value="true"/>
               <lineWrap value="true"/>
               <rows value="5"/>
               <tabSize value="4"/>
@@ -46,9 +45,7 @@
           <xy x="0" y="200" width="340" height="102"/>
           <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
-        <properties>
-          <focusTraversalPolicyProvider value="true"/>
-        </properties>
+        <properties/>
         <border type="etched" title="ITN tracker login (optional)"/>
         <children>
           <grid id="feb2" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
