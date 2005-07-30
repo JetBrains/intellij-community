@@ -61,6 +61,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
         setShow(prc, myShowLogs.isSelected());
       }
     });
+    myShowLogs.setMnemonic('S');
     myModules.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         if (myModules.getSelectedItem() != null){
