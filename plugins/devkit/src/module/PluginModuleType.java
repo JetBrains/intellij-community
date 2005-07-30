@@ -52,16 +52,16 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
     final ProjectWizardStepFactory stepFactory = ProjectWizardStepFactory.getInstance();
     ArrayList<ModuleWizardStep> steps = new ArrayList<ModuleWizardStep>();
     final ModuleWizardStep nameAndLocationStep = stepFactory
-      .createNameAndLocationStep(wizardContext, pluginModuleBuilder, modulesProvider, ADD_PLUGIN_MODULE_ICON, null);
+      .createNameAndLocationStep(wizardContext, pluginModuleBuilder, modulesProvider, ADD_PLUGIN_MODULE_ICON, "plugin.creation");
     steps.add(nameAndLocationStep);
     steps.add(stepFactory.createProjectJdkStep(wizardContext, pluginModuleBuilder, new Computable<Boolean>() {
       public Boolean compute() {
         final ProjectJdk projectJdk = wizardContext.getProjectJdk();
         return projectJdk == null || ! (projectJdk.getSdkType() instanceof IdeaJdk) ? Boolean.TRUE : Boolean.FALSE;
       }
-    }, ADD_PLUGIN_MODULE_ICON, null)); //todo help
-    steps.add(stepFactory.createSourcePathsStep(nameAndLocationStep, pluginModuleBuilder, ADD_PLUGIN_MODULE_ICON, null));
-    steps.add(stepFactory.createOutputPathPathsStep(nameAndLocationStep, pluginModuleBuilder, ADD_PLUGIN_MODULE_ICON, null));
+    }, ADD_PLUGIN_MODULE_ICON, "plugin.creation")); 
+    steps.add(stepFactory.createSourcePathsStep(nameAndLocationStep, pluginModuleBuilder, ADD_PLUGIN_MODULE_ICON, "plugin.creation"));
+    steps.add(stepFactory.createOutputPathPathsStep(nameAndLocationStep, pluginModuleBuilder, ADD_PLUGIN_MODULE_ICON, "plugin.creation"));
     return steps.toArray(new ModuleWizardStep[steps.size()]);
   }
 
