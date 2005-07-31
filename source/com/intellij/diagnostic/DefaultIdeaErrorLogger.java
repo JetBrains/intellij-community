@@ -21,10 +21,12 @@ import java.lang.reflect.InvocationTargetException;
 public class DefaultIdeaErrorLogger implements ErrorLogger {
   private static boolean ourOomOccured = false;
 
-  /** @noinspection ConstantConditions, PointlessBooleanExpression */
   public boolean canHandle(IdeaLoggingEvent event) {
-    return !DialogAppender.RELEASE_BUILD || ApplicationManagerEx.getApplicationEx().isInternal() ||
-          event.getThrowable() instanceof OutOfMemoryError;
+    boolean notificationEnabled = !"disabled".equals(System.getProperty("idea.fatal.error.notification", "enabled"));
+
+    return  notificationEnabled ||
+            ApplicationManagerEx.getApplicationEx().isInternal() ||
+            event.getThrowable() instanceof OutOfMemoryError;
   }
 
   /** @noinspection CallToPrintStackTrace*/
@@ -44,14 +46,14 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
 
   /** @noinspection CallToPrintStackTrace*/
   private void processOOMError(IdeaLoggingEvent event) throws InterruptedException, InvocationTargetException {
-    final String logFilePath = getLogFilePath();
-
+    final String message = event.getThrowable().getMessage();
+    final String option = message != null && message.indexOf("PermGen") >= 0 ? "-XX:MaxPermSize" : "-Xmx";
     ourOomOccured = true;
     event.getThrowable().printStackTrace();
     SwingUtilities.invokeAndWait(new Runnable() {
       public void run() {
-        String message = "There's not enough memory to perform the requested operation.";
-        message += "\n" + "Please shutdown IDEA and increase -Xmx setting in " + getSettingsFilePath();
+        String message = "There's not enough memory to perform the requested operation.\n" +
+                         "Please shutdown IDEA and increase " + option + " setting in " + getSettingsFilePath();
 
         if (JOptionPane.showOptionDialog(JOptionPane.getRootFrame(), message, "Out of Memory",
                                          JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null,

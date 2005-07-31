@@ -14,7 +14,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public static final String COMPONENT_NAME = "ApplicationInfo";
 
-  public static final boolean IS_EAP = true;
+  public static final boolean IS_EAP = false;
 
   public abstract String getLogoUrl();
 
