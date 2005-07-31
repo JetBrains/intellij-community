@@ -32,7 +32,7 @@ public class CustomizationConfigurable extends BaseConfigurable implements Appli
   }
 
   public String getHelpTopic() {
-    return null;
+    return "preferences.customizations";
   }
 
 
