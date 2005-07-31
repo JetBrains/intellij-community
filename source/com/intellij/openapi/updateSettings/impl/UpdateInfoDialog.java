@@ -98,10 +98,21 @@ class UpdateInfoDialog extends DialogWrapper {
 
       final String build = ApplicationInfo.getInstance().getBuildNumber().trim();
       myBuildNumber.setText(build + ")");
-      String version = ApplicationInfo.getInstance().getMajorVersion() + "." + ApplicationInfo.getInstance().getMajorVersion();
-      if (version.equalsIgnoreCase("null.null")) {
+      final String majorVersion = ApplicationInfo.getInstance().getMajorVersion();
+      final String version;
+      if (majorVersion != null) {
+        final String minorVersion = ApplicationInfo.getInstance().getMinorVersion();
+        if (minorVersion != null && minorVersion.trim().length() > 0) {
+          version = majorVersion + "." + minorVersion;
+        }
+        else {
+          version = majorVersion + ".0";
+        }
+      }
+      else {
         version = ApplicationInfo.getInstance().getVersionName();
       }
+      
       myVersionNumber.setText(version);
       myNewBuildNumber.setText(Integer.toString(myNewVersion.getLatestBuild()) + ")");
       myNewVersionNumber.setText(myNewVersion.getLatestVersion());
