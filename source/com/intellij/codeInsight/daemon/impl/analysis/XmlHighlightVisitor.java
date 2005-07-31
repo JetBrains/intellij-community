@@ -639,20 +639,21 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       return;
     }
 
-    if (myRefCountHolder != null && 
+    final RefCountHolder refCountHolder = myRefCountHolder;  // To make sure it doesn't get null in multi-threaded envir.
+    if (refCountHolder != null &&
         attributeDescriptor.hasIdType() &&
         tag.getParent().getUserData(DO_NOT_VALIDATE_KEY) == null
       ) {
       final String unquotedValue = getUnquotedValue(value, tag);
 
       if (XmlUtil.isSimpleXmlAttributeValue(unquotedValue)) {
-        XmlTag xmlTag = myRefCountHolder.getTagById(unquotedValue);
+        XmlTag xmlTag = refCountHolder.getTagById(unquotedValue);
 
         if (xmlTag == null ||
             !xmlTag.isValid() ||
             xmlTag == tag
            ) {
-          myRefCountHolder.registerTagWithId(unquotedValue,tag);
+          refCountHolder.registerTagWithId(unquotedValue,tag);
         } else {
           XmlAttribute anotherTagIdValue = xmlTag.getAttribute("id", null);
 
@@ -672,7 +673,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
             return;
           } else {
             // tag previously has that id
-            myRefCountHolder.registerTagWithId(unquotedValue,tag);
+            refCountHolder.registerTagWithId(unquotedValue,tag);
           }
         }
       }
