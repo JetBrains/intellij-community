@@ -76,6 +76,6 @@ public class AddOnDemandStaticImportAction extends BaseIntentionAction {
   }
 
   private boolean isParameterizedReference(final PsiReferenceExpression expression) {
-    return expression.getParameterList() != null && expression.getParameterList().getTypeParameterElements().length > 0;
+    return expression.getParameterList() != null && expression.getParameterList().getFirstChild() != null;
   }
 }

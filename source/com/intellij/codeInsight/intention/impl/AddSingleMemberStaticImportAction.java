@@ -28,7 +28,7 @@ public class AddSingleMemberStaticImportAction extends BaseIntentionAction {
         ((PsiReferenceExpression)element.getParent()).getQualifierExpression() != null) {
       PsiReferenceExpression refExpr = (PsiReferenceExpression)element.getParent();
       if (refExpr.getParameterList() != null &&
-          refExpr.getParameterList().getTypeParameterElements().length > 0) return false;
+          refExpr.getParameterList().getFirstChild() != null) return false;
       PsiElement resolved = refExpr.resolve();
       if (resolved instanceof PsiMember &&
           ((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)) {
@@ -78,7 +78,7 @@ public class AddSingleMemberStaticImportAction extends BaseIntentionAction {
     file.accept(new PsiRecursiveElementVisitor() {
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         if (expression.getParameterList() != null &&
-            expression.getParameterList().getTypeParameterElements().length > 0) return;
+            expression.getParameterList().getFirstChild() != null) return;
 
         if (refExpr.getReferenceName().equals(expression.getReferenceName())) {
           if (!expression.isQualified()) {
