@@ -81,11 +81,11 @@ public class URIReferenceProvider implements PsiReferenceProvider {
     }
 
     public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-      return null;
+      return getElement();
     }
 
     public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
-      return null;
+      return getElement();
     }
 
     public boolean isReferenceTo(PsiElement element) {
