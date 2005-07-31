@@ -34,6 +34,8 @@ import com.intellij.xml.util.XmlUtil;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author ven
  */
@@ -49,17 +51,17 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
   protected abstract void doReplaceRange(final String includePath, final XmlTagChild first, final XmlTagChild last);
 
   protected abstract String doExtract(final PsiDirectory targetDirectory,
-                           final String targetfileName,
-                           final XmlTagChild first,
-                           final XmlTagChild last,
-                           final Language includingLanguage) throws IncorrectOperationException;
+                                      final String targetfileName,
+                                      final XmlTagChild first,
+                                      final XmlTagChild last,
+                                      final Language includingLanguage) throws IncorrectOperationException;
 
   protected abstract boolean verifyChildRange (final XmlTagChild first, final XmlTagChild last);
 
   protected void replaceDuplicates(final String includePath,
-                                 final List<Pair<PsiElement, PsiElement>> duplicates,
-                                 final Editor editor,
-                                 final Project project) {
+                                   final List<Pair<PsiElement, PsiElement>> duplicates,
+                                   final Editor editor,
+                                   final Project project) {
     if (duplicates.size() > 0) {
       final String message = "IDEA has found fragments that can be replaced with include directive\n" +
                              "Do you want to review them?";
@@ -114,6 +116,9 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
   public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
   }
 
+  @NotNull
+  protected abstract Language getLanguageForExtract(PsiElement firstExtracted);
+
   private FileType getFileType(final Language language) {
     final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
     for (FileType fileType : fileTypes) {
@@ -145,7 +150,7 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
       return;
     }
 
-    final FileType fileType = getFileType(file.getLanguage());
+    final FileType fileType = getFileType(getLanguageForExtract(children.getFirst()));
     if (!(fileType instanceof LanguageFileType)) {
       String message = "The language for selected elements has no associated file type";
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_INCLUDE, project);
