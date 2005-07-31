@@ -40,6 +40,7 @@ public class MoveHandler implements RefactoringActionHandler {
   public static final int FILES = 6;
   public static final int DIRECTORIES = 7;
   public static final int MOVE_OR_REARRANGE_PACKAGE = 8;
+  public static final int INSTANCE_METHOD = 9;
 
 
   public static interface TargetContainerFinder {
@@ -182,6 +183,9 @@ public class MoveHandler implements RefactoringActionHandler {
     else if (moveType == INNER_TO_UPPER) {
       MoveInnerImpl.doMove(project, elements, callback);
     }
+    else if (moveType == INSTANCE_METHOD) {
+      new MoveInstanceMethodHandler().invoke(project, elements, null);
+    }
     else if (moveType == INNER_TO_UPPER_OR_MEMBERS) {
       SelectInnerOrMembersRefactoringDialog dialog = new SelectInnerOrMembersRefactoringDialog((PsiClass)elements[0], project);
       dialog.show();
@@ -287,8 +291,11 @@ public class MoveHandler implements RefactoringActionHandler {
         PsiDirectory directory = (PsiDirectory)element;
         return directory.getPackage() != null ? PACKAGES : NOT_SUPPORTED;
       }
-      else if (element instanceof PsiField || element instanceof PsiMethod) {
+      else if (element instanceof PsiField) {
         return MEMBERS;
+      }
+      else if (element instanceof PsiMethod) {
+        return ((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC) ? MEMBERS : INSTANCE_METHOD;
       }
       else if (element instanceof PsiClass) {
         PsiClass aClass = (PsiClass)element;
