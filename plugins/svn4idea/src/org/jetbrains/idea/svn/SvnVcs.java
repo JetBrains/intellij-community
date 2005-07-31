@@ -373,7 +373,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
       myValue = value;
       myEntriesTimestamp = entriesStamp;
       myFileTimestamp = fileStamp;
-      myIsLocked = value.isLocked();
+      myIsLocked = value == null ? false : value.isLocked();
     }
 
     public long getEntriesTimestamp() {
