@@ -212,10 +212,11 @@ public class XmlTagBlock extends AbstractXmlBlock{
       }
     } else if (syntheticBlock1.isTagDescription() && syntheticBlock2.startsWithTag()) {
       return Spacing.createSpacing(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
+    } else if (syntheticBlock1.insertLineFeedAfter()) {
+      return Spacing.createSpacing(0,0,1,true,myXmlFormattingPolicy.getKeepBlankLines());
     } else if (syntheticBlock1.endsWithTag() && syntheticBlock2.isTagDescription()) {
       return Spacing.createSpacing(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
-    }
-    else {
+    } else {
       return createDefaultSpace(true);
     }
 

@@ -171,4 +171,18 @@ public abstract class AbstractSyntheticBlock implements Block{
     final ASTNode child = myStartTreeNode.getLastChildNode();
     return child != null && child.getElementType() == ElementType.XML_CDATA;
   }
+
+  public boolean insertLineFeedAfter() {
+    final List<Block> subBlocks = getSubBlocks();
+    final Block lastBlock = subBlocks.get(subBlocks.size() - 1);
+    if (lastBlock instanceof XmlTagBlock) {
+      return  insertLineFeedAfter(((XmlTagBlock)lastBlock).getTag());
+    } else {
+      return false;
+    }
+  }
+
+  protected boolean insertLineFeedAfter(final XmlTag tag) {
+    return myXmlFormattingPolicy.getWrappingTypeForTagBegin(tag) == WrapType.ALWAYS;
+  }
 }

@@ -29,12 +29,12 @@ public class DebugUtil {
 
   public static String treeToString(ASTNode root, boolean skipWhitespaces) {
     StringBuffer buffer = new StringBuffer();
-    treeToBuffer(buffer, root, 0, skipWhitespaces, false);
+    treeToBuffer(buffer, root, 0, skipWhitespaces, false, false);
     return buffer.toString();
   }
   public static String treeToString(ASTNode root, boolean skipWhitespaces, boolean showRanges) {
     StringBuffer buffer = new StringBuffer();
-    treeToBuffer(buffer, root, 0, skipWhitespaces, showRanges);
+    treeToBuffer(buffer, root, 0, skipWhitespaces, showRanges, false);
     return buffer.toString();
   }
 
@@ -69,7 +69,12 @@ public class DebugUtil {
     }
   }
 
-  public static void treeToBuffer(StringBuffer buffer, ASTNode root, int indent, boolean skipWhiteSpaces, boolean showRanges) {
+  public static void treeToBuffer(StringBuffer buffer,
+                                  ASTNode root,
+                                  int indent,
+                                  boolean skipWhiteSpaces,
+                                  boolean showRanges,
+                                  final boolean showChildrenRanges) {
     if (skipWhiteSpaces && root.getElementType() == ElementType.WHITE_SPACE) return;
 
     for (int i = 0; i < indent; i++) {
@@ -105,7 +110,7 @@ public class DebugUtil {
       }
       else {
         while (child != null) {
-          treeToBuffer(buffer, child, indent + 2, skipWhiteSpaces, false);
+          treeToBuffer(buffer, child, indent + 2, skipWhiteSpaces, showChildrenRanges, showChildrenRanges);
           child = child.getTreeNext();
         }
       }

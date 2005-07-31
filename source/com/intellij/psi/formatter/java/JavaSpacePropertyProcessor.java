@@ -56,19 +56,10 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
 
   }
 
-  private int getKeepBlankLines() {
-    if (myChild2.getElementType() == ElementType.RBRACE) return mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE;
-    if (SourceTreeToPsiMap.psiElementToTree(myParent).getElementType() == ElementType
-      .CLASS) {
-      return mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS;
-    }
-    return mySettings.KEEP_BLANK_LINES_IN_CODE;
-  }
-
   private void init(final ASTNode child) {
     if (child == null) return;
     ASTNode treePrev = child.getTreePrev();
-    while (isWhiteSpace(treePrev)) {
+    while (treePrev != null && isWhiteSpace(treePrev)) {
       treePrev = treePrev.getTreePrev();
     }
     if (treePrev == null) {
@@ -756,7 +747,9 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
       createSpaceInCode(mySettings.SPACE_WITHIN_SYNCHRONIZED_PARENTHESES);
     }
     else if (myRole2 == ChildRole.BLOCK) {
-      createSpaceInCode(mySettings.SPACE_BEFORE_SYNCHRONIZED_LBRACE);
+      myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_SYNCHRONIZED_LBRACE,
+                                      mySettings.BRACE_STYLE, null,
+                                      mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
     }
 
   }

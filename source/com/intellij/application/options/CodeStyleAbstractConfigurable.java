@@ -58,10 +58,6 @@ public abstract class CodeStyleAbstractConfigurable implements Configurable {
     return null;
   }
 
-  public String getHelpTopic() {
-    return null;
-  }
-
   public JComponent createComponent() {
     myPanel = createPanel(myCloneSettings);
     return myPanel.getPanel();

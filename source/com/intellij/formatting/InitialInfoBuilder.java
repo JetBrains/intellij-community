@@ -195,7 +195,7 @@ class InitialInfoBuilder {
       final FormattingDocumentModelImpl modelImpl = ((FormattingDocumentModelImpl)model);
       message.append("Psi Tree:");
       message.append('\n');
-      DebugUtil.treeToBuffer(message, modelImpl.getFile().getNode(), 0, false, true);
+      DebugUtil.treeToBuffer(message, modelImpl.getFile().getNode(), 0, false, true, true);
       message.append('\n');
     }
     message.append("Start Offset:");

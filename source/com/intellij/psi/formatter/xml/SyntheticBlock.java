@@ -1,9 +1,6 @@
 package com.intellij.psi.formatter.xml;
 
-import com.intellij.formatting.Block;
-import com.intellij.formatting.ChildAttributes;
-import com.intellij.formatting.Indent;
-import com.intellij.formatting.Spacing;
+import com.intellij.formatting.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -74,6 +71,10 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block{
 
     if (((AbstractXmlBlock)child1).isTextElement() && ((AbstractXmlBlock)child2).isTextElement()) {
       return Spacing.createSafeSpacing(myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
+    }
+
+    if (firstIsTag && insertLineFeedAfter((XmlTag)node1.getPsi())) {
+      return Spacing.createSpacing(0, 0, 1, true, myXmlFormattingPolicy.getKeepBlankLines());
     }
 
     if ((firstIsText || firstIsTag) && secondIsTag) {
