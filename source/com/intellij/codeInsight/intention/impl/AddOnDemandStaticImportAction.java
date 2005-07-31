@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -22,11 +23,13 @@ public class AddOnDemandStaticImportAction extends BaseIntentionAction {
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    if (!file.isWritable()) return false;
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     if (element instanceof PsiIdentifier && element.getParent() instanceof PsiReferenceExpression) {
       PsiReferenceExpression refExpr = (PsiReferenceExpression)element.getParent();
-        PsiElement resolved = refExpr.resolve();
+      if (refExpr.getParent() instanceof PsiReferenceExpression &&
+          isParameterizedReference((PsiReferenceExpression)refExpr.getParent())) return false;
+
+      PsiElement resolved = refExpr.resolve();
       if (resolved instanceof PsiClass) {
         String text = MessageFormat.format("Add on demand static import for ''{0}''", new Object[]{((PsiClass)resolved).getQualifiedName()});
         setText(text);
@@ -38,6 +41,7 @@ public class AddOnDemandStaticImportAction extends BaseIntentionAction {
   }
 
   public void invoke(final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
+    if (!CodeInsightUtil.prepareFileForWrite(file)) return;
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     final PsiReferenceExpression refExpr = (PsiReferenceExpression)element.getParent();
     final PsiClass aClass = (PsiClass)refExpr.resolve();
@@ -46,6 +50,7 @@ public class AddOnDemandStaticImportAction extends BaseIntentionAction {
 
     file.accept(new PsiRecursiveElementVisitor() {
       public void visitReferenceExpression(PsiReferenceExpression expression) {
+        if (isParameterizedReference(expression)) return;
         PsiExpression qualifierExpression = expression.getQualifierExpression();
         if (qualifierExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifierExpression).isReferenceTo(aClass)) {
           try {
@@ -68,5 +73,9 @@ public class AddOnDemandStaticImportAction extends BaseIntentionAction {
         if (qualifierExpression != null) super.visitElement(qualifierExpression);
       }
     });
+  }
+
+  private boolean isParameterizedReference(final PsiReferenceExpression expression) {
+    return expression.getParameterList() != null && expression.getParameterList().getTypeParameterElements().length > 0;
   }
 }

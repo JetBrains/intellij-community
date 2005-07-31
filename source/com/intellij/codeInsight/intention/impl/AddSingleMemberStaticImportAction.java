@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.codeInsight.CodeInsightUtil;
 
 import java.text.MessageFormat;
 
@@ -22,11 +23,12 @@ public class AddSingleMemberStaticImportAction extends BaseIntentionAction {
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    if (!file.isWritable()) return false;
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     if (element instanceof PsiIdentifier && element.getParent() instanceof PsiReferenceExpression &&
         ((PsiReferenceExpression)element.getParent()).getQualifierExpression() != null) {
       PsiReferenceExpression refExpr = (PsiReferenceExpression)element.getParent();
+      if (refExpr.getParameterList() != null &&
+          refExpr.getParameterList().getTypeParameterElements().length > 0) return false;
       PsiElement resolved = refExpr.resolve();
       if (resolved instanceof PsiMember &&
           ((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)) {
@@ -51,6 +53,7 @@ public class AddSingleMemberStaticImportAction extends BaseIntentionAction {
   }
 
   public void invoke(final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
+    if (!CodeInsightUtil.prepareFileForWrite(file)) return;
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     final PsiReferenceExpression refExpr = (PsiReferenceExpression)element.getParent();
     final PsiElement resolved = refExpr.resolve();
@@ -74,6 +77,9 @@ public class AddSingleMemberStaticImportAction extends BaseIntentionAction {
 
     file.accept(new PsiRecursiveElementVisitor() {
       public void visitReferenceExpression(PsiReferenceExpression expression) {
+        if (expression.getParameterList() != null &&
+            expression.getParameterList().getTypeParameterElements().length > 0) return;
+
         if (refExpr.getReferenceName().equals(expression.getReferenceName())) {
           if (!expression.isQualified()) {
             PsiElement referent = expression.getUserData(TEMP_REFERENT_USER_DATA);
@@ -109,4 +115,5 @@ public class AddSingleMemberStaticImportAction extends BaseIntentionAction {
       }
     });
   }
+
 }
