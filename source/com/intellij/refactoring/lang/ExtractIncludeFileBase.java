@@ -152,6 +152,10 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
       return;
     }
 
+    if (!file.isWritable()) {
+      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, file)) return;
+    }
+
     ExtractIncludeDialog dialog = new ExtractIncludeDialog(file.getContainingDirectory(), (LanguageFileType)fileType);
     dialog.show();
     if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
