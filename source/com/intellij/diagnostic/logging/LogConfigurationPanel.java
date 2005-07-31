@@ -277,8 +277,9 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
           name = location;
         }
       }
+      return Pair.create(location, name);
     }
-    return Pair.create(location, name);
+    return null;
   }
 
   private static class LogFileCellEditor extends AbstractTableCellEditor {
@@ -292,7 +293,10 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
       getChildComponent().setBorder(null);
       myComponent.getComponentWithButton().getButton().addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          mySelectedPair = showEditorDialog(mySelectedPair.second, mySelectedPair.first);
+          final Pair<String, String> newValue = showEditorDialog(mySelectedPair.second, mySelectedPair.first);
+          if (newValue != null) {
+            mySelectedPair = newValue;
+          }
           JTextField textField = getChildComponent();
           textField.setText(mySelectedPair.second);
           textField.requestFocus();
