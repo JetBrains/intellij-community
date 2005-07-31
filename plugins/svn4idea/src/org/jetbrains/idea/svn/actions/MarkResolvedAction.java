@@ -112,7 +112,9 @@ public class MarkResolvedAction extends BasicAction {
       return;
     }
     String[] pathsArray = (String[])paths.toArray(new String[paths.size()]);
-    SelectFilesDialog dialog = new SelectFilesDialog(project, "Select files and directories to mark resolved:", "Mark Resolved", "Mark Resolved", pathsArray);
+    SelectFilesDialog dialog = new SelectFilesDialog(project, "Select files and directories to mark resolved:",
+                                                     "Mark Resolved", "Mark Resolved", pathsArray, "vcs.subversion.resolve"
+                                                     );
     dialog.show();
     if (!dialog.isOK()) {
       return;

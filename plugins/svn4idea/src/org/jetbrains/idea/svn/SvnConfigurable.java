@@ -63,6 +63,8 @@ public class SvnConfigurable implements Configurable, ActionListener {
   private JLabel myConfigurationDirectoryLabel;
   private FileChooserDescriptor myBrowserDescriptor;
 
+  private static final String HELP_ID = "project.propSubversion";
+
   public SvnConfigurable(Project project) {
     myProject = project;
   }
@@ -172,7 +174,7 @@ public class SvnConfigurable implements Configurable, ActionListener {
   }
 
   public String getHelpTopic() {
-    return null;
+    return HELP_ID;
   }
 
   public boolean isModified() {

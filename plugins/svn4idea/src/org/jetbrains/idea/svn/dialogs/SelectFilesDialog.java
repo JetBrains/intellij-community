@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.ui.OrderPanel;
 import com.intellij.ui.OrderPanelListener;
 
@@ -40,17 +41,31 @@ public class SelectFilesDialog extends DialogWrapper implements ActionListener {
   private JButton mySelectAllButton;
   private JButton myDeselectAllButton;
   private String myLabel;
+  private String myHelpID;
 
-  public SelectFilesDialog(final Project project, String label, String title, String actionName, String[] paths) {
+  public SelectFilesDialog(final Project project, String label, String title, String actionName, String[] paths,
+                           String helpID) {
     super(project, true);
+    myHelpID = helpID;
     setOKButtonText(actionName);
     setTitle(title);
     setResizable(true);
 
     myFiles = paths;
     myLabel = label;
+    getHelpAction().setEnabled(myHelpID != null);
 
     init();
+  }
+
+  protected void doHelpAction() {
+    if (myHelpID != null) {
+      HelpManager.getInstance().invokeHelp(myHelpID);
+    }
+  }
+
+  protected Action[] createActions() {
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
   protected void init() {

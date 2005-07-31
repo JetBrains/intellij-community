@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.help.HelpManager;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
@@ -56,6 +57,8 @@ public class SetPropertyDialog extends DialogWrapper {
   private boolean myIsRecursionAllowed;
   private SvnVcs myVCS;
 
+  private static final String HELP_ID = "vcs.subversion.property";
+
   public SetPropertyDialog(Project project, File[] files, String name, boolean allowRecursion) {
     super(project, true);
     myFiles = files;
@@ -64,8 +67,18 @@ public class SetPropertyDialog extends DialogWrapper {
     myVCS = SvnVcs.getInstance(project);
     setResizable(true);
     setTitle("Set Property");
+    getHelpAction().setEnabled(true);
     init();
   }
+
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp(HELP_ID);
+  }
+
+  protected Action[] createActions() {
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+  }
+
 
   public JComponent getPreferredFocusedComponent() {
     return myPropertyNameBox;

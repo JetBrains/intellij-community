@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.help.HelpManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,12 +33,24 @@ public class LockDialog extends DialogWrapper {
   private JTextArea myLockTextArea;
   private JCheckBox myForceCheckBox;
 
+  private static final String HELP_ID = "vcs.subversion.lock";
+
   public LockDialog(Project project, boolean canBeParent) {
     super(project, canBeParent);
     setTitle("Lock Files");
     setResizable(true);
 
+    getHelpAction().setEnabled(true);
     init();
+
+  }
+
+  protected Action[] createActions() {
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+  }
+
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp(HELP_ID);
   }
 
   public boolean shouldCloseOnCross() {

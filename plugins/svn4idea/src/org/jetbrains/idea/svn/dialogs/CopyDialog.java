@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.help.HelpManager;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -56,13 +57,24 @@ public class CopyDialog extends DialogWrapper implements ActionListener {
   private JTextArea myCommentText;
   private String mySrcURL;
 
+  private static final String HELP_ID = "vcs.subversion.branch";
+
   public CopyDialog(Project project, boolean canBeParent, File file) {
     super(project, canBeParent);
     mySrcFile = file;
     myProject = project;
     setResizable(true);
     setTitle("Create Branch or Tag");
+    getHelpAction().setEnabled(true);
     init();
+  }
+
+  protected Action[] createActions() {
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+  }
+
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp(HELP_ID);
   }
 
   protected void init() {

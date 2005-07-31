@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.help.HelpManager;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -39,6 +40,8 @@ public class SimpleCredentialsDialog extends DialogWrapper implements DocumentLi
   private JCheckBox myAllowSaveCheckBox;
   private JPasswordField myPasswordText;
 
+  private static final String HELP_ID = "vcs.subversion.authentication";
+
   protected SimpleCredentialsDialog(Project project) {
     super(project, true);
     setResizable(false);
@@ -48,7 +51,15 @@ public class SimpleCredentialsDialog extends DialogWrapper implements DocumentLi
     myRealm = realm;
     myUserName = userName;
     myAllowSave = allowSave;
+    getHelpAction().setEnabled(true);
     init();
+  }
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp(HELP_ID);
+  }
+
+  protected Action[] createActions() {
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
   protected JComponent createCenterPanel() {

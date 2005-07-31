@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.help.HelpManager;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
@@ -59,15 +60,26 @@ public class CheckoutDialog extends DialogWrapper implements ActionListener {
   private boolean myIsDialogClosed;
   private boolean myIsDstChanged;
 
+  private static final String HELP_ID = "vcs.subversion.checkoutSVN";
+
   public CheckoutDialog(Project project) {
     super(project, true);
     myProject = project;
     setTitle("Check Out from Repository");
+    getHelpAction().setEnabled(true);
     init();
   }
 
   protected String getDimensionServiceKey() {
     return "svn.checkoutDialog";
+  }
+
+  protected Action[] createActions() {
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+  }
+
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp(HELP_ID);
   }
 
   protected void doOKAction() {

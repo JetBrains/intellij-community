@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.help.HelpManager;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNDirEntry;
@@ -63,17 +64,24 @@ public class RepositoryBrowserDialog extends DialogWrapper implements ActionList
   private JButton myPasteButton;
   private SVNDirEntry myCopiedEntry;
 
+  private static final String HELP_ID = "vcs.subversion.browseSVN";
+
   public RepositoryBrowserDialog(Project project) {
     super(project, true);
     myProject = project;
     setTitle("Browse SVN Repository");
     setResizable(true);
     setOKButtonText("Close");
+    getHelpAction().setEnabled(true);
     init();
   }
 
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp(HELP_ID);
+  }
+
   protected Action[] createActions() {
-    return new Action[]{getOKAction()};
+    return new Action[]{getOKAction(), getHelpAction()};
   }
 
   protected String getDimensionServiceKey() {

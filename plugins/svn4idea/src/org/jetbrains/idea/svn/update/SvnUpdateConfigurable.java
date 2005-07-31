@@ -49,6 +49,7 @@ public class SvnUpdateConfigurable implements Configurable, ActionListener {
   private JLabel myMergeRevisionLabel2;
   private JTextField myMergeRevisionText2;
   private JCheckBox myDryRunCheckbox;
+  private static final String HELP_ID = "vcs.subversion.updateProject";
 
   public SvnUpdateConfigurable(SvnVcs vcs, String url) {
     myVCS = vcs;
@@ -64,7 +65,7 @@ public class SvnUpdateConfigurable implements Configurable, ActionListener {
   }
 
   public String getHelpTopic() {
-    return null;
+    return HELP_ID;
   }
 
   public SVNRevision getTargetRevision() {

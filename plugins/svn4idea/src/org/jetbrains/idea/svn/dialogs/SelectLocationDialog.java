@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.help.HelpManager;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 
@@ -43,6 +44,8 @@ public class SelectLocationDialog extends DialogWrapper {
   private JTextField myDstText;
   private boolean myIsShowFiles;
 
+  private static final String HELP_ID = "vcs.subversion.common";
+
   public SelectLocationDialog(Project project, String url) {
     this(project, url, null, null, true);
   }
@@ -56,7 +59,16 @@ public class SelectLocationDialog extends DialogWrapper {
     myURL = url;
     myIsShowFiles = showFiles;
     setTitle("Select Repository Location");
+    getHelpAction().setEnabled(true);
     init();
+  }
+
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp(HELP_ID);
+  }
+
+  protected Action[] createActions() {
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
   protected String getDimensionServiceKey() {

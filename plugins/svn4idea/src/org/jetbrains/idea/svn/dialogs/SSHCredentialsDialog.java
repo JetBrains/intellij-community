@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.help.HelpManager;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -56,6 +57,8 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
   private JLabel myPassphraseLabel;
   private Project myProject;
 
+  private static final String HELP_ID = "vcs.subversion.authentication";
+
   protected SSHCredentialsDialog(Project project) {
     super(project, true);
     myProject = project;
@@ -66,7 +69,16 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
     myRealm = realm;
     myUserName = userName;
     myAllowSave = allowSave;
+    getHelpAction().setEnabled(true);
     init();
+  }
+
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp(HELP_ID);
+  }
+
+  protected Action[] createActions() {
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
   protected JComponent createCenterPanel() {
