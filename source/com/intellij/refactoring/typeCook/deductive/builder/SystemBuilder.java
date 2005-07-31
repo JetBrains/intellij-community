@@ -229,12 +229,9 @@ public class SystemBuilder {
               continue;
             }
             if (!substitution.equals(currentSubstitution)) {
-              if (substitution instanceof PsiTypeVariable || currentSubstitution instanceof PsiTypeVariable ||
-                  !substitution.isAssignableFrom(currentSubstitution)) {
+              if (substitution instanceof PsiTypeVariable || currentSubstitution instanceof PsiTypeVariable) {
                 substitution = GenericsUtil.getLeastUpperBound(substitution, currentSubstitution, typeParameter.getManager());
-                if (substitution == null) {
-                  break;
-                }
+                if (substitution == null) break;
               }
             }
           }
