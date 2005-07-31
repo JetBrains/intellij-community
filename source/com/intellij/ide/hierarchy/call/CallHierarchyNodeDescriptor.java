@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -106,21 +107,27 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
       mainTextAttributes = new TextAttributes(myColor, null, null, null, Font.PLAIN);
     }
     if (enclosingElement instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)enclosingElement;
-      final StringBuffer buffer = new StringBuffer(128);
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass != null) {
-        buffer.append(ClassPresentationUtil.getNameForClass(containingClass, false));
-        buffer.append('.');
+      if (enclosingElement instanceof JspHolderMethod) {
+        PsiFile file = enclosingElement.getContainingFile();
+        myHighlightedText.getEnding().addText(file != null ? file.getName() : "unknown jsp", mainTextAttributes);
       }
-      final String methodText = PsiFormatUtil.formatMethod(
-        method,
-        PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
-        PsiFormatUtil.SHOW_TYPE
-      );
-      buffer.append(methodText);
+      else {
+        final PsiMethod method = (PsiMethod)enclosingElement;
+        final StringBuffer buffer = new StringBuffer(128);
+        final PsiClass containingClass = method.getContainingClass();
+        if (containingClass != null) {
+          buffer.append(ClassPresentationUtil.getNameForClass(containingClass, false));
+          buffer.append('.');
+        }
+        final String methodText = PsiFormatUtil.formatMethod(
+          method,
+          PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
+          PsiFormatUtil.SHOW_TYPE
+        );
+        buffer.append(methodText);
 
-      myHighlightedText.getEnding().addText(buffer.toString(), mainTextAttributes);
+        myHighlightedText.getEnding().addText(buffer.toString(), mainTextAttributes);
+      }
     }
     else if (enclosingElement instanceof JspFile) {
       final JspFile file = (JspFile)enclosingElement;
