@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
-import com.intellij.psi.PsiField;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -128,6 +127,7 @@ public class AbstractTreeUpdater {
   }
 
   public void cancelAllRequests(){
+    myNodesToUpdate.clear();
     myUpdateQueue.cancelAllUpdates();
   }
 
