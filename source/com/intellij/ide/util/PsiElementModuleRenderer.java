@@ -43,45 +43,50 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
     ) {
     if (value instanceof PsiElement) {
       PsiElement element = (PsiElement)value;
-      PsiFile psiFile = element.getContainingFile();
-      Module module = ModuleUtil.findModuleForPsiElement(element);
-      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
-      if (module != null) {
-        boolean inTestSource = false;
-        if (psiFile != null) {
-          VirtualFile vFile = psiFile.getVirtualFile();
-          if (vFile != null) {
-            inTestSource = fileIndex.isInTestSourceContent(vFile);
+      if (element.isValid()) {
+        PsiFile psiFile = element.getContainingFile();
+        Module module = ModuleUtil.findModuleForPsiElement(element);
+        final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
+        if (module != null) {
+          boolean inTestSource = false;
+          if (psiFile != null) {
+            VirtualFile vFile = psiFile.getVirtualFile();
+            if (vFile != null) {
+              inTestSource = fileIndex.isInTestSourceContent(vFile);
+            }
           }
-        }
-        myText = module.getName();
-        if (inTestSource) {
-          setIcon(TEST_ICON);
-        }
-        else {
-          setIcon(module.getModuleType().getNodeIcon(false));
-        }
-      } else {
-        if (psiFile != null) {
-          VirtualFile vFile = psiFile.getVirtualFile();
-          if (vFile != null) {
-            final boolean isInLibraries = fileIndex.isInLibrarySource(vFile) || fileIndex.isInLibraryClasses(vFile);
-            if (isInLibraries){
-              setIcon(LIB_ICON);
-              OrderEntry[] orders = fileIndex.getOrderEntriesForFile(vFile);
-              for (int i = 0; i < orders.length; i++) {
-                OrderEntry order = orders[i];
-                if (order instanceof LibraryOrderEntry || order instanceof JdkOrderEntry){
-                  myText = order.getPresentableName();
-                  break;
+          myText = module.getName();
+          if (inTestSource) {
+            setIcon(TEST_ICON);
+          }
+          else {
+            setIcon(module.getModuleType().getNodeIcon(false));
+          }
+        } else {
+          if (psiFile != null) {
+            VirtualFile vFile = psiFile.getVirtualFile();
+            if (vFile != null) {
+              final boolean isInLibraries = fileIndex.isInLibrarySource(vFile) || fileIndex.isInLibraryClasses(vFile);
+              if (isInLibraries){
+                setIcon(LIB_ICON);
+                OrderEntry[] orders = fileIndex.getOrderEntriesForFile(vFile);
+                for (int i = 0; i < orders.length; i++) {
+                  OrderEntry order = orders[i];
+                  if (order instanceof LibraryOrderEntry || order instanceof JdkOrderEntry){
+                    myText = order.getPresentableName();
+                    break;
+                  }
                 }
-              }
-            } /*else {
+              } /*else {
               setIcon(IconUtilEx.getEmptyIcon(false));
               setText(value.toString());
             }*/
+            }
           }
         }
+      }
+      else {
+        myText = "";
       }
     }
     /*else {
