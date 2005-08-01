@@ -134,7 +134,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
         documentManager.commitDocument(documentManager.getDocument(this));
       }
     }
-    getPropertiesList().addChild(property.getNode());
+    getPropertiesList().addChild(ChangeUtil.copyToElement(property));
     return property;
   }
 

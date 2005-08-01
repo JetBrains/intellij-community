@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.util.ArrayUtil;
@@ -84,6 +85,7 @@ public class UnscrambleDialog extends DialogWrapper{
 
   private void reset() {
     final List<String> savedUrls = getSavedLogFileUrls();
+    myLogFile.setHistorySize(10);
     myLogFile.setHistory(savedUrls);
 
     String lastUrl = getLastUsedLogUrl();
@@ -200,7 +202,7 @@ public class UnscrambleDialog extends DialogWrapper{
   }
 
   protected Action[] createActions(){
-    return new Action[]{new NormalizeTextAction(), getOKAction(), getCancelAction()};
+    return new Action[]{new NormalizeTextAction(), getOKAction(), getCancelAction(), getHelpAction()};
   }
 
   private void createLogFileChooser() {
@@ -338,6 +340,10 @@ public class UnscrambleDialog extends DialogWrapper{
       myLogFile.addCurrentTextToHistory();
       close(OK_EXIT_CODE);
     }
+  }
+
+  public void doHelpAction() {
+    HelpManager.getInstance().invokeHelp("find.analyzeStackTrace");
   }
 
   private boolean performUnscramble() {
