@@ -55,7 +55,22 @@ public class JavaModuleBuilder extends ModuleBuilder {
   }
 
   public final void setContentEntryPath(String moduleRootPath) {
-    myContentEntryPath = acceptParameter(moduleRootPath);
+    final String path = acceptParameter(moduleRootPath);
+    if (path != null) {
+      try {
+        // use canonical path to be sure symlinks are resolved
+        myContentEntryPath = new File(path).getCanonicalPath();
+      }
+      catch (IOException e) {
+        myContentEntryPath = path;
+      }
+    }
+    else {
+      myContentEntryPath = null;
+    }
+    if (myContentEntryPath != null) {
+      myContentEntryPath = myContentEntryPath.replace(File.separatorChar, '/');
+    }
   }
 
   public final void setCompilerOutputPath(String compilerOutputPath) {

@@ -389,7 +389,8 @@ public class SourcePathsStep extends ModuleWizardStep {
     for (int idx = 0; idx < suggestedRoots.size(); idx++) {
       final Pair<File,String> suggestedRoot = suggestedRoots.get(idx);
       try {
-        if (FileUtil.isAncestor(entryFile, suggestedRoot.first, false)) {
+        // important: should check canonical file because of symlinks
+        if (FileUtil.isAncestor(entryFile, suggestedRoot.first.getCanonicalFile(), false)) {
           paths.add(Pair.create(suggestedRoot.first.getCanonicalPath(), suggestedRoot.second));
         }
       }
