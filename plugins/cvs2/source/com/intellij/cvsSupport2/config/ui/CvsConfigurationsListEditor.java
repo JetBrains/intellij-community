@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.ui.ScrollPaneFactory;
 
 import javax.swing.*;
@@ -294,6 +295,10 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
       return "cvs.configureRoots";
     }
     return null;
+  }
+
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp("cvs.configureRoots");
   }
 
   protected Action[] createActions() {
