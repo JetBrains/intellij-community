@@ -116,7 +116,18 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Appl
       myPeriodCombo.addItem(WEEKLY);
       myPeriodCombo.addItem(MONTHLY);
 
-      myVersionNumber.setText(ApplicationInfo.getInstance().getVersionName());
+      final String majorVersion = ApplicationInfo.getInstance().getMajorVersion();
+      String versionNumber = "";
+      if (majorVersion != null && majorVersion.trim().length() > 0) {
+        final String minorVersion = ApplicationInfo.getInstance().getMinorVersion();
+        if (minorVersion != null && minorVersion.trim().length() > 0) {
+          versionNumber = majorVersion + "." + minorVersion;
+        }
+        else {
+          versionNumber = majorVersion + ".0";
+        }
+      }
+      myVersionNumber.setText(ApplicationInfo.getInstance().getVersionName() + " " + versionNumber);
       String currentBuild = (ApplicationInfo.getInstance().getBuildNumber() == null) ? "N/A" : ApplicationInfo.getInstance().getBuildNumber();
       myBuildNumber.setText(currentBuild);
 
