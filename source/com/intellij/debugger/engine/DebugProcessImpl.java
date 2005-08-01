@@ -420,7 +420,12 @@ public abstract class DebugProcessImpl implements DebugProcess {
         }
         finally {
           if(myArguments != null) {
-            connector.stopListening(myArguments);
+            try {
+              connector.stopListening(myArguments);
+            }
+            catch (IllegalConnectorArgumentsException e) {
+              // ignored
+            }
           }
         }
       }
