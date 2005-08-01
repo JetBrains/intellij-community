@@ -195,7 +195,7 @@
       <module fileurl="file://$PROJECT_DIR$/InspectionGadgetsSVN.iml" filepath="$PROJECT_DIR$/InspectionGadgetsSVN.iml" />
     </modules>
   </component>
-  <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="true" project-jdk-name="IDEA 3425" />
+  <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="true" project-jdk-name="IDEA 3431" />
   <component name="RmicSettings">
     <option name="IS_EANABLED" value="false" />
     <option name="DEBUGGING_INFO" value="true" />
@@ -213,7 +213,8 @@
     <option name="calculateMetrics" value="false" />
     <option name="includeTestClasses" value="false" />
     <option name="flattenInnerClasses" value="false" />
-    <option name="cycleTableSpecificationString" value="" />
+    <option name="cycleTableSpecificationString" value="150,550,150,150" />
+    <option name="shortCycleTableSpecificationString" value="" />
   </component>
   <component name="libraryTable" />
   <component name="org.tmatesoft.tmate.projectComponent" />

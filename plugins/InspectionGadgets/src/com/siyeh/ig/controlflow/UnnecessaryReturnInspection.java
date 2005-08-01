@@ -76,7 +76,10 @@ public class UnnecessaryReturnInspection extends StatementInspection{
                                                                          throws IncorrectOperationException{
             final PsiElement returnKeywordElement = descriptor.getPsiElement();
             final PsiElement returnStatement = returnKeywordElement.getParent();
-            assert returnStatement !=null;
+            if(returnStatement == null)
+            {
+                return;
+            }
             deleteElement(returnStatement);
         }
     }
