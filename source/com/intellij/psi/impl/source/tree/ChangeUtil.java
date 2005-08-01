@@ -267,6 +267,7 @@ public class ChangeUtil implements Constants {
             action.makeChange(destinationTreeChange);
           }
           psiManager.invalidateFile(file);
+          TreeUtil.clearCaches(changedElement);
           changedElement.subtreeChanged();
           return event;
         }
