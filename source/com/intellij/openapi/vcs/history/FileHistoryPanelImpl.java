@@ -777,7 +777,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       return this;
     }
     else {
-      return null;
+      return super.getData(dataId);
     }
   }
 

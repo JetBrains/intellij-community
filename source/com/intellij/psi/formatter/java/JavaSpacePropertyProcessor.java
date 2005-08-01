@@ -489,8 +489,7 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
       else {
         if (myChild2.getElementType() == ElementType.BLOCK_STATEMENT) {
           myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_ELSE_LBRACE, mySettings.BRACE_STYLE,
-                                          new TextRange(myParent.getTextRange().getStartOffset(),
-                                                        myChild2.getTextRange().getStartOffset()),
+                                          null,
                                           mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
         }
         else {

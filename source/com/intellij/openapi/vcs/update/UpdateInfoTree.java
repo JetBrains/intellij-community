@@ -174,8 +174,11 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     else if (VcsDataConstants.IO_FILE_ARRAY.equals(dataId)) {
       return getFileArray();
     }
-    return ProjectLevelVcsManager.getInstance(myProject).createVirtualAndPsiFileDataProvider(getVirtualFileArray(), mySelectedFile)
+    final Object fromProvider = ProjectLevelVcsManager.getInstance(myProject)
+      .createVirtualAndPsiFileDataProvider(getVirtualFileArray(), mySelectedFile)
       .getData(dataId);
+
+    return fromProvider == null ? super.getData(dataId) : fromProvider;
   }
 
   private VirtualFile[] getVirtualFileArray() {
