@@ -307,7 +307,7 @@ public class CustomizableActionsPanel {
         final CustomActionsSchema selectedValue = (CustomActionsSchema)myList.getSelectedValue();
         if (selectedValue != null) {
           mySelectedSchema = selectedValue;
-          setNameAndDescription(mySelectedSchema != null && !mySelectedSchema.getName().equals(CustomizableActionsSchemas.DEFAULT_NAME),
+          setNameAndDescription(!mySelectedSchema.getName().equals(CustomizableActionsSchemas.DEFAULT_NAME),
                                 mySelectedSchema.getName(), mySelectedSchema.getDescription());
           patchActionsTreeCorrespondingToSchema((DefaultMutableTreeNode)myActionsTree.getModel().getRoot());
         }
