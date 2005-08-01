@@ -539,41 +539,43 @@ public class CodeEditUtil {
                                              final boolean changeWSBeforeFirstElement, final boolean changeLineFeedsBeforeFirstElement,
                                              final PsiFile file) {
     first = transform(first);
-    final PsiElement psi = first.getPsi();
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(psi.getProject());
-    final FormattingModelBuilder builder = file.getLanguage().getFormattingModelBuilder();
-    final FormattingModelBuilder elementBuilder = psi.getLanguage().getFormattingModelBuilder();
+    if (first != null) {
+      final PsiElement psi = first.getPsi();
+      CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(psi.getProject());
+      final FormattingModelBuilder builder = file.getLanguage().getFormattingModelBuilder();
+      final FormattingModelBuilder elementBuilder = psi.getLanguage().getFormattingModelBuilder();
 
-    final boolean keepWhiteSpaces = settings.HTML_KEEP_WHITESPACES;
-    boolean canModifyWhiteSpaces = canModifyWS(file);
-    if (!canModifyWhiteSpaces) {
-      settings.HTML_KEEP_WHITESPACES = true;
-    }
+      final boolean keepWhiteSpaces = settings.HTML_KEEP_WHITESPACES;
+      boolean canModifyWhiteSpaces = canModifyWS(file);
+      if (!canModifyWhiteSpaces) {
+        settings.HTML_KEEP_WHITESPACES = true;
+      }
 
-    try {
-      if (builder != null && elementBuilder != null) {
-        ASTNode firstNonSpaceLeaf = TreeUtil.findFirstLeaf(first);
-        while (firstNonSpaceLeaf != null && firstNonSpaceLeaf.getElementType() == ElementType.WHITE_SPACE) {
-          firstNonSpaceLeaf = TreeUtil.nextLeaf(firstNonSpaceLeaf);
-        }
-        if (firstNonSpaceLeaf != null) {
-          final int startOffset = firstNonSpaceLeaf.getStartOffset();
-          final int endOffset = first.getTextRange().getEndOffset();
-          if (startOffset < endOffset) {
-            FormatterEx.getInstanceEx().adjustTextRange(builder.createModel(file, settings), settings,
-              settings.getIndentOptions(file.getFileType()),
-              new TextRange(startOffset, endOffset),
-              keepBlankLines,
-              keepLineBreaks,
-              changeWSBeforeFirstElement,
-              changeLineFeedsBeforeFirstElement,
-              canModifyWhiteSpaces ? new MyIndentInfoStorage(file, null) : null);
+      try {
+        if (builder != null && elementBuilder != null) {
+          ASTNode firstNonSpaceLeaf = TreeUtil.findFirstLeaf(first);
+          while (firstNonSpaceLeaf != null && firstNonSpaceLeaf.getElementType() == ElementType.WHITE_SPACE) {
+            firstNonSpaceLeaf = TreeUtil.nextLeaf(firstNonSpaceLeaf);
+          }
+          if (firstNonSpaceLeaf != null) {
+            final int startOffset = firstNonSpaceLeaf.getStartOffset();
+            final int endOffset = first.getTextRange().getEndOffset();
+            if (startOffset < endOffset) {
+              FormatterEx.getInstanceEx().adjustTextRange(builder.createModel(file, settings), settings,
+                                                          settings.getIndentOptions(file.getFileType()),
+                                                          new TextRange(startOffset, endOffset),
+                                                          keepBlankLines,
+                                                          keepLineBreaks,
+                                                          changeWSBeforeFirstElement,
+                                                          changeLineFeedsBeforeFirstElement,
+                                                          canModifyWhiteSpaces ? new MyIndentInfoStorage(file, null) : null);
+            }
           }
         }
       }
-    }
-    finally {
-      settings.HTML_KEEP_WHITESPACES = keepWhiteSpaces;
+      finally {
+        settings.HTML_KEEP_WHITESPACES = keepWhiteSpaces;
+      }
     }
   }
 
