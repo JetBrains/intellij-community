@@ -55,7 +55,7 @@ public class IntentionSettingsConfigurable extends BaseConfigurable implements A
   }
 
   public String getHelpTopic() {
-    return "preferences.errorHighlight";
+    return "preferences.intentionPowerPack";
   }
 
   public void disposeComponent() {
