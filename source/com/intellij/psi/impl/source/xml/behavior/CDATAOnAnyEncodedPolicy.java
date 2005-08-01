@@ -6,6 +6,7 @@ import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlTokenType;
@@ -27,22 +28,24 @@ public class CDATAOnAnyEncodedPolicy extends DefaultXmlPsiPolicy{
 
   public static FileElement createCDATAElement(final PsiManager manager, final CharTable charTableByTree, final String displayText) {
     final FileElement dummyParent = new DummyHolder(manager, null, charTableByTree).getTreeElement();
+    final CompositeElement cdata = Factory.createCompositeElement(XmlElementType.XML_CDATA);
+    TreeUtil.addChildren(dummyParent, cdata);
     TreeUtil.addChildren(
-      dummyParent,
+      cdata,
       Factory.createLeafElement(
         XmlTokenType.XML_CDATA_START,
         "<![CDATA[".toCharArray(),
         0, 9, -1,
         dummyParent.getCharTable()));
     TreeUtil.addChildren(
-      dummyParent,
+      cdata,
       Factory.createLeafElement(
         XmlTokenType.XML_DATA_CHARACTERS,
         displayText.toCharArray(),
         0, displayText.length(), -1,
         dummyParent.getCharTable()));
     TreeUtil.addChildren(
-      dummyParent,
+      cdata,
       Factory.createLeafElement(
         XmlTokenType.XML_CDATA_END,
         "]]>".toCharArray(),
