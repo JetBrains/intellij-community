@@ -135,6 +135,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
   public void clearCaches() {
     setCachedLength(-1);
     myModificationsCount++;
+    myParentModifications = -1;
   }
 
   public void acceptTree(TreeElementVisitor visitor) {
