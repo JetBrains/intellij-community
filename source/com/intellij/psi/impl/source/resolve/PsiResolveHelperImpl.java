@@ -17,8 +17,11 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.openapi.util.Pair;
 
 import java.util.Iterator;
+
+import org.jetbrains.annotations.Nullable;
 
 public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
   private final PsiManager myManager;
@@ -104,7 +107,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
                                                  PsiSubstitutor partialSubstitutor,
                                                  PsiElement parent,
                                                  final boolean forCompletion) {
-    PsiType substitution = PsiType.NULL;
+    PsiType lowerBound = PsiType.NULL;
+    PsiType upperBound = PsiType.NULL;
     if (parameters.length > 0) {
       for (int j = 0; j < arguments.length; j++) {
         PsiExpression argument = arguments[j];
@@ -120,45 +124,51 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
             argumentType = ((PsiArrayType)argumentType).getComponentType();
           }
         }
-        final PsiType currentSubstitution = getSubstitutionForTypeParameter(typeParameter, parameterType,
+        final Pair<PsiType,ConstraintType> currentSubstitution = getSubstitutionForTypeParameterConstraint(typeParameter, parameterType,
                                                                             argumentType, true);
-        if (currentSubstitution == null) {
-          substitution = null;
-          break;
-        } else if (currentSubstitution instanceof PsiCapturedWildcardType) {
-          if (substitution instanceof PsiCapturedWildcardType) return PsiType.NULL;
-        } else if (currentSubstitution == PsiType.NULL) continue;
-
-        if (substitution == PsiType.NULL) {
-          substitution = currentSubstitution;
-          continue;
-        }
-        if (!substitution.equals(currentSubstitution)) {
-          substitution = GenericsUtil.getLeastUpperBound(substitution, currentSubstitution, typeParameter.getManager());
-          if (substitution == null) break;
+        if (currentSubstitution == null) continue;
+        final ConstraintType constraintType = currentSubstitution.getSecond();
+        final PsiType type = currentSubstitution.getFirst();
+        switch(constraintType) {
+          case EQUALS:
+            return type;
+          case SUPERTYPE:
+            if (lowerBound == null) {
+              lowerBound = type;
+            } else {
+              if (!lowerBound.equals(type)) {
+                lowerBound = GenericsUtil.getLeastUpperBound(lowerBound, type, typeParameter.getManager());
+                if (lowerBound == null) return PsiType.NULL;
+              }
+            }
+            break;
+          case SUBTYPE:
+            if (upperBound == PsiType.NULL) {
+              upperBound = type;
+            }
         }
       }
     }
 
-    if (substitution == PsiType.NULL) {
-      substitution = inferMethodTypeParameterFromParent(typeParameter, partialSubstitutor, parent, forCompletion);
+    if (lowerBound == PsiType.NULL) lowerBound = upperBound;
+
+    if (lowerBound == PsiType.NULL) {
+      lowerBound = inferMethodTypeParameterFromParent(typeParameter, partialSubstitutor, parent, forCompletion);
     }
-    return substitution;
+    return lowerBound;
   }
 
-  private static PsiType processArgType(PsiType arg, boolean captureWildcard) {
-    if (arg instanceof PsiWildcardType) {
-      return captureWildcard ? arg : PsiType.NULL;
-    } else if (arg instanceof PsiCapturedWildcardType && captureWildcard) {
-      return ((PsiCapturedWildcardType)arg).getWildcard(); //reopen
+  private static Pair<PsiType, ConstraintType> processArgType(PsiType arg, boolean captureWildcard, final ConstraintType constraintType) {
+    if (arg instanceof PsiWildcardType && captureWildcard) {
+      return new Pair<PsiType, ConstraintType>(arg, constraintType);
     } else {
       if (arg == null || arg.getDeepComponentType() instanceof PsiPrimitiveType ||
           PsiUtil.resolveClassInType(arg) != null || arg instanceof PsiTypeVariable) {
-        return arg;
+        return new Pair<PsiType, ConstraintType>(arg, constraintType);
       }
     }
 
-    return PsiType.NULL;
+    return null;
   }
 
   private PsiType inferMethodTypeParameterFromParent(final PsiTypeParameter typeParameter,
@@ -178,14 +188,22 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
   }
 
   public PsiType getSubstitutionForTypeParameter(PsiTypeParameter typeParam,
-                                                        PsiType param,
-                                                        PsiType arg,
-                                                        boolean isContraVariantPosition) {
+                                                 PsiType param,
+                                                 PsiType arg,
+                                                 boolean isContraVariantPosition) {
+    final Pair<PsiType, ConstraintType> constraint = getSubstitutionForTypeParameterConstraint(typeParam, param, arg, isContraVariantPosition);
+    return constraint == null ? PsiType.NULL : constraint.getFirst();
+  }
+
+  public Pair<PsiType, ConstraintType> getSubstitutionForTypeParameterConstraint(PsiTypeParameter typeParam,
+                                                           PsiType param,
+                                                           PsiType arg,
+                                                           boolean isContraVariantPosition) {
     //Ellipsis types are analyzed somewhere else
     LOG.assertTrue(!(param instanceof PsiEllipsisType));
 
     if (param instanceof PsiArrayType && arg instanceof PsiArrayType) {
-      return getSubstitutionForTypeParameter(typeParam, ((PsiArrayType)param).getComponentType(), ((PsiArrayType)arg).getComponentType(),
+      return getSubstitutionForTypeParameterConstraint(typeParam, ((PsiArrayType)param).getComponentType(), ((PsiArrayType)arg).getComponentType(),
                                              isContraVariantPosition);
     }
 
@@ -193,86 +211,80 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
       PsiManager manager = typeParam.getManager();
       if (arg instanceof PsiPrimitiveType) {
         arg = ((PsiPrimitiveType)arg).getBoxedType(manager, typeParam.getResolveScope());
-        if (arg == null) return PsiType.NULL;
+        if (arg == null) return null;
       }
 
       JavaResolveResult paramResult = ((PsiClassType)param).resolveGenerics();
       PsiClass paramClass = (PsiClass)paramResult.getElement();
       if (typeParam == paramClass) {
         return arg == null || arg.getDeepComponentType() instanceof PsiPrimitiveType ||
-               PsiUtil.resolveClassInType(arg) != null ? arg : PsiType.NULL;
+               PsiUtil.resolveClassInType(arg) != null ? new Pair<PsiType, ConstraintType> (arg, ConstraintType.SUPERTYPE) : null;
       }
-      if (paramClass == null) return PsiType.NULL;
+      if (paramClass == null) return null;
 
       if (arg instanceof PsiClassType) {
         JavaResolveResult argResult = ((PsiClassType)arg).resolveGenerics();
         PsiClass argClass = (PsiClass)argResult.getElement();
-        if (argClass == null) return PsiType.NULL;
+        if (argClass == null) return null;
 
         PsiElementFactory factory = manager.getElementFactory();
         PsiType patternType = factory.createType(typeParam);
         if (isContraVariantPosition) {
           PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(paramClass, argClass, argResult.getSubstitutor());
-          if (substitutor == null) return PsiType.NULL;
+          if (substitutor == null) return null;
           arg = factory.createType(paramClass, substitutor);
         }
         else {
           PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(argClass, paramClass, paramResult.getSubstitutor());
-          if (substitutor == null) return PsiType.NULL;
+          if (substitutor == null) return null;
           param = factory.createType(argClass, substitutor);
         }
 
-        PsiType substitution = getSubstitutionForTypeParameterInner(param, arg, patternType, false);
-        return substitution != PsiType.NULL ? substitution : getSubstitutionForTypeParameterInner(param, arg, patternType, true);
+        Pair<PsiType, ConstraintType> substitution = getSubstitutionForTypeParameterInner(param, arg, patternType, false,
+                                                                                          ConstraintType.SUPERTYPE);
+        return substitution != null
+               ? substitution
+               : getSubstitutionForTypeParameterInner(param, arg, patternType, true, ConstraintType.SUPERTYPE);
       }
     }
 
-    return PsiType.NULL;
+    return null;
   }
 
-  private PsiType getSubstitutionForTypeParameterInner(PsiType param,
-                                                              PsiType arg,
-                                                              PsiType patternType,
-                                                              boolean captureWildcard) {
-    if (patternType.equals(param)) {
-      return processArgType(arg, captureWildcard);
-    }
+  private enum ConstraintType {
+    EQUALS,
+    SUBTYPE,
+    SUPERTYPE;
+  }
 
+  @Nullable
+  private Pair<PsiType, ConstraintType> getSubstitutionForTypeParameterInner(PsiType param,
+                                                                             PsiType arg,
+                                                                             PsiType patternType,
+                                                                             boolean captureWildcard,
+                                                                             final ConstraintType constraintType) {
     if (arg instanceof PsiCapturedWildcardType) arg = ((PsiCapturedWildcardType)arg).getWildcard(); //reopen
+
+    if (patternType.equals(param)) {
+      return processArgType(arg, captureWildcard, constraintType);
+    }
 
     if (param instanceof PsiWildcardType) {
       final PsiWildcardType wildcardParam = (PsiWildcardType)param;
       final PsiType paramBound = wildcardParam.getBound();
-      if (arg instanceof PsiWildcardType && ((PsiWildcardType)arg).isExtends() == wildcardParam.isExtends()) {
-        PsiType res = getSubstitutionForTypeParameterInner(paramBound, ((PsiWildcardType)arg).getBound(),
-                                                           patternType, captureWildcard);
-        if (res != PsiType.NULL) return res;
+      if (paramBound == null) return null;
+      ConstraintType constrType = wildcardParam.isExtends() ? ConstraintType.SUPERTYPE : ConstraintType.SUBTYPE;
+      if (arg instanceof PsiWildcardType) {
+        if (((PsiWildcardType)arg).isExtends() == wildcardParam.isExtends()) {
+          Pair<PsiType, ConstraintType> res = getSubstitutionForTypeParameterInner(paramBound, ((PsiWildcardType)arg).getBound(),
+                                                                                   patternType, captureWildcard, constrType);
+          if (res != null) return res;
+        }
       }
       else if (patternType.equals(paramBound)) {
-        if (!(arg instanceof PsiWildcardType) || ((PsiWildcardType)arg).isExtends() == wildcardParam.isExtends()) {
-          if (wildcardParam.isExtends()) {
-            if (arg instanceof PsiWildcardType) {
-              if (((PsiWildcardType)arg).isExtends()) {
-                PsiType guess = getSubstitutionForTypeParameterInner(paramBound, ((PsiWildcardType)arg).getBound(), patternType, captureWildcard);
-                if (guess != PsiType.NULL) return guess;
-              }
-            } else {
-              PsiType guess =  getSubstitutionForTypeParameterInner(paramBound, arg, patternType, captureWildcard);
-              if (guess != PsiType.NULL) return guess;
-            }
-          }
-          else {
-            if (arg instanceof PsiWildcardType) {
-              if (((PsiWildcardType)arg).isSuper()) {
-                PsiType guess = getSubstitutionForTypeParameterInner(paramBound, ((PsiWildcardType)arg).getBound(), patternType, captureWildcard);
-                if (guess != PsiType.NULL) return guess;
-              }
-            } else {
-              PsiType guess =  getSubstitutionForTypeParameterInner(paramBound, arg, patternType, captureWildcard);
-              if (guess != PsiType.NULL) return guess;
-            }
-          }
-        }
+        Pair<PsiType, ConstraintType> res = getSubstitutionForTypeParameterInner(paramBound, arg,
+                                                                                   patternType, captureWildcard, constrType);
+        if (res != null) return res;
       }
       else if (paramBound instanceof PsiClassType && arg instanceof PsiClassType) {
         final PsiClassType.ClassResolveResult boundResult = ((PsiClassType)paramBound).resolveGenerics();
@@ -287,10 +299,10 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
                 final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(boundClass);
                 while (iterator.hasNext()) {
                   final PsiTypeParameter typeParameter = iterator.next();
-                  final PsiType guess = getSubstitutionForTypeParameterInner(boundResult.getSubstitutor().substitute(typeParameter),
+                  final Pair<PsiType, ConstraintType> res = getSubstitutionForTypeParameterInner(boundResult.getSubstitutor().substitute(typeParameter),
                                                                              superSubstitutor.substitute(typeParameter),
-                                                                             patternType, captureWildcard);
-                  if (guess != PsiType.NULL) return guess;
+                                                                             patternType, captureWildcard, ConstraintType.EQUALS);
+                  if (res != null) return res;
                 }
               }
             }
@@ -300,10 +312,10 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
                 final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(argClass);
                 while (iterator.hasNext()) {
                   final PsiTypeParameter typeParameter = iterator.next();
-                  final PsiType guess = getSubstitutionForTypeParameterInner(superSubstitutor.substitute(typeParameter),
+                  final Pair<PsiType, ConstraintType> res = getSubstitutionForTypeParameterInner(superSubstitutor.substitute(typeParameter),
                                                                              argResult.getSubstitutor().substitute(typeParameter),
-                                                                             patternType, captureWildcard);
-                  if (guess != PsiType.NULL) return guess;
+                                                                             patternType, captureWildcard, ConstraintType.EQUALS);
+                  if (res != null) return res;
                 }
               }
             }
@@ -314,29 +326,29 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
 
     if (param instanceof PsiArrayType && arg instanceof PsiArrayType) {
       return getSubstitutionForTypeParameterInner(((PsiArrayType)param).getComponentType(), ((PsiArrayType)arg).getComponentType(),
-                                                  patternType, captureWildcard);
+                                                  patternType, captureWildcard, constraintType);
     }
 
     if (param instanceof PsiClassType && arg instanceof PsiClassType) {
       PsiClass paramClass = ((PsiClassType)param).resolve();
-      if (paramClass == null) return PsiType.NULL;
+      if (paramClass == null) return null;
 
       PsiClass argClass = ((PsiClassType)arg).resolve();
-      if (argClass != paramClass) return PsiType.NULL;
+      if (argClass != paramClass) return null;
 
       PsiType[] paramTypes = ((PsiClassType)param).getParameters();
       PsiType[] argTypes = ((PsiClassType)arg).getParameters();
-      if (paramTypes.length != argTypes.length) return PsiType.NULL;
-      PsiType capturedWildcard = PsiType.NULL;
+      if (paramTypes.length != argTypes.length) return null;
+      Pair<PsiType,ConstraintType> capturedWildcard = null;
       for (int i = 0; i < argTypes.length; i++) {
-        PsiType res = getSubstitutionForTypeParameterInner(paramTypes[i], argTypes[i], patternType, captureWildcard);
-        if (res != PsiType.NULL) {
+        Pair<PsiType,ConstraintType> res = getSubstitutionForTypeParameterInner(paramTypes[i], argTypes[i], patternType, captureWildcard, ConstraintType.EQUALS);
+        if (res != null) {
           if (!captureWildcard) {
             return res;
           }
           else {
-            if (capturedWildcard != PsiType.NULL) {
-              return PsiType.NULL;
+            if (capturedWildcard != null) {
+              return null;
             }
             else {
               capturedWildcard = res;
@@ -348,7 +360,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
       return capturedWildcard;
     }
 
-    return PsiType.NULL;
+    return null;
   }
 
   private PsiType inferMethodTypeParameterFromParent(PsiElement parent,
