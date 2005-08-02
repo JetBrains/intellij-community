@@ -46,22 +46,22 @@ public class PinActiveTabAction extends ToggleAction {
     if(file != null){
       // 1. Check editor
       EditorWindow editorWindow = getEditorWindow(context);
-      if (!editorWindow.isFileOpen(file)) {
-        file = editorWindow.getSelectedFile();
-        if (file == null) return false;
-      }
+      if (editorWindow != null) {
+        if (!editorWindow.isFileOpen(file)) {
+          file = editorWindow.getSelectedFile();
+          if (file == null) return false;
+        }
 
-      return editorWindow.isFilePinned(file);
+        return editorWindow.isFilePinned(file);
+      }
+    }
+    // 2. Check content
+    final Content content = getContent(context);
+    if(content != null){
+      return content.isPinned();
     }
     else{
-      // 2. Check content
-      final Content content = getContent(context);
-      if(content != null){
-        return content.isPinned();
-      }
-      else{
-        return false;
-      }
+      return false;
     }
   }
 
@@ -71,17 +71,18 @@ public class PinActiveTabAction extends ToggleAction {
     if(file != null){
       // 1. Check editor
       EditorWindow editorWindow = getEditorWindow(context);
-      if (!editorWindow.isFileOpen(file)) {
-        file = editorWindow.getSelectedFile();
-        if (file == null) return;
-      }
+      if (editorWindow != null) {
+        if (!editorWindow.isFileOpen(file)) {
+          file = editorWindow.getSelectedFile();
+          if (file == null) return;
+        }
 
-      editorWindow.setFilePinned(file, state);
+        editorWindow.setFilePinned(file, state);
+        return;
+      }
     }
-    else{
-      Content content = getContent(context); // at this point content cannot be null
-      content.setPinned(state);
-    }
+    Content content = getContent(context); // at this point content cannot be null
+    content.setPinned(state);    
   }
 
   private EditorWindow getEditorWindow(DataContext context) {
