@@ -726,6 +726,7 @@ public class PluginManagerMain {
               if (root == null){
                 loadAvailablePlugins();
               }
+              if (root == null) return;
               final boolean isUpdate = tabs.getSelectedIndex() == INSTALLED_TAB;
               PluginTable pluginTable = isUpdate ? installedPluginTable : availablePluginTable;
               if (pluginTable == null) return;
