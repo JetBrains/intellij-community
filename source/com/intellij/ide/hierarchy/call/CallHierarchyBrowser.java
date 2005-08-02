@@ -363,6 +363,7 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider {
     JTree tree = getCurrentTree();
     if (tree == null) return PsiMethod.EMPTY_ARRAY;
     TreePath[] paths = tree.getSelectionPaths();
+    if (paths == null) return PsiMethod.EMPTY_ARRAY;
     ArrayList<PsiMethod> psiMethods = new ArrayList<PsiMethod>();
     for (int i = 0; i < paths.length; i++) {
       TreePath path = paths[i];
