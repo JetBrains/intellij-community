@@ -604,6 +604,9 @@ public class ControlFlowUtils{
     public static boolean methodAlwaysThrowsException(
             @NotNull PsiMethod method){
         final PsiCodeBlock body = method.getBody();
+	    if (body == null) {
+		    return true;
+	    }
         final ReturnFinder returnFinder = new ReturnFinder();
         body.accept(returnFinder);
         if(returnFinder.returnFound()){
