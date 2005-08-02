@@ -2,6 +2,7 @@ package com.intellij.cvsSupport2.cvsoperations.cvsContent;
 
 
 import java.io.File;
+import java.util.regex.Pattern;
 
 
 class DirectoryContentListener {
@@ -9,6 +10,7 @@ class DirectoryContentListener {
   private DirectoryContent myDirectoryContent = new DirectoryContent();
   private static final String FILE_MESSAGE_PREFIX = "fname ";
   private static final String MODULE_MESSAGE_PREFIX = "cvs server: ignoring module ";
+  private static final Pattern NEW_DIRECTORY_PATTERN = Pattern.compile("cvs .*: New directory.*-- ignored");
 
   public void messageSent(String message) {
     if (directoryMessage(message)){
@@ -47,8 +49,7 @@ class DirectoryContentListener {
   }
 
   public static boolean directoryMessage(String message) {
-    return message.startsWith("cvs server: New directory")
-           || message.startsWith("cvs update: New directory");
+    return NEW_DIRECTORY_PATTERN.matcher(message).matches();
   }
 
   public static String directoryNameFromMessage(String message) {

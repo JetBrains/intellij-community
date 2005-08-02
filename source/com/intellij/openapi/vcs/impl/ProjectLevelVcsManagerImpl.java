@@ -378,7 +378,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private void releaseUpdateAlarms(final Document document) {
     if (myLineStatusUpdateAlarms.containsKey(document)) {
       final Alarm alarm = myLineStatusUpdateAlarms.get(document);
-      alarm.cancelAllRequests();
+      if (alarm != null) {
+        alarm.cancelAllRequests();
+      }
       myLineStatusUpdateAlarms.remove(document);
     }
   }

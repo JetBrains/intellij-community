@@ -72,7 +72,7 @@ public class CodeStyleGeneralConfigurable implements Configurable {
   }
 
   public String getHelpTopic() {
-    return "preferences.sourceCode";
+    return "preferences.sourceCode.codeGeneration";
   }
 
   public Icon getIcon() {

@@ -62,7 +62,7 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
     int endOffset=myRangeMarker.getEndOffset();
 
     LOG.assertTrue(startOffset>-1);
-    LOG.assertTrue(startOffset<document.getTextLength());
+    LOG.assertTrue(startOffset<=document.getTextLength());
     LOG.assertTrue(endOffset>-1);
     LOG.assertTrue(endOffset<document.getTextLength()+1);
 
@@ -73,7 +73,7 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
     int lineStartOffset = document.getLineStartOffset(lineNumber);
     LOG.assertTrue(lineStartOffset>-1);
     LOG.assertTrue(lineStartOffset<=startOffset);
-    LOG.assertTrue(lineStartOffset<document.getTextLength());
+    LOG.assertTrue(lineStartOffset<=document.getTextLength());
 
     int columnNumber=startOffset-lineStartOffset;
     LOG.assertTrue(columnNumber>-1);

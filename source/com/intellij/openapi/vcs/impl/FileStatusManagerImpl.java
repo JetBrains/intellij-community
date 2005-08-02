@@ -2,6 +2,7 @@ package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
@@ -166,7 +167,8 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   }
 
   public void fileStatusChanged(final VirtualFile file) {
-    if (!ApplicationManager.getApplication().isDispatchThread()) {
+    final Application application = ApplicationManager.getApplication();
+    if (!application.isDispatchThread() && !application.isUnitTestMode()) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           fileStatusChanged(file);

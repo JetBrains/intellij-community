@@ -390,7 +390,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
         return myTree.getRowCount() != myTree.getRowForPath(path) + 1;
       }
       else {
-        return myTodoTreeBuilder.getFirstPointerForElement(element) != null;
+        return true;
       }
     }
 
@@ -404,7 +404,6 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
       if (userObject == null) {
         return false;
       }
-      Object element = userObject.getElement();
       return !isFirst(node);
     }
 

@@ -131,7 +131,7 @@ class InitialInfoBuilder {
     myResult.put(rootBlock, info);
 
     if (textRange.getLength() == 0) {
-      LOG.assertTrue(false);
+      LOG.assertTrue(false, rootBlock.getClass().getName());
     }
     if (myPreviousBlock != null) {
       myPreviousBlock.setNextBlock(info);
