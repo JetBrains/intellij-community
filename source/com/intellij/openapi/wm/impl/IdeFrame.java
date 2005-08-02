@@ -74,6 +74,14 @@ public class IdeFrame extends JFrame implements DataProvider {
     myLayoutFocusTraversalPolicy.setOverridenDefaultComponent(component);
   }
 
+  /**
+   * This is overriden to get rid of strange Alloy LaF customization of frames. For unknown reason it sets the maxBounds rectangle
+   * and it does it plain wrong. Setting bounds to <code>null</code> means default value should be taken from the underlying OS.
+   */
+  public synchronized void setMaximizedBounds(Rectangle bounds) {
+    super.setMaximizedBounds(null);
+  }
+
 // Made protected for Fabrique
   protected void setupCloseAction() {
     setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
