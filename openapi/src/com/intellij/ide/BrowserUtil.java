@@ -119,6 +119,11 @@ public class BrowserUtil {
   }
 
   private static void showErrorMessage(final String message, final String title) {
+    final Application app = ApplicationManager.getApplication();
+    if (app == null) {
+      return; // Not started yet. Not able to show message up. (Could happen in License panel under Linux).
+    }
+
     Runnable runnable = new Runnable() {
       public void run() {
         Messages.showMessageDialog(message,
@@ -126,11 +131,12 @@ public class BrowserUtil {
                                    Messages.getErrorIcon());
       }
     };
-    if (ApplicationManager.getApplication().isDispatchThread()) {
+    
+    if (app.isDispatchThread()) {
       runnable.run();
     }
     else {
-      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MMODAL);
+      app.invokeLater(runnable, ModalityState.NON_MMODAL);
     }
   }
 
