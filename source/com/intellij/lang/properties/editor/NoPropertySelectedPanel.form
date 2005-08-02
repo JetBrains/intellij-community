@@ -3,7 +3,7 @@
   <grid id="5157b" binding="myPanel" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="103" y="168" width="323" height="20"/>
+      <xy x="103" y="168" width="327" height="20"/>
       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
     </constraints>
     <properties/>
@@ -11,11 +11,11 @@
     <children>
       <component id="a707f" class="javax.swing.JLabel">
         <constraints>
-          <xy x="17" y="3" width="288" height="14"/>
+          <xy x="0" y="3" width="327" height="14"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0"/>
         </constraints>
         <properties>
-          <text value="&lt;html&gt;&lt;body&gt;&lt;center&gt;&lt;b&gt;Please select property name on the left to edit it's values&lt;/body&gt;&lt;/html&gt;"/>
+          <text value="&lt;html&gt;&lt;body&gt;&lt;center&gt;&lt;b&gt;Please select property name on the left to edit its values&lt;/body&gt;&lt;/html&gt;"/>
         </properties>
       </component>
     </children>
