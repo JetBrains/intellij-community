@@ -187,7 +187,7 @@ public class PsiBuilderImpl implements PsiBuilder {
 
   @Nullable
   private Token getTokenOrWhitespace() {
-    if (myCurrentLexem >= myLexems.size()) {
+    while(myCurrentLexem >= myLexems.size()) {
       if (myLexer.getTokenType() == null) return null;
       myLexems.add(new Token());
       myLexer.advance();
