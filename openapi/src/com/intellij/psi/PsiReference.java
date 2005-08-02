@@ -19,25 +19,91 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A PSI element which is a reference to another element. For example, the variable name
+ * used in an expression. The "Goto Definition" action can be used to go from a reference
+ * to the element it references.
+ */
+
 public interface PsiReference {
   PsiReference[] EMPTY_ARRAY = new PsiReference[0];
 
+  /**
+   * Returns the underlying (referencing) element of the reference.
+   *
+   * @return the underlying element of the reference.
+   */
   PsiElement getElement();
 
   /**
-   * Relative range in element
-   * @return
+   * Returns the part of the underlying element which serves as a reference, or the complete
+   * text range of the element if the entire element is a reference.
+   *
+   * @return Relative range in element
    */
   TextRange getRangeInElement();
 
+  /**
+   * Returns the element which is the target of the reference.
+   *
+   * @return the target element, or null if it was not possible to resolve the reference to a valid target.
+   */
   @Nullable PsiElement resolve();
+
+  /**
+   * Returns the name of the reference target element which does not depend on import statements
+   * and other context (for example, the full-qualified name of the class if the reference targets
+   * a Java class).
+   *
+   * @return the canonical text of the reference.
+   */
   String getCanonicalText();
 
+  /**
+   * Called when the reference target element has been renamed, in order to change the reference
+   * text according to the new name.
+   *
+   * @param newElementName the new name of the target element.
+   * @return the new underlying element of the reference.
+   * @throws IncorrectOperationException if the rename cannot be handled for some reason.
+   */
   PsiElement handleElementRename(String newElementName) throws IncorrectOperationException;
+
+  /**
+   * Changes the reference so that it starts to point to the specified element. This is called,
+   * for example, by the "Create Class from New" quickfix, to bind the (invalid) reference on
+   * which the quickfix was called to the newly created class.
+   *
+   * @param element the element which should become the target of the reference.
+   * @return the new underlying element of the reference.
+   * @throws IncorrectOperationException if the rebind cannot be handled for some reason.
+   */
   PsiElement bindToElement(PsiElement element) throws IncorrectOperationException;
 
+  /**
+   * Checks if the reference targets the specified element.
+   *
+   * @param element the element to check target for.
+   * @return true if the reference targets that element, false otherwise.
+   */
   boolean isReferenceTo(PsiElement element);
+
+  /**
+   * Returns the array of {@link PsiElement} and/or {@link com.intellij.psi.infos.CandidateInfo} instances
+   * representing all identifiers that are visible at the location of the reference. The contents
+   * of the returned array is used to build the lookup list for basic code completion.
+   *
+   * @return the array of available identifiers.
+   */
   Object[] getVariants();
 
+  /**
+   * Returns false if the underlying element is guaranteed to be a reference, or true
+   * if the underlying element is a possible reference which should not be reported as
+   * an error if it fails to resolve. For example, a text in an XML file which looks
+   * like a full-qualified Java class name is a soft reference.
+   *
+   * @return true if the refence is soft, false otherwise.
+   */
   boolean isSoft();
 }
