@@ -15,7 +15,10 @@ import java.util.Collections;
 public class ConstantExpressionEvaluator extends PsiElementVisitor {
   private Set<PsiVariable> myVisitedVars;
   private boolean myThrowExceptionOnOverflow;
-  private Object myValue;
+
+  /** used in Fabrique:*/
+  protected Object myValue;
+  
   private static final Key<CachedValue<Map<PsiElement,Object>>> CONSTANT_VALUE_MAP_KEY = new Key<CachedValue<Map<PsiElement, Object>>>("CONSTANT_VALUE_MAP_KEY");
   private static final Object NO_VALUE = new Object();
 
