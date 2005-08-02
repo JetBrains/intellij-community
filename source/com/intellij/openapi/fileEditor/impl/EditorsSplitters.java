@@ -375,9 +375,25 @@ public final class EditorsSplitters extends JPanel {
     return myCurrentWindow;
   }
 
+  /**
+   * sets the window passed as a current ('focused') window among all splitters. All file openings will be done inside this
+   * current window
+   * @param window a window to be set as current
+   * @param requestFocus whether to request focus to the editor currently selected in this window
+   */
   public void setCurrentWindow(final EditorWindow window, final boolean requestFocus) {
-    myCurrentWindow = window;
+    final EditorWithProviderComposite oldEditor = myCurrentSelectedEditor;
+    final EditorWithProviderComposite newEditor = window != null? window.getSelectedEditor() : null;
+    try {
+      getManager().fireSelectionChanged(oldEditor, newEditor);
+    }
+    finally {
+      myCurrentWindow = window;
+      myCurrentSelectedEditor = newEditor;
+    }
+
     getManager().updateFileName(window == null ? null : window.getSelectedFile());
+
     if (window != null) {
       final EditorWithProviderComposite selectedEditor = myCurrentWindow.getSelectedEditor();
       if (selectedEditor != null) {
@@ -522,20 +538,8 @@ public final class EditorsSplitters extends JPanel {
           getManager().updateFileName(newActiveWindow == null ? null : newActiveWindow.getSelectedFile());
           myCurrentFile = getCurrentFile();
         }
-        if (oldActiveWindow != newActiveWindow && component != null) {
+        if (component != null) {
           setCurrentWindow(newActiveWindow, false);
-        }
-        if (component == null && !currentFileChanged) {
-          // focused component has changed, but active window not 
-          return;
-        }
-        EditorWithProviderComposite oldSelected = myCurrentSelectedEditor;
-        EditorWithProviderComposite newSelected = newActiveWindow == null ? null : newActiveWindow.getSelectedEditor();
-        try {
-          getManager().fireSelectionChanged(oldSelected, newSelected);
-        }
-        finally {
-          myCurrentSelectedEditor = newSelected;
         }
       }
     }

@@ -919,7 +919,6 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     if(editor.equals(getLastSelected ())){
       editor.getSelectedEditor().deselectNotify();
       mySplitters.setCurrentWindow (null, false);
-      fireSelectionChanged(editor, null); // oldSelectedComposite -> null
     }
 
     editor.removeEditorManagerListener(myEditorManagerListener);
