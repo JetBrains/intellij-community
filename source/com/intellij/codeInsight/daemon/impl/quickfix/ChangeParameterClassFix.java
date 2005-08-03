@@ -65,7 +65,7 @@ public class ChangeParameterClassFix extends ExtendsListFix {
       }
       else {
         //SCR 12599
-        editor1.getCaretModel().moveToOffset(myClass.getTextRange().getStartOffset() - 1);
+        editor1.getCaretModel().moveToOffset(myClass.getTextRange().getStartOffset());
 
         OverrideImplementUtil.chooseAndImplementMethods(project, editor1, myClass);
       }
