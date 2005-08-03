@@ -736,25 +736,30 @@ public abstract class GenericsHighlightUtil {
   }
 
   public static HighlightInfo checkInstanceOfGenericType(PsiInstanceOfExpression expression) {
-    PsiType type = expression.getCheckType().getType();
-    if (type instanceof PsiClassType) {
-      PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
-      if (resolveResult.getElement() == null) return null;
-      if (resolveResult.getElement() instanceof PsiTypeParameter) {
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression.getCheckType(), "Class or array expected");
-      }
-      else {
-        Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(resolveResult.getElement());
-        while (iterator.hasNext()) {
-          PsiType substituted = resolveResult.getSubstitutor().substitute(iterator.next());
-          if (substituted != null && (!(substituted instanceof PsiWildcardType) || ((PsiWildcardType)substituted).getBound() != null)) {
-            return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression.getCheckType(),
-                                                     "Illegal generic type for instanceof");
-          }
-        }
-        return null;
+    final PsiTypeElement checkTypeElement = expression.getCheckType();
+    PsiElement ref = checkTypeElement.getInnermostComponentReferenceElement();
+    while (ref instanceof PsiJavaCodeReferenceElement) {
+      final HighlightInfo result = isIllegalForInstanceOf((PsiJavaCodeReferenceElement)ref, checkTypeElement);
+      if (result != null) return result;
+      ref = ((PsiJavaCodeReferenceElement)ref).getQualifier();
+    }
+    return null;
+  }
+
+  private static HighlightInfo isIllegalForInstanceOf(PsiJavaCodeReferenceElement ref, final PsiTypeElement typeElement) {
+    final PsiElement resolved = ref.resolve();
+    if (resolved instanceof PsiTypeParameter) {
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, ref, "Class or array expected");
+    }
+
+    final PsiType[] parameters = ref.getTypeParameters();
+    for (PsiType parameterType : parameters) {
+      if (parameterType != null &&
+          !(parameterType instanceof PsiWildcardType && ((PsiWildcardType)parameterType).getBound() == null)) {
+         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, typeElement, "Illegal generic type for instanceof");
       }
     }
+
     return null;
   }
 
