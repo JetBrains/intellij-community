@@ -136,7 +136,7 @@ public class TypeConversionUtil {
     if (!fromClass.isInterface()) {
       if (toClass.isInterface()) {
         if (fromClass.hasModifierProperty(PsiModifier.FINAL)) return false;
-        return checkSuperTypesWithDifferentTypeArguments(toResult, fromClass, manager, fromResult.getSubstitutor());
+        return checkSuperTypesWithDifferentTypeArguments(toResult, fromClass, manager, fromResult.getSubstitutor(), new HashSet<PsiClass>());
       }
       else {
         if (manager.areElementsEquivalent(fromClass, toClass)) {
@@ -144,10 +144,10 @@ public class TypeConversionUtil {
         }
 
         if (toClass.isInheritor(fromClass, true)) {
-          return checkSuperTypesWithDifferentTypeArguments(fromResult, toClass, manager, toResult.getSubstitutor());
+          return checkSuperTypesWithDifferentTypeArguments(fromResult, toClass, manager, toResult.getSubstitutor(), new HashSet<PsiClass>());
         }
         else if (fromClass.isInheritor(toClass, true)) {
-          return checkSuperTypesWithDifferentTypeArguments(toResult, fromClass, manager, fromResult.getSubstitutor());
+          return checkSuperTypesWithDifferentTypeArguments(toResult, fromClass, manager, fromResult.getSubstitutor(), new HashSet<PsiClass>());
         }
 
         return false;
@@ -156,7 +156,7 @@ public class TypeConversionUtil {
     else {
       if (!toClass.isInterface()) {
         if (!toClass.hasModifierProperty(PsiModifier.FINAL)) {
-          return checkSuperTypesWithDifferentTypeArguments(fromResult, toClass, manager, toResult.getSubstitutor());
+          return checkSuperTypesWithDifferentTypeArguments(fromResult, toClass, manager, toResult.getSubstitutor(), new HashSet<PsiClass>());
         }
         else {
           if (!toClass.isInheritor(fromClass, true)) return false;
@@ -193,10 +193,10 @@ public class TypeConversionUtil {
         else {
           //In jls3 check for super interface with distinct type arguments
           if (toClass.isInheritor(fromClass, true)) {
-            return checkSuperTypesWithDifferentTypeArguments(fromResult, toClass, manager, toResult.getSubstitutor());
+            return checkSuperTypesWithDifferentTypeArguments(fromResult, toClass, manager, toResult.getSubstitutor(), new HashSet<PsiClass>());
           }
           else {
-            return checkSuperTypesWithDifferentTypeArguments(toResult, fromClass, manager, fromResult.getSubstitutor());
+            return checkSuperTypesWithDifferentTypeArguments(toResult, fromClass, manager, fromResult.getSubstitutor(), new HashSet<PsiClass>());
           }
         }
       }
@@ -205,7 +205,12 @@ public class TypeConversionUtil {
 
   private static boolean checkSuperTypesWithDifferentTypeArguments(PsiClassType.ClassResolveResult baseResult,
                                                                    PsiClass derived,
-                                                                   PsiManager manager, PsiSubstitutor derivedSubstitutor) {
+                                                                   PsiManager manager,
+                                                                   PsiSubstitutor derivedSubstitutor,
+                                                                   final Set<PsiClass> visited) {
+    if (visited.contains(derived)) return true;
+    visited.add(derived);
+
     if (manager.getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) return true;
     PsiClass base = baseResult.getElement();
     PsiClass[] supers = derived.getSupers();
@@ -221,7 +226,7 @@ public class TypeConversionUtil {
 
     for (PsiClass aSuper : supers) {
       PsiSubstitutor s = getSuperClassSubstitutor(aSuper, derived, derivedSubstitutor);
-      if (!checkSuperTypesWithDifferentTypeArguments(baseResult, aSuper, manager, s)) return false;
+      if (!checkSuperTypesWithDifferentTypeArguments(baseResult, aSuper, manager, s, visited)) return false;
     }
 
     return true;
