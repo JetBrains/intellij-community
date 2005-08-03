@@ -27,14 +27,18 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class InspectionGadgetsFix implements LocalQuickFix{
-  //to appear in "Apply Fix" statement when multiple Quick Fixes exist
-  public String getFamilyName() {
-    return "";
-  }
+    //to appear in "Apply Fix" statement when multiple Quick Fixes exist
+    public String getFamilyName() {
+        return "";
+    }
 
-  public void applyFix(Project project,
+    public void applyFix(Project project,
                          ProblemDescriptor descriptor){
-        if(isQuickFixOnReadOnlyFile(descriptor)){
+        final PsiElement problemElement = descriptor.getPsiElement();
+        if(problemElement == null || !problemElement.isValid()){
+            return;
+        }
+        if(isQuickFixOnReadOnlyFile(problemElement)){
             return;
         }
         try{
@@ -103,11 +107,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
         styleManager.reformat(replacementStatement);
     }
 
-    private static boolean isQuickFixOnReadOnlyFile(ProblemDescriptor descriptor){
-        final PsiElement problemElement = descriptor.getPsiElement();
-        if(problemElement == null){
-            return false;
-        }
+    private static boolean isQuickFixOnReadOnlyFile(PsiElement problemElement){
         final PsiFile containingPsiFile = problemElement.getContainingFile();
         if(containingPsiFile == null){
             return false;

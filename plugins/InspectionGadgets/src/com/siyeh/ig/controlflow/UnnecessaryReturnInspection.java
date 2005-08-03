@@ -73,13 +73,10 @@ public class UnnecessaryReturnInspection extends StatementInspection{
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
+		        throws IncorrectOperationException{
             final PsiElement returnKeywordElement = descriptor.getPsiElement();
             final PsiElement returnStatement = returnKeywordElement.getParent();
-            if(returnStatement == null)
-            {
-                return;
-            }
+            assert returnStatement !=null;
             deleteElement(returnStatement);
         }
     }
@@ -95,7 +92,7 @@ public class UnnecessaryReturnInspection extends StatementInspection{
             final PsiMethod method =
                     PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
             if(method == null){
-            return;
+	            return;
             }
             if(!method.isConstructor()){
                 final PsiType returnType = method.getReturnType();
