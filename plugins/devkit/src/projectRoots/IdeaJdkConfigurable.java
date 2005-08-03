@@ -138,7 +138,9 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
         }
         mySandboxHome.setHistory(result);
       }
-      mySandboxHome.setText(((Sandbox)myIdeaJdk.getSdkAdditionalData()).getSandboxHome());
+      final String sandboxHome = ((Sandbox)myIdeaJdk.getSdkAdditionalData()).getSandboxHome();
+      mySandboxHome.setText(sandboxHome);
+      mySandboxHome.setSelectedItem(sandboxHome);
     } else {
       mySandboxHome.setText("");
     }
