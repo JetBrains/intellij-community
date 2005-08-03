@@ -29,7 +29,9 @@ public class PsiFileUrl extends AbstractUrl {
   public AbstractUrl createUrlByElement(Object element) {
     if (element instanceof PsiFile) {
       VirtualFile file = ((PsiFile)element).getVirtualFile();
-      return new PsiFileUrl(file.getUrl(), null);
+      if (file != null){
+        return new PsiFileUrl(file.getUrl(), null);
+      }
     }
     return null;
   }
