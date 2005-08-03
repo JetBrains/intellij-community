@@ -212,7 +212,11 @@ public class FileReference implements PsiPolyVariantReference, QuickFixProvider 
 
     final String newName = JspUtil.getDeploymentPath((PsiFileSystemItem)element);
     final TextRange range = new TextRange(myFileReferenceSet.getStartInElement(), getRangeInElement().getEndOffset());
-    return getManipulator(getElement()).handleContentChange(getElement(), range, newName);
+    final ElementManipulator<PsiElement> manipulator = getManipulator(getElement());
+    if (manipulator == null) {
+      throw new IncorrectOperationException("Manipulator not defined for: " + getElement());
+    }
+    return manipulator.handleContentChange(getElement(), range, newName);
   }
   private static ElementManipulator<PsiElement> getManipulator(PsiElement currentElement){
     return ReferenceProvidersRegistry.getInstance(currentElement.getProject()).getManipulator(currentElement);
