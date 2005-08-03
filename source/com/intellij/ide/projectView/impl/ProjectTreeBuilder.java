@@ -101,9 +101,11 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
 
   private class PropertiesFileListener implements PropertiesFilesManager.PropertiesFileListener {
     public void fileAdded(VirtualFile propertiesFile) {
+      fileChanged(propertiesFile, null);
     }
 
     public void fileRemoved(VirtualFile propertiesFile) {
+      fileChanged(propertiesFile, null);
     }
 
     public void fileChanged(VirtualFile propertiesFile, final VirtualFilePropertyEvent event) {

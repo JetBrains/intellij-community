@@ -289,7 +289,8 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     }
     final SimplifyBooleanExpressionFix fix = new SimplifyBooleanExpressionFix(expression, Boolean.valueOf(value));
     // simplify intention already active
-    if (SimplifyBooleanExpressionFix.canBeSimplified((PsiExpression)element) != null) return null;
+    if (!fix.isAvailable(element.getProject(), null, element.getContainingFile()) 
+        || SimplifyBooleanExpressionFix.canBeSimplified((PsiExpression)element) != null) return null;
     return new LocalQuickFix() {
       public String getName() {
         return fix.getText();

@@ -49,6 +49,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.PathUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
@@ -71,7 +72,7 @@ public class LibraryLinkImpl extends LibraryLink implements ResolvableElement{
   interface LibraryInfo extends JDOMExternalizable {
     String getName();
 
-    List<String> getUrls();
+    @NotNull List<String> getUrls();
 
     String getLevel();
 
@@ -80,13 +81,14 @@ public class LibraryLinkImpl extends LibraryLink implements ResolvableElement{
     void addUrl(String url);
   }
 
-  private class LibraryInfoImpl implements LibraryInfo {
+  private static class LibraryInfoImpl implements LibraryInfo {
     private final List<String> myUrls = new ArrayList<String>();
 
     public String getName() {
       return null;
     }
 
+    @NotNull
     public List<String> getUrls() {
       return myUrls;
     }
@@ -122,7 +124,7 @@ public class LibraryLinkImpl extends LibraryLink implements ResolvableElement{
     }
   }
 
-  private class LibraryInfoBasedOnLibrary implements LibraryInfo {
+  private static class LibraryInfoBasedOnLibrary implements LibraryInfo {
     private final Library myLibrary;
 
     private LibraryInfoBasedOnLibrary(Library library) {
@@ -133,6 +135,7 @@ public class LibraryLinkImpl extends LibraryLink implements ResolvableElement{
       return myLibrary.getName();
     }
 
+    @NotNull
     public List<String> getUrls() {
       return Arrays.asList(myLibrary.getUrls(OrderRootType.CLASSES));
     }
@@ -244,8 +247,7 @@ public class LibraryLinkImpl extends LibraryLink implements ResolvableElement{
     if (!(otherElement instanceof LibraryLink)) return false;
     final LibraryLink otherLibraryLink = (LibraryLink)otherElement;
     if (!Comparing.strEqual(getName(), otherLibraryLink.getName())) return false;
-    if (!getUrls().equals(otherLibraryLink.getUrls())) return false;
-    return true;
+    return getUrls().equals(otherLibraryLink.getUrls());
   }
 
   public String getSingleFileName() {
