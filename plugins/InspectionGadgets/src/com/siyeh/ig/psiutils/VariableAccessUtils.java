@@ -94,6 +94,12 @@ public class VariableAccessUtils{
                     ((PsiParenthesizedExpression) expression) .getExpression();
             return mayEvaluateToVariable(containedExpression, variable);
         }
+        if(expression instanceof PsiTypeCastExpression)
+        {
+            final PsiExpression containedExpression =
+                    ((PsiTypeCastExpression) expression) .getOperand();
+            return mayEvaluateToVariable(containedExpression, variable);
+        }
         if(expression instanceof PsiConditionalExpression)
         {
             final PsiConditionalExpression conditional = (PsiConditionalExpression) expression;
