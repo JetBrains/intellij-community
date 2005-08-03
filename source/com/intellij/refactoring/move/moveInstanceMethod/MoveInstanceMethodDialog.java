@@ -114,6 +114,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
     }
 
     final PsiVariable targetVariable = (PsiVariable)myList.getSelectedValue();
+    if (targetVariable == null) return;
     final MoveInstanceMethodProcessor processor = new MoveInstanceMethodProcessor(myMethod.getProject(),
                                                                                   myMethod, targetVariable,
                                                                                   myVisibilityPanel.getVisibility(),
