@@ -1424,17 +1424,18 @@ public abstract class DebugProcessImpl implements DebugProcess {
     public void contextAction() {
       if (getSuspendManager().isFrozen(myThread)) {
         getSuspendManager().unfreezeThread(myThread);
+        return;
       }
 
-      if (getSuspendContext().getThread() == myThread) {
-        DebugProcessImpl.this.getManagerThread().invoke(createResumeCommand(getSuspendContext()));
-      }
-      else {
-        Set<SuspendContextImpl> suspendingContexts = SuspendManagerUtil.getSuspendingContexts(getSuspendManager(), myThread);
-        for (Iterator<SuspendContextImpl> iterator = suspendingContexts.iterator(); iterator.hasNext();) {
-          SuspendContextImpl suspendContext = iterator.next();
+      final Set<SuspendContextImpl> suspendingContexts = SuspendManagerUtil.getSuspendingContexts(getSuspendManager(), myThread);
+      for (Iterator<SuspendContextImpl> iterator = suspendingContexts.iterator(); iterator.hasNext();) {
+        SuspendContextImpl suspendContext = iterator.next();
+        if (suspendContext.getThread() == myThread) {
+          DebugProcessImpl.this.getManagerThread().invoke(createResumeCommand(suspendContext));
+        }
+        else {
           getSuspendManager().resumeThread(suspendContext, myThread);
-        }        
+        }
       }
     }
   }

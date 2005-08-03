@@ -8,6 +8,8 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.sun.jdi.request.EventRequest;
 
 /**
  * User: lex
@@ -41,18 +43,37 @@ public class ResumeThreadAction extends DebuggerAction{
     DebuggerTreeNodeImpl[] selectedNodes = getSelectedNodes(e.getDataContext());
 
     boolean visible = false;
+    boolean enabled = false;
+    String text = "Resume";
 
     if(selectedNodes != null && selectedNodes.length > 0){
       visible = true;
-      for (int i = 0; i < selectedNodes.length; i++) {
-        NodeDescriptorImpl threadDescriptor = selectedNodes[i].getDescriptor();
-        if(!(threadDescriptor instanceof ThreadDescriptorImpl) ||
-           !((ThreadDescriptorImpl)threadDescriptor).isSuspended()) {
+      enabled = true;
+      for (DebuggerTreeNodeImpl selectedNode : selectedNodes) {
+        final NodeDescriptorImpl threadDescriptor = selectedNode.getDescriptor();
+        if (!(threadDescriptor instanceof ThreadDescriptorImpl) || !((ThreadDescriptorImpl)threadDescriptor).isSuspended()) {
           visible = false;
           break;
         }
       }
+      if (visible) {
+        for (DebuggerTreeNodeImpl selectedNode : selectedNodes) {
+          final ThreadDescriptorImpl threadDescriptor = (ThreadDescriptorImpl)selectedNode.getDescriptor();
+          if (threadDescriptor.getSuspendContext().getSuspendPolicy() == EventRequest.SUSPEND_ALL && !threadDescriptor.isFrozen()) {
+            enabled = false;
+            break;
+          }
+          else {
+            if (threadDescriptor.isFrozen()) {
+              text = "Unfreeze";
+            }
+          }
+        }
+      }
     }
-    e.getPresentation().setVisible(visible);
+    final Presentation presentation = e.getPresentation();
+    presentation.setText(text);
+    presentation.setVisible(visible);
+    presentation.setEnabled(enabled);
   }
 }
