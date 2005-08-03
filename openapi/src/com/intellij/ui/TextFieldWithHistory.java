@@ -19,6 +19,8 @@ import javax.swing.*;
 import javax.swing.event.DocumentListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.ActionListener;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,13 +34,15 @@ public class TextFieldWithHistory extends JComboBox {
     setModel(myModel);
     setEditable(true);
 
+    setEditor(new MyComboBoxEditor(getEditor()));
+
     getTextEditor().addKeyListener(new HistoricalValuesHighlighter());
   }
 
   public void addDocumentListener(DocumentListener listener) {
     getTextEditor().getDocument().addDocumentListener(listener);
   }
-  
+
   public void setHistorySize(int aHistorySize) {
     myHistorySize = aHistorySize;
   }
@@ -253,6 +257,52 @@ public class TextFieldWithHistory extends JComboBox {
 
     public List getItems() {
       return myFullList;
+    }
+  }
+
+  /**
+   * To override
+   * @see com.sun.java.swing.plaf.windows.WindowsComboBoxUI.WindowsComboBoxEditor#setItem
+   * otherwise every type (for letters only) produce selection of text Thus near every next typing removes previous ones.
+   */
+  private static class MyComboBoxEditor implements ComboBoxEditor {
+    private ComboBoxEditor myDelegate;
+
+    public MyComboBoxEditor(final ComboBoxEditor delegate) {
+      myDelegate = delegate;
+    }
+
+    public Component getEditorComponent() {
+      return myDelegate.getEditorComponent();
+    }
+
+    public void setItem(Object anObject) {
+      final Component editorComponent = myDelegate.getEditorComponent();
+      if (editorComponent instanceof JTextField){
+        if ( anObject != null )  {
+          ((JTextField)editorComponent).setText(anObject.toString());
+        } else {
+          ((JTextField)editorComponent).setText("");
+        }
+      } else {
+        myDelegate.setItem(anObject);
+      }
+    }
+
+    public Object getItem() {
+      return myDelegate.getItem();
+    }
+
+    public void selectAll() {
+      myDelegate.selectAll();
+    }
+
+    public void addActionListener(ActionListener l) {
+      myDelegate.addActionListener(l);
+    }
+
+    public void removeActionListener(ActionListener l) {
+      myDelegate.removeActionListener(l);
     }
   }
 }
