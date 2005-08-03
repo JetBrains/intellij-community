@@ -468,7 +468,7 @@ public class CompileDriver {
         return myExitStatus;
       }
 
-      didSomething |= invokeFileProcessingCompilers(compilerManager, context, SourceInstrumentingCompiler.class, myProcessingCompilerAdapterFactory, forceCompile);
+      didSomething |= invokeFileProcessingCompilers(compilerManager, context, SourceInstrumentingCompiler.class, myProcessingCompilerAdapterFactory, isRebuild);
       if (myExitStatus != null) {
         return myExitStatus;
       }
@@ -479,7 +479,7 @@ public class CompileDriver {
           return myExitStatus;
         }
 
-        didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassInstrumentingCompiler.class, myProcessingCompilerAdapterFactory, forceCompile);
+        didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassInstrumentingCompiler.class, myProcessingCompilerAdapterFactory, isRebuild);
         if (myExitStatus != null) {
           return myExitStatus;
         }
@@ -487,17 +487,17 @@ public class CompileDriver {
         // explicitly passing forceCompile = false because in scopes that is narrower than ProjectScope it is impossible
         // to understand whether the class to be processed is in scope or not. Otherwise compiler may process its items even if 
         // there were changes in completely independent files.
-        didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassPostProcessingCompiler.class, myProcessingCompilerAdapterFactory, false);
+        didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassPostProcessingCompiler.class, myProcessingCompilerAdapterFactory, isRebuild);
         if (myExitStatus != null) {
           return myExitStatus;
         }
 
-        didSomething |= invokeFileProcessingCompilers(compilerManager, context, PackagingCompiler.class, myPackagingCompilerAdapterFactory, forceCompile);
+        didSomething |= invokeFileProcessingCompilers(compilerManager, context, PackagingCompiler.class, myPackagingCompilerAdapterFactory, isRebuild);
         if (myExitStatus != null) {
           return myExitStatus;
         }
 
-        didSomething |= invokeFileProcessingCompilers(compilerManager, context, Validator.class, myProcessingCompilerAdapterFactory, forceCompile);
+        didSomething |= invokeFileProcessingCompilers(compilerManager, context, Validator.class, myProcessingCompilerAdapterFactory, isRebuild);
         if (myExitStatus != null) {
           return myExitStatus;
         }
