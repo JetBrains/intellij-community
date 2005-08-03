@@ -93,7 +93,7 @@ public class MismatchedCollectionQueryUpdateInspection
             super.visitLocalVariable(variable);
             final PsiCodeBlock codeBlock =
                     PsiTreeUtil.getParentOfType(variable,
-                                                               PsiCodeBlock.class);
+		                    PsiCodeBlock.class);
             if(codeBlock == null){
                 return;
             }
@@ -121,6 +121,15 @@ public class MismatchedCollectionQueryUpdateInspection
         if(initializer != null && !isEmptyCollectionInitializer(initializer)){
             return true;
         }
+	    if (initializer instanceof PsiNewExpression) {
+		    final PsiNewExpression newExpression = (PsiNewExpression)initializer;
+		    final PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
+		    if (anonymousClass != null) {
+			    if (collectionUpdateCalled(variable, anonymousClass)) {
+				    return true;
+			    }
+		    }
+	    }
         if(VariableAccessUtils.variableIsAssigned(variable, context)){
             return true;
         }
@@ -141,10 +150,10 @@ public class MismatchedCollectionQueryUpdateInspection
 
     private static boolean collectionContentsAreQueried(PsiVariable variable,
                                                         PsiElement context){
-        final PsiExpression initializer = variable.getInitializer();
         if(collectionQueryCalled(variable, context)){
             return true;
         }
+	    final PsiExpression initializer = variable.getInitializer();
         if(initializer != null && !isEmptyCollectionInitializer(initializer)){
             return true;
         }

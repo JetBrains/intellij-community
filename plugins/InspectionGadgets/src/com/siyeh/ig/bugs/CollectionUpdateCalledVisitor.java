@@ -16,6 +16,7 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
+import com.siyeh.ig.psiutils.CollectionUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -29,28 +30,29 @@ class CollectionUpdateCalledVisitor extends PsiRecursiveElementVisitor{
 
     static{
         updateNames.add("add");
-        updateNames.add("put");
-        updateNames.add("set");
-        updateNames.add("remove");
         updateNames.add("addAll");
-        updateNames.add("removeAll");
-        updateNames.add("retainAll");
-        updateNames.add("putAll");
-        updateNames.add("clear");
+        updateNames.add("addBefore");
         updateNames.add("addElement");
-        updateNames.add("removeAllElements");
-        updateNames.add("trimToSize");
-        updateNames.add("removeElementAt");
-        updateNames.add("removeRange");
-        updateNames.add("insertElementAt");
-        updateNames.add("setElementAt");
-        updateNames.add("removeRange");
         updateNames.add("addFirst");
         updateNames.add("addLast");
-        updateNames.add("addBefore");
+        updateNames.add("clear");
+        updateNames.add("insertElementAt");
+        updateNames.add("load");
+        updateNames.add("offer");
+        updateNames.add("push");
+        updateNames.add("put");
+        updateNames.add("putAll");
+        updateNames.add("remove");
+        updateNames.add("removeAll");
+        updateNames.add("removeAllElements");
+        updateNames.add("retainAll");
+        updateNames.add("removeElementAt");
         updateNames.add("removeFirst");
         updateNames.add("removeLast");
-        updateNames.add("offer");
+        updateNames.add("removeRange");
+        updateNames.add("set");
+        updateNames.add("setElementAt");
+        updateNames.add("trimToSize");
     }
 
     private boolean updated = false;
@@ -83,15 +85,26 @@ class CollectionUpdateCalledVisitor extends PsiRecursiveElementVisitor{
         }
         final PsiExpression qualifier =
                 methodExpression.getQualifierExpression();
-        if(!(qualifier instanceof PsiReferenceExpression)){
-            return;
-        }
-        final PsiElement referent = ((PsiReference) qualifier).resolve();
-        if(referent == null){
-            return;
-        }
-        if(referent.equals(variable)){
-            updated = true;
+        if (qualifier == null || qualifier instanceof PsiThisExpression) {
+            final PsiElement method = methodExpression.resolve();
+            if (method == null) {
+                return;
+            }
+            final PsiClass aClass = (PsiClass)method.getParent();
+            if (CollectionUtils.isCollectionClassOrInterface(aClass)) {
+                updated = true;
+            }
+        } else {
+            if (!(qualifier instanceof PsiReferenceExpression)) {
+                return;
+            }
+            final PsiElement referent = ((PsiReference)qualifier).resolve();
+            if (referent == null) {
+                return;
+            }
+            if (referent.equals(variable)) {
+                updated = true;
+            }
         }
     }
 

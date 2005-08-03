@@ -28,31 +28,34 @@ class CollectionQueryCalledVisitor extends PsiRecursiveElementVisitor{
     private static final Set<String> queryNames = new HashSet<String>(10);
 
     static{
-        queryNames.add("get");
+        queryNames.add("clone");
         queryNames.add("contains");
+        queryNames.add("containsAll");
         queryNames.add("containsKey");
         queryNames.add("containsValue");
-        queryNames.add("containsAll");
-        queryNames.add("size");
-        queryNames.add("indexOf");
-        queryNames.add("iterator");
-        queryNames.add("lastIndexOf");
-        queryNames.add("toArray");
-        queryNames.add("isEmpty");
-        queryNames.add("entrySet");
-        queryNames.add("keySet");
-        queryNames.add("values");
-        queryNames.add("keys");
-        queryNames.add("elements");
-        queryNames.add("subList");
         queryNames.add("copyInto");
-        queryNames.add("lastElement");
+        queryNames.add("entrySet");
+        queryNames.add("elements");
+        queryNames.add("empty");
         queryNames.add("firstElement");
-        queryNames.add("clone");
+        queryNames.add("get");
         queryNames.add("getFirst");
         queryNames.add("getLast");
+        queryNames.add("indexOf");
+        queryNames.add("isEmpty");
+        queryNames.add("iterator");
+        queryNames.add("keys");
+        queryNames.add("keySet");
+        queryNames.add("lastElement");
+        queryNames.add("lastIndexOf");
         queryNames.add("peek");
         queryNames.add("poll");
+        queryNames.add("pop");
+        queryNames.add("size");
+        queryNames.add("store");
+        queryNames.add("subList");
+        queryNames.add("toArray");
+        queryNames.add("values");
     }
 
     private boolean queried = false;
