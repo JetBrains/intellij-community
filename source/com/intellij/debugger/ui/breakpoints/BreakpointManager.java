@@ -37,6 +37,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiField;
 import com.intellij.util.Alarm;
@@ -91,7 +92,7 @@ public class BreakpointManager implements JDOMExternalizable {
                 update(breakpointsToUpdate);
               }
             }
-          }, 300);
+          }, 300, ModalityState.NON_MMODAL);
         }
       }
     }
