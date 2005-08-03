@@ -1,0 +1,11 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html><body bgcolor="white">
+Provides interfaces for interacting with IDEA's debugger. The main extensibility
+point of the debugger is the possibility for a plugin to provide custom mapping of
+positions in compiled classes to source code lines, which is mostly necessary for
+JSP debugging. Such mapping is provided through the {@link PositionManager} interface.
+One standard implementation of this interface for application servers compatible
+with the JSR-45 specification is provided by the {@link JSR45PositionManager} class.
+Another implementation of this interface, which can be used as an example for the debugger
+API, is found in the Tomcat plugin.
+</body></html>
