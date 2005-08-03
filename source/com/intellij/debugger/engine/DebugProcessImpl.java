@@ -423,7 +423,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
             try {
               connector.stopListening(myArguments);
             }
-            catch (IllegalConnectorArgumentsException e) {
+            catch (IllegalArgumentException e) {
               // ignored
             }
           }
