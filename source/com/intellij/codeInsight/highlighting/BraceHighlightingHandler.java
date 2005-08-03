@@ -11,6 +11,7 @@ package com.intellij.codeInsight.highlighting;
 import com.intellij.codeInsight.CodeInsightColors;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -30,7 +31,6 @@ import com.intellij.util.Alarm;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 public class BraceHighlightingHandler {
   private static final Key BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY = Key.create("BraceHighlighter.BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY");
@@ -312,8 +312,7 @@ public class BraceHighlightingHandler {
             }
           }
         },
-        300
-    );
+        300, ModalityState.stateForComponent(myEditor.getComponent()));
   }
 
   public void clearBraceHighlighters() {

@@ -4,6 +4,7 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -200,7 +201,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
       public void documentChanged(final DocumentEvent e) {
         if (!myInsideChange) {
           alarm.cancelAllRequests();
-          alarm.addRequest(request, 100/*any arbitrary delay*/);
+          alarm.addRequest(request, 100/*any arbitrary delay*/, ModalityState.stateForComponent(GuiEditor.this));
         }
       }
     };
@@ -794,7 +795,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
     private void handleEvent() {
       myAlarm.cancelAllRequests();
-      myAlarm.addRequest(this, 2500);
+      myAlarm.addRequest(this, 2500, ModalityState.stateForComponent(GuiEditor.this));
     }
 
     /**

@@ -185,12 +185,26 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
       return;
     }
 
-    if (!vFile.getFileType().isBinary() && !getLocalVcs().isUnderVcs(vFile)) {
+    final DocumentReference newRef = new DocumentReferenceByVirtualFile(vFile);
+    
+    if (vFile.getFileType().isBinary()) {
+      myUndoManager.undoableActionPerformed(new NonUndoableAction() {
+        public DocumentReference[] getAffectedDocuments() {
+          return new DocumentReference[]{newRef};
+        }
+
+        public boolean isComplex() {
+          return isComplex;
+        }
+      });
+
+    }
+
+    if (!getLocalVcs().isUnderVcs(vFile)) {
       return;
     }
 
     DocumentReference oldRef = myUndoManager.findInvalidatedReferenceByUrl(vFile.getUrl());
-    final DocumentReference newRef = new DocumentReferenceByVirtualFile(vFile);
 
     createNonUndoableAction(vFile, newRef, isComplex);
 

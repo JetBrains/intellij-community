@@ -10,6 +10,7 @@ import com.intellij.ide.macro.DataAccessor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.actions.DiffActions;
@@ -249,8 +250,8 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
     }
     final Runnable requestFlush = new Runnable() {
       public void run() {
-        if (myFlushAlarm.getActiveRequestCount() == 0) {
-          myFlushAlarm.addRequest(myFlushDeferredRunnable, FLUSH_DELAY);
+        if (myFlushAlarm.getActiveRequestCount() == 0 && myEditor != null) {
+          myFlushAlarm.addRequest(myFlushDeferredRunnable, FLUSH_DELAY, ModalityState.stateForComponent(myEditor.getComponent()));
         }
       }
     };
@@ -259,11 +260,13 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
   }
 
   private void requestFlushImmediately() {
-    myFlushAlarm.addRequest(new Runnable() {
-      public void run() {
-        flushDeferredText();
-      }
-    }, 0);
+    if (myEditor != null) {
+      myFlushAlarm.addRequest(new Runnable() {
+        public void run() {
+          flushDeferredText();
+        }
+      }, 0, ModalityState.stateForComponent(myEditor.getComponent()));
+    }
   }
 
   public int getContentSize() { return myContentSize; }

@@ -17,6 +17,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -370,7 +371,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
           }
         });
       }
-    }, 300);
+    }, 300, ModalityState.stateForComponent(getComponent()));
   }
 
   private @Nullable String getSelectedPropertyName() {

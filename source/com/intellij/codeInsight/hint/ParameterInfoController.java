@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -208,7 +209,7 @@ class ParameterInfoController {
         updateComponent();
       }
     };
-    myAlarm.addRequest(request, DELAY);
+    myAlarm.addRequest(request, DELAY, ModalityState.stateForComponent(myEditor.getComponent()));
   }
 
   private void updateComponent(){

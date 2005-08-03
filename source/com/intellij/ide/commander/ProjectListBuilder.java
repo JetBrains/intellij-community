@@ -7,6 +7,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
@@ -93,7 +94,7 @@ public class ProjectListBuilder extends AbstractListBuilder {
           // Rely on project view to commit PSI and wait until it's updated.
           if (myTreeStructure.hasSomethingToCommit() ) {
             myUpdateAlarm.cancelAllRequests();
-            myUpdateAlarm.addRequest(this, 300);
+            myUpdateAlarm.addRequest(this, 300, ModalityState.stateForComponent(myList));
             return;
           }
           updateList();
@@ -103,7 +104,7 @@ public class ProjectListBuilder extends AbstractListBuilder {
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       myUpdateAlarm.cancelAllRequests();
-      myUpdateAlarm.addRequest(request, 300);
+      myUpdateAlarm.addRequest(request, 300, ModalityState.stateForComponent(myList));
     }
     else {
       request.run();

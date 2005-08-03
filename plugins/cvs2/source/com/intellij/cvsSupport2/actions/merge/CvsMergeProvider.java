@@ -51,6 +51,7 @@ public class CvsMergeProvider implements MergeProvider {
     myProject = project;
   }
 
+  @NotNull
   public MergeData loadRevisions(final VirtualFile file) throws VcsException {
     ensureMergeData(file);
     return myMergeData.createData();
@@ -65,6 +66,12 @@ public class CvsMergeProvider implements MergeProvider {
 
 
     final List<String> revisions = getRevisions(file);
+
+    if (revisions.isEmpty()) {
+      myMergeData = parseConflictsInFile(file);
+      return;
+    }
+
     final String lastRevision = CvsUtil.getEntryFor(file).getRevision();
 
     if (revisions.size() == 1) {

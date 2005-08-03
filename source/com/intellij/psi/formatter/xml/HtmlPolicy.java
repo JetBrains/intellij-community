@@ -39,7 +39,7 @@ public class HtmlPolicy extends XmlFormattingPolicy{
       return false;
     }
 
-    if (getLines(parentTag) > mySettings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES) {
+    if (mySettings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES > 0 && getLines(parentTag) > mySettings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES) {
       return false;
     }
     else {

@@ -857,7 +857,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
            : createNormalIndent(baseChildrenIndent);
   }
 
-  private Indent createNormalIndent(final int baseChildrenIndent) {
+  protected Indent createNormalIndent(final int baseChildrenIndent) {
     if (baseChildrenIndent == 1) {
       return Indent.getNormalIndent();
     } else if (baseChildrenIndent <= 0) {

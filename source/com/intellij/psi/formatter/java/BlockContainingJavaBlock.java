@@ -91,7 +91,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
       }
     }
     if (isSimpleStatement(child)){
-      return getCodeBlockInternalIndent(1);
+      return createNormalIndent(1);
     }
     if (child.getElementType() == ElementType.ELSE_KEYWORD)
       return getCodeBlockExternalIndent();

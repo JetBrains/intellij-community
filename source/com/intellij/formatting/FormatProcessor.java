@@ -2,6 +2,7 @@ package com.intellij.formatting;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import gnu.trove.TIntObjectHashMap;
 import org.jdom.Element;
@@ -11,6 +12,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 class FormatProcessor {
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.FormatProcessor");
+
   private LeafBlockWrapper myCurrentBlock;
 
   private final Map<Block, AbstractBlockWrapper> myInfos;
@@ -679,6 +683,9 @@ class FormatProcessor {
 
     final List<Block> subBlocks = current.getParent().getBlock().getSubBlocks();
     final int index = subBlocks.indexOf(current.getBlock());
+    if (index < 0) {
+      LOG.assertTrue(false, current.getParent().getBlock().getClass().getName());
+    }
     if (index == 0) return null;
 
     Block currentResult = subBlocks.get(index - 1);
