@@ -266,6 +266,8 @@ public class RefactoringUtil {
     for (int index = 0; index < elementText.length(); index++) {
       index = elementText.indexOf(stringToSearch, index);
       if (index < 0) break;
+      final PsiReference referenceAt = element.findReferenceAt(index);
+      if (referenceAt != null && referenceAt.resolve() != null) continue;
 
       if (index > 0) {
         char c = elementText.charAt(index - 1);

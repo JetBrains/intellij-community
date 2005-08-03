@@ -11,10 +11,7 @@ import com.intellij.psi.filters.position.ParentElementFilter;
 import com.intellij.psi.filters.position.TokenTypeFilter;
 import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
-import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.PlainFileManipulator;
-import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlAttributeValueManipulator;
-import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlTokenManipulator;
-import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlTagValueManipulator;
+import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.xml.*;
@@ -67,6 +64,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     registerManipulator(XmlAttributeValue.class, new XmlAttributeValueManipulator());
     registerManipulator(PsiPlainTextFile.class, new PlainFileManipulator());
     registerManipulator(XmlToken.class, new XmlTokenManipulator());
+    registerManipulator(PsiLiteralExpression.class, new StringLiteralManipulator());
     registerManipulator(XmlTag.class, new XmlTagValueManipulator());
     // Binding declarations
 
