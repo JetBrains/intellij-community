@@ -163,13 +163,18 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
         if (tagType != null) {
           if ("text".equals(tagType)) {
             final int textStartPosition = tagType.length();
+            if (myContent.size() > 0) {
+              myContent.write('\n');
+            }
             myContent.write(byteMessage, textStartPosition + 1, byteMessage.length - textStartPosition);
-            myContent.write('\n');
+
           }
         }
       } else {
+        if (myContent.size() > 0) {
+          myContent.write('\n');
+        }
         myContent.write(byteMessage, 0, byteMessage.length);
-        myContent.write('\n');
       }
 
     } else if (message.startsWith("VERS:")) {
