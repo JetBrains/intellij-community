@@ -35,6 +35,9 @@ class CreateAssertPredicate implements PsiElementPredicate{
         final PsiExpressionStatement statement =
                 (PsiExpressionStatement) element;
         final PsiExpression expression = statement.getExpression();
+	    if (expression == null) {
+		    return false;
+	    }
         final PsiElement parent = expression.getParent();
         if(!(parent instanceof PsiExpressionStatement)){
             return false;
