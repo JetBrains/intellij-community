@@ -16,12 +16,13 @@
 package com.intellij.psi.tree;
 
 import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 
 import java.util.Arrays;
 
 public class TokenSet {
   public static final TokenSet EMPTY = new TokenSet();
-  private final THashSet<IElementType> mySet = new THashSet<IElementType>(100, (float)0.1);
+  private final THashSet<IElementType> mySet = new THashSet<IElementType>(100, (float)0.1, TokenHashingStrategy.INSTANCE) ;
 
   public IElementType[] getTypes() {
     return mySet.toArray(new IElementType[mySet.size()]);
@@ -48,8 +49,25 @@ public class TokenSet {
     return set;
   }
 
+  /**
+   * @deprecated use {@link #contains(IElementType)} instead. This appears to be a better naming.
+   */
   public boolean isInSet(IElementType t) {
     return mySet.contains(t);
   }
 
+  public boolean contains(IElementType t) {
+    return mySet.contains(t);
+  }
+
+  private static class TokenHashingStrategy implements TObjectHashingStrategy<IElementType> {
+    public static TokenHashingStrategy INSTANCE = new TokenHashingStrategy();
+    public int computeHashCode(final IElementType object) {
+      return object.getIndex();
+    }
+
+    public boolean equals(final IElementType o1, final IElementType o2) {
+      return o1 == o2;
+    }
+  }
 }
