@@ -4,6 +4,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.SwitchOffToolAction;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInspection.InspectionManager;
@@ -272,6 +273,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
         public void run() {
           if (dlg.isOK()) {
             InspectionResultsView.this.update();
+            DaemonCodeAnalyzer.getInstance(myProject).restart();
           }
         }
       });
