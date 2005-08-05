@@ -62,12 +62,12 @@ public class TokenSet {
 
   private static class TokenHashingStrategy implements TObjectHashingStrategy<IElementType> {
     public static TokenHashingStrategy INSTANCE = new TokenHashingStrategy();
-    public int computeHashCode(final IElementType object) {
-      return object.getIndex();
+    public int computeHashCode(final IElementType token) {
+      return token != null ? token.getIndex() : 0;
     }
 
-    public boolean equals(final IElementType o1, final IElementType o2) {
-      return o1 == o2;
+    public boolean equals(final IElementType t1, final IElementType t2) {
+      return t1 == t2;
     }
   }
 }
