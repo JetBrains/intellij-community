@@ -30,15 +30,14 @@ import org.jetbrains.annotations.Nullable;
 import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
 import javax.swing.*;
+import javax.swing.Timer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public final class ActionManagerImpl extends ActionManagerEx implements JDOMExternalizable, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.impl.ActionManagerImpl");
+  private static final int TIMER_DELAY = 500;
   private static final int UPDATE_DELAY_AFTER_TYPING = 500;
 
   private final Object myLock = new Object();
@@ -47,7 +46,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   private TObjectIntHashMap<String> myId2Index;
   private THashMap<Object,String> myAction2Id;
   private ArrayList<String> myNotRegisteredInternalActionIds;
-  private final Map<TimerListener, Timer> myRunnable2Timer = new HashMap<TimerListener, Timer>();
+  private MyTimer myTimer;
+
   private int myRegisteredActionsCount;
   private ArrayList<AnActionListener> myActionListeners;
   private AnActionListener[] myCachedActionListeners;
@@ -74,36 +74,18 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   public void disposeComponent() {}
 
   public void addTimerListener(int delay, final TimerListener listener) {
-    Timer timer = new Timer(delay,
-                            new ActionListener() {
-                              public void actionPerformed(ActionEvent e) {
-                                if (myLastTimeEditorWasTypedIn + UPDATE_DELAY_AFTER_TYPING > System.currentTimeMillis()) return;
-                                
-                                ModalityState modalityState = listener.getModalityState();
-                                if (modalityState == null) return;
-                                if (!ModalityState.current().dominates(modalityState)) {
-                                  listener.run();
-                                }
-                              }
-                            });
-    synchronized (myRunnable2Timer) {
-      myRunnable2Timer.put(listener, timer);
+    if (myTimer == null) {
+      myTimer = new MyTimer();
+      myTimer.start();
     }
-    timer.setRepeats(true);
-    timer.start();
+
+    myTimer.addTimerListener(listener);
   }
 
   public void removeTimerListener(TimerListener listener) {
-    synchronized (myRunnable2Timer) {
-      Timer timer = myRunnable2Timer.get(listener);
-      if (timer != null) {
-        timer.stop();
-        myRunnable2Timer.remove(listener);
-      }
-      else {
-        LOG.error("removeTimerListener for not registered");
-      }
-    }
+    LOG.assertTrue(myTimer != null);
+
+    myTimer.removeTimerListener(listener);
   }
 
   public ActionPopupMenu createActionPopupMenu(String place, ActionGroup group) {
@@ -770,5 +752,41 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
 
   public String getPrevPreformedActionId() {
     return myPrevPerformedActionId;
+  }
+
+  private class MyTimer extends Timer implements ActionListener {
+    private final List<TimerListener> myTimerListeners = Collections.synchronizedList(new ArrayList<TimerListener>());
+
+    MyTimer() {
+      super(TIMER_DELAY, null);
+      addActionListener(this);
+      setRepeats(true);
+    }
+
+    public void addTimerListener(TimerListener listener){
+      myTimerListeners.add(listener);
+    }
+
+    public void removeTimerListener(TimerListener listener){
+      final boolean removed = myTimerListeners.remove(listener);
+      LOG.assertTrue(removed, "Unknown listener " + listener);
+    }
+
+    public void actionPerformed(ActionEvent e) {
+      if (myLastTimeEditorWasTypedIn + UPDATE_DELAY_AFTER_TYPING > System.currentTimeMillis()) return;
+
+      TimerListener[] listeners = myTimerListeners.toArray(new TimerListener[myTimerListeners.size()]);
+      for (TimerListener listener : listeners) {
+        runListenerAction(listener);
+      }
+   }
+
+    private void runListenerAction(final TimerListener listener) {
+      ModalityState modalityState = listener.getModalityState();
+      if (modalityState == null) return;
+      if (!ModalityState.current().dominates(modalityState)) {
+        listener.run();
+      }
+    }
   }
 }
