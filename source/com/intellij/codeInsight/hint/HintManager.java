@@ -140,14 +140,13 @@ public class HintManager implements ApplicationComponent {
 
     myEditorDocumentListener = new DocumentAdapter() {
       public void documentChanged(DocumentEvent event) {
-        for (int i = 0; i < myHintsStack.size(); i++) {
-          HintInfo info = myHintsStack.get(i);
+        HintInfo[] infos = myHintsStack.toArray(new HintInfo[myHintsStack.size()]);
+        for (HintInfo info : infos) {
           if ((info.flags & HIDE_BY_TEXT_CHANGE) != 0) {
             if (info.hint.isVisible()) {
               info.hint.hide();
             }
-            myHintsStack.remove(i);
-            i--;
+            myHintsStack.remove(info);
           }
         }
 
