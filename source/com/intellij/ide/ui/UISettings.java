@@ -194,4 +194,18 @@ public class UISettings implements NamedJDOMExternalizable, ApplicationComponent
   public String getComponentName() {
     return "UISettings";
   }
+
+  public static void setupAntialiasing(final Graphics g) {
+    if (SystemInfo.JAVA_VERSION.startsWith("1.6")) return; // Enable subpixel antialiasing under 1.6
+
+    Graphics2D g2d=(Graphics2D)g;
+    UISettings uiSettings=getInstance();
+    if(uiSettings.ANTIALIASING_IN_EDITOR){
+      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+      g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+    }else{
+      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_OFF);
+      g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+    }
+  }
 }

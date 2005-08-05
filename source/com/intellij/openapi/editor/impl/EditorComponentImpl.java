@@ -80,16 +80,7 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
     ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
 
     try {
-      Graphics2D g2d = (Graphics2D)g;
-      UISettings uiSettings = UISettings.getInstance();
-      if (uiSettings.ANTIALIASING_IN_EDITOR) {
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-      }
-      else {
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-      }
+      UISettings.setupAntialiasing(g);
       myEditor.paint(g);
     }
     finally {

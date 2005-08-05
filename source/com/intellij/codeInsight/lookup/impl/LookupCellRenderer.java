@@ -1,7 +1,10 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.LookupValueWithUIHint;
+import com.intellij.codeInsight.lookup.PresentableLookupValue;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.ide.IconUtilEx;
@@ -78,15 +81,7 @@ class LookupCellRenderer implements ListCellRenderer {
     myLabel3.setOpaque(true);
     myPanel = new JPanel(new BorderLayout()){
       public void paint(Graphics g){
-        Graphics2D g2d=(Graphics2D)g;
-        UISettings uiSettings=UISettings.getInstance();
-        if(uiSettings.ANTIALIASING_IN_EDITOR){
-          g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
-          g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        }else{
-          g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_OFF);
-          g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-        }
+        UISettings.setupAntialiasing(g);
         super.paint(g);
       }
     };
