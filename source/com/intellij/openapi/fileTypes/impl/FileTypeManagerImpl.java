@@ -595,7 +595,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         }
       }
 
-      if (table != null) {
+      if (table != null && type instanceof CustomFileType) {
         ((CustomFileType)type).setSyntaxTable(table);
       }
     }
