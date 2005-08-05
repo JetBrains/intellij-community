@@ -6,6 +6,7 @@ package com.intellij.diagnostic;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.ErrorLogger;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
@@ -53,7 +54,8 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     SwingUtilities.invokeAndWait(new Runnable() {
       public void run() {
         String message = "There's not enough memory to perform the requested operation.\n" +
-                         "Please shutdown IDEA and increase " + option + " setting in " + getSettingsFilePath();
+                         "Please shutdown " + ApplicationNamesInfo.getInstance().getProductName() +
+                         " and increase " + option + " setting in " + getSettingsFilePath();
 
         if (JOptionPane.showOptionDialog(JOptionPane.getRootFrame(), message, "Out of Memory",
                                          JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null,

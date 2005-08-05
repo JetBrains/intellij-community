@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
@@ -85,8 +86,8 @@ public class OpenFileAction extends AnAction {
       setLastFilePath(project, file.getParent());
       if (isProjectFile(file)) {
         int answer = Messages.showYesNoDialog(project,
-                                              file.getName() +
-                                                             " is an IDEA project file.\nWould you like to open this project?",
+                                              file.getName() + " is an " + ApplicationNamesInfo.getInstance().getProductName() +
+                                                                       " project file.\nWould you like to open this project?",
                                               "Open Project",
                                               Messages.getQuestionIcon());
         if (answer == 0) {
@@ -117,7 +118,7 @@ public class OpenFileAction extends AnAction {
     FileEditorProviderManager editorProviderManager = FileEditorProviderManager.getInstance();
     if (editorProviderManager.getProviders(project, virtualFiles[0]).length == 0) {
       Messages.showMessageDialog(project,
-                                 "Files of this type cannot be opened in IDEA",
+                                 "Files of this type cannot be opened in " + ApplicationNamesInfo.getInstance().getProductName(),
                                  "Cannot Open File",
                                  Messages.getErrorIcon());
       return;

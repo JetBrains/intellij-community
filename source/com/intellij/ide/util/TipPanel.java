@@ -2,7 +2,7 @@ package com.intellij.ide.util;
 
 import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
@@ -82,7 +82,8 @@ public class TipPanel extends JPanel {
 
   public void prevTip() {
     if (myTipPaths.size() == 0) {
-      browser.setText("Tips not found.  Make sure you installed IntelliJ IDEA correctly.");
+      browser.setText("Tips not found.  Make sure you installed " + ApplicationNamesInfo.getInstance().getFullProductName() +
+                      " correctly.");
       return;
     }
     GeneralSettings settings = GeneralSettings.getInstance();
@@ -109,7 +110,8 @@ public class TipPanel extends JPanel {
 
   public void nextTip() {
     if (myTipPaths.size() == 0) {
-      browser.setText("Tips not found.  Make sure you installed IntelliJ IDEA correctly.");
+      browser.setText("Tips not found.  Make sure you installed " + ApplicationNamesInfo.getInstance().getFullProductName() +
+                      " correctly.");
       return;
     }
     GeneralSettings settings = GeneralSettings.getInstance();

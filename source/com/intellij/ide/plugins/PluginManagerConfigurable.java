@@ -1,6 +1,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
@@ -80,7 +81,8 @@ public class PluginManagerConfigurable extends BaseConfigurable implements JDOME
 
   public void apply() throws ConfigurationException {
     if (myPluginManagerMain.isRequireShutdown()) {
-      if (Messages.showYesNoDialog("You need to shut down IDEA to activate changes in plugins. Would you like do it now?", "Plugins", Messages.getQuestionIcon()) == 0) {
+      if (Messages.showYesNoDialog("You need to shut down " + ApplicationNamesInfo.getInstance().getProductName() +
+                                   " to activate changes in plugins. Would you like do it now?", "Plugins", Messages.getQuestionIcon()) == 0) {
         ApplicationManagerEx.getApplicationEx().exit(true);        
       }
       else {

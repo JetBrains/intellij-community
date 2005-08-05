@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -82,7 +83,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     PsiElement scope = file;
     final List<Match> duplicates = duplicatesFinder.findDuplicates(scope);
     if (duplicates.isEmpty()) {
-      final String message = "IDEA has not found any code that can be replaced with method call";
+      final String message = ApplicationNamesInfo.getInstance().getProductName() + " has not found any code that can be replaced with method call";
       Messages.showInfoMessage(project, message, REFACTORING_NAME);
       return;
     }

@@ -4,6 +4,7 @@ import com.intellij.debugger.ui.tree.render.ArrayRenderer;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -62,7 +63,8 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
       }
 
       if(newEndIndex - newStartIndex > 10000) {
-        if(Messages.showOkCancelDialog(myPanel.getRootPane(), "Range specified is too big. IDEA needs too much resources to perform requested operation. Are you shure you want to continue?", "Range is Too Big", Messages.getWarningIcon()) != DialogWrapper.OK_EXIT_CODE) return;
+        if(Messages.showOkCancelDialog(myPanel.getRootPane(), "Range specified is too big. " + ApplicationNamesInfo.getInstance().getProductName() +
+                                                              " needs too much resources to perform requested operation. Are you shure you want to continue?", "Range is Too Big", Messages.getWarningIcon()) != DialogWrapper.OK_EXIT_CODE) return;
       }
     }
 

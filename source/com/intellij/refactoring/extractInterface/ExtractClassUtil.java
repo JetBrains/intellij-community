@@ -1,6 +1,7 @@
 package com.intellij.refactoring.extractInterface;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -27,7 +28,8 @@ public class ExtractClassUtil {
           String className = ((PsiClass) classElement).getName();
           String message = (superClass.isInterface() ? "Interface " : "Class ") +
                   interfaceName + " has been successfully created.\n" +
-                  "At this stage, IDEA can analyze usages of " + className + "\nand replace them with usages of the " +
+                  "At this stage, " + ApplicationNamesInfo.getInstance().getProductName() +
+                  " can analyze usages of " + className + "\nand replace them with usages of the " +
                   (superClass.isInterface() ? "interface " : "superclass ") +
                   "where possible.\n" +
                   "Do you want to proceed?";

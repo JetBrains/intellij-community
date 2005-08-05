@@ -7,6 +7,7 @@ package com.intellij.refactoring.util.duplicates;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -104,8 +105,8 @@ public class DuplicatesImpl {
   public static void processDuplicates(final MatchProvider provider, final Project project, Editor editor, final String commandName) {
     boolean hasDuplicates = provider.hasDuplicates();
     if (hasDuplicates) {
-      final int answer = Messages.showYesNoDialog(project, "IDEA has detected " + provider.getDuplicates().size()
-                                                  + " code fragments in this file that can be replaced with "
+      final int answer = Messages.showYesNoDialog(project, ApplicationNamesInfo.getInstance().getProductName() + " has detected " + provider.getDuplicates().size()
+                                                           + " code fragments in this file that can be replaced with "
                                                   + "a call to extracted method. Would you like to review and replace them?",
                                          "Process Duplicates", Messages.getQuestionIcon());
       if (answer == 0) {

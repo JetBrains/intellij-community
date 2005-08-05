@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.impl;
 
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -96,7 +97,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   public static ApplicationInfoEx getShadowInstance() {
     ApplicationInfoImpl instance = new ApplicationInfoImpl();
     try {
-      Document doc = JDOMUtil.loadDocument(ApplicationInfoImpl.class.getResourceAsStream("/idea/" + COMPONENT_NAME + ".xml"));
+      Document doc = JDOMUtil.loadDocument(ApplicationInfoImpl.class.getResourceAsStream("/idea/" + ApplicationNamesInfo.COMPONENT_NAME + ".xml"));
       instance.readExternal(doc.getRootElement());
     }
     catch (Exception e) {
@@ -160,7 +161,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
 
   public String getComponentName() {
-    return COMPONENT_NAME;
+    return ApplicationNamesInfo.COMPONENT_NAME;
   }
 
 }

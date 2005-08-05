@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.palette;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -181,7 +182,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
     if (getItem(componentClassName) != null) {
       Messages.showMessageDialog(
         "GUI Designer palette: item for this class already is added: " + componentClassName,
-        "IntelliJ IDEA",
+        ApplicationNamesInfo.getInstance().getFullProductName(),
         Messages.getErrorIcon()
       );
       return;

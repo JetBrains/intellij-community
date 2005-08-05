@@ -4,6 +4,7 @@ import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.JavaUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -256,7 +257,8 @@ public class SourcePathsStep extends ModuleWizardStep {
 
   public boolean validate() {
     if (isSourcesSearchInProgress()) {
-      final int answer = Messages.showDialog(myPanel, "IDEA is currently searching for sources. Would you like to stop the search?", "Question", new String[] {"Continue Searching", "Stop Searching"}, 0, Messages.getWarningIcon());
+      final int answer = Messages.showDialog(myPanel, ApplicationNamesInfo.getInstance().getProductName() +
+                                                      " is currently searching for sources. Would you like to stop the search?", "Question", new String[] {"Continue Searching", "Stop Searching"}, 0, Messages.getWarningIcon());
       if (answer == 1) { // terminate
         cancelSourcesSearch();
       }

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -63,7 +64,7 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
                                    final Editor editor,
                                    final Project project) {
     if (duplicates.size() > 0) {
-      final String message = "IDEA has found fragments that can be replaced with include directive\n" +
+      final String message = ApplicationNamesInfo.getInstance().getProductName() + " has found fragments that can be replaced with include directive\n" +
                              "Do you want to review them?";
       final int exitCode = Messages.showYesNoDialog(project, message, REFACTORING_NAME, Messages.getInformationIcon());
       if (exitCode == DialogWrapper.OK_EXIT_CODE) {

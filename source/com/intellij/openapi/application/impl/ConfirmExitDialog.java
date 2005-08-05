@@ -6,6 +6,7 @@ package com.intellij.openapi.application.impl;
 
 import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.util.ui.OptionsDialog;
 
 import javax.swing.*;
@@ -42,7 +43,8 @@ public class ConfirmExitDialog extends OptionsDialog {
 
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
-    final JLabel label = new JLabel("Are you sure you want to exit IntelliJ IDEA?");
+    final JLabel label = new JLabel("Are you sure you want to exit " +
+                                    ApplicationNamesInfo.getInstance().getFullProductName() + "?");
     label.setIconTextGap(10);
     label.setIcon(Messages.getQuestionIcon());
     panel.add(label, BorderLayout.CENTER);

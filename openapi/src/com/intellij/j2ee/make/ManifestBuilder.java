@@ -15,6 +15,8 @@
  */
 package com.intellij.j2ee.make;
 
+import com.intellij.openapi.application.ApplicationNamesInfo;
+
 import java.util.jar.Attributes;
 
 public class ManifestBuilder {
@@ -22,7 +24,7 @@ public class ManifestBuilder {
 
   public static void setGlobalAttributes(Attributes mainAttributes) {
     setIfNone(mainAttributes, Attributes.Name.MANIFEST_VERSION, "1.0");
-    setIfNone(mainAttributes, CREATED_BY, "IntelliJ IDEA");
+    setIfNone(mainAttributes, CREATED_BY, ApplicationNamesInfo.getInstance().getFullProductName());
   }
 
   private static void setIfNone(Attributes mainAttributes, Attributes.Name attrName, String value) {

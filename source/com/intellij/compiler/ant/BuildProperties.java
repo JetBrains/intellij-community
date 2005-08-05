@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 
 import java.io.File;
 import java.util.HashSet;
@@ -53,7 +54,9 @@ public class BuildProperties extends CompositeGenerator {
     add(new Comment("Uncomment the following property if no tests compilation is needed", new Property(PROPERTY_SKIP_TESTS, "true")));
     final JavacSettings javacSettings = JavacSettings.getInstance(project);
     if (genOptions.enableFormCompiler) {
-      add(new Comment("The task requires the following libraries from IntelliJ IDEA distribution:"), 1);
+      add(new Comment("The task requires the following libraries from " +
+                      ApplicationNamesInfo.getInstance().getFullProductName() +
+                      " distribution:"), 1);
       add(new Comment("  javac2.jar; jdom.jar; bcel.jar"));
       add(new Tag("taskdef", new Pair[] {
         new Pair<String, String>("name", "javac2"),

@@ -4,6 +4,7 @@
 package com.intellij.ide.startup;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.ZipUtil;
 
@@ -54,7 +55,8 @@ public class StartupActionScriptManager {
         // problem with scrambled code
         // fas fixed, but still appear because corrupted file still exists
         // return empty list.
-        System.err.println("Internal IDEA file was corrupted. Problem is fixed.\n" +
+        System.err.println("Internal " + ApplicationNamesInfo.getInstance().getProductName() +
+                           " file was corrupted. Problem is fixed.\n" +
                            "If some plugins has been installed/uninstalled, please " +
                            "re-install/-uninstall them.");
         return new ArrayList<ActionCommand>();

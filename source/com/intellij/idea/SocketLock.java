@@ -2,6 +2,7 @@ package com.intellij.idea;
 
 import com.intellij.diagnostic.ReportMessages;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 
 import javax.swing.*;
@@ -51,14 +52,15 @@ public class SocketLock {
     acquireSocket();
     if (mySocket == null) {
       if (!myIsDialogShown) {
+        final String productName = ApplicationNamesInfo.getInstance().getProductName();
         JOptionPane.showMessageDialog(
           JOptionPane.getRootFrame(),
-          "IDEA was unable to create a local connection in order to check whether\n" +
-          "other instance of IDEA is currently running on the same machine.\n" +
-          "Running multiple instances of IDEA on the same machine may cause unpredictable\n" +
+          productName + " was unable to create a local connection in order to check whether\n" +
+          "other instance of " + productName + " is currently running on the same machine.\n" +
+          "Running multiple instances of " + productName + " on the same machine may cause unpredictable\n" +
           "results because of sharing system folders.\n" +
           "Please troubleshoot your TCP/IP configuration and/or local firewall settings.\n" +
-           ReportMessages.getReportAddress() + "\n" +
+          ReportMessages.getReportAddress() + "\n" +
           "and attach the " + PathManager.getSystemPath() + "/log/idea.log file".replace('/', File.separatorChar),
           "Warning",
           JOptionPane.WARNING_MESSAGE

@@ -1,6 +1,7 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 
 import java.io.File;
 
@@ -21,7 +22,8 @@ public class ProjectWizardUtil {
     File dir = new File(directoryPath);
     if (!dir.exists()) {
       if (promptUser) {
-        final int answer = Messages.showOkCancelDialog(promptPrefix + "\"" + dir.getPath() + "\"\ndoes not exist. It will be created by IDEA.", "Directory Does Not Exist", Messages.getQuestionIcon());
+        final int answer = Messages.showOkCancelDialog(promptPrefix + "\"" + dir.getPath() + "\"\ndoes not exist. It will be created by " +
+                                                       ApplicationNamesInfo.getInstance().getProductName() + ".", "Directory Does Not Exist", Messages.getQuestionIcon());
         if (answer != 0) {
           return false;
         }

@@ -5,4 +5,5 @@
   <logo url="/idea_logo.png"/>
   <about url="/idea_about.png"/>
   <package code="__PACKAGE_CODE__"/>
+  <names product="IDEA" fullname="IntelliJ IDEA"/>
 </component>

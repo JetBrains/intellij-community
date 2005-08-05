@@ -2,6 +2,7 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ide.GeneralSettings;
@@ -67,7 +68,8 @@ public class ProjectNameStep extends ModuleWizardStep {
       return lastProjectLocation.replace('/', File.separatorChar);
     }
     final String userHome = System.getProperty("user.home");
-    return userHome.replace('/', File.separatorChar) + File.separator + "IdeaProjects";
+    return userHome.replace('/', File.separatorChar) + File.separator +
+           ApplicationNamesInfo.getInstance().getLowercaseProductName() + "Projects";
   }
 
 

@@ -5,6 +5,7 @@ import com.intellij.featureStatistics.*;
 import com.intellij.ide.util.TipUIUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -155,7 +156,8 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
     Application app = ApplicationManager.getApplication();
     long uptime = System.currentTimeMillis() - app.getStartTime();
     long idletime = app.getIdleTime();
-    controlsPanel.add(new JLabel("IDEA uptime: " + DateFormatUtil.formatDuration(uptime) + ", idle time: " + DateFormatUtil.formatDuration(idletime)), BorderLayout.NORTH);
+    controlsPanel.add(new JLabel(ApplicationNamesInfo.getInstance().getProductName() + " uptime: " + DateFormatUtil.formatDuration(uptime) +
+                                 ", idle time: " + DateFormatUtil.formatDuration(idletime)), BorderLayout.NORTH);
 
     final JCheckBox compiler = new JCheckBox("Show productivity hints while compiling");
     compiler.setSelected(FeatureUsageTracker.getInstance().SHOW_IN_COMPILATION_PROGRESS);

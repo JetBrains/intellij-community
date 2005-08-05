@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.featureStatistics.ProductivityFeaturesProvider;
 
 import javax.swing.*;
@@ -69,7 +70,8 @@ public class TipUIUtil{
 
   private static void setCantReadText(JEditorPane browser) {
     try {
-      browser.read(new StringReader("<html><body>Unable to read Tip Of The Day. Make sure IntelliJ IDEA is installed properly.</body></html>"), null);
+      browser.read(new StringReader("<html><body>Unable to read Tip Of The Day. Make sure " + ApplicationNamesInfo.getInstance().getFullProductName() +
+                                    " is installed properly.</body></html>"), null);
     }
     catch (IOException e1) {
       // Can't be

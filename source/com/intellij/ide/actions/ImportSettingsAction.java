@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.ui.Messages;
@@ -82,8 +83,10 @@ public class ImportSettingsAction extends AnAction {
       StartupActionScriptManager.ActionCommand deleteTemp = new StartupActionScriptManager.DeleteCommand(tempFile);
       StartupActionScriptManager.addActionCommand(deleteTemp);
 
-      final int ret = Messages.showOkCancelDialog("Settings imported successfully. You have to restart IDEA to reload the settings." +
-                                        "\nShutdown Intellij IDEA?", "Restart Needed", Messages.getQuestionIcon());
+      final int ret = Messages.showOkCancelDialog("Settings imported successfully. You have to restart " +
+                                                  ApplicationNamesInfo.getInstance().getProductName() + " to reload the settings." +
+                                                  "\nShutdown " + ApplicationNamesInfo.getInstance().getFullProductName() + "?",
+                                                  "Restart Needed", Messages.getQuestionIcon());
       if (ret == 0) {
         ApplicationManager.getApplication().exit();
       }

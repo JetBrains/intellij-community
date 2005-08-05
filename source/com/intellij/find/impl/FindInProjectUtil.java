@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -192,7 +193,7 @@ public class FindInProjectUtil {
         if (fileLength == -1) continue; // Binary or invalid
 
         if (fileLength > SINGLE_FILE_SIZE_LIMIT) {
-          int retCode = showMessage(project, "IDEA is about to scan for occurences in\n" + getPresentablePath(virtualFile) + "\n" +
+          int retCode = showMessage(project, ApplicationNamesInfo.getInstance().getProductName() + " is about to scan for occurences in\n" + getPresentablePath(virtualFile) + "\n" +
                                              "which is " + presentableSize(fileLength) + " long. Skip?", "Too Large File");
           if (retCode == DialogWrapper.OK_EXIT_CODE) continue;
         }
@@ -225,7 +226,8 @@ public class FindInProjectUtil {
         if (countBefore < count[0]) {
           totalFilesSize += fileLength;
           if (totalFilesSize > FILES_SIZE_LIMIT && !warningShown) {
-            showTooManyUsagesWaring(project, "Usages in files of total size " + presentableSize(totalFilesSize) + " found. IDEA may become " +
+            showTooManyUsagesWaring(project, "Usages in files of total size " + presentableSize(totalFilesSize) + " found. " +
+                                             ApplicationNamesInfo.getInstance().getProductName() + " may become " +
                                              "unresponsive or even fail with OutOfMemoryError if you continue. Continue?");
             warningShown = true;
           }

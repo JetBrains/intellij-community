@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.util.Options;
 import org.jdom.Element;
 
@@ -363,7 +364,7 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
       if (!ok) {
         final String initialPatternString = patternsToString(getRegexpPatterns());
         final String message = "The format of resource patterns has changed.\n" +
-                               "IDEA failed to convert existing regular expression patterns:\n" +
+                               ApplicationNamesInfo.getInstance().getProductName() + " failed to convert existing regular expression patterns:\n" +
                                initialPatternString +"\n" +
                                "Please enter pattern string in a new format.\n" +
                                "Each resource pattern may contain the following wildcards:\n" +

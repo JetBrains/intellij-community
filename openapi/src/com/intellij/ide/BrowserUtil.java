@@ -18,6 +18,7 @@ package com.intellij.ide;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -155,7 +156,9 @@ public class BrowserUtil {
       // todo: fix the possible problem on startup, see SCR #35066
       command = getDefaultBrowserCommand(null);
       if (command == null) {
-        showErrorMessage("Please open URL (" + url + ") manualy. IDEA can't open it in browser", "Browser Path Not Found");
+        showErrorMessage("Please open URL (" + url + ") manualy. " +
+                         ApplicationNamesInfo.getInstance().getProductName() +
+                         " can't open it in browser", "Browser Path Not Found");
         return;
       }
 

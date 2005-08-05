@@ -34,6 +34,7 @@ package com.intellij.openapi.vcs.impl;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -131,7 +132,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myConfirmations.put(VcsConfiguration.StandardConfirmation.ADD.getId(),
                         new VcsShowConfirmationOptionImpl(
                           VcsConfiguration.StandardConfirmation.ADD.getId(),
-                          "When files are created with IDEA:",
+                          "When files are created with " + ApplicationNamesInfo.getInstance().getProductName() +
+                          ":",
                           "Do not add",
                           "Show options before adding to version control",
                           "Add silently"));

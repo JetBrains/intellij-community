@@ -2,6 +2,7 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,7 +22,8 @@ public class ModuleCreationPromptStep extends ModuleWizardStep {
     myPanel = new JPanel(new GridBagLayout());
     myPanel.setBorder(BorderFactory.createEtchedBorder());
     final String promptText =
-      "A functional IDEA project must have at least one module. In most cases, one module would be quite enough.\n" +
+      "A functional " + ApplicationNamesInfo.getInstance().getProductName() +
+      " project must have at least one module. In most cases, one module would be quite enough.\n" +
       "To quickly create a single-module project and start working right away, select the \"Create single-module project\" option.\n" +
       "For creating a more complex project, with multiple modules, use the \"Create/configure multi-module project\" option.";
     final JLabel promptLabel = new JLabel(promptText);

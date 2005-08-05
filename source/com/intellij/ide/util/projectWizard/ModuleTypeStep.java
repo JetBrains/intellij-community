@@ -8,6 +8,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.EventDispatcher;
@@ -97,7 +98,10 @@ public class ModuleTypeStep extends ModuleWizardStep {
     myRbImportModule.addItemListener(listener);
 
     JTextField tfModuleFilePath = new JTextField();
-    myModulePathFieldPanel = createFieldPanel(tfModuleFilePath, "Path to IDEA module file (.iml):", new BrowseFilesListener(tfModuleFilePath, "Select IDEA module file (.iml) to import", null, new ModuleFileChooserDescriptor()));
+    final String productName = ApplicationNamesInfo.getInstance().getProductName();
+    myModulePathFieldPanel = createFieldPanel(tfModuleFilePath, "Path to " + productName + " module file (.iml):",
+                                              new BrowseFilesListener( tfModuleFilePath, "Select " + productName + " module file (.iml) to import", null,
+                                                                                                                          new ModuleFileChooserDescriptor()));
     myModulePathFieldPanel.setEnabled(false);
 
     if (createNewProject) {
@@ -165,7 +169,8 @@ public class ModuleTypeStep extends ModuleWizardStep {
     if (myRbImportModule.isSelected()) {
       final String path = myModulePathFieldPanel.getText().trim();
       if (path.length() == 0) {
-        Messages.showErrorDialog("Please specify path to IDEA module file (.iml)", "Module File Path Not Specified");
+        Messages.showErrorDialog("Please specify path to " + ApplicationNamesInfo.getInstance().getProductName() +
+                                 " module file (.iml)", "Module File Path Not Specified");
         myModulePathFieldPanel.getTextField().requestFocus();
         return false;
       }
@@ -176,7 +181,8 @@ public class ModuleTypeStep extends ModuleWizardStep {
         return false;
       }
       if (!StdFileTypes.IDEA_MODULE.equals(FileTypeManager.getInstance().getFileTypeByFileName(file.getName()))) {
-        Messages.showErrorDialog("The \"" + path + "\"\nis not an IDEA module file (.iml)", "Incorrect File Type");
+        Messages.showErrorDialog("The \"" + path + "\"\nis not an " + ApplicationNamesInfo.getInstance().getProductName() +
+                                 " module file (.iml)", "Incorrect File Type");
         myModulePathFieldPanel.getTextField().requestFocus();
         return false;
       }

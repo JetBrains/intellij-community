@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.PluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -475,7 +476,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
 
   private String getDefaultClassTemplateText(String templateName) {
     return "/*\n" +
-        " * Created by IntelliJ IDEA.\n" +
+        " * Created by " + ApplicationNamesInfo.getInstance().getFullProductName() + ".\n" +
         " * User: $USER$\n" +
         " * Date: $DATE$\n" +
         " * Time: $TIME$\n" +

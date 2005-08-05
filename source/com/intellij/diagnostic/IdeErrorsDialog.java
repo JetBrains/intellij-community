@@ -15,6 +15,7 @@ import com.intellij.ide.reporter.ScrData;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.SubmittedReportInfo;
@@ -146,7 +147,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     final AbstractMessage message = getMessageAt(myIndex);
     if (message != null) {
       final PluginId pluginId = findPluginId(message.getThrowable());
-      myBlameLabel.setText("Blame " + (pluginId == null ? "IDEA core" : PluginManager.getPlugin(pluginId).getName()));
+      myBlameLabel.setText("Blame " + (pluginId == null ? ApplicationNamesInfo.getInstance().getProductName() +
+                                                          " core" : PluginManager.getPlugin(pluginId).getName()));
     }
     else {
       myBlameLabel.setText("");

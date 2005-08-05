@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ex.AddAssertStatementFix;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
@@ -364,7 +365,9 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       gc.anchor = GridBagConstraints.NORTHWEST;
 
       //mySuggestNullables = new JCheckBox("Suggest @Nullable annotation for method possibly return null.\n Requires JDK5.0 and annotations.jar from IDEA distribution");
-      mySuggestNullables = new JCheckBox("<html><body>Suggest @Nullable annotation for methods that may possibly return null.<br> Requires JDK5.0 and annotations.jar from IDEA distribution</body></html>");
+      mySuggestNullables = new JCheckBox("<html><body>Suggest @Nullable annotation for methods that may possibly return null.<br> Requires JDK5.0 and annotations.jar from " +
+                                         ApplicationNamesInfo.getInstance().getProductName() +
+                                         " distribution</body></html>");
       mySuggestNullables.setSelected(SUGGEST_NULLABLE_ANNOTATIONS);
       mySuggestNullables.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {

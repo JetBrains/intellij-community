@@ -12,8 +12,6 @@ import com.intellij.openapi.application.ApplicationInfo;
 
 public abstract class ApplicationInfoEx extends ApplicationInfo {
 
-  public static final String COMPONENT_NAME = "ApplicationInfo";
-
   public static final boolean IS_EAP = false;
 
   public abstract String getLogoUrl();

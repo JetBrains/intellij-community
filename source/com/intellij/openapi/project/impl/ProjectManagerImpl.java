@@ -6,6 +6,7 @@ import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -487,7 +488,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
       String message =
         "The project " + projectFile.getName() + " you are about to open has an older format.\n"
-        + "IDEA will automatically convert it to the new format.\n"
+        + ApplicationNamesInfo.getInstance().getProductName() + " will automatically convert it to the new format.\n"
         + "You will not be able to open it by earlier versions.\n"
         + "The old project file will be saved to " + name + "_old.ipr.\n"
         + "Proceed with conversion?";
@@ -549,7 +550,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     if (version > CURRENT_FORMAT_VERSION) {
       String message =
         "The project " + project.getName() + " you are about to open " +
-        "has been created by a newer version of IDEA. If you open it, your project" +
+        "has been created by a newer version of " + ApplicationNamesInfo.getInstance().getProductName() +
+        ". If you open it, your project" +
         " is likely to be corrupted. Continue?";
 
       if (Messages.showYesNoDialog(message, "Warning", Messages.getWarningIcon()) != 0) return false;

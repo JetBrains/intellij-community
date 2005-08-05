@@ -10,6 +10,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
@@ -135,8 +136,10 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
 
   private void showWorkaroundMessage() {
     if (myIsWarningShown) return;
+    final String productName = ApplicationNamesInfo.getInstance().getProductName();
     Messages.showErrorDialog("You're seeing this message because of the workaround to JRE issue: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4818143\n" +
-                             "IDEA would hang otherwise. The system clipboard might be not working correctly. It is recommended to restart IDEA.", "System Error");
+                             productName + " would hang otherwise. The system clipboard might be not working correctly. It is recommended to restart " +
+                             productName + ".", "System Error");
     myIsWarningShown = true;
   }
 
