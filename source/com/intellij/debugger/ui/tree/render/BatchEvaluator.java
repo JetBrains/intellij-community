@@ -5,6 +5,7 @@ import com.intellij.debugger.jdi.ObjectReferenceCachingProxy;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessAdapter;
 import com.intellij.debugger.engine.SuspendContext;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.managerThread.SuspendContextCommand;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
@@ -171,6 +172,7 @@ public class BatchEvaluator {
       }
 
       ArrayReference argArray = debugProcess.newInstance(objectArrayClass, values.size());
+      ((SuspendContextImpl)evaluationContext.getSuspendContext()).keep(argArray); // to avoid ObjectCollectedException
       argArray.setValues(values);
       List argList = new ArrayList(1);
       argList.add(argArray);
@@ -204,6 +206,8 @@ public class BatchEvaluator {
     catch (InvalidTypeException e) {
     }
     catch (EvaluateException e) {
+    }
+    catch (ObjectCollectedException e) {
     }
     return false;
   }
