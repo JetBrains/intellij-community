@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLock;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -33,6 +34,12 @@ public class LowLevelSearchUtil {
                                                                 final short searchContext) {
     ProgressManager.getInstance().checkCanceled();
     final PsiElement scopePsi = SourceTreeToPsiMap.treeElementToPsi(scope);
+    if (scopePsi instanceof PsiWhiteSpace) {
+      // Optimization. Taking language from whitespace may expand a chameleon next to this whitespace
+      // As we know for sure whitespaces may not have words in them this optimization is safe.
+      return true;
+    }
+
     final Language lang = scopePsi.getLanguage();
     //TODO[ven]: lang is null for PsiPlainText for example. Should be reviewed.
     if (lang == null || lang.getFindUsagesProvider().mayHaveReferences(scope.getElementType(), searchContext)) {
