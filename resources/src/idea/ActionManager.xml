@@ -488,7 +488,7 @@
       <group text="R_un" id="RunMenu" popup="true">
         <group id="RunnerActions" text="Run/Debug" />
         <action id="editRunConfigurations" text="Edit Configu_rations" class="com.intellij.execution.actions.EditRunConfigurationsAction" description="Open edit Run/Debug configurations dialog"/>
-        <action id="Stop" text="Stop" class="com.intellij.execution.actions.StopAction" description="_Stop process" icon = "/actions/suspend.png"/>
+        <action id="Stop" text="Stop" class="com.intellij.execution.actions.StopAction" description="Stop process" icon = "/actions/suspend.png"/>
         <action id="Hotswap" class="com.intellij.debugger.actions.HotSwapAction" text="Relo_ad Changed Classes" description="Reload all changed classes into application being debugged (HotSwap)"/>
         <separator/>
         <action id="StepOver" class="com.intellij.debugger.actions.StepOverAction" text="Step _Over" icon="/actions/traceOver.png" description="Step to the next line in this file"/>
