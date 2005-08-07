@@ -39,6 +39,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -666,6 +667,11 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
                                                   null);
 
     return result;
+  }
+
+  @NotNull
+  public Project getProject() {
+    return myProject;
   }
 
   @Nullable

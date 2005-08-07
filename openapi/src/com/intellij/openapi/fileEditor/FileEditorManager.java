@@ -114,4 +114,7 @@ public abstract class FileEditorManager {
 
   @NotNull
   public abstract List<FileEditor> openEditor(OpenFileDescriptor descriptor, boolean focusEditor);
+
+  @NotNull
+  public abstract Project getProject();
 }

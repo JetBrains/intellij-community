@@ -292,6 +292,11 @@ public class TestEditorManagerImpl extends FileEditorManagerEx implements Applic
     return Collections.EMPTY_LIST;
   }
 
+  @NotNull
+  public Project getProject() {
+    return myProject;
+  }
+
   public JComponent getPreferredFocusedComponent() {
     throw new UnsupportedOperationException();
   }

@@ -286,6 +286,9 @@ public class EditorWindow {
       if (dataId.equals(DataConstants.VIRTUAL_FILE)){
         return myEditor.getFile();
       }
+      else if (dataId.equals(DataConstants.PROJECT)) {
+        return myEditor.getFileEditorManager().getProject();
+      }
       return null;
     }
   }

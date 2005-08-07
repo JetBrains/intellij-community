@@ -9,13 +9,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * This class hides internal structure of UI component which represent
@@ -185,6 +184,10 @@ public abstract class EditorComposite{
    */
   public VirtualFile getFile() {
     return myFile;
+  }
+
+  public FileEditorManager getFileEditorManager() {
+    return myFileEditorManager;
   }
 
   /**
