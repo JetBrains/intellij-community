@@ -4,10 +4,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.Commenter;
-import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.editor.*;
@@ -17,15 +14,12 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.Indent;
-import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.text.CharArrayUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CommentByLineCommentHandler implements CodeInsightActionHandler {
@@ -141,6 +135,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     for (int line = myLine1; line <= myLine2; line++) {
       final Commenter commenter = findCommenter(line);
       if (commenter == null) return;
+
       if (commenter.getLineCommentPrefix() == null && (commenter.getBlockCommentPrefix() == null || commenter.getBlockCommentSuffix() == null)) return;
       myCommenters[line - myLine1] = commenter;
       if (!isLineCommented(line, chars, commenter)) {
@@ -267,6 +262,8 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
 
   private void commentLine(int line, int offset) {
     final Commenter commenter = findCommenter(line);
+    if (commenter == null) return;
+
     String prefix = commenter.getLineCommentPrefix();
     if (prefix != null) {
       myDocument.insertString(offset, prefix);
