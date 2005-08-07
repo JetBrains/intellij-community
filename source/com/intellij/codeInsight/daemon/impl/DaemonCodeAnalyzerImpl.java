@@ -214,6 +214,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
               final Editor editor = ((TextEditor)fileEditor).getEditor();
               ApplicationManager.getApplication().invokeLater(new Runnable() {
                 public void run() {
+                  if (myProject.isDisposed()) return;
+
                   final Document document = editor.getDocument();
                   final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
                   ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeRenderer(new RefreshStatusRenderer(myProject, DaemonCodeAnalyzerImpl.this, document, psiFile));
