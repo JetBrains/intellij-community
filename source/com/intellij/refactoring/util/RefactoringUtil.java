@@ -1,19 +1,22 @@
 package com.intellij.refactoring.util;
 
+import com.intellij.ant.PsiAntElement;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInspection.redundantCast.RedundantCastUtil;
+import com.intellij.lang.StdLanguages;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -26,20 +29,20 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.ControlFlowUtil;
-import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.psi.search.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElementDecl;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.ui.InfoDialog;
@@ -48,13 +51,10 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
-import com.intellij.lang.StdLanguages;
-import com.intellij.lang.properties.psi.Property;
-import com.intellij.ant.PsiAntElement;
 import gnu.trove.THashMap;
 
-import java.util.*;
 import java.io.File;
+import java.util.*;
 
 public class RefactoringUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.RefactoringUtil");
@@ -192,7 +192,8 @@ public class RefactoringUtil {
     if (psiElement instanceof Property) {
       return true;
     }
-    return PsiManager.getInstance(project).getNameHelper().isIdentifier(newName.trim());
+
+    return psiElement.getLanguage().getNamesValidator().isIdentifier(newName.trim(), project);
   }
 
   public static interface UsageInfoFactory {
