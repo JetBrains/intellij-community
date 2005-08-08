@@ -316,8 +316,15 @@ public class AnalysisScope {
   }
 
   public boolean isValid() {
-    if (myProject != null || myModule != null || myModules != null) return true;
-    return myElement.isValid();
+    if (myProject != null) return true;
+    if (myModule != null && !myModule.isDisposed()) return true;
+    if (myModules != null){
+      for (Module module : myModules) {
+        if (module.isDisposed()) return false;
+      }
+      return true;
+    }
+    return myElement != null && myElement.isValid();
   }
 
   public int getScopeType() {

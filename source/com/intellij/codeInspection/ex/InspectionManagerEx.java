@@ -375,6 +375,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     if (myRefManager != null) {
       myRefManager.cleanup();
       myRefManager = null;
+      myCurrentScope = null;
     }
   }
 
