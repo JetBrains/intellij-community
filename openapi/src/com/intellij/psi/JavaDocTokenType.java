@@ -35,6 +35,8 @@ public interface JavaDocTokenType {
   IElementType DOC_TAG_VALUE_COMMA = new IJavaDocElementType("DOC_TAG_VALUE_COMMA");
   IElementType DOC_TAG_VALUE_LPAREN = new IJavaDocElementType("DOC_TAG_VALUE_LPAREN");
   IElementType DOC_TAG_VALUE_RPAREN = new IJavaDocElementType("DOC_TAG_VALUE_RPAREN");
+  IElementType DOC_TAG_VALUE_LT = new IJavaDocElementType("DOC_TAG_VALUE_LT");
+  IElementType DOC_TAG_VALUE_GT = new IJavaDocElementType("DOC_TAG_VALUE_GT");
   IElementType DOC_TAG_VALUE_SHARP_TOKEN = new IJavaDocElementType("DOC_TAG_VALUE_SHARP_TOKEN");
 
   IElementType DOC_COMMENT_BAD_CHARACTER = new IJavaDocElementType("DOC_COMMENT_BAD_CHARACTER");

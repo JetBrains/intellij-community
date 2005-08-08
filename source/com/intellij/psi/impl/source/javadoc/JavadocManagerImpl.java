@@ -18,7 +18,7 @@ public class JavadocManagerImpl implements JavadocManager {
   private JavadocTagInfo[] myInfos;
 
   public JavadocManagerImpl() {
-    List infos = new ArrayList();
+    List<JavadocTagInfo> infos = new ArrayList<JavadocTagInfo>();
 
     infos.add(new SimpleDocTagInfo("author", PsiClass.class, false, LanguageLevel.JDK_1_3));
     infos.add(new SimpleDocTagInfo("deprecated", PsiElement.class, false, LanguageLevel.JDK_1_3));
@@ -45,17 +45,17 @@ public class JavadocManagerImpl implements JavadocManager {
     infos.add(new ExceptionTagInfo("exception"));
     infos.add(new ExceptionTagInfo("throws"));
 
-    myInfos = (JavadocTagInfo[])infos.toArray(new JavadocTagInfo[infos.size()]);
+    myInfos = infos.toArray(new JavadocTagInfo[infos.size()]);
   }
 
   public JavadocTagInfo[] getTagInfos(PsiElement context) {
-    List result = new ArrayList();
+    List<JavadocTagInfo> result = new ArrayList<JavadocTagInfo>();
 
     for (JavadocTagInfo info : myInfos) {
       if (info.isValidInContext(context)) result.add(info);
     }
 
-    return (JavadocTagInfo[])result.toArray(new JavadocTagInfo[result.size()]);
+    return result.toArray(new JavadocTagInfo[result.size()]);
   }
 
   public JavadocTagInfo getTagInfo(String name) {

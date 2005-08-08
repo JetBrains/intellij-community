@@ -1,53 +1,67 @@
 package com.intellij.psi.impl.source.javadoc;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.util.CharTable;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTagValue;
+import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
-import com.intellij.lang.ASTNode;
+import com.intellij.util.IncorrectOperationException;
 
 /**
  * @author mike
  */
 public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValue {
+
+  private PsiReference myCachedReference;
+
   public PsiDocParamRef() {
     super(DOC_PARAMETER_REF);
   }
 
-  public PsiReference getReference() {
-    PsiDocComment comment = PsiTreeUtil.getParentOfType(this, PsiDocComment.class);
-    final PsiElement parent = comment.getParent();
-    if (!(parent instanceof PsiMethod)) return null;
-    final PsiMethod method = (PsiMethod)parent;
-    if (method.getDocComment() != comment) return null;
+  public void clearCaches() {
+    myCachedReference = null;
+    super.clearCaches();
+  }
 
-    return new PsiReference() {
+  public PsiReference getReference() {
+    if (myCachedReference != null) return myCachedReference;
+    final PsiDocCommentOwner owner = PsiTreeUtil.getParentOfType(this, PsiDocCommentOwner.class);
+    if (!(owner instanceof PsiMethod) &&
+        !(owner instanceof PsiClass)) return null;
+    final ASTNode valueToken = findChildByType(JavaDocTokenType.DOC_TAG_VALUE_TOKEN);
+    if (valueToken == null) return null;
+    myCachedReference = new PsiReference() {
       public PsiElement resolve() {
-        String name = getText();
-        final PsiParameter[] parameters = method.getParameterList().getParameters();
-        for (int i = 0; i < parameters.length; i++) {
-          PsiParameter parameter = parameters[i];
-          if (parameter.getName().equals(name)) return parameter;
+        String name = valueToken.getText();
+        final PsiElement firstChild = getFirstChild();
+        if (firstChild instanceof PsiDocToken && ((PsiDocToken)firstChild).getTokenType().equals(JavaDocTokenType.DOC_TAG_VALUE_LT)) {
+          final PsiTypeParameter[] typeParameters = ((PsiTypeParameterListOwner)owner).getTypeParameters();
+          for (PsiTypeParameter typeParameter : typeParameters) {
+            if (typeParameter.getName().equals(name)) return typeParameter;
+          }
+        }
+        else if (owner instanceof PsiMethod) {
+          final PsiParameter[] parameters = ((PsiMethod)owner).getParameterList().getParameters();
+          for (PsiParameter parameter : parameters) {
+            if (parameter.getName().equals(name)) return parameter;
+          }
         }
 
         return null;
       }
 
       public String getCanonicalText() {
-        return getText();
+        return valueToken.getText();
       }
 
-      public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-        final ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(PsiDocParamRef.this);
-        final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(treeElement);
+      public PsiElement handleElementRename(String newElementName) {
+        final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(getNode());
         LeafElement newElement = Factory.createSingleLeafElement(ElementType.DOC_TAG_VALUE_TOKEN, newElementName.toCharArray(), 0, newElementName.length(), charTableByTree, getManager());
-        replaceChildInternal(getFirstChildNode(), newElement);
+        replaceChild(valueToken, newElement);
         return PsiDocParamRef.this;
       }
 
@@ -60,14 +74,20 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
       }
 
       public boolean isReferenceTo(PsiElement element) {
-        if (!(element instanceof PsiParameter)) return false;
-        PsiParameter parameter = (PsiParameter)element;
-        if (!getCanonicalText().equals(parameter.getName())) return false;
+        if (!(element instanceof PsiNamedElement)) return false;
+        PsiNamedElement namedElement = (PsiNamedElement)element;
+        if (!getCanonicalText().equals(namedElement.getName())) return false;
         return element.getManager().areElementsEquivalent(element, resolve());
       }
 
       public Object[] getVariants() {
-        return method.getParameterList().getParameters();
+        final PsiElement firstChild = getFirstChild();
+        if (firstChild instanceof PsiDocToken && ((PsiDocToken)firstChild).getTokenType().equals(JavaDocTokenType.DOC_TAG_VALUE_LT)) {
+          return ((PsiTypeParameterListOwner)owner).getTypeParameters();
+        } else if (owner instanceof PsiMethod) {
+          return ((PsiMethod)owner).getParameterList().getParameters();
+        }
+        return ArrayUtil.EMPTY_OBJECT_ARRAY;
       }
 
       public boolean isSoft(){
@@ -75,13 +95,15 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
       }
 
       public TextRange getRangeInElement() {
-        return new TextRange(0, getTextLength());
+        final int startOffsetInParent = valueToken.getPsi().getStartOffsetInParent();
+        return new TextRange(startOffsetInParent, startOffsetInParent + valueToken.getTextLength());
       }
 
       public PsiElement getElement() {
         return PsiDocParamRef.this;
       }
     };
+    return myCachedReference;
   }
 
   public void accept(PsiElementVisitor visitor) {

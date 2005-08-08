@@ -24,7 +24,7 @@ public class JavaDocLexer extends MergingLexerAdapter {
     JavaDocTokenType.DOC_SPACE
   );
 
-  public JavaDocLexer() {
-    super(new FlexAdapter(new _JavaDocLexer()), TOKENS_TO_MERGE);
+  public JavaDocLexer(final boolean isJdk15Enabled) {
+    super(new FlexAdapter(new _JavaDocLexer(isJdk15Enabled)), TOKENS_TO_MERGE);
   }
 }

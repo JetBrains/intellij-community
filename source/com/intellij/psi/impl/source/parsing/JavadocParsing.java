@@ -30,6 +30,8 @@ public class JavadocParsing extends Parsing {
     JavaDocTokenType.DOC_TAG_VALUE_LPAREN,
     JavaDocTokenType.DOC_TAG_VALUE_RPAREN,
     JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN,
+    JavaDocTokenType.DOC_TAG_VALUE_LT,
+    JavaDocTokenType.DOC_TAG_VALUE_GT
   });
 
   private int myBraceScope = 0;
@@ -70,7 +72,7 @@ public class JavadocParsing extends Parsing {
   }
 
   public TreeElement parseDocCommentText(PsiManager manager, char[] buffer, int startOffset, int endOffset) {
-    Lexer originalLexer = new JavaDocLexer(); // we need caching lexer because the lexer has states
+    Lexer originalLexer = new JavaDocLexer(manager.getEffectiveLanguageLevel().hasEnumKeywordAndAutoboxing()); // we need caching lexer because the lexer has states
 
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(TOKEN_FILTER));
     lexer.start(buffer, startOffset, endOffset);

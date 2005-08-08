@@ -20,7 +20,7 @@ public class JavaHighlightingLexer extends LayeredLexer {
 
 
     
-    LayeredLexer docLexer = new LayeredLexer(new JavaDocLexer());
+    LayeredLexer docLexer = new LayeredLexer(new JavaDocLexer(languageLevel.hasEnumKeywordAndAutoboxing()));
 
     HtmlHighlightingLexer lexer = new HtmlHighlightingLexer();
     lexer.setHasNoEmbeddments(true);
