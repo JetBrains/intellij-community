@@ -118,7 +118,12 @@ public abstract class BasePsiNode <T extends PsiElement> extends ProjectViewNode
   public boolean contains(VirtualFile file) {
     if (getValue() == null) return false;
     PsiFile containingFile = getValue().getContainingFile();
-    return file.equals(containingFile.getVirtualFile());
+    final VirtualFile valueFile = containingFile.getVirtualFile();
+    if (valueFile != null) {
+      return file.equals(valueFile);
+    } else {
+      return false;
+    }
   }
 
   public void navigate(boolean requestFocus) {
