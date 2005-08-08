@@ -118,6 +118,13 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     return true;
   }
 
+  // since this option is stored in 2 different places (a field in the base class and myOptions map in this class),
+  // we have to update both storages whenever the value of the option changes
+  public void setSavePathsRelative(boolean value) {
+    super.setSavePathsRelative(value);
+    setOption(RELATIVE_PATHS_OPTION, String.valueOf(value));
+  }
+
   private static List<String> parseOptionValue(String optionValue) {
     if (optionValue == null) return new ArrayList<String>(0);
     return Arrays.asList(optionValue.split(";"));
