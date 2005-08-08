@@ -142,8 +142,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
     if (editor != null) {
       HighlightManager highlightManager = HighlightManager.getInstance(project);
-      for (int i = 0; i < highlighters.size(); i++) {
-        RangeHighlighter highlighter = highlighters.get(i);
+      for (RangeHighlighter highlighter : highlighters) {
         highlightManager.removeSegmentHighlighter(editor, highlighter);
       }
     }
@@ -230,7 +229,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
             addInitializationToConstructors(initializer, field, enclosingConstructor);
           }
           if (initializerPlace == IN_SETUP_METHOD && initializer != null) {
-            addInitializationToSetUp(initializer, field);
+            addInitializationToSetUp(initializer, field, occurenceManager, replaceAll);
           }
           if (expr.getParent() instanceof PsiParenthesizedExpression) {
             expr = (PsiExpression)expr.getParent();
@@ -242,8 +241,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
           if (replaceAll) {
             List<PsiElement> array = new ArrayList<PsiElement>();
-            for (int i = 0; i < occurrences.length; i++) {
-              PsiExpression occurrence = occurrences[i];
+            for (PsiExpression occurrence : occurrences) {
               if (occurrence instanceof PsiExpression) {
                 occurrence = RefactoringUtil.outermostParenthesizedExpression(occurrence);
               }
@@ -363,23 +361,35 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     return null;
   }
 
-  private void addInitializationToSetUp(final PsiExpression initializer, final PsiField field) throws IncorrectOperationException {
+  private void addInitializationToSetUp(final PsiExpression initializer,
+                                        final PsiField field,
+                                        final OccurenceManager occurenceManager, final boolean replaceAll) throws IncorrectOperationException {
     final PsiManager manager = myParentClass.getManager();
     final PsiElementFactory factory = manager.getElementFactory();
     final PsiMethod patternMethod = factory.createMethodFromText("protected void setUp() throws Exception {\nsuper.setUp();\n}", null);
     PsiMethod inClass = field.getContainingClass().findMethodBySignature(patternMethod, false);
+    PsiElement anchor = null;
     if (inClass == null) {
       inClass = (PsiMethod)field.getContainingClass().add(patternMethod);
     }
     else if (inClass.getBody() == null) {
       inClass.replace(patternMethod);
+    } else {
+      if (PsiTreeUtil.isAncestor(inClass, initializer, true)) {
+        anchor = replaceAll ?
+                 occurenceManager.getAnchorStatementForAllInScope(inClass) :
+                 PsiTreeUtil.getParentOfType(initializer, PsiStatement.class);
+      }
     }
 
     final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)factory.createStatementFromText(field.getName() + "= expr;",
                                                                                                                null);
     PsiAssignmentExpression expr = (PsiAssignmentExpression)expressionStatement.getExpression();
-    expr.getRExpression().replace(initializer);
-    inClass.getBody().add(expressionStatement);
+    final PsiExpression rExpression = expr.getRExpression();
+    LOG.assertTrue(rExpression != null);
+    rExpression.replace(initializer);
+
+    inClass.getBody().addBefore(expressionStatement, anchor);
     manager.getCodeStyleManager().reformat(inClass.getBody());
   }
 
@@ -457,7 +467,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       statement = (PsiExpressionStatement)CodeStyleManager.getInstance(psiManager.getProject()).reformat(statement);
 
       PsiAssignmentExpression expr = (PsiAssignmentExpression)statement.getExpression();
-      expr.getRExpression().replace(initializerExpr);
+      final PsiExpression rExpression = expr.getRExpression();
+      LOG.assertTrue(rExpression != null);
+      rExpression.replace(initializerExpr);
       final PsiReferenceExpression fieldReference = RenameUtil.createFieldReference(field, context);
       expr.getLExpression().replace(fieldReference);
 
