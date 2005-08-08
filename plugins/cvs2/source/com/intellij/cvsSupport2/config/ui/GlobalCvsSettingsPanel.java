@@ -19,6 +19,7 @@ public class GlobalCvsSettingsPanel {
   private JPanel myPServerPanel;
   private JCheckBox myUseGZIPCompression;
   private JComboBox myCharset;
+  private JCheckBox myLogOutput;
 
   public GlobalCvsSettingsPanel() {
     myPServerPanel.setLayout(new BorderLayout());
@@ -37,6 +38,7 @@ public class GlobalCvsSettingsPanel {
     myPServerSettingsPanel.updateFrom(config);
     myCharset.setSelectedItem(config.ENCODING);
     myUseGZIPCompression.setSelected(config.USE_GZIP);
+    myLogOutput.setSelected(config.DO_OUTPUT);
   }
 
   public void saveTo(CvsApplicationLevelConfiguration config) {
@@ -47,7 +49,7 @@ public class GlobalCvsSettingsPanel {
       CvsEntriesManager.getInstance().encodingChanged();
     }
     config.USE_GZIP = myUseGZIPCompression.isSelected();
-
+    config.DO_OUTPUT = myLogOutput.isSelected();
   }
 
   public JComponent getPanel() {

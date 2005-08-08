@@ -47,6 +47,8 @@ public class CvsApplicationLevelConfiguration implements ApplicationComponent, J
   public boolean USE_GZIP = false;
   public static final String DEFAULT = "Default";
 
+  public boolean DO_OUTPUT = false;
+
   public CvsApplicationLevelConfiguration() {
     ENCODING = DEFAULT;
   }
