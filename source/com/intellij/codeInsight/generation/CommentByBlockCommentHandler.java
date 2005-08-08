@@ -94,12 +94,12 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     if (fileType instanceof CustomFileType) {
       Lexer lexer = new CustomFileTypeLexer(((CustomFileType)fileType).getSyntaxTable());
       final CharSequence text = myDocument.getCharsSequence();
-      int commentStart = CharArrayUtil.lastIndexOf(text, commenter.getBlockCommentPrefix(), myEditor.getCaretModel().getOffset());
+      final int caretOffset = myEditor.getCaretModel().getOffset();
+      int commentStart = CharArrayUtil.lastIndexOf(text, commenter.getBlockCommentPrefix(), caretOffset);
       if (commentStart == -1) return null;
       char[] chars = CharArrayUtil.fromSequence(text);
       lexer.start(chars, commentStart, text.length());
-
-      if (lexer.getTokenType() == CustomHighlighterTokenType.MULTI_LINE_COMMENT) {
+      if (lexer.getTokenType() == CustomHighlighterTokenType.MULTI_LINE_COMMENT && lexer.getTokenEnd() >= caretOffset) {
         return new TextRange(commentStart, lexer.getTokenEnd());
       }
       return null;
