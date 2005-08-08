@@ -410,9 +410,14 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
   }
 
-  private ASTNode findLastFieldInGroup(final ASTNode child) {
+  @NotNull private ASTNode findLastFieldInGroup(final ASTNode child) {
     final PsiTypeElement typeElement = ((PsiVariable)child.getPsi()).getTypeElement();
     if (typeElement == null) return child;
+
+    ASTNode lastChildNode = child.getLastChildNode();
+    if (lastChildNode == null) return child;
+
+    if (lastChildNode.getElementType() == ElementType.SEMICOLON) return child;
 
     ASTNode currentResult = child;
     ASTNode currentNode = child.getTreeNext();

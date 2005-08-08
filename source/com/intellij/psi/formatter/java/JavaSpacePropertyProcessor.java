@@ -215,8 +215,14 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
 
     else if (myRole1 == ChildRole.FIELD) {
       if (myRole2 == ChildRole.COMMA) {
-        myResult = Spacing
-          .createSpacing(0, 0, 0, false, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+        ASTNode lastChildNode = myChild1.getLastChildNode();
+        if (lastChildNode != null && lastChildNode.getElementType() == ElementType.SEMICOLON) {
+          myResult = Spacing
+            .createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);                    
+        } else {
+          myResult = Spacing
+            .createSpacing(0, 0, 0, false, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+        }
       }
       else if (myRole2 == ChildRole.RBRACE) {
         myResult = Spacing
