@@ -50,28 +50,20 @@ public class PsiBinaryExpressionImpl extends CompositePsiElement implements PsiB
       if (type1.equalsToText("java.lang.String")) {
         return type1;
       }
-      if (type1 == PsiType.DOUBLE || type2 == PsiType.DOUBLE) return PsiType.DOUBLE;
-      if (type1 == PsiType.FLOAT || type2 == PsiType.FLOAT) return PsiType.FLOAT;
-      if (type1 == PsiType.LONG || type2 == PsiType.LONG) return PsiType.LONG;
-      return PsiType.INT;
+      return unboxAndBalanceTypes(type1, type2);
     }
     if (i == MINUS || i == ASTERISK || i == DIV || i == PERC) {
       PsiType type2 = rOperand.getType();
       PsiType type1 = lOperand.getType();
       if (type1 == null && type2 == null) return null;
-      if (type1 == PsiType.DOUBLE || type2 == PsiType.DOUBLE) return PsiType.DOUBLE;
-      if (type1 == PsiType.FLOAT || type2 == PsiType.FLOAT) return PsiType.FLOAT;
-      if (type1 == PsiType.LONG || type2 == PsiType.LONG) return PsiType.LONG;
-      return PsiType.INT;
+      return unboxAndBalanceTypes(type1, type2);
     }
     if (i == LTLT || i == GTGT || i == GTGTGT) {
       PsiType type1 = lOperand.getType();
       if (type1 == PsiType.BYTE || type1 == PsiType.CHAR || type1 == PsiType.SHORT) {
         return PsiType.INT;
       }
-      else {
-        return type1;
-      }
+      return type1;
     }
     if (i == EQEQ || i == NE || i == LT || i == GT || i == LE || i == GE || i == OROR || i == ANDAND) {
       return PsiType.BOOLEAN;
@@ -79,13 +71,27 @@ public class PsiBinaryExpressionImpl extends CompositePsiElement implements PsiB
     if (i == OR || i == XOR || i == AND) {
       PsiType type2 = rOperand.getType();
       PsiType type1 = lOperand.getType();
+      if (type1 instanceof PsiClassType) type1 = PsiPrimitiveType.getUnboxedType(type1);
+      if (type2 instanceof PsiClassType) type2 = PsiPrimitiveType.getUnboxedType(type2);
+
       if (type1 == null && type2 == null) return null;
       if (type1 == PsiType.BOOLEAN || type2 == PsiType.BOOLEAN) return PsiType.BOOLEAN;
       if (type1 == PsiType.LONG || type2 == PsiType.LONG) return PsiType.LONG;
       return PsiType.INT;
     }
-      LOG.assertTrue(false);
-      return null;
+
+    LOG.assertTrue(false);
+    return null;
+  }
+
+  private PsiType unboxAndBalanceTypes(PsiType type1, PsiType type2) {
+    if (type1 instanceof PsiClassType) type1 = PsiPrimitiveType.getUnboxedType(type1);
+    if (type2 instanceof PsiClassType) type2 = PsiPrimitiveType.getUnboxedType(type2);
+
+    if (type1 == PsiType.DOUBLE || type2 == PsiType.DOUBLE) return PsiType.DOUBLE;
+    if (type1 == PsiType.FLOAT || type2 == PsiType.FLOAT) return PsiType.FLOAT;
+    if (type1 == PsiType.LONG || type2 == PsiType.LONG) return PsiType.LONG;
+    return PsiType.INT;
   }
 
   public ASTNode findChildByRole(int role) {
