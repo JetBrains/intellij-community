@@ -655,7 +655,11 @@ public class CtrlMouseHandler implements ProjectComponent {
         }
       }
 
-      if (info.myTargetElement != null && info.myElementAtPointer != null) {
+      if (info.myTargetElement != null &&
+          info.myElementAtPointer != null &&
+          info.myTargetElement != info.myElementAtPointer &&
+          info.myTargetElement != info.myElementAtPointer.getParent()
+        ) {
         //if (info.myTargetElement.isPhysical()) {
         installLinkHighlighter(info);
         //}
