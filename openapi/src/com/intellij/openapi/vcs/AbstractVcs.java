@@ -192,7 +192,7 @@ public abstract class AbstractVcs {
     return myStatusOption;
   }
 
-  public final void loadSettings() {
+  public void loadSettings() {
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
 
     if (getCheckinEnvironment() != null) {
