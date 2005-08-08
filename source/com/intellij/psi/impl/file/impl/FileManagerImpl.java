@@ -297,17 +297,30 @@ public class FileManagerImpl implements FileManager {
       return GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, includeTests);
     }
     else {
-      // resolve references in libraries in any module which contain it
-      //TODO: exclude project content
+      // resolve references in libraries in context of all modules which contain it
+      GlobalSearchScope allInclusiveModuleScope = null;
+
       OrderEntry[] orderEntries = projectFileIndex.getOrderEntriesForFile(vFile);
-      if (orderEntries.length == 0) return GlobalSearchScope.allScope(myManager.getProject());
-      for (OrderEntry entry : orderEntries) {
-        if (entry instanceof LibraryOrderEntry) {
-          Module ownerModule = entry.getOwnerModule();
-          return GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(ownerModule);
+      if (orderEntries.length > 0) {
+        for (OrderEntry entry : orderEntries) {
+          if (entry instanceof LibraryOrderEntry) {
+            Module ownerModule = entry.getOwnerModule();
+            final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(ownerModule);
+            if (allInclusiveModuleScope == null) {
+              allInclusiveModuleScope = moduleScope;
+            }
+            else {
+              allInclusiveModuleScope = allInclusiveModuleScope.uniteWith(moduleScope);
+            }
+          }
         }
       }
-      return GlobalSearchScope.allScope(myManager.getProject());
+
+      if (allInclusiveModuleScope == null) {
+        allInclusiveModuleScope = GlobalSearchScope.allScope(myManager.getProject());
+      }
+
+      return new LibrariesOnlyScope(allInclusiveModuleScope);
     }
   }
 
@@ -1255,6 +1268,30 @@ public class FileManagerImpl implements FileManager {
         out.write(vFile.getPresentableUrl());
         out.write("\n");
       }
+    }
+  }
+
+  private static class LibrariesOnlyScope extends GlobalSearchScope {
+    private final GlobalSearchScope myOriginal;
+
+    public LibrariesOnlyScope(final GlobalSearchScope original) {
+      myOriginal = original;
+    }
+
+    public boolean contains(VirtualFile file) {
+      return myOriginal.contains(file);
+    }
+
+    public int compare(VirtualFile file1, VirtualFile file2) {
+      return myOriginal.compare(file1, file2);
+    }
+
+    public boolean isSearchInModuleContent(Module aModule) {
+      return false;
+    }
+
+    public boolean isSearchInLibraries() {
+      return true;
     }
   }
 }
