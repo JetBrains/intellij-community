@@ -1,8 +1,8 @@
 package com.intellij.psi.formatter.java;
 
 import com.intellij.codeFormatting.general.FormatterUtil;
-import com.intellij.lang.ASTNode;
 import com.intellij.formatting.Spacing;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -10,7 +10,10 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -195,7 +198,12 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
     }
 
     else if (myRole2 == ChildRole.FIELD) {
-      if (myRole1 == ChildRole.LBRACE) {
+
+      if (myRole1 == ChildRole.COMMA) {
+        myResult = Spacing
+          .createSpacing(1, 1, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+      }
+      else if (myRole1 == ChildRole.LBRACE) {
         myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, 0);
       }
       else {
@@ -206,7 +214,11 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
     }
 
     else if (myRole1 == ChildRole.FIELD) {
-      if (myRole2 == ChildRole.RBRACE) {
+      if (myRole2 == ChildRole.COMMA) {
+        myResult = Spacing
+          .createSpacing(0, 0, 0, false, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+      }
+      else if (myRole2 == ChildRole.RBRACE) {
         myResult = Spacing
           .createSpacing(0, Integer.MAX_VALUE, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
       }

@@ -233,7 +233,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
           && myNode.getTreeParent().getElementType() == ElementType.ASSIGNMENT_EXPRESSION
           && myAlignment != null) {
         return myAlignment;
-      } else {
+      }
+      else {
         return createAlignment(mySettings.ALIGN_MULTILINE_ASSIGNMENT, null);
       }
     }
@@ -341,7 +342,10 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       child = processEnumBlock(result, child, ((ClassElement)myNode).findEnumConstantListDelimiterPlace());
     }
     else if (mySettings.TERNARY_OPERATION_SIGNS_ON_NEXT_LINE && isTernaryOperationSign(child)) {
-      child = processTernaryOperationRange(result, child,defaultAlignment,  defaultWrap,  childIndent);
+      child = processTernaryOperationRange(result, child, defaultAlignment, defaultWrap, childIndent);
+    }
+    else if (child.getElementType() == ElementType.FIELD) {
+      child = processField(result, child, defaultAlignment, defaultWrap, childIndent);
     }
     else {
       final Block block =
@@ -379,6 +383,62 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return child;
   }
 
+  private ASTNode processField(final ArrayList<Block> result, ASTNode child, final Alignment defaultAlignment, final Wrap defaultWrap,
+                               final Indent childIndent) {
+    ASTNode lastFieldInGroup = findLastFieldInGroup(child);
+    if (lastFieldInGroup == child) {
+      result.add(createJavaBlock(child, getSettings(), childIndent, arrangeChildWrap(child, defaultWrap),
+                                 arrangeChildAlignment(child, defaultAlignment)));
+      return child;
+    }
+    else {
+      final ArrayList<Block> localResult = new ArrayList<Block>();
+      while (child != null) {
+        if (!FormatterUtil.containsWhiteSpacesOnly(child)) {
+          localResult.add(createJavaBlock(child, getSettings(), Indent.getContinuationWithoutFirstIndent(), arrangeChildWrap(child, defaultWrap),
+                                          arrangeChildAlignment(child, defaultAlignment)));
+        }
+        if (child == lastFieldInGroup) break;
+
+        child = child.getTreeNext();
+
+      }
+      if (!localResult.isEmpty()) {
+        result.add(new SyntheticCodeBlock(localResult, null, getSettings(), childIndent, null));
+      }
+      return lastFieldInGroup;
+    }
+  }
+
+  private ASTNode findLastFieldInGroup(final ASTNode child) {
+    final PsiTypeElement typeElement = ((PsiVariable)child.getPsi()).getTypeElement();
+    if (typeElement == null) return child;
+
+    ASTNode currentResult = child;
+    ASTNode currentNode = child.getTreeNext();
+
+    while (currentNode != null) {
+      if (currentNode.getElementType() == ElementType.WHITE_SPACE
+          || currentNode.getElementType() == ElementType.COMMA
+          || ElementType.COMMENT_BIT_SET.contains(currentNode.getElementType())) {
+      }
+      else if (currentNode.getElementType() == ElementType.FIELD) {
+        if (((PsiVariable)currentNode.getPsi()).getTypeElement() != typeElement) {
+          return currentResult;
+        }
+        else {
+          currentResult = currentNode;
+        }
+      }
+      else {
+        return currentResult;
+      }
+
+      currentNode = currentNode.getTreeNext();
+    }
+    return currentResult;
+  }
+
   private ASTNode processTernaryOperationRange(final ArrayList<Block> result,
                                                final ASTNode child,
                                                final Alignment defaultAlignment,
@@ -386,7 +446,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     final ArrayList<Block> localResult = new ArrayList<Block>();
     final Wrap wrap = arrangeChildWrap(child, defaultWrap);
     final Alignment alignment = arrangeChildAlignment(child, defaultAlignment);
-    localResult.add(new LeafBlock(child,  wrap, alignment, childIndent));
+    localResult.add(new LeafBlock(child, wrap, alignment, childIndent));
 
     ASTNode current = child.getTreeNext();
     while (current != null) {
@@ -412,7 +472,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   private boolean isTernaryOperationSign(final ASTNode child) {
     if (myNode.getElementType() != ElementType.CONDITIONAL_EXPRESSION) return false;
     final int role = ((CompositeElement)child.getTreeParent()).getChildRole(child);
-    return role ==  ChildRole.OPERATION_SIGN || role == ChildRole.COLON;
+    return role == ChildRole.OPERATION_SIGN || role == ChildRole.COLON;
   }
 
   private Block createMethodCallExpressiobBlock(final ASTNode node, final Wrap blockWrap, final Alignment alignment) {
@@ -564,7 +624,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       if (role == ChildRole.LOPERAND) return defaultAlignment;
       if (role == ChildRole.ROPERAND && child.getElementType() == ElementType.ASSIGNMENT_EXPRESSION) {
         return defaultAlignment;
-      } else {
+      }
+      else {
         return null;
       }
     }
@@ -628,7 +689,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     else if (myNode.getElementType() == ElementType.THROWS_LIST) {
       if (role == ChildRole.REFERENCE_IN_LIST) {
         return defaultWrap;
-      } else {
+      }
+      else {
         return null;
       }
     }
@@ -767,7 +829,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
     ASTNode prev = child;
     while (child != null) {
-      isAfterIncomplete = isAfterIncomplete || child.getElementType() == ElementType.ERROR_ELEMENT || child.getElementType() == ElementType.EMPTY_EXPRESSION;
+      isAfterIncomplete = isAfterIncomplete || child.getElementType() == ElementType.ERROR_ELEMENT ||
+                          child.getElementType() == ElementType.EMPTY_EXPRESSION;
       if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {
         if (child.getElementType() == from) {
           result.add(createJavaBlock(child, mySettings, externalIndent, null, null));
@@ -860,9 +923,11 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   protected Indent createNormalIndent(final int baseChildrenIndent) {
     if (baseChildrenIndent == 1) {
       return Indent.getNormalIndent();
-    } else if (baseChildrenIndent <= 0) {
+    }
+    else if (baseChildrenIndent <= 0) {
       return Indent.getNoneIndent();
-    } else {
+    }
+    else {
       LOG.assertTrue(false);
       return Indent.getNormalIndent();
     }
