@@ -37,7 +37,9 @@ public interface Block {
   TextRange getTextRange();
 
   /**
-   * Returns the list of child blocks for the specified block.
+   * Returns the list of child blocks for the specified block. <b>Important</b>: The same list
+   * of blocks must be returned when <code>getSubBlocks()</code> is repeatedly called on a particular
+   * <code>Block</code> instance.
    *
    * @return the child block list.
    * @see #isLeaf()
