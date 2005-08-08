@@ -20,6 +20,7 @@ import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.log.LogCommand;
 import org.netbeans.lib.cvsclient.command.log.LogInformation;
 import org.netbeans.lib.cvsclient.file.ILocalFileReader;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -75,8 +76,12 @@ public class LocalPathIndifferentLogOperation extends LocalPathIndifferentOperat
     }
   }
 
-  public LogInformation getFirstLogInformation() {
-    return myLogInformationList.get(0);
+  @Nullable public LogInformation getFirstLogInformation() {
+    if (!myLogInformationList.isEmpty()) {
+      return myLogInformationList.get(0);
+    } else {
+      return null;
+    }
   }
 
   public List<LogInformation> getLogInformationList() {

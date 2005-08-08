@@ -32,6 +32,7 @@ import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.log.LogInformation;
 import org.netbeans.lib.cvsclient.command.log.Revision;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -177,8 +178,11 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
                                  public void executionFinishedSuccessfully() {
                                    CvsConnectionSettings env = CvsEntriesManager.getInstance()
                                      .getCvsConnectionSettingsFor(filePath.getVirtualFileParent());
-                                   result.addAll(createRevisionListOn(CvsUtil.getCvsLightweightFileForFile(filePath.getIOFile()),
-                                                                      logOperation.getFirstLogInformation(), env, myProject));
+                                   final LogInformation firstLogInformation = logOperation.getFirstLogInformation();
+                                   if (firstLogInformation != null) {
+                                     result.addAll(createRevisionListOn(CvsUtil.getCvsLightweightFileForFile(filePath.getIOFile()),
+                                                                        firstLogInformation, env, myProject));
+                                   }
                                  }
                                });
     return result;
@@ -186,13 +190,13 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
   }
 
   private List<VcsFileRevision> createRevisionListOn(File file,
-                                                     LogInformation logInformation,
+                                                     @NotNull LogInformation logInformation,
                                                      CvsEnvironment env,
                                                      Project project) {
     List revisionList = logInformation.getRevisionList();
     ArrayList<VcsFileRevision> result = new ArrayList<VcsFileRevision>();
-    for (Iterator each = revisionList.iterator(); each.hasNext();) {
-      Revision revision = (Revision)each.next();
+    for (final Object aRevisionList : revisionList) {
+      Revision revision = (Revision)aRevisionList;
       result.add(new CvsFileRevisionImpl(revision, file, logInformation, env, project));
     }
     return result;
