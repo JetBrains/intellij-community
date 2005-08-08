@@ -50,8 +50,13 @@ public class ModifyKeywordDialog extends DialogWrapper {
   }
 
   protected void doOKAction() {
-    if (myKeywordName.getText().trim().length() == 0) {
+    final String keywordName = myKeywordName.getText().trim();
+    if (keywordName.length() == 0) {
       Messages.showMessageDialog(getContentPane(), "Keyword cannot be empty", "Error", Messages.getErrorIcon());
+      return;
+    }
+    if (keywordName.indexOf(' ') >= 0) {
+      Messages.showMessageDialog(getContentPane(), "Keyword may not contain spaces", "Error", Messages.getErrorIcon());
       return;
     }
     super.doOKAction();
