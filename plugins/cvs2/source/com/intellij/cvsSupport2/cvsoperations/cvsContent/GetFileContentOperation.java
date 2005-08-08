@@ -23,6 +23,58 @@ import java.util.Collections;
 
 public class GetFileContentOperation extends LocalPathIndifferentOperation {
 
+  public static class FileContentReader {
+    private ByteArrayOutputStream myContent = null;
+    private byte[] myBinaryContent = null;
+
+    public boolean isEmpty() {
+      return myContent == null && myBinaryContent == null;
+    }
+
+    public byte[] getReadContent() {
+      if (myBinaryContent != null) {
+        return myBinaryContent;
+      } else {
+        return myContent.toByteArray();
+      }
+    }
+
+    public void messageSent(final byte[] byteMessage, final boolean tagged) {
+      if (myContent == null) myContent = new ByteArrayOutputStream();
+      if (tagged) {
+        String tagType = readTagTypeFrom(byteMessage);
+        if (tagType != null) {
+          if ("text".equals(tagType)) {
+            final int textStartPosition = tagType.length();
+            if (myContent.size() > 0) {
+              myContent.write('\n');
+            }
+            myContent.write(byteMessage, textStartPosition + 1, byteMessage.length - textStartPosition - 1);
+
+          }
+        }
+      } else {
+        if (myContent.size() > 0) {
+          myContent.write('\n');
+        }
+        myContent.write(byteMessage, 0, byteMessage.length);
+      }
+    }
+
+    private String readTagTypeFrom(final byte[] byteMessage) {
+      final StringBuffer result = new StringBuffer();
+      for (byte b : byteMessage) {
+        if (b == ' ') return result.toString();
+        result.append((char)b);
+      }
+      return null;
+    }
+
+    public void binaryMessageSent(final byte[] bytes) {
+      myBinaryContent = bytes;
+    }
+  }
+
   private final static byte NOT_LOADED = 0;
   private final static byte FILE_NOT_FOUND = 1;
   private final static byte DELETED = 2;
@@ -31,8 +83,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
 
   private byte myState = NOT_LOADED;
 
-  private ByteArrayOutputStream myContent = null;
-  private byte[] myBinaryContent = null;
+  private final FileContentReader myReader = new FileContentReader();
 
   private byte[] myFileBytes = null;
   private String myRevision;
@@ -112,17 +163,13 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
 
   private synchronized byte[] loadFileBytes() {
     LOG.assertTrue(myState == LOADING, "state = " + String.valueOf(myState));
-    if (myContent == null && myBinaryContent == null) {
+    if (myReader.isEmpty()) {
       myState = DELETED;
       return null;
     }
     else {
       myState = SUCCESSFULLY_LOADED;
-      if (myBinaryContent != null) {
-        return myBinaryContent;
-      } else {
-        return myContent.toByteArray();
-      }
+      return myReader.getReadContent();
     }
   }
 
@@ -157,26 +204,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
 
   public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
     if (!error) {
-      if (myContent == null) myContent = new ByteArrayOutputStream();
-      if (tagged) {
-        String tagType = readTagTypeFrom(byteMessage);
-        if (tagType != null) {
-          if ("text".equals(tagType)) {
-            final int textStartPosition = tagType.length();
-            if (myContent.size() > 0) {
-              myContent.write('\n');
-            }
-            myContent.write(byteMessage, textStartPosition + 1, byteMessage.length - textStartPosition);
-
-          }
-        }
-      } else {
-        if (myContent.size() > 0) {
-          myContent.write('\n');
-        }
-        myContent.write(byteMessage, 0, byteMessage.length);
-      }
-
+      myReader.messageSent(byteMessage, tagged);
     } else if (message.startsWith("VERS:")) {
       final String version = message.substring(5).trim();
       myRevision = version;
@@ -184,16 +212,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
     }
   }
 
-  private String readTagTypeFrom(final byte[] byteMessage) {
-    final StringBuffer result = new StringBuffer();
-    for (byte b : byteMessage) {
-      if (b == ' ') return result.toString();
-      result.append(b);
-    }
-    return null;
-  }
-
   public void binaryMessageSent(final byte[] bytes) {
-    myBinaryContent = bytes;
+    myReader.binaryMessageSent(bytes);
   }
 }
