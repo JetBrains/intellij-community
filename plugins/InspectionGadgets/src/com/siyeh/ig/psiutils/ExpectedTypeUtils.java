@@ -32,10 +32,10 @@ public class ExpectedTypeUtils{
     /**
      * @noinspection StaticCollection
      */
-    private static final Set<IElementType> arithmeticOps = new HashSet<IElementType>(
-            5);
+    private static final Set<IElementType> arithmeticOps =
+		    new HashSet<IElementType>(5);
 
-    static {
+	static {
         arithmeticOps.add(JavaTokenType.PLUS);
         arithmeticOps.add(JavaTokenType.MINUS);
         arithmeticOps.add(JavaTokenType.ASTERISK);
@@ -298,14 +298,14 @@ public class ExpectedTypeUtils{
                 PsiDeclarationStatement declaration){
             final PsiElement[] declaredElements =
                     declaration.getDeclaredElements();
-            for(PsiElement declaredElement1 : declaredElements){
-                if(declaredElement1 instanceof PsiVariable){
-                    final PsiVariable declaredElement =
-                            (PsiVariable) declaredElement1;
+            for(PsiElement declaredElement : declaredElements){
+                if(declaredElement instanceof PsiVariable){
+                    final PsiVariable variable =
+                            (PsiVariable) declaredElement;
                     final PsiExpression initializer =
-                            declaredElement.getInitializer();
+                            variable.getInitializer();
                     if(wrappedExp.equals(initializer)){
-                        expectedType = declaredElement.getType();
+                        expectedType = variable.getType();
                         return;
                     }
                 }
@@ -319,8 +319,7 @@ public class ExpectedTypeUtils{
                 expectedType = null;
             } else{
                 final int parameterPosition =
-                        ExpectedTypeUtils
-                                .getParameterPosition(expList, wrappedExp);
+                        getParameterPosition(expList, wrappedExp);
                 expectedType = getTypeOfParameter(result, parameterPosition);
             }
         }
@@ -444,11 +443,11 @@ public class ExpectedTypeUtils{
             {
                 return false;
             }
-            if(method.hasModifierProperty(PsiModifier.PROTECTED))
-            {
-                return referencingClass.isInheritor(containingClass, true) ||
-                        ClassUtils.inSamePackage(containingClass, referencingClass);
-            }
+            //if(method.hasModifierProperty(PsiModifier.PROTECTED))
+            //{
+            //    return referencingClass.isInheritor(containingClass, true) ||
+            //            ClassUtils.inSamePackage(containingClass, referencingClass);
+            //}
             return ClassUtils.inSamePackage(containingClass, referencingClass);
         }
 

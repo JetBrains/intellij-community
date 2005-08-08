@@ -101,7 +101,7 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
                 return;
             }
 
-            PsiClass resolved = PsiUtil.resolveClassInType(expectedType);
+            final PsiClass resolved = PsiUtil.resolveClassInType(expectedType);
             if (resolved != null && !resolved.isPhysical()) {
                 return;
             }
@@ -109,8 +109,7 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
             if (expectedType.isAssignableFrom(operandType)) {
                 return;     //then it's redundant, and caught by the built-in exception
             }
-            if(isTypeParameter(expectedType))
-            {
+            if(isTypeParameter(expectedType)) {
                 return;
             }
             if(expectedType instanceof PsiArrayType)
