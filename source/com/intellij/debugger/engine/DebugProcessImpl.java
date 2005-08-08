@@ -413,6 +413,10 @@ public abstract class DebugProcessImpl implements DebugProcess {
         if (portArg != null) {
           portArg.setValue(address);
         }
+        final Connector.Argument timeoutArg = (Connector.Argument)myArguments.get("timeout");
+        if (timeoutArg != null) {
+          timeoutArg.setValue("0"); // wait forever
+        }
         connector.startListening(myArguments);
         myDebugProcessDispatcher.getMulticaster().connectorIsReady();
         try {
@@ -441,29 +445,33 @@ public abstract class DebugProcessImpl implements DebugProcess {
           );
         }
         myArguments = connector.defaultArguments();
-        Connector.Argument argument;
         if (myConnection.isUseSockets()) {
-          argument = (Connector.Argument)myArguments.get("hostname");
-          if (argument != null && myConnection.getHostName() != null) {
-            argument.setValue(myConnection.getHostName());
+          final Connector.Argument hostnameArg = (Connector.Argument)myArguments.get("hostname");
+          if (hostnameArg != null && myConnection.getHostName() != null) {
+            hostnameArg.setValue(myConnection.getHostName());
           }
           if (address == null) {
             throw new CantRunException("The port to attach to unspecified");
           }
-          argument = (Connector.Argument)myArguments.get("port");
-          if (argument != null) {
-            argument.setValue(address);
+          final Connector.Argument portArg = (Connector.Argument)myArguments.get("port");
+          if (portArg != null) {
+            portArg.setValue(address);
           }
         }
         else {
           if (address == null) {
             throw new CantRunException("Shared memory address unspecified");
           }
-          argument = (Connector.Argument)myArguments.get("name");
-          if (argument != null) {
-            argument.setValue(address);
+          final Connector.Argument nameArg = (Connector.Argument)myArguments.get("name");
+          if (nameArg != null) {
+            nameArg.setValue(address);
           }
         }
+        final Connector.Argument timeoutArg = (Connector.Argument)myArguments.get("timeout");
+        if (timeoutArg != null) {
+          timeoutArg.setValue("0"); // wait forever
+        }
+
         myDebugProcessDispatcher.getMulticaster().connectorIsReady();
         try {
           if(SOCKET_ATTACHING_CONNECTOR_NAME.equals(connector.name()) && Patches.SUN_BUG_338675) {
