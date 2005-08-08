@@ -71,7 +71,18 @@ public abstract class AbstractBlock implements Block {
 
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
-    return new ChildAttributes(getChildIndent(), null);
+    return new ChildAttributes(getChildIndent(), getFirstChildAlignment());
+  }
+
+  private Alignment getFirstChildAlignment() {
+    List<Block> subBlocks = getSubBlocks();
+    for (final Block subBlock : subBlocks) {
+      Alignment alignment = subBlock.getAlignment();
+      if (alignment != null) {
+        return alignment;
+      }
+    }
+    return null;
   }
 
   @Nullable

@@ -411,14 +411,30 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
   private TextRange getSignificantRange(final PsiFile file, final int offset) {
     final ASTNode elementAtOffset = SourceTreeToPsiMap.psiElementToTree(file.findElementAt(offset));
+    if (elementAtOffset == null) {
+      return new TextRange(offset, offset);
+    }
+
     if (file instanceof PsiJavaFile) {
       ASTNode current = elementAtOffset;
-      while (current != null && !(current.getPsi() instanceof PsiBinaryExpression ||
-                                  current.getPsi() instanceof PsiConditionalExpression)) {
-        current = current.getTreeParent();
-      }
+      current = findNearestExpressionParent(current);
       if (current == null) {
-        return elementAtOffset.getTextRange();
+        if (elementAtOffset.getElementType() == ElementType.WHITE_SPACE) {
+          ASTNode prevElement = elementAtOffset.getTreePrev();
+          if (prevElement == null) {
+            return elementAtOffset.getTextRange();
+          } else {
+            ASTNode prevExpressionParent = findNearestExpressionParent(prevElement);
+            if (prevExpressionParent == null) {
+              return elementAtOffset.getTextRange();
+            } else {
+              return new TextRange(prevExpressionParent.getTextRange().getStartOffset(), elementAtOffset.getTextRange().getEndOffset());
+            }
+          }
+        } else {
+          return elementAtOffset.getTextRange();
+        }
+
       }
       else {
         return current.getTextRange();
@@ -426,6 +442,18 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     } else {
       return elementAtOffset.getTextRange();
     }
+  }
+
+  private ASTNode findNearestExpressionParent(final ASTNode current) {
+    ASTNode result = current;
+    while (result != null) {
+      PsiElement psi = ((TreeElement)result).getTransformedFirstOrSelf().getPsi();
+      if (psi instanceof PsiExpression && !(psi.getParent() instanceof PsiExpression)) {
+        return result;
+      }
+      result = result.getTreeParent();
+    }
+    return result;
   }
 
   public boolean isLineToBeIndented(PsiFile file, int offset) {
