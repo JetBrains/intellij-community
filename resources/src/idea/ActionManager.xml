@@ -598,7 +598,7 @@
         <action id="Unsplit"                class="com.intellij.ide.actions.UnsplitAction"         text="Un_split"     description="Unsplit Window"/>
         <action id="UnsplitAll"             class="com.intellij.ide.actions.UnsplitAllAction"      text="U_nsplit All" description="Remove all splitters"/>
         <action id="NextSplitter"           class="com.intellij.ide.actions.NextSplitAction"       text="_Goto Next Splitter"     description="Goto next splitter window"/>
-        <action id="PrevSplitter"           class="com.intellij.ide.actions.PrevSplitAction"       text="Goto Previons Splitter"     description="Goto previous splitter window"/>
+        <action id="PrevSplitter"           class="com.intellij.ide.actions.PrevSplitAction"       text="Goto Previous Splitter"     description="Goto previous splitter window"/>
       </group>
 
       <!-- Help -->
