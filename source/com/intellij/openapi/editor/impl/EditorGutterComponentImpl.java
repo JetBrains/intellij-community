@@ -165,9 +165,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       for (int j = startLineNumber; j < endLineNumber; j++) {
         int logLine = myEditor.visualToLogicalPosition(new VisualPosition(j, 0)).line;
         String s = gutterProvider.getLineText(logLine, myEditor);
-        g.drawString(s,
-                     x,
-                     (j + 1) * lineHeight - myEditor.getDescent());
+        if (s != null) {
+          g.drawString(s,
+                       x,
+                       (j + 1) * lineHeight - myEditor.getDescent());
+        }
       }
 
       x += myTextAnnotationGutterSizes.get(i);
@@ -364,8 +366,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       TextAnnotationGutterProvider gutterProvider = myTextAnnotationGutters.get(j);
       int gutterSize = 0;
       for (int i = 0; i < lineCount; i++) {
-        gutterSize = Math.max(gutterSize,
-                              fontMetrics.stringWidth(gutterProvider.getLineText(i, myEditor)));
+        final String lineText = gutterProvider.getLineText(i, myEditor);
+        if (lineText != null) {
+          gutterSize = Math.max(gutterSize, fontMetrics.stringWidth(lineText));
+        }
       }
       if (gutterSize > 0) gutterSize += GAP_BETWEEN_ANNOTATIONS;
       myTextAnnotationGutterSizes.set(j, gutterSize);
