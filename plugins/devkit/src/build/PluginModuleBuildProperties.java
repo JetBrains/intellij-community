@@ -134,16 +134,12 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
 
   public void setPluginXMLUrl(final String pluginXMLUrl) {
     myPluginXML = DeploymentDescriptorFactory.getInstance().createDeploymentItem(myModule, new PluginDescriptorMetaData());
-    myPluginXML.setUrl(VfsUtil.pathToUrl(pluginXMLUrl.replace(File.separatorChar, '/')));
+    final String url = VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(pluginXMLUrl));
+    myPluginXML.setUrl(url);
     myPluginXML.createIfNotExists();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        final VirtualFile pluginXML = LocalFileSystem.getInstance().findFileByPath(pluginXMLUrl.replace(File.separatorChar, '/'));
-        if (pluginXML != null) {
-          myPluginXMLPointer = VirtualFilePointerManager.getInstance().create(pluginXML, null);
-        } else {
-          myPluginXMLPointer = VirtualFilePointerManager.getInstance().create(VfsUtil.pathToUrl(pluginXMLUrl), null);
-        }
+        myPluginXMLPointer = VirtualFilePointerManager.getInstance().create(url, null);
       }
     });
   }
@@ -154,10 +150,7 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
     } else {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
-          final VirtualFile manifest = LocalFileSystem.getInstance().findFileByPath(manifestUrl.replace(File.separatorChar, '/'));
-          if (manifest != null) {
-            myManifestFilePointer = VirtualFilePointerManager.getInstance().create(manifest, null);
-          }
+          myManifestFilePointer = VirtualFilePointerManager.getInstance().create(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(manifestUrl)), null);
         }
       });
     }
