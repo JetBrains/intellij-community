@@ -192,8 +192,7 @@ public class StringConcatenationInLoopsInspection extends ExpressionInspection {
     private static boolean isOnRHSOfAssignment(PsiExpression expression) {
         final PsiElement parent = expression.getParent();
         if (parent instanceof PsiParenthesizedExpression) {
-            final PsiExpression containedExpression = ((PsiParenthesizedExpression) parent).getExpression();
-            return isOnRHSOfAssignment(containedExpression);
+            return isOnRHSOfAssignment((PsiExpression)parent);
         }
         if (parent instanceof PsiAssignmentExpression) {
             return true;
