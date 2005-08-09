@@ -429,6 +429,15 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     for (Module module : modules) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       contentRoots.addAll(Arrays.asList(moduleRootManager.getContentRoots()));
+      final VirtualFile compilerOutputPath = moduleRootManager.getCompilerOutputPath();
+      if (compilerOutputPath != null) {
+        contentRoots.addAll(Arrays.asList(compilerOutputPath));
+      }
+      final VirtualFile compilerOutputPathForTests = moduleRootManager.getCompilerOutputPathForTests();
+      if (compilerOutputPathForTests != null) {
+        contentRoots.addAll(Arrays.asList(compilerOutputPathForTests));
+      }
+      
       final VirtualFile moduleFile = module.getModuleFile();
       if (moduleFile != null) {
         contentRoots.add(moduleFile);
