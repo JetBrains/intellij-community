@@ -230,7 +230,7 @@ class ReloadClassesWorker {
   }
 
   public void reloadClasses(final HashMap<String, HotSwapFile> modifiedClasses) {
-    if(modifiedClasses == null) {
+    if(modifiedClasses == null || modifiedClasses.size() == 0) {
       myProgress.addMessage(MessageCategory.INFORMATION, "Loaded classes are up to date. Nothing to reload.");
       return;
     }

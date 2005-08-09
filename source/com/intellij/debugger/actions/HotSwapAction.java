@@ -20,7 +20,6 @@ import com.intellij.debugger.impl.DebuggerSession;
  * To change this template use Options | File Templates.
  */
 public class HotSwapAction extends AnAction{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.actions.HotSwapAction");
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();

@@ -7,11 +7,13 @@ import com.intellij.debugger.impl.HotSwapFile;
 import com.intellij.debugger.impl.HotSwapManager;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.compiler.CompilationStatusListener;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.containers.HashMap;
 import com.intellij.psi.PsiDocumentManager;
 
@@ -76,7 +78,15 @@ public class HotSwapUI implements ProjectComponent{
       public void run() {
         final HashMap<DebuggerSession, HashMap<String, HotSwapFile>> modifiedClasses = getModifiedClasses(sessions);
 
-        if(modifiedClasses.isEmpty()) return;
+        if(modifiedClasses.isEmpty()) {
+          final Application application = ApplicationManager.getApplication();
+          application.invokeLater(new Runnable() {
+            public void run() {
+              WindowManager.getInstance().getStatusBar(myProject).setInfo("Loaded classes are up to date. Nothing to reload.");
+            }
+          }, application.getDefaultModalityState());
+          return;
+        }
 
         final HashMap<DebuggerSession, HashMap<String, HotSwapFile>> classesToReload = new HashMap<DebuggerSession, HashMap<String, HotSwapFile>>();
         if(askBeforeHotswap) {
