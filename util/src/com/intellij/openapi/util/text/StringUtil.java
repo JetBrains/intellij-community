@@ -388,7 +388,8 @@ public class StringUtil {
   }
 
   public static String pluralize(@NotNull String suggestion) {
-    if (StringUtil.endsWithChar(suggestion, 's') || StringUtil.endsWithChar(suggestion, 'x')) {
+    if (StringUtil.endsWithChar(suggestion, 's') || StringUtil.endsWithChar(suggestion, 'x') ||
+      suggestion.endsWith("ch")) {
       suggestion += "es";
     }
     else {
