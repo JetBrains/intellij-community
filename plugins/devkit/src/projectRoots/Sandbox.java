@@ -15,7 +15,9 @@
  */
 package org.jetbrains.idea.devkit.projectRoots;
 
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -43,6 +45,9 @@ public class Sandbox implements SdkAdditionalData, JDOMExternalizable{
 
   public Object clone() throws CloneNotSupportedException {
     return new Sandbox(mySandboxHome);
+  }
+
+  public void checkValid(SdkModel sdkModel) throws ConfigurationException {
   }
 
   public void readExternal(Element element) throws InvalidDataException {

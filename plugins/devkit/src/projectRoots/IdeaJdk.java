@@ -300,7 +300,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
         myRtPath = null;
       }
 
-      public void sdkChanged(Sdk sdk) {
+      public void sdkChanged(Sdk sdk, String previousName) {
         myInternalJdk = null;
         myToolsPath = null;
         myRtPath = null;
