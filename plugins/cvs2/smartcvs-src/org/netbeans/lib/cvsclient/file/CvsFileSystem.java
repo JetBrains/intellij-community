@@ -75,13 +75,17 @@ public final class CvsFileSystem
 	}
 
 	public String getRelativeRepositoryPath(String repositoryPath) {
-		String relativeRepositoryPath = repositoryPath.substring(repository.length());
-		relativeRepositoryPath = FileUtils.removeTrailingSlash(relativeRepositoryPath);
-		if (relativeRepositoryPath.length() == 0) {
-			relativeRepositoryPath = ".";
-		}
-		return relativeRepositoryPath;
-	}
+          if (repositoryPath.startsWith(repository)) {
+            String relativeRepositoryPath = repositoryPath.substring(repository.length());
+            relativeRepositoryPath = FileUtils.removeTrailingSlash(relativeRepositoryPath);
+            if (relativeRepositoryPath.length() == 0) {
+                    relativeRepositoryPath = ".";
+            }
+            return relativeRepositoryPath;
+          } else {
+            return repository;
+          }
+        }
 
 	public String getRepositoryForDirectory(DirectoryObject directoryObject, IAdminReader adminReader) {
 		try {

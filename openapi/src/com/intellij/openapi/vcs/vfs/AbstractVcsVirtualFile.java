@@ -28,6 +28,7 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
   private final VirtualFile myParent;
   protected int myModificationStamp = 0;
   private final VirtualFileSystem myFileSystem;
+  private static final byte[] EMPTY_BUF = new byte[0];
 
   protected AbstractVcsVirtualFile(String path, VirtualFileSystem fileSystem) {
     myFileSystem = fileSystem;
@@ -101,7 +102,13 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
   }
 
   public InputStream getInputStream() throws IOException {
-    return new ByteArrayInputStream(contentsToByteArray());
+    final byte[] buf = contentsToByteArray();
+    //52243 NPE
+    if (buf != null) {
+      return new ByteArrayInputStream(buf);
+    } else {
+      return new ByteArrayInputStream(EMPTY_BUF);
+    }
   }
 
   public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {

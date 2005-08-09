@@ -232,11 +232,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         }
       }
     });
-
-    final Module[] modules = ModuleManager.getInstance(myProject).getModules();
-    for (Module module : modules) {
-      ModuleLevelVcsManager.getInstance(module).startVcs();
-    }
   }
 
   public void initialize() {

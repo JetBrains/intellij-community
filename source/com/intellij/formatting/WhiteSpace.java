@@ -1,6 +1,5 @@
 package com.intellij.formatting;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -10,8 +9,6 @@ import java.util.ArrayList;
 class WhiteSpace {
 
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.WhiteSpace");
-  
   private TextRange myTextRange;
 
   private int mySpaces;
@@ -49,7 +46,7 @@ class WhiteSpace {
     myInitial = model.getText(myTextRange);
     
     if (myInitial != null && myInitial.toString().trim().length() > 0) {
-      LOG.assertTrue(false, model.getText(new TextRange(0, model.getTextLength())).toString() + ":" + myInitial.toString());
+      InitialInfoBuilder.assertInvalidRanges(myTextRange.getStartOffset(), myTextRange.getEndOffset(), model);
     }
 
     final int tabsize = options.TAB_SIZE;

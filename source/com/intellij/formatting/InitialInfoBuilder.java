@@ -110,8 +110,7 @@ class InitialInfoBuilder {
 
   private void setDefaultIndents(final List<AbstractBlockWrapper> list) {
     if (!list.isEmpty()) {
-      for (Iterator<AbstractBlockWrapper> iterator = list.iterator(); iterator.hasNext();) {
-        AbstractBlockWrapper wrapper = iterator.next();
+      for (AbstractBlockWrapper wrapper : list) {
         if (wrapper.getIndent() == null) {
           wrapper.setIndent((IndentImpl)Indent.getContinuationWithoutFirstIndent());
         }
@@ -131,7 +130,7 @@ class InitialInfoBuilder {
     myResult.put(rootBlock, info);
 
     if (textRange.getLength() == 0) {
-      LOG.assertTrue(false, rootBlock.getClass().getName());
+      assertInvalidRanges(textRange.getStartOffset(), textRange.getEndOffset(), myModel);
     }
     if (myPreviousBlock != null) {
       myPreviousBlock.setNextBlock(info);
@@ -163,16 +162,14 @@ class InitialInfoBuilder {
       final TextRange textRange = myCurrentWhiteSpace.getTextRange();
 
       if (textRange.getStartOffset() >= myAffectedRange.getEndOffset()) return true;
-      if (textRange.getEndOffset() < myAffectedRange.getStartOffset()) return true;
-      return false;
+      return textRange.getEndOffset() < myAffectedRange.getStartOffset();
     }
   }
 
   private boolean isReadOnly(final TextRange textRange) {
     if (myAffectedRange == null) return false;
     if (textRange.getStartOffset() > myAffectedRange.getEndOffset()) return true;
-    if (textRange.getEndOffset() < myAffectedRange.getStartOffset()) return true;
-    return false;
+    return textRange.getEndOffset() < myAffectedRange.getStartOffset();
   }
 
   public Map<Block, AbstractBlockWrapper> getBlockToInfoMap() {
