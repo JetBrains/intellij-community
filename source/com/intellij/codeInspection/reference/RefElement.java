@@ -80,6 +80,16 @@ public abstract class RefElement extends RefEntity {
     }
   }
 
+  protected RefElement(PsiFile file, RefManager manager) {
+    super(file.getName());
+    myManager = manager;
+    myID = SmartPointerManager.getInstance(manager.getProject()).createSmartPsiElementPointer(file);
+    myFlags = 0;
+
+    myOutReferences = new ArrayList<RefElement>(0);
+    myInReferences = new ArrayList<RefElement>(0);
+  }
+
   protected RefElement(PsiModifierListOwner elem, RefManager manager) {
     super(RefUtil.getName(elem));
     myManager = manager;
@@ -122,8 +132,8 @@ public abstract class RefElement extends RefEntity {
     return getName();
   }
 
-  public PsiModifierListOwner getElement() {
-    return (PsiModifierListOwner)myID.getElement();
+  public PsiElement getElement() {
+    return myID.getElement();
   }
 
   public abstract void accept(RefVisitor visitor);

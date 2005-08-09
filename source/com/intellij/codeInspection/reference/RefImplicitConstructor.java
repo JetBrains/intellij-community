@@ -8,7 +8,6 @@
  */
 package com.intellij.codeInspection.reference;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifierListOwner;
 
 public class RefImplicitConstructor extends RefMethod {
@@ -47,7 +46,7 @@ public class RefImplicitConstructor extends RefMethod {
   }
 
   public PsiModifierListOwner getElement() {
-    return getOwnerClass().getElement();
+    return (PsiModifierListOwner)getOwnerClass().getElement();
   }
 
   public RefClass getOwnerClass() {

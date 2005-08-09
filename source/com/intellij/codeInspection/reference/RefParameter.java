@@ -96,6 +96,6 @@ public class RefParameter extends RefElement {
   }
 
   public void initializeFinalFlag() {
-    setIsFinal(getElement().hasModifierProperty(PsiModifier.FINAL));
+    setIsFinal(((PsiModifierListOwner)getElement()).hasModifierProperty(PsiModifier.FINAL));
   }
 }

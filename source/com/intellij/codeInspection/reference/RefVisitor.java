@@ -28,4 +28,8 @@ public class RefVisitor {
   public void visitClass(RefClass aClass) {
     visitElement(aClass);
   }
+
+  public void visitFile(RefFile file) {
+    visitElement(file);
+  }
 }

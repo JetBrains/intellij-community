@@ -315,7 +315,7 @@ public class VisibilityInspection extends FilteringInspectionTool {
     protected boolean applyFix(RefElement[] refElements) {
       for (int i = 0; i < refElements.length; i++) {
         RefElement refElement = refElements[i];
-        PsiModifierListOwner psiElement = refElement.getElement();
+        PsiModifierListOwner psiElement = (PsiModifierListOwner)refElement.getElement();
         if (psiElement == null) continue;
         String accessLevel = getFilter().getPossibleAccess(refElement);
         changeAccessLevel(psiElement, refElement, accessLevel);

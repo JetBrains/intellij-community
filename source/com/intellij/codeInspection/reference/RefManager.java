@@ -287,6 +287,9 @@ public class RefManager {
         else if (elem instanceof PsiField) {
           ref = new RefField((PsiField)elem, this);
         }
+        else if (elem instanceof PsiFile) {
+          ref = new RefFile((PsiFile)elem, this);
+        }
         else {
           return null;
         }

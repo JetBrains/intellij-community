@@ -527,7 +527,7 @@ public class RefUtil {
 
     if (psiThis instanceof PsiAnonymousClass) {
       RefElement refOwner = (RefElement)refElement.getOwner();
-      updateCanBeStatic(refOwner, refOwner.getElement(), psiWhat);
+      updateCanBeStatic(refOwner, ((PsiModifierListOwner)refOwner.getElement()), psiWhat);
     }
     else if (!psiWhat.hasModifierProperty(PsiModifier.STATIC)) {
       PsiClass whatClass = getPsiOwnerClass(psiWhat);
