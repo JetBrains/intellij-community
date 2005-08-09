@@ -95,6 +95,10 @@ public class SdkEditor implements Configurable{
     return myMainPanel;
   }
 
+  public JComponent getComponent(){
+    return myMainPanel;
+  }
+
   private void createMainPanel(){
     myClassPathEditor = new MyPathsEditor("Classpath", ProjectRootType.CLASS, new FileChooserDescriptor(true, true, true, false, true, true), false);
     mySourcePathEditor = new MyPathsEditor("Sourcepath", ProjectRootType.SOURCE, new FileChooserDescriptor(true, true, true, false, true, true), false);
@@ -410,7 +414,11 @@ public class SdkEditor implements Configurable{
     if (mySdk == null) {
       return null;
     }
-    final SdkType sdkType = mySdk.getSdkType();
+    return initAdditionalDataConfigurable(mySdk);
+  }
+
+  public AdditionalDataConfigurable initAdditionalDataConfigurable(Sdk sdk) {
+    final SdkType sdkType = sdk.getSdkType();
     AdditionalDataConfigurable configurable = myAdditionalDataConfigurables.get(sdkType);
     if (configurable == null) {
       configurable = sdkType.createAdditionalDataConfigurable(mySdkModel, myEditedSdkModificator);

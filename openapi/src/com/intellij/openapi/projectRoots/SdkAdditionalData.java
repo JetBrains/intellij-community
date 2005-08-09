@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.projectRoots;
 
+import com.intellij.openapi.options.ConfigurationException;
+
 public interface SdkAdditionalData {
   Object clone() throws CloneNotSupportedException;
+  void checkValid(SdkModel sdkModel) throws ConfigurationException;
 }

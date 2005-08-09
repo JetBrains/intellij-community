@@ -26,7 +26,7 @@ public interface SdkModel {
   interface Listener extends EventListener {
     void sdkAdded(Sdk sdk);
     void beforeSdkRemove(Sdk sdk);
-    void sdkChanged(Sdk sdk);
+    void sdkChanged(Sdk sdk, String previousName);
     void sdkHomeSelected(Sdk sdk, String newSdkHome);
 
   }

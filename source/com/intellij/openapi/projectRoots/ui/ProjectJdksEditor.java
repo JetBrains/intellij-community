@@ -16,8 +16,7 @@ public class ProjectJdksEditor extends DialogWrapper{
 
   public ProjectJdksEditor(ProjectJdk jdk, Component parent){
     super(parent, true);
-    myJdkTableConfigurable = new JdkTableConfigurable();
-    myJdkTableConfigurable.setSelectedJdk(jdk);
+    myJdkTableConfigurable = new JdkTableConfigurable(jdk);
     setTitle("Configure JDK");
     init();
   }
@@ -29,9 +28,6 @@ public class ProjectJdksEditor extends DialogWrapper{
   }
 
   protected void doOKAction(){
-    if(!myJdkTableConfigurable.canApply(true, new String[1])){
-      return;
-    }
     try{
       myJdkTableConfigurable.apply();
       super.doOKAction();
