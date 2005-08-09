@@ -362,8 +362,8 @@ public class TooBroadScopeInspection extends StatementInspection
             {
                 if (initializer != null)
                 {
-                return;
-            }
+                    return;
+                }
                 if (!(blockChild instanceof PsiExpressionStatement))
                 {
                     return;
@@ -389,11 +389,12 @@ public class TooBroadScopeInspection extends StatementInspection
 			if (expression == null)
 			{
 				return true;
-    }
+            }
 			if (PsiUtil.isConstantExpression(expression))
 			{
 				return true;
-}			if (expression instanceof PsiNewExpression)
+            }
+            if (expression instanceof PsiNewExpression)
 			{
 				final PsiNewExpression newExpression = (PsiNewExpression)expression;
 				if (newExpression.getArrayDimensions().length > 0)

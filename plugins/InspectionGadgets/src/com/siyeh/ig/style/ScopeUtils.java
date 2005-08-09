@@ -34,45 +34,17 @@ public class ScopeUtils
                                                 @NotNull PsiVariable variable)
     {
         PsiElement prevSibling = sibling.getPrevSibling();
-        if (variable.hasInitializer())
+        while (prevSibling instanceof PsiWhiteSpace || prevSibling instanceof PsiComment)
         {
-            while (prevSibling instanceof PsiWhiteSpace || prevSibling instanceof PsiComment)
-            {
-                prevSibling = prevSibling.getPrevSibling();
-            }
+            prevSibling = prevSibling.getPrevSibling();
         }
-        else
-        {
-            if (prevSibling instanceof PsiWhiteSpace)
-            {
-                prevSibling = prevSibling.getPrevSibling();
-            }
-        }
-
         if (prevSibling instanceof PsiDeclarationStatement)
         {
             if (prevSibling.equals(variable.getParent()))
             {
                 return null;
             }
-            if (variable.hasInitializer())
-            {
-                return findInsertionPoint(prevSibling, variable);
-            }
-            final PsiDeclarationStatement declarationStatement =
-                    (PsiDeclarationStatement)prevSibling;
-            final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
-            final PsiElement element = declaredElements[declaredElements.length - 1];
-            if (element instanceof PsiVariable)
-            {
-                final PsiVariable otherVariable = (PsiVariable)element;
-                final PsiExpression initializer = otherVariable.getInitializer();
-                if (initializer == null /*|| PsiUtil.isConstantExpression(initializer)*/)
-                {
-                    return findInsertionPoint(prevSibling, variable);
-                }
-
-            }
+            return findInsertionPoint(prevSibling, variable);
         }
         return prevSibling;
     }
