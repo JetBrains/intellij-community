@@ -17,19 +17,20 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
 
-public class MissortedModifiersInspection extends ClassInspection {
+public class MissortedModifiersInspection extends BaseInspection {
 
     private static final int NUM_MODIFIERS = 11;
     /** @noinspection StaticCollection*/
@@ -61,12 +62,55 @@ public class MissortedModifiersInspection extends ClassInspection {
         return GroupNames.STYLE_GROUP_NAME;
     }
 
+    public ProblemDescriptor[] doCheckClass(PsiClass aClass,
+                                            InspectionManager manager,
+                                            boolean isOnTheFly){
+        if(!aClass.isPhysical()){
+            return super.doCheckClass(aClass, manager, isOnTheFly);
+        }
+        return checkModifierListOwner(aClass, manager);
+    }
+
+    public ProblemDescriptor[] doCheckMethod(PsiMethod method,
+                                             InspectionManager manager,
+                                             boolean isOnTheFly){
+        if(!method.isPhysical()){
+            return super.doCheckMethod(method, manager, isOnTheFly);
+        }
+        return checkModifierListOwner(method, manager);
+    }
+
+    public ProblemDescriptor[] doCheckField(PsiField field,
+                                            InspectionManager manager,
+                                            boolean isOnTheFly){
+        if(!field.isPhysical()){
+            return super.doCheckField(field, manager, isOnTheFly);
+        }
+        return checkModifierListOwner(field, manager);
+    }
+
+    private ProblemDescriptor[] checkModifierListOwner(
+            PsiModifierListOwner modifierListOwner,
+            InspectionManager manager
+    ) {
+        final PsiModifierList modifierList = modifierListOwner.getModifierList();
+        if (!isModifierListMissorted(modifierList)) {
+            return null;
+        }
+        final String description = buildErrorString(modifierList);
+        final ProblemDescriptor problemDescriptor =
+                manager.createProblemDescriptor(modifierList, description, fix,
+                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+        return new ProblemDescriptor[] {problemDescriptor};
+    }
+
+
     public String buildErrorString(PsiElement location) {
         return "Missorted modifers '#ref' #loc";
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new MissortedModifiersVisitor();
+        return null;
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -74,7 +118,7 @@ public class MissortedModifiersInspection extends ClassInspection {
     }
          public JComponent createOptionsPanel(){
         return new SingleCheckboxOptionsPanel("Require annotations to be sorted before keywords",
-                                                              this, "m_requireAnnotationsFirst");
+                this, "m_requireAnnotationsFirst");
     }
     private static class SortModifiersFix extends InspectionGadgetsFix {
         public String getName() {
@@ -82,7 +126,7 @@ public class MissortedModifiersInspection extends ClassInspection {
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
+                throws IncorrectOperationException{
 
             final PsiModifierList modifierList = (PsiModifierList) descriptor.getPsiElement();
             final List<String> simpleModifiers = new ArrayList<String>();
@@ -109,7 +153,7 @@ public class MissortedModifiersInspection extends ClassInspection {
 
         private static void clearModifiers(List<String> modifiers,
                                            PsiModifierList modifierList)
-                                                                         throws IncorrectOperationException{
+                throws IncorrectOperationException{
             for(final String modifier : modifiers){
                     modifierList.setModifierProperty(modifier, false);
 
@@ -117,85 +161,42 @@ public class MissortedModifiersInspection extends ClassInspection {
         }
     }
 
-    private class MissortedModifiersVisitor
-            extends BaseInspectionVisitor {
-        private boolean m_isInClass = false;
+    private boolean hasMissortedModifierList(PsiModifierListOwner listOwner) {
+        final PsiModifierList modifierList = listOwner.getModifierList();
+        return isModifierListMissorted(modifierList);
+    }
 
-        public void visitClass(@NotNull PsiClass aClass) {
-            if (!m_isInClass) {
-                m_isInClass = true;
-                super.visitClass(aClass);
-                checkForMissortedModifiers(aClass);
-                m_isInClass = false;
-            }
-        }
-
-        public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
-            super.visitClassInitializer(initializer);
-            checkForMissortedModifiers(initializer);
-        }
-
-        public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
-            super.visitLocalVariable(variable);
-            checkForMissortedModifiers(variable);
-        }
-
-        public void visitParameter(@NotNull PsiParameter parameter) {
-            super.visitParameter(parameter);
-            checkForMissortedModifiers(parameter);
-        }
-
-        public void visitMethod(@NotNull PsiMethod method) {
-            super.visitMethod(method);
-            checkForMissortedModifiers(method);
-        }
-
-        public void visitField(@NotNull PsiField field) {
-            super.visitField(field);
-            checkForMissortedModifiers(field);
-        }
-
-        private void checkForMissortedModifiers(PsiModifierListOwner listOwner) {
-            final PsiModifierList modifierList = listOwner.getModifierList();
-            if (isModifierListMissorted(modifierList)) {
-                registerError(modifierList);
-            }
-        }
-
-        private boolean isModifierListMissorted(PsiModifierList modifierList) {
-            if (modifierList == null) {
-                return false;
-            }
-
-            final List<PsiElement> simpleModifiers = new ArrayList<PsiElement>();
-            final PsiElement[] children = modifierList.getChildren();
-            for(final PsiElement child : children){
-                if(child instanceof PsiJavaToken){
-                    simpleModifiers.add(child);
-                }
-                if(child instanceof PsiAnnotation){
-                    if(m_requireAnnotationsFirst && simpleModifiers.size() != 0){
-                        return true; //things aren't in order, since annotations come first
-                    }
-                }
-            }
-            int currentModifierIndex = -1;
-
-            for(Object simpleModifier : simpleModifiers){
-                final PsiJavaToken token = (PsiJavaToken) simpleModifier;
-                final String text = token.getText();
-                final Integer modifierIndex = s_modifierOrder.get(text);
-                if(modifierIndex == null){
-                    return false;
-                }
-                if(currentModifierIndex >= modifierIndex){
-                    return true;
-                }
-                currentModifierIndex = modifierIndex;
-            }
+    private boolean isModifierListMissorted(PsiModifierList modifierList) {
+        if (modifierList == null) {
             return false;
         }
 
-    }
+        final List<PsiElement> simpleModifiers = new ArrayList<PsiElement>();
+        final PsiElement[] children = modifierList.getChildren();
+        for(final PsiElement child : children){
+            if(child instanceof PsiJavaToken){
+                simpleModifiers.add(child);
+            }
+            if(child instanceof PsiAnnotation){
+                if(m_requireAnnotationsFirst && simpleModifiers.size() != 0){
+                    return true; //things aren't in order, since annotations come first
+                }
+            }
+        }
+        int currentModifierIndex = -1;
 
+        for(Object simpleModifier : simpleModifiers){
+            final PsiJavaToken token = (PsiJavaToken) simpleModifier;
+            final String text = token.getText();
+            final Integer modifierIndex = s_modifierOrder.get(text);
+            if(modifierIndex == null){
+                return false;
+            }
+            if(currentModifierIndex >= modifierIndex){
+                return true;
+            }
+            currentModifierIndex = modifierIndex;
+        }
+        return false;
+    }
 }
