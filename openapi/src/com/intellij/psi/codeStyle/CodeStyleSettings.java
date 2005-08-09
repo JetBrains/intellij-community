@@ -823,7 +823,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public int CLASS_ANNOTATION_WRAP = WRAP_ALWAYS;  
   public int FIELD_ANNOTATION_WRAP = WRAP_ALWAYS;  
   public int PARAMETER_ANNOTATION_WRAP = DO_NOT_WRAP;  
-  public int VARIABLE_ANNOTATION_WRAP = WRAP_ALWAYS;  
+  public int VARIABLE_ANNOTATION_WRAP = DO_NOT_WRAP;  
   
   public boolean SPACE_BEFORE_ANOTATION_PARAMETER_LIST = false;
   public boolean SPACE_WITHIN_ANNOTATION_PARENTHESES = false;
