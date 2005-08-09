@@ -23,7 +23,7 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
    * Should be called in read action
    */
   public CallerMethodsTreeStructure(final Project project, final PsiMethod method, final String scopeType) {
-    super(project, new CallHierarchyNodeDescriptor(project, null, method, true));
+    super(project, new CallHierarchyNodeDescriptor(project, null, method, true, false));
     myScopeType = scopeType;
   }
 
@@ -92,7 +92,7 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
 
       CallHierarchyNodeDescriptor d = methodToDescriptorMap.get(key);
       if (d == null) {
-        d = new CallHierarchyNodeDescriptor(myProject, descriptor, element, false);
+        d = new CallHierarchyNodeDescriptor(myProject, descriptor, element, false, true);
         methodToDescriptorMap.put(key, d);
       }
       else {

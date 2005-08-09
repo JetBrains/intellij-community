@@ -7,7 +7,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ArrayUtil;
 
@@ -21,7 +20,7 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
    * Should be called in read action
    */
   public CalleeMethodsTreeStructure(final Project project, final PsiMethod method, final String scopeType) {
-    super(project, new CallHierarchyNodeDescriptor(project, null, method, true));
+    super(project, new CallHierarchyNodeDescriptor(project, null, method, true, false));
     myScopeType = scopeType;
   }
 
@@ -62,7 +61,7 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
 
       CallHierarchyNodeDescriptor d = (CallHierarchyNodeDescriptor)methodToDescriptorMap.get(calledMethod);
       if (d == null) {
-        d = new CallHierarchyNodeDescriptor(myProject, descriptor, calledMethod, false);
+        d = new CallHierarchyNodeDescriptor(myProject, descriptor, calledMethod, false, false);
         methodToDescriptorMap.put(calledMethod, d);
         result.add(d);
       }
@@ -76,7 +75,7 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
     final PsiMethod[] overridingMethods = searchHelper.findOverridingMethods(method, GlobalSearchScope.projectScope(myProject), true);
     for (int i = 0; i < overridingMethods.length; i++) {
       final PsiMethod overridingMethod = overridingMethods[i];
-      final CallHierarchyNodeDescriptor node = new CallHierarchyNodeDescriptor(myProject, descriptor, overridingMethod, false);
+      final CallHierarchyNodeDescriptor node = new CallHierarchyNodeDescriptor(myProject, descriptor, overridingMethod, false, false);
       if (!result.contains(node)) result.add(node);
     }
 

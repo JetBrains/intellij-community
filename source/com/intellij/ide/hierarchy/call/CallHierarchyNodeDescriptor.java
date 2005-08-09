@@ -23,25 +23,26 @@ import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LayeredIcon;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 
-import org.jetbrains.annotations.Nullable;
-
 public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor implements Navigatable {
   private int myUsageCount = 1;
   private final static Class<? extends PsiMember>[] ourEnclosingElementClasses = new Class[]{PsiMethod.class, PsiClass.class};
   private ArrayList<PsiReference> myReferences = new ArrayList<PsiReference>();
+  private boolean myNavigateToReference;
 
   public CallHierarchyNodeDescriptor(
     final Project project,
     final HierarchyNodeDescriptor parentDescriptor,
     final PsiElement element,
-    final boolean isBase
-  ){
+    final boolean isBase,
+    final boolean navigateToReference){
     super(project, parentDescriptor, element, isBase);
+    myNavigateToReference = navigateToReference;
   }
 
   /**
@@ -159,6 +160,13 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
   }
 
   public void navigate(boolean requestFocus) {
+    if (!myNavigateToReference) {
+      if (myElement instanceof Navigatable && ((Navigatable)myElement).canNavigate()) {
+        ((Navigatable)myElement).navigate(requestFocus);
+      }
+      return;
+    }
+
     final PsiReference firstReference = myReferences.get(0);
     final PsiElement element = firstReference.getElement();
     if (element == null) return;
@@ -203,6 +211,9 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
   }
 
   public boolean canNavigate() {
+    if (!myNavigateToReference) {
+      return myElement instanceof Navigatable && ((Navigatable) myElement).canNavigate();
+    }
     if (myReferences.isEmpty()) return false;
     final PsiReference firstReference = myReferences.get(0);
     final PsiElement callElement = firstReference.getElement().getParent();
