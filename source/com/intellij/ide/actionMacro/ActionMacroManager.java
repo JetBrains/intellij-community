@@ -55,8 +55,6 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
         }
       }
     });
-
-    registerActions();
   }
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -68,6 +66,8 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
       macro.readExternal(macroElement);
       myMacros.add(macro);
     }
+
+    registerActions();
   }
 
   public String getExternalFileName() {
@@ -227,7 +227,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
 
   public void registerActions() {
     unregisterActions();
-    HashSet registeredIds = new HashSet(); // to prevent exception if 2 or more targets have the same name
+    HashSet<String> registeredIds = new HashSet<String>(); // to prevent exception if 2 or more targets have the same name
 
     ActionMacro[] macros = getAllMacros();
     for (int i = 0; i < macros.length; i++) {
