@@ -41,6 +41,7 @@ public class TargetElementUtil {
 
     DataContext dataContext = DataManager.getInstance().getDataContext(editor.getComponent());
     Project project = (Project) dataContext.getData(DataConstants.PROJECT);
+    if (project == null) return null;
 
     Document document = editor.getDocument();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
