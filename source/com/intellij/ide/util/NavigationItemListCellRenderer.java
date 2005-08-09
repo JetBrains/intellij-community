@@ -40,6 +40,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 
@@ -48,6 +49,8 @@ import java.awt.*;
 import java.util.Comparator;
 
 public class NavigationItemListCellRenderer extends JPanel implements ListCellRenderer {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.NavigationItemListCellRenderer");
+
   public NavigationItemListCellRenderer() {
     super(new BorderLayout());
   }
@@ -90,6 +93,7 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
       if (value instanceof NavigationItem) {
         NavigationItem element = (NavigationItem)value;
         ItemPresentation presentation = element.getPresentation();
+        assert presentation != null: "PSI elements displayed in choose by name lists must return a non-null value from getPresentation()";
         String name = presentation.getPresentableText();
         Color color = list.getForeground();
         FileStatus status = element.getFileStatus();
