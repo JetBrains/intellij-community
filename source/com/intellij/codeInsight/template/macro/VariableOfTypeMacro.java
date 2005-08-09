@@ -70,7 +70,7 @@ public class VariableOfTypeMacro implements Macro {
         if (!manager.areElementsEquivalent(varClass, placeClass)) continue;
       }
       else if (var instanceof PsiLocalVariable) {
-        if (var.getParent() instanceof PsiDeclarationStatement && var.getParent().getTextRange().contains(offset)) {
+        if (var.getNameIdentifier().getTextRange().contains(offset)) {
           continue;
         }
       }
