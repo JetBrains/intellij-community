@@ -29,20 +29,24 @@ public class ClsAnnotationsUtil {
     if (element instanceof PsiLiteralExpression) {
       PsiLiteralExpression expr = (PsiLiteralExpression)element;
       return new ClsLiteralExpressionImpl(parent, element.getText(), expr.getType(), expr.getValue());
-
+    }
+    else if (element instanceof PsiPrefixExpression) {
+      PsiExpression operand = ((PsiPrefixExpression) element).getOperand();
+      ClsLiteralExpressionImpl literal = (ClsLiteralExpressionImpl) getMemberValue(operand, null);
+      ClsPrefixExpressionImpl prefixExpression = new ClsPrefixExpressionImpl(parent, literal);
+      literal.setParent(prefixExpression);
+      return prefixExpression;
     }
     else if (element instanceof PsiClassObjectAccessExpression) {
       PsiClassObjectAccessExpression expr = (PsiClassObjectAccessExpression)element;
       return new ClsClassObjectAccessExpressionImpl(expr.getOperand().getType().getCanonicalText(), parent);
-
     }
     else if (element instanceof PsiArrayInitializerMemberValue) {
       PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)element).getInitializers();
       PsiAnnotationMemberValue[] clsInitializers = new PsiAnnotationMemberValue[initializers.length];
       ClsArrayInitializerMemberValueImpl arrayValue = new ClsArrayInitializerMemberValueImpl(parent);
       for (int i = 0; i < initializers.length; i++) {
-        PsiAnnotationMemberValue innerValue = getMemberValue(initializers[i], arrayValue);
-        clsInitializers[i] = innerValue;
+        clsInitializers[i] = getMemberValue(initializers[i], arrayValue);
       }
       arrayValue.setInitializers(clsInitializers);
       return arrayValue;

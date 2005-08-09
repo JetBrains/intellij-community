@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -35,11 +36,15 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider{
   }
 
   public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type){
-    if (element instanceof XmlAttributeValue) {
-      final String valueString = ((XmlAttributeValue)element).getValue();
-      return getReferencesByString(valueString, element, type, 1);
-    }
-    return getReferencesByString(element.getText(), element, type, 0);
+      String text = element.getText();
+      if (element instanceof XmlAttributeValue) {
+          final String valueString = ((XmlAttributeValue) element).getValue();
+          int startOffset = StringUtil.startsWithChar(text, '"') ||
+                            StringUtil.startsWithChar(text, '\'') ? 1 : 0;
+          return getReferencesByString(valueString, element, type, startOffset);
+      }
+
+      return getReferencesByString(text, element, type, 0);
   }
 
   public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition){
