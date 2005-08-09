@@ -26,7 +26,6 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="tools" level="application" />
     <orderEntry type="module" module-name="extensions" exported="" />
     <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="Annotations" exported="" />
