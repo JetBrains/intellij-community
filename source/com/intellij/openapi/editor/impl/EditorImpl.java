@@ -38,8 +38,8 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.ScrollBarUI;
@@ -1052,7 +1052,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
 
   private Color getBackgroundColor(final TextAttributes attributes) {
     final Color attrColor = attributes.getBackgroundColor();
-    return attrColor == getBackgroundIgnoreForced() ? getBackroundColor() : attrColor;
+    return attrColor == myScheme.getDefaultBackground() ? getBackroundColor() : attrColor;
   }
 
   private Color getBackgroundIgnoreForced() {

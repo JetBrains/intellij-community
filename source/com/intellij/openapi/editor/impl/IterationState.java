@@ -86,7 +86,7 @@ public class IterationState {
 
     CaretModelImpl caretModel = (CaretModelImpl)editor.getCaretModel();
     myCaretRowAttributes = editor.isRendererMode() ? null : caretModel.getTextAttributes();
-    myDefaultBackground = editor.getBackroundColor();
+    myDefaultBackground = editor.getColorsScheme().getDefaultBackground();
     myDefaultForeground = editor.getForegroundColor();
 
     myCurrentHighlighters = new ArrayList<RangeHighlighterImpl>();
