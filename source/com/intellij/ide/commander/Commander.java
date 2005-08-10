@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.psi.*;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.ui.AutoScrollToSourceHandler;
@@ -54,10 +55,22 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
   private FocusWatcher myFocusWatcher;
   private CommanderHistory myHistory;
   private boolean myAutoScrollMode = false;
+  private final ToolWindowManager myToolWindowManager;
+  private final java.util.List<Disposable> myDisposables = new ArrayList<Disposable>();
 
+  /**
+   * FOR USE IN TESTS ONLY!!!
+   * @param project
+   * @param keymapManager
+   */
   public Commander(final Project project, KeymapManager keymapManager) {
+    this(project, keymapManager, null);
+  }
+
+  public Commander(final Project project, KeymapManager keymapManager, final ToolWindowManager toolWindowManager) {
     super(new BorderLayout());
     myProject = project;
+    myToolWindowManager = toolWindowManager;
 
     final AbstractAction backAction = new AbstractAction() {
       public void actionPerformed(final ActionEvent e) {
@@ -163,7 +176,7 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
   }
 
   public void projectClosed() {
-    ToolWindowManager.getInstance(myProject).unregisterToolWindow(ToolWindowId.COMMANDER);
+    myToolWindowManager.unregisterToolWindow(ToolWindowId.COMMANDER);
   }
 
   public void projectOpened() {
@@ -269,7 +282,7 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
   }
 
   protected void setupToolWindow() {
-    final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(ToolWindowId.COMMANDER, this, ToolWindowAnchor.RIGHT);
+    final ToolWindow toolWindow = myToolWindowManager.registerToolWindow(ToolWindowId.COMMANDER, this, ToolWindowAnchor.RIGHT);
     toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowCommander.png"));
     SelectInManager.getInstance(myProject).addTarget(new CommanderSelectInTarget(myProject));
   }
@@ -280,14 +293,23 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
     final ProjectAbstractTreeStructureBase treeStructure = createProjectTreeStructure();
     panel.setBuilder(new ProjectListBuilder(myProject, panel, treeStructure, AlphaComparator.INSTANCE, true));
 
-    panel.getList().addFocusListener(new FocusAdapter() {
+    final FocusAdapter focusListener = new FocusAdapter() {
       public void focusGained(final FocusEvent e) {
         updateToolWindowTitle(panel);
       }
-    });
-    panel.getList().getSelectionModel().addListSelectionListener(mySelectionListener);
-    panel.getList().getModel().addListDataListener(myListDataListener);
+    };
+    final JList list = panel.getList();
+    list.addFocusListener(focusListener);
+    list.getSelectionModel().addListSelectionListener(mySelectionListener);
+    list.getModel().addListDataListener(myListDataListener);
 
+    myDisposables.add(new Disposable() {
+      public void dispose() {
+        list.removeFocusListener(focusListener);
+        list.getSelectionModel().removeListSelectionListener(mySelectionListener);
+        list.getModel().removeListDataListener(myListDataListener);
+      }
+    });
     return panel;
   }
 
@@ -328,7 +350,7 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
   }
 
   protected void updateToolWindowTitle(final CommanderPanel activePanel) {
-    final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.COMMANDER);
+    final ToolWindow toolWindow = myToolWindowManager.getToolWindow(ToolWindowId.COMMANDER);
     if (toolWindow != null) {
       final PsiElement element = activePanel.getSelectedElement();
       toolWindow.setTitle(getTitle(element));
@@ -485,6 +507,10 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
   }
 
   public void disposeComponent() {
+    for (Disposable disposable : myDisposables) {
+      disposable.dispose();
+    }
+    myDisposables.clear();
     if (myLeftPanel == null) {
       // not opened project (default?)
       return;
