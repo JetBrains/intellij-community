@@ -84,28 +84,30 @@ public class VariableAccessUtils{
 
     public static boolean mayEvaluateToVariable(PsiExpression expression,
                                                 PsiVariable variable){
-        if(expression == null)
-        {
+        if(expression == null){
             return false;
         }
-        if(expression instanceof PsiParenthesizedExpression)
-        {
+        if(expression instanceof PsiParenthesizedExpression){
             final PsiExpression containedExpression =
-                    ((PsiParenthesizedExpression) expression) .getExpression();
+                    ((PsiParenthesizedExpression) expression).getExpression();
             return mayEvaluateToVariable(containedExpression, variable);
         }
-        if(expression instanceof PsiTypeCastExpression)
-        {
+        if(expression instanceof PsiTypeCastExpression){
             final PsiExpression containedExpression =
                     ((PsiTypeCastExpression) expression) .getOperand();
             return mayEvaluateToVariable(containedExpression, variable);
         }
-        if(expression instanceof PsiConditionalExpression)
-        {
+        if(expression instanceof PsiConditionalExpression){
             final PsiConditionalExpression conditional = (PsiConditionalExpression) expression;
             final PsiExpression thenExpression = conditional.getThenExpression();
             final PsiExpression elseExpression = conditional.getElseExpression();
             return mayEvaluateToVariable(thenExpression, variable) || mayEvaluateToVariable(elseExpression, variable);
+        }
+        if(expression instanceof PsiArrayAccessExpression)
+        {
+            final PsiExpression arrayAccessExpression = 
+                    ((PsiArrayAccessExpression)expression).getArrayExpression();
+            return mayEvaluateToVariable(arrayAccessExpression, variable);
         }
         if(!(expression instanceof PsiReferenceExpression)){
             return false;

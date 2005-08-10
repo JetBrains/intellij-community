@@ -20,7 +20,9 @@ import org.jetbrains.annotations.NotNull;
 
 public class VariableAssignedFromVisitor extends PsiRecursiveElementVisitor{
     private boolean assignedFrom = false;
-    private final @NotNull PsiVariable variable;
+
+    @NotNull
+    private final PsiVariable variable;
 
     public VariableAssignedFromVisitor(@NotNull PsiVariable variable){
         super();
@@ -41,6 +43,28 @@ public class VariableAssignedFromVisitor extends PsiRecursiveElementVisitor{
         final PsiExpression arg = assignment.getRExpression();
         if(VariableAccessUtils.mayEvaluateToVariable(arg, variable)){
             assignedFrom = true;
+        }
+    }
+
+    public void visitDeclarationStatement(@NotNull PsiDeclarationStatement statement) {
+        if(assignedFrom){
+            return;
+        }
+        super.visitDeclarationStatement(statement);
+        final PsiElement[] declaredElements = statement.getDeclaredElements();
+        for(PsiElement declaredElement : declaredElements){
+            if(declaredElement instanceof PsiVariable){
+                final PsiVariable declaredVariable =
+                        (PsiVariable)declaredElement;
+                final PsiExpression initializer =
+                        declaredVariable.getInitializer();
+                if(initializer != null &&
+                    VariableAccessUtils.mayEvaluateToVariable(initializer,
+                            variable)){
+                    assignedFrom = true;
+                    return;
+                }
+            }
         }
     }
 
