@@ -11,6 +11,8 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.ConstantExpressionEvaluator;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.filters.*;
@@ -74,7 +76,27 @@ public class JavaDocCompletionData extends CompletionData {
 
     {
       final CompletionVariant variant = new CompletionVariant(PsiDocTagValue.class, new NotFilter(new LeftNeighbour(new TextFilter("("))));
-      variant.addCompletionFilter(TrueFilter.INSTANCE);
+      variant.addCompletionFilter(new ElementFilter() {
+        public boolean isAcceptable(Object element, PsiElement context) {
+          if (element instanceof CandidateInfo) {
+            PsiDocTag tag = PsiTreeUtil.getParentOfType(context, PsiDocTag.class);
+            if (tag != null && tag.getName().equals("value")) {
+              CandidateInfo cInfo = (CandidateInfo) element;
+              if (!(cInfo.getElement() instanceof PsiField)) return false;
+              PsiField field = (PsiField) cInfo.getElement();
+              return field.getModifierList().hasModifierProperty(PsiModifier.STATIC) &&
+                     field.getInitializer() != null &&
+                     ConstantExpressionEvaluator.computeConstantExpression(field.getInitializer(), null, false) != null;
+            }
+          }
+
+          return true;
+        }
+
+        public boolean isClassAcceptable(Class hintClass) {
+          return true;
+        }
+      });
       variant.setInsertHandler(new MethodSignatureInsertHandler());
       variant.setItemProperty(LookupItem.FORCE_SHOW_SIGNATURE_ATTR, Boolean.TRUE);
       registerVariant(variant);

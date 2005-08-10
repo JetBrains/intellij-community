@@ -179,6 +179,10 @@ public class JavadocParsing extends Parsing {
       else if (!isInlineItem && tagName != null && tagName.equals("@param")) {
         return parseParamTagValue(lexer);
       }
+      else if (manager.getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0 &&
+               "@value".equals(tagName) && isInlineItem) {
+        return parseSeeTagValue(lexer);
+      }
       else {
         return parseSimpleTagValue(lexer);
       }

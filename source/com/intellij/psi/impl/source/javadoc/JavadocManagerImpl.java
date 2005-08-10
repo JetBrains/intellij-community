@@ -29,7 +29,6 @@ public class JavadocManagerImpl implements JavadocManager {
 
     infos.add(new SimpleDocTagInfo("docRoot", PsiElement.class, true, LanguageLevel.JDK_1_3));
     infos.add(new SimpleDocTagInfo("inheritDoc", PsiElement.class, true, LanguageLevel.JDK_1_4));
-    infos.add(new SimpleDocTagInfo("value", PsiElement.class, true, LanguageLevel.JDK_1_4));
     infos.add(new SimpleDocTagInfo("literal", PsiElement.class, true, LanguageLevel.JDK_1_5));
     infos.add(new SimpleDocTagInfo("code", PsiElement.class, true, LanguageLevel.JDK_1_5));
 
@@ -44,6 +43,7 @@ public class JavadocManagerImpl implements JavadocManager {
     infos.add(new SeeDocTagInfo("linkplain", true));
     infos.add(new ExceptionTagInfo("exception"));
     infos.add(new ExceptionTagInfo("throws"));
+    infos.add(new ValueDocTagInfo());
 
     myInfos = infos.toArray(new JavadocTagInfo[infos.size()]);
   }

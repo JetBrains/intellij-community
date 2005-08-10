@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.ConstantExpressionEvaluator;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
@@ -677,6 +678,9 @@ class JavaDocInfoGenerator {
         else if (tag.getName().equals("docRoot")) {
           buffer.append(getDocRoot());
         }
+        else if (tag.getName().equals("value")) {
+          generateValueValue(tag, buffer, element);
+        }
         else {
           buffer.append(element.getText());
         }
@@ -717,6 +721,33 @@ class JavaDocInfoGenerator {
         label = null;
       }
       generateLink(buffer, refText, label, tagElements[0], plainLink);
+    }
+  }
+
+  private void generateValueValue(final PsiInlineDocTag tag, final StringBuffer buffer, final PsiElement element) {
+    String text = createLinkText(tag.getDataElements());
+    PsiField valueField = null;
+    if (text.length() == 0) {
+      if (myElement instanceof PsiField) valueField = (PsiField) myElement;
+    }
+    else {
+      PsiElement target = JavaDocUtil.findReferenceTarget(PsiManager.getInstance(myProject), text, myElement);
+      if (target instanceof PsiField) {
+        valueField = (PsiField) target;
+      }
+    }
+
+    Object value = null;
+    if (valueField != null) {
+      PsiExpression initializer = valueField.getInitializer();
+      value = ConstantExpressionEvaluator.computeConstantExpression(initializer, null, false);
+    }
+
+    if (value != null) {
+      buffer.append(value.toString());
+    }
+    else {
+      buffer.append(element.getText());
     }
   }
 
