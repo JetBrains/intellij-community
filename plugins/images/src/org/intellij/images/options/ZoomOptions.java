@@ -22,6 +22,7 @@ import java.awt.*;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public interface ZoomOptions extends Cloneable {
     Dimension DEFAULT_PREFFERED_SIZE = new Dimension(128, 128);
     String ATTR_PREFIX = "Editor.Zoom.";

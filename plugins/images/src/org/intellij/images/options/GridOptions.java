@@ -22,6 +22,7 @@ import java.awt.*;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public interface GridOptions extends Cloneable {
     int DEFAULT_LINE_ZOOM_FACTOR = 3;
     int DEFAULT_LINE_SPAN = 1;

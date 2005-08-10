@@ -22,6 +22,7 @@ import java.awt.*;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public interface TransparencyChessboardOptions extends Cloneable {
     int DEFAULT_CELL_SIZE = 5;
     Color DEFAULT_WHITE_COLOR = Color.WHITE;

@@ -22,6 +22,7 @@ import com.intellij.openapi.options.BaseConfigurableWithChangeSupport;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import org.intellij.images.IconsBundle;
 import org.intellij.images.options.Options;
 import org.intellij.images.options.OptionsManager;
 
@@ -35,8 +36,9 @@ import java.beans.PropertyChangeListener;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public final class OptionsConfigurabe extends BaseConfigurableWithChangeSupport implements ApplicationComponent, PropertyChangeListener {
+    @SuppressWarnings({"HardCodedStringLiteral"})
     private static final String NAME = "Images.OptionsConfigurable";
-    private static final String DISPLAY_NAME = "Images";
+    private static final String DISPLAY_NAME = IconsBundle.message("settings.page.name");
     private OptionsUIForm uiForm;
 
     public String getDisplayName() {

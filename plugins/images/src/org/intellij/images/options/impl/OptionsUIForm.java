@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorPanel;
 import com.intellij.ui.DocumentAdapter;
+import org.intellij.images.IconsBundle;
 import org.intellij.images.options.*;
 
 import javax.swing.*;
@@ -59,10 +60,8 @@ final class OptionsUIForm {
     private JCheckBox smartZooming;
     private JSpinner smartZoomingWidth;
     private JLabel smartZoomingWidthLabel;
-    private JLabel smartZoomingWidthSuffixLabel;
     private JSpinner smartZoomingHeight;
     private JLabel smartZoomingHeightLabel;
-    private JLabel smartZoomingHeightSuffixLabel;
     private JLabel gridLineColorLabel;
     private ColorPanel gridLineColor;
     private JLabel chessboardWhiteColorLabel;
@@ -91,10 +90,8 @@ final class OptionsUIForm {
         smartZooming.addItemListener(new LinkEnabledListener(new JComponent[]{
                         smartZoomingHeightLabel,
                         smartZoomingHeight,
-                        smartZoomingHeightSuffixLabel,
                         smartZoomingWidthLabel,
                         smartZoomingWidth,
-                        smartZoomingWidthSuffixLabel,
                     }));
         // Setup spinners models
         gridLineZoomFactor.setModel(new SpinnerNumberModel(GridOptions.DEFAULT_LINE_ZOOM_FACTOR, 2, 8, 1));
@@ -240,8 +237,8 @@ final class OptionsUIForm {
 
                     FileChooserDescriptor fileDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
                     fileDescriptor.setShowFileSystemRoots(true);
-                    fileDescriptor.setTitle("Select editor");
-                    fileDescriptor.setDescription("Select external graphics editor");
+                    fileDescriptor.setTitle(IconsBundle.message("select.external.executable.title"));
+                    fileDescriptor.setDescription(IconsBundle.message("select.external.executable.message"));
                     VirtualFile[] virtualFiles = FileChooser.chooseFiles(externalEditorPath, fileDescriptor, previous);
 
                     if (virtualFiles != null && virtualFiles.length > 0) {

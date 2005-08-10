@@ -18,6 +18,7 @@ package org.intellij.images.ui;
 
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import org.intellij.images.IconsBundle;
 import org.intellij.images.editor.ImageDocument;
 
 import javax.swing.*;
@@ -34,12 +35,15 @@ public class ThumbnailComponentUI extends ComponentUI {
     private static final Icon BLANK_ICON = IconLoader.getIcon("/org/intellij/images/icons/ThumbnailBlank.png");
     private static final Icon DIRECTORY_ICON = IconLoader.getIcon("/org/intellij/images/icons/ThumbnailDirectory.png");
     private static final Icon ERROR_ICON = Messages.getErrorIcon();
+    @SuppressWarnings({"HardCodedStringLiteral"})
     private static final String DOTS = "...";
 
     private static final ThumbnailComponentUI ui = new ThumbnailComponentUI();
 
     static {
-        UIManager.getDefaults().put("ThumbnailComponent.errorString", "Error");
+      //noinspection HardCodedStringLiteral
+      UIManager.getDefaults().put("ThumbnailComponent.errorString",
+                                  IconsBundle.message("thumbnails.component.error.text"));
     }
 
 
@@ -65,7 +69,16 @@ public class ThumbnailComponentUI extends ComponentUI {
 
         int imagesCount = tc.getImagesCount();
         if (imagesCount > 0) {
-            String title = (imagesCount > 100 ? ">100" : "" + imagesCount) + " icons";
+            final String title;
+          if (imagesCount == 1) {
+            title = IconsBundle.message("icons.count.one");
+          }
+          else if (imagesCount > 100) {
+            title = IconsBundle.message("icons.count.more.than.hundred");
+          }
+          else {
+            title = IconsBundle.message("icons.count", imagesCount);
+          }
 
             Font font = getSmallFont();
             FontMetrics fontMetrics = g.getFontMetrics(font);
@@ -113,7 +126,7 @@ public class ThumbnailComponentUI extends ComponentUI {
     }
 
     private int paintImageCaps(Graphics g, BufferedImage image) {
-        String description = image.getWidth() + "x" + image.getHeight() + "x" + image.getColorModel().getPixelSize();
+        String description = IconsBundle.message("icon.dimensions", image.getWidth(), image.getHeight(), image.getColorModel().getPixelSize());
 
         Font font = getSmallFont();
         FontMetrics fontMetrics = g.getFontMetrics(font);
@@ -230,6 +243,7 @@ public class ThumbnailComponentUI extends ComponentUI {
         g.drawString(error, 8, 8 + fontMetrics.getAscent());
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     private static Font getLabelFont() {
         return UIManager.getFont("Label.font");
     }

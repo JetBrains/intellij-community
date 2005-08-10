@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.ui.Messages;
+import org.intellij.images.IconsBundle;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.editor.actionSystem.ImageEditorActions;
@@ -42,7 +43,9 @@ import java.awt.image.BufferedImage;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 final class ImageEditorUI extends JPanel {
+    @SuppressWarnings({"HardCodedStringLiteral"})
     private static final String IMAGE_PANEL = "image";
+    @SuppressWarnings({"HardCodedStringLiteral"})
     private static final String ERROR_PANEL = "error";
 
     private final ImageZoomModel zoomModel = new ImageZoomModelImpl();
@@ -90,7 +93,7 @@ final class ImageEditorUI extends JPanel {
         component.addMouseListener(new FocusRequester());
 
         JLabel errorLabel = new JLabel(
-            "<html><b>Image not loaded</b><br>Try to open it externaly to fix format problem</html>",
+            IconsBundle.message("error.broken.image.file.format"),
             Messages.getErrorIcon(), JLabel.CENTER
         );
 

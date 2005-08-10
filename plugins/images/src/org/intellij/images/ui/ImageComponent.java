@@ -33,6 +33,7 @@ import java.util.Set;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class ImageComponent extends JComponent {
     /**
      * @see #getUIClassID

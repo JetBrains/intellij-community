@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.intellij.images.IconsBundle;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.options.Options;
 import org.intellij.images.options.OptionsManager;
@@ -47,7 +48,9 @@ public final class EditExternalyAction extends AnAction {
         Options options = OptionsManager.getInstance().getOptions();
         String executablePath = options.getExternalEditorOptions().getExecutablePath();
         if (StringUtil.isEmpty(executablePath)) {
-            Messages.showInfoMessage(project, "Please, configure external editor executable path", "External Editor not Configured");
+            Messages.showErrorDialog(project,
+                                     IconsBundle.message("error.empty.external.editor.path"),
+                                     IconsBundle.message("error.title.empty.external.editor.path"));
             OptionsConfigurabe.show(project);
         } else {
             if (files != null) {
@@ -65,7 +68,9 @@ public final class EditExternalyAction extends AnAction {
                     File executableFile = new File(executablePath);
                     Runtime.getRuntime().exec(commandLine.toString(), null, executableFile.getParentFile());
                 } catch (IOException ex) {
-                    Messages.showErrorDialog(project, ex.getLocalizedMessage(), "Error opening executableFile");
+                    Messages.showErrorDialog(project,
+                                             ex.getLocalizedMessage(),
+                                             IconsBundle.message("error.title.launching.external.editor"));
                 }
             }
         }

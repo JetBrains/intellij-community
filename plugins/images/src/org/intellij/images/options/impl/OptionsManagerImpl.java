@@ -30,7 +30,9 @@ import org.jdom.Element;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 final class OptionsManagerImpl extends OptionsManager implements NamedJDOMExternalizable, ApplicationComponent {
+    @SuppressWarnings({"HardCodedStringLiteral"})
     private static final String CONFIGURATION_NAME = "images.support";
+    @SuppressWarnings({"HardCodedStringLiteral"})
     private static final String NAME = "Images.OptionsManager";
     private Options options = new OptionsImpl();
 

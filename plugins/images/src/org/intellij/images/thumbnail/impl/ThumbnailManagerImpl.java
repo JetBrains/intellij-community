@@ -37,6 +37,7 @@ import java.util.Map;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 final class ThumbnailManagerImpl extends ThumbnailManager implements ApplicationComponent, ProjectManagerListener {
+    @SuppressWarnings({"HardCodedStringLiteral"})
     private static final String NAME = "Images.ThumbnailManager";
     private final ThumbnailSelectInTarget selectInTarget = new ThumbnailSelectInTarget();
 

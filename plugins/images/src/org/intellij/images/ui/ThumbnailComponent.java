@@ -16,11 +16,14 @@
  */
 package org.intellij.images.ui;
 
+import com.intellij.openapi.util.text.StringUtil;
+
 import javax.swing.*;
 
 /**
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class ThumbnailComponent extends JComponent {
     /**
      * @see #getUIClassID
@@ -112,15 +115,7 @@ public class ThumbnailComponent extends JComponent {
     }
 
     public String getFileSizeText() {
-        if (fileSize < 0x400) {
-            return fileSize + "b";
-        }
-        if (fileSize < 0x100000) {
-            long kbytes = fileSize * 100 / 1024;
-            return kbytes / 100 + "." + kbytes % 100 + "Kb";
-        }
-        long mbytes = fileSize * 100 / 1024;
-        return mbytes / 100 + "." + mbytes % 100 + "Mb";
+        return StringUtil.formatFileSize(fileSize);
     }
 
     public void updateUI() {

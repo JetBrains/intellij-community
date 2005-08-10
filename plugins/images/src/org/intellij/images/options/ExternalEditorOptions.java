@@ -21,6 +21,7 @@ package org.intellij.images.options;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public interface ExternalEditorOptions extends Cloneable {
     String ATTR_PREFIX = "ExternalEditor.";
     String ATTR_EXECUTABLE_PATH = ATTR_PREFIX + "executablePath";

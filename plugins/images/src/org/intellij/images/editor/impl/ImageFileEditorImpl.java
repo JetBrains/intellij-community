@@ -42,6 +42,7 @@ import java.io.Serializable;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileEditor {
+    @SuppressWarnings({"HardCodedStringLiteral"})
     private static final String NAME = "ImageFileEditor";
     private final ImageEditor imageEditor;
 

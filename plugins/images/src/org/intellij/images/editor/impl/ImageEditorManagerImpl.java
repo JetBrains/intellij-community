@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 final class ImageEditorManagerImpl implements ImageEditorManager, ApplicationComponent {
+    @SuppressWarnings({"HardCodedStringLiteral"})
     private static final String NAME = "ImageEditorManager";
 
     public String getComponentName() {

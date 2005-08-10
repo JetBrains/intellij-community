@@ -18,6 +18,7 @@ package org.intellij.images.thumbnail;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.intellij.images.IconsBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public interface ThumbnailView extends Disposable {
-    String TOOLWINDOW_ID = "Thumbnails";
+    String TOOLWINDOW_ID = IconsBundle.message("thumbnails.toolwindow.name");
 
     @NotNull Project getProject();
 

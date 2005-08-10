@@ -20,6 +20,7 @@ package org.intellij.images.thumbnail.actionSystem;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public interface ThumbnailsActions {
     String GROUP_POPUP = "Images.ThumbnailsPopupMenu";
     String GROUP_TOOLBAR = "Images.ThumbnailsToolbar";
