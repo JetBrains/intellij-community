@@ -101,6 +101,8 @@ public class LookupItemUtil{
   }
 
   public static LookupItem objectToLookupItem(Object object) {
+    if (object instanceof LookupItem) return (LookupItem)object;
+    
     String s = null;
     LookupItem item = new LookupItem(object, "");
     int tailType = TailType.NONE;
