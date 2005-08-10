@@ -475,7 +475,7 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
   }
 
   public boolean isModified() {
-    return myModified || myEditor.isModified();
+    return myModified || (myEditor != null && myEditor.isModified());
   }
 
   /**
