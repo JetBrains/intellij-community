@@ -468,6 +468,11 @@ public class TypeConversionUtil {
     PsiType rType = rExpr.getType();
     if (rType == null) return false;
     if (lType.isAssignableFrom(rType)) return true;
+    if (lType instanceof PsiClassType) {
+        lType = PsiPrimitiveType.getUnboxedType(lType);
+        if (lType == null) return false;
+    }
+      
     final int rTypeRank = getTypeRank(rType);
     if (lType instanceof PsiPrimitiveType
         && rType instanceof PsiPrimitiveType
