@@ -179,6 +179,7 @@ public class BatchEvaluator {
       Value value = debugProcess.invokeMethod(evaluationContext, myBatchEvaluatorObject,
                                               myBatchEvaluatorMethod, argList);
       if (value instanceof ArrayReference) {
+        ((SuspendContextImpl)evaluationContext.getSuspendContext()).keep((ArrayReference)value); // to avoid ObjectCollectedException for both the array and its elements
         final ArrayReference strings = (ArrayReference)value;
         final List<Value> allValuesArray = strings.getValues();
         final Value[] allValues = allValuesArray.toArray(new Value[allValuesArray.size()]);
@@ -187,8 +188,13 @@ public class BatchEvaluator {
           ToStringCommand request = iterator.next();
           final Value strValue = allValues[idx];
           if(strValue == null || strValue instanceof StringReference){
-            String str = (strValue == null)? null : ((StringReference)strValue).value();
-            request.evaluationResult(str);
+            try {
+              String str = (strValue == null)? null : ((StringReference)strValue).value();
+              request.evaluationResult(str);
+            }
+            catch (ObjectCollectedException e) {
+              // ignored
+            }
           } 
           else if(strValue instanceof ObjectReference){
             request.evaluationError(EvaluateExceptionUtil.createEvaluateException(new InvocationException((ObjectReference)strValue)).getMessage());
