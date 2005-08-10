@@ -197,8 +197,8 @@ public abstract class GlobalSearchScope extends SearchScope {
     }
 
     public int compare(VirtualFile file1, VirtualFile file2) {
-      int res1 = myScope1.compare(file1, file2);
-      int res2 = myScope2.compare(file1, file2);
+      int res1 = myScope1.contains(file1) && myScope1.contains(file2) ? myScope1.compare(file1, file2) : 0;
+      int res2 = myScope2.contains(file1) && myScope2.contains(file2) ? myScope2.compare(file1, file2) : 0;
 
       if (res1 == 0) return res2;
       if (res2 == 0) return res1;
