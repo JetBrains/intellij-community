@@ -15,29 +15,26 @@
  */
 package org.jetbrains.idea.devkit.projectRoots;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.projectRoots.AdditionalDataConfigurable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.ui.ComponentWithBrowseButton;
-import com.intellij.openapi.ui.TextComponentAccessor;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.ui.GuiUtils;
-import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.ui.TextFieldWithHistory;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
 /**
@@ -125,26 +122,26 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
   }
 
   public void reset() {
-    if (myIdeaJdk != null && myIdeaJdk.getSdkAdditionalData() instanceof Sandbox) {
-      final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
-      final String history = propertiesComponent.getValue(SANDBOX_HISTORY);
-      if (history != null) {
-        final String[] items = history.split("\n");
-        ArrayList<String> result = new ArrayList<String>();
-        for (String item : items) {
-          if (item != null && item.length() > 0) {
-            result.add(item);
-          }
+    final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
+    final String history = propertiesComponent.getValue(SANDBOX_HISTORY);
+    if (history != null) {
+      final String[] items = history.split("\n");
+      ArrayList<String> result = new ArrayList<String>();
+      for (String item : items) {
+        if (item != null && item.length() > 0) {
+          result.add(item);
         }
-        mySandboxHome.setHistory(result);
       }
+      mySandboxHome.setHistory(result);
+    }
+    if (myIdeaJdk != null && myIdeaJdk.getSdkAdditionalData() instanceof Sandbox) {
       final String sandboxHome = ((Sandbox)myIdeaJdk.getSdkAdditionalData()).getSandboxHome();
       mySandboxHome.setText(sandboxHome);
       mySandboxHome.setSelectedItem(sandboxHome);
+      myModified = false;
     } else {
       mySandboxHome.setText("");
     }
-    myModified = false;
   }
 
   public void disposeUIResources() {

@@ -48,6 +48,9 @@ public class Sandbox implements SdkAdditionalData, JDOMExternalizable{
   }
 
   public void checkValid(SdkModel sdkModel) throws ConfigurationException {
+    if (mySandboxHome == null || mySandboxHome.length() == 0){
+      throw new ConfigurationException("Please configure the sandbox");
+    }
   }
 
   public void readExternal(Element element) throws InvalidDataException {
