@@ -626,4 +626,16 @@ public class StringUtil {
     if (endsWithChar(text, '\"') || endsWithChar(text, '\'')) text = text.substring(0, text.length() - 1);
     return text;
   }
+
+  public static String formatFileSize(final long fileSize) {
+    if (fileSize < 0x400) {
+        return fileSize + "b";
+    }
+    if (fileSize < 0x100000) {
+        long kbytes = fileSize * 100 / 1024;
+        return kbytes / 100 + "." + kbytes % 100 + "Kb";
+    }
+    long mbytes = fileSize * 100 / 1024;
+    return mbytes / 100 + "." + mbytes % 100 + "Mb";
+  }
 }
