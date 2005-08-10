@@ -431,11 +431,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       contentRoots.addAll(Arrays.asList(moduleRootManager.getContentRoots()));
       final VirtualFile compilerOutputPath = moduleRootManager.getCompilerOutputPath();
       if (compilerOutputPath != null) {
-        contentRoots.addAll(Arrays.asList(compilerOutputPath));
+        contentRoots.add(compilerOutputPath);
       }
       final VirtualFile compilerOutputPathForTests = moduleRootManager.getCompilerOutputPathForTests();
       if (compilerOutputPathForTests != null) {
-        contentRoots.addAll(Arrays.asList(compilerOutputPathForTests));
+        contentRoots.add(compilerOutputPathForTests);
       }
       
       final VirtualFile moduleFile = module.getModuleFile();
