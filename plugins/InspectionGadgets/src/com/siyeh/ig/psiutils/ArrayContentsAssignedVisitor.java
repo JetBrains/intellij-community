@@ -38,8 +38,13 @@ public class ArrayContentsAssignedVisitor extends PsiRecursiveElementVisitor {
         if(!(arg instanceof PsiArrayAccessExpression)){
             return;
         }
-        final PsiExpression arrayExpression =
+        PsiExpression arrayExpression =
                 ((PsiArrayAccessExpression) arg).getArrayExpression();
+        while (arrayExpression instanceof PsiArrayAccessExpression) {
+            final PsiArrayAccessExpression arrayAccessExpression =
+                    (PsiArrayAccessExpression)arrayExpression;
+            arrayExpression = arrayAccessExpression.getArrayExpression();
+        }
         if(!(arrayExpression instanceof PsiReferenceExpression)){
             return;
         }
