@@ -163,7 +163,10 @@ public class ZipUtil {
     while (en.hasMoreElements()) {
       ZipEntry zipEntry = (ZipEntry)en.nextElement();
 
-      if (zipEntry.isDirectory()) {
+      // we do not necessarily get a separate entry for the subdirectory when the file
+      // in the ZIP archive is placed in a subdirectory, so we need to check if the slash
+      // is found anywhere in the path
+      if (zipEntry.getName().indexOf('/') >= 0) {
         return true;
       }
     }
