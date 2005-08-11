@@ -160,6 +160,7 @@ public class CharsetToolkit {
    *
    * @return the Charset recognized.
    */
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public Charset guessEncoding( int guess_length ) {
     // if the file has a Byte Order Marker, we can assume the file is in UTF-xx
     // otherwise, the file would not be human readable

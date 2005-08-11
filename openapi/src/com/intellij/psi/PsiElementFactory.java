@@ -27,6 +27,8 @@ import com.intellij.util.IncorrectOperationException;
 
 import java.util.Map;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  *
  */
@@ -86,7 +88,7 @@ public interface PsiElementFactory {
 
   PsiDeclarationStatement createVariableDeclarationStatement(String name, PsiType type, PsiExpression initializer, boolean reformat)
     throws IncorrectOperationException;
-  
+
   PsiDocTag createParamTag(String parameterName, String description) throws IncorrectOperationException;
   PsiDocTag createDocTagFromText(String docTagText, PsiElement context) throws IncorrectOperationException;
   PsiDocComment createDocCommentFromText(String docCommentText, PsiElement context) throws IncorrectOperationException;
@@ -98,7 +100,7 @@ public interface PsiElementFactory {
   PsiMethod createMethodFromText(String text, PsiElement context) throws IncorrectOperationException;
   PsiParameter createParameterFromText(String text, PsiElement context) throws IncorrectOperationException;
   PsiType createTypeFromText(String text, PsiElement context) throws IncorrectOperationException;
-  PsiCodeBlock createCodeBlockFromText(String text, PsiElement context) throws IncorrectOperationException;
+  PsiCodeBlock createCodeBlockFromText(@NonNls String text, PsiElement context) throws IncorrectOperationException;
   PsiStatement createStatementFromText(String text, PsiElement context) throws IncorrectOperationException;
   PsiExpression createExpressionFromText(String text, PsiElement context) throws IncorrectOperationException;
   PsiComment createCommentFromText(String text, PsiElement context) throws IncorrectOperationException;
@@ -129,9 +131,9 @@ public interface PsiElementFactory {
                                                                boolean isClassesAccepted);
 
   PsiTypeCodeFragment createTypeCodeFragment(String text,
-                                                PsiElement context,
-                                                boolean isVoidValid,
-                                                boolean isPhysical, boolean allowEllipsis);
+                                             PsiElement context,
+                                             boolean isVoidValid,
+                                             boolean isPhysical, boolean allowEllipsis);
 
   PsiAnnotation createAnnotationFromText(String annotationText, PsiElement context) throws IncorrectOperationException;
 

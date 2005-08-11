@@ -18,6 +18,7 @@ package com.intellij.openapi.fileEditor;
 /**
  * @author Vladimir Kondratyev
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public final class FileEditorStateLevel {
   public static final FileEditorStateLevel FULL = new FileEditorStateLevel("full");
   public static final FileEditorStateLevel UNDO = new FileEditorStateLevel("undo");

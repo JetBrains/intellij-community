@@ -35,7 +35,7 @@ import java.util.List;
 
 public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.TreeNode");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.ProjectViewNode");
 
   private ViewSettings mySettings;
 

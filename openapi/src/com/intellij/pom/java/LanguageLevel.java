@@ -50,6 +50,7 @@ public enum LanguageLevel {
   }
 
   public String toString() {
+    //noinspection HardCodedStringLiteral
     return "java " + myId;
   }
 

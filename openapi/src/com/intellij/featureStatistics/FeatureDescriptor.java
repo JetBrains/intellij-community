@@ -73,6 +73,7 @@ public class FeatureDescriptor{
     myProvider = provider;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   void readExternal(Element element) {
     myId = element.getAttributeValue("id");
     myTipFileName = element.getAttributeValue("tip-file");
@@ -132,6 +133,7 @@ public class FeatureDescriptor{
     return myUsageCount < myMinUsageCount;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     StringBuffer buffer = new StringBuffer();
 
@@ -208,6 +210,7 @@ public class FeatureDescriptor{
     myShownCount = shownCount == null ? 0 : Integer.parseInt(shownCount);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   void writeStatistics(Element element) {
     element.setAttribute("count", String.valueOf(getUsageCount()));
     element.setAttribute("last-shown", String.valueOf(getLastTimeShown()));

@@ -69,6 +69,7 @@ public class NameUtil {
     return true;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static String buildRegexp(String pattern, int exactPrefixLen, final boolean caseSencetive) {
     {
       final int len = pattern.length ();
@@ -117,7 +118,8 @@ public class NameUtil {
           if (!uppercaseOnly && !caseSencetive) {
             buffer.append('(');
           }
-          if (i > 0) buffer.append("[a-z0-9_\\$]*");
+          if (i > 0)
+            buffer.append("[a-z0-9_\\$]*");
           buffer.append(c);
           if (!uppercaseOnly && !caseSencetive) {
             buffer.append('|');

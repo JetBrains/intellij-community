@@ -38,7 +38,7 @@ import java.util.Iterator;
  * Do NOT add code wich assumes that table has same number of rows as model. It isn't true!
  */
 public abstract class BaseTableView extends Table {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.TableView");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.table.BaseTableView");
 
   public BaseTableView(final ListTableModel model) {
     super(model);
@@ -73,10 +73,12 @@ public abstract class BaseTableView extends Table {
     super.setModel(dataModel);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static String orderPropertyName(final int index) {
     return "Order"+index;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static String widthPropertyName(final int index) {
     return "Width" + index;
   }

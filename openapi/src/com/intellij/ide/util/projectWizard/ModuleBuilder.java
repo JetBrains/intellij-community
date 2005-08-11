@@ -31,7 +31,7 @@ import java.io.File;
 import java.io.IOException;
 
 public abstract class ModuleBuilder  {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.ModuleDescriptor");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.ModuleBuilder");
   private String myName;
   private String myModuleFilePath;
 

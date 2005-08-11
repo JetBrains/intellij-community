@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.Set;
 
 public abstract class LocalFileSystem extends VirtualFileSystem {
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static final String PROTOCOL = "file";
 
   public static LocalFileSystem getInstance(){

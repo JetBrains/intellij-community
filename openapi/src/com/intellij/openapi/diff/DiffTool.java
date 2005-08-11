@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff;
 
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public interface DiffTool {
   /**
    * @see DiffManager#getIdeaDiffTool()

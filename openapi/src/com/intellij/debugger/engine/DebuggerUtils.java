@@ -44,6 +44,7 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
   public static String getValueAsString(final EvaluationContext evaluationContext, Value value) throws EvaluateException {
     try {
       if (value == null) {
+        //noinspection HardCodedStringLiteral
         return "null";
       }
       if (value instanceof StringReference) {
@@ -76,6 +77,7 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
             throw EvaluateExceptionUtil.createEvaluateException("Cannot evaluate " + objRef.referenceType().name() + ".toString()");
           }
         }
+        //noinspection HardCodedStringLiteral
         final Method toStringMethod = findMethod(refType, "toString", "()Ljava/lang/String;");
         if (toStringMethod == null) {
           throw EvaluateExceptionUtil.createEvaluateException("Cannot evaluate " + objRef.referenceType().name() + ".toString()");
@@ -87,6 +89,7 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
           toStringMethod,
           Collections.EMPTY_LIST);
 
+        //noinspection HardCodedStringLiteral
         return  stringReference == null ? "null" : stringReference.value();
       }
       throw EvaluateExceptionUtil.createEvaluateException("internal error : unsupported expression type");
@@ -265,6 +268,7 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
       }
     }
     else if (subType instanceof PrimitiveType) {
+      //noinspection HardCodedStringLiteral
       if(superType.equals("java.lang.Primitive")) {
         return subType;
       }

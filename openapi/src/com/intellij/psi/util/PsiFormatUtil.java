@@ -211,6 +211,7 @@ public class PsiFormatUtil {
         if (buffer.length() > 0){
           buffer.append(' ');
         }
+        //noinspection HardCodedStringLiteral
         buffer.append("throws ");
         buffer.append(throwsText);
       }
@@ -331,6 +332,7 @@ public class PsiFormatUtil {
         if (buffer.length() > 0){
           buffer.append(' ');
         }
+        //noinspection HardCodedStringLiteral
         buffer.append("extends ");
         buffer.append(extendsText);
       }
@@ -339,6 +341,7 @@ public class PsiFormatUtil {
         if (buffer.length() > 0){
           buffer.append(' ');
         }
+        //noinspection HardCodedStringLiteral
         buffer.append("implements ");
         buffer.append(implementsText);
       }

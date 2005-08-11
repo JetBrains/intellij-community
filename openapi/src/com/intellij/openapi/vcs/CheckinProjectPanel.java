@@ -28,6 +28,7 @@ import java.util.List;
 
 public interface CheckinProjectPanel extends Refreshable {
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   String REVISIONS = "Revisions";
 
   JComponent getComponent();

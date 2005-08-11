@@ -37,6 +37,7 @@ public class TableHeaderRenderer extends JPanel implements TableCellRenderer{
   private final Border myBorder;
 
   public TableHeaderRenderer(SortableColumnModel model) {
+    //noinspection HardCodedStringLiteral
     this(model, UIManager.getBorder("TableHeader.cellBorder"));
   }
   public TableHeaderRenderer(SortableColumnModel model, Border border) {
@@ -71,6 +72,7 @@ public class TableHeaderRenderer extends JPanel implements TableCellRenderer{
     final ColumnInfo columnInfo = myModel.getColumnInfos()[logicalIndex];
     String labelString = columnInfo.getName();
     if (myModel.isSortable() && columnInfo.isSortable() && myModel.getSortedColumnIndex() == logicalIndex) {
+      //noinspection HardCodedStringLiteral
       labelString = "<html><b>" + labelString + "</b></html>";
       if (myModel.getSortingType() == SortableColumnModel.SORT_ASCENDING) {
         icon = IconLoader.getIcon("/actions/sortAsc.png");

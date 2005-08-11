@@ -106,6 +106,7 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
   public boolean SHOW_FILE_HISTORY_AS_TREE = false;
   public float FILE_HISTORY_SPLITTER_PROPORTION = 0.6f;
   private static final int MAX_STORED_MESSAGES = 10;
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static final String MESSAGE_ELEMENT_NAME = "MESSAGE";
 
   public static VcsConfiguration createEmptyConfiguration(Project project) {
@@ -120,6 +121,7 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
     for (String message : myLastCommitMessages) {
@@ -148,6 +150,7 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
   }
 
   public String getComponentName() {
+    //noinspection HardCodedStringLiteral
     return "VcsManagerConfiguration";
   }
 

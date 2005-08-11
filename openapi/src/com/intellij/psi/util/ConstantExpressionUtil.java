@@ -22,6 +22,7 @@ import gnu.trove.TObjectIntHashMap;
 
 import java.util.Map;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class ConstantExpressionUtil {
   public static Object computeCastTo(PsiExpression expression, PsiType castTo) {
     Object value = expression.getManager().getConstantEvaluationHelper().computeConstantExpression(expression, false);

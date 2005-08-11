@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.colors;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public final class EditorFontType {
   private String myDebugName;
 

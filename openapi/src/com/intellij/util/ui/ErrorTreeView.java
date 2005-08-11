@@ -21,6 +21,7 @@ import com.intellij.pom.Navigatable;
 import javax.swing.*;
 
 public interface ErrorTreeView {
+  @SuppressWarnings({"HardCodedStringLiteral"})
   String CURRENT_EXCEPTION_DATA = "CURRENT_EXCEPTION_DATA";
 
   /**

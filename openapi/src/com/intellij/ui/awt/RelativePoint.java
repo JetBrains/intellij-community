@@ -66,6 +66,7 @@ public class RelativePoint {
   }
 
   public String toString() {
+    //noinspection HardCodedStringLiteral
     return getPoint() + " on " + getComponent().toString();
   }
 

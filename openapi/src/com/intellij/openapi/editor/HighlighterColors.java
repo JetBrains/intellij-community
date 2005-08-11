@@ -20,6 +20,7 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public interface HighlighterColors {
   TextAttributesKey TEXT = TextAttributesKey.createTextAttributesKey("TEXT");
   TextAttributesKey BAD_CHARACTER = TextAttributesKey.createTextAttributesKey("BAD_CHARACTER");

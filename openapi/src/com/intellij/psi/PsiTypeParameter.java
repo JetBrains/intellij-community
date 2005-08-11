@@ -23,7 +23,11 @@ import org.jetbrains.annotations.NotNull;
 public interface PsiTypeParameter extends PsiClass {
   PsiTypeParameter[] EMPTY_ARRAY = new PsiTypeParameter[0];
 
-  @NotNull(documentation = "for this particular kind of classes it never returns null")
+  /**
+   * Returns the extends list of the type parameter.
+   * @return the extends list. For this particular kind of classes it never returns null.
+   */
+  @NotNull
   PsiReferenceList getExtendsList();
 
   @NotNull

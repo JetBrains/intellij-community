@@ -47,6 +47,7 @@ public class IdeaLoggingEvent {
   }
 
   public String toString() {
+    //noinspection HardCodedStringLiteral
     return "IdeaLoggingEvent[message=" + myMessage + ", throwable=" + getThrowableText() + "]";
   }
 }

@@ -152,6 +152,7 @@ public class GuiUtils {
       aRight ? paddingInsideDialog.right : 0));
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void setAdditionalIcon(JRadioButton button, Icon icon) {
     final Icon defaultIcon = UIManager.getIcon("RadioButton.icon");
     LayeredIcon deficon = new LayeredIcon(2);
@@ -266,6 +267,7 @@ public class GuiUtils {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void enableComponent(Component component, boolean enabled) {
     component.setEnabled(enabled);
     if (component instanceof JPanel) {

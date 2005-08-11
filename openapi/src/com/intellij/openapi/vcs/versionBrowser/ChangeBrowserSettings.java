@@ -48,6 +48,7 @@ public class ChangeBrowserSettings implements ProjectComponent, JDOMExternalizab
   }
 
   public String getComponentName() {
+    //noinspection HardCodedStringLiteral
     return "ChangeBrowserSettings";
   }
 

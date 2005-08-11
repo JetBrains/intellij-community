@@ -30,6 +30,7 @@ public class VcsFileSystem extends VirtualFileSystem implements ApplicationCompo
   }
 
   public VcsFileSystem() {
+    //noinspection HardCodedStringLiteral
     myProtocol = "vcs";
   }
 
@@ -65,6 +66,7 @@ public class VcsFileSystem extends VirtualFileSystem implements ApplicationCompo
   }
 
   public String getComponentName() {
+    //noinspection HardCodedStringLiteral
     return "VcsFileSystem";
   }
 

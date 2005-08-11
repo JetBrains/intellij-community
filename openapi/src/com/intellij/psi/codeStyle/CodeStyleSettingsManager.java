@@ -71,6 +71,7 @@ public class CodeStyleSettingsManager implements ApplicationComponent, ProjectCo
   public void projectClosed() {}
 
   public String getComponentName() {
+    //noinspection HardCodedStringLiteral
     return "CodeStyleSettingsManager";
   }
 

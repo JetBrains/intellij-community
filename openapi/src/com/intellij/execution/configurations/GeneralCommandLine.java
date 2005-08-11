@@ -63,6 +63,7 @@ public class GeneralCommandLine {
       return;
     }
     myCharset = charset;
+    //noinspection HardCodedStringLiteral
     addParameter("-Dfile.encoding=" + charset.name());
   }
 

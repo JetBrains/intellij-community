@@ -44,6 +44,7 @@ public class ReadOnlyAttributeUtil {
     file.refresh(false, false);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void setReadOnlyAttribute(String path, boolean readOnlyStatus) throws IOException {
     Process process;
     if(SystemInfo.isWindows){

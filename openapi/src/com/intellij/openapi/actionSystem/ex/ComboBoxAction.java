@@ -124,6 +124,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       setToolTipText(tooltip.length() > 0 ? tooltip : null);
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     public void updateUI() {
       super.updateUI();
       if("Motif".equals(UIManager.getLookAndFeel().getID())){

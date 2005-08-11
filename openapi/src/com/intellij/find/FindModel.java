@@ -227,6 +227,7 @@ public class FindModel implements Cloneable {
   }
 
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString(){
     StringBuffer buffer=new StringBuffer();
     buffer.append("--- FIND MODEL ---\n");

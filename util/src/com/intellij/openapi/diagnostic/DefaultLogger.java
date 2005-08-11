@@ -31,6 +31,7 @@ public class DefaultLogger extends Logger {
   public void debug(Throwable t) {
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void error(String message, Throwable t, String[] details) {
     System.err.println("ERROR: " + message);
     t.printStackTrace();

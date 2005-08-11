@@ -26,7 +26,11 @@ import java.util.List;
 public interface PsiMethod extends PsiMember, PsiNamedElement, PsiModifierListOwner, PsiDocCommentOwner, PsiTypeParameterListOwner {
   PsiMethod[] EMPTY_ARRAY = new PsiMethod[0];
 
-  @Nullable(documentation = "Can return null for constructors")
+  /**
+   * Returns the return type of the method.
+   * @return the method return type, or null if the method is a constructor.
+   */
+  @Nullable
   PsiType getReturnType();
 
   PsiTypeElement getReturnTypeElement();

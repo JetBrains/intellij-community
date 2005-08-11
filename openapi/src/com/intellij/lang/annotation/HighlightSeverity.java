@@ -22,6 +22,7 @@ package com.intellij.lang.annotation;
  * @see Annotation
  */
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class HighlightSeverity implements Comparable<HighlightSeverity> {
   private final String myName; // for debug only
   private final int myVal;

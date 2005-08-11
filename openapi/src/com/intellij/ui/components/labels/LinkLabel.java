@@ -236,14 +236,17 @@ public class LinkLabel extends JLabel {
     ourVisitedLinks.clear();
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static Color getVisited() {
     return UI.getColor("link.visited.foreground");
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static Color getActive() {
     return UI.getColor("link.pressed.foreground");
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static Color getNormal() {
     return UI.getColor("link.foreground");
   }

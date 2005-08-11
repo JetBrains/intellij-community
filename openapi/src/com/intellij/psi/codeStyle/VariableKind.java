@@ -17,6 +17,7 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.util.containers.HashMap;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class VariableKind {
   private final String myName;
 

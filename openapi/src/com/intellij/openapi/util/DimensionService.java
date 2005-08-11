@@ -36,8 +36,11 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
   private final HashMap myKey2Location;
   private final HashMap myKey2Size;
   private final TObjectIntHashMap myKey2ExtendedState;
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static final String EXTENDED_STATE = "extendedState";
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static final String KEY = "key";
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static final String STATE = "state";
 
   public static DimensionService getInstance() {
@@ -129,6 +132,7 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public synchronized void readExternal(Element element) throws InvalidDataException {
     for (Iterator i = element.getChildren().iterator(); i.hasNext();) {
       Element e = (Element)i.next();
@@ -160,6 +164,7 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public synchronized void writeExternal(Element element) throws WriteExternalException {
     // Save locations
     for(Iterator i=myKey2Location.keySet().iterator();i.hasNext();){
@@ -194,6 +199,7 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
   }
 
   public String getComponentName() {
+    //noinspection HardCodedStringLiteral
     return "DimensionService";
   }
 

@@ -31,10 +31,14 @@ import java.util.regex.Pattern;
  * @version 1.0
  */
 public class RegexpFilter implements Filter {
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static final String FILE_PATH_MACROS = "$FILE_PATH$";
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static final String LINE_MACROS = "$LINE$";
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static final String COLUMN_MACROS = "$COLUMN$";
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static final String FILE_PATH_REGEXP = "((?:\\p{Alpha}\\:)?[0-9 a-z_A-Z\\-\\\\./]+)";
   private static final String NUMBER_REGEXP = "([0-9]+)";
 

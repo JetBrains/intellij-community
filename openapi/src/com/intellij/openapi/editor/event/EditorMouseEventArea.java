@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.event;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class EditorMouseEventArea {
   private final String myDebugName;
 

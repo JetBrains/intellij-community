@@ -28,6 +28,7 @@ import java.util.List;
 /**
  *
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
   public CodeStyleSettings() {

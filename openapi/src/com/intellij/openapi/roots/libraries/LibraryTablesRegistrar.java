@@ -19,7 +19,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 
 public abstract class LibraryTablesRegistrar {
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static final String PROJECT_LEVEL = "project";
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static final String APPLICATION_LEVEL = "application";
 
   public static LibraryTablesRegistrar getInstance() {

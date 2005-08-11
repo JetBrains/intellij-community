@@ -94,6 +94,7 @@ public class ParametersList implements Cloneable{
   }
 
   public void defineProperty(final String propertyName, final String propertyValue) {
+    //noinspection HardCodedStringLiteral
     myParameters.add("-D" + propertyName + "=" + propertyValue);
   }
   

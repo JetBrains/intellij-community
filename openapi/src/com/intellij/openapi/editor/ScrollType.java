@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public final class ScrollType {
   public static final ScrollType RELATIVE = new ScrollType("RELATIVE");
   public static final ScrollType CENTER = new ScrollType("CENTER");

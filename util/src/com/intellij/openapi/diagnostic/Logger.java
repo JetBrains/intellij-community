@@ -16,6 +16,7 @@
 package com.intellij.openapi.diagnostic;
 
 import org.apache.log4j.Level;
+import org.jetbrains.annotations.NonNls;
 
 public abstract class Logger {
   public interface Factory {
@@ -38,10 +39,10 @@ public abstract class Logger {
 
   public abstract boolean isDebugEnabled();
 
-  public abstract void debug(String message);
+  public abstract void debug(@NonNls String message);
   public abstract void debug(Throwable t);
 
-  public void error(String message) {
+  public void error(@NonNls String message) {
     error(message, new Throwable(), new String[0]);
   }
 
@@ -49,7 +50,7 @@ public abstract class Logger {
     error(message, new Throwable(), details);
   }
 
-  public void error(String message, Throwable e) {
+  public void error(@NonNls String message, Throwable e) {
     error(message, e, new String[0]);
   }
 
@@ -59,7 +60,7 @@ public abstract class Logger {
 
   public abstract void error(String message, Throwable t, String[] details);
 
-  public abstract void info(String message);
+  public abstract void info(@NonNls String message);
 
   public abstract void info(String message, Throwable t);
 
@@ -67,8 +68,9 @@ public abstract class Logger {
     info("", t);
   }
 
-  public boolean assertTrue(boolean value, String message) {
+  public boolean assertTrue(boolean value, @NonNls String message) {
     if (!value) {
+      //noinspection HardCodedStringLiteral
       String resultMessage = "Assertion failed";
       if (!message.equals("")) resultMessage += ": " + message;
 

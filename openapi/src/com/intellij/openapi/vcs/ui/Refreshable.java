@@ -19,6 +19,7 @@ package com.intellij.openapi.vcs.ui;
  * author: lesya
  */
 public interface Refreshable {
+  @SuppressWarnings({"HardCodedStringLiteral"})
   String PANEL = "Panel";
 
   void refresh();

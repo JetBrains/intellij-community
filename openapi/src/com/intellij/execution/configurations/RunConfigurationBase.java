@@ -35,9 +35,13 @@ public abstract class RunConfigurationBase implements RunConfiguration {
   private String myName = "";
 
   private Map<Pair<String, String >, Boolean> myLogFiles = new HashMap<Pair<String, String>, Boolean>();
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private final String LOG_FILE = "log_file";
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private final String PATH = "path";
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private final String CHECKED = "checked";
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private final String ALIAS = "alias";
   protected RunConfigurationBase(final Project project, final ConfigurationFactory factory, final String name) {
     myProject = project;

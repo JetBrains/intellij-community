@@ -106,6 +106,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * @see VirtualFileListener#propertyChanged
    * @see VirtualFilePropertyEvent#getPropertyName
    */
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static final String PROP_WRITABLE = "writable";
 
   /**
@@ -429,6 +430,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
 
   private void skipUTF8BOM(final Reader reader) throws IOException {
     if (Patches.SUN_BUG_ID_4508058) {
+      //noinspection HardCodedStringLiteral
       if (myCharset != null && myCharset.name().indexOf("UTF-8") >= 0) {
         reader.mark(1);
         char c = (char)reader.read();

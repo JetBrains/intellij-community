@@ -20,6 +20,7 @@ package com.intellij.openapi.roots;
  * @see com.intellij.openapi.roots.OrderEntry
  * @author dsl
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class OrderRootType {
   private final String myName;
 

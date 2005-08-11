@@ -28,7 +28,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TreeState implements JDOMExternalizable {
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static final String PATH = "PATH";
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static final String PATH_ELEMENT = "PATH_ELEMENT";
 
   static class PathElement implements JDOMExternalizable {

@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class XmlTagTextUtil {
   private static Map<String, Character> ourCharacterEntities;
 

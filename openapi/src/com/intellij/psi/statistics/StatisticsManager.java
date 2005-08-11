@@ -24,7 +24,7 @@ import java.util.Map;
 public abstract class StatisticsManager implements SettingsSavingComponent {
   public static NameContext getContext(final PsiElement element) {
     if(element instanceof PsiField){
-      if(((PsiField)element).hasModifierProperty("static") && ((PsiField)element).hasModifierProperty("final"))
+      if(((PsiField)element).hasModifierProperty(PsiModifier.STATIC) && ((PsiField)element).hasModifierProperty(PsiModifier.FINAL))
         return NameContext.CONSTANT_NAME;
       return NameContext.FIELD_NAME;
     }

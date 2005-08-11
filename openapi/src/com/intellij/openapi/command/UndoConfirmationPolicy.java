@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.command;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class UndoConfirmationPolicy {
   private final String myName;
 

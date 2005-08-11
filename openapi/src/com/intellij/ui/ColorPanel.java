@@ -31,8 +31,10 @@ public class ColorPanel extends JPanel {
   public static final Color BLUE_GREEN = new Color(0, 128, 128);
   public static final Color DARK_YELLOW = new Color(128, 128, 0);
   public static final Color DARK_RED = new Color(128, 0, 0);
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static final Color DISABLED_COLOR = UIManager.getColor("Panel.background");
   private static Color[] myCustomColors;
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private String myActionCommand = "colorPanelChanged";
   private boolean isFiringEvent = false;
   private int myBoxSize;

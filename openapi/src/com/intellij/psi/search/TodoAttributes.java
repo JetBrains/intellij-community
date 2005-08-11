@@ -67,6 +67,7 @@ public class TodoAttributes implements JDOMExternalizable, Cloneable {
     return textAttributes;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(Element element) throws InvalidDataException {
     String icon = element.getAttributeValue("icon","default");
 
@@ -88,6 +89,7 @@ public class TodoAttributes implements JDOMExternalizable, Cloneable {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(Element element) throws WriteExternalException {
     String icon;
     if (myIcon == DEFAULT_ICON){

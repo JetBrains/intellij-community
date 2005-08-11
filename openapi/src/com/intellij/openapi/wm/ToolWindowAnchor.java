@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public final class ToolWindowAnchor {
   public static final ToolWindowAnchor TOP = new ToolWindowAnchor("top");
   public static final ToolWindowAnchor LEFT = new ToolWindowAnchor("left");

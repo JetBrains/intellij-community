@@ -115,6 +115,7 @@ public class TodoPattern implements Cloneable, JDOMExternalizable {
     compilePattern();
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(Element element) throws WriteExternalException {
     myAttributes.writeExternal(element);
     element.setAttribute("case-sensitive", myCaseSensitive ? "true" : "false");

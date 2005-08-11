@@ -87,6 +87,7 @@ public class ComboBox extends JComboBox {
             setPopupVisible(false);
           }
           else {
+            //noinspection HardCodedStringLiteral
             final Object clientProperty = getClientProperty("tableCellEditor");
             if(clientProperty instanceof CellEditor){
               // If combo box is inside editable table then we need to cancel editing
@@ -152,6 +153,7 @@ public class ComboBox extends JComboBox {
                 myComboBox.setPopupVisible(false);
               }
               else {
+                //noinspection HardCodedStringLiteral
                 final Object clientProperty = myComboBox.getClientProperty("tableCellEditor");
                 if(clientProperty instanceof CellEditor){
                   // If combo box is inside editable table then we need to cancel editing

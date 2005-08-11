@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.markup;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public final class SeparatorPlacement {
   public static final SeparatorPlacement TOP = new SeparatorPlacement("TOP");
   public static final SeparatorPlacement BOTTOM = new SeparatorPlacement("BOTTOM");

@@ -266,6 +266,7 @@ public class VfsUtil {
     return components;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static VirtualFile findRelativeFile(String uri, VirtualFile base) {
     if (base != null) {
       if (!base.isValid()){
@@ -314,8 +315,11 @@ public class VfsUtil {
     return file;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static final String FILE = "file";
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static final String JAR = "jar";
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static final String MAILTO = "mailto";
   private static final String PROTOCOL_DELIMITER = ":";
 
@@ -451,6 +455,7 @@ public class VfsUtil {
       String s = ideaUrl.substring(0, idx);
       
       if (s.equals(JarFileSystem.PROTOCOL)) {
+        //noinspection HardCodedStringLiteral
         s = "jar:file";
       }
       ideaUrl = s+":/"+ideaUrl.substring(idx+3);

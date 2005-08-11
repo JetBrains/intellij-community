@@ -55,6 +55,7 @@ public abstract class ColoredListCellRenderer extends SimpleColoredComponent imp
    * When the item is selected then we use default tree's selection foreground.
    * It guaranties readability of selected text in any LAF.
    */
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public final void append(final String fragment,final SimpleTextAttributes attributes){
     if(mySelected){
       super.append(
@@ -68,6 +69,7 @@ public abstract class ColoredListCellRenderer extends SimpleColoredComponent imp
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public Dimension getPreferredSize() {
     // There is a bug in BasicComboPopup. It does not add renderer into CellRendererPane,
     // so font can be null here.

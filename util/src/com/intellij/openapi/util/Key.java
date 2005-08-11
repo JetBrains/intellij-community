@@ -15,10 +15,12 @@
  */
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.NonNls;
+
 public class Key<T> {
   private String myName; // for debug purposes only
 
-  public Key(String name) {
+  public Key(@NonNls String name) {
     myName = name;
   }
 
@@ -26,7 +28,7 @@ public class Key<T> {
     return myName;
   }
 
-  public static <T> Key<T> create(String name) {
+  public static <T> Key<T> create(@NonNls String name) {
     return new Key<T>(name);
   }
 }

@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class ProjectLevelVcsManager {
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static final String FILE_VIEW_TOOL_WINDOW_ID = "File View";
 
   public static ProjectLevelVcsManager getInstance(Project project) {

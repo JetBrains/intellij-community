@@ -56,8 +56,10 @@ public class PathUtil {
     if (homeDirectory == null) {
       return null;
     }
+    //noinspection HardCodedStringLiteral
     VirtualFile rtJar = homeDirectory.findFileByRelativePath("jre/lib/rt.jar");
     if (rtJar == null) {
+      //noinspection HardCodedStringLiteral
       rtJar = homeDirectory.findFileByRelativePath("lib/rt.jar");
     }
     if (rtJar == null) {
@@ -94,6 +96,7 @@ public class PathUtil {
   }
 
   public static String getJarPathForClass(final Class aClass) {
+    //noinspection HardCodedStringLiteral
     String resourceRoot = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
     return new File(resourceRoot).getAbsoluteFile().getAbsolutePath();
   }

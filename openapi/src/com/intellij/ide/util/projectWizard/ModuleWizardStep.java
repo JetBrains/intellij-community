@@ -60,6 +60,7 @@ public abstract class ModuleWizardStep extends StepAdapter{
 
   protected static FieldPanel createFieldPanel(final JTextField field, final String labelText, final BrowseFilesListener browseButtonActionListener) {
     final FieldPanel fieldPanel = new FieldPanel(field, labelText, null, browseButtonActionListener, null);
+    //noinspection HardCodedStringLiteral
     fieldPanel.getFieldLabel().setFont(UIManager.getFont("Label.font").deriveFont(Font.BOLD));
     return fieldPanel;
   }

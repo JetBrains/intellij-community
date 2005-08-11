@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public abstract class PsiNameHelper {
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static final Pattern WHITESPACE_PATTERN = Pattern.compile("(?:\\s)|(?:/\\*.*\\*/)|(?://[^\\n]*)");
 
   public abstract boolean isIdentifier(String text);
@@ -71,7 +72,7 @@ public abstract class PsiNameHelper {
     return new String(chars, 0, lessPos).trim();
   }
 
-  public static final String getPresentableText(PsiJavaCodeReferenceElement ref) {
+  public static String getPresentableText(PsiJavaCodeReferenceElement ref) {
     StringBuffer buffer = new StringBuffer();
     buffer.append(ref.getReferenceName());
     PsiType[] typeParameters = ref.getTypeParameters();

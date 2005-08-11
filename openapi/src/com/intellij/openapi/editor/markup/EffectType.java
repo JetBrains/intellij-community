@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.markup;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class EffectType {
   public static final EffectType LINE_UNDERSCORE = new EffectType("LINE_UNDERSCORE");
   public static final EffectType WAVE_UNDERSCORE = new EffectType("WAVE_UNDERSCORE");

@@ -27,6 +27,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComponent {
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static final String PROP_INACTIVE_TIMEOUT = "inactiveTimeout";
   private static final int DEFAULT_INACTIVE_TIMEOUT = 15;
 
@@ -58,9 +59,11 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
     myCharsetName="System Default";
 
     if (SystemInfo.isWindows) {
+      //noinspection HardCodedStringLiteral
       myBrowserPath = "C:\\Program Files\\Internet Explorer\\IExplore.exe";
     }
     else if (SystemInfo.isMac) {
+      //noinspection HardCodedStringLiteral
       myBrowserPath = "open";
     }
     else {
@@ -192,6 +195,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
   }
 
   //todo use DefaultExternalizer
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(Element parentNode) {
     List children = parentNode.getChildren("option");
     for (Iterator iterator = children.iterator(); iterator.hasNext();) {
@@ -330,6 +334,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(Element parentNode) {
     if (myBrowserPath != null) {
       Element element = new Element("option");
@@ -420,12 +425,13 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
     }
   }
 
-
   public String getExternalFileName() {
+    //noinspection HardCodedStringLiteral
     return "ide.general";
   }
 
   public String getComponentName() {
+    //noinspection HardCodedStringLiteral
     return "GeneralSettings";
   }
 

@@ -72,6 +72,7 @@ public class PsiSuperMethodUtil {
         PsiElement firstChild = statements[0].getFirstChild();
         if (firstChild instanceof PsiMethodCallExpression) {
           PsiReferenceExpression superExpr = ((PsiMethodCallExpression)firstChild).getMethodExpression();
+          //noinspection HardCodedStringLiteral
           if (superExpr.getText().equals("super")) {
             PsiElement superConstructor = superExpr.resolve();
             if (superConstructor instanceof PsiMethod) {

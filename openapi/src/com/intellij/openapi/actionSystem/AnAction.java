@@ -56,6 +56,7 @@ import java.util.ArrayList;
  */
 public abstract class AnAction {
   public static final AnAction[] EMPTY_ARRAY = new AnAction[0];
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static final String ourClientProperty = "AnAction.shortcutSet";
 
   private Presentation myTemplatePresentation;

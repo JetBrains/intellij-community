@@ -38,6 +38,7 @@ public class BrowserUtil {
   // with RFC is that we do not allow schemes with length=1 (in other case
   // local paths like "C:/temp/index.html" whould be erroneously interpreted as
   // external URLs.)
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static Pattern ourExternalPrefix = Pattern.compile("^[\\w\\+\\.\\-]{2,}:");
   private static Pattern ourAnchorsuffix = Pattern.compile("#(.*)$");
 
@@ -60,6 +61,7 @@ public class BrowserUtil {
 
   public static URL getURL(String url) throws java.net.MalformedURLException {
     if (!isAbsoluteURL(url)) {
+      //noinspection HardCodedStringLiteral
       return new URL("file", "", url);
     }
 
@@ -103,6 +105,7 @@ public class BrowserUtil {
   /**
    * This method works around Windows 'start' command behaivor of dropping anchors from the url for local urls.
    */
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static String redirectUrl(String url, String urlString) throws IOException {
     if (url.indexOf('&') == -1 && (!urlString.startsWith("file:") || urlString.indexOf("#") == -1)) return urlString;
 
@@ -175,6 +178,7 @@ public class BrowserUtil {
 
 
   public static void launchBrowser(final String url, String name) {
+    //noinspection HardCodedStringLiteral
     if (url.startsWith("jar:")) {
       showErrorMessage("Cannot show \"" + url + "\" in external browser", "Cannot start browser");
       return;
@@ -191,6 +195,7 @@ public class BrowserUtil {
     launchBrowser(url, (String)null);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static String[] getDefaultBrowserCommand(String name) {
     if (SystemInfo.isWindows9x) {
       return new String[]{"command.com", "/c", "start"};

@@ -40,6 +40,7 @@ public class Alarm {
     ourThreadUseSwing.start();
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static class ThreadToUse {
     public static final ThreadToUse SWING_THREAD = new ThreadToUse("SWING_THREAD");
     public static final ThreadToUse SHARED_THREAD = new ThreadToUse("SHARED_THREAD");
@@ -152,6 +153,7 @@ public class Alarm {
     private ArrayList<ModalityState> myRequestModalityStates = new ArrayList<ModalityState>();
 
     public MyThread(boolean useSwingThread) {
+      //noinspection HardCodedStringLiteral
       super("AlarmThread");
       myUseSwingThread = useSwingThread;
     }

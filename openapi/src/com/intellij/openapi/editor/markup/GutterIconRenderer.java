@@ -54,6 +54,7 @@ public abstract class GutterIconRenderer {
     return null;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static class Alignment {
     public static final Alignment LEFT = new Alignment("LEFT", 1);
     public static final Alignment RIGHT = new Alignment("RIGHT", 3);

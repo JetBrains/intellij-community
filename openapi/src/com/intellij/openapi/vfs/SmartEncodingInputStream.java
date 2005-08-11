@@ -213,6 +213,7 @@ public class SmartEncodingInputStream extends InputStream {
   }
 
   public byte[] detectUTF8_BOM() {
+    //noinspection HardCodedStringLiteral
     if ("UTF-8".equals(charset.name()) && CharsetToolkit.hasUTF8Bom(buffer)) {
       counter += CharsetToolkit.UTF8_BOM.length;
       return CharsetToolkit.UTF8_BOM;

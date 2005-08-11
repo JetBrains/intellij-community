@@ -113,7 +113,7 @@ public abstract class PsiType {
     }
     return type;
   }
-
+  
   @Nullable(documentation = "for primitives and arrays of primitives")
   public abstract GlobalSearchScope getResolveScope();
 

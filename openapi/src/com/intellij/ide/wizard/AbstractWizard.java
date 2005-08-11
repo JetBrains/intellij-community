@@ -32,7 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class AbstractWizard extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.AbstractWizard");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.wizard.AbstractWizard");
 
   private int myCurrentStep;
   protected final ArrayList<Step> mySteps;

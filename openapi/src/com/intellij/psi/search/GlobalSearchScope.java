@@ -312,6 +312,7 @@ public abstract class GlobalSearchScope extends SearchScope {
     }
 
     public String toString() {
+      //noinspection HardCodedStringLiteral
       return "package scope: " + myPackage +
              ", includeSubpackages = " + myIncludeSubpackages;
     }
@@ -347,6 +348,7 @@ public abstract class GlobalSearchScope extends SearchScope {
     }
 
     public String toString() {
+      //noinspection HardCodedStringLiteral
       return "directory scope: " + myDirectory + "; withSubdirs:"+myWithSubdirectories;
     }
   }

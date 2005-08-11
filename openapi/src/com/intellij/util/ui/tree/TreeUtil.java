@@ -437,6 +437,7 @@ public final class TreeUtil {
     return count;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void installActions(final JTree tree) {
     tree.getActionMap().put("scrollUpChangeSelection", new AbstractAction() {
       public void actionPerformed(final ActionEvent e) {

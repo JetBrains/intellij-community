@@ -35,6 +35,7 @@ public class ColorChooser {
       final Class[] classes = JColorChooser.class.getDeclaredClasses();
       Class dlgClass = null;
       for (Class aClass : classes) {
+        //noinspection HardCodedStringLiteral
         if (aClass.getName().endsWith("ColorChooserDialog")) {
           dlgClass = aClass;
           break;
@@ -42,6 +43,7 @@ public class ColorChooser {
       }
 
       if (dlgClass != null) {
+        //noinspection HardCodedStringLiteral
         final Field cancelButton = dlgClass.getDeclaredField("cancelButton");
         cancelButton.setAccessible(true);
         cancelButton.set(null, null);

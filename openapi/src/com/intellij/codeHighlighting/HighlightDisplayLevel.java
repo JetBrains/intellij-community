@@ -21,6 +21,7 @@ import com.intellij.util.containers.HashMap;
 import javax.swing.*;
 import java.util.Map;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class HighlightDisplayLevel {
   private static Map<String, HighlightDisplayLevel> ourMap = new HashMap<String, HighlightDisplayLevel>();
 

@@ -27,6 +27,8 @@ import java.io.Serializable;
 import java.net.URL;
 import java.util.Map;
 
+import org.jetbrains.annotations.NonNls;
+
 public class ImageLoader implements Serializable {
   private final static Component ourComponent = new Component() {};
 
@@ -47,7 +49,7 @@ public class ImageLoader implements Serializable {
     return !mediatracker.isErrorID(1);
   }
 
-  public static Image loadFromResource(String s) {
+  public static Image loadFromResource(@NonNls String s) {
     int stackFrameCount = 2;
     Class callerClass = Reflection.getCallerClass(stackFrameCount);
     while (callerClass != null && callerClass.getClassLoader() == null) { // looks like a system class

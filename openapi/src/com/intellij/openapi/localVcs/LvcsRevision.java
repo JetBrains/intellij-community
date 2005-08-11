@@ -17,6 +17,7 @@ package com.intellij.openapi.localVcs;
 
 
 public interface LvcsRevision extends Comparable{
+  @SuppressWarnings({"HardCodedStringLiteral"})
   String PROPERTY_UP_TO_DATE = "upToDate";
 
   String getName();

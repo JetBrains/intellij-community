@@ -19,6 +19,7 @@ package com.intellij.openapi.diagnostic;
  * Simple bean representing error submission status.
  */
 public class SubmittedReportInfo {
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static class SubmissionStatus {
     /**
      * Issue have been succesfully created

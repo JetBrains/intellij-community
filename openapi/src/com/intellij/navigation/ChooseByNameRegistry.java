@@ -87,6 +87,7 @@ public class ChooseByNameRegistry implements ApplicationComponent {
   }
 
   public String getComponentName() {
+    //noinspection HardCodedStringLiteral
     return "ChooseByNameRegistry";
   }
 

@@ -51,6 +51,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     if(selected){
       setPaintFocusBorder(true);
       if(myFocused){
+        //noinspection HardCodedStringLiteral
         setBackground(UIManager.getColor("Tree.selectionBackground"));
       }else{
         setBackground(null);
@@ -70,6 +71,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
    */
   public void append(String fragment,SimpleTextAttributes attributes){
     if(mySelected && myFocused){
+      //noinspection HardCodedStringLiteral
       super.append(
         fragment,
         new SimpleTextAttributes(

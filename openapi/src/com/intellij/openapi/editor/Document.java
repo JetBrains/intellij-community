@@ -23,6 +23,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import java.beans.PropertyChangeListener;
 
 public interface Document extends UserDataHolder {
+  @SuppressWarnings({"HardCodedStringLiteral"})
   String PROP_WRITABLE = "writable";
   /**
    * Retreives a copy of the document content. For obvious performance reasons use {@link #getCharsSequence()} whenever it's possible.

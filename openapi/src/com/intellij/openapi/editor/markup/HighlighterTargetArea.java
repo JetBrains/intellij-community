@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.markup;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class HighlighterTargetArea {
   public static final HighlighterTargetArea EXACT_RANGE = new HighlighterTargetArea("EXACT_RANGE");
   public static final HighlighterTargetArea LINES_IN_RANGE = new HighlighterTargetArea("LINES_IN_RANGE");

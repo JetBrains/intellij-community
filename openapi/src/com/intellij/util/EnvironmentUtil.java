@@ -116,6 +116,7 @@ public class EnvironmentUtil {
     return procEnvironment;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static String[] getProcEnvCommand() {
     if (SystemInfo.isOS2) {
       String[] cmd = {"cmd", "/c", "set"};

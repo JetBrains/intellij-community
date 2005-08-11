@@ -30,10 +30,12 @@ public interface FileEditor extends UserDataHolder {
   /**
    * @see #isModified() 
    */ 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   String PROP_MODIFIED = "modified";
   /**
    * @see #isValid()  
    */ 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   String PROP_VALID = "valid";
 
   /**

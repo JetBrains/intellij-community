@@ -29,6 +29,7 @@ import java.awt.event.MouseEvent;
  */
 public class Splitter extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.Splitter");
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static final String PROP_PROPORTION = "proportion";
 
   private int myDividerWidth;

@@ -24,6 +24,7 @@ import com.intellij.psi.PsiFile;
 import java.util.Iterator;
 
 public abstract class Location<E extends PsiElement> {
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static final String LOCATION = "Location";
 
   public abstract E getPsiElement();

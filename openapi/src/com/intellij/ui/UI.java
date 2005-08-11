@@ -27,6 +27,7 @@ import java.util.Map;
  * Time: 4:22:50 PM
  * To change this template use File | Settings | File Templates.
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class UI {
   private static Map<String, Color> ourColors = new HashMap<String, Color>();
 

@@ -134,6 +134,7 @@ public class LocalSearchScope extends SearchScope {
       }
       result.append(element.toString());
     }
+    //noinspection HardCodedStringLiteral
     return "LocalSearchScope:" + result;
   }
 

@@ -18,6 +18,7 @@ package com.intellij.openapi.wm;
 /**
  * This is enumeration of all posiible types of tool windows.
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public final class ToolWindowType {
   public static final ToolWindowType DOCKED = new ToolWindowType("docked");
   public static final ToolWindowType FLOATING = new ToolWindowType("floating");

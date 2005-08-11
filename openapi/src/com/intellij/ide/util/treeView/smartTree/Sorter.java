@@ -35,6 +35,7 @@ public interface Sorter extends TreeAction {
    */
   Comparator getComparator();
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   String ALPHA_SORTER_ID = "ALPHA_COMPARATOR";
 
   /**

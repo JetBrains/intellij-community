@@ -237,6 +237,7 @@ public final class PsiUtil {
     return element.getManager().isInProject(element);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void updatePackageStatement(PsiFile file) throws IncorrectOperationException {
     if (!(file instanceof PsiJavaFile) || file instanceof JspFile) return;
 

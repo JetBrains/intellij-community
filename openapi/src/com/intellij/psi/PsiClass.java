@@ -26,17 +26,29 @@ import java.util.List;
 public interface PsiClass extends PsiElement, PsiNamedElement, PsiModifierListOwner, PsiDocCommentOwner, PsiMetaOwner, PsiTypeParameterListOwner, PsiMember {
   PsiClass[] EMPTY_ARRAY  = new PsiClass[0];
 
-  @Nullable(documentation = "return null for anonymous and local classes, and for type parameters")
+  /**
+   * Returns the fully qualified name of the class.
+   * @return the qualified name of the class, or null for anonymous and local classes, and for type parameters
+   */
+  @Nullable
   String getQualifiedName();
 
   boolean isInterface();
   boolean isAnnotationType();
   boolean isEnum();
 
-  @Nullable(documentation = "return null for anonymous classes, enums and annotation types")
+  /**
+   * Returns the list of classes that this class extends.
+   * @return the extends list, or null for anonymous classes, enums and annotation types
+   */
+  @Nullable
   PsiReferenceList getExtendsList();
 
-  @Nullable(documentation = "return null for anonymous classes")
+  /**
+   * Returns the list of interfaces that this class implements.
+   * @return the implements list, or null for anonymous classes
+   */
+  @Nullable
   PsiReferenceList getImplementsList();
 
   @NotNull
@@ -45,7 +57,12 @@ public interface PsiClass extends PsiElement, PsiNamedElement, PsiModifierListOw
   @NotNull
   PsiClassType[] getImplementsListTypes();
 
-  @Nullable(documentation = "May return null when jdk is not configured, so no java.lang.Object is found, or for java.lang.Object itself")
+  /**
+   * Returns the base class of this class.
+   * @return the base class. May return null when jdk is not configured, so no java.lang.Object is found,
+   * or for java.lang.Object itself
+   */
+  @Nullable
   PsiClass getSuperClass();
 
   PsiClass[] getInterfaces();
@@ -82,7 +99,11 @@ public interface PsiClass extends PsiElement, PsiNamedElement, PsiModifierListOw
   @Nullable PsiJavaToken getLBrace();
   @Nullable PsiJavaToken getRBrace();
 
-  @Nullable(documentation = "parser understands classes without name identifiers")
+  /**
+   * Returns the name identifier of the class.
+   * @return the name identifier, or null if the class is incomplete and the name identifier is missing.
+   */
+  @Nullable
   PsiIdentifier getNameIdentifier();
 
   // very special method!

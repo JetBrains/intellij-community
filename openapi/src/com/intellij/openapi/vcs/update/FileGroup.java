@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class FileGroup implements JDOMExternalizable {
 
   public String myUpdateName;

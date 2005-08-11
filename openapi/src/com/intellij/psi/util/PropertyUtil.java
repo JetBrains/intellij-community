@@ -34,6 +34,7 @@ import java.util.List;
 public class PropertyUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PropertyUtil");
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isSimplePropertyGetter(PsiMethod method) {
     if (method == null) return false;
 
@@ -62,6 +63,7 @@ public class PropertyUtil {
     return true;
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isSimplePropertySetter(PsiMethod method) {
     if (method == null) return false;
 
@@ -95,6 +97,7 @@ public class PropertyUtil {
     }
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   public static String getPropertyNameByGetter(PsiMethod getterMethod) {
     String methodName = getterMethod.getName();
     return methodName.startsWith("get") ?
@@ -220,6 +223,7 @@ public class PropertyUtil {
     return null;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static String getPropertyName(String methodName) {
     if (methodName.startsWith("get")) {
       return Introspector.decapitalize(methodName.substring(3));
@@ -239,6 +243,7 @@ public class PropertyUtil {
     return suggestGetterName(propertyName, propertyType, null);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static String suggestGetterName(String propertyName, PsiType propertyType, String existingGetterName) {
     StringBuffer name = new StringBuffer(StringUtil.capitalize(propertyName));
     if (propertyType == PsiType.BOOLEAN) {
@@ -256,6 +261,7 @@ public class PropertyUtil {
     return name.toString();
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static String suggestSetterName(String propertyName) {
     StringBuffer name = new StringBuffer(StringUtil.capitalize(propertyName));
     name.insert(0, "set");
@@ -354,6 +360,7 @@ public class PropertyUtil {
       buffer.append("{\n");
       if (name.equals(parameterName)) {
         if (!isStatic) {
+          //noinspection HardCodedStringLiteral
           buffer.append("this.");
         }
         else {

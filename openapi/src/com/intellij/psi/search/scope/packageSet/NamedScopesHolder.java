@@ -43,6 +43,7 @@ public abstract class NamedScopesHolder implements JDOMExternalizable {
     myScopes.add(scope);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private Element writeScope(NamedScope scope) {
     Element setElement = new Element("scope");
     setElement.setAttribute("name", scope.getName());
@@ -56,6 +57,7 @@ public abstract class NamedScopesHolder implements JDOMExternalizable {
     return new NamedScope(name, set);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(Element element) throws InvalidDataException {
     List sets = element.getChildren("scope");
     for (int i = 0; i < sets.size(); i++) {

@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface SelectInContext {
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   String DATA_CONTEXT_ID = "SelectInContext";
 
   @NotNull

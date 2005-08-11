@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.zip.ZipFile;
 
 public abstract class JarFileSystem extends VirtualFileSystem {
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static final String PROTOCOL = "jar";
   public static final String JAR_SEPARATOR = "!/";
 

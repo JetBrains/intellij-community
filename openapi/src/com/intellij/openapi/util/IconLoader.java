@@ -29,6 +29,8 @@ import java.awt.image.BufferedImage;
 import java.net.URL;
 import java.util.Map;
 
+import org.jetbrains.annotations.NonNls;
+
 public final class IconLoader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.IconLoader");
   private static final Color ourTransparentColor = new Color(0, 0, 0, 0);
@@ -64,7 +66,7 @@ public final class IconLoader {
     }
   }
 
-  public static Icon getIcon(final String path) {
+  public static Icon getIcon(@NonNls final String path) {
     int stackFrameCount = 2;
     Class callerClass = Reflection.getCallerClass(stackFrameCount);
     while (callerClass != null && callerClass.getClassLoader() == null) { // looks like a system class

@@ -26,6 +26,7 @@ public class TableCellState {
   private Font myFont;
   private Border myCellBorder;
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void collectState(JTable table, boolean isSelected, boolean hasFocus, int row, int column) {
     clear();
     mySelected = isSelected;

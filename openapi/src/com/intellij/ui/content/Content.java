@@ -22,9 +22,12 @@ import javax.swing.*;
 import java.beans.PropertyChangeListener;
 
 public interface Content extends UserDataHolder {
+  @SuppressWarnings({"HardCodedStringLiteral"})
   String PROP_DISPLAY_NAME = "displayName";
+  @SuppressWarnings({"HardCodedStringLiteral"})
   String PROP_ICON = "icon";
   String PROP_DESCRIPTION = "description";
+  @SuppressWarnings({"HardCodedStringLiteral"})
   String PROP_COMPONENT = "component";
 
   JComponent getComponent();

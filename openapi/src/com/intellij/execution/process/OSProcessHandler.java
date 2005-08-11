@@ -184,6 +184,7 @@ public class OSProcessHandler extends ProcessHandler {
     private boolean myIsClosed = false;
 
     public ReadProcessThread(final Reader reader) {
+      //noinspection HardCodedStringLiteral
       super("ReadProcessThread "+reader.getClass().getName());
       setPriority(Thread.MAX_PRIORITY);
       myReader = reader;

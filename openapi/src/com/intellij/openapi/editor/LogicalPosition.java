@@ -36,6 +36,7 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
   }
 
   public String toString() {
+    //noinspection HardCodedStringLiteral
     return "LogicalPosition: line = " + line + " column = " + column;
   }
 

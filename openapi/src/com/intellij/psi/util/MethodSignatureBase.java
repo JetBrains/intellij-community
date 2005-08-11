@@ -81,6 +81,7 @@ public abstract class MethodSignatureBase implements MethodSignature {
     return MethodSignatureUtil.computeHashCode(this);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     String s = "MethodSignature: ";
     final PsiTypeParameter[] typeParameters = getTypeParameters();

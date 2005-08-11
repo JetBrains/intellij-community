@@ -280,6 +280,7 @@ public abstract class Language {
   }
 
   public String toString() {
+    //noinspection HardCodedStringLiteral
     return "Language: " + myID;
   }
 

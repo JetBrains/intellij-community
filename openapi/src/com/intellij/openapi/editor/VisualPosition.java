@@ -30,6 +30,7 @@ public class VisualPosition {
   }
 
   public String toString() {
+    //noinspection HardCodedStringLiteral
     return "VisualPosition: line = " + line + " column = " + column;
   }
 }

@@ -72,6 +72,7 @@ public abstract class JSR45PositionManager implements PositionManager {
       String sourcePath = getRelativePath(location.sourcePath("JSP"));
       PsiFile file = myHelper.getDeployedJspSource(sourcePath, myDebugProcess.getProject());
       if(file == null) throw new NoDataException();
+      //noinspection HardCodedStringLiteral
       int lineNumber = location.lineNumber("JSP");
       sourcePosition = SourcePosition.createFromLine(file, lineNumber - 1);
     }
@@ -128,6 +129,7 @@ public abstract class JSR45PositionManager implements PositionManager {
       public List<Location> compute() {
         try {
           PsiFile file = null;
+          //noinspection HardCodedStringLiteral
           List<String> paths = (List<String>)type.sourcePaths("JSP");
           for (Iterator<String> iterator = paths.iterator(); iterator.hasNext();) {
             String path = iterator.next();
@@ -136,6 +138,7 @@ public abstract class JSR45PositionManager implements PositionManager {
           }
 
           if(file != null && file.equals(position.getFile())) {
+            //noinspection HardCodedStringLiteral
             return (List<Location>)type.locationsOfLine("JSP", type.sourceName(), position.getLine() + 1);
           }
         }

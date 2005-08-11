@@ -59,6 +59,7 @@ public class WordOccurrence {
   /**
    * Defines possible locations where words can be encountered.
    */
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static class Kind {
     /** Kind for words encountered in code (keywords and identifiers). */
     public static final Kind CODE = new Kind("CODE");

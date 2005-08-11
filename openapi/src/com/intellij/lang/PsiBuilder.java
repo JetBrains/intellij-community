@@ -42,14 +42,14 @@ public interface PsiBuilder {
    * Returns the type of current token from the lexer.
    * @return the token type, or null when lexing is over.
    */
-  @Nullable(documentation = "Returns null when lexing is over")
+  @Nullable
   IElementType getTokenType();
 
   /**
    * Returns the text of the current token from the lexer.
    * @return the token text, or null when the lexing is over.
    */
-  @Nullable(documentation = "Returns null when lexing is over")
+  @Nullable
   String getTokenText();
 
   /**

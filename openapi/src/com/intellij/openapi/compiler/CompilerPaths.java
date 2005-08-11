@@ -38,6 +38,7 @@ public class CompilerPaths {
    * @return a directory where compiler may generate files. All generated files are not deleted when the application exits
    */
   public static File getGeneratedDataDirectory(Project project, Compiler compiler) {
+    //noinspection HardCodedStringLiteral
     File dir = new File(getGeneratedDataDirectory(project), compiler.getDescription().replaceAll("\\s+", "_"));
     dir.mkdirs();
     return dir;
@@ -48,6 +49,7 @@ public class CompilerPaths {
    * @return a root directory where generated files for various compilers are stored
    */
   public static File getGeneratedDataDirectory(Project project) {
+    //noinspection HardCodedStringLiteral
     File dir = new File(getCompilerSystemDirectory(project), ".generated");
     dir.mkdirs();
     return dir;
@@ -58,6 +60,7 @@ public class CompilerPaths {
    * @return a root directory where compiler caches for the given project are stored
    */
   public static File getCacheStoreDirectory(final Project project) {
+    //noinspection HardCodedStringLiteral
     final File cacheStoreDirectory = new File(getCompilerSystemDirectory(project), ".dependency-info");
     cacheStoreDirectory.mkdirs();
     return cacheStoreDirectory;
@@ -71,6 +74,7 @@ public class CompilerPaths {
     String projectDirName;
     projectDirName = project.getName() + "." + Integer.toHexString(project.getProjectFilePath().replace(File.separatorChar, '/').hashCode());
 
+    //noinspection HardCodedStringLiteral
     final File compilerSystemDir = new File(PathManager.getSystemPath(), "/compiler/" + projectDirName);
     compilerSystemDir.mkdirs();
     return compilerSystemDir;

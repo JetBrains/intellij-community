@@ -53,6 +53,7 @@ public interface Storage {
     }
 
     public String toString() {
+      //noinspection HardCodedStringLiteral
       return "PropertiesComponentStorage: " + myPrefix;
     }
   }

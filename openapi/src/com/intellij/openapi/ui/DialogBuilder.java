@@ -29,6 +29,7 @@ import java.util.Iterator;
 public class DialogBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.DialogBuilder");
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static final String REQUEST_FOCUS_ENABLED = "requestFocusEnabled";
 
   private JComponent myCenterPanel;

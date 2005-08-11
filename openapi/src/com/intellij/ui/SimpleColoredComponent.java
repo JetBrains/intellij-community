@@ -227,6 +227,7 @@ public class SimpleColoredComponent extends JComponent {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private void doPaint(final Graphics g) {
     checkCanPaint();
     int xOffset=0;
@@ -342,6 +343,7 @@ public class SimpleColoredComponent extends JComponent {
   }
 
   private String logSwingPath() {
+    //noinspection HardCodedStringLiteral
     final StringBuffer buffer = new StringBuffer("Components hierarchy:\n");
     for (Container c = this; c != null; c = c.getParent()) {
       buffer.append('\n');

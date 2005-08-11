@@ -28,6 +28,7 @@ import com.intellij.psi.PsiPackage;
 import java.util.regex.Pattern;
 
 public class PatternPackageSet implements PackageSet {
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static final String SCOPE_TEST = "test";
   public static final String SCOPE_SOURCE = "src";
   public static final String SCOPE_LIBRARY = "lib";

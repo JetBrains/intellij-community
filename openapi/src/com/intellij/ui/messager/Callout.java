@@ -61,6 +61,7 @@ public class Callout {
   }
 
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void main(String[] args) {
     JFrame frame = new JFrame("Portlet Test");
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -72,6 +73,7 @@ public class Callout {
 
     final JButton first = new JButton("North east");
     first.addActionListener(new ActionListener() {
+      @SuppressWarnings({"HardCodedStringLiteral"})
       public void actionPerformed(ActionEvent e) {
         Callout.showText(first, Callout.NORTH_EAST, "North east");
       }
@@ -80,6 +82,7 @@ public class Callout {
 
     final JButton second = new JButton("North west");
     second.addActionListener(new ActionListener() {
+      @SuppressWarnings({"HardCodedStringLiteral"})
       public void actionPerformed(ActionEvent e) {
         Callout.showText(second, Callout.NORTH_WEST, "North west");
       }
@@ -88,6 +91,7 @@ public class Callout {
 
     final JButton third = new JButton("South east");
     third.addActionListener(new ActionListener() {
+      @SuppressWarnings({"HardCodedStringLiteral"})
       public void actionPerformed(ActionEvent e) {
         Callout.showText(third, Callout.SOUTH_EAST, "South east");
       }
@@ -96,6 +100,7 @@ public class Callout {
 
     final JButton fourth = new JButton("South west");
     fourth.addActionListener(new ActionListener() {
+      @SuppressWarnings({"HardCodedStringLiteral"})
       public void actionPerformed(ActionEvent e) {
         Callout.showText(fourth, Callout.SOUTH_WEST, "South west");
       }
