@@ -69,18 +69,9 @@ public class ThumbnailComponentUI extends ComponentUI {
 
         int imagesCount = tc.getImagesCount();
         if (imagesCount > 0) {
-            final String title;
-          if (imagesCount == 1) {
-            title = IconsBundle.message("icons.count.one");
-          }
-          else if (imagesCount > 100) {
-            title = IconsBundle.message("icons.count.more.than.hundred");
-          }
-          else {
-            title = IconsBundle.message("icons.count", imagesCount);
-          }
+            final String title = IconsBundle.message("icons.count", imagesCount);
 
-            Font font = getSmallFont();
+          Font font = getSmallFont();
             FontMetrics fontMetrics = g.getFontMetrics(font);
             g.setColor(Color.BLACK);
             g.setFont(font);
