@@ -1,12 +1,14 @@
 package com.intellij.psi.formatter.java;
 
-import com.intellij.lang.ASTNode;
+import com.intellij.codeFormatting.general.FormatterUtil;
 import com.intellij.formatting.*;
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.codeFormatting.general.FormatterUtil;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -135,7 +137,27 @@ public class CodeBlockBlock extends AbstractJavaBlock {
 
   private SyntheticCodeBlock createCaseSectionBlock(final ArrayList<Block> localResult, final Alignment childAlignment, final Indent indent,
                                                    final Wrap childWrap) {
-    final SyntheticCodeBlock result = new SyntheticCodeBlock(localResult, childAlignment, getSettings(), indent, childWrap);
+    final SyntheticCodeBlock result = new SyntheticCodeBlock(localResult, childAlignment, getSettings(), indent, childWrap){
+      @NotNull
+      public ChildAttributes getChildAttributes(final int newChildIndex) {
+        IElementType prevElementType = null;
+        if (newChildIndex > 0) {
+          final Block previousBlock = getSubBlocks().get(newChildIndex - 1);
+          if (previousBlock instanceof AbstractBlock) {
+            prevElementType = ((AbstractBlock)previousBlock).getNode().getElementType();
+          }
+        }
+
+        if (prevElementType == ElementType.BLOCK_STATEMENT
+            || prevElementType == ElementType.BREAK_STATEMENT 
+            || prevElementType == ElementType.RETURN_STATEMENT) {
+          return new ChildAttributes(Indent.getNoneIndent(), null);
+        } else {
+          return super.getChildAttributes(newChildIndex);
+        }
+      }
+
+    };
     result.setChildAttributes(new ChildAttributes(Indent.getNormalIndent(), null));
     result.setIsIncomplete(true);
     return result;
@@ -145,7 +167,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     switch (state) {
       case BEFORE_FIRST:
       {
-        if (ElementType.COMMENT_BIT_SET.isInSet(child.getElementType())) {
+        if (ElementType.COMMENT_BIT_SET.contains(child.getElementType())) {
           return BEFORE_FIRST;
         }
         else if (isLBrace(child)) {

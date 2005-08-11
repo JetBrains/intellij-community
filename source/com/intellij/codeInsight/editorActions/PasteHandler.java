@@ -462,6 +462,9 @@ public class PasteHandler extends EditorActionHandler {
       LOG.error(e);
     }
     chars = document.getCharsSequence();
+    if (spaceStart > newEnd) {
+      newEnd = spaceStart; //TODO lesya. Try to reproduce it. SCR52139
+    }
     Indent newIndent = codeStyleManager.getIndent(chars.subSequence(spaceStart, newEnd).toString(), fileType);
     Indent indentShift = newIndent.subtract(indent);
     ArrayList<Boolean> indentFlags = new ArrayList<Boolean>();

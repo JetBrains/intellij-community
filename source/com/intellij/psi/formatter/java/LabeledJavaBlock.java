@@ -10,6 +10,8 @@ import com.intellij.codeFormatting.general.FormatterUtil;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 public class LabeledJavaBlock extends AbstractJavaBlock{
   public LabeledJavaBlock(final ASTNode node,
                           final Wrap wrap,
@@ -31,7 +33,7 @@ public class LabeledJavaBlock extends AbstractJavaBlock{
         if (child.getElementType() == ElementType.COLON) {
           currentIndent = Indent.getNoneIndent();
           currentWrap =Wrap.createWrap(Wrap.ALWAYS, true);
-        } 
+        }
       }
       child = child.getTreeNext();
     }
@@ -52,5 +54,10 @@ public class LabeledJavaBlock extends AbstractJavaBlock{
 
   protected void setReservedWrap(final Wrap reservedWrap) {
   }
-  
+
+  @Override
+  @NotNull
+  public ChildAttributes getChildAttributes(final int newChildIndex) {
+    return new ChildAttributes(Indent.getNoneIndent(), null);
+  }
 }

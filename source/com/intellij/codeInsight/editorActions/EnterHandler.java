@@ -5,6 +5,7 @@ import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.StdLanguages;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.StringLiteralLexer;
@@ -30,6 +31,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.IncorrectOperationException;
@@ -380,9 +382,11 @@ public class EnterHandler extends EditorWriteActionHandler {
         offset = CharArrayUtil.shiftBackwardUntil(chars, offset, LINE_SEPARATOR) + 1;
         int lineStart = CharArrayUtil.shiftForward(chars, offset, " \t");
 
-        boolean docStart = CharArrayUtil.regionMatches(chars, lineStart, DOC_COMMENT_PREFIX);
-        boolean docAsterisk = CharArrayUtil.regionMatches(chars, lineStart, DOC_COMMENT_ASTERISK_STRING);
-        boolean slashSlash = CharArrayUtil.regionMatches(chars, lineStart, "//") &&
+        boolean isInsideJava = PsiUtil.getLanguageAtOffset(myFile, offset) == StdLanguages.JAVA;
+
+        boolean docStart = isInsideJava && CharArrayUtil.regionMatches(chars, lineStart, DOC_COMMENT_PREFIX);
+        boolean docAsterisk = isInsideJava && CharArrayUtil.regionMatches(chars, lineStart, DOC_COMMENT_ASTERISK_STRING);
+        boolean slashSlash = isInsideJava && CharArrayUtil.regionMatches(chars, lineStart, "//") &&
                              chars.charAt(CharArrayUtil.shiftForward(chars, myOffset, " \t")) != '\n';
 
         if (docStart) {

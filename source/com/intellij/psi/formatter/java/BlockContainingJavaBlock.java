@@ -94,7 +94,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
       return createNormalIndent(1);
     }
     if (child.getElementType() == ElementType.ELSE_KEYWORD)
-      return getCodeBlockExternalIndent();
+      return Indent.getNoneIndent();
     if (state == BEFORE_FIRST)
       return Indent.getNoneIndent();
     else {
@@ -104,7 +104,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
       else if (isSimpleStatement(child)){
         return getCodeBlockInternalIndent(1);
       }
-      else if (ElementType.COMMENT_BIT_SET.isInSet(child.getElementType())) {
+      else if (ElementType.COMMENT_BIT_SET.contains(child.getElementType())) {
         return getCodeBlockInternalIndent(1);
       }
       else {
