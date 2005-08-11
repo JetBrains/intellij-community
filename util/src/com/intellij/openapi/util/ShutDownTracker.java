@@ -27,6 +27,7 @@ public class ShutDownTracker implements Runnable {
   private List<Thread> myThreads = new ArrayList<Thread>();
 
   private ShutDownTracker() {
+    //noinspection HardCodedStringLiteral
     Runtime.getRuntime().addShutdownHook(new Thread(this, "Shutdown tracker"));
   }
 

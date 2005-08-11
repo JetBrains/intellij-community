@@ -23,11 +23,16 @@ import org.jetbrains.annotations.Nullable;
 public interface PsiAnnotation extends PsiAnnotationMemberValue {
   PsiAnnotation[] EMPTY_ARRAY = new PsiAnnotation[0];
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   String DEFAULT_REFERENCED_METHOD_NAME = "value";
 
   PsiAnnotationParameterList getParameterList();
 
-  @Nullable (documentation = "May return null if unresolved")
+  /**
+   * Returns the fully qualified name of the annotation class.
+   * @return the class name, or null if the annotation is unresolved.
+   */
+  @Nullable
   String getQualifiedName();
 
   @Nullable

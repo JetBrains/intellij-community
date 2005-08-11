@@ -22,6 +22,7 @@ import sun.reflect.Reflection;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class JDOMExternalizableStringList extends ArrayList<String> implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.JDOMExternalizableStringList");
 

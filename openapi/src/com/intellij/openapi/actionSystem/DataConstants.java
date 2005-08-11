@@ -20,6 +20,7 @@ package com.intellij.openapi.actionSystem;
  * {@link DataProvider#getData(String)}.
  */
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public interface DataConstants {
   /**
    * Returns {@link com.intellij.openapi.project.Project}

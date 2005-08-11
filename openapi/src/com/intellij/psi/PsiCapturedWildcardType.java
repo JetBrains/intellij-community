@@ -40,6 +40,7 @@ public class PsiCapturedWildcardType extends PsiType {
   }
 
   public String getInternalCanonicalText() {
+    //noinspection HardCodedStringLiteral
     return "capture<" + myExistential.getInternalCanonicalText() + '>';
   }
 

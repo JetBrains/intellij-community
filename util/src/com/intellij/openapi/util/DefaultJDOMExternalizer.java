@@ -26,6 +26,7 @@ import java.util.Iterator;
 /**
  * @author mike
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class DefaultJDOMExternalizer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.DefaultJDOMExternalizer");
 

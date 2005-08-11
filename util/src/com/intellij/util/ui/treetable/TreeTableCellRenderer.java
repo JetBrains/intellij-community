@@ -29,6 +29,7 @@ public class TreeTableCellRenderer implements TableCellRenderer {
   private TreeTable myTreeTable;
   private final TreeTableTree myTree;
   private TreeCellRenderer myTreeCellRenderer;
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private Border myDefaultBorder = UIManager.getBorder("Table.focusCellHighlightBorder");
 
 

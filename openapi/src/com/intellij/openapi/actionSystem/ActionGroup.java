@@ -30,6 +30,7 @@ public abstract class ActionGroup extends AnAction {
   /**
    * The actual value is a Boolean.
    */
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static final String PROP_POPUP = "popup";
 
   /**

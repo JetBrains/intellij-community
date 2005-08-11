@@ -79,6 +79,7 @@ public class Diff {
     }
 
     public String toString() {
+      //noinspection HardCodedStringLiteral
       return "change[" + "inserted=" + inserted + ", deleted=" + deleted + ", line0=" + line0 + ", line1=" + line1 + "]";
     }
 

@@ -22,6 +22,7 @@ import javax.swing.*;
  * Can be used to represent a menu item with a checkbox, or a toolbar button which keeps its pressed state.
  */
 public abstract class ToggleAction extends AnAction {
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static final String SELECTED_PROPERTY = "selected";
 
   public ToggleAction(){

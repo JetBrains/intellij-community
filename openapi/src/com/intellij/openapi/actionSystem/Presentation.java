@@ -28,6 +28,7 @@ import java.beans.PropertyChangeSupport;
  * @see ActionPlaces
  */
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public final class Presentation implements Cloneable {
   private THashMap myUserMap;
   /**

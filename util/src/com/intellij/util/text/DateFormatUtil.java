@@ -16,6 +16,7 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.CommonBundle;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -33,7 +34,8 @@ public class DateFormatUtil {
   public static final long YEAR = DAY * 365;
 
   public static final long[] DELIMS = new long[] {YEAR, MONTH, WEEK, DAY, HOUR, MINUTE};
-  public static final String[] NAMES = new String[] {"year", "month", "week", "day", "hour", "minute"};
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private static final String[] NAMES = new String[] {"n.years", "n.months", "n.weeks", "n.days", "n.hours", "n.minutes"};
 
   public static String formatDuration(long delta) {
     StringBuffer buf = new StringBuffer();
@@ -41,53 +43,50 @@ public class DateFormatUtil {
       long delim = DELIMS[i];
       int n = (int)(delta / delim);
       if (n != 0) {
-        buf.append(String.valueOf(n));
-        buf.append(' ');
-        buf.append(StringUtil.pluralize(NAMES[i], n));
+        buf.append(CommonBundle.message(NAMES [i], n));
         buf.append(' ');
         delta = delta % delim;
       }
     }
 
-    if (buf.length() == 0) return "less than a minute";
+    if (buf.length() == 0) return CommonBundle.message("less.than.a.minute");
     return buf.toString().trim();
   }
 
   public static String formatBetweenDates(long d1, long d2) {
     long delta = Math.abs(d1 - d2);
-    if (delta == 0) return "right now";
+    if (delta == 0) return CommonBundle.message("right.now");
 
     StringBuffer buf = new StringBuffer();
-    if (d2 < d1) {
-      buf.append("in ");
-    }
 
     int i;
     for (i = 0; i < DELIMS.length; i++) {
       long delim = DELIMS[i];
       if (delta >= delim) {
         int n = (int)(delta / delim);
-        buf.append(numeric(n));
-        buf.append(" ");
-        buf.append(StringUtil.pluralize(NAMES[i], n));
+        buf.append(CommonBundle.message(NAMES [i], n));
         break;
       }
     }
 
     if (i >= DELIMS.length) {
-      buf.append("a few moments");
+      buf.append(CommonBundle.message("a.few.moments"));
     }
 
-    if (d2 > d1) {
-      buf.append(" ago");
+    String result = buf.toString();
+    if (d2 < d1) {
+      result = CommonBundle.message("between.dates.future", result);
+    }
+    else if (d2 > d1) {
+      result = CommonBundle.message("between.dates.past", result);
     }
 
-    return buf.toString();
+    return result;
   }
 
   public static String numeric(int n) {
-    if (n == 0) return "zero";
-    if (n == 1) return "one";
+    if (n == 0) return CommonBundle.message("zero");
+    if (n == 1) return CommonBundle.message("one");
     return String.valueOf(n);
   }
 
@@ -114,11 +113,11 @@ public class DateFormatUtil {
     boolean isYesterday = isYesterdayOnPreviousYear || (todayYear == year && todayDayOfYear == dayOfYear + 1);
 
     if (isYesterday) {
-      return "Yesterday " + timeDefaultFormat.format(date);
+      return CommonBundle.message("yesterday") + " " + timeDefaultFormat.format(date);
     } else if (year != todayYear) {
       return defaultDateFormat.format(date);
     } else if (todayDayOfYear == dayOfYear) {
-      return "Today " + timeDefaultFormat.format(date);
+      return CommonBundle.message("today") + " " + timeDefaultFormat.format(date);
     } else {
       return defaultDateFormat.format(date);
     }

@@ -34,6 +34,7 @@ public class EventUtil {
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         Object o = reference.get();
         if (o == null) {
+          //noinspection HardCodedStringLiteral
           if ("equals".equals(method.getName())) return Boolean.FALSE;
           return null;
         }

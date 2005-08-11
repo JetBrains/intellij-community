@@ -118,6 +118,7 @@ public abstract class PsiType {
   public abstract GlobalSearchScope getResolveScope();
 
   public String toString() {
+    //noinspection HardCodedStringLiteral
     return "PsiType:" + getPresentableText();
   }
 

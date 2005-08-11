@@ -211,6 +211,7 @@ public class ClsUtil {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static String getTypeText(byte[] data, int offset) throws ClsFormatException {
     int count = 0;
     while (true) {

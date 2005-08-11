@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public interface PsiModifier {
   String PUBLIC = "public";
   String PROTECTED = "protected";

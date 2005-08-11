@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import java.util.EventObject;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public abstract class PsiTreeChangeEvent extends EventObject {
   public static final String PROP_FILE_NAME = "fileName";
   public static final String PROP_DIRECTORY_NAME  = "directoryName";

@@ -30,6 +30,7 @@ import java.util.Map;
 /**
  * Represents primitive types of Java language
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class PsiPrimitiveType extends PsiType {
   protected static final PsiPrimitiveType VOID = new PsiPrimitiveType("void");
   protected static final PsiPrimitiveType BYTE = new PsiPrimitiveType("byte");

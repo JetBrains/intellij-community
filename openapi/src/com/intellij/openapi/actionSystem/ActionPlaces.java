@@ -21,6 +21,7 @@ import com.intellij.util.ArrayUtil;
  * Possible places in the IDEA user interface where an action can appear.
  */
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public abstract class ActionPlaces {
   public static final String UNKNOWN = "unknown";
 

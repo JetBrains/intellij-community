@@ -17,6 +17,7 @@ package com.intellij;
 
 import com.intellij.openapi.util.SystemInfo;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class Patches {
   public static final boolean ALL_FOLDERS_ARE_WRITABLE = SystemInfo.isWindows;
 

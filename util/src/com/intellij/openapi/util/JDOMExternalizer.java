@@ -22,6 +22,7 @@ import org.jdom.Element;
 
 import java.util.List;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class JDOMExternalizer {
   public static void write(Element root, String name, String value) {
     Element element = new Element("setting");

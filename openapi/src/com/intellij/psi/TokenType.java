@@ -18,6 +18,7 @@ package com.intellij.psi;
 import com.intellij.lang.Language;
 import com.intellij.psi.tree.IElementType;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public interface TokenType {
   IElementType WHITE_SPACE = new IElementType("WHITE_SPACE", Language.ANY);
   IElementType BAD_CHARACTER = new IElementType("BAD_CHARACTER", Language.ANY);

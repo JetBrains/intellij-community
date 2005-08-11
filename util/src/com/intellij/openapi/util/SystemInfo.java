@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class SystemInfo {
   private static final String OS_NAME = System.getProperty("os.name").toLowerCase();
   public static final String OS_VERSION = System.getProperty("os.version").toLowerCase();

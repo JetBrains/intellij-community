@@ -22,6 +22,7 @@ import com.intellij.psi.tree.IElementType;
  * @author Yura Cangea
  * @version 1.0
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public interface CustomHighlighterTokenType {
   class CustomElementType extends IElementType {
     public CustomElementType(String debugName) {

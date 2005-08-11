@@ -20,6 +20,7 @@ import org.jdom.Element;
 
 import java.util.List;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class JDOMExternalizerUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.JDOMExternalizerUtil");
     

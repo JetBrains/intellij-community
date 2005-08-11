@@ -23,6 +23,7 @@ import com.intellij.psi.tree.TokenSet;
 /**
  * @author max
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public interface StringEscapesTokenTypes {
   IElementType VALID_STRING_ESCAPE_TOKEN = new IElementType("VALID_STRING_ESCAPE_TOKEN", Language.ANY);
   IElementType INVALID_CHARACTER_ESCAPE_TOKEN = new IElementType("INVALID_CHARACTER_ESCAPE_TOKEN", Language.ANY);   // e.g. \x

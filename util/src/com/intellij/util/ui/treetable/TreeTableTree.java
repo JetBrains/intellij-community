@@ -41,6 +41,7 @@ public class TreeTableTree extends Tree{
     setCellRenderer(getCellRenderer());
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void updateUI() {
     super.updateUI();
     TreeCellRenderer tcr = super.getCellRenderer();

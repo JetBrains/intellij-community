@@ -26,11 +26,14 @@ import com.intellij.psi.search.GlobalSearchScope;
  */
 public class PsiWildcardType extends PsiType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.PsiWildcardType");
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static final Key<PsiWildcardType> UNBOUNDED_WILDCARD = new Key<PsiWildcardType>("UNBOUNDED_WILDCARD");
   private final PsiManager myManager;
   private final PsiType myBound;
   private final boolean myIsExtending;
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static final String EXTENDS_PREFIX = "? extends ";
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static final String SUPER_PREFIX = "? super ";
 
   private PsiWildcardType(PsiManager manager, boolean isExtending, PsiType bound) {
@@ -71,6 +74,7 @@ public class PsiWildcardType extends PsiType {
       return EXTENDS_PREFIX + myBound.getPresentableText();
     }
     else {
+      //noinspection HardCodedStringLiteral
       return "? super " + myBound.getPresentableText();
     }
   }
@@ -81,6 +85,7 @@ public class PsiWildcardType extends PsiType {
       return EXTENDS_PREFIX + myBound.getCanonicalText();
     }
     else {
+      //noinspection HardCodedStringLiteral
       return "? super " + myBound.getCanonicalText();
     }
   }
@@ -91,6 +96,7 @@ public class PsiWildcardType extends PsiType {
       return EXTENDS_PREFIX + myBound.getInternalCanonicalText();
     }
     else {
+      //noinspection HardCodedStringLiteral
       return "? super " + myBound.getInternalCanonicalText();
     }
   }

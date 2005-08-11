@@ -174,6 +174,7 @@ public class FileUtil {
   }
 
   public static String getTempDirectory() throws IOException {
+    //noinspection HardCodedStringLiteral
     final File file = File.createTempFile("idea", "idea");
     File parent = file.getParentFile();
     file.delete();
@@ -200,6 +201,7 @@ public class FileUtil {
   }
 
   private static void startDeletionThread(final File[] tempFiles) {
+    //noinspection HardCodedStringLiteral
     Thread t = new Thread("File deletion thread") {
       public void run() {
         ShutDownTracker.getInstance().registerStopperThread(this);
@@ -224,6 +226,7 @@ public class FileUtil {
 
     File tempFile;
     for (int i = 0; ; i++) {
+      //noinspection HardCodedStringLiteral
       String name = "___" + file.getName() + i + ".__del__";
       tempFile = new File(parent, name);
       if (!tempFile.exists()) break;

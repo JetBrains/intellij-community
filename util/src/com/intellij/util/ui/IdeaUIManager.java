@@ -19,6 +19,7 @@ import javax.swing.*;
 import java.awt.*;
 
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class IdeaUIManager {
 
   public static Color getTableSelectionBackgroung(){

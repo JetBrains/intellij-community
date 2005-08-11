@@ -72,11 +72,13 @@ public class Table extends JTable {
           setFont(header.getFont());
         }
         if (!table.isEnabled()) {
+          //noinspection HardCodedStringLiteral
           Color color = UIManager.getColor("textInactiveText");
           setForeground(color);
         }
       }
       setText(value == null ? "" : value.toString());
+      //noinspection HardCodedStringLiteral
       setBorder(UIManager.getBorder("TableHeader.cellBorder"));
       setHorizontalAlignment(JLabel.CENTER);
 
@@ -86,6 +88,7 @@ public class Table extends JTable {
 
   public void removeNotify() {
     final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+    //noinspection HardCodedStringLiteral
     keyboardFocusManager.removePropertyChangeListener("focusOwner", myEditorRemover);
     super.removeNotify();
   }
@@ -106,6 +109,7 @@ public class Table extends JTable {
     if (myEditorRemover == null) {
       final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
       myEditorRemover = new MyCellEditorRemover(keyboardFocusManager);
+      //noinspection HardCodedStringLiteral
       keyboardFocusManager.addPropertyChangeListener("focusOwner", myEditorRemover);
     }
 
@@ -132,6 +136,7 @@ public class Table extends JTable {
 
   public void removeEditor() {
     final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+    //noinspection HardCodedStringLiteral
     keyboardFocusManager.removePropertyChangeListener("focusOwner", myEditorRemover);
     super.removeEditor();
   }

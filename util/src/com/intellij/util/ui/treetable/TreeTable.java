@@ -134,6 +134,7 @@ public class TreeTable extends Table {
     }
     // Use the tree's default foreground and background colors in the
     // table.
+    //noinspection HardCodedStringLiteral
     LookAndFeel.installColorsAndFont(this, "Tree.background", "Tree.foreground", "Tree.font");
   }
 

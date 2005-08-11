@@ -19,6 +19,7 @@ package com.intellij.openapi.actionSystem;
  * Identifiers for standard actions and action groups supported by IDEA.
  */
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public interface IdeActions {
   String ACTION_EDITOR_CUT = "EditorCut";
   String ACTION_EDITOR_COPY = "EditorCopy";

@@ -20,6 +20,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaDocElementType;
 
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public interface JavaDocTokenType {
   IElementType DOC_COMMENT_START = new IJavaDocElementType("DOC_COMMENT_START");
   IElementType DOC_COMMENT_END = new IJavaDocElementType("DOC_COMMENT_END");

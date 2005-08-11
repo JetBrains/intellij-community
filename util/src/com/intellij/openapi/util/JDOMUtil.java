@@ -36,6 +36,7 @@ import java.util.List;
 /**
  * @author mike
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class JDOMUtil {
   //Logger is lasy-initialized in order not to use it outside the appClassLoader
   private static Logger ourLogger = null;

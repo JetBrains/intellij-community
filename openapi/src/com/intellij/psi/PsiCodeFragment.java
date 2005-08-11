@@ -41,6 +41,7 @@ public interface PsiCodeFragment extends PsiFile, PsiImportHolder {
   interface VisibilityChecker {
     Visibility isDeclarationVisible(PsiElement declaration, PsiElement place);
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     public class Visibility {
       public static final Visibility VISIBLE = new Visibility("VISIBLE");
       public static final Visibility NOT_VISIBLE = new Visibility("NOT_VISIBLE");

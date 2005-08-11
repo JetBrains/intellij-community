@@ -18,6 +18,7 @@ package com.intellij.psi;
 /**
  *
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public interface PsiKeyword extends PsiJavaToken {
   String ABSTRACT = "abstract";
   String ASSERT = "assert";
