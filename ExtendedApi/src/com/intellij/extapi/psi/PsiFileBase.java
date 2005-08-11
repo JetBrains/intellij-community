@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
  * To change this template use File | Settings | File Templates.
  */
 public abstract class PsiFileBase extends PsiFileImpl {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiFileBase");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.extapi.psi.PsiFileBase");
 
   private final static IElementType FILE_TEXT_CHAMELEON = new IElementType("FILE_TEXT_CHAMELEON",
                                                                            Language.ANY); // Shouldn't happen to be used.
