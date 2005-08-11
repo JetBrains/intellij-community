@@ -810,6 +810,16 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
 
   public void visitSwitchLabelStatement(PsiSwitchLabelStatement statement) {
     startElement(statement);
+    PsiExpression caseValue = statement.getCaseValue();
+
+    myStartStatementStack.pushStatement(caseValue, false);
+    myEndStatementStack.pushStatement(caseValue, false);
+
+    if (caseValue != null) caseValue.accept(this);
+
+    myStartStatementStack.popStatement();
+    myEndStatementStack.popStatement();
+
     finishElement(statement);
   }
 
