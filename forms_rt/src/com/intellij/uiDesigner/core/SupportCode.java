@@ -15,9 +15,12 @@
  */
 package com.intellij.uiDesigner.core;
 
+import sun.reflect.Reflection;
+
 import javax.swing.*;
 import java.lang.reflect.Method;
 import java.util.ResourceBundle;
+import java.util.Locale;
 
 /**
  * @author Vladimir Kondratyev
@@ -83,6 +86,7 @@ public final class SupportCode {
 
   /**
    * Called in generated code
+   * Because this method is sensitive to the caller's class loader, it must be called from generated code only
    */
   public static void setTextFromBundle(final JComponent component, final String bundleName, final String key) {
     if(component == null){
@@ -95,7 +99,7 @@ public final class SupportCode {
       throw new IllegalArgumentException("key cannot be null");
     }
 
-    final String text = getResourceString(bundleName, key);
+    final String text = getResourceString(bundleName, key, getCallerClassLoader());
 
     final TextWithMnemonic textWithMnemonic = SupportCode.parseText(text);
 
@@ -124,6 +128,7 @@ public final class SupportCode {
 
   /**
    * Called in generated code
+   * Because this method is sensitive to the caller's class loader, it must be called from generated code only
    */
   public static void setTextFromBundle(final JComponent component, final String setterName, final String bundle, final String key) {
     if(component == null){
@@ -139,7 +144,7 @@ public final class SupportCode {
       throw new IllegalArgumentException("key cannot be null");
     }
 
-    final String text = getResourceString(bundle, key);
+    final String text = getResourceString(bundle, key, getCallerClassLoader());
 
     final TextWithMnemonic textWithMnemonic = SupportCode.parseText(text);
 
@@ -186,8 +191,21 @@ public final class SupportCode {
 
   /**
    * Called in generated code
+   * Because this method is sensitive to the caller's class loader, it must be called from generated code only
    */
   public static String getResourceString(final String bundleName, final String key) {
-    return ResourceBundle.getBundle(bundleName).getString(key);
+    return getResourceString(bundleName, key, getCallerClassLoader());
+  }
+
+  private static String getResourceString(final String bundleName, final String key, final ClassLoader callerClassLoader) {
+    final ResourceBundle bundle = callerClassLoader != null?
+                                  ResourceBundle.getBundle(bundleName, Locale.getDefault(), callerClassLoader) :
+                                  ResourceBundle.getBundle(bundleName, Locale.getDefault());
+    return bundle.getString(key);
+  }
+
+  private static ClassLoader getCallerClassLoader() {
+    final Class caller = Reflection.getCallerClass(3);
+    return caller != null? caller.getClassLoader() : null;
   }
 }
