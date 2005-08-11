@@ -28,6 +28,8 @@ import java.util.Set;
 public class AnnotationUtil {
   public static final String NULLABLE = "org.jetbrains.annotations.Nullable";
   public static final String NOT_NULL = "org.jetbrains.annotations.NotNull";
+  public static final String NON_NLS = "org.jetbrains.annotations.NonNls";
+
   private final static Set<String> ALL_ANNOTATIONS;
 
   static {
