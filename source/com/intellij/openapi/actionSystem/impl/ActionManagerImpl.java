@@ -225,7 +225,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     final String resBundleName = plugin != null ? plugin.getResourceBundleBaseName() : "idea.ActionsBundle";
     ResourceBundle bundle = null;
     if (resBundleName != null) {
-      bundle = ResourceBundle.getBundle(resBundleName);
+      bundle = ResourceBundle.getBundle(resBundleName, Locale.getDefault(), loader);
     }
 
     if (LOG.isDebugEnabled()) {
