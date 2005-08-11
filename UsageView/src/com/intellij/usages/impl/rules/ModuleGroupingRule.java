@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewBundle;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageInLibrary;
 import com.intellij.usages.rules.UsageInModule;
@@ -172,7 +173,7 @@ public class ModuleGroupingRule implements UsageGroupingRule {
     }
 
     public String toString() {
-      return "Module:" + getText(null);
+      return UsageViewBundle.message("node.group.module") + getText(null);
     }
 
     public Object getData(String dataId) {

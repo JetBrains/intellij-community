@@ -134,15 +134,15 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         public void run() {
           close();
         }
-      }, "Cancel", 'C');
+      }, UsageViewBundle.message("action.cancel"), 'C');
     }
   }
 
   private static UsageFilteringRule[] getActiveFilteringRules(final Project project) {
     final UsageFilteringRuleProvider[] providers = ApplicationManager.getApplication().getComponents(UsageFilteringRuleProvider.class);
     List<UsageFilteringRule> list = new ArrayList<UsageFilteringRule>();
-    for (int i = 0; i < providers.length; i++) {
-      list.addAll(Arrays.asList(providers[i].getActiveRules(project)));
+    for (UsageFilteringRuleProvider provider : providers) {
+      list.addAll(Arrays.asList(provider.getActiveRules(project)));
     }
     return list.toArray(new UsageFilteringRule[list.size()]);
   }
@@ -150,8 +150,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private static UsageGroupingRule[] getActiveGroupingRules(final Project project) {
     final UsageGroupingRuleProvider[] providers = ApplicationManager.getApplication().getComponents(UsageGroupingRuleProvider.class);
     List<UsageGroupingRule> list = new ArrayList<UsageGroupingRule>();
-    for (int i = 0; i < providers.length; i++) {
-      list.addAll(Arrays.asList(providers[i].getActiveRules(project)));
+    for (UsageGroupingRuleProvider provider : providers) {
+      list.addAll(Arrays.asList(provider.getActiveRules(project)));
     }
     return list.toArray(new UsageGroupingRule[list.size()]);
   }
@@ -206,8 +206,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     };
 
     AnAction[] actions = createActions();
-    for (int i = 0; i < actions.length; i++) {
-      final AnAction action = actions[i];
+    for (final AnAction action : actions) {
       if (action != null) {
         group.add(action);
       }
@@ -221,8 +220,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     final DefaultActionGroup group = new DefaultActionGroup();
 
     final AnAction[] groupingActions = createGroupingActions();
-    for (int i = 0; i < groupingActions.length; i++) {
-      group.add(groupingActions[i]);
+    for (AnAction groupingAction : groupingActions) {
+      group.add(groupingAction);
     }
 
     final JComponent component = getComponent();
@@ -312,8 +311,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private AnAction[] createFilteringActions() {
     final UsageFilteringRuleProvider[] providers = ApplicationManager.getApplication().getComponents(UsageFilteringRuleProvider.class);
     List<AnAction> list = new ArrayList<AnAction>();
-    for (int i = 0; i < providers.length; i++) {
-      list.addAll(Arrays.asList(providers[i].createFilteringActions(this)));
+    for (UsageFilteringRuleProvider provider : providers) {
+      list.addAll(Arrays.asList(provider.createFilteringActions(this)));
     }
     return list.toArray(new AnAction[list.size()]);
   }
@@ -396,7 +395,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   private class CloseAction extends AnAction {
     private CloseAction() {
-      super("Close", null, IconLoader.getIcon("/actions/cancel.png"));
+      super(UsageViewBundle.message("action.close"), null, IconLoader.getIcon("/actions/cancel.png"));
     }
 
     public void update(AnActionEvent e) {
@@ -411,7 +410,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   private class MergeDupLines extends RuleAction {
     public MergeDupLines() {
-      super(UsageViewImpl.this, "Merge usages from the same line", IconLoader.getIcon("/toolbar/filterdups.png"));
+      super(UsageViewImpl.this, UsageViewBundle.message("action.merge.same.line"), IconLoader.getIcon("/toolbar/filterdups.png"));
       setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F, KeyEvent.CTRL_DOWN_MASK)));
     }
 
@@ -426,7 +425,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   private class ReRunAction extends AnAction {
     public ReRunAction() {
-      super("Rerun", "Rerun search", IconLoader.getIcon("/actions/refreshUsages.png"));
+      super(UsageViewBundle.message("action.rerun"), UsageViewBundle.message("action.description.rerun"), IconLoader.getIcon("/actions/refreshUsages.png"));
       registerCustomShortcutSet(CommonShortcuts.getRerun(), myRootPanel);
     }
 
@@ -696,8 +695,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
             if (canPerformReRun() && allTargetsAreValid()) {
               int answer = Messages.showYesNoDialog(
                 myProject,
-                cannotMakeString + "\nWould you like to rerun the search now?",
-                "Error",
+                cannotMakeString + "\n" + UsageViewBundle.message("dialog.rerun.search"),
+                UsageViewBundle.message("dialog.title.error"),
                 Messages.getErrorIcon()
               );
               if (answer == 0) {
@@ -708,7 +707,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
               Messages.showMessageDialog(
                 myProject,
                 cannotMakeString,
-                "Error",
+                UsageViewBundle.message("dialog.title.error"),
                 Messages.getErrorIcon()
               );
               //todo[myakovlev] request focus to tree
@@ -935,11 +934,11 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         }
 
         public String getNextOccurenceActionName() {
-          return "Next Occurence";
+          return UsageViewBundle.message("action.next.occurrence");
         }
 
         public String getPreviousOccurenceActionName() {
-          return "Previous Occurence";
+          return UsageViewBundle.message("action.previous.occurrence");
         }
       };
     }

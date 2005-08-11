@@ -44,6 +44,7 @@ public class UsageViewSettings implements JDOMExternalizable, ApplicationCompone
   public void initComponent() {
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String getComponentName() {
     return "UsageViewSettings";
   }

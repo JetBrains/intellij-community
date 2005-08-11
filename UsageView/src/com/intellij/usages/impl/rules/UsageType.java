@@ -22,24 +22,26 @@
  */
 package com.intellij.usages.impl.rules;
 
+import com.intellij.usages.UsageViewBundle;
+
 public class UsageType {
-  public static final UsageType CLASS_INSTANCE_OF = new UsageType("Usage in instanceof");
-  public static final UsageType CLASS_IMPORT = new UsageType("Usage in import");
-  public static final UsageType CLASS_CAST_TO = new UsageType("Usage in cast target type");
-  public static final UsageType CLASS_EXTENDS_IMPLEMENTS_LIST = new UsageType("Usage in extends/implements clause");
-  public static final UsageType CLASS_STATIC_MEMBER_ACCESS = new UsageType("Class static member access");
-  public static final UsageType CLASS_METHOD_THROWS_LIST = new UsageType("Method throws list");
-  public static final UsageType CLASS_CLASS_OBJECT_ACCESS = new UsageType("Usage in .class");
-  public static final UsageType CLASS_FIELD_DECLARATION = new UsageType("Field declaration");
-  public static final UsageType CLASS_LOCAL_VAR_DECLARATION = new UsageType("Local variable declaration");
-  public static final UsageType CLASS_METHOD_PARAMETER_DECLARATION = new UsageType("Method parameter declaration");
-  public static final UsageType CLASS_CATCH_CLAUSE_PARAMETER_DECLARATION = new UsageType("Catch clause parameter declaration");
-  public static final UsageType CLASS_METHOD_RETURN_TYPE = new UsageType("Method return type");
+  public static final UsageType CLASS_INSTANCE_OF = new UsageType(UsageViewBundle.message("usage.type.instanceof"));
+  public static final UsageType CLASS_IMPORT = new UsageType(UsageViewBundle.message("usage.type.import"));
+  public static final UsageType CLASS_CAST_TO = new UsageType(UsageViewBundle.message("usage.type.cast.target"));
+  public static final UsageType CLASS_EXTENDS_IMPLEMENTS_LIST = new UsageType(UsageViewBundle.message("usage.type.extends"));
+  public static final UsageType CLASS_STATIC_MEMBER_ACCESS = new UsageType(UsageViewBundle.message("usage.type.static.member"));
+  public static final UsageType CLASS_METHOD_THROWS_LIST = new UsageType(UsageViewBundle.message("usage.type.throws.list"));
+  public static final UsageType CLASS_CLASS_OBJECT_ACCESS = new UsageType(UsageViewBundle.message("usage.type.class.object"));
+  public static final UsageType CLASS_FIELD_DECLARATION = new UsageType(UsageViewBundle.message("usage.type.field.declaration"));
+  public static final UsageType CLASS_LOCAL_VAR_DECLARATION = new UsageType(UsageViewBundle.message("usage.type.local.declaration"));
+  public static final UsageType CLASS_METHOD_PARAMETER_DECLARATION = new UsageType(UsageViewBundle.message("usage.type.parameter.declaration"));
+  public static final UsageType CLASS_CATCH_CLAUSE_PARAMETER_DECLARATION = new UsageType(UsageViewBundle.message("usage.type.catch.declaration"));
+  public static final UsageType CLASS_METHOD_RETURN_TYPE = new UsageType(UsageViewBundle.message("usage.type.return"));
 
-  public static final UsageType LITERAL_USAGE = new UsageType("Usage in string constants");
-  public static final UsageType COMMENT_USAGE = new UsageType("Usage in comments");
+  public static final UsageType LITERAL_USAGE = new UsageType(UsageViewBundle.message("usage.type.string.constant"));
+  public static final UsageType COMMENT_USAGE = new UsageType(UsageViewBundle.message("usage.type.comment"));
 
-  public static final UsageType UNCLASSIFIED = new UsageType("Unclassified usage");
+  public static final UsageType UNCLASSIFIED = new UsageType(UsageViewBundle.message("usage.type.unclassified"));
 
   private final String myName;
 

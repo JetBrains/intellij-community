@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewBundle;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.UsageGroupingRule;
 
@@ -37,13 +38,17 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
     private CodeUsageGroup() {}
 
     public String getText(UsageView view) {
-      return view == null ? "Code usages" : view.getPresentation().getCodeUsagesString();
+      return view == null ? UsageViewBundle.message("node.group.code.usages") : view.getPresentation().getCodeUsagesString();
     }
 
     public void update() {
     }
 
-    public String toString() { return "CodeUsages"; }
+    public String toString() {
+      //noinspection HardCodedStringLiteral
+      return "CodeUsages";
+    }
+
     public Icon getIcon(boolean isOpen) { return null; }
     public FileStatus getFileStatus() { return null; }
     public boolean isValid() { return true; }
@@ -61,13 +66,16 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
     private NonCodeUsageGroup() {}
 
     public String getText(UsageView view) {
-      return view == null ? "Code usages" : view.getPresentation().getNonCodeUsagesString();
+      return view == null ? UsageViewBundle.message("node.group.code.usages") : view.getPresentation().getNonCodeUsagesString();
     }
 
     public void update() {
     }
 
-    public String toString() { return "NonCodeUsages"; }
+    public String toString() {
+      //noinspection HardCodedStringLiteral
+      return "NonCodeUsages";
+    }
     public Icon getIcon(boolean isOpen) { return null; }
     public FileStatus getFileStatus() { return null; }
     public boolean isValid() { return true; }

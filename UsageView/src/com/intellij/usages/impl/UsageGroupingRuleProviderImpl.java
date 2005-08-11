@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewBundle;
 import com.intellij.usages.impl.rules.*;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleProvider;
@@ -117,7 +118,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider,
 
   private class GroupByUsageTypeAction extends RuleAction {
     public GroupByUsageTypeAction(UsageViewImpl view) {
-      super(view, "Group by usage type", IconLoader.getIcon("/ant/filter.png")); //TODO: special icon
+      super(view, UsageViewBundle.message("action.group.by.usage.type"), IconLoader.getIcon("/ant/filter.png")); //TODO: special icon
     }
     protected boolean getOptionValue() {
       return GROUP_BY_USAGE_TYPE;
@@ -129,7 +130,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider,
 
   private class GroupByModuleTypeAction extends RuleAction {
     public GroupByModuleTypeAction(UsageViewImpl view) {
-      super(view, "Group by module", IconLoader.getIcon("/objectBrowser/showModules.png"));
+      super(view, UsageViewBundle.message("action.group.by.module"), IconLoader.getIcon("/objectBrowser/showModules.png"));
     }
 
     protected boolean getOptionValue() {
@@ -143,7 +144,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider,
 
   private class GroupByPackageAction extends RuleAction {
     public GroupByPackageAction(UsageViewImpl view) {
-      super(view, "Group by package", Icons.GROUP_BY_PACKAGES);
+      super(view, UsageViewBundle.message("action.group.by.package"), Icons.GROUP_BY_PACKAGES);
     }
     protected boolean getOptionValue() {
       return GROUP_BY_PACKAGE;
@@ -155,7 +156,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider,
 
   private class GroupByFileStructureAction extends RuleAction {
     public GroupByFileStructureAction(UsageViewImpl view) {
-      super(view, "Group by file structure", IconLoader.getIcon("/actions/groupByMethod.png"));
+      super(view, UsageViewBundle.message("action.group.by.file.structure"), IconLoader.getIcon("/actions/groupByMethod.png"));
     }
     protected boolean getOptionValue() {
       return GROUP_BY_FILE_STRUCTURE;
@@ -165,6 +166,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider,
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String getComponentName() {
     return "UsageGroupingRuleProvider";
   }

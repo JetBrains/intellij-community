@@ -31,12 +31,16 @@ public interface UsageView extends Disposable {
   /**
    * Returns {@link com.intellij.usages.UsageTarget} to look usages for
    */
+  @SuppressWarnings({"HardCodedStringLiteral"})
   String USAGE_TARGETS = "usageTarget";
+
   /**
    * Returns {@link com.intellij.usages.Usage} which are selected in usage view
    */
+  @SuppressWarnings({"HardCodedStringLiteral"})
   String USAGES = "usages";
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   String USAGE_VIEW = "UsageView.new";
 
   void appendUsage(Usage usage);

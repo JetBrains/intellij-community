@@ -56,7 +56,7 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
     if (value instanceof Node && value != tree.getModel().getRoot()) {
       Node node = (Node)value;
       if (!node.isValid()) {
-        append("INVALID ", ourInvalidAttributes);
+        append(UsageViewBundle.message("node.invalid") + " ", ourInvalidAttributes);
       }
       if (myPresentation.isShowReadOnlyStatusAsRed() && node.isReadOnly()) {
         showAsReadOnly = true;
@@ -71,7 +71,7 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         UsageTarget usageTarget = (UsageTarget)userObject;
         ItemPresentation presentation = usageTarget.getPresentation();
         if (showAsReadOnly) {
-          append("Read-only ", ourReadOnlyAttributes);
+          append(UsageViewBundle.message("node.readonly") + " ", ourReadOnlyAttributes);
         }
         append(presentation.getPresentableText(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         setIcon(presentation.getIcon(expanded));
@@ -95,7 +95,7 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         UsageNode node = (UsageNode)treeNode;
         setIcon(node.getUsage().getPresentation().getIcon());
         if (showAsReadOnly) {
-          append("Read-only ", patchAttrs(node, ourReadOnlyAttributes));
+          append(UsageViewBundle.message("node.readonly") + " ", patchAttrs(node, ourReadOnlyAttributes));
         }
 
         TextChunk[] text = node.getUsage().getPresentation().getText();

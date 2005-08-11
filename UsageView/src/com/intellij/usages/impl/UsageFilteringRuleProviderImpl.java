@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewBundle;
 import com.intellij.usages.impl.rules.ImportFilteringRule;
 import com.intellij.usages.impl.rules.ReadAccessFilteringRule;
 import com.intellij.usages.impl.rules.WriteAccessFilteringRule;
@@ -93,7 +94,7 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
 
   private class ShowImportsAction extends RuleAction {
     public ShowImportsAction(UsageViewImpl view) {
-      super(view, "Show import statements", IconLoader.getIcon("/actions/showImportStatements.png"));
+      super(view, UsageViewBundle.message("action.show.import.statements"), IconLoader.getIcon("/actions/showImportStatements.png"));
     }
 
     protected boolean getOptionValue() {
@@ -144,7 +145,7 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
     private final ReadWriteState myState;
 
     public ShowReadAccessUsagesAction(UsageViewImpl view, ReadWriteState state) {
-      super("Show read access", null, IconLoader.getIcon("/actions/showReadAccess.png"));
+      super(UsageViewBundle.message("action.show.read.access"), null, IconLoader.getIcon("/actions/showReadAccess.png"));
       myView = view;
       myState = state;
     }
@@ -164,7 +165,7 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
     private final ReadWriteState myState;
 
     public ShowWriteAccessUsagesAction(UsageViewImpl view, ReadWriteState state) {
-      super("Show write access", null, IconLoader.getIcon("/actions/showWriteAccess.png"));
+      super(UsageViewBundle.message("action.show.write.access"), null, IconLoader.getIcon("/actions/showWriteAccess.png"));
       myView = view;
       myState = state;
     }
@@ -180,6 +181,7 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
   }
 
   public String getComponentName() {
+    //noinspection HardCodedStringLiteral
     return "UsageFilteringRuleProvider";
   }
 

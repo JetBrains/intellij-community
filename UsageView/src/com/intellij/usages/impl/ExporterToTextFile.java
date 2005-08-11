@@ -15,10 +15,10 @@
  */
 package com.intellij.usages.impl;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageViewSettings;
+import com.intellij.usages.UsageViewBundle;
 
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
@@ -77,17 +77,16 @@ class ExporterToTextFile implements com.intellij.ide.ExporterToTextFile {
   private void appendNodeText(StringBuffer buf, DefaultMutableTreeNode node, String lineSeparator) {
     if (node instanceof UsageNode) {
       TextChunk[] chunks = ((UsageNode)node).getUsage().getPresentation().getText();
-      for (int i = 0; i < chunks.length; i++) {
-        TextChunk chunk = chunks[i];
+      for (TextChunk chunk : chunks) {
         buf.append(chunk.getText());
       }
     }
     else if (node instanceof GroupNode) {
       UsageGroup group = ((GroupNode)node).getGroup();
-      buf.append(group != null ? group.getText(myUsageView) : "Usages");
+      buf.append(group != null ? group.getText(myUsageView) : UsageViewBundle.message("usages.title"));
       buf.append(" ");
       int count = ((GroupNode)node).getRecursiveUsageCount();
-      buf.append(" (").append(StringUtil.pluralize(count + " usage", count)).append(")");
+      buf.append(" (").append(UsageViewBundle.message("usages.n", count)).append(")");
     }
     else if (node instanceof UsageTargetNode) {
       buf.append(((UsageTargetNode)node).getTarget().getPresentation().getPresentableText());

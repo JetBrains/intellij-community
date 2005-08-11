@@ -30,6 +30,7 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
   private UsageTargetNode[] myTargetNodes;
 
   public UsageViewTreeModelBuilder(UsageViewPresentation presentation, UsageTarget[] targets) {
+    //noinspection HardCodedStringLiteral
     super(new DefaultMutableTreeNode("temp root"));
     myRootNode = new RootGroupNode();
     setRoot(myRootNode);

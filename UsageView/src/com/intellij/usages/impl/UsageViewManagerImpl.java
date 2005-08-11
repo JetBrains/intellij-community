@@ -38,6 +38,8 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Created by IntelliJ IDEA.
  * User: max
@@ -47,12 +49,14 @@ import java.util.List;
  */
 public class UsageViewManagerImpl extends UsageViewManager implements ProjectComponent {
   private Project myProject;
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static final Key<UsageView> USAGE_VIEW_KEY = Key.create("USAGE_VIEW");
 
   public UsageViewManagerImpl(Project project) {
     myProject = project;
   }
 
+  @NotNull
   public UsageView createUsageView(UsageTarget[] targets, Usage[] usages, UsageViewPresentation presentation) {
     UsageViewImpl usageView = new UsageViewImpl(presentation, targets, null, myProject);
     appendUsages(usages, usageView);
@@ -60,6 +64,7 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
     return usageView;
   }
 
+  @NotNull
   public UsageView showUsages(UsageTarget[] searchedFor, Usage[] foundUsages, UsageViewPresentation presentation) {
     UsageView usageView = createUsageView(searchedFor, foundUsages, presentation);
     addContent((UsageViewImpl)usageView, presentation);
@@ -104,10 +109,10 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
   }
 
   public void searchAndShowUsages(UsageTarget[] searchFor,
-                                       Factory<UsageSearcher> searcherFactory,
-                                       FindUsagesProcessPresentation processPresentation,
-                                       UsageViewPresentation presentation,
-                                       UsageViewManager.UsageViewStateListener listener
+                                  Factory<UsageSearcher> searcherFactory,
+                                  FindUsagesProcessPresentation processPresentation,
+                                  UsageViewPresentation presentation,
+                                  UsageViewManager.UsageViewStateListener listener
                                        ) {
     final UsageViewImpl[] usageView = new UsageViewImpl[]{null};
     final SearchForUsagesRunnable runnable = new SearchForUsagesRunnable(usageView, presentation, searchFor, searcherFactory, processPresentation, listener);
@@ -143,8 +148,9 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
 
   static String getProgressTitle(UsageViewPresentation presentation) {
     final String scopeText = presentation.getScopeText();
-    if (scopeText == null) return "Searching for " + StringUtil.capitalize(presentation.getUsagesString()) + "...";
-    return "Searching for " + StringUtil.capitalize(presentation.getUsagesString()) + " in " + scopeText + "...";
+    if (scopeText == null)
+      return UsageViewBundle.message("progress.searching.for", StringUtil.capitalize(presentation.getUsagesString()));
+    return UsageViewBundle.message("progress.searching.for.in", StringUtil.capitalize(presentation.getUsagesString()), scopeText);
   }
 
   private void showToolWindow(boolean activateWindow) {
@@ -167,6 +173,7 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
 
 
   public String getComponentName() {
+    //noinspection HardCodedStringLiteral
     return "NewUsageViewManager";
   }
 
@@ -263,14 +270,16 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             final List<Action> notFoundActions = myProcessPresentation.getNotFoundActions();
-            final String message = "No " + StringUtil.decapitalize(myPresentation.getUsagesString()) + " found in " + myPresentation.getScopeText();
+            final String message = UsageViewBundle.message("dialog.no.usages.found.in",
+                                                           StringUtil.decapitalize(myPresentation.getUsagesString()),
+                                                           myPresentation.getScopeText());
 
             if (notFoundActions == null || notFoundActions.size() == 0) {
-              Messages.showMessageDialog(myProject, message, "Information",
-                                     Messages.getInformationIcon());
+              Messages.showMessageDialog(myProject, message, UsageViewBundle.message("dialog.title.information"),
+                                         Messages.getInformationIcon());
             } else {
               List<String> titles = new ArrayList<String>(notFoundActions.size()+1);
-              titles.add("OK");
+              titles.add(UsageViewBundle.message("dialog.button.ok"));
               for (int i = 0; i < notFoundActions.size(); i++) {
                 Action action = notFoundActions.get(i);
                 Object value = action.getValue(FindUsagesProcessPresentation.NAME_WITH_MNEMONIC_KEY);
@@ -280,11 +289,11 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
               }
 
               int option = Messages.showDialog(myProject,
-                                       message,
-                                       "Information",
-                                       titles.toArray(new String[titles.size()]),
-                                       0,
-                                       Messages.getInformationIcon());
+                                               message,
+                                               UsageViewBundle.message("dialog.title.information"),
+                                               titles.toArray(new String[titles.size()]),
+                                               0,
+                                               Messages.getInformationIcon());
 
               if (option > 0) {
                 notFoundActions.get(option-1).actionPerformed(new ActionEvent(this,0,titles.get(option)));

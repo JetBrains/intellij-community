@@ -30,14 +30,14 @@ public class UsageViewPresentation {
   private String myTabText;
   private String myScopeText;
   private String myUsagesString;
-  private String myTargetsNodeText = "Targets"; // Default value. to be overwritten in most cases.
-  private String myNonCodeUsagesString = "Occurences found in non-java files";
-  private String myCodeUsagesString = "Found usages";
+  private String myTargetsNodeText = UsageViewBundle.message("node.targets"); // Default value. to be overwritten in most cases.
+  private String myNonCodeUsagesString = UsageViewBundle.message("node.non.code.usages");
+  private String myCodeUsagesString = UsageViewBundle.message("node.found.usages");
   private boolean myShowReadOnlyStatusAsRed = false;
   private boolean myShowCancelButton = false;
   private boolean myOpenInNewTab = true;
   private boolean myCodeUsages = true;
-  private String myUsagesWord = "usage";
+  private String myUsagesWord = UsageViewBundle.message("usage.name");
 
   private List<Action> myNotFoundActions;
 
