@@ -221,6 +221,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
    */
   @Nullable
   private AnAction processActionElement(Element element, final ClassLoader loader, PluginId pluginId) {
+    final PluginDescriptor plugin = PluginManager.getPlugin(pluginId);
+    final String resBundleName = plugin != null ? plugin.getResourceBundleBaseName() : "idea.ActionsBundle";
+    ResourceBundle bundle = null;
+    if (resBundleName != null) {
+      bundle = ResourceBundle.getBundle(resBundleName);
+    }
+
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: processActionElement(" + element.getName() + ")");
     }
@@ -245,17 +252,46 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     }
 
     // text
-    String text = element.getAttributeValue("text");
+    String text = null;
+    if (bundle != null) {
+      try {
+        text = bundle.getString("action." + id + ".text");
+      }
+      catch (MissingResourceException e) {
+        // OK for a while. Try to load regulary from text attribute
+      }
+    }
+
+    if (text == null) {
+      text = element.getAttributeValue("text");
+    }
+
     if (text == null) {
       LOG.error("'text' attribute is mandatory (action ID=" + id + ")");
       return null;
     }
+
     ActionStub stub = new ActionStub(className, id, text, loader);
     Presentation presentation = stub.getTemplatePresentation();
     presentation.setText(text);
+
     // description
-    String description = element.getAttributeValue("description");
+    String description = null;
+    if (bundle != null) {
+      try {
+        description = bundle.getString("action." + id + ".description");
+      }
+      catch (MissingResourceException e) {
+        // OK, no description
+      }
+    }
+
+    if (description == null) {
+      description = element.getAttributeValue("description");
+    }
+
     presentation.setDescription(description);
+
     // icon
     String iconPath = element.getAttributeValue("icon");
     if (iconPath != null) {
