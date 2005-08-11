@@ -85,7 +85,7 @@ public class CopyDialog extends DialogWrapper implements ActionListener {
       SVNWCClient client = vcs.createWCClient();
       SVNInfo info = client.doInfo(mySrcFile, SVNRevision.WORKING);
       if (info != null) {
-        mySrcURL = info.getURL();
+        mySrcURL = info.getURL() == null ? null : info.getURL().toString();
         revStr = info.getRevision() + "";
         myURL = mySrcURL;
         if (myURL != null) {
@@ -276,7 +276,7 @@ public class CopyDialog extends DialogWrapper implements ActionListener {
     if (dialog.isOK()) {
       url = dialog.getSelectedURL();
       String name = dialog.getDestinationName();
-      url = SVNPathUtil.append(url, SVNEncodingUtil.uriEncode(name));
+      url = SVNPathUtil.append(url, name);
       myToURLText.setText(url);
     }
     getOKAction().setEnabled(isOKActionEnabled());

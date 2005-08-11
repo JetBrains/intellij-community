@@ -243,7 +243,7 @@ public class SvnUtil {
         SVNWCClient wcClient = myVcs.createWCClient();
         SVNInfo info = wcClient.doInfo(root, SVNRevision.WORKING);
         if (info != null && info.getURL() != null) {
-          myLocations.add(info.getURL());
+          myLocations.add(info.getURL().toString());
         }
       }
       catch (SVNException e) {

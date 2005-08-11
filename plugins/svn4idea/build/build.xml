@@ -4,9 +4,9 @@
     <property name="build.path" value="build_out"/>
 
     <target name="deploy-javasvn">
-        <ant dir="../org.tmatesoft.javasvn.idea" antfile="../org.tmatesoft.javasvn.idea/build.xml" target="clean"/>
-        <ant dir="../org.tmatesoft.javasvn.idea" antfile="../org.tmatesoft.javasvn.idea/build.xml" target="build-library"/>
-        <copy file="../org.tmatesoft.javasvn.idea/build/lib/javasvn.jar" tofile="lib/javasvn.jar" overwrite="true"/>
+        <ant dir="../org.tmatesoft.javasvn" antfile="../org.tmatesoft.javasvn/build.xml" target="clean"/>
+        <ant dir="../org.tmatesoft.javasvn" antfile="../org.tmatesoft.javasvn/build.xml" target="build-library"/>
+        <copy file="../org.tmatesoft.javasvn/build/lib/javasvn.jar" tofile="lib/javasvn.jar" overwrite="true"/>
     </target>
 
     <target name="jar_plugin">

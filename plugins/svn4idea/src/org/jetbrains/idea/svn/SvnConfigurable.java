@@ -45,6 +45,8 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.idea.svn.dialogs.DialogUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNCancelException;
 
 import javax.swing.*;
 import java.awt.*;

@@ -28,6 +28,7 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
@@ -54,7 +55,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
           client.setEventHandler(new CheckoutEventHandler(SvnVcs.getInstance(project), progressIndicator));
           try {
             progressIndicator.setText("Checking out files to '" + target.getAbsolutePath() + "'");
-            client.doCheckout(url, target, SVNRevision.UNDEFINED, SVNRevision.HEAD, true);
+            client.doCheckout(SVNURL.parseURIEncoded(url), target, SVNRevision.UNDEFINED, SVNRevision.HEAD, true);
           }
           catch (SVNException e) {
             exception[0] = e;

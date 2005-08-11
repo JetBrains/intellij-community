@@ -46,6 +46,7 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.CopyDialog;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
@@ -104,8 +105,7 @@ public class CopyAction extends BasicAction {
               progress.setText("Copy to '" + dstURL + "'");
               client.setEventHandler(new CopyEventHandler(progress));
             }
-            System.out.println("copy from revision: " + revision);
-            SVNCommitInfo result = client.doCopy(srcFile, SVNRevision.UNDEFINED, revision, dstURL, SVNRevision.HEAD, false, comment);
+            SVNCommitInfo result = client.doCopy(srcFile, revision, SVNURL.parseURIEncoded(dstURL), comment);
             if (result != null && result != SVNCommitInfo.NULL) {
               WindowManager.getInstance().getStatusBar(project).setInfo("Comitted revision " + result.getNewRevision() + ".");
             }

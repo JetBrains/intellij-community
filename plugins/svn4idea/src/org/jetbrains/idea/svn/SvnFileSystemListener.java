@@ -188,7 +188,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
           wcClient.doAdd(targetFile, false, false, false, false);
         }
         catch (SVNException e) {
-          SVNFileUtil.deleteAll(targetFile);
+          SVNFileUtil.deleteAll(targetFile, true);
           return false;
         }
         return true;
@@ -217,7 +217,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         return true;
       }
       catch (SVNException e) {
-        SVNFileUtil.deleteAll(targetFile);
+        SVNFileUtil.deleteAll(targetFile, true);
         return false;
       }
     }

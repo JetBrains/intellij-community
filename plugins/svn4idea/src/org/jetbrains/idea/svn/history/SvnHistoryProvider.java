@@ -77,7 +77,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
         try {
           SVNWCClient wcClient = myVcs.createWCClient();
           SVNInfo info = wcClient.doInfo(new File(file.getIOFile().getAbsolutePath()), SVNRevision.WORKING);
-          final String url = info.getURL();
+          final String url = info.getURL() == null ? null : info.getURL().toString();
           if (indicator != null) {
             indicator.setText2("Establishing connection to '" + url + "'");
           }

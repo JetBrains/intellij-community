@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
@@ -138,7 +139,7 @@ public class SvnFileRevision implements VcsFileRevision {
       }
       try {
         SVNWCClient client = myVCS.createWCClient();
-        client.doGetFileContents(myURL, myPegRevision, myRevision, true, myDst);
+        client.doGetFileContents(SVNURL.parseURIEncoded(myURL), myPegRevision, myRevision, true, myDst);
       }
       catch (SVNException e) {
         myException = e;

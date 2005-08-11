@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.help.HelpManager;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -272,8 +273,9 @@ public class SetPropertyDialog extends DialogWrapper {
                                    names.add(name);
                                  }
                                }
-
-                               public void handleProperty(String url, SVNPropertyData property) {
+                               public void handleProperty(SVNURL url, SVNPropertyData property) {
+                               }
+                               public void handleProperty(long revision, SVNPropertyData property) {
                                }
                              });
       }

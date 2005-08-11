@@ -125,7 +125,7 @@ public class SvnUpdateEnvironment implements UpdateEnvironment {
       }
     }
     if (info != null && info.getURL() != null) {
-      myConfigurable = new SvnUpdateConfigurable(myVcs, info.getURL());
+      myConfigurable = new SvnUpdateConfigurable(myVcs, info.getURL().toString());
     } else {
       myConfigurable = new SvnSimpleUpdateConfigurable();
     }
@@ -279,7 +279,7 @@ public class SvnUpdateEnvironment implements UpdateEnvironment {
           diffClient.doMerge(svnURL1, rev1, svnURL2, rev2, root, recursive, true, false, dryRun);
         }
         else if (config != null && !config.isUpdate() && url != null) {
-          rev = client.doSwitch(root, url, revision, recursive);
+          rev = client.doSwitch(root, SVNURL.parseURIEncoded(url), revision, recursive);
         }
         else {
           rev = client.doUpdate(root, revision, recursive);

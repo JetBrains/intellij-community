@@ -373,7 +373,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
       myValue = value;
       myEntriesTimestamp = entriesStamp;
       myFileTimestamp = fileStamp;
-      myIsLocked = value == null ? false : value.isLocked();
+      myIsLocked = value != null && value.isLocked();
     }
 
     public long getEntriesTimestamp() {
@@ -426,14 +426,25 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
       myLoggingEnabled = loggingEnabled;
       myLog = log;
     }
-
-    public void log(String message) {
+    public void logInfo(String message) {
       if (myLoggingEnabled) {
         myLog.info(message);
       }
     }
 
-    public void log(Throwable th) {
+    public void logError(String message) {
+      if (myLoggingEnabled) {
+        myLog.info(message);
+      }
+    }
+
+    public void logInfo(Throwable th) {
+      if (myLoggingEnabled) {
+        myLog.info(th);
+      }
+    }
+
+    public void logError(Throwable th) {
       if (myLoggingEnabled) {
         myLog.info(th);
       }

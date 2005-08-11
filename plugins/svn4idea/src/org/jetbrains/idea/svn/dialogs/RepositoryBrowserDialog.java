@@ -378,7 +378,7 @@ public class RepositoryBrowserDialog extends DialogWrapper implements ActionList
         SvnVcs vcs = SvnVcs.getInstance(myProject);
         try {
           SVNCommitClient committer = vcs.createCommitClient();
-          committer.doDelete(new String[]{url}, comment);
+          committer.doDelete(new SVNURL[]{SVNURL.parseURIEncoded(url)}, comment);
         }
         catch (SVNException e) {
           exception[0] = e;
@@ -403,7 +403,7 @@ public class RepositoryBrowserDialog extends DialogWrapper implements ActionList
         SvnVcs vcs = SvnVcs.getInstance(myProject);
         try {
           SVNCommitClient committer = vcs.createCommitClient();
-          committer.doMkDir(new String[]{url}, comment);
+          committer.doMkDir(new SVNURL[]{SVNURL.parseURIEncoded(url)}, comment);
         }
         catch (SVNException e) {
           exception[0] = e;
@@ -429,7 +429,7 @@ public class RepositoryBrowserDialog extends DialogWrapper implements ActionList
         SvnVcs vcs = SvnVcs.getInstance(myProject);
         try {
           SVNCopyClient committer = vcs.createCopyClient();
-          committer.doCopy(src, SVNRevision.UNDEFINED, SVNRevision.HEAD, dst, SVNRevision.UNDEFINED, move, comment);
+          committer.doCopy(SVNURL.parseURIEncoded(src), SVNRevision.HEAD, SVNURL.parseURIEncoded(dst), move, comment);
         }
         catch (SVNException e) {
           exception[0] = e;
