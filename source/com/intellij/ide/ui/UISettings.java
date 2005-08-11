@@ -196,8 +196,6 @@ public class UISettings implements NamedJDOMExternalizable, ApplicationComponent
   }
 
   public static void setupAntialiasing(final Graphics g) {
-    if (SystemInfo.JAVA_VERSION.startsWith("1.6")) return; // Enable subpixel antialiasing under 1.6
-
     Graphics2D g2d=(Graphics2D)g;
     UISettings uiSettings=getInstance();
     if(uiSettings.ANTIALIASING_IN_EDITOR){
