@@ -1030,14 +1030,11 @@ public class HighlightUtil {
                                                "'.' expected");
     }
     PsiClass aClass = qualifier == null ? null : (PsiClass)qualifier.resolve();
-    if (aClass != null && aClass.isInterface()) {
+    if (aClass == null) return null;
+    if (aClass.isInterface()) {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, qualifier, HighlightClassUtil.CLASS_EXPECTED);
     }
-    PsiType type = expr.getType();
-    if (type == null) return null;
-    PsiClass referencedClass = PsiUtil.resolveClassInType(type);
-    if (referencedClass == null) return null;
-    if (HighlightClassUtil.hasEnclosingInstanceInScope(referencedClass, expr, expr instanceof PsiSuperExpression)) return null;
+    if (HighlightClassUtil.hasEnclosingInstanceInScope(aClass, expr, false)) return null;
 
     return HighlightClassUtil.reportIllegalEnclosingUsage(expr, null, aClass, expr);
   }
