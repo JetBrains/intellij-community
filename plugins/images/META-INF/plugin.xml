@@ -5,6 +5,7 @@
     <description>Enables image files viewing in IDEA editors</description>
     <version>1.1</version>
     <idea-version since-build="3378"/>
+    <resource-bundle>org.intellij.images.IconsBundle</resource-bundle>
 
     <extensions xmlns="com.intellij">
       <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
@@ -36,14 +37,16 @@
     </application-components>
 
     <actions>
-        <action class="org.intellij.images.actions.EditExternalyAction" text="Jump to External Editor"
-                id="Images.EditExternaly" description="Open image in external editor"
+        <action class="org.intellij.images.actions.EditExternalyAction"
+                id="Images.EditExternaly"
                 icon="/org/intellij/images/icons/EditExternaly.png">
             <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="EditSource"/>
             <add-to-group anchor="after" group-id="CommanderPopupMenu" relative-to-action="EditSource"/>
         </action>
-        <action class="org.intellij.images.actions.ShowThumbnailsAction" text="Show Thumbnails"
-                id="Images.ShowThumbnails" description="Show thumnails view for current directory">
+        <action class="org.intellij.images.actions.ShowThumbnailsAction"
+                text="Show Thumbnails"
+                id="Images.ShowThumbnails"
+                description="Show thumnails view for current directory">
             <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="AddToFavorites"/>
             <add-to-group anchor="after" group-id="CommanderPopupMenu" relative-to-action="AddToFavorites"/>
         </action>
@@ -53,22 +56,20 @@
         </group>
         <group id="Images.EditorToolbar">
             <action class="org.intellij.images.editor.actions.ToggleTransparencyChessboardAction"
-                    text="Transparency Chessboard"
                     id="Images.Editor.ToggleTransparencyChessboard"
-                    description="Toggle transparency chessboard under image"
                     icon="/org/intellij/images/icons/ToggleTransparencyChessboard.png"/>
-            <action class="org.intellij.images.editor.actions.ToggleGridAction" text="Grid"
-                    id="Images.Editor.ToggleGrid" description="Toggle grid lines over image"
+            <action class="org.intellij.images.editor.actions.ToggleGridAction"
+                    id="Images.Editor.ToggleGrid"
                     icon="/org/intellij/images/icons/ToggleGrid.png"/>
             <separator/>
-            <action class="org.intellij.images.editor.actions.ZoomInAction" text="Zoom In"
-                    id="Images.Editor.ZoomIn" description="Increase image view"
+            <action class="org.intellij.images.editor.actions.ZoomInAction"
+                    id="Images.Editor.ZoomIn"
                     icon="/org/intellij/images/icons/ZoomIn.png"/>
-            <action class="org.intellij.images.editor.actions.ZoomOutAction" text="Zoom Out"
-                    id="Images.Editor.ZoomOut" description="Reduce image view"
+            <action class="org.intellij.images.editor.actions.ZoomOutAction"
+                    id="Images.Editor.ZoomOut"
                     icon="/org/intellij/images/icons/ZoomOut.png"/>
-            <action class="org.intellij.images.editor.actions.ActualSizeAction" text="Actual Size"
-                    id="Images.Editor.ActualSize" description="Resize image to actual size"
+            <action class="org.intellij.images.editor.actions.ActualSizeAction"
+                    id="Images.Editor.ActualSize"
                     icon="/org/intellij/images/icons/ActualSize.png"/>
             <separator/>
             <reference id="Images.EditExternaly"/>
@@ -90,20 +91,18 @@
             <action class="org.intellij.images.thumbnail.actions.UpFolderAction" text="Level Up"
                     id="Images.Thumbnails.UpFolder" description="Level up"
                     icon="/nodes/upFolder.png"/>
-            <action class="org.intellij.images.thumbnail.actions.ToggleRecursiveAction" text="Recursive"
-                    id="Images.Thumbnails.ToggleRecursive" description="Toggle recursive browsing"
+            <action class="org.intellij.images.thumbnail.actions.ToggleRecursiveAction"
+                    id="Images.Thumbnails.ToggleRecursive"
                     icon="/objectBrowser/flattenPackages.png"/>
             <separator/>
             <action class="org.intellij.images.thumbnail.actions.ToggleTransparencyChessboardAction"
-                    text="Toggle Transparency Chessboard"
                     id="Images.Thumbnails.ToggleTransparencyChessboard"
-                    description="Toggle transparency chessboard under image"
                     icon="/org/intellij/images/icons/ToggleTransparencyChessboard.png"/>
             <separator/>
             <reference id="Images.EditExternaly"/>
             <separator/>
-            <action class="org.intellij.images.thumbnail.actions.HideThumbnailsAction" text="Close thumnails"
-                    id="Images.Thumbnails.Hide" description="Close thumnails window"
+            <action class="org.intellij.images.thumbnail.actions.HideThumbnailsAction"
+                    id="Images.Thumbnails.Hide"
                     icon="/actions/cancel.png"/>
         </group>
         <group id="Images.ThumbnailsPopupMenu">
