@@ -18,12 +18,18 @@ package org.jetbrains.annotations;
 import java.lang.annotation.*;
 
 /**
- * 
+ * If a method parameter is annotated with <code>NonNls</code>, it means that the string passed
+ * as the value of this parameter is never displayed to the user and does not need to be localized.
+ * If a method is annotated with <code>NonNls</code>, it means that the return value of the method
+ * is a string which is never displayed to the user and does not need to be localized.
+ * The annotation is intended to be used by localization tools for detecting strings which should
+ * not be reported as requiring localization.
+ *
  * @author max
  */
 @Documented
 @Retention(RetentionPolicy.CLASS)
-@Target({ElementType.PARAMETER})
+@Target({ElementType.PARAMETER, ElementType.METHOD})
 public @interface NonNls {
 
 }
