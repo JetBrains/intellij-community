@@ -15,10 +15,9 @@
  */
 package com.intellij.uiDesigner.core;
 
-import sun.reflect.Reflection;
-
 import javax.swing.*;
 import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ResourceBundle;
 import java.util.Locale;
 
@@ -26,6 +25,20 @@ import java.util.Locale;
  * @author Vladimir Kondratyev
  */
 public final class SupportCode {
+  private static final Method ourGetCallerClassLoaderMethod;
+  private static final Object[] EMPTY_OBJECT_ARRAY = new Object[]{};
+  static {
+    Method method;
+    try {
+      method = ClassLoader.class.getDeclaredMethod("getCallerClassLoader", new Class[]{});
+      method.setAccessible(true);
+    }
+    catch (NoSuchMethodException e) {
+      e.printStackTrace();
+      method = null;
+    }
+    ourGetCallerClassLoaderMethod = method;
+  }
   /**
    * Parses text that might contain mnemonic and returns structure which contains
    * plain text and index of mnemonic char (if any)
@@ -99,7 +112,18 @@ public final class SupportCode {
       throw new IllegalArgumentException("key cannot be null");
     }
 
-    final String text = getResourceString(bundleName, key, getCallerClassLoader());
+    ClassLoader loader = null;
+    try {
+      loader = ourGetCallerClassLoaderMethod != null? (ClassLoader)ourGetCallerClassLoaderMethod.invoke(null, EMPTY_OBJECT_ARRAY) : null;
+    }
+    catch (IllegalAccessException e) {
+      e.printStackTrace(); // should not happen
+    }
+    catch (InvocationTargetException e) {
+      e.printStackTrace();
+    }
+
+    final String text = getResourceString(bundleName, key, loader);
 
     final TextWithMnemonic textWithMnemonic = SupportCode.parseText(text);
 
@@ -144,7 +168,18 @@ public final class SupportCode {
       throw new IllegalArgumentException("key cannot be null");
     }
 
-    final String text = getResourceString(bundle, key, getCallerClassLoader());
+    ClassLoader loader = null;
+    try {
+      loader = ourGetCallerClassLoaderMethod != null? (ClassLoader)ourGetCallerClassLoaderMethod.invoke(null, EMPTY_OBJECT_ARRAY) : null;
+    }
+    catch (IllegalAccessException e1) {
+      e1.printStackTrace(); // should not happen
+    }
+    catch (InvocationTargetException e11) {
+      e11.printStackTrace();
+    }
+
+    final String text = getResourceString(bundle, key, loader);
 
     final TextWithMnemonic textWithMnemonic = SupportCode.parseText(text);
 
@@ -194,7 +229,17 @@ public final class SupportCode {
    * Because this method is sensitive to the caller's class loader, it must be called from generated code only
    */
   public static String getResourceString(final String bundleName, final String key) {
-    return getResourceString(bundleName, key, getCallerClassLoader());
+    ClassLoader loader = null;
+    try {
+      loader = ourGetCallerClassLoaderMethod != null? (ClassLoader)ourGetCallerClassLoaderMethod.invoke(null, EMPTY_OBJECT_ARRAY) : null;
+    }
+    catch (IllegalAccessException e) {
+      e.printStackTrace(); // should not happen
+    }
+    catch (InvocationTargetException e) {
+      e.printStackTrace();
+    }
+    return getResourceString(bundleName, key, loader);
   }
 
   private static String getResourceString(final String bundleName, final String key, final ClassLoader callerClassLoader) {
@@ -202,10 +247,5 @@ public final class SupportCode {
                                   ResourceBundle.getBundle(bundleName, Locale.getDefault(), callerClassLoader) :
                                   ResourceBundle.getBundle(bundleName, Locale.getDefault());
     return bundle.getString(key);
-  }
-
-  private static ClassLoader getCallerClassLoader() {
-    final Class caller = Reflection.getCallerClass(3);
-    return caller != null? caller.getClassLoader() : null;
   }
 }
