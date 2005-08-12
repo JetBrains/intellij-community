@@ -1,6 +1,7 @@
 package com.intellij.uiDesigner;
 
 import com.intellij.uiDesigner.quickFixes.QuickFix;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
@@ -10,7 +11,7 @@ public final class ErrorInfo {
   public final String myDescription;
   public final QuickFix[] myFixes;
 
-  public ErrorInfo(final String description, final QuickFix[] fixes) {
+  public ErrorInfo(@NotNull final String description, @NotNull final QuickFix[] fixes) {
     if (description == null) {
       throw new IllegalArgumentException("description cannot be null");
     }

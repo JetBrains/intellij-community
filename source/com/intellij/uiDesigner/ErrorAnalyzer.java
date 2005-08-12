@@ -7,14 +7,15 @@ import com.intellij.psi.*;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IContainer;
 import com.intellij.uiDesigner.lw.IRootContainer;
-import com.intellij.uiDesigner.quickFixes.CreateClassToBindFix;
-import com.intellij.uiDesigner.quickFixes.CreateFieldFix;
-import com.intellij.uiDesigner.quickFixes.QuickFix;
-import com.intellij.uiDesigner.quickFixes.ChangeFieldTypeFix;
+import com.intellij.uiDesigner.quickFixes.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * @author Anton Katilin
@@ -42,10 +43,10 @@ public final class ErrorAnalyzer {
 
   /**
    * @param editor if null, no quick fixes are created. This is used in form to source compiler.
-   */ 
+   */
   public static void analyzeErrors(
     final Module module,
-    final VirtualFile formFile, 
+    final VirtualFile formFile,
     final GuiEditor editor,
     final IRootContainer rootContainer
   ){
@@ -100,7 +101,7 @@ public final class ErrorAnalyzer {
             if(field == null){
               final QuickFix[] fixes = editor != null ? new QuickFix[]{
                 new CreateFieldFix(editor, psiClass, component.getComponentClassName(), binding)} :
-                QuickFix.EMPTY_ARRAY;
+                                                                                                  QuickFix.EMPTY_ARRAY;
               component.putClientProperty(
                CLIENT_PROP_BINDING_ERROR,
                new ErrorInfo(
@@ -177,12 +178,12 @@ public final class ErrorAnalyzer {
       rootContainer,
       new FormEditingUtil.ComponentVisitor<IComponent>() {
         public boolean visit(final IComponent component) {
+          // Clear previous error (if any)
+          component.putClientProperty(CLIENT_PROP_GENERAL_ERROR, null);
+
           if(!(component instanceof IContainer)){
             return true;
           }
-
-          // Clear previous error (if any)
-          component.putClientProperty(CLIENT_PROP_GENERAL_ERROR, null);
 
           final IContainer container = (IContainer)component;
           if(container instanceof IRootContainer){
@@ -212,6 +213,43 @@ public final class ErrorAnalyzer {
         }
       }
     );
+
+    try {
+      // Run inspections for form elements
+      final PsiFile formPsiFile = PsiManager.getInstance(module.getProject()).findFile(formFile);
+      if (formPsiFile != null) {
+        final InspectionProfileImpl profile = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(formPsiFile);
+        final List<FormInspectionTool> formInspectionTools = new ArrayList<FormInspectionTool>();
+        for(LocalInspectionTool tool: profile.getHighlightingLocalInspectionTools()) {
+          if (tool instanceof FormInspectionTool) {
+            formInspectionTools.add((FormInspectionTool) tool);
+          }
+        }
+
+        if (formInspectionTools.size() > 0) {
+          FormEditingUtil.iterate(
+            rootContainer,
+            new FormEditingUtil.ComponentVisitor<RadComponent>() {
+              public boolean visit(final RadComponent component) {
+                if (component.getClientProperty(CLIENT_PROP_GENERAL_ERROR) == null) {
+                  for(FormInspectionTool tool: formInspectionTools) {
+                    ErrorInfo errorInfo = tool.checkComponent(editor, component);
+                    if (errorInfo != null) {
+                      component.putClientProperty(CLIENT_PROP_GENERAL_ERROR, errorInfo);
+                      break;
+                    }
+                  }
+                }
+                return true;
+              }
+            }
+          );
+        }
+      }
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
   }
 
   /**

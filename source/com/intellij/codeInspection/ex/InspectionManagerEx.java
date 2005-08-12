@@ -743,13 +743,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
         }
 
         @Override
-        public void visitJspFile(JspFile file) {
-          if (file instanceof PsiJavaFile) {
-            visitJavaFile((PsiJavaFile)file);
-          }
-        }
-
-        public void visitJavaFile(PsiJavaFile file) {
+        public void visitFile(PsiFile file) {
           incrementJobDoneAmount(LOCAL_ANALYSIS, file.getVirtualFile().getPresentableUrl());
           for (int i = 0; i < localTools.size(); i++) {
             LocalInspectionToolWrapper tool = localTools.get(i);
