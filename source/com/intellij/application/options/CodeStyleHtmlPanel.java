@@ -307,7 +307,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   }
 
   protected String getPreviewText() {
-    return readFromFile("preview.html.properties");
+    return readFromFile("preview.html.template");
 
   }
 
