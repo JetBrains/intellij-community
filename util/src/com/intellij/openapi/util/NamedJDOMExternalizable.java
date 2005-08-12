@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.NonNls;
+
 public interface NamedJDOMExternalizable extends JDOMExternalizable {
-  String getExternalFileName();
+  @NonNls String getExternalFileName();
 }

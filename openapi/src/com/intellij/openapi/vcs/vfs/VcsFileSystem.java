@@ -66,7 +66,6 @@ public class VcsFileSystem extends VirtualFileSystem implements ApplicationCompo
   }
 
   public String getComponentName() {
-    //noinspection HardCodedStringLiteral
     return "VcsFileSystem";
   }
 

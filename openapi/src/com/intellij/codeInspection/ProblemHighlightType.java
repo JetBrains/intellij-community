@@ -22,7 +22,8 @@
  */
 package com.intellij.codeInspection;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
+import org.jetbrains.annotations.NonNls;
+
 public class ProblemHighlightType {
   public static final ProblemHighlightType GENERIC_ERROR_OR_WARNING = new ProblemHighlightType("GENERIC_ERROR_OR_WARNING");
   public static final ProblemHighlightType LIKE_DEPRECATED = new ProblemHighlightType("LIKE_DEPRECATED");
@@ -31,7 +32,7 @@ public class ProblemHighlightType {
 
   private final String myName; // for debug only
 
-  private ProblemHighlightType(String name) {
+  private ProblemHighlightType(@NonNls String name) {
     myName = name;
   }
 

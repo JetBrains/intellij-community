@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.colors;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -81,7 +82,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
     return key;
   }
 
-  public static TextAttributesKey createTextAttributesKey(String externalName) {
+  public static TextAttributesKey createTextAttributesKey(@NonNls String externalName) {
     return find(externalName);
   }
 }

@@ -19,7 +19,6 @@ import com.intellij.lang.Language;
 
 public class IFileElementType extends IChameleonElementType {
   public IFileElementType(final Language language) {
-    //noinspection HardCodedStringLiteral
     super("FILE", language);
   }
 

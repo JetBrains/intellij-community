@@ -15,13 +15,14 @@
  */
 package com.intellij.openapi.editor.markup;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
+import org.jetbrains.annotations.NonNls;
+
 public final class SeparatorPlacement {
   public static final SeparatorPlacement TOP = new SeparatorPlacement("TOP");
   public static final SeparatorPlacement BOTTOM = new SeparatorPlacement("BOTTOM");
   private String myDebugName;
 
-  private SeparatorPlacement(String debugName) {
+  private SeparatorPlacement(@NonNls String debugName) {
     myDebugName = debugName;
   }
 

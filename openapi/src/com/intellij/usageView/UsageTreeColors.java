@@ -17,7 +17,6 @@ package com.intellij.usageView;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
 public interface UsageTreeColors {
   TextAttributesKey INVALID_PREFIX = TextAttributesKey.createTextAttributesKey("$INVALID_PREFIX");
   TextAttributesKey READONLY_PREFIX = TextAttributesKey.createTextAttributesKey("$READ_ONLY_PREFIX");

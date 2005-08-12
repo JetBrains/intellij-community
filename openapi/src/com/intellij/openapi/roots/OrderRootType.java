@@ -15,12 +15,13 @@
  */
 package com.intellij.openapi.roots;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Root types that can be queried from OrderEntry.
  * @see com.intellij.openapi.roots.OrderEntry
  * @author dsl
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
 public class OrderRootType {
   private final String myName;
 
@@ -53,7 +54,7 @@ public class OrderRootType {
     CLASSES, CLASSES_AND_OUTPUT, COMPILATION_CLASSES, SOURCES, JAVADOC
   };
 
-  private OrderRootType(String name) {
+  private OrderRootType(@NonNls String name) {
     myName = name;
   }
 

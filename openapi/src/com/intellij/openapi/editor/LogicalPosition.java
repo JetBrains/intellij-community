@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.editor;
 
+import org.jetbrains.annotations.NonNls;
+
 public class LogicalPosition implements Comparable<LogicalPosition> {
   public final int line;
   public final int column;
@@ -35,8 +37,8 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
     return 29 * line + column;
   }
 
+  @NonNls
   public String toString() {
-    //noinspection HardCodedStringLiteral
     return "LogicalPosition: line = " + line + " column = " + column;
   }
 

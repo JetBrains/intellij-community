@@ -15,13 +15,14 @@
  */
 package com.intellij.openapi.editor.markup;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
+import org.jetbrains.annotations.NonNls;
+
 public class HighlighterTargetArea {
   public static final HighlighterTargetArea EXACT_RANGE = new HighlighterTargetArea("EXACT_RANGE");
   public static final HighlighterTargetArea LINES_IN_RANGE = new HighlighterTargetArea("LINES_IN_RANGE");
   private String myDebugName;
 
-  private HighlighterTargetArea(String debugName) {
+  private HighlighterTargetArea(@NonNls String debugName) {
     myDebugName = debugName;
   }
 

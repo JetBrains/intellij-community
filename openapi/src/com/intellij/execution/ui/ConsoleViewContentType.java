@@ -23,6 +23,8 @@ import com.intellij.util.containers.HashMap;
 import java.awt.*;
 import java.util.Map;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author Alexey Kudravtsev
  */
@@ -37,13 +39,9 @@ public class ConsoleViewContentType {
 
   private static final Map<Key, ConsoleViewContentType> ourRegisteredTypes = new HashMap<Key, ConsoleViewContentType>();
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static final ConsoleViewContentType NORMAL_OUTPUT = new ConsoleViewContentType("NORMAL_OUTPUT", NORMAL_OUTPUT_ATTRIBUTES);
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static final ConsoleViewContentType ERROR_OUTPUT = new ConsoleViewContentType("ERROR_OUTPUT", ERROR_OUTPUT_ATTRIBUTES);
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static final ConsoleViewContentType USER_INPUT = new ConsoleViewContentType("USER_OUTPUT", USER_INPUT_ATTRIBUTES);
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static final ConsoleViewContentType SYSTEM_OUTPUT = new ConsoleViewContentType("SYSTEM_OUTPUT", SYSTEM_OUTPUT_ATTRIBUTES);
 
   static {
@@ -58,7 +56,7 @@ public class ConsoleViewContentType {
     ourRegisteredTypes.put(ProcessOutputTypes.STDERR, ERROR_OUTPUT);
   }
 
-  protected ConsoleViewContentType(final String name, final TextAttributes textAttributes) {
+  protected ConsoleViewContentType(@NonNls final String name, final TextAttributes textAttributes) {
     this.myName = name;
     myTextAttributes = textAttributes;
   }

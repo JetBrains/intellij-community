@@ -312,12 +312,10 @@ public class CalloutComponent {
   }
 
   private Color getFillColor() {
-    //noinspection HardCodedStringLiteral
     return UI.getColor("callout.background");
   }
 
   private Color getBoundsColor() {
-    //noinspection HardCodedStringLiteral
     return UI.getColor("callout.frame.color");
   }
 

@@ -123,7 +123,6 @@ public class SelectInManager implements JDOMExternalizable, ProjectComponent {
   }
 
   public String getComponentName() {
-    //noinspection HardCodedStringLiteral
     return "SelectInManager";
   }
 

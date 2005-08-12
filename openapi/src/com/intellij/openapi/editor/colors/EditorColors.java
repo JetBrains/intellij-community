@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.editor.colors;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
 public interface EditorColors {
   ColorKey CARET_ROW_COLOR = ColorKey.createColorKey("CARET_ROW_COLOR");
   ColorKey CARET_COLOR = ColorKey.createColorKey("CARET_COLOR");

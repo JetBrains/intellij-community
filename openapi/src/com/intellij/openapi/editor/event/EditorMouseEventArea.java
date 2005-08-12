@@ -15,7 +15,8 @@
  */
 package com.intellij.openapi.editor.event;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
+import org.jetbrains.annotations.NonNls;
+
 public class EditorMouseEventArea {
   private final String myDebugName;
 
@@ -25,7 +26,7 @@ public class EditorMouseEventArea {
   public static final EditorMouseEventArea LINE_MARKERS_AREA = new EditorMouseEventArea("LINE_MARKERS_AREA");
   public static final EditorMouseEventArea FOLDING_OUTLINE_AREA = new EditorMouseEventArea("FOLDING_OUTLINE_AREA");
 
-  private EditorMouseEventArea(String debugName) {
+  private EditorMouseEventArea(@NonNls String debugName) {
     myDebugName = debugName;
   }
 

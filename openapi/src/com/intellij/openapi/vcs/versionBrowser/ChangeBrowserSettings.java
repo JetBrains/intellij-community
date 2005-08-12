@@ -37,7 +37,7 @@ public class ChangeBrowserSettings implements ProjectComponent, JDOMExternalizab
   public String CHANGE_AFTER = "";
 
 
-  public static final ChangeBrowserSettings getSettings(Project project){
+  public static ChangeBrowserSettings getSettings(Project project){
     return project.getComponent(ChangeBrowserSettings.class);
   }
 
@@ -48,7 +48,6 @@ public class ChangeBrowserSettings implements ProjectComponent, JDOMExternalizab
   }
 
   public String getComponentName() {
-    //noinspection HardCodedStringLiteral
     return "ChangeBrowserSettings";
   }
 

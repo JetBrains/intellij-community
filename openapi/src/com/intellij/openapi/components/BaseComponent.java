@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.components;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * The base interface class for all components.
  *
@@ -28,6 +30,7 @@ public interface BaseComponent {
    *
    * @return the name of this component
    */
+  @NonNls
   String getComponentName();
 
   /**

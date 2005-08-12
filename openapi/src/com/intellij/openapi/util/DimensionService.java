@@ -199,7 +199,6 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
   }
 
   public String getComponentName() {
-    //noinspection HardCodedStringLiteral
     return "DimensionService";
   }
 

@@ -150,7 +150,6 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
   }
 
   public String getComponentName() {
-    //noinspection HardCodedStringLiteral
     return "VcsManagerConfiguration";
   }
 

@@ -17,6 +17,7 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,7 +31,7 @@ public abstract class OptionsDialog extends DialogWrapper {
   private JCheckBox myCheckBoxDoNotShowDialog;
 
   protected String getDoNotShowMessage() {
-    return "Do not show this dialog in the future";
+    return CommonBundle.message("dialog.options.do.not.show");
   }
 
   protected final Project myProject;

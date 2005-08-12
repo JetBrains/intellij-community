@@ -26,7 +26,6 @@ public class NamedScopeManager extends NamedScopesHolder implements ProjectCompo
   public NamedScopeManager() {}
 
   public String getComponentName() {
-    //noinspection HardCodedStringLiteral
     return "NamedScopeManager";
   }
 

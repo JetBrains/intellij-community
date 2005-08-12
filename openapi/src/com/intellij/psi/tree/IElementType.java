@@ -19,6 +19,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,7 +52,7 @@ public class IElementType {
     return matches.toArray(new IElementType[matches.size()]);
   }
 
-  public IElementType(@NotNull String debugName, @NotNull Language language) {
+  public IElementType(@NotNull @NonNls String debugName, @NotNull Language language) {
     this(debugName, language, true);
   }
 

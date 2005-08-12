@@ -15,6 +15,8 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NonNls;
+
 public interface PsiCodeFragment extends PsiFile, PsiImportHolder {
   void setEverythingAcessible(boolean value);
 
@@ -41,7 +43,6 @@ public interface PsiCodeFragment extends PsiFile, PsiImportHolder {
   interface VisibilityChecker {
     Visibility isDeclarationVisible(PsiElement declaration, PsiElement place);
 
-    @SuppressWarnings({"HardCodedStringLiteral"})
     public class Visibility {
       public static final Visibility VISIBLE = new Visibility("VISIBLE");
       public static final Visibility NOT_VISIBLE = new Visibility("NOT_VISIBLE");
@@ -49,7 +50,7 @@ public interface PsiCodeFragment extends PsiFile, PsiImportHolder {
 
       private final String myName; // for debug only
 
-      private Visibility(String name) {
+      private Visibility(@NonNls String name) {
         myName = name;
       }
 

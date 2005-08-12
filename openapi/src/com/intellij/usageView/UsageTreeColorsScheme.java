@@ -37,7 +37,6 @@ public class UsageTreeColorsScheme implements ApplicationComponent, JDOMExternal
   }
 
   public String getComponentName() {
-    //noinspection HardCodedStringLiteral
     return "FindViewColorsScheme";
   }
 

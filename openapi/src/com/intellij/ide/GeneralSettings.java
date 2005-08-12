@@ -426,12 +426,10 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
   }
 
   public String getExternalFileName() {
-    //noinspection HardCodedStringLiteral
     return "ide.general";
   }
 
   public String getComponentName() {
-    //noinspection HardCodedStringLiteral
     return "GeneralSettings";
   }
 

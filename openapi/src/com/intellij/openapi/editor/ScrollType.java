@@ -15,7 +15,8 @@
  */
 package com.intellij.openapi.editor;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
+import org.jetbrains.annotations.NonNls;
+
 public final class ScrollType {
   public static final ScrollType RELATIVE = new ScrollType("RELATIVE");
   public static final ScrollType CENTER = new ScrollType("CENTER");
@@ -25,7 +26,7 @@ public final class ScrollType {
 
   private final String myDebugName;
 
-  private ScrollType(String debugName) {
+  private ScrollType(@NonNls String debugName) {
     myDebugName = debugName;
   }
 

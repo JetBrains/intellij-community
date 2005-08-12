@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.diagnostic;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
@@ -46,8 +48,8 @@ public class IdeaLoggingEvent {
     return stringWriter.getBuffer().toString();
   }
 
+  @NonNls
   public String toString() {
-    //noinspection HardCodedStringLiteral
     return "IdeaLoggingEvent[message=" + myMessage + ", throwable=" + getThrowableText() + "]";
   }
 }

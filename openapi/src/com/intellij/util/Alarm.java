@@ -24,6 +24,8 @@ import com.intellij.util.containers.LongArrayList;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import org.jetbrains.annotations.NonNls;
+
 public class Alarm {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.Alarm");
 
@@ -40,7 +42,6 @@ public class Alarm {
     ourThreadUseSwing.start();
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static class ThreadToUse {
     public static final ThreadToUse SWING_THREAD = new ThreadToUse("SWING_THREAD");
     public static final ThreadToUse SHARED_THREAD = new ThreadToUse("SHARED_THREAD");
@@ -48,7 +49,7 @@ public class Alarm {
 
     private final String myName;
 
-    private ThreadToUse(String name) {
+    private ThreadToUse(@NonNls String name) {
       myName = name;
     }
 

@@ -93,7 +93,7 @@ public interface PsiElementFactory {
   PsiDocTag createDocTagFromText(String docTagText, PsiElement context) throws IncorrectOperationException;
   PsiDocComment createDocCommentFromText(String docCommentText, PsiElement context) throws IncorrectOperationException;
 
-  PsiFile createFileFromText(String name, String text) throws IncorrectOperationException;
+  PsiFile createFileFromText(@NonNls String name, @NonNls String text) throws IncorrectOperationException;
   PsiClass createClassFromText(String text, PsiElement context) throws IncorrectOperationException;
   PsiField createFieldFromText(String text, PsiElement context) throws IncorrectOperationException;
   PsiMethod createMethodFromText(String text, PsiElement context, LanguageLevel languageLevel) throws IncorrectOperationException;

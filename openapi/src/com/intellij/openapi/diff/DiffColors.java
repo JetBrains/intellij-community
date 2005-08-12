@@ -17,7 +17,6 @@ package com.intellij.openapi.diff;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
 public interface DiffColors {
   TextAttributesKey DIFF_ABSENT = TextAttributesKey.createTextAttributesKey("DIFF_ABSENT");
   TextAttributesKey DIFF_MODIFIED = TextAttributesKey.createTextAttributesKey("DIFF_MODIFIED");

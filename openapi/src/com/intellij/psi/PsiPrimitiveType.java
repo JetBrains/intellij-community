@@ -27,10 +27,11 @@ import com.intellij.util.containers.HashMap;
 
 import java.util.Map;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Represents primitive types of Java language
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
 public class PsiPrimitiveType extends PsiType {
   protected static final PsiPrimitiveType VOID = new PsiPrimitiveType("void");
   protected static final PsiPrimitiveType BYTE = new PsiPrimitiveType("byte");
@@ -45,7 +46,7 @@ public class PsiPrimitiveType extends PsiType {
 
   private final String myName;
 
-  private PsiPrimitiveType(String name) {
+  private PsiPrimitiveType(@NonNls String name) {
     myName = name;
   }
 

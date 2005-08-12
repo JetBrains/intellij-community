@@ -15,6 +15,8 @@
  */
 package com.intellij.lang.annotation;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Defines a highlighting severity level for an annotation.
  *
@@ -22,7 +24,6 @@ package com.intellij.lang.annotation;
  * @see Annotation
  */
 
-@SuppressWarnings({"HardCodedStringLiteral"})
 public class HighlightSeverity implements Comparable<HighlightSeverity> {
   private final String myName; // for debug only
   private final int myVal;
@@ -50,7 +51,7 @@ public class HighlightSeverity implements Comparable<HighlightSeverity> {
    *             if two annotations with different severity levels cover the same text range, only
    *             the annotation with a higher severity level is displayed.
    */
-  public HighlightSeverity(String name, int val) {
+  public HighlightSeverity(@NonNls String name, int val) {
     myName = name;
     myVal = val;
   }

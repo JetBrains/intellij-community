@@ -15,10 +15,11 @@
  */
 package com.intellij.openapi.wm;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * This is enumeration of all posiible types of tool windows.
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
 public final class ToolWindowType {
   public static final ToolWindowType DOCKED = new ToolWindowType("docked");
   public static final ToolWindowType FLOATING = new ToolWindowType("floating");
@@ -26,7 +27,7 @@ public final class ToolWindowType {
 
   private String myText;
 
-  private ToolWindowType(String text){
+  private ToolWindowType(@NonNls String text){
     myText = text;
   }
 

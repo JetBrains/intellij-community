@@ -15,10 +15,11 @@
  */
 package com.intellij.openapi.fileEditor;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author Vladimir Kondratyev
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
 public final class FileEditorStateLevel {
   public static final FileEditorStateLevel FULL = new FileEditorStateLevel("full");
   public static final FileEditorStateLevel UNDO = new FileEditorStateLevel("undo");
@@ -26,11 +27,11 @@ public final class FileEditorStateLevel {
 
   private final String myText;
 
-  private FileEditorStateLevel(final String text) {
+  private FileEditorStateLevel(@NonNls final String text) {
     myText = text;
   }
 
-  public String toString() {
+  @NonNls public String toString() {
     return "FileEditorStateLevel["+myText+"]";
   }
 }

@@ -16,20 +16,20 @@
 package com.intellij.psi;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NonNls;
 
 
 /**
  * @author Yura Cangea
  * @version 1.0
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
 public interface CustomHighlighterTokenType {
   class CustomElementType extends IElementType {
-    public CustomElementType(String debugName) {
+    public CustomElementType(@NonNls String debugName) {
       super(debugName, null);
     }
   }
-  
+
   IElementType KEYWORD_1 = new CustomElementType("KEYWORD_1");
   IElementType KEYWORD_2 = new CustomElementType("KEYWORD_2");
   IElementType KEYWORD_3 = new CustomElementType("KEYWORD_3");

@@ -16,6 +16,7 @@
 package com.intellij.lang.cacheBuilder;
 
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * A single word instance extracted by {@link WordsScanner}.
@@ -59,7 +60,6 @@ public class WordOccurrence {
   /**
    * Defines possible locations where words can be encountered.
    */
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static class Kind {
     /** Kind for words encountered in code (keywords and identifiers). */
     public static final Kind CODE = new Kind("CODE");
@@ -70,11 +70,11 @@ public class WordOccurrence {
 
     private String myName;
 
-    private Kind(String name) {
+    private Kind(@NonNls String name) {
       myName = name;
     }
 
-    public String toString() {
+    @NonNls public String toString() {
       return "WordOccurrence.Kind(" + myName + ")";
     }
   }

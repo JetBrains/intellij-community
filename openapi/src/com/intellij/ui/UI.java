@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import org.jetbrains.annotations.NonNls;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
@@ -70,7 +72,7 @@ public class UI {
     ourColors.put("speedsearch.foreground", Color.black);
   }
 
-  public static Color getColor(String id) {
+  public static Color getColor(@NonNls String id) {
     return ourColors.get(id);
   }
 }

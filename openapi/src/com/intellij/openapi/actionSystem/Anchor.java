@@ -15,11 +15,12 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Defines possible positions of an action relative to another action.
  */
 
-@SuppressWarnings({"HardCodedStringLiteral"})
 public class Anchor {
   /**
    * Anchor type that specifies the action to be the first in the list at the
@@ -44,7 +45,7 @@ public class Anchor {
 
   private String myText;
 
-  private Anchor(String text) {
+  private Anchor(@NonNls String text) {
     myText = text;
   }
 

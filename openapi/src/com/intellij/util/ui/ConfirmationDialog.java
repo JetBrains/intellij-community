@@ -17,6 +17,7 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
+import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,11 +45,11 @@ public class ConfirmationDialog extends OptionsMessageDialog{
   }
 
   protected String getOkActionName() {
-    return "&Yes";
+    return CommonBundle.message("button.yes");
   }
 
   protected String getCancelActionName() {
-    return "&No";
+    return CommonBundle.message("button.no");
   }
 
   protected boolean isToBeShown() {

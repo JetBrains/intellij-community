@@ -21,7 +21,8 @@ import com.intellij.util.containers.HashMap;
 import javax.swing.*;
 import java.util.Map;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
+import org.jetbrains.annotations.NonNls;
+
 public class HighlightDisplayLevel {
   private static Map<String, HighlightDisplayLevel> ourMap = new HashMap<String, HighlightDisplayLevel>();
 
@@ -36,7 +37,7 @@ public class HighlightDisplayLevel {
     return ourMap.get(name);
   }
 
-  private HighlightDisplayLevel(String name, Icon icon) {
+  private HighlightDisplayLevel(@NonNls String name, Icon icon) {
     myName = name;
     myIcon = icon;
     ourMap.put(myName, this);

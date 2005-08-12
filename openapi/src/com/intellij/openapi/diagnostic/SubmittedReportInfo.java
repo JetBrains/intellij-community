@@ -15,11 +15,12 @@
  */
 package com.intellij.openapi.diagnostic;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Simple bean representing error submission status.
  */
 public class SubmittedReportInfo {
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static class SubmissionStatus {
     /**
      * Issue have been succesfully created
@@ -37,10 +38,11 @@ public class SubmittedReportInfo {
     public static SubmissionStatus FAILED = new SubmissionStatus("FAILED");
     private String myName;
 
-    private SubmissionStatus(String name) {
+    private SubmissionStatus(@NonNls String name) {
       myName = name;
     }
 
+    @NonNls
     public String toString() {
       return "SubmissionStatus[" + myName + "]";
     }

@@ -15,8 +15,10 @@
  */
 package com.intellij.psi.tree.java;
 
+import org.jetbrains.annotations.NonNls;
+
 public class IKeywordElementType extends IJavaElementType {
-  public IKeywordElementType(String debugName) {
+  public IKeywordElementType(@NonNls String debugName) {
     super(debugName);
   }
 }

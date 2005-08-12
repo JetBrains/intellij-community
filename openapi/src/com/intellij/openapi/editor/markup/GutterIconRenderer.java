@@ -20,6 +20,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author max
  */
@@ -54,7 +56,6 @@ public abstract class GutterIconRenderer {
     return null;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static class Alignment {
     public static final Alignment LEFT = new Alignment("LEFT", 1);
     public static final Alignment RIGHT = new Alignment("RIGHT", 3);
@@ -63,7 +64,7 @@ public abstract class GutterIconRenderer {
     private final String myName;
     private int myWeight;
 
-    private Alignment(String name, int weight) {
+    private Alignment(@NonNls String name, int weight) {
       myName = name;
       myWeight = weight;
     }

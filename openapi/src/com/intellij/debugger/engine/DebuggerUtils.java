@@ -33,6 +33,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.*;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -41,10 +42,10 @@ import java.util.List;
 public abstract class DebuggerUtils  implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.DebuggerUtils");
 
+  @NonNls
   public static String getValueAsString(final EvaluationContext evaluationContext, Value value) throws EvaluateException {
     try {
       if (value == null) {
-        //noinspection HardCodedStringLiteral
         return "null";
       }
       if (value instanceof StringReference) {
@@ -77,7 +78,6 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
             throw EvaluateExceptionUtil.createEvaluateException("Cannot evaluate " + objRef.referenceType().name() + ".toString()");
           }
         }
-        //noinspection HardCodedStringLiteral
         final Method toStringMethod = findMethod(refType, "toString", "()Ljava/lang/String;");
         if (toStringMethod == null) {
           throw EvaluateExceptionUtil.createEvaluateException("Cannot evaluate " + objRef.referenceType().name() + ".toString()");
@@ -89,7 +89,6 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
           toStringMethod,
           Collections.EMPTY_LIST);
 
-        //noinspection HardCodedStringLiteral
         return  stringReference == null ? "null" : stringReference.value();
       }
       throw EvaluateExceptionUtil.createEvaluateException("internal error : unsupported expression type");
@@ -99,7 +98,7 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
     }
   }
 
-  public static Method findMethod(ReferenceType refType, String methodName, String methodSignature) {
+  public static Method findMethod(ReferenceType refType, @NonNls String methodName, @NonNls String methodSignature) {
     Method method = null;
     if(methodSignature != null) {
       if (refType instanceof ClassType) {

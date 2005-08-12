@@ -15,7 +15,8 @@
  */
 package com.intellij.openapi.wm;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
+import org.jetbrains.annotations.NonNls;
+
 public final class ToolWindowAnchor {
   public static final ToolWindowAnchor TOP = new ToolWindowAnchor("top");
   public static final ToolWindowAnchor LEFT = new ToolWindowAnchor("left");
@@ -24,7 +25,7 @@ public final class ToolWindowAnchor {
 
   private String myText;
 
-  private ToolWindowAnchor(String text){
+  private ToolWindowAnchor(@NonNls String text){
     myText = text;
   }
 

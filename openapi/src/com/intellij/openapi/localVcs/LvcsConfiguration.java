@@ -54,7 +54,6 @@ public class LvcsConfiguration implements JDOMExternalizable, ApplicationCompone
   }
 
   public String getComponentName() {
-    //noinspection HardCodedStringLiteral
     return "LvcsConfiguration";
   }
 

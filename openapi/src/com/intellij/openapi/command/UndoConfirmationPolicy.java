@@ -15,11 +15,12 @@
  */
 package com.intellij.openapi.command;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
+import org.jetbrains.annotations.NonNls;
+
 public class UndoConfirmationPolicy {
   private final String myName;
 
-  private UndoConfirmationPolicy(String name) {
+  private UndoConfirmationPolicy(@NonNls String name) {
     myName = name;
   }
 

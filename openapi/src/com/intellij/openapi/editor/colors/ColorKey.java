@@ -21,6 +21,8 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.jetbrains.annotations.NonNls;
+
 public final class ColorKey implements Comparable<ColorKey> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.colors.ColorKey");
   private static final Color NULL_COLOR = new Color(0, 0, 0);
@@ -68,7 +70,7 @@ public final class ColorKey implements Comparable<ColorKey> {
     return myDefaultColor;
   }
 
-  public static ColorKey createColorKey(String externalName) {
+  public static ColorKey createColorKey(@NonNls String externalName) {
     return find(externalName);
   }
 

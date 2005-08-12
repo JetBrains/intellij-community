@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NonNls;
 
 public class VisualPosition {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.VisualPosition");
@@ -29,8 +30,8 @@ public class VisualPosition {
     this.column = column;
   }
 
+  @NonNls
   public String toString() {
-    //noinspection HardCodedStringLiteral
     return "VisualPosition: line = " + line + " column = " + column;
   }
 }

@@ -16,14 +16,14 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
 public class VariableKind {
   private final String myName;
 
   private static HashMap ourNameToObjectMap = new HashMap();
 
-  private VariableKind(String name) {
+  private VariableKind(@NonNls String name) {
     myName = name;
     ourNameToObjectMap.put(name, this);
   }

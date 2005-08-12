@@ -15,11 +15,12 @@
  */
 package com.intellij.openapi.editor.colors;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
+import org.jetbrains.annotations.NonNls;
+
 public final class EditorFontType {
   private String myDebugName;
 
-  private EditorFontType(String debugName) {
+  private EditorFontType(@NonNls String debugName) {
     myDebugName = debugName;
   }
 
