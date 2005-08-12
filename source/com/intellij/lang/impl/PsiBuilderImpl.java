@@ -196,7 +196,7 @@ public class PsiBuilderImpl implements PsiBuilder {
   }
 
   private boolean whitespaceOrComment(IElementType token) {
-    return myWhitespaces.isInSet(token) || myComments.isInSet(token);
+    return myWhitespaces.contains(token) || myComments.contains(token);
   }
 
   public Marker mark() {
@@ -273,12 +273,12 @@ public class PsiBuilderImpl implements PsiBuilder {
       ProductionMarker item = myProduction.get(i);
 
       if (item instanceof StartMarker) {
-        while (item.myLexemIndex < myLexems.size() && myWhitespaces.isInSet(myLexems.get(item.myLexemIndex).getTokenType())) item.myLexemIndex++;
+        while (item.myLexemIndex < myLexems.size() && myWhitespaces.contains(myLexems.get(item.myLexemIndex).getTokenType())) item.myLexemIndex++;
       }
       else if (item instanceof DoneMarker || item instanceof ErrorItem) {
         int prevProductionLexIndex = myProduction.get(i - 1).myLexemIndex;
         while (item.myLexemIndex > prevProductionLexIndex && item.myLexemIndex < myLexems.size() &&
-               myWhitespaces.isInSet(myLexems.get(item.myLexemIndex - 1).getTokenType())) {
+               myWhitespaces.contains(myLexems.get(item.myLexemIndex - 1).getTokenType())) {
           item.myLexemIndex--;
         }
       }
@@ -341,10 +341,10 @@ public class PsiBuilderImpl implements PsiBuilder {
   private LeafElement createLeaf(final Token lexem) {
     if (lexem.myTokenStart == lexem.myTokenEnd) return null; // Empty token. Most probably a parser directive like indent/dedent in phyton
     final IElementType type = lexem.getTokenType();
-    if (myWhitespaces.isInSet(type)) {
+    if (myWhitespaces.contains(type)) {
       return new PsiWhiteSpaceImpl(myLexer.getBuffer(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
     }
-    else if (myComments.isInSet(type)) {
+    else if (myComments.contains(type)) {
       return new PsiCommentImpl(type, myLexer.getBuffer(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
     }
     else if (type instanceof IChameleonElementType) {

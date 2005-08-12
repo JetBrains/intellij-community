@@ -153,6 +153,13 @@ public class BraceMatchingUtil {
     }
 
     private boolean isLBraceToken(final IElementType tokenType) {
+      PairedBraceMatcher matcher = tokenType.getLanguage().getPairedBraceMatcher();
+      if (matcher != null) {
+        BracePair[] pairs = matcher.getPairs();
+        for (BracePair pair : pairs) {
+          if (pair.getLeftBraceType() == tokenType) return true;
+        }
+      }
       return tokenType == JavaTokenType.LPARENTH ||
              tokenType == JavaTokenType.LBRACE ||
              tokenType == JavaTokenType.LBRACKET ||
@@ -169,6 +176,13 @@ public class BraceMatchingUtil {
 
     public boolean isRBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
       final IElementType tokenType = getToken(iterator);
+      PairedBraceMatcher matcher = tokenType.getLanguage().getPairedBraceMatcher();
+      if (matcher != null) {
+        BracePair[] pairs = matcher.getPairs();
+        for (BracePair pair : pairs) {
+          if (pair.getRightBraceType() == tokenType) return true;
+        }
+      }
 
       if (tokenType == JavaTokenType.RPARENTH ||
           tokenType == JavaTokenType.RBRACE ||
@@ -186,10 +200,10 @@ public class BraceMatchingUtil {
       }
       else if (tokenType == XmlTokenType.XML_TAG_END) {
         final boolean result = findEndTagStart(iterator);
-        
+
         if (fileType == StdFileTypes.HTML || fileType == StdFileTypes.JSP) {
           final String tagName = getTagName(fileText, iterator);
-          
+
           if (tagName != null && HtmlUtil.isSingleHtmlTag(tagName)) {
             return !result;
           }
@@ -211,6 +225,15 @@ public class BraceMatchingUtil {
 
     public boolean isStructuralBrace(HighlighterIterator iterator,CharSequence text, FileType fileType) {
       IElementType tokenType = getToken(iterator);
+
+      PairedBraceMatcher matcher = tokenType.getLanguage().getPairedBraceMatcher();
+      if (matcher != null) {
+        BracePair[] pairs = matcher.getPairs();
+        for (BracePair pair : pairs) {
+          if ((pair.getLeftBraceType() == tokenType || pair.getRightBraceType() == tokenType) &&
+              pair.isStructural()) return true;
+        }
+      }
       if (fileType == StdFileTypes.JAVA || fileType == StdFileTypes.ASPECT) {
         return tokenType == JavaTokenType.RBRACE || tokenType == JavaTokenType.LBRACE;
       }

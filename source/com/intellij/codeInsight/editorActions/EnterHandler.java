@@ -3,9 +3,10 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.ide.DataManager;
+import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.StringLiteralLexer;
@@ -25,6 +26,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -108,7 +110,7 @@ public class EnterHandler extends EditorWriteActionHandler {
         lexer.start(chars, range.getStartOffset(), range.getEndOffset());
         while (lexer.getTokenType() != null) {
           if (lexer.getTokenStart() < caretOffset && caretOffset < lexer.getTokenEnd()) {
-            if (StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.isInSet(lexer.getTokenType())) {
+            if (StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.contains(lexer.getTokenType())) {
               caretOffset = lexer.getTokenEnd();
             }
             break;
@@ -196,14 +198,14 @@ public class EnterHandler extends EditorWriteActionHandler {
                                   || text.charAt(caretOffset) == '\t');
     editor.getCaretModel().moveToOffset(caretOffset);
     myOriginalHandler.execute(editor, dataContext);
-    
+
     if (settings.SMART_INDENT_ON_ENTER || forceIndent) {
       caretOffset += 1;
       caretOffset = CharArrayUtil.shiftForward(editor.getDocument().getCharsSequence(), caretOffset, " \t");
     }
     else {
       caretOffset = editor.getCaretModel().getOffset();
-    }    
+    }
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     final DoEnterAction action = new DoEnterAction(
@@ -218,9 +220,9 @@ public class EnterHandler extends EditorWriteActionHandler {
   }
 
   private static void handleEnterInPropertiesFile(final Editor editor,
-                                           final Document document,
-                                           final PsiElement psiAtOffset,
-                                           int caretOffset) {
+                                                  final Document document,
+                                                  final PsiElement psiAtOffset,
+                                                  int caretOffset) {
     final IElementType elementType = psiAtOffset == null ? null : psiAtOffset.getNode().getElementType();
     final String toInsert;
     if (elementType == PropertiesTokenTypes.VALUE_CHARACTERS) {
@@ -310,9 +312,21 @@ public class EnterHandler extends EditorWriteActionHandler {
       return false;
     }
 
-    iterator = highlighter.createIterator(0);
+    iterator = highlighter.createIterator(offset - 1);
+    Language language = iterator.getTokenType().getLanguage();
+    do {
+      iterator.retreat();
+      IElementType tokenType = iterator.getTokenType();
+      if (tokenType!= ElementType.WHITE_SPACE  && !tokenType.getLanguage().equals(language)) {
+        iterator.advance();
+        break;
+      }
+    } while(iterator.getStart() > 0);
+
     int balance = 0;
     while (!iterator.atEnd()) {
+      IElementType tokenType = iterator.getTokenType();
+      if (tokenType != ElementType.WHITE_SPACE && !tokenType.getLanguage().equals(language)) break;
       if (braceMatcher.isStructuralBrace(iterator,chars, fileType)) {
         if (braceMatcher.isLBraceToken(iterator,chars, fileType)) {
           balance++;
@@ -465,7 +479,7 @@ public class EnterHandler extends EditorWriteActionHandler {
       buffer.append(DOC_COMMENT_ASTERISK);
       buffer.append(LINE_SEPARATOR);
       buffer.append(DOC_COMMENT_SUFFIX);
-      
+
       PsiDocComment comment = createComment(buffer, settings);
 
       myOffset = comment.getTextRange().getStartOffset();
