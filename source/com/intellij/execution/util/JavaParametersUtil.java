@@ -57,7 +57,7 @@ public class JavaParametersUtil {
   }
 
   private static void configureOneModuleClassPath(final  JavaParameters parameters, Module module, String jreHome) throws CantRunException {
-    final List<CommandLineEntry> common = getClassPath(module);
+    final List<CommandLineEntry> common = getClassPath(module, true);
 
     final ProjectJdk jdk = JavaSdk.getInstance().createJdk("", jreHome);
     if (jdk == null) throw CantRunException.noJdkConfigured();
@@ -91,14 +91,15 @@ public class JavaParametersUtil {
 
     Module[] modules = ModuleManager.getInstance(project).getModules();
     for (Module module : modules) {
-      orders.add(getClassPath(module));
+      orders.add(getClassPath(module, false));
     }
     return (List<CommandLineEntry>)OrdersMerger.mergeOrder(orders, TObjectHashingStrategy.CANONICAL);
   }
 
-  private static ArrayList<CommandLineEntry> getClassPath(final Module module) {
+  private static ArrayList<CommandLineEntry> getClassPath(final Module module, final boolean withDependencies) {
     final ArrayList<CommandLineEntry> entries = new ArrayList<CommandLineEntry>();
-    ModuleRootManager.getInstance(module).processOrder(new RootPolicy() {
+    final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+    moduleRootManager.processOrder(new RootPolicy() {
       public Object visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final Object object) {
         entries.add(JavaParametersUtil.JDK_ENTRY);
         return null;
@@ -115,6 +116,14 @@ public class JavaParametersUtil {
 
       public Object visitModuleSourceOrderEntry(final ModuleSourceOrderEntry moduleSourceOrderEntry, final Object object) {
         final List<String> outputs = ProjectRootsTraversing.RootTraversePolicy.ALL_OUTPUTS.getOutputs(module);
+        if (withDependencies){
+          final Module[] dependencies = moduleRootManager.getDependencies();
+          if (dependencies != null){
+            for (Module module1 : dependencies) {
+              outputs.addAll(ProjectRootsTraversing.RootTraversePolicy.ALL_OUTPUTS.getOutputs(module1));
+            }
+          }
+        }
         for (Iterator<String> iterator1 = outputs.iterator(); iterator1.hasNext();) {
           final String url = iterator1.next();
           entries.add(new ClassPathEntry(PathUtil.toPresentableUrl(url)));
