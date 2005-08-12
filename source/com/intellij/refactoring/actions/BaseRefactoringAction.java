@@ -5,10 +5,7 @@ import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.lang.Language;
 
@@ -52,9 +49,11 @@ public abstract class BaseRefactoringAction extends AnAction {
 
     Editor editor = (Editor) dataContext.getData(DataConstants.EDITOR);
     PsiFile file = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
-    if (file != null && !isAvailableForFile(file)) {
-      presentation.setEnabled(false);
-      return;
+    if (file != null) {
+      if (file instanceof PsiCompiledElement || !isAvailableForFile(file)) {
+        presentation.setEnabled(false);
+        return;
+      }
     }
 
     if (editor != null) {

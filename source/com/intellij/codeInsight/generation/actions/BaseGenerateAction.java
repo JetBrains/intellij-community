@@ -27,6 +27,7 @@ public class BaseGenerateAction extends BaseCodeInsightAction {
 
   protected boolean isValidForFile(Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PsiJavaFile)) return false;
+    if (file instanceof PsiCompiledElement) return false;
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
