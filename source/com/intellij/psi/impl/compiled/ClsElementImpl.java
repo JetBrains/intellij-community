@@ -9,6 +9,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
 abstract class ClsElementImpl extends PsiElementBase implements PsiCompiledElement {
@@ -147,9 +148,12 @@ abstract class ClsElementImpl extends PsiElementBase implements PsiCompiledEleme
     PsiElement[] children = getChildren();
     if (children.length == 0) return null;
 
-    for (PsiElement aChildren : children) {
-      PsiElement element = ((ClsElementImpl)aChildren).mirrorToElement(mirror);
-      if (element != null) return element;
+    for (PsiElement child : children) {
+      ClsElementImpl clsChild = ((ClsElementImpl) child);
+      if (PsiTreeUtil.isAncestor(clsChild.getMirror(), mirror, false)) {
+        PsiElement element = clsChild.mirrorToElement(mirror);
+        if (element != null) return element;
+      }
     }
 
     return null;
