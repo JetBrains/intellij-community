@@ -8,6 +8,7 @@ import org.jdom.Element;
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import java.awt.*;
+import java.util.Map;
 
 public class UISettings implements NamedJDOMExternalizable, ApplicationComponent {
   private EventListenerList myListenerList;
@@ -198,10 +199,20 @@ public class UISettings implements NamedJDOMExternalizable, ApplicationComponent
   public static void setupAntialiasing(final Graphics g) {
     Graphics2D g2d=(Graphics2D)g;
     UISettings uiSettings=getInstance();
-    if(uiSettings.ANTIALIASING_IN_EDITOR){
-      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
-      g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-    }else{
+
+    if(uiSettings.ANTIALIASING_IN_EDITOR) {
+      Toolkit tk = Toolkit.getDefaultToolkit();
+      //noinspection HardCodedStringLiteral
+      Map map = (Map)(tk.getDesktopProperty("awt.font.desktophints"));
+      if (map != null) {
+        g2d.addRenderingHints(map);
+      }
+      else {
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+      }
+    }
+    else {
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_OFF);
       g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
     }
