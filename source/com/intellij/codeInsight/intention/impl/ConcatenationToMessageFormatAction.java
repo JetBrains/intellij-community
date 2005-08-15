@@ -51,7 +51,7 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
 
   private void calculateFormatAndArguments(PsiExpression expression, StringBuffer formatString, List<PsiExpression> args, List<PsiExpression> argsToCombine) throws IncorrectOperationException {
     if (expression == null) return;
-    if (expression instanceof PsiBinaryExpression &&
+    if (expression instanceof PsiBinaryExpression && expression.getType() != null &&
         expression.getType().equalsToText("java.lang.String") &&
         ((PsiBinaryExpression) expression).getOperationSign().getTokenType() == JavaTokenType.PLUS) {
       calculateFormatAndArguments(((PsiBinaryExpression) expression).getLOperand(), formatString, args, argsToCombine);
