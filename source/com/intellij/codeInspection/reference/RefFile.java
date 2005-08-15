@@ -49,11 +49,14 @@ public class RefFile extends RefElement {
               final SourceFolder[] sourceFolderFiles = contentEntry.getSourceFolders();
               for (SourceFolder folder : sourceFolderFiles) {
                 if (VfsUtil.isAncestor(folder.getFile(), parentDirectory, false)){
-                  final String qualifiedName = aPackage.getQualifiedName();
+                  String qualifiedName = aPackage.getQualifiedName();
                   final int prefixLength = folder.getPackagePrefix().length();
                   if (prefixLength > 0 && qualifiedName.length() > prefixLength){ //consider package prefixes
                     manager.getPackage(qualifiedName.substring(prefixLength + 1)).add(this);
                   } else {
+                    if (qualifiedName.length() == 0) {
+                      qualifiedName = "default package";
+                    }
                     manager.getPackage(qualifiedName).add(this);
                   }
                   return;
