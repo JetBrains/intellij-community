@@ -106,23 +106,24 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
   }
 
   public boolean processDeclarations(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
-    if (myContext == null) { // process classes in lang&default package + "pseudo-imports"
-      ElementClassHint classHint = processor.getHint(ElementClassHint.class);
-      if (classHint == null || classHint.shouldProcess(PsiClass.class)) {
-        final NameHint nameHint = processor.getHint(NameHint.class);
-        final String name = nameHint != null ? nameHint.getName() : null;
-        if (name != null) {
-          PsiClass imported = myPseudoImports.get(name);
-          if (imported != null) {
-            if (!processor.execute(imported, substitutor)) return false;
-          }
+    ElementClassHint classHint = processor.getHint(ElementClassHint.class);
+    if (classHint == null || classHint.shouldProcess(PsiClass.class)) {
+      final NameHint nameHint = processor.getHint(NameHint.class);
+      final String name = nameHint != null ? nameHint.getName() : null;
+      //"pseudo-imports"
+      if (name != null) {
+        PsiClass imported = myPseudoImports.get(name);
+        if (imported != null) {
+          if (!processor.execute(imported, substitutor)) return false;
         }
-        else {
-          for (PsiClass aClass : myPseudoImports.values()) {
-            if (!processor.execute(aClass, substitutor)) return false;
-          }
+      } else {
+        for (PsiClass aClass : myPseudoImports.values()) {
+          if (!processor.execute(aClass, substitutor)) return false;
         }
+      }
 
+      if (myContext == null) {
+        //process classes in lang&default package
         PsiPackage langPackage = getManager().findPackage("java.lang");
         if (langPackage != null) {
           if (!langPackage.processDeclarations(processor, substitutor, null, place)) return false;

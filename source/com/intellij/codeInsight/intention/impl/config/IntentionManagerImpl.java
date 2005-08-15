@@ -40,14 +40,14 @@ public class IntentionManagerImpl extends IntentionManager {
     registerIntentionAndMetaData(new SplitDeclarationAction(), DECLARATION_CAT);
     registerIntentionAndMetaData(new AddRuntimeExceptionToThrowsAction(), DECLARATION_CAT);
 
-    registerIntentionAndMetaData(new SimplifyBooleanExpressionAction(), new String[]{"Boolean"});
+    registerIntentionAndMetaData(new SimplifyBooleanExpressionAction(), "Boolean");
 
-    registerIntentionAndMetaData(new EJBImplementationAction(), new String[]{"EJB"});
-    registerIntentionAndMetaData(new EJBDeclarationAction(), new String[]{"EJB"});
-
+    registerIntentionAndMetaData(new EJBImplementationAction(), "EJB");
+    registerIntentionAndMetaData(new EJBDeclarationAction(), "EJB");
+    registerIntentionAndMetaData(new ConcatenationToMessageFormatAction(), "I18N");
   }
 
-  public void registerIntentionAndMetaData(IntentionAction action, String[] category) {
+  public void registerIntentionAndMetaData(IntentionAction action, String... category) {
     registerIntentionAndMetaData(action, category, action.getFamilyName());
   }
   public void registerIntentionAndMetaData(IntentionAction action, String[] category, String descriptionDirectoryName) {
