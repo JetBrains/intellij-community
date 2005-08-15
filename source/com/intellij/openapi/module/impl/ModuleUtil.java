@@ -151,4 +151,14 @@ public class ModuleUtil {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     return fileIndex.getModuleForFile(file);
   }
+
+  public static void getDependencies(Module module, Set<Module> modules) {
+    if (modules.contains(module)) return;
+    Module[] dependencies = ModuleRootManager.getInstance(module).getDependencies();
+    for (int i = 0; i < dependencies.length; i++) {
+      Module dependency = dependencies[i];
+      modules.add(dependency);
+      getDependencies(dependency, modules);
+    }
+  }
 }

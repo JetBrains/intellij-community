@@ -200,7 +200,7 @@ final class StringEditorDialog extends DialogWrapper{
               initialVirtualFile = VfsUtil.findFileByURL(resource);
             }
             PsiFile initialPropertiesFile = initialVirtualFile == null ? null : PsiManager.getInstance(project).findFile(initialVirtualFile);
-            final GlobalSearchScope moduleScope = GlobalSearchScope.moduleScope(myModule);
+            final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesScope(myModule);
             TreeFileChooser fileChooser = TreeClassChooserFactory.getInstance(project).createFileChooser("Choose Poperties File", initialPropertiesFile,
                                                                                                          StdFileTypes.PROPERTIES, new TreeFileChooser.PsiFileFilter() {
               public boolean accept(PsiFile file) {
