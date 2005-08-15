@@ -19,11 +19,12 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.HighlightedRegion;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -34,7 +35,7 @@ import java.util.Iterator;
 public final class TodoPackageNode extends PackageElementNode implements HighlightedRegionProvider {
   private final ArrayList myHighlightedRegions;
   private final TodoTreeBuilder myBuilder;
-  private String myPresentationName = null;
+  @Nullable private String myPresentationName = null;
 
   public TodoPackageNode(Project project,
                          PackageElement element,
@@ -53,11 +54,18 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
   public TodoPackageNode(Project project,
                          PackageElement element,
                          TodoTreeBuilder builder,
-                         String name) {
+                         @Nullable String name) {
     super(project, element, ViewSettings.DEFAULT);
     myBuilder = builder;
     myHighlightedRegions = new ArrayList(2);
-    myPresentationName = name;
+    if (element != null && name == null){
+      final PsiPackage aPackage = element.getPackage();
+      if (aPackage != null){
+        myPresentationName = aPackage.getName();
+      }
+    } else {
+      myPresentationName = name;
+    }
   }
 
 
@@ -128,7 +136,8 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
 
   public Collection<AbstractTreeNode> getChildren() {
     ArrayList<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
-    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
+    final Project project = getProject();
+    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final PsiPackage psiPackage = getValue().getPackage();
     final Module module = getValue().getModule();
     if (!getStructure().getIsFlattenPackages() || psiPackage == null) {
@@ -142,7 +151,7 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
         }
         // Add files
         final PsiDirectory containingDirectory = psiFile.getContainingDirectory();
-        TodoFileNode todoFileNode = new TodoFileNode(getProject(), psiFile, myBuilder, false);
+        TodoFileNode todoFileNode = new TodoFileNode(project, psiFile, myBuilder, false);
         if (ArrayUtil.find(psiPackage.getDirectories(), containingDirectory) > -1 && !children.contains(todoFileNode)) {
           children.add(todoFileNode);
           continue;
@@ -153,10 +162,17 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
           final PsiDirectory parentDirectory = _dir.getParentDirectory();
           if (parentDirectory != null){
             PsiPackage _package = _dir.getPackage();
-            TodoPackageNode todoPackageNode = new TodoPackageNode(getProject(), new PackageElement(module, _package, false), myBuilder);
-            if (_package != null && _package.getParentPackage() != null && psiPackage.equals(_package.getParentPackage()) && !children.contains(todoPackageNode)) {
-              children.add(todoPackageNode);
-              break;
+            if (_package != null && _package.getParentPackage() != null && psiPackage.equals(_package.getParentPackage())) {
+              final GlobalSearchScope scope = module != null ? GlobalSearchScope.moduleScope(module) : GlobalSearchScope.projectScope(project);
+              _package = TodoPackageUtil.findNonEmptyPackage(_package, module, project, myBuilder, scope); //compact empty middle packages
+              final String name = _package.getParentPackage().equals(psiPackage)
+                                  ? null //non compacted
+                                  : _package.getQualifiedName().substring(psiPackage.getQualifiedName().length() + 1);
+              TodoPackageNode todoPackageNode = new TodoPackageNode(project, new PackageElement(module, _package, false), myBuilder, name);
+              if (!children.contains(todoPackageNode)) {
+                children.add(todoPackageNode);
+                break;
+              }
             }
           }
           _dir = parentDirectory;
@@ -180,17 +196,6 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
           children.add(todoFileNode);
           continue;
         }
-        // Add directories
-         PsiPackage _package = _dir.getPackage();
-        final PackageElement element = new PackageElement(module, _package, false);
-        if (_package != null && !TodoPackageUtil.isPackageEmpty(element, myBuilder, getProject())){
-           TodoPackageNode todoPackageNode = new TodoPackageNode(getProject(), element, myBuilder);
-           if (PsiTreeUtil.isAncestor(psiPackage, _package, true) && !children.contains(todoPackageNode)) {
-             children.add(todoPackageNode);
-             continue;
-           }
-         }
-
       }
       Collections.sort(children, TodoFileDirAndModuleComparator.ourInstance);
     }

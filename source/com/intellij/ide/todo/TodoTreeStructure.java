@@ -14,10 +14,8 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.util.containers.HashMap;
@@ -145,11 +143,26 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
         }
       }
     } else if (element instanceof PackageElement){
-      Iterator<PsiFile> iterator = myBuilder.getFiles((PackageElement)element);
-      while(iterator.hasNext()){
-        PsiFile psiFile = iterator.next();
-        if(accept(psiFile)){
-          count++;
+      final PackageElement packageElement = (PackageElement)element;
+      if (getIsFlattenPackages()){
+        final PsiPackage aPackage = packageElement.getPackage();
+        final Module module = packageElement.getModule();
+        final GlobalSearchScope scope = module != null ? GlobalSearchScope.moduleScope(module) : GlobalSearchScope.projectScope(aPackage.getProject());
+        final PsiDirectory[] directories = aPackage.getDirectories(scope);
+        for (PsiDirectory directory : directories) {
+          Iterator<PsiFile> iterator = myBuilder.getFilesUnderDirectory(directory);
+          while(iterator.hasNext()){
+            PsiFile psiFile = iterator.next();
+            if (accept(psiFile)) count++;
+          }
+        }
+      } else {
+        Iterator<PsiFile> iterator = myBuilder.getFiles(packageElement);
+        while(iterator.hasNext()){
+          PsiFile psiFile = iterator.next();
+          if(accept(psiFile)){
+            count++;
+          }
         }
       }
     }else{
@@ -193,10 +206,25 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
         count+=getTodoItemCount(psiFile);
       }
     } else if(element instanceof PackageElement){
-      Iterator<PsiFile> iterator = myBuilder.getFiles((PackageElement)element);
-      while(iterator.hasNext()){
-        PsiFile psiFile = iterator.next();
-        count+=getTodoItemCount(psiFile);
+      final PackageElement packageElement = (PackageElement)element;
+      if (getIsFlattenPackages()){
+        final PsiPackage aPackage = packageElement.getPackage();
+        final Module module = packageElement.getModule();
+        GlobalSearchScope scope = module != null ? GlobalSearchScope.moduleScope(module) : GlobalSearchScope.projectScope(aPackage.getProject());
+        final PsiDirectory[] directories = aPackage.getDirectories(scope);
+        for (PsiDirectory directory : directories) {
+          Iterator<PsiFile> iterator = myBuilder.getFilesUnderDirectory(directory);
+          while(iterator.hasNext()){
+            PsiFile psiFile = iterator.next();
+            count+=getTodoItemCount(psiFile);
+          }
+        }
+      } else {
+        Iterator<PsiFile> iterator = myBuilder.getFiles(packageElement);
+        while(iterator.hasNext()){
+          PsiFile psiFile = iterator.next();
+          count+=getTodoItemCount(psiFile);
+        }
       }
     }else{
       throw new IllegalArgumentException("unknown element: "+element);

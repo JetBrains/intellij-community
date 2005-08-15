@@ -87,11 +87,7 @@ public class TodoPackageUtil {
       }
       else {
         // this is the case when a source root has pakage prefix assigned
-        PackageElement element = new PackageElement(module, directoryPackage, false);
-        TodoPackageNode packageNode = new TodoPackageNode(project, element, builder, directoryPackage.getQualifiedName());
-        if (!children.contains(packageNode)) {
-          children.add(packageNode);
-        }
+        topLevelPackages.add(directoryPackage);
       }
     }
 
@@ -104,10 +100,21 @@ public class TodoPackageUtil {
       }
     }
     for (PsiPackage psiPackage : packages) {
-      PackageElement element = new PackageElement(module, psiPackage, false);
-      TodoPackageNode packageNode = new TodoPackageNode(project, element, builder, psiPackage.getQualifiedName());
-      if (!children.contains(packageNode)) {
-        children.add(packageNode);
+      if (!builder.getTodoTreeStructure().getIsFlattenPackages()) {
+        PackageElement element = new PackageElement(module, psiPackage, false);
+        TodoPackageNode packageNode = new TodoPackageNode(project, element, builder, psiPackage.getQualifiedName());
+        if (!children.contains(packageNode)) {
+          children.add(packageNode);
+        }
+      } else {
+        Set<PsiPackage> allPackages = new HashSet<PsiPackage>();
+        traverseSubPackages(psiPackage, module, builder, project, allPackages);
+        for (PsiPackage aPackage : allPackages) {
+          TodoPackageNode packageNode = new TodoPackageNode(project, new PackageElement(module, aPackage, false), builder);
+          if (!children.contains(packageNode)) {
+            children.add(packageNode);
+          }
+        }
       }
     }
     roots.removeAll(sourceRoots);
@@ -126,7 +133,7 @@ public class TodoPackageUtil {
   }
 
   @Nullable
-  private static PsiPackage findNonEmptyPackage(PsiPackage rootPackage, Module module, Project project, TodoTreeBuilder builder, GlobalSearchScope scope){
+  public static PsiPackage findNonEmptyPackage(PsiPackage rootPackage, Module module, Project project, TodoTreeBuilder builder, GlobalSearchScope scope){
     if (!isPackageEmpty(new PackageElement(module, rootPackage, false), builder, project)){
       return rootPackage;
     }
@@ -154,4 +161,16 @@ public class TodoPackageUtil {
     }
     return suggestedNonEmptyPackage;
   }
+
+  private static void traverseSubPackages(PsiPackage psiPackage, Module module, TodoTreeBuilder builder, Project project, Set<PsiPackage> packages){
+    if (!isPackageEmpty(new PackageElement(module, psiPackage,  false), builder, project)){
+      packages.add(psiPackage);
+    }
+    GlobalSearchScope scope = module != null ? GlobalSearchScope.moduleScope(module) : GlobalSearchScope.projectScope(project);
+    final PsiPackage[] subPackages = psiPackage.getSubPackages(scope);
+    for (PsiPackage subPackage : subPackages) {      
+      traverseSubPackages(subPackage, module, builder, project, packages);
+    }
+  }
+
 }
