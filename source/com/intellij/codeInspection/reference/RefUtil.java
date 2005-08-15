@@ -317,6 +317,9 @@ public class RefUtil {
     else if (refEntity.getOwner() == null) {
       return refEntity.getName();
     }
+    else if (refEntity instanceof RefFile){
+      return refEntity.getName();
+    }
     else if (refEntity instanceof RefClass && ((RefClass)refEntity).isAnonymous()) {
       return refEntity.getName() + " in " + getQualifiedName(refEntity.getOwner());
     }

@@ -15,8 +15,13 @@
  */
 package com.intellij.codeInspection.reference;
 
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
+import org.jetbrains.annotations.Nullable;
 
 
 public class RefFile extends RefElement {
@@ -24,10 +29,49 @@ public class RefFile extends RefElement {
     super(elem, manager);
     if (elem instanceof PsiJavaFile) {
       manager.getPackage(((PsiJavaFile)elem).getPackageName()).add(this);
+    } else {
+      final Project project = elem.getProject();
+      final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
+      final ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
+      final VirtualFile vFile = elem.getVirtualFile();
+      if (vFile == null) return;
+      final VirtualFile parentDirectory = vFile.getParent();
+      if (parentDirectory == null) return;
+      final PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(parentDirectory);
+      if (psiDirectory != null){
+        final PsiPackage aPackage = psiDirectory.getPackage();
+        if (aPackage != null){
+          final Module module = fileIndex.getModuleForFile(parentDirectory);
+          if (module == null) return;
+          final ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
+          for (ContentEntry contentEntry : contentEntries) {
+            if (VfsUtil.isAncestor(contentEntry.getFile(), parentDirectory, false)){
+              final SourceFolder[] sourceFolderFiles = contentEntry.getSourceFolders();
+              for (SourceFolder folder : sourceFolderFiles) {
+                if (VfsUtil.isAncestor(folder.getFile(), parentDirectory, false)){
+                  final String qualifiedName = aPackage.getQualifiedName();
+                  final int prefixLength = folder.getPackagePrefix().length();
+                  if (prefixLength > 0 && qualifiedName.length() > prefixLength){ //consider package prefixes
+                    manager.getPackage(qualifiedName.substring(prefixLength + 1)).add(this);
+                  } else {
+                    manager.getPackage(qualifiedName).add(this);
+                  }
+                  return;
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 
   public void accept(RefVisitor visitor) {
     visitor.visitFile(this);
+  }
+
+  @Nullable
+  public String getAccessModifier() {
+    return null;
   }
 }

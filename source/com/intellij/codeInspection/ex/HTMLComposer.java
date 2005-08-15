@@ -162,6 +162,13 @@ public abstract class HTMLComposer {
         appendMethodParameters(buf, psiMethod, true);
         buf.append("</code>");
       }
+
+      public void visitFile(RefFile file) {
+        final PsiFile psiFile = (PsiFile)file.getElement();
+        buf.append("<b>");
+        buf.append(psiFile.getName());
+        buf.append("</b>");
+      }
     });
   }
 
