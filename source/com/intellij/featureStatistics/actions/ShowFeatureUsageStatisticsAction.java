@@ -10,7 +10,6 @@ import java.io.IOException;
 
 public class ShowFeatureUsageStatisticsAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
-    new IOExceptionDialog(new IOException("Test IO Exception"), "IO Title", "IO Error Text").setVisible(true);
     new ShowFeatureUsageStatisticsDialog(getProject(e)).show();
   }
 
