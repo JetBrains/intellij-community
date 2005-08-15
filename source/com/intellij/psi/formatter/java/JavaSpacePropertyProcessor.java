@@ -511,7 +511,7 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
                                           mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
         }
         else {
-          createSpaceInCode(mySettings.SPACE_BEFORE_ELSE_LBRACE);
+          myResult = Spacing.createSpacing(1, 1, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
         }
       }
     }
