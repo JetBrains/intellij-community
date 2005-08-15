@@ -15,6 +15,8 @@
  */
 package com.intellij;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Extension points provided by IDEA core are listed here.
  */
@@ -33,7 +35,7 @@ public interface ExtensionPoints {
    * Possible registration areas are IDEA_PROJECT, MODULE_PROJECT which stand for ProjectComponent and ModuleComponent correspondingly.
    * If area attribute is ommited the component will be registered in root area which corresponds to ApplicationComponent.
    */
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @NonNls
   String COMPONENT = "com.intellij.component";
 
   /**
@@ -47,7 +49,7 @@ public interface ExtensionPoints {
    * </pre>
    * my.plugin.package.MyErrorHandler class must implement {@link com.intellij.openapi.diagnostic.ErrorReportSubmitter} abstract class.
    */
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @NonNls
   String ERROR_HANDLER = "com.intellij.errorHandler";
 
   /**
@@ -61,7 +63,7 @@ public interface ExtensionPoints {
      * my.plugin.package.MyJUnitPatcher class must implement {@link com.intellij.execution.JUnitPatcher} abstract class.
      */
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @NonNls
   String JUNIT_PATCHER = "com.intellij.junitPatcher";
 
   /**
@@ -73,6 +75,6 @@ public interface ExtensionPoints {
    * </pre>
    * my.plugin.package.MyApplicationStarter class must implement {@link com.intellij.openapi.application.ApplicationStarter} interface.
    */
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @NonNls
   String APPLICATION_STARTER = "com.intellij.appStarter";
 }

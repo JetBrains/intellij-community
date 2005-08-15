@@ -23,6 +23,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -32,8 +33,8 @@ import java.util.Map;
 public abstract class ContainerElement implements JDOMExternalizable, Cloneable {
   private final Map<String,String> myAttributes = new LinkedHashMap<String, String>();
   private Module myParentModule;
-  private static final String URI_ATTR = "URI";
-  private static final String PACKAGING_METHOD_ATTR = "method";
+  @NonNls private static final String URI_ATTR = "URI";
+  @NonNls private static final String PACKAGING_METHOD_ATTR = "method";
 
   protected ContainerElement(Module parentModule) {
     myParentModule = parentModule;
@@ -70,6 +71,7 @@ public abstract class ContainerElement implements JDOMExternalizable, Cloneable 
     myParentModule = module;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(Element element) throws InvalidDataException {
     final List attrs = element.getChildren("attribute");
     for (int i = 0; i < attrs.size(); i++) {
@@ -80,6 +82,7 @@ public abstract class ContainerElement implements JDOMExternalizable, Cloneable 
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(Element element) throws WriteExternalException {
     for (Iterator iterator = myAttributes.keySet().iterator(); iterator.hasNext();) {
       String name = (String)iterator.next();
