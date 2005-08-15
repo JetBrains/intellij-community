@@ -311,9 +311,9 @@ public class EnterHandler extends EditorWriteActionHandler {
       return false;
     }
 
-    iterator = highlighter.createIterator(0);
     Language language = iterator.getTokenType().getLanguage();
 
+    iterator = highlighter.createIterator(0);
     int balance = 0;
     while (!iterator.atEnd()) {
       IElementType tokenType = iterator.getTokenType();
