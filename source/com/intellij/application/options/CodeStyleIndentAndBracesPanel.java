@@ -468,7 +468,7 @@ public class CodeStyleIndentAndBracesPanel extends CodeStyleAbstractPanel {
     settings.KEEP_FIRST_COLUMN_COMMENT = myKeepCommentAtFirstColumn.isSelected();
     settings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE = myKeepControlStatementInOneLine.isSelected();
     settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = myKeepSimpleBlocksInOneLine.isSelected();
-    settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = myKeepSimpleBlocksInOneLine.isSelected();
+    settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = myKeepMethodsInOneLine.isSelected();
 
   }
 
