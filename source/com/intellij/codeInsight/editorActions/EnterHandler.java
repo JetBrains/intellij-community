@@ -26,7 +26,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -312,27 +311,19 @@ public class EnterHandler extends EditorWriteActionHandler {
       return false;
     }
 
-    iterator = highlighter.createIterator(offset - 1);
+    iterator = highlighter.createIterator(0);
     Language language = iterator.getTokenType().getLanguage();
-    do {
-      iterator.retreat();
-      IElementType tokenType = iterator.getTokenType();
-      if (tokenType!= ElementType.WHITE_SPACE  && !tokenType.getLanguage().equals(language)) {
-        iterator.advance();
-        break;
-      }
-    } while(iterator.getStart() > 0);
 
     int balance = 0;
     while (!iterator.atEnd()) {
       IElementType tokenType = iterator.getTokenType();
-      if (tokenType != ElementType.WHITE_SPACE && !tokenType.getLanguage().equals(language)) break;
-      if (braceMatcher.isStructuralBrace(iterator,chars, fileType)) {
-        if (braceMatcher.isLBraceToken(iterator,chars, fileType)) {
-          balance++;
-        }
-        else if (braceMatcher.isRBraceToken(iterator,chars, fileType)) {
-          balance--;
+      if (tokenType.getLanguage().equals(language)) {
+        if (braceMatcher.isStructuralBrace(iterator, chars, fileType)) {
+          if (braceMatcher.isLBraceToken(iterator, chars, fileType)) {
+            balance++;
+          } else if (braceMatcher.isRBraceToken(iterator, chars, fileType)) {
+            balance--;
+          }
         }
       }
       iterator.advance();
