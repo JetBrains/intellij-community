@@ -118,16 +118,17 @@ public class PsiBasedFormattingModel implements FormattingModel {
       if (found != null) {
         if (!myCanModifyAllWhiteSpaces && found.getElementType() == ElementType.WHITE_SPACE) return found;
         if (!(found.getPsi()instanceof JspText) && found.getTextRange().getStartOffset() == offset) {
-          if (found.getElementType() == ElementType.XML_COMMENT_START) {
-            return found.getTreeParent();
-          } else {
-            return found;
-          }
+          return chooseElement(found);
         }
       }
     }
     final ASTNode found = myASTNode.findLeafElementAt(offset);
-    if (found != null && found.getElementType() == ElementType.XML_COMMENT_START) {
+    return chooseElement(found);
+  }
+
+  private ASTNode chooseElement(final ASTNode found) {
+    if (found != null && found.getElementType() == ElementType.XML_COMMENT_START &&
+        found.getTreeParent() != null && found.getTreeParent().getStartOffset() == found.getStartOffset()) {
       return found.getTreeParent();
     } else {
       return found;

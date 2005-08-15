@@ -147,9 +147,13 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
           transaction.run();
           event = transaction.getAccumulatedEvent();
         }
-        catch(IncorrectOperationException ioe){
+        catch(Exception e){
+          LOG.error(e);
           return;
         }
+        //catch(IncorrectOperationException ioe){
+        //  return;
+        //}
         finally{
           myBlockedAspects.pop();
         }
