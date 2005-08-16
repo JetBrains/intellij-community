@@ -118,15 +118,15 @@ public class ArrayUtil {
    * @param obj object to be found.
    * @return index of <code>obj</code> in the <code>src</code> array.
    * Returns <code>-1</code> if passed object isn't found. This method uses
-   * <code>euqals</code> of arrays elements to compare <code>obj</code> with
+   * <code>equals</code> of arrays elements to compare <code>obj</code> with
    * these elements.
    */
-  public static int find(final Object[] src,final Object obj){
+  public static <T> int find(final T[] src,final T obj){
     if (src == null){
       throw new IllegalArgumentException("src cannot be null");
     }
     for(int i=0;i<src.length;i++){
-      final Object o=src[i];
+      final T o=src[i];
       if(o==null){
         if(obj==null){
           return i;
