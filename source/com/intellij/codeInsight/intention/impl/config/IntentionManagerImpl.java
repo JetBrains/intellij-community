@@ -44,7 +44,6 @@ public class IntentionManagerImpl extends IntentionManager {
 
     registerIntentionAndMetaData(new EJBImplementationAction(), "EJB");
     registerIntentionAndMetaData(new EJBDeclarationAction(), "EJB");
-    registerIntentionAndMetaData(new ConcatenationToMessageFormatAction(), "I18N");
   }
 
   public void registerIntentionAndMetaData(IntentionAction action, String... category) {
