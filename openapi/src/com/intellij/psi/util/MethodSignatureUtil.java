@@ -275,20 +275,12 @@ public class MethodSignatureUtil {
    * @return null if signatures do not match
    */
   public static PsiSubstitutor getSuperMethodSignatureSubstitutor(MethodSignature methodSignature, MethodSignature superMethodSignature) {
-    // normalize generic method declarations: correlate type parameters
+    PsiSubstitutor result = getSuperMethodSignatureSubstitutorImpl(methodSignature, superMethodSignature);
+    if (result == null) return null;
+
     PsiTypeParameter[] typeParameters1 = methodSignature.getTypeParameters();
     PsiTypeParameter[] typeParameters2 = superMethodSignature.getTypeParameters();
-
-    // both methods are parameterized and number of parameters mismatch
-    if (typeParameters1.length != typeParameters2.length) return null;
-
-
     PsiSubstitutor substitutor1 = methodSignature.getSubstitutor();
-    PsiSubstitutor substitutor2 = superMethodSignature.getSubstitutor();
-    for (int i = 0; i < typeParameters1.length; i++) {
-      PsiElementFactory factory = typeParameters1[i].getManager().getElementFactory();
-      substitutor2 = substitutor2.put(typeParameters2[i], factory.createType(typeParameters1[i]));
-    }
 
     //check bounds
     for (int i = 0; i < typeParameters1.length; i++) {
@@ -299,11 +291,28 @@ public class MethodSignatureUtil {
       if (supers1.length != supers2.length) return null;
       for (int j = 0; j < supers1.length; j++) {
         PsiType type1 = substitutor1.substitute(supers1[j]);
-        PsiType type2 = substitutor2.substitute(supers2[j]);
+        PsiType type2 = result.substitute(supers2[j]);
         if (!type1.equals(type2)) return null;
       }
     }
-    return substitutor2;
+    return result;
+  }
+
+  private static PsiSubstitutor getSuperMethodSignatureSubstitutorImpl(MethodSignature signature1, MethodSignature signature2) {
+    // normalize generic method declarations: correlate type parameters
+    PsiTypeParameter[] typeParameters1 = signature1.getTypeParameters();
+    PsiTypeParameter[] typeParameters2 = signature2.getTypeParameters();
+
+    // both methods are parameterized and number of parameters mismatch
+    if (typeParameters1.length != typeParameters2.length) return null;
+
+    PsiSubstitutor result = signature2.getSubstitutor();
+    for (int i = 0; i < typeParameters1.length; i++) {
+      PsiElementFactory factory = typeParameters1[i].getManager().getElementFactory();
+      result = result.put(typeParameters2[i], factory.createType(typeParameters1[i]));
+    }
+
+    return result;
   }
 
   public static PsiSubstitutor combineSubstitutors(PsiSubstitutor substitutor, PsiSubstitutor parentSubstitutor) {
@@ -346,9 +355,12 @@ public class MethodSignatureUtil {
       final PsiType[] parameterTypes1 = method1.getParameterTypes();
       final PsiType[] parameterTypes2 = method2.getParameterTypes();
       if (parameterTypes1.length != parameterTypes2.length) return false;
+      PsiSubstitutor superSubstitutor = getSuperMethodSignatureSubstitutorImpl(method1, method2);
+      if (superSubstitutor == null) superSubstitutor = method2.getSubstitutor();
+
       for (int i = 0; i < parameterTypes1.length; i++) {
-        final PsiType type1 = TypeConversionUtil.erasure(parameterTypes1[i]);
-        final PsiType type2 = TypeConversionUtil.erasure(parameterTypes2[i]);
+        final PsiType type1 = TypeConversionUtil.erasure(method1.getSubstitutor().substitute(parameterTypes1[i]));
+        final PsiType type2 = TypeConversionUtil.erasure(superSubstitutor.substitute(parameterTypes2[i]));
         if (!Comparing.equal(type1, type2)) return false;
       }
       return true;
