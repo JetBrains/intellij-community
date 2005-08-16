@@ -29,6 +29,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.io.FileTypeFilter;
+import com.intellij.ide.ui.SplitterProportionsData;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 
@@ -61,6 +62,7 @@ public class BuildJarActionDialog extends DialogWrapper {
   private JPanel myModuleSettingsPanel;
   private LabeledComponent<TextFieldWithBrowseButton> myMainClassComponent;
   private LabeledComponent<TextFieldWithBrowseButton> myJarFilePathComponent;
+  private final SplitterProportionsData mySplitterProportionsData = new SplitterProportionsData();
 
   protected BuildJarActionDialog(Project project) {
     super(true);
@@ -70,6 +72,8 @@ public class BuildJarActionDialog extends DialogWrapper {
 
     setTitle("Build Jars");
     init();
+    mySplitterProportionsData.externalizeFromDimensionService(getDimensionKey());
+    mySplitterProportionsData.restoreSplitterProportions(myPanel);
   }
 
   protected void doHelpAction() {
@@ -228,6 +232,12 @@ public class BuildJarActionDialog extends DialogWrapper {
 
   protected String getDimensionServiceKey() {
     return "#com.intellij.j2ee.jar.BuildJarActionDialog";
+  }
+
+  protected void dispose() {
+    mySplitterProportionsData.saveSplitterProportions(myPanel);
+    mySplitterProportionsData.externalizeToDimensionService(getDimensionKey());
+    super.dispose();
   }
 
   protected void doOKAction() {

@@ -1,13 +1,10 @@
 /**
  * @author cdr
  */
-package com.intellij.j2ee.module.view.common.editor;
+package com.intellij.ide.ui;
 
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.*;
 import com.intellij.util.text.StringTokenizer;
 import org.jdom.Element;
 
@@ -23,6 +20,7 @@ public class SplitterProportionsData implements JDOMExternalizable{
     proportions.clear();
     doSaveSplitterProportions(root);
   }
+
   private void doSaveSplitterProportions(Component root) {
     if (root instanceof Splitter) {
       Float prop = new Float(((Splitter)root).getProportion());
@@ -52,6 +50,25 @@ public class SplitterProportionsData implements JDOMExternalizable{
       }
     }
     return index;
+  }
+
+  public void externalizeToDimensionService(String key) {
+    for (int i = 0; i < proportions.size(); i++) {
+      float proportion = proportions.get(i).floatValue();
+      String serviceKey = key + "."+i;
+      int value = (int)(proportion * 1000);
+      DimensionService.getInstance().setExtendedState(serviceKey, value);
+    }
+  }
+  public void externalizeFromDimensionService(String key) {
+    proportions.clear();
+    for (int i = 0; ;i++) {
+      String serviceKey = key + "."+i;
+      int value = DimensionService.getInstance().getExtendedState(serviceKey);
+      if (value == -1) break;
+      double proportion = value * 0.001;
+      proportions.add(new Float(proportion));
+    }
   }
 
   public void readExternal(Element element) throws InvalidDataException {

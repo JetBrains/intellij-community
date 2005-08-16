@@ -25,6 +25,7 @@ import org.jdom.Element;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * This class represents map between strings and rectangles. It's intended to store
@@ -33,9 +34,9 @@ import java.util.Iterator;
 public class DimensionService implements JDOMExternalizable, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.DimensionService");
 
-  private final HashMap myKey2Location;
-  private final HashMap myKey2Size;
-  private final TObjectIntHashMap myKey2ExtendedState;
+  private final Map<String,Point> myKey2Location;
+  private final Map<String,Dimension> myKey2Size;
+  private final TObjectIntHashMap<String> myKey2ExtendedState;
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static final String EXTENDED_STATE = "extendedState";
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -49,9 +50,9 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
 
   /** Invoked by reflection */
   private DimensionService(){
-    myKey2Location=new HashMap();
-    myKey2Size=new HashMap();
-    myKey2ExtendedState = new TObjectIntHashMap();
+    myKey2Location=new HashMap<String, Point>();
+    myKey2Size=new HashMap<String, Dimension>();
+    myKey2ExtendedState = new TObjectIntHashMap<String>();
   }
 
   public void initComponent() {}
@@ -69,7 +70,7 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
     if(key==null){
       throw new IllegalArgumentException("key cannot be null");
     }
-    Point point=(Point)myKey2Location.get(key);
+    Point point=myKey2Location.get(key);
     if(point!=null){
       WindowManager windowManager=WindowManager.getInstance();
       if(!windowManager.isInsideScreenBounds(point.x,point.y)){
@@ -93,7 +94,7 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
       throw new IllegalArgumentException("key cannot be null");
     }
     if (point != null) {
-      myKey2Location.put(key, point.clone());
+      myKey2Location.put(key, (Point)point.clone());
     }else {
       myKey2Location.remove(key);
     }
@@ -108,7 +109,7 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
     if(key==null){
       throw new IllegalArgumentException("key cannot be null");
     }
-    Dimension size=(Dimension)myKey2Size.get(key);
+    Dimension size=myKey2Size.get(key);
     if(size!=null){
       return (Dimension)size.clone();
     }else{
@@ -126,7 +127,7 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
       throw new IllegalArgumentException("key cannot be null");
     }
     if (size != null) {
-      myKey2Size.put(key, size.clone());
+      myKey2Size.put(key, (Dimension)size.clone());
     }else {
       myKey2Size.remove(key);
     }
@@ -167,9 +168,9 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
   @SuppressWarnings({"HardCodedStringLiteral"})
   public synchronized void writeExternal(Element element) throws WriteExternalException {
     // Save locations
-    for(Iterator i=myKey2Location.keySet().iterator();i.hasNext();){
-      String key=(String)i.next();
-      Point point=(Point)myKey2Location.get(key);
+    for(Iterator<String> i=myKey2Location.keySet().iterator();i.hasNext();){
+      String key=i.next();
+      Point point=myKey2Location.get(key);
       LOG.assertTrue(point!=null);
       Element e=new Element("location");
       e.setAttribute(KEY,key);
@@ -178,9 +179,9 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
       element.addContent(e);
     }
     // Save sizes
-    for (Iterator i = myKey2Size.keySet().iterator(); i.hasNext();) {
-      String key = (String)i.next();
-      Dimension size = (Dimension)myKey2Size.get(key);
+    for (Iterator<String> i = myKey2Size.keySet().iterator(); i.hasNext();) {
+      String key = i.next();
+      Dimension size = myKey2Size.get(key);
       LOG.assertTrue(size!=null);
       Element e = new Element("size");
       e.setAttribute(KEY,key);
