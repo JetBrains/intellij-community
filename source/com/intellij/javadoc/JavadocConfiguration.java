@@ -282,14 +282,16 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
         }
         return true;
       }
-      else if (!dirContainsJavaFiles(directory)) {
-        return true;
+      else {
+        PsiPackage psiPackage = directory.getPackage();
+        if (psiPackage == null) {
+          return true;
+        }
+        if (!dirContainsJavaFiles(directory, myPackages)) {
+          return true;
+        }
       }
-      PsiPackage psiPackage = directory.getPackage();
-      if (psiPackage == null) {
-        return true;
-      }
-      myPackages.add(psiPackage.getQualifiedName());
+
       return true;
     }
 
@@ -303,10 +305,12 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
     }
   }
 
-  private static boolean dirContainsJavaFiles(PsiDirectory dir) {
+  public static boolean dirContainsJavaFiles(PsiDirectory dir, Collection<String> packages) {
     PsiFile[] files = dir.getFiles();
-    for(int i = 0; i < files.length; i++){
-      if (files[i] instanceof PsiJavaFile) {
+    for (PsiFile file : files) {
+      if (file instanceof PsiJavaFile) {
+        final PsiJavaFile javaFile = (PsiJavaFile)file;
+        packages.add(javaFile.getPackageName());
         return true;
       }
     }
