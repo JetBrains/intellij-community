@@ -55,6 +55,7 @@ public abstract class FileEditorManager {
    * @return currently selected text editor. The method returns <code>null</code> in case
    * there is no selected editor at all or selected editor is not a text one.
    */
+  @Nullable
   public abstract Editor getSelectedTextEditor();
 
   /**

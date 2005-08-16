@@ -688,18 +688,16 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
 
   public Editor getSelectedTextEditor() {
     assertThread();
-    final VirtualFile[] selectedFiles = getSelectedFiles();
-    if (selectedFiles.length == 0) {
-      return null;
+
+    final EditorWindow currentWindow = mySplitters.getCurrentWindow();
+    if (currentWindow != null) {
+      final EditorWithProviderComposite selectedEditor = currentWindow.getSelectedEditor();
+      if (selectedEditor != null && selectedEditor.getSelectedEditor() instanceof TextEditor) {
+        return ((TextEditor)selectedEditor.getSelectedEditor()).getEditor();
+      }
     }
 
-    final FileEditor editor = getSelectedEditor(selectedFiles[0]);
-    if (editor instanceof TextEditor) {
-      return ((TextEditor)editor).getEditor();
-    }
-    else {
-      return null;
-    }
+    return null;
   }
 
 
