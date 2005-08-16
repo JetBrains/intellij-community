@@ -154,10 +154,9 @@ public class ModuleUtil {
 
   public static void getDependencies(Module module, Set<Module> modules) {
     if (modules.contains(module)) return;
+    modules.add(module);
     Module[] dependencies = ModuleRootManager.getInstance(module).getDependencies();
-    for (int i = 0; i < dependencies.length; i++) {
-      Module dependency = dependencies[i];
-      modules.add(dependency);
+    for (Module dependency : dependencies) {
       getDependencies(dependency, modules);
     }
   }
