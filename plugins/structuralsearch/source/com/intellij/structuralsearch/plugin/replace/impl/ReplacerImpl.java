@@ -516,8 +516,8 @@ public class ReplacerImpl {
 
         if (searchIsExpression!=replaceIsExpression) {
           throw new UnsupportedPatternException(
-            (searchIsExpression)?"Search query is expression,but replacement query isn't":
-            "Search query is not expression,but replacement query is"
+            (searchIsExpression) ? "The search template is a well formed expression, but the replacement template is not an expression.":
+            "The search template is not an expression, but the replacement template is a well formed expression."
           );
         }
       }
