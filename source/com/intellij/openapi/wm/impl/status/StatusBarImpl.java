@@ -251,6 +251,10 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     }
   }
 
+  public void disposeListeners() {
+    myEditorHighlightingPanel.dispose();
+  }
+
   private final class MyUISettingsListener implements UISettingsListener{
     public void uiSettingsChanged(final UISettings uiSettings) {
       setMemoryIndicatorVisible(uiSettings.SHOW_MEMORY_INDICATOR);

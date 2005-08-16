@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.openapi.wm.impl.status.StatusBarImpl;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -38,14 +39,16 @@ public class IdeFrame extends JFrame implements DataProvider {
   private Project myProject;
   private final LayoutFocusTraversalPolicyExt myLayoutFocusTraversalPolicy;
 
+  private IdeRootPane myRootPane;
+
   public IdeFrame(ApplicationInfoEx applicationInfoEx,
                   ActionManager actionManager,
                   UISettings uiSettings,
                   DataManager dataManager,
                   KeymapManager keymapManager) {
     super(applicationInfoEx.getFullApplicationName());
-
-    setRootPane(new IdeRootPane(actionManager, uiSettings, dataManager, keymapManager));
+    myRootPane = new IdeRootPane(actionManager, uiSettings, dataManager, keymapManager);
+    setRootPane(myRootPane);
 
     UIUtil.updateFrameIcon(this);
     final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -162,5 +165,11 @@ public class IdeFrame extends JFrame implements DataProvider {
 
   public Project getProject() {
     return myProject;
+  }
+
+  public void dispose() {
+    ((StatusBarImpl)myRootPane.getStatusBar()).disposeListeners();
+    myRootPane = null;
+    super.dispose();
   }
 }
