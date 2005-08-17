@@ -62,7 +62,7 @@ public class SmartList<E> extends AbstractList<E> {
     }
     else if (mySize == 2) {
       List<E> list = new ArrayList<E>(3);
-      final Object[] array = ((Object[])myElem);
+      final Object[] array = (Object[])myElem;
       list.add((E)array[0]);
       list.add((E)array[1]);
       list.add(e);
@@ -95,7 +95,7 @@ public class SmartList<E> extends AbstractList<E> {
       myElem = element;
     }
     else if (mySize == 2) {
-      final Object[] array = ((Object[])myElem);
+      final Object[] array = (Object[])myElem;
       oldValue = (E)array[index];
       array[index] = element;
     }

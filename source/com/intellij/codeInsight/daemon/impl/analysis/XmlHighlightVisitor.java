@@ -60,6 +60,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   private DaemonCodeAnalyzerSettings mySettings;
 
   private static boolean ourDoJaxpTesting;
+  private List<HighlightInfo> myMutableResult;
 
   public XmlHighlightVisitor(DaemonCodeAnalyzerSettings settings) {
     mySettings = settings;
@@ -70,11 +71,16 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   }
 
   public List<HighlightInfo> getResult() {
+    // assertion to ensure nobody twiddles with myResult after it has been used
+    myMutableResult = myResult;
+    myResult = Collections.unmodifiableList(myMutableResult);
     return myResult;
   }
 
   public void clearResult() {
+    myResult = myMutableResult;
     myResult.clear();
+    myMutableResult = null;
     myRefCountHolder = null;
   }
 
@@ -869,13 +875,11 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
   public void addMessage(PsiElement context, String message, int type) {
     if (message != null && message.length() > 0) {
-      synchronized (myResult) {
-        if (context instanceof XmlTag) {
-          addElementsForTag((XmlTag)context, message, myResult, type == ERROR ? HighlightInfoType.ERROR : HighlightInfoType.WARNING, null);
-        }
-        else {
-          myResult.add(HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, context, message));
-        }
+      if (context instanceof XmlTag) {
+        addElementsForTag((XmlTag)context, message, myResult, type == ERROR ? HighlightInfoType.ERROR : HighlightInfoType.WARNING, null);
+      }
+      else {
+        myResult.add(HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, context, message));
       }
     }
   }
@@ -1027,7 +1031,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       }
     }
 
-    private PsiElement findNextAttribute(final XmlAttribute attribute) {
+    private static PsiElement findNextAttribute(final XmlAttribute attribute) {
       PsiElement nextSibling = attribute.getNextSibling();
       while (nextSibling != null) {
         if (nextSibling instanceof XmlAttribute) return nextSibling;

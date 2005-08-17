@@ -909,9 +909,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     element.accept(myXmlVisitor);
 
     List<HighlightInfo> result = myXmlVisitor.getResult();
-    synchronized(result) {
-      myHolder.addAll(result);
-    }
+    myHolder.addAll(result);
     myXmlVisitor.clearResult();
   }
 }
