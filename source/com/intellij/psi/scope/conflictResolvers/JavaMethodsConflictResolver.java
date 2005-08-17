@@ -139,6 +139,7 @@ outer:
   private void checkInnerMostClass(final List<CandidateInfo> conflicts) {
     PsiClass innerMostClass = null;
     for (CandidateInfo info : conflicts) {
+      if (!(info.getCurrentFileResolveScope() instanceof PsiClass)) return;
       final PsiClass containingClass = ((PsiMember)info.getElement()).getContainingClass();
       if (innerMostClass == null || PsiTreeUtil.isAncestor(innerMostClass, containingClass, true)) {
         innerMostClass = containingClass;
