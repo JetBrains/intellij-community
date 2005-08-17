@@ -7,6 +7,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -628,7 +629,10 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     final Project project = manager.getProject();
     final CharArrayCharSequence text = new CharArrayCharSequence(chars, startOffset, endOffset);
     if (fileType instanceof LanguageFileType) {
-      return ((LanguageFileType)fileType).getLanguage().getParserDefinition().createFile(project, name, text);
+      final ParserDefinition parserDefinition = ((LanguageFileType)fileType).getLanguage().getParserDefinition();
+      if (parserDefinition != null) {
+        return parserDefinition.createFile(project, name, text);
+      }
     }
     return new PsiPlainTextFileImpl(project, name, fileType, text);
   }
