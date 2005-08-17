@@ -2,6 +2,7 @@ package com.intellij.xml.util;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -213,7 +214,7 @@ public class HtmlUtil {
 
       if (refs != null) {
         String text = element.getUserData(cachedRefsTextKey);
-        if (text.equals(originalText)) return refs;
+        if (text != null && text.equals(originalText)) return refs;
       }
 
       final XmlAttribute attribute = (XmlAttribute)element.getParent();
@@ -231,7 +232,7 @@ public class HtmlUtil {
           ++offset;
         }
   
-        text = text.substring(offset,text.length() - offset);
+        text = StringUtil.stripQuotesAroundValue(text);
         int ind = text.lastIndexOf('#');
         String anchor = null;
         if (ind != -1) {
