@@ -220,16 +220,17 @@ public class HighlightMethodUtil {
     }
     else {
       exceptionContexts = null;
-      referenceElements = null;
+      referenceElements = PsiJavaCodeReferenceElement.EMPTY_ARRAY;
     }
-
-    for (int i = 0; i < exceptions.length; i++) {
-      PsiClassType exception = exceptions[i];
-      if (!ExceptionUtil.isUncheckedException(exception)) {
-        checkedExceptions.add(exception);
-        if (includeRealPositionInfo) {
-          PsiJavaCodeReferenceElement exceptionRef = referenceElements[i];
-          exceptionContexts.add(exceptionRef);
+    if (exceptions.length == referenceElements.length) {
+      for (int i = 0; i < exceptions.length; i++) {
+        PsiClassType exception = exceptions[i];
+        if (!ExceptionUtil.isUncheckedException(exception)) {
+          checkedExceptions.add(exception);
+          if (includeRealPositionInfo) {
+            PsiJavaCodeReferenceElement exceptionRef = referenceElements[i];
+            exceptionContexts.add(exceptionRef);
+          }
         }
       }
     }
@@ -722,7 +723,7 @@ public class HighlightMethodUtil {
 
     if (aClass != null) {
       String className = aClass instanceof PsiAnonymousClass ? null : aClass.getName();
-      if (!methodName.equals(className)) {
+      if (!Comparing.strEqual(methodName, className)) {
         errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, method.getNameIdentifier(),
                                                         "Invalid method declaration; return type required");
       }

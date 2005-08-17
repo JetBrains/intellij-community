@@ -235,9 +235,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
           for (int i=0; i<holder.size(); i++) {
             HighlightInfo info = holder.get(i);
             // have to filter out already obtained highlights
-            if (gotHighlights.contains(info)) continue;
-
-            gotHighlights.add(info);
+            if (!gotHighlights.add(info)) continue;
             if (info.getSeverity() == HighlightSeverity.ERROR) {
               skipParentsSet.add(element.getParent());
             }
