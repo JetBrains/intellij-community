@@ -779,8 +779,9 @@ public abstract class GenericsHighlightUtil {
     final PsiAnnotation overrideAnnotation = list.findAnnotation("java.lang.Override");
     if (overrideAnnotation != null) {
       PsiMethod[] superMethods = method.findSuperMethods();
+      final PsiClass containingClass = method.getContainingClass();
       for (PsiMethod superMethod : superMethods) {
-        if (!superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) return null;
+        if (containingClass.isInterface() == superMethod.getContainingClass().isInterface()) return null;
       }
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, overrideAnnotation,
                                                  "Method does not override method from its superclass");
