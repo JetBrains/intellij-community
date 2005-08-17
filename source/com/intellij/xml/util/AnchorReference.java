@@ -154,7 +154,7 @@ class AnchorReference implements PsiReference {
     final XmlFile file = getFile();
     if (file!=null) {
       processXmlElements(
-        file.getDocument().getRootTag(),
+        HtmlUtil.getRealXmlDocument(file.getDocument()).getRootTag(),
         new PsiElementProcessor() {
           public boolean execute(final PsiElement element) {
             final String anchorValue = getAnchorValue(element);
