@@ -43,9 +43,13 @@ public class PropertiesFilesManager implements ApplicationComponent {
     VirtualFile file = event.getFile();
     FileType fileType = myFileTypeManager.getFileTypeByFile(file);
     if (fileType == StdFileTypes.PROPERTIES) {
-      myPropertiesFiles.remove(file);
       firePropertiesFileRemoved(file);
     }
+    removeFile(file);
+  }
+
+  private void removeFile(final VirtualFile file) {
+    myPropertiesFiles.remove(file);
   }
 
   private void addNewFile(final VirtualFileEvent event) {
@@ -97,6 +101,9 @@ public class PropertiesFilesManager implements ApplicationComponent {
     FileType fileType = myFileTypeManager.getFileTypeByFile(file);
     if (fileType == StdFileTypes.PROPERTIES) {
       firePropertiesFileChanged(file, event);
+    }
+    else {
+      removeFile(file);
     }
   }
 
