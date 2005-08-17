@@ -392,11 +392,16 @@ public abstract class AbstractTreeBuilder {
         LOG.error("childDescr.getElement() == null, child = " + child + ", builder = " + this);
         continue;
       }
-      final DefaultMutableTreeNode childNode = new DefaultMutableTreeNode(childDescr);
+      final DefaultMutableTreeNode childNode = createChildNode(childDescr);
       nodesToInsert.add(childNode);
       createMapping(child, childNode);
     }
     return nodesToInsert;
+  }
+
+  //fabrique
+  protected DefaultMutableTreeNode createChildNode(final NodeDescriptor childDescr) {
+    return new DefaultMutableTreeNode(childDescr);
   }
 
   private void updateInBackground(final DefaultMutableTreeNode node, final NodeDescriptor descriptor) {
