@@ -220,17 +220,15 @@ public class HighlightMethodUtil {
     }
     else {
       exceptionContexts = null;
-      referenceElements = PsiJavaCodeReferenceElement.EMPTY_ARRAY;
+      referenceElements = null;
     }
-    if (exceptions.length == referenceElements.length) {
-      for (int i = 0; i < exceptions.length; i++) {
-        PsiClassType exception = exceptions[i];
-        if (!ExceptionUtil.isUncheckedException(exception)) {
-          checkedExceptions.add(exception);
-          if (includeRealPositionInfo) {
-            PsiJavaCodeReferenceElement exceptionRef = referenceElements[i];
-            exceptionContexts.add(exceptionRef);
-          }
+    for (int i = 0; i < exceptions.length; i++) {
+      PsiClassType exception = exceptions[i];
+      if (!ExceptionUtil.isUncheckedException(exception)) {
+        checkedExceptions.add(exception);
+        if (includeRealPositionInfo && referenceElements != null && i < referenceElements.length) {
+          PsiJavaCodeReferenceElement exceptionRef = referenceElements[i];
+          exceptionContexts.add(exceptionRef);
         }
       }
     }
