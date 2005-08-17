@@ -31,6 +31,8 @@ import com.intellij.util.containers.HashMap;
 
 import java.util.*;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author dsl
  */
@@ -57,8 +59,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     LOG.assertTrue(myTargetParameter.getType() instanceof PsiClassType);
     final PsiType type = myTargetParameter.getType();
     LOG.assertTrue(type instanceof PsiClassType);
-    final PsiClass targetClass = ((PsiClassType) type).resolve();
-    myTargetClass = targetClass;
+    myTargetClass = ((PsiClassType) type).resolve();
     myOldVisibility = VisibilityUtil.getVisibilityModifier(method.getModifierList ());
     myNewVisibility = newVisibility;
   }
@@ -78,6 +79,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     myTargetClass = (PsiClass) elements[2];
   }
 
+  @NotNull
   protected UsageInfo[] findUsages() {
     LOG.assertTrue(myTargetParameter.getDeclarationScope() == myMethod);
     final PsiManager manager = myMethod.getManager();
@@ -87,12 +89,13 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     final PsiReference[] methodReferences = searchHelper.findReferences(myMethod, GlobalSearchScope.projectScope(project), false);
     List<UsageInfo> result = new ArrayList<UsageInfo>();
     for (final PsiReference ref : methodReferences) {
-      if (ref.getElement() instanceof PsiReferenceExpression) {
-        if (ref.getElement().getParent() instanceof PsiMethodCallExpression) {
-          result.add(new MethodCallUsageInfo((PsiMethodCallExpression)ref.getElement().getParent()));
+      final PsiElement element = ref.getElement();
+      if (element instanceof PsiReferenceExpression) {
+        if (element.getParent() instanceof PsiMethodCallExpression) {
+          result.add(new MethodCallUsageInfo((PsiMethodCallExpression)element.getParent()));
         }
       }
-      else if (ref.getElement() instanceof PsiDocTagValue) {
+      else if (element instanceof PsiDocTagValue) {
         result.add(new JavaDocUsageInfo(ref)); //TODO:!!!
       }
     }
@@ -212,6 +215,9 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
   private void doRefactoring(UsageInfo[] usages) throws IncorrectOperationException {
     myTypeParameterReplacements = buildTypeParameterReplacements();
     List<PsiClass> inheritors = new ArrayList<PsiClass>();
+
+    RefactoringUtil.sortDepthFirstRightLeftOrder(usages);
+
     // Process usages
     for (final UsageInfo usage : usages) {
       if (usage instanceof MethodCallUsageInfo) {

@@ -3,8 +3,8 @@ package com.intellij.refactoring.encapsulateFields;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -12,7 +12,6 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.ui.ConflictsDialog;
@@ -26,10 +25,11 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
-
-import java.util.*;
-
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.encapsulateFields.EncapsulateFieldsProcessor");
@@ -215,15 +215,8 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     }
 
     for (List<MyUsageInfo> usageInfos : usagesInFiles.values()) {
-      //sort usages in depth-first, right-to-left order
       //this is to avoid elements to become invalid as a result of processUsage
-      Collections.sort(usageInfos, new Comparator<MyUsageInfo>() {
-        public int compare(final MyUsageInfo usage1, final MyUsageInfo usage2) {
-          final PsiElement element1 = usage1.getElement();
-          final PsiElement element2 = usage2.getElement();
-          return element2.getTextRange().getStartOffset() - element1.getTextRange().getStartOffset();
-        }
-      });
+      RefactoringUtil.sortDepthFirstRightLeftOrder(usages);
 
       for (MyUsageInfo info : usageInfos) {
         processUsage(info);
