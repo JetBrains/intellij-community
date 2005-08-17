@@ -59,11 +59,23 @@ class AnchorReference implements PsiReference {
   }
 
   static boolean processXmlElements(XmlTag element, PsiElementProcessor processor) {
+    if (!_processXmlElements(element,processor)) return false;
+    
+    for(PsiElement next = element.getNextSibling(); next != null; next = next.getNextSibling()) {
+      if (next instanceof XmlTag) {
+        if (!_processXmlElements((XmlTag)next,processor)) return false;
+      }
+    }
+
+    return true;
+  }
+  
+  static boolean _processXmlElements(XmlTag element, PsiElementProcessor processor) {
     if (!processor.execute(element)) return false;
     final XmlTag[] subTags = element.getSubTags();
 
     for (int i = 0; i < subTags.length; i++) {
-      if(!processXmlElements(subTags[i],processor)) return false;
+      if(!_processXmlElements(subTags[i],processor)) return false;
     }
 
     return true;
