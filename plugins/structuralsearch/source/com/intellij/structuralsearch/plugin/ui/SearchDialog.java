@@ -481,8 +481,8 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
             model.getConfig().setName(name);
             setValuesToConfig(model.getConfig());
 
-            if (model.getShadowConfig()==null ||
-                model.getConfig() instanceof PredefinedConfiguration
+            if (model.getShadowConfig() == null ||
+                model.getShadowConfig() instanceof PredefinedConfiguration
                ) {
               existingTemplatesComponent.addConfigurationToUserTemplates(
                 model.getConfig()
