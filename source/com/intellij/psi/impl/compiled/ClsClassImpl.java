@@ -1064,15 +1064,12 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
           VirtualFile source = file.findFileByRelativePath(relativeFilePath);
           if (source != null) {
             PsiFile psiSource = getManager().findFile(source);
-            if (psiSource == null) continue;
-            if (!(psiSource instanceof PsiJavaFile)) {
-              LOG.error("Not PsiJavaFile:" + psiSource);
-              continue;
-            }
-            PsiJavaFile psiJavaFile = (PsiJavaFile)psiSource;
-            PsiClass[] classes = psiJavaFile.getClasses();
-            for (PsiClass aClass : classes) {
-              if (aClass.getName().equals(getName())) return aClass;
+            if (psiSource instanceof PsiJavaFile) {
+              PsiJavaFile psiJavaFile = (PsiJavaFile)psiSource;
+              PsiClass[] classes = psiJavaFile.getClasses();
+              for (PsiClass aClass : classes) {
+                if (aClass.getName().equals(getName())) return aClass;
+              }
             }
           }
         }
