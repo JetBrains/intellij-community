@@ -67,7 +67,7 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
     return buffer.toString();
   }
 
-  private boolean calculateFormatAndArguments(PsiExpression expression, StringBuffer formatString,
+  public static boolean calculateFormatAndArguments(PsiExpression expression, StringBuffer formatString,
                                               List<PsiExpression> args, List<PsiExpression> argsToCombine,
                                               boolean wasLiteral) throws IncorrectOperationException {
     if (expression == null) return wasLiteral;
@@ -94,7 +94,7 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
     return wasLiteral;
   }
 
-  private void appendArgument(List<PsiExpression> args, List<PsiExpression> argsToCombine, StringBuffer formatString) throws IncorrectOperationException {
+  private static void appendArgument(List<PsiExpression> args, List<PsiExpression> argsToCombine, StringBuffer formatString) throws IncorrectOperationException {
     if (argsToCombine.size() == 0) return;
     PsiExpression argument = argsToCombine.get(0);
     for (int i = 1; i < argsToCombine.size(); i++) {
@@ -116,9 +116,13 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
   }
 
   private PsiBinaryExpression getEnclosingConcatenation(PsiFile file, Editor editor) {
-    PsiBinaryExpression concatenation = null;
     final PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset());
-    final PsiLiteralExpression literal = PsiTreeUtil.getParentOfType(elementAt, PsiLiteralExpression.class, true);
+    return getEnclosingConcatenation(elementAt);
+  }
+
+  public static PsiBinaryExpression getEnclosingConcatenation(final PsiElement psiElement) {
+    PsiBinaryExpression concatenation = null;
+    final PsiLiteralExpression literal = PsiTreeUtil.getParentOfType(psiElement, PsiLiteralExpression.class, false);
     if (literal != null && literal.getValue() instanceof String) {
       PsiElement run = literal;
       while (run.getParent() instanceof PsiBinaryExpression &&
