@@ -32,7 +32,7 @@ public class OverloadedMethodsWithSameNumberOfParametersInspection extends Metho
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Multiple methods names '#ref' with the same number of parameters";
+        return "Multiple methods named '#ref' with the same number of parameters";
     }
 
     public BaseInspectionVisitor buildVisitor() {
