@@ -422,7 +422,11 @@ public class FindInProjectUtil {
   }
 
   private static boolean canOptimizeForFastWordSearch(final FindModel findModel) {
-    return findModel.isWholeWordsOnly() && !findModel.isRegularExpressions();
+    // $ is used to separate words when indexing plain-text files but not when indexing
+    // Java identifiers, so we can't consistently break a string containing $ characters
+    // into words
+    return findModel.isWholeWordsOnly() && !findModel.isRegularExpressions() &&
+      findModel.getStringToFind().indexOf('$') < 0;
   }
 
   private static void addToUsages(Project project,
