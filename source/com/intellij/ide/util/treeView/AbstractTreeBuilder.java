@@ -399,7 +399,12 @@ public abstract class AbstractTreeBuilder {
     return nodesToInsert;
   }
 
-  //fabrique
+  /**
+   * @fabrique
+   * We use IBM Rational Software Functional Tester to functionally test Visual Fabrique.
+   * For capturing data from trees it requires 'String getText()' method defined in the 
+   * nodes. So, in overriding method we define this method in the DefaultMutableTreeNode.
+   */
   protected DefaultMutableTreeNode createChildNode(final NodeDescriptor childDescr) {
     return new DefaultMutableTreeNode(childDescr);
   }
