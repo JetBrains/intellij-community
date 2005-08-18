@@ -248,15 +248,14 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   private HighlightInfo processLocalVariable(PsiLocalVariable variable, final List<IntentionAction> options) {
     PsiIdentifier identifier = variable.getNameIdentifier();
 
-    int count = myRefCountHolder.getRefCount(variable);
-    if (count == 0) {
+    if (!myRefCountHolder.isReferenced(variable)) {
       String message = MessageFormat.format(LOCAL_VARIABLE_IS_NOT_USED, new Object[]{identifier.getText()});
       HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
       QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(variable), options);
       return highlightInfo;
     }
 
-    count = myRefCountHolder.getReadRefCount(variable);
+    int count = myRefCountHolder.getReadRefCount(variable);
     if (count == 0) {
       String message = MessageFormat.format(LOCAL_VARIABLE_IS_NOT_USED_FOR_READING, new Object[]{identifier.getText()});
       HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
@@ -310,8 +309,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     }
 
     if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
-      final int refCount = myRefCountHolder.getRefCount(field);
-      if (refCount == 0) {
+      if (!myRefCountHolder.isReferenced(field)) {
         if (HighlightUtil.isSerializationImplicitlyUsedField(field)) {
           return null;
         }
@@ -374,8 +372,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
           && !method.hasModifierProperty(PsiModifier.NATIVE)
       ) {
         if (isMainMethod(method)) return null;
-        int count = myRefCountHolder.getRefCount(parameter);
-        if (count == 0) {
+        if (!myRefCountHolder.isReferenced(parameter)) {
           PsiIdentifier identifier = parameter.getNameIdentifier();
           String message = MessageFormat.format(PARAMETER_IS_NOT_USED, new Object[]{identifier.getText()});
           HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
@@ -385,7 +382,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       }
     }
     else if (declarationScope instanceof PsiForeachStatement) {
-      if (myRefCountHolder.getRefCount(parameter) == 0) {
+      if (!myRefCountHolder.isReferenced(parameter)) {
         PsiIdentifier identifier = parameter.getNameIdentifier();
         String message = MessageFormat.format(PARAMETER_IS_NOT_USED, new Object[]{identifier.getText()});
         final HighlightInfo unusedSymbolInfo = createUnusedSymbolInfo(identifier, message);
@@ -399,8 +396,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   private HighlightInfo processMethod(PsiMethod method, final List<IntentionAction> options) {
     if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
-      int count = myRefCountHolder.getRefCount(method);
-      if (count == 0) {
+      if (!myRefCountHolder.isReferenced(method)) {
         if (isWriteObjectMethod(method) ||
             isWriteReplaceMethod(method) ||
             isReadObjectMethod(method) ||
@@ -424,8 +420,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   private HighlightInfo processClass(PsiClass aClass, final List<IntentionAction> options) {
     if (aClass.getContainingClass() != null && aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
-      int count = myRefCountHolder.getRefCount(aClass);
-      if (count == 0) {
+      if (!myRefCountHolder.isReferenced(aClass)) {
         String pattern = aClass.isInterface()
                          ? PRIVATE_INNER_INTERFACE_IS_NOT_USED
                          : PRIVATE_INNER_CLASS_IS_NOT_USED;
@@ -433,14 +428,12 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       }
     }
     else if (aClass.getParent() instanceof PsiDeclarationStatement) { // local class
-      int count = myRefCountHolder.getRefCount(aClass);
-      if (count == 0) {
+      if (!myRefCountHolder.isReferenced(aClass)) {
         return formatUnusedSymbolHighlightInfo(aClass, LOCAL_CLASS_IS_NOT_USED, options);
       }
     }
     else if (aClass instanceof PsiTypeParameter) {
-      int count = myRefCountHolder.getRefCount(aClass);
-      if (count == 0) {
+      if (!myRefCountHolder.isReferenced(aClass)) {
         return formatUnusedSymbolHighlightInfo(aClass, TYPE_PARAMETER_IS_NOT_USED, options);
       }
     }
@@ -529,7 +522,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private static boolean isWriteObjectMethod(PsiMethod method) {
-    if (!method.getName().equals("writeObject")) return false;
+    if (!"writeObject".equals(method.getName())) return false;
     PsiType returnType = method.getReturnType();
     if (!TypeConversionUtil.isVoidType(returnType)) return false;
     PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -541,7 +534,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private static boolean isWriteReplaceMethod(PsiMethod method) {
-    if (!method.getName().equals("writeReplace")) return false;
+    if (!"writeReplace".equals(method.getName())) return false;
     PsiType returnType = method.getReturnType();
     if (returnType == null || !returnType.equalsToText("java.lang.Object")) return false;
     PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -552,7 +545,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private static boolean isReadResolveMethod(PsiMethod method) {
-    if (!method.getName().equals("readResolve")) return false;
+    if (!"readResolve".equals(method.getName())) return false;
     PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length != 0) return false;
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
@@ -563,7 +556,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private static boolean isReadObjectMethod(PsiMethod method) {
-    if (!method.getName().equals("readObject")) return false;
+    if (!"readObject".equals(method.getName())) return false;
     PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length != 1) return false;
 
@@ -577,7 +570,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private static boolean isReadObjectNoDataMethod(PsiMethod method) {
-    if (!method.getName().equals("readObjectNoData")) return false;
+    if (!"readObjectNoData".equals(method.getName())) return false;
     PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length != 0) return false;
     PsiType returnType = method.getReturnType();

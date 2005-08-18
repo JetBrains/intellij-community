@@ -7,7 +7,9 @@ import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiMatcherImpl;
 import com.intellij.util.containers.BidirectionalMap;
+import com.intellij.util.ArrayUtil;
 
 import java.util.*;
 
@@ -20,8 +22,7 @@ public class RefCountHolder {
 
   private final Map<PsiNamedElement, Boolean> myDclsUsedMap = Collections.synchronizedMap(new HashMap<PsiNamedElement, Boolean>());
   private final Map<String, XmlTag> myXmlId2TagMap = Collections.synchronizedMap(new HashMap<String, XmlTag>());
-  private final Map<PsiReference, PsiImportStatementBase> myImportStatements =
-    Collections .synchronizedMap(new HashMap<PsiReference, PsiImportStatementBase>());
+  private final Map<PsiReference, PsiImportStatementBase> myImportStatements = Collections.synchronizedMap(new HashMap<PsiReference, PsiImportStatementBase>());
   private final Set<PsiNamedElement> myUsedElements = Collections.synchronizedSet(new HashSet<PsiNamedElement>());
 
   public RefCountHolder(PsiFile file) {
@@ -115,14 +116,42 @@ public class RefCountHolder {
     }
   }
 
-  public int getRefCount(PsiElement element) {
+  public boolean isReferenced(PsiElement element) {
     List<PsiReference> array = myLocalRefsMap.getKeysByValue(element);
-    if(array != null) return array.size();
+    if(array != null && !isParameterUsedRecursively(element, array)) return true;
 
     Boolean usedStatus = myDclsUsedMap.get(element);
-    if (usedStatus == Boolean.TRUE) return 1;
+    return usedStatus == Boolean.TRUE;
+  }
 
-    return 0;
+  private static boolean isParameterUsedRecursively(final PsiElement element, final List<PsiReference> array) {
+    if (!(element instanceof PsiParameter)) return false;
+    PsiParameter parameter = (PsiParameter)element;
+    PsiElement scope = parameter.getDeclarationScope();
+    if (!(scope instanceof PsiMethod)) return false;
+    PsiMethod method = (PsiMethod)scope;
+    int paramIndex = ArrayUtil.find(method.getParameterList().getParameters(), parameter);
+
+    for (PsiReference reference : array) {
+      if (!(reference instanceof PsiElement)) return false;
+      PsiElement argument = (PsiElement)reference;
+
+      PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)new PsiMatcherImpl(argument)
+        .dot(PsiMatcherImpl.hasClass(PsiReferenceExpression.class))
+        .parent(PsiMatcherImpl.hasClass(PsiExpressionList.class))
+        .parent(PsiMatcherImpl.hasClass(PsiMethodCallExpression.class))
+        .getElement();
+      if (methodCallExpression == null) return false;
+      PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      if (methodExpression == null || method != methodExpression.resolve()) return false;
+      PsiExpressionList argumentList = methodCallExpression.getArgumentList();
+      if (argumentList == null) return false;
+      PsiExpression[] arguments = argumentList.getExpressions();
+      int argumentIndex = ArrayUtil.find(arguments, argument);
+      if (paramIndex != argumentIndex) return false;
+    }
+
+    return true;
   }
 
   public int getReadRefCount(PsiElement element) {
