@@ -226,7 +226,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     for (PsiExpression expr : exprs) {
       final String text = isNullLiteralExpression(expr)
                           ? "Passing <code>null</code> argument to parameter annotated as @NotNull"
-                          : "Argument <code>#ref</code> #loc is probably null";
+                          : "Argument <code>#ref</code> #loc might be null";
       descriptions.add(manager.createProblemDescriptor(expr, text, (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
     }
 
@@ -234,9 +234,9 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     for (PsiExpression expr : exprs) {
       final String exprText = isNullLiteralExpression(expr)
                               ? "<code>null</code>"
-                              : "Expression <code>#ref</code> probably evaluates to null and";
+                              : "Expression <code>#ref</code> might evaluate to null but";
       descriptions.add(manager.createProblemDescriptor(expr,
-                                                       exprText + " is being assigned to a variable that is annotated with @NotNull",
+                                                       exprText + " is assigned to a variable that is annotated with @NotNull",
                                                        (LocalQuickFix [])null,
                                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
     }
@@ -246,16 +246,16 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       final PsiExpression expr = statement.getReturnValue();
       final String exprText = isNullLiteralExpression(expr)
                               ? "<code>null</code>"
-                              : "Expression <code>#ref</code> probably evaluates to null and";
+                              : "Expression <code>#ref</code> might evaluate to null but";
       if (runner.isInNotNullMethod()) {
         descriptions.add(manager.createProblemDescriptor(expr,
-                                                         exprText + " is being returned by the method declared as @NotNull",
+                                                         exprText + " is returned by the method declared as @NotNull",
                                                          (LocalQuickFix [])null,
                                                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
       }
       else if (AnnotationUtil.isAnnotatingApplicable(statement)) {
         descriptions.add(manager.createProblemDescriptor(expr,
-                                                         exprText + " is being returned by the method which isn't declared as @Nullable",
+                                                         exprText + " is returned by the method which isn't declared as @Nullable",
                                                          new AnnotateMethodFix(AnnotationUtil.NULLABLE),
                                                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
 
