@@ -121,6 +121,18 @@ public class JavaParametersUtil {
           if (dependencies != null){
             for (Module module1 : dependencies) {
               outputs.addAll(ProjectRootsTraversing.RootTraversePolicy.ALL_OUTPUTS.getOutputs(module1));
+              final OrderEntry[] orderEntries = ModuleRootManager.getInstance(module1).getOrderEntries();
+              for (OrderEntry entry : orderEntries) {
+                if (entry instanceof LibraryOrderEntry){
+                  final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
+                  if (libraryOrderEntry.isExported()){
+                    final String[] urls = libraryOrderEntry.getUrls(OrderRootType.CLASSES_AND_OUTPUT);
+                    for (final String url : urls) {
+                      entries.add(new ClassPathEntry(PathUtil.toPresentableUrl(url)));
+                    }
+                  }
+                }
+              }
             }
           }
         }
