@@ -324,28 +324,32 @@ public class ReplacerImpl {
                 try {
 
                   CodeStyleManager codeStyleManager = PsiManager.getInstance(project).getCodeStyleManager();
-
-                  if (elementParent.getContainingFile()!=null) {
+                  final PsiFile containingFile = elementParent.getContainingFile();
+                  
+                  if (containingFile !=null) {
                     if (options.isToShortenFQN()) {
-                      PsiDocumentManager.getInstance(project).commitDocument(
-                        FileDocumentManager.getInstance().getDocument(elementParent.getContainingFile().getVirtualFile())
-                      );
+                      if (containingFile.getVirtualFile() != null) {
+                        PsiDocumentManager.getInstance(project).commitDocument(
+                          FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile())
+                        );
+                      }
+                      
                       codeStyleManager.shortenClassReferences(
-                        elementParent.getContainingFile(),
+                        containingFile,
                         elementParent.getTextOffset(),
                         elementParent.getTextOffset() + elementParent.getTextLength()
                       );
                     }
 
                     if (options.isToReformatAccordingToStyle()) {
-                      if (elementParent.getContainingFile().getVirtualFile()!=null) {
+                      if (containingFile.getVirtualFile() != null) {
                         PsiDocumentManager.getInstance(project).commitDocument(
-                          FileDocumentManager.getInstance().getDocument(elementParent.getContainingFile().getVirtualFile())
+                          FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile())
                         );
                       }
 
                       codeStyleManager.reformatRange(
-                        elementParent.getContainingFile(),
+                        containingFile,
                         elementParent.getTextOffset(),
                         elementParent.getTextOffset() + elementParent.getTextLength(),
                         true
