@@ -3,6 +3,6 @@
   <problem>
     <file>Npe.java</file>
     <line>14</line>
-    <description>Argument 'nullable()' is probably null</description>
+    <description>Argument 'nullable()' might be null</description>
   </problem>
 </problems>

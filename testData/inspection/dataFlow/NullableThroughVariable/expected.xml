@@ -3,6 +3,6 @@
   <problem>
     <file>Npe.java</file>
     <line>15</line>
-    <description>Argument 'o' is probably null</description>
+    <description>Argument 'o' might be null</description>
   </problem>
 </problems>

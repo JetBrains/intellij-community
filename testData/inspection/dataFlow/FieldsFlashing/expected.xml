@@ -3,11 +3,11 @@
   <problem>
     <file>Test.java</file>
     <line>18</line>
-    <description>Argument 'obj' is probably null</description>
+    <description>Argument 'obj' might be null</description>
   </problem>
   <problem>
     <file>Test.java</file>
     <line>39</line>
-    <description>Argument 'obj' is probably null</description>
+    <description>Argument 'obj' might be null</description>
   </problem>
 </problems>

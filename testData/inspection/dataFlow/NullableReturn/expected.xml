@@ -3,6 +3,6 @@
   <problem>
     <file>Npe.java</file>
     <line>6</line>
-    <description>null is being returned</description>
+    <description>null is returned</description>
   </problem>
 </problems>

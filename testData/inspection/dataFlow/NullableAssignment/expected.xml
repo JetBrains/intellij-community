@@ -3,11 +3,11 @@
   <problem>
     <file>Npe.java</file>
     <line>12</line>
-    <description>Expression 'o' evaluates to null</description>
+    <description>Expression 'o' might evaluate to null</description>
   </problem>
   <problem>
     <file>Npe.java</file>
     <line>13</line>
-    <description>Expression 'o' evaluates to null</description>
+    <description>Expression 'o' might evaluate to null</description>
   </problem>
 </problems>
