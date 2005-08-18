@@ -22,10 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.beans.Introspector;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 
 public class StringUtil {
   private static final String VOWELS = "aeiouy";
@@ -389,7 +386,7 @@ public class StringUtil {
 
   public static String pluralize(@NotNull String suggestion) {
     if (StringUtil.endsWithChar(suggestion, 's') || StringUtil.endsWithChar(suggestion, 'x') ||
-      suggestion.endsWith("ch")) {
+        suggestion.endsWith("ch")) {
       suggestion += "es";
     }
     else {
@@ -555,6 +552,9 @@ public class StringUtil {
   }
 
   public static List<String> split(@NotNull String s, @NotNull String separator) {
+    if (separator.length() == 0) {
+      return Collections.singletonList(s);
+    }
     ArrayList<String> result = new ArrayList<String>();
     int pos = 0;
     while (true) {
