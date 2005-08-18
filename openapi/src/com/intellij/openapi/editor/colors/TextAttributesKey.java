@@ -23,6 +23,10 @@ import org.jetbrains.annotations.NonNls;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * A type of item with a distinct highlighting in an editor or in other views.
+ */
+
 public final class TextAttributesKey implements Comparable<TextAttributesKey> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.colors.TextAttributesKey");
   private static final TextAttributes NULL_ATTRIBUTES = new TextAttributes();
@@ -58,6 +62,12 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
     return myExternalName.compareTo(key.myExternalName);
   }
 
+  /**
+   * Returns the default text attributes associated with the key.
+   *
+   * @return the text attributes.
+   */
+
   public TextAttributes getDefaultAttributes() {
     if (myDefaultAttributes == NULL_ATTRIBUTES) {
       myDefaultAttributes = null;
@@ -71,7 +81,17 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
     return myDefaultAttributes;
   }
 
-  public static TextAttributesKey createTextAttributesKey(String externalName, TextAttributes defaultAttributes) {
+  /**
+   * Registers a text attribute key with the specified identifier and default attributes.
+   *
+   * @param externalName      the unique identifier of the key.
+   * @param defaultAttributes the default text attributes associated with the key.
+   * @return the new key instance, or an existing instance if the key with the same
+   *         identifier was already registered.
+   */
+
+  public static TextAttributesKey createTextAttributesKey(@NonNls String externalName,
+                                                          TextAttributes defaultAttributes) {
     TextAttributesKey key = ourRegistry.get(externalName);
     if (key == null) {
       key = find(externalName);
@@ -82,6 +102,13 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
     return key;
   }
 
+  /**
+   * Registers a text attribute key with the specified identifier.
+   *
+   * @param externalName      the unique identifier of the key.
+   * @return the new key instance, or an existing instance if the key with the same
+   *         identifier was already registered.
+   */
   public static TextAttributesKey createTextAttributesKey(@NonNls String externalName) {
     return find(externalName);
   }

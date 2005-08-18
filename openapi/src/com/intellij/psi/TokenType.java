@@ -18,9 +18,24 @@ package com.intellij.psi;
 import com.intellij.lang.Language;
 import com.intellij.psi.tree.IElementType;
 
+/**
+ * The standard lexer token types common to all languages.
+ */
+
 public interface TokenType {
+  /**
+   * Token type for a sequence of whitespace characters.
+   */
   IElementType WHITE_SPACE = new IElementType("WHITE_SPACE", Language.ANY);
+
+  /**
+   * Token type for a character which is not valid in the position where it was encountered,
+   * according to the language grammar.
+   */
   IElementType BAD_CHARACTER = new IElementType("BAD_CHARACTER", Language.ANY);
 
+  /**
+   * Internal token type used by the code formatter.
+   */
   IElementType NEW_LINE_INDENT = new IElementType("NEW_LINE_INDENT", Language.ANY);
 }

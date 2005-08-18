@@ -20,19 +20,43 @@ import gnu.trove.TObjectHashingStrategy;
 
 import java.util.Arrays;
 
+/**
+ * A set of element types.
+ */
+
 public class TokenSet {
   public static final TokenSet EMPTY = new TokenSet();
   private final THashSet<IElementType> mySet = new THashSet<IElementType>(100, (float)0.1, TokenHashingStrategy.INSTANCE) ;
 
+  /**
+   * Returns the array of element types contained in the set.
+   *
+   * @return the contents of the set.
+   */
+
   public IElementType[] getTypes() {
     return mySet.toArray(new IElementType[mySet.size()]);
   }
+
+  /**
+   * Returns a new token set containing the specified element types.
+   *
+   * @param types the element types contained in the set.
+   * @return the new token set.
+   */
 
   public static TokenSet create(IElementType... types) {
     TokenSet set = new TokenSet();
     set.mySet.addAll(Arrays.asList(types));
     return set;
   }
+
+  /**
+   * Returns a token set containing the union of the specified token sets.
+   *
+   * @param sets the token sets to unio.
+   * @return the new token set.
+   */
 
   public static TokenSet orSet(TokenSet... sets) {
     TokenSet newSet = new TokenSet();
@@ -41,6 +65,14 @@ public class TokenSet {
     }
     return newSet;
   }
+
+  /**
+   * Returns a token set containing the intersection of the specified token sets.
+   *
+   * @param a the first token set to intersect.
+   * @param b the second token set to intersect.
+   * @return the new token set.
+   */
 
   public static TokenSet andSet(TokenSet a, TokenSet b) {
     TokenSet set = new TokenSet();
@@ -56,6 +88,12 @@ public class TokenSet {
     return mySet.contains(t);
   }
 
+  /**
+   * Checks if the specified element type is contained in the set.
+   *
+   * @param t the element type to search for.
+   * @return true if the element type is found in the set, false otherwise.
+   */
   public boolean contains(IElementType t) {
     return mySet.contains(t);
   }

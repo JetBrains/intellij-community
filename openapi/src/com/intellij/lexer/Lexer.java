@@ -26,6 +26,7 @@ public interface Lexer {
    * Prepare for lexing character data from <code>buffer</code> passed. Lexing should be performed starting from offset 0 and
    * terminated (EOFed) at offset <code>buffer.length</code>. Internal lexer state is supposed to be initial.
    * YY_INITIAL for JLex and JFlex generated lexer.
+   *
    * @param buffer character data for lexing.
    */
   void start(char[] buffer);
@@ -34,9 +35,10 @@ public interface Lexer {
    * Prepare for lexing character data from <code>buffer</code> passed. Lexing should be performed starting from offset <code>startOffset</code> and
    * terminated (EOFed) at offset <code>endOffset</code>. Internal lexer state is supposed to be initial. YY_INITIAL for JLex and JFlex generated
    * lexer.
-   * @param buffer character data for lexing.
+   *
+   * @param buffer      character data for lexing.
    * @param startOffset offset to start lexing from
-   * @param endOffset offset to stop lexing at
+   * @param endOffset   offset to stop lexing at
    */
   void start(char[] buffer, int startOffset, int endOffset);
 
@@ -46,33 +48,37 @@ public interface Lexer {
    * that the value of initialState has been returned by {@link #getState()} method of this <code>Lexer</code> at condition <code>startOffset=getTokenStart()</code>
    * This method is used to incrementally relex changed characters using lexing data acquired from this particular lexer sometime in the past.
    *
-   * @param buffer character data for lexing.
-   * @param startOffset offset to start lexing from
-   * @param endOffset offset to stop lexing at
+   * @param buffer       character data for lexing.
+   * @param startOffset  offset to start lexing from
+   * @param endOffset    offset to stop lexing at
    * @param initialState the initial state of the lexer.
    */
   void start(char[] buffer, int startOffset, int endOffset, int initialState);
 
   /**
    * Returns the current state of the lexer.
+   *
    * @return the lexer state.
    */
   int getState();
 
   /**
    * Returns the token at the current position of the lexer.
+   *
    * @return the current token.
    */
   IElementType getTokenType();
 
   /**
    * Returns the start offset of the current token.
+   *
    * @return the current token start offset.
    */
   int getTokenStart();
 
   /**
    * Returns the end offset of the current token.
+   *
    * @return the current token end offset.
    */
 
@@ -85,25 +91,32 @@ public interface Lexer {
 
   /**
    * Returns the current position and state of the lexer.
+   *
    * @return the lexer position and state.
    */
   LexerPosition getCurrentPosition();
 
   /**
    * Restores the lexer to the specified state and position.
+   *
    * @param position the state and position to restore to.
    */
   void restore(LexerPosition position);
 
   /**
-   * Returns the buffer over which the lexer is running.
+   * Returns the buffer over which the lexer is running. This method should return the
+   * same buffer instance which was passed to the <code>start()</code> method.
+   *
    * @return the lexer buffer.
    */
 
   char[] getBuffer();
 
   /**
-   * Returns the offset at which the lexer will stop lexing.
+   * Returns the offset at which the lexer will stop lexing. This method should return
+   * the length of the buffer or the value passed in the <code>endOffset</code> parameter
+   * to the <code>start()</code> method.
+   *
    * @return the lexing end offset
    */
   int getBufferEnd();

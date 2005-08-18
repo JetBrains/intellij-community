@@ -16,15 +16,20 @@
 package com.intellij.lang;
 
 /**
- * Defines the brace matching support required for a custom language.
+ * Defines the brace matching support required for a custom language. For paired
+ * brace matching to work, the language must also provide a
+ * {@link com.intellij.openapi.fileTypes.SyntaxHighlighter} and return the correct
+ * lexer from <code>getHighlightingLexer()</code>.
+ *
  * @author max
- * @see com.intellij.lang.Language#getPairedBraceMatcher()
+ * @see Language#getPairedBraceMatcher()
  * @see BracePair
  */
 public interface PairedBraceMatcher {
   /**
    * Returns the array of definitions for brace pairs that need to be matched when
    * editing code in the language.
+   *
    * @return the array of brace pair definitions.
    */
   BracePair[] getPairs();

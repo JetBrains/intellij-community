@@ -19,6 +19,7 @@ import com.intellij.psi.tree.IElementType;
 
 /**
  * Defines a single pair of braces which need to be matched when editing code in a custom language.
+ *
  * @author max
  * @see PairedBraceMatcher
  */
@@ -32,13 +33,18 @@ public class BracePair {
 
   /**
    * Creates a new brace pair instance.
-   * @param leftBraceChar the character for the left brace in the pair.
-   * @param leftBrace the lexer token type for the left brace in the pair.
+   *
+   * @param leftBraceChar  the character for the left brace in the pair.
+   * @param leftBrace      the lexer token type for the left brace in the pair.
    * @param rightBraceChar the character for the right brace in the pair.
-   * @param rightBrace the lexer token type for the right brace in the pair.
-   * @param structural if true, the brace is considered structural (see {@link #isStructural()} for details)
+   * @param rightBrace     the lexer token type for the right brace in the pair.
+   * @param structural     if true, the brace is considered structural (see {@link #isStructural()} for details)
    */
-  public BracePair(char leftBraceChar, final IElementType leftBrace,char rightBraceChar,final IElementType rightBrace, final boolean structural) {
+  public BracePair(char leftBraceChar,
+                   final IElementType leftBrace,
+                   char rightBraceChar,
+                   final IElementType rightBrace,
+                   final boolean structural) {
     myLeftBraceChar = leftBraceChar;
     myLeftBrace = leftBrace;
     myRightBraceChar = rightBraceChar;
@@ -48,6 +54,7 @@ public class BracePair {
 
   /**
    * Returns the lexer token type for the left brace in the pair.
+   *
    * @return token type
    */
   public IElementType getLeftBraceType() {
@@ -56,6 +63,7 @@ public class BracePair {
 
   /**
    * Returns the lexer token type for the right brace in the pair.
+   *
    * @return token type
    */
   public IElementType getRightBraceType() {
@@ -67,6 +75,7 @@ public class BracePair {
    * they are matched with each other even if there are unmatched braces of other types between them,
    * and an opening non-structural brace is not matched with a closing one if one of them is outside a pair
    * of matched structural braces and another is outside. In Java code, the curly braces are structural.
+   *
    * @return true if the brace is structural, false otherwise.
    */
   public boolean isStructural() {
@@ -75,6 +84,7 @@ public class BracePair {
 
   /**
    * Returns the character for the left brace in the pair.
+   *
    * @return brace character
    */
   public char getLeftBraceChar() {
@@ -83,6 +93,7 @@ public class BracePair {
 
   /**
    * Returns the character for the right brace in the pair.
+   *
    * @return brace character
    */
   public char getRightBraceChar() {
