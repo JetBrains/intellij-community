@@ -294,7 +294,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
       if (psiElement != null) {
         if (psiElement instanceof XmlTag &&
             psiElement.getTextRange().getStartOffset() >= currentChild.getTextRange().getStartOffset() &&
-            containsTag(psiElement)) {
+            containsTag(psiElement) && doesNotIntersectSubTagsWith(psiElement)) {
           result.add(createAnotherTreeTagBlock(psiElement, childIndent));
           currentChild = findChildAfter(currentChild, psiElement.getTextRange().getEndOffset());
           tag = psiElement;
