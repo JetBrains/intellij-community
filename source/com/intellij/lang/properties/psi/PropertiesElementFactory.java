@@ -11,11 +11,16 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PropertiesElementFactory {
   public static @NotNull Property createProperty(@NotNull Project project, @NotNull String name, @NotNull String value) {
+    String text = escape(name) + "=" + value;
+    final PropertiesFile dummyFile = createPropertiesFile(project, text);
+    return dummyFile.getProperties().get(0);
+  }
+
+  public static PropertiesFile createPropertiesFile(final Project project, String text) {
     ParserDefinition def = StdFileTypes.PROPERTIES.getLanguage().getParserDefinition();
     String filename = "dummy." + StdFileTypes.PROPERTIES.getDefaultExtension();
-    String text = escape(name) + "=" + value;
     final PropertiesFile dummyFile = (PropertiesFile)def.createFile(project, filename, text);
-    return dummyFile.getProperties().get(0);
+    return dummyFile;
   }
 
   private static String escape(String name) {

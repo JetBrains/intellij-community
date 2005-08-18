@@ -51,7 +51,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   }
 
   public String toString() {
-    return "Property file:" + getName();
+    return "Properties file:" + getName();
   }
 
   @NotNull
@@ -122,20 +122,21 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
 
   @NotNull
   public PsiElement addProperty(@NotNull Property property) throws IncorrectOperationException {
-    final List<Property> properties = getProperties();
-    if (properties.size() != 0) {
-      Property lastProperty = properties.get(properties.size() - 1);
-      final PsiElement nextSibling = lastProperty.getNextSibling();
-      if (nextSibling == null || nextSibling.getText().indexOf("\n") == -1) {
-        String text = "\n";
-        LeafElement ws = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, text.toCharArray(), 0, text.length(), getTreeElement().getCharTable(), myManager);
-        ChangeUtil.addChild((CompositeElement)getPropertiesList(), ws, null);
-        PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
-        documentManager.commitDocument(documentManager.getDocument(this));
-      }
+    if (haveToAddNewLine()) {
+      String text = "\n";
+      LeafElement ws = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, text.toCharArray(), 0, text.length(), getTreeElement().getCharTable(), myManager);
+      ChangeUtil.addChild((CompositeElement)getPropertiesList(), ws, null);
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
+      documentManager.commitDocument(documentManager.getDocument(this));
     }
     getPropertiesList().addChild(ChangeUtil.copyToElement(property));
     return property;
+  }
+
+  private boolean haveToAddNewLine() {
+    ASTNode lastChild = getPropertiesList().getLastChildNode();
+    if (lastChild == null) return false;
+    return lastChild.getText().indexOf('\n') == -1;
   }
 
   @NotNull

@@ -43,7 +43,7 @@ public class PropertiesSeparatorManager implements JDOMExternalizable, Applicati
     return separator;
   }
 
-  //returns most probable separator in property files
+  //returns most probable separator in properties files
   private static String guessSeparator(final Project project, final VirtualFile file) {
     Collection<PropertiesFile> files;
     if (file instanceof ResourceBundleAsVirtualFile) {
