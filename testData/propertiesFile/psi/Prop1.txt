@@ -1,4 +1,4 @@
-Property file:Prop1.properties
+Properties file:Prop1.properties
   PropertiesList
     Property
       PsiElement(Properties:KEY_CHARACTERS)('xx')

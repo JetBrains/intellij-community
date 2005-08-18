@@ -2,9 +2,6 @@ package com.intellij.lang.properties;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.testFramework.ParsingTestCase;
-import com.intellij.idea.IdeaTestUtil;
-
-import java.util.Calendar;
 
 /**
  * Created by IntelliJ IDEA.
@@ -22,7 +19,6 @@ public class PropertiesParsingTest extends ParsingTestCase {
     return PathManagerEx.getTestDataPath() + "/propertiesFile";
   }
 
-  public void testProp1() throws Exception {
-    doTest(true);
-  }
+  public void testProp1() throws Exception { doTest(true); }
+  public void testComments() throws Exception { doTest(true); }
 }
