@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The IDEA side of a custom language parser. Provides lexing results to the
  * plugin and allows the plugin to build the AST tree.
+ *
  * @see PsiParser
  * @see ASTNode
  */
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 public interface PsiBuilder {
   /**
    * Returns the complete text being parsed.
+   *
    * @return the text being parsed
    */
   CharSequence getOriginalText();
@@ -40,6 +42,7 @@ public interface PsiBuilder {
 
   /**
    * Returns the type of current token from the lexer.
+   *
    * @return the token type, or null when lexing is over.
    */
   @Nullable
@@ -47,6 +50,7 @@ public interface PsiBuilder {
 
   /**
    * Returns the text of the current token from the lexer.
+   *
    * @return the token text, or null when the lexing is over.
    */
   @Nullable
@@ -54,6 +58,7 @@ public interface PsiBuilder {
 
   /**
    * Returns the start offset of the current token, or the file length when the lexing is over.
+   *
    * @return the token offset.
    */
   int getCurrentOffset();
@@ -67,6 +72,7 @@ public interface PsiBuilder {
     /**
      * Creates and returns a new marker starting immediately before the start of
      * this marker and extending after its end. Can be called only on a completed marker.
+     *
      * @return the new marker instance.
      */
     Marker precede();
@@ -86,6 +92,7 @@ public interface PsiBuilder {
     /**
      * Completes this marker and labels it with the specified AST node type. Before calling this method,
      * all markers added after the beginning of this marker must be either dropped or completed.
+     *
      * @param type the type of the node in the AST tree.
      */
     void done(IElementType type);
@@ -93,24 +100,28 @@ public interface PsiBuilder {
 
   /**
    * Creates a marker at the current parsing position.
+   *
    * @return the new marker instance.
    */
   Marker mark();
 
   /**
    * Adds an error marker with the specified message text at the current position in the tree.
+   *
    * @param messageText the text of the error message displayed to the user.
    */
   void error(String messageText);
 
   /**
    * Checks if the lexer has reached the end of file.
+   *
    * @return true if the lexer is at end of file, false otherwise.
    */
   boolean eof();
 
   /**
    * Returns the result of the parsing. All markers must be completed or dropped before this method is called.
+   *
    * @return the built tree.
    */
   ASTNode getTreeBuilt();
@@ -118,6 +129,7 @@ public interface PsiBuilder {
   /**
    * Enables or disables the builder debug mode. In debug mode, the builder will print stack trace
    * to marker allocation position if one is not done when calling getTreeBuilt().
+   *
    * @param dbgMode the debug mode value.
    */
   void setDebugMode(boolean dbgMode);
