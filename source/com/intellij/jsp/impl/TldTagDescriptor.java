@@ -111,8 +111,10 @@ public class TldTagDescriptor extends CustomTagDescriptorBase  {
 
   public void validate(PsiElement context,ValidationHost host) {
     super.validate(context, host);
-    
-    final WebModuleProperties properties = ((JspFile)context.getContainingFile()).getWebModuleProperties();
+
+    final PsiFile containingFile = context.getContainingFile();
+    if (!(containingFile instanceof JspFile)) return;
+    final WebModuleProperties properties = ((JspFile)containingFile).getWebModuleProperties();
 
     if(properties != null) {
       final TagExtraInfo info = getExtraInfo(properties);
