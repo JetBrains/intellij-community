@@ -812,7 +812,7 @@ public class MatchingVisitor extends PsiElementVisitor {
       List<PsiCodeBlock> unmatchedCatchBlocks = new ArrayList<PsiCodeBlock>();
       List<PsiParameter> unmatchedCatchParams = new ArrayList<PsiParameter>();
 
-      for(int j=0;j<catches2.length;++j) {
+      for(int j = 0;j < catches2.length;++j) {
         unmatchedCatchBlocks.add(catches2[j]);
         unmatchedCatchParams.add(catchesArgs2[j]);
       }
@@ -820,7 +820,8 @@ public class MatchingVisitor extends PsiElementVisitor {
       for(int i = 0, j; i < catches1.length; ++i) {
         for(j = 0; j < unmatchedCatchBlocks.size(); ++j) {
 
-          if (match(catchesArgs1[i],unmatchedCatchParams.get(j)) &&
+          if (i < catchesArgs1.length && 
+              match(catchesArgs1[i],unmatchedCatchParams.get(j)) &&
               match(catches1[i],unmatchedCatchBlocks.get(j))
              ) {
             unmatchedCatchBlocks.remove(j);
