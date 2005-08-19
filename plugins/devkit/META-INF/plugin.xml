@@ -2,8 +2,6 @@
 <idea-plugin version="2">
   <name>Plugin DevKit</name>
   <id>DevKit</id>
-  <description>IntelliJ IDEA plugins development kit. Adds dedicated Plugin module type to IntelliJ IDEA project.
-    Allows running/debugging IDEA plugins through Plugin-oriented Run/Debug Configuration tab.</description>
   <version>1.0</version>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
   <idea-version since-build="3000"/>
