@@ -17,6 +17,7 @@ package org.jetbrains.idea.devkit.module;
 
 import com.intellij.j2ee.j2eeDom.DeploymentDescriptorMetaData;
 import com.intellij.openapi.module.ModuleType;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 public class PluginDescriptorMetaData implements DeploymentDescriptorMetaData {
   private final static String VERSION = "1.0";
@@ -42,7 +43,7 @@ public class PluginDescriptorMetaData implements DeploymentDescriptorMetaData {
   }
 
   public String getTitle() {
-    return "IntelliJ IDEA Plugin Descriptor";
+    return DevKitBundle.message("plugin.descriptor");
   }
 
   public ModuleType[] getSuitableTypes() {

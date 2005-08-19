@@ -28,6 +28,7 @@ import java.io.File;
  */
 public class JUnitDevKitPatcher extends JUnitPatcher{
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void patchJavaParameters(JavaParameters javaParameters) {
     final ProjectJdk jdk = javaParameters.getJdk();
     if (jdk == null || !(jdk.getSdkType() instanceof IdeaJdk)) {

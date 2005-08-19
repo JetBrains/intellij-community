@@ -37,12 +37,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.devkit.DevKitBundle;
+
 /**
  * User: anna
  * Date: Nov 22, 2004
  */
 public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
-  private JLabel mySandboxHomeLabel = new JLabel("Sandbox Home:");
+  private JLabel mySandboxHomeLabel = new JLabel(DevKitBundle.message("sandbox.home.label"));
   private TextFieldWithHistory mySandboxHome = new TextFieldWithHistory() {
     public void addCurrentTextToHistory() {
       super.addCurrentTextToHistory();
@@ -61,7 +64,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
   private Sdk myIdeaJdk;
 
   private boolean myModified;
-  private static final String SANDBOX_HISTORY = "DEVKIT_SANDBOX_HISTORY";
+  @NonNls private static final String SANDBOX_HISTORY = "DEVKIT_SANDBOX_HISTORY";
 
   public void setSdk(Sdk sdk) {
     myIdeaJdk = sdk;
@@ -77,9 +80,9 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
                                                              public void actionPerformed(ActionEvent e) {
                                                                FileChooserDescriptor descriptor = FileChooserDescriptorFactory
                                                                  .createSingleFolderDescriptor();
-                                                               descriptor.setTitle("Sandbox Home");
+                                                               descriptor.setTitle(DevKitBundle.message("sandbox.home"));
                                                                descriptor.setDescription(
-                                                                 "Browse folder to put config, system and plugins for target IDEA");
+                                                                 DevKitBundle.message("sandbox.purpose"));
                                                                VirtualFile[] files = FileChooser.chooseFiles(mySandboxHome, descriptor);
                                                                if (files.length != 0) {
                                                                  mySandboxHome.setText(
@@ -107,7 +110,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
 
   public void apply() throws ConfigurationException {
     if (mySandboxHome.getText() == null || mySandboxHome.getText().length() == 0) {
-      throw new ConfigurationException("Please configure the sandbox");
+      throw new ConfigurationException(DevKitBundle.message("sandbox.specification"));
     }
     mySandboxHome.addCurrentTextToHistory();
     Sandbox sandbox = new Sandbox(mySandboxHome.getText());

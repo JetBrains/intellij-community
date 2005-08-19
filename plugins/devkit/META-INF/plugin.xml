@@ -7,6 +7,7 @@
   <version>1.0</version>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
   <idea-version since-build="3000"/>
+  <resource-bundle xmlns="">org.jetbrains.idea.devkit.DevKitBundle</resource-bundle>
 
   <extensions xmlns="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
@@ -46,7 +47,7 @@
   </module-components>
   <actions>
     <group>
-      <action class="org.jetbrains.idea.devkit.build.PrepareToDeployAction" text="Prepare To Deploy" id="MakeJarAction" />
+      <action class="org.jetbrains.idea.devkit.build.PrepareToDeployAction" id="MakeJarAction" />
       <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="Compile"/>
       <add-to-group anchor="after" group-id="BuildMenu" relative-to-action="BuildJar"/>
     </group>

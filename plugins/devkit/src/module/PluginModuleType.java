@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -34,6 +35,7 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   private static final Icon ADD_PLUGIN_MODULE_ICON = IconLoader.getIcon("/add_plugin_modulewizard.png");
   private static PluginModuleType ourInstance = new PluginModuleType();
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private PluginModuleType() {
     super("PLUGIN_MODULE");
   }
@@ -70,13 +72,11 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   }
 
   public String getName() {
-    return "Plugin Module";
+    return DevKitBundle.message("module.title");
   }
 
   public String getDescription() {
-    return "<html>This module type is designed to ease <b>development of Plugins</b> for IntelliJ IDEA. It allows you to properly configure " +
-           "target IntelliJ IDEA SDK and all necessary deployment settings. You can also configure running/debugging instance of IntelliJ IDEA " +
-           "with your plugin enabled.</html>";
+    return DevKitBundle.message("module.description");
   }
 
   public Icon getBigIcon() {

@@ -24,6 +24,8 @@ import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
 
+import org.jetbrains.idea.devkit.DevKitBundle;
+
 public class PluginConfigurationType implements ConfigurationType {
   private final ConfigurationFactory myFactory;
 
@@ -48,11 +50,11 @@ public class PluginConfigurationType implements ConfigurationType {
   private static final Icon ICON = IconLoader.getIcon("/nodes/plugin.png");
 
   public String getDisplayName() {
-    return "Plugin";
+    return DevKitBundle.message("run.configuration.title");
   }
 
   public String getConfigurationTypeDescription() {
-    return "Plugin Sandbox Environment";
+    return DevKitBundle.message("run.configuration.type.description");
   }
 
   public Icon getIcon() {

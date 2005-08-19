@@ -28,6 +28,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.RawCommandLineEditor;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
+import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -44,14 +46,14 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
 
   private DefaultComboBoxModel myModulesModel = new DefaultComboBoxModel();
   private JComboBox myModules = new JComboBox(myModulesModel);
-  private JLabel myModuleLabel = new JLabel("Choose classpath and jdk from module:");
+  private JLabel myModuleLabel = new JLabel(DevKitBundle.message("run.configuration.classpath.from.module.choose"));
   private LabeledComponent<RawCommandLineEditor> myVMParameters = new LabeledComponent<RawCommandLineEditor>();
   private LabeledComponent<RawCommandLineEditor> myProgramParameters = new LabeledComponent<RawCommandLineEditor>();
 
-  private JCheckBox myShowLogs = new JCheckBox("Show idea.log");
+  @NonNls private JCheckBox myShowLogs = new JCheckBox(DevKitBundle.message("show.smth", "idea.log"));
 
   private PluginRunConfiguration myPRC;
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.devkit.ru.PluginRunConfigurationEditor");
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.run.PluginRunConfigurationEditor");
 
   public PluginRunConfigurationEditor(final PluginRunConfiguration prc) {
     myPRC = prc;
@@ -63,6 +65,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
     });
     myShowLogs.setMnemonic('S');
     myModules.addActionListener(new ActionListener() {
+      @SuppressWarnings({"HardCodedStringLiteral"})
       public void actionPerformed(ActionEvent e) {
         if (myModules.getSelectedItem() != null){
           prc.removeAllLogFiles();
@@ -131,11 +134,11 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
       }
     });
     JPanel wholePanel = new JPanel(new GridBagLayout());
-    myVMParameters.setText("&VM Parameters");
+    myVMParameters.setText(DevKitBundle.message("vm.parameters"));
     myVMParameters.setComponent(new RawCommandLineEditor());
     myVMParameters.getComponent().setDialodCaption(myVMParameters.getRawText());
 
-    myProgramParameters.setText("&Program Parameters");
+    myProgramParameters.setText(DevKitBundle.message("program.parameters"));
     myProgramParameters.setComponent(new RawCommandLineEditor());
     myProgramParameters.getComponent().setDialodCaption(myProgramParameters.getRawText());
 

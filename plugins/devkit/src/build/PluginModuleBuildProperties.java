@@ -104,6 +104,7 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(Element element) throws WriteExternalException {
     element.setAttribute("url", getPluginXMLPointer().getUrl());
     if (myManifestFilePointer != null){
@@ -122,6 +123,7 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
 
   public VirtualFilePointer getPluginXMLPointer() {
     if (myPluginXMLPointer == null) {
+      //noinspection HardCodedStringLiteral
       final String defaultPluginXMLLocation = new File(myModule.getModuleFilePath()).getParent() + File.separator + "META-INF" + File.separator + "plugin.xml";
       setPluginXMLUrl(defaultPluginXMLLocation);
     }

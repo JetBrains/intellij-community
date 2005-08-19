@@ -23,17 +23,21 @@ import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
 import java.io.IOException;
 
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * User: anna
  * Date: Dec 3, 2004
  */
 public class IdeaLicenseHelper {
-  private static final String LICENSE_PATH_PREFERRED = "idea50.key";
-  private static final String LICENSE_PATH_40 = "idea40.key";
-  private static final String LICENSE_PATH_SYSTEM = "idea.license";
+  @NonNls private static final String LICENSE_PATH_PREFERRED = "idea50.key";
+  @NonNls private static final String LICENSE_PATH_40 = "idea40.key";
+  @NonNls private static final String LICENSE_PATH_SYSTEM = "idea.license";
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.run.IdeaLicenseHelper");
 
+  @Nullable
   public static File isIDEALicenseInSandbox(final String configPath, final String systemPath, final String binPath){
     final File config = new File(configPath, LICENSE_PATH_PREFERRED);
     if (config.exists()){
@@ -54,6 +58,7 @@ public class IdeaLicenseHelper {
     return null;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void copyIDEALicencse(final String sandboxHome, ProjectJdk jdk){
     if (isIDEALicenseInSandbox(sandboxHome + File.separator + "config", sandboxHome + File.separator + "system", jdk.getHomePath() + File.separator + "bin") == null){
       final File ideaLicense = isIDEALicenseInSandbox(PathManager.getConfigPath(), PathManager.getSystemPath(), PathManager.getBinPath());

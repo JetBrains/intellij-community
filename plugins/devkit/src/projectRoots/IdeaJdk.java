@@ -24,11 +24,14 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 import javax.swing.*;
 import java.io.*;
@@ -43,11 +46,9 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   public static final Icon SDK_OPEN = IconLoader.getIcon("/sdk_open.png");
   public static final Icon SDK_CLOSED = IconLoader.getIcon("/sdk_closed.png");
 
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit");
-  private ProjectJdk myInternalJdk = null;
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.projectRoots.IdeaJdk");
 
-  private String myToolsPath = null;
-  private String myRtPath = null;
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public IdeaJdk() {
     super("IDEA JDK");
   }
@@ -68,6 +69,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     return PathManager.getHomePath().replace(File.separatorChar, '/');
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public boolean isValidSdkHome(String path) {
     if (isFromIDEAProject(path)) {
       return true;
@@ -85,6 +87,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   public static boolean isFromIDEAProject(String path) {
     File home = new File(path);
     File[] openapiDir = home.listFiles(new FileFilter() {
+      @SuppressWarnings({"HardCodedStringLiteral"})
       public boolean accept(File pathname) {
         if (pathname.getName().equals("openapi") && pathname.isDirectory()) return true; //todo
         return false;
@@ -96,63 +99,111 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     return true;
   }
 
+  @Nullable
   public final String getVersionString(final String sdkHome) {
-    return getInternalJavaSdk(sdkHome).getVersionString();
+    final Sdk internalJavaSdk = getInternalJavaSdk(sdkHome);
+    return internalJavaSdk != null ? internalJavaSdk.getVersionString() : null;
   }
 
+  @Nullable
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private String getInternalToolsPath(final String sdkHome){
+    if (SystemInfo.isLinux || SystemInfo.isWindows) {
+      final File tools = new File(new File(new File(sdkHome, "jre"), "lib"), "tools.jar");
+      if (tools.exists()){
+        return tools.getPath();
+      }
+   }
+
+    final String javaHome = System.getProperty("java.home");
+    File tools = new File(new File(javaHome, "lib"), "tools.jar");
+    if (tools.exists()){ // java home points to jdk
+      return tools.getPath();
+    } else {
+      tools = new File(new File (new File(javaHome).getParentFile(), "lib"), "tools.jar");
+      if (tools.exists()){
+        return tools.getPath();
+      }
+    }
+    ProjectJdk jdk = JavaSdk.getInstance().createJdk("", javaHome);
+    if (jdk.getVersionString() != null){
+      return jdk.getToolsPath();
+    }
+    return null;
+  }
+
+  @Nullable
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private String getInternalRtPath(final String homePath) {
+    String rtPath;
+    if (SystemInfo.isLinux || SystemInfo.isWindows) {
+      rtPath = homePath + File.separator + "jre" + File.separator + "lib" + File.separator + "rt.jar";
+      if (new File(rtPath).exists()) {
+        return rtPath;
+      }
+    }
+    final String javaHome = System.getProperty("java.home");
+    File rt = new File(new File(javaHome, "lib"), "rt.jar");
+    if (rt.exists()){ // java home points to jre
+      return rt.getPath();
+    } else {
+      rt = new File(new File (new File(javaHome, "jre"), "lib"), "rt.jar");
+      if (rt.exists()){
+        return rt.getPath();
+      }
+    }
+    return null;
+  }
+
+  @Nullable
   private Sdk getInternalJavaSdk(final String sdkHome) {
-    if (myInternalJdk == null) {
-      String jreHome;
-      myToolsPath = null;
-      if (SystemInfo.isLinux || SystemInfo.isWindows) {
-        jreHome = sdkHome + File.separator + "jre";
-        if (!new File(jreHome).exists()) {
-          jreHome = System.getProperty("java.home");
-          final File tools = new File(new File(jreHome, "lib"), "tools.jar");
-          if (tools.exists()){
-            myToolsPath = tools.getPath();
-            jreHome = jreHome + File.separator + "jre";
-          } else {
-            myToolsPath = new File(jreHome).getParent() + File.separator + "lib" + File.separator + "tools.jar";
-          }
-        }
-      }
-      else {
-        jreHome = System.getProperty("java.home");
-      }
-      myInternalJdk = JavaSdk.getInstance().createJdk("", jreHome);
-      if (myInternalJdk.getVersionString() != null){ //internal jdk is valid
-        myToolsPath = myToolsPath != null ? myToolsPath : myInternalJdk.getToolsPath();
-        myRtPath = jreHome + File.separator + "lib" + File.separator + "rt.jar";
-        final VirtualFile tools = LocalFileSystem.getInstance().findFileByPath(myToolsPath.replace(File.separatorChar, '/'));
+    String jreHome = getJreHome(sdkHome);
+    ProjectJdk internalJdk = JavaSdk.getInstance().createJdk("", jreHome);
+    if (internalJdk.getVersionString() != null){ //internal jdk is valid
+      final String internalToolsPath = getInternalToolsPath(sdkHome);
+      if (internalToolsPath != null) {
+        final VirtualFile tools = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(internalToolsPath));
         if (tools != null) {
-          final SdkModificator sdkModificator = myInternalJdk.getSdkModificator();
+          final SdkModificator sdkModificator = internalJdk.getSdkModificator();
           sdkModificator.addRoot(tools, ProjectRootType.CLASS);
           sdkModificator.commitChanges();
         }
-      } else {
-        myToolsPath = null;
-        myRtPath = null;
       }
+    } else {
+      return null;
     }
-    return myInternalJdk;
+    return internalJdk;
   }
 
+  private String getJreHome(final String sdkHome) {
+    String jreHome;
+    if (SystemInfo.isLinux || SystemInfo.isWindows) {
+      jreHome = sdkHome + File.separator + "jre";
+      if (new File(jreHome).exists()){
+        return jreHome;
+      }
+    }
+    return System.getProperty("java.home");
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String suggestSdkName(String currentSdkName, String sdkHome) {
     return "IDEA " + (getBuildNumber(sdkHome) != null ? getBuildNumber(sdkHome) : "");
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private String getBuildNumber(String ideaHome) {
     try {
       BufferedReader reader = new BufferedReader(new FileReader(ideaHome + "/build.txt"));
       return reader.readLine().trim();
     }
     catch (IOException e) {
+      return null;
     }
 
-    return null;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private VirtualFile[] getIdeaLibrary(String home) {
     ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
     JarFileSystem jfs = JarFileSystem.getInstance();
@@ -199,6 +250,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     final File src = new File(new File(file, "lib"), "src");
     if (!src.exists()) return;
     File[] srcs = src.listFiles(new FileFilter() {
+      @SuppressWarnings({"HardCodedStringLiteral"})
       public boolean accept(File pathname) {
         if (pathname.getPath().indexOf("generics") > -1) return false;
         if (pathname.getPath().endsWith(".jar") || pathname.getPath().endsWith(".zip")) return true;
@@ -217,6 +269,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void addDocs(File file, SdkModificator sdkModificator) {
     File docFile = new File(new File(file, "help"), "openapi");
     if (docFile.exists() && docFile.isDirectory()) {
@@ -250,26 +303,29 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private void addSources(SdkModificator sdkModificator) {
     final Sdk internalJavaSdk = getInternalJavaSdk(sdkModificator.getHomePath());
-    if (!addOrderEntries(OrderRootType.SOURCES, ProjectRootType.SOURCE, internalJavaSdk, sdkModificator)){
-      if (SystemInfo.isMac) {
-        ProjectJdk [] jdks = ProjectJdkTable.getInstance().getAllJdks();
-        for (ProjectJdk jdk : jdks) {
-          if (jdk.getSdkType() instanceof JavaSdk) {
-            addOrderEntries(OrderRootType.SOURCES, ProjectRootType.SOURCE, jdk, sdkModificator);
-            break;
+    if (internalJavaSdk != null) {
+      if (!addOrderEntries(OrderRootType.SOURCES, ProjectRootType.SOURCE, internalJavaSdk, sdkModificator)){
+        if (SystemInfo.isMac) {
+          ProjectJdk [] jdks = ProjectJdkTable.getInstance().getAllJdks();
+          for (ProjectJdk jdk : jdks) {
+            if (jdk.getSdkType() instanceof JavaSdk) {
+              addOrderEntries(OrderRootType.SOURCES, ProjectRootType.SOURCE, jdk, sdkModificator);
+              break;
+            }
           }
         }
-      }
-      else {
-        final File jdkHome = new File(internalJavaSdk.getHomePath()).getParentFile();
-        final File jarFile = new File(jdkHome, "src.zip");
-        if (jarFile.exists()){
-          JarFileSystem jarFileSystem = JarFileSystem.getInstance();
-          String path = jarFile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
-          jarFileSystem.setNoCopyJarForPath(path);
-          sdkModificator.addRoot(jarFileSystem.findFileByPath(path), ProjectRootType.SOURCE);
+        else {
+          final File jdkHome = new File(internalJavaSdk.getHomePath()).getParentFile();
+          final File jarFile = new File(jdkHome, "src.zip");
+          if (jarFile.exists()){
+            JarFileSystem jarFileSystem = JarFileSystem.getInstance();
+            String path = jarFile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
+            jarFileSystem.setNoCopyJarForPath(path);
+            sdkModificator.addRoot(jarFileSystem.findFileByPath(path), ProjectRootType.SOURCE);
+          }
         }
       }
     }
@@ -287,50 +343,29 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   }
 
   public AdditionalDataConfigurable createAdditionalDataConfigurable(final SdkModel sdkModel, SdkModificator sdkModificator) {
-    sdkModel.addListener(new SdkModel.Listener() {
-      public void sdkAdded(Sdk sdk) {
-        myInternalJdk = null;
-        myToolsPath = null;
-        myRtPath = null;
-      }
-
-      public void beforeSdkRemove(Sdk sdk) {
-        myInternalJdk = null;
-        myToolsPath = null;
-        myRtPath = null;
-      }
-
-      public void sdkChanged(Sdk sdk, String previousName) {
-        myInternalJdk = null;
-        myToolsPath = null;
-        myRtPath = null;
-      }
-
-      public void sdkHomeSelected(final Sdk sdk, final String newSdkHome) {
-        myInternalJdk = null;
-        myToolsPath = null;
-        myRtPath = null;
-      }
-    });
     return new IdeaJdkConfigurable();
   }
 
+  @Nullable
   public String getBinPath(Sdk sdk) {
-    return JavaSdk.getInstance().getBinPath(getInternalJavaSdk(sdk.getHomePath()));
+    final Sdk internalJavaSdk = getInternalJavaSdk(sdk.getHomePath());
+    return internalJavaSdk == null ? null : JavaSdk.getInstance().getBinPath(internalJavaSdk);
   }
 
+  @Nullable
   public String getToolsPath(Sdk sdk) {
-    getInternalJavaSdk(sdk.getHomePath());
-    return myToolsPath;
+    return getInternalToolsPath(sdk.getHomePath());
   }
 
+  @Nullable
   public String getVMExecutablePath(Sdk sdk) {
-    return JavaSdk.getInstance().getVMExecutablePath(getInternalJavaSdk(sdk.getHomePath()));
+    final Sdk internalJavaSdk = getInternalJavaSdk(sdk.getHomePath());
+    return internalJavaSdk == null ? null : JavaSdk.getInstance().getVMExecutablePath(internalJavaSdk);
   }
 
+  @Nullable
   public String getRtLibraryPath(Sdk sdk) {
-    getInternalJavaSdk(sdk.getHomePath());
-    return myRtPath;
+    return getInternalRtPath(sdk.getHomePath());
   }
 
   public void saveAdditionalData(SdkAdditionalData additionalData, Element additional) {
@@ -356,7 +391,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   }
 
   public String getPresentableName() {
-    return "IntelliJ IDEA SDK";
+    return DevKitBundle.message("sdk.title");
   }
 
   public String getComponentName() {

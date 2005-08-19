@@ -23,6 +23,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 /**
  * User: anna
@@ -49,7 +50,7 @@ public class Sandbox implements SdkAdditionalData, JDOMExternalizable{
 
   public void checkValid(SdkModel sdkModel) throws ConfigurationException {
     if (mySandboxHome == null || mySandboxHome.length() == 0){
-      throw new ConfigurationException("Please configure the sandbox");
+      throw new ConfigurationException(DevKitBundle.message("sandbox.specification"));
     }
   }
 

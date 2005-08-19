@@ -34,6 +34,7 @@ import org.jdom.Element;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 import java.io.File;
 import java.io.IOException;
@@ -68,7 +69,7 @@ public class PluginRunConfiguration extends RunConfigurationBase {
                                   RunnerSettings runnerSettings,
                                   ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException {
     if (getModule() == null){
-      throw new ExecutionException("No module specified for configuration");
+      throw new ExecutionException(DevKitBundle.message("run.configuration.no.module.specified"));
     }
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(getModule());
     final ProjectJdk jdk = rootManager.getJdk();
@@ -76,19 +77,19 @@ public class PluginRunConfiguration extends RunConfigurationBase {
       throw CantRunException.noJdkForModule(getModule());
     }
     if (!(jdk.getSdkType() instanceof IdeaJdk)) {
-      throw new ExecutionException("Wrong jdk type for plugin module");
+      throw new ExecutionException(DevKitBundle.message("jdk.type.incorrect.common"));
     }
     String sandboxHome = ((Sandbox)jdk.getSdkAdditionalData()).getSandboxHome();
 
     if (sandboxHome == null){
-      throw new ExecutionException("No sandbox specified for idea jdk");
+      throw new ExecutionException(DevKitBundle.message("sandbox.no.configured"));
     }
 
     try {
       sandboxHome = new File(sandboxHome).getCanonicalPath();
     }
     catch (IOException e) {
-      throw new ExecutionException("No sandbox specified for idea jdk");
+      throw new ExecutionException(DevKitBundle.message("sandbox.no.configured"));
     }
     final String canonicalSandbox = sandboxHome;
 
@@ -96,6 +97,7 @@ public class PluginRunConfiguration extends RunConfigurationBase {
     IdeaLicenseHelper.copyIDEALicencse(sandboxHome, jdk);
 
     final JavaCommandLineState state = new JavaCommandLineState(runnerSettings, configurationSettings) {
+      @SuppressWarnings({"HardCodedStringLiteral"})
       protected JavaParameters createJavaParameters() throws ExecutionException {
 
         final JavaParameters params = new JavaParameters();
@@ -149,7 +151,7 @@ public class PluginRunConfiguration extends RunConfigurationBase {
 
   public void checkConfiguration() throws RuntimeConfigurationException {
     if (getModule() == null) {
-      throw new RuntimeConfigurationException("Plugin module not specified.");
+      throw new RuntimeConfigurationException(DevKitBundle.message("run.configuration.no.module.specified"));
     }
     String moduleName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       public String compute() {
@@ -157,15 +159,15 @@ public class PluginRunConfiguration extends RunConfigurationBase {
       }
     });
     if (ModuleManager.getInstance(getProject()).findModuleByName(moduleName) == null){
-      throw new RuntimeConfigurationException("Plugin module not specified.");
+      throw new RuntimeConfigurationException(DevKitBundle.message("run.configuration.no.module.specified"));
     }
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(getModule());
     final ProjectJdk jdk = rootManager.getJdk();
     if (jdk == null) {
-      throw new RuntimeConfigurationException("No jdk specified for plugin module \'" + moduleName + "\'");
+      throw new RuntimeConfigurationException(DevKitBundle.message("jdk.no.specified", moduleName));
     }
     if (!(jdk.getSdkType() instanceof IdeaJdk)) {
-      throw new RuntimeConfigurationException("Wrong jdk type for plugin module \'" + moduleName + "\'");
+      throw new RuntimeConfigurationException(DevKitBundle.message("jdk.type.incorrect", moduleName));
     }
   }
 
@@ -182,6 +184,7 @@ public class PluginRunConfiguration extends RunConfigurationBase {
     return modules.toArray(new Module[modules.size()]);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(Element element) throws InvalidDataException {
     Element module = element.getChild("module");
     if (module != null) {
@@ -191,6 +194,7 @@ public class PluginRunConfiguration extends RunConfigurationBase {
     super.readExternal(element);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(Element element) throws WriteExternalException {
     Element moduleElement = new Element("module");
     moduleElement.setAttribute("name", ApplicationManager.getApplication().runReadAction(new Computable<String>() {
