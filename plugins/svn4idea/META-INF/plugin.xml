@@ -5,6 +5,7 @@
   <version>1.0</version>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
   <idea-version min="5.0" max="5.0"/>
+  <resource-bundle>org.jetbrains.SvnBundle</resource-bundle>
 
   <extensions xmlns="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
@@ -37,43 +38,43 @@
 
   <actions>
 
-    <group id="SubversionFileGroup" text="SVN">
+    <group id="SubversionFileGroup">
       <separator/>
-      <action id="Subversion.BrowseSVNRepository" class="org.jetbrains.idea.svn.actions.BrowseRepositoryAction" text="Browse S_VN Repository..."
-        description="Browse a Subversion repository"/>
+      <action id="Subversion.BrowseSVNRepository" class="org.jetbrains.idea.svn.actions.BrowseRepositoryAction"
+        />
       <separator/>
       <add-to-group group-id="FileMenu" anchor="before" relative-to-action="ExportToHTML"/>
     </group>
 
-    <group id="SubversionFilePopupGroup" popup="true" text="_Subversion" class="org.jetbrains.idea.svn.actions.SubversionGroup">
+    <group id="SubversionFilePopupGroup" popup="true" class="org.jetbrains.idea.svn.actions.SubversionGroup">
       <add-to-group group-id="VcsGroup" anchor="last"/>
       <add-to-group group-id="VcsGroups" anchor="last"/>      
     </group>
 
     <group id="SubversionGroup">
       <separator/>
-      <action id="Subversion.Add" class="org.jetbrains.idea.svn.actions.AddAction" text="Add" description="Add the file to Subversion"/>
+      <action id="Subversion.Add" class="org.jetbrains.idea.svn.actions.AddAction"/>
       <reference id="CheckinFiles"/>
       <reference id="UpdateFiles"/>
       <reference id="CheckStatusForFiles"/>
       <reference id="Vcs.ShowTabbedFileHistory"/>
       <separator/>
-      <action id="Subversion.SetProperty" class="org.jetbrains.idea.svn.actions.SetPropertyAction" text="Set Property..." description="Set versioned property on file or directory"/>
-      <action id="Subversion.Revert" class="org.jetbrains.idea.svn.actions.RevertAction" text="Revert..." description="Revert file to pristine state"/>
-      <action id="Subversion.Resolve" class="org.jetbrains.idea.svn.actions.ResolveAction" text="Resolve Text Conflict..." description="Resolve text conflict on file"/>
-      <action id="Subversion.MarkResolved" class="org.jetbrains.idea.svn.actions.MarkResolvedAction" text="Mark Resolved..." description="Mark text and properties conflicts as resolved"/>
-      <action id="Subversion.Clenaup" class="org.jetbrains.idea.svn.actions.CleanupAction" text="Cleanup" description="Unlock locked directories and run all remaining incompleted operations"/>
+      <action id="Subversion.SetProperty" class="org.jetbrains.idea.svn.actions.SetPropertyAction"/>
+      <action id="Subversion.Revert" class="org.jetbrains.idea.svn.actions.RevertAction"/>
+      <action id="Subversion.Resolve" class="org.jetbrains.idea.svn.actions.ResolveAction"/>
+      <action id="Subversion.MarkResolved" class="org.jetbrains.idea.svn.actions.MarkResolvedAction"/>
+      <action id="Subversion.Clenaup" class="org.jetbrains.idea.svn.actions.CleanupAction"/>
       <separator/>
       <reference id="Compare.SameVersion" text="Compare with BASE revision"/>
       <reference id="Compare.LastVersion" text="Comparet with revision at HEAD"/>
       <reference id="Compare.Selected"/>
       <reference id="Annotate"/>
-      <action id="Subversion.Copy" class="org.jetbrains.idea.svn.actions.CopyAction" text="Branch or Tag..." description="Copy selected file or directory to the new repository location"/>
+      <action id="Subversion.Copy" class="org.jetbrains.idea.svn.actions.CopyAction"/>
       <separator/>
-      <action id="Subversion.Lock" class="org.jetbrains.idea.svn.actions.LockAction" text="Lock..." description="Lock files"/>
-      <action id="Subversion.Unlock" class="org.jetbrains.idea.svn.actions.UnlockAction" text="Unlock" description="Unlock files"/>
+      <action id="Subversion.Lock" class="org.jetbrains.idea.svn.actions.LockAction"/>
+      <action id="Subversion.Unlock" class="org.jetbrains.idea.svn.actions.UnlockAction"/>
       <separator/>
-      <action id="SvnChangesBrowser" class="org.jetbrains.idea.svn.actions.BrowseChangesAction" text="Browse Changes..."/>
+      <action id="SvnChangesBrowser" class="org.jetbrains.idea.svn.actions.BrowseChangesAction"/>
       <add-to-group group-id="SubversionFilePopupGroup" anchor="last"/>
     </group>
   </actions>
