@@ -19,6 +19,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.help.HelpManager;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.annotations.NonNls;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 
 import javax.swing.*;
@@ -44,7 +46,7 @@ public class SelectLocationDialog extends DialogWrapper {
   private JTextField myDstText;
   private boolean myIsShowFiles;
 
-  private static final String HELP_ID = "vcs.subversion.common";
+  @NonNls private static final String HELP_ID = "vcs.subversion.common";
 
   public SelectLocationDialog(Project project, String url) {
     this(project, url, null, null, true);
@@ -58,7 +60,7 @@ public class SelectLocationDialog extends DialogWrapper {
     myDstName = dstName;
     myURL = url;
     myIsShowFiles = showFiles;
-    setTitle("Select Repository Location");
+    setTitle(SvnBundle.message("dialog.title.select.repository.location"));
     getHelpAction().setEnabled(true);
     init();
   }

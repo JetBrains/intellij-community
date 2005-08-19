@@ -20,6 +20,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.help.HelpManager;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.annotations.NonNls;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
@@ -57,14 +59,14 @@ public class CopyDialog extends DialogWrapper implements ActionListener {
   private JTextArea myCommentText;
   private String mySrcURL;
 
-  private static final String HELP_ID = "vcs.subversion.branch";
+  @NonNls private static final String HELP_ID = "vcs.subversion.branch";
 
   public CopyDialog(Project project, boolean canBeParent, File file) {
     super(project, canBeParent);
     mySrcFile = file;
     myProject = project;
     setResizable(true);
-    setTitle("Create Branch or Tag");
+    setTitle(SvnBundle.message("dialog.title.branch"));
     getHelpAction().setEnabled(true);
     init();
   }
@@ -89,7 +91,7 @@ public class CopyDialog extends DialogWrapper implements ActionListener {
         revStr = info.getRevision() + "";
         myURL = mySrcURL;
         if (myURL != null) {
-          String dstName = "CopyOf" + SVNPathUtil.tail(myURL);
+          @NonNls String dstName = "CopyOf" + SVNPathUtil.tail(myURL);
           if (mySrcFile.isDirectory()) {
             myURL = SVNPathUtil.append(myURL, dstName);
           }
@@ -143,7 +145,7 @@ public class CopyDialog extends DialogWrapper implements ActionListener {
 
     GridBagConstraints gc = createGridBagConstraints();
 
-    JLabel fromLabel = new JLabel("&From:");
+    JLabel fromLabel = new JLabel(SvnBundle.message("label.copy.from"));
     panel.add(fromLabel, gc);
 
     gc.gridx += 1;
@@ -157,7 +159,7 @@ public class CopyDialog extends DialogWrapper implements ActionListener {
     panel.add(myFromURLText, gc);
     DialogUtil.registerMnemonic(fromLabel, myFromURLText);
 
-    JLabel toLabel = new JLabel("&To:");
+    JLabel toLabel = new JLabel(SvnBundle.message("label.copy.to"));
     gc.gridy += 1;
     gc.gridx = 0;
     gc.gridwidth = 1;
@@ -183,11 +185,11 @@ public class CopyDialog extends DialogWrapper implements ActionListener {
     gc.weightx = 1;
     gc.fill = GridBagConstraints.NONE;
 
-    panel.add(new JLabel("Copy from revision:"), gc);
+    panel.add(new JLabel(SvnBundle.message("label.copy.from.revision")), gc);
 
-    myWorkingRevisionButton = new JRadioButton("&Working copy");
-    myHEADRevisionButton = new JRadioButton("&HEAD revision");
-    mySpecificRevisionButton = new JRadioButton("Specific &revision:");
+    myWorkingRevisionButton = new JRadioButton(SvnBundle.message("radio.copy.working.copy"));
+    myHEADRevisionButton = new JRadioButton(SvnBundle.message("radio.copy.head"));
+    mySpecificRevisionButton = new JRadioButton(SvnBundle.message("radio.copy.specific"));
 
     myWorkingRevisionButton.addActionListener(this);
     myHEADRevisionButton.addActionListener(this);
@@ -237,7 +239,7 @@ public class CopyDialog extends DialogWrapper implements ActionListener {
     gc.gridy += 1;
     gc.gridx = 0;
     gc.gridwidth = 3;
-    JLabel commentLabel = new JLabel("&Comment");
+    JLabel commentLabel = new JLabel(SvnBundle.message("label.copy.comment"));
     panel.add(commentLabel, gc);
 
     gc.gridy += 1;
@@ -271,7 +273,7 @@ public class CopyDialog extends DialogWrapper implements ActionListener {
     String url = myToURLText.getText();
     String dstName = SVNPathUtil.tail(myURL);
     dstName = SVNEncodingUtil.uriDecode(dstName);
-    SelectLocationDialog dialog = new SelectLocationDialog(myProject, SVNPathUtil.removeTail(url), "Copy &as:", dstName, false);
+    SelectLocationDialog dialog = new SelectLocationDialog(myProject, SVNPathUtil.removeTail(url), SvnBundle.message("label.copy.select.location.dialog.copy.as"), dstName, false);
     dialog.show();
     if (dialog.isOK()) {
       url = dialog.getSelectedURL();

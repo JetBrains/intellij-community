@@ -39,6 +39,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.dialogs.SelectFilesDialog;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.*;
@@ -49,7 +50,7 @@ import java.util.TreeSet;
 
 public class MarkResolvedAction extends BasicAction {
   protected String getActionName(AbstractVcs vcs) {
-    return "Mark Resolved";
+    return SvnBundle.message("action.name.mark.resolved");
   }
 
   protected boolean needsAllFiles() {
@@ -108,12 +109,13 @@ public class MarkResolvedAction extends BasicAction {
     ApplicationManager.getApplication().saveAll();
     Collection paths = collectResolvablePaths(files);
     if (paths.isEmpty()) {
-      Messages.showInfoMessage(project, "No conflicts found", "No Conflicts");
+      Messages.showInfoMessage(project, SvnBundle.message("message.text.no.conflicts.found"), SvnBundle.message("message.title.no.conflicts.found"));
       return;
     }
     String[] pathsArray = (String[])paths.toArray(new String[paths.size()]);
-    SelectFilesDialog dialog = new SelectFilesDialog(project, "Select files and directories to mark resolved:",
-                                                     "Mark Resolved", "Mark Resolved", pathsArray, "vcs.subversion.resolve"
+    SelectFilesDialog dialog = new SelectFilesDialog(project, SvnBundle.message("label.select.files.and.directories.to.mark.resolved"),
+                                                     SvnBundle.message("dialog.title.mark.resolved"),
+                                                     SvnBundle.message("action.name.mark.resolved"), pathsArray, "vcs.subversion.resolve"
                                                      );
     dialog.show();
     if (!dialog.isOK()) {

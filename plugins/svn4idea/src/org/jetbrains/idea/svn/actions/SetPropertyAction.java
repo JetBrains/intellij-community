@@ -39,6 +39,7 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.dialogs.SetPropertyDialog;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNInfo;
@@ -49,7 +50,7 @@ import java.io.File;
 
 public class SetPropertyAction extends BasicAction {
   protected String getActionName(AbstractVcs vcs) {
-    return "Set Property";
+    return SvnBundle.message("action.name.set.property");
   }
 
   protected boolean needsAllFiles() {

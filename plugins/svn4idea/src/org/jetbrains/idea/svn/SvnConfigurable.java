@@ -43,6 +43,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.idea.svn.dialogs.DialogUtil;
+import org.jetbrains.annotations.NonNls;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.core.SVNException;
@@ -65,7 +66,8 @@ public class SvnConfigurable implements Configurable, ActionListener {
   private JLabel myConfigurationDirectoryLabel;
   private FileChooserDescriptor myBrowserDescriptor;
 
-  private static final String HELP_ID = "project.propSubversion";
+  @NonNls private static final String HELP_ID = "project.propSubversion";
+  @NonNls private static final String AUTH_DIR_NAME = "auth";
 
   public SvnConfigurable(Project project) {
     myProject = project;
@@ -85,7 +87,7 @@ public class SvnConfigurable implements Configurable, ActionListener {
     gb.gridy = 0;
     gb.anchor = GridBagConstraints.WEST;
     gb.gridwidth = 3;
-    myUseDefaultCheckBox = new JCheckBox("&Use system default Subversion configuration directory");
+    myUseDefaultCheckBox = new JCheckBox(SvnBundle.message("checkbox.configure.use.system.default.configuration.directory"));
     DialogUtil.registerMnemonic(myUseDefaultCheckBox);
     add(myUseDefaultCheckBox, gb);
     myUseDefaultCheckBox.addActionListener(this);
@@ -95,7 +97,7 @@ public class SvnConfigurable implements Configurable, ActionListener {
     gb.fill = GridBagConstraints.HORIZONTAL;
     gb.gridwidth = 3;
     gb.insets = new Insets(5, 5, 1, 5);
-    JLabel label = new JLabel("Subversion configuration &directory:");
+    JLabel label = new JLabel(SvnBundle.message("label.configuration.configuration.directory"));
     myConfigurationDirectoryLabel = label;
 
     myConfigurationDirectoryText = new TextFieldWithBrowseButton(new ActionListener() {
@@ -103,16 +105,16 @@ public class SvnConfigurable implements Configurable, ActionListener {
         if (myBrowserDescriptor == null) {
           myBrowserDescriptor = new FileChooserDescriptor(false, true, false, false, false, false);
           myBrowserDescriptor.setShowFileSystemRoots(true);
-          myBrowserDescriptor.setTitle("Select Configuration Directory");
-          myBrowserDescriptor.setDescription("Select Subversion configuration directory or create new one");
+          myBrowserDescriptor.setTitle(SvnBundle.message("dialog.title.select.configuration.directory"));
+          myBrowserDescriptor.setDescription(SvnBundle.message("dialog.description.select.configuration.directory"));
           myBrowserDescriptor.setHideIgnored(false);
         }
-        String path = myConfigurationDirectoryText.getText().trim();
+        @NonNls String path = myConfigurationDirectoryText.getText().trim();
         path = "file://" + path.replace(File.separatorChar, '/');
         VirtualFile root = VirtualFileManager.getInstance().findFileByUrl(path);
 
         String oldValue = PropertiesComponent.getInstance().getValue("FileChooser.showHiddens");
-        PropertiesComponent.getInstance().setValue("FileChooser.showHiddens", "true");
+        PropertiesComponent.getInstance().setValue("FileChooser.showHiddens", Boolean.TRUE.toString());
         VirtualFile[] files = FileChooser.chooseFiles(myComponent, myBrowserDescriptor, root);
         PropertiesComponent.getInstance().setValue("FileChooser.showHiddens", oldValue);
         if (files == null || files.length != 1 || files[0] == null) {
@@ -140,14 +142,14 @@ public class SvnConfigurable implements Configurable, ActionListener {
     gb.gridheight = 1;
     gb.gridx = 0;
     gb.gridy += 1;
-    myClearAuthButton = new JButton("&Clear Authentication Cache");
+    myClearAuthButton = new JButton(SvnBundle.message("button.text.clear.authentication.cache"));
     DialogUtil.registerMnemonic(myClearAuthButton);
     myClearAuthButton.addActionListener(this);
     add(myClearAuthButton, gb);
     gb.gridwidth = 2;
     gb.gridx = 1;
     gb.fill = GridBagConstraints.HORIZONTAL;
-    label = new JLabel("Delete all stored credentials for 'http', 'svn' and 'svn+ssh' protocols");
+    label = new JLabel(SvnBundle.message("label.text.delete.stored.credentials"));
     label.setEnabled(false);
     add(label, gb);
 
@@ -231,11 +233,11 @@ public class SvnConfigurable implements Configurable, ActionListener {
     else if (e.getSource() == myClearAuthButton) {
       String path = myConfigurationDirectoryText.getText();
       if (path != null) {
-        int result = Messages.showYesNoDialog(myComponent, "You are about to delete all stored Subversion authentication information.\n" +
-                                                           "Would you like to proceed with deletion?", "Clear Authentication Cache",
+        int result = Messages.showYesNoDialog(myComponent, SvnBundle.message("confirmation.text.delete.stored.authentication.information"),
+                                              SvnBundle.message("confirmation.title.clear.authentication.cache"),
                                                            Messages.getWarningIcon());
         if (result == 0) {
-          File authDir = new File(path, "auth");
+          File authDir = new File(path, AUTH_DIR_NAME);
           SVNFileUtil.deleteAll(authDir, false);
         }
         SvnConfiguration.RUNTIME_AUTH_CACHE.clear();

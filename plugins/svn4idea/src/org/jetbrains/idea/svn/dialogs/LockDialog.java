@@ -22,6 +22,9 @@ import com.intellij.openapi.help.HelpManager;
 import javax.swing.*;
 import java.awt.*;
 
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.svn.SvnBundle;
+
 /**
  * Created by IntelliJ IDEA.
  * User: alex
@@ -33,11 +36,11 @@ public class LockDialog extends DialogWrapper {
   private JTextArea myLockTextArea;
   private JCheckBox myForceCheckBox;
 
-  private static final String HELP_ID = "vcs.subversion.lock";
+  @NonNls private static final String HELP_ID = "vcs.subversion.lock";
 
   public LockDialog(Project project, boolean canBeParent) {
     super(project, canBeParent);
-    setTitle("Lock Files");
+    setTitle(SvnBundle.message("dialog.title.lock.files"));
     setResizable(true);
 
     getHelpAction().setEnabled(true);
@@ -79,7 +82,7 @@ public class LockDialog extends DialogWrapper {
     gc.weightx = 0;
     gc.weighty = 0;
 
-    JLabel commentLabel = new JLabel("&Lock comment:");
+    JLabel commentLabel = new JLabel(SvnBundle.message("label.lock.comment"));
     panel.add(commentLabel, gc);
 
     gc.gridy += 1;
@@ -99,7 +102,7 @@ public class LockDialog extends DialogWrapper {
     gc.weighty = 0;
     gc.fill = GridBagConstraints.NONE;
 
-    myForceCheckBox = new JCheckBox("&Steal existing lock");
+    myForceCheckBox = new JCheckBox(SvnBundle.message("label.locl.steal.existing"));
     panel.add(myForceCheckBox, gc);
     DialogUtil.registerMnemonic(myForceCheckBox);
 

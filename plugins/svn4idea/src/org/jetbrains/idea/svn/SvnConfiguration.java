@@ -120,6 +120,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
     return myAuthManager;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(org.jdom.Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
     List elems = element.getChildren("addpath");
@@ -159,6 +160,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
     myRemoteStatus = element.getChild("remoteStatus") != null;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(org.jdom.Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
     if (ADD_PATHS != null) {

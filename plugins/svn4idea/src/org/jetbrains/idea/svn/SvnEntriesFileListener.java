@@ -39,7 +39,7 @@ public class SvnEntriesFileListener extends VirtualFileAdapter {
       return;
     }
     final VirtualFile file = event.getFile();
-    if (file != null && ".svn".equals(file.getName())) {
+    if (file != null && SvnUtil.SVN_ADMIN_DIR_NAME.equals(file.getName())) {
       if (event.getParent() != null) {
         VirtualFile parent = event.getParent();
         fireFileStatusesChanged(parent);
@@ -70,7 +70,7 @@ public class SvnEntriesFileListener extends VirtualFileAdapter {
       return;
     }
     final VirtualFile file = event.getFile();
-    if (file != null && ".svn".equals(file.getName())) {
+    if (file != null && SvnUtil.SVN_ADMIN_DIR_NAME.equals(file.getName())) {
       if (event.getParent() != null) {
         VirtualFile parent = event.getParent();
         fireFileStatusesChanged(parent);
@@ -114,6 +114,6 @@ public class SvnEntriesFileListener extends VirtualFileAdapter {
 
   private static boolean isEntriesFile(final VirtualFile file) {
     VirtualFile parent = file.getParent();
-    return !file.isDirectory() && "entries".equals(file.getName()) && parent != null && ".svn".equals(parent.getName());
+    return !file.isDirectory() && SvnUtil.ENTRIES_FILE_NAME.equals(file.getName()) && parent != null && SvnUtil.SVN_ADMIN_DIR_NAME.equals(parent.getName());
   }
 }

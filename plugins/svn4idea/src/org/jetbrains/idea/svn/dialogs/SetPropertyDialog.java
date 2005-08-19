@@ -19,6 +19,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.help.HelpManager;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.annotations.NonNls;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
@@ -58,7 +60,7 @@ public class SetPropertyDialog extends DialogWrapper {
   private boolean myIsRecursionAllowed;
   private SvnVcs myVCS;
 
-  private static final String HELP_ID = "vcs.subversion.property";
+  @NonNls private static final String HELP_ID = "vcs.subversion.property";
 
   public SetPropertyDialog(Project project, File[] files, String name, boolean allowRecursion) {
     super(project, true);
@@ -67,7 +69,7 @@ public class SetPropertyDialog extends DialogWrapper {
     myIsRecursionAllowed = allowRecursion;
     myVCS = SvnVcs.getInstance(project);
     setResizable(true);
-    setTitle("Set Property");
+    setTitle(SvnBundle.message("dialog.title.set.property"));
     getHelpAction().setEnabled(true);
     init();
   }
@@ -189,7 +191,7 @@ public class SetPropertyDialog extends DialogWrapper {
     gc.weightx = 0;
     gc.weighty = 0;
 
-    JLabel nameLabel = new JLabel("Property &name:");
+    JLabel nameLabel = new JLabel(SvnBundle.message("label.set.property.property.name"));
     panel.add(nameLabel, gc);
 
     gc.gridx += 1;
@@ -211,7 +213,7 @@ public class SetPropertyDialog extends DialogWrapper {
     gc.gridx = 0;
     gc.gridwidth = 2;
     gc.gridy += 1;
-    mySetPropertyButton = new JRadioButton("&Set property value:");
+    mySetPropertyButton = new JRadioButton(SvnBundle.message("radio.set.property.set.property.value"));
     panel.add(mySetPropertyButton, gc);
     DialogUtil.registerMnemonic(mySetPropertyButton);
     mySetPropertyButton.addChangeListener(new ChangeListener() {
@@ -237,14 +239,14 @@ public class SetPropertyDialog extends DialogWrapper {
     gc.weighty = 0;
     gc.fill = GridBagConstraints.HORIZONTAL;
 
-    myDeletePropertyButton = new JRadioButton("&Delete property");
+    myDeletePropertyButton = new JRadioButton(SvnBundle.message("radio.set.property.delete.property"));
     panel.add(myDeletePropertyButton, gc);
     DialogUtil.registerMnemonic(myDeletePropertyButton);
 
     gc.gridy += 1;
     panel.add(new JSeparator(), gc);
     gc.gridy += 1;
-    myRecursiveButton = new JCheckBox("Update properties &recursively");
+    myRecursiveButton = new JCheckBox(SvnBundle.message("checkbox.set.property.update.properties.recursively"));
     panel.add(myRecursiveButton, gc);
     DialogUtil.registerMnemonic(myRecursiveButton);
 
@@ -284,6 +286,16 @@ public class SetPropertyDialog extends DialogWrapper {
       }
     }
 
+    fillProperties(names);
+
+    for (Iterator iterator = names.iterator(); iterator.hasNext();) {
+      String name = (String)iterator.next();
+      myPropertyNameBox.addItem(name);
+    }
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private void fillProperties(final Collection names) {
     names.add("svn:eol-style");
     names.add("svn:keywords");
     names.add("svn:needs-lock");
@@ -291,10 +303,5 @@ public class SetPropertyDialog extends DialogWrapper {
     names.add("svn:executable");
     names.add("svn:ignore");
     names.add("svn:externals");
-
-    for (Iterator iterator = names.iterator(); iterator.hasNext();) {
-      String name = (String)iterator.next();
-      myPropertyNameBox.addItem(name);
-    }
   }
 }

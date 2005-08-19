@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
@@ -47,7 +48,7 @@ public class SvnAnnotationProvider implements AnnotationProvider {
 
   public FileAnnotation annotate(final VirtualFile file, final VcsFileRevision revision) throws VcsException {
     if (file.isDirectory()) {
-      throw new VcsException("Annotation operation only makes sence for files");
+      throw new VcsException(SvnBundle.message("exception.text.cannot.annotate.directory"));
     }
     final FileAnnotation[] annotation = new FileAnnotation[1];
     final SVNException[] exception = new SVNException[1];
@@ -61,7 +62,7 @@ public class SvnAnnotationProvider implements AnnotationProvider {
           SVNLogClient client = myVcs.createLogClient();
           SVNRevision endRevision = ((SvnRevisionNumber)revision.getRevisionNumber()).getRevision();
           if (progress != null) {
-            progress.setText("Computing annotation for '" + file.getName() + "'");
+            progress.setText(SvnBundle.message("progress.text.computing.annotation", file.getName()));
           }
           client.doAnnotate(new File(file.getPath()).getAbsoluteFile(), SVNRevision.UNDEFINED,
                             SVNRevision.create(0), endRevision, new ISVNAnnotateHandler() {
@@ -77,7 +78,7 @@ public class SvnAnnotationProvider implements AnnotationProvider {
       }
     };
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      ApplicationManager.getApplication().runProcessWithProgressSynchronously(command, "Annotate", false, myVcs.getProject());
+      ApplicationManager.getApplication().runProcessWithProgressSynchronously(command, SvnBundle.message("action.text.annotate"), false, myVcs.getProject());
     }
     else {
       command.run();

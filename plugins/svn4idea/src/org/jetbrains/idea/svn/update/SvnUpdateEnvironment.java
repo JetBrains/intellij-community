@@ -31,7 +31,10 @@ import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnWCRootCrawler;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.status.SvnStatusEnvironment;
 import org.jetbrains.idea.svn.actions.SvnMergeProvider;
+import org.jetbrains.annotations.NonNls;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -74,7 +77,7 @@ public class SvnUpdateEnvironment implements UpdateEnvironment {
       }
     }
     if (updatedRoots.isEmpty()) {
-      Messages.showErrorDialog(myVcs.getProject(), "No versioned directories to update was found", "SVN: Update Error");
+      Messages.showErrorDialog(myVcs.getProject(), SvnBundle.message("message.text.update.no.directories.found"), SvnBundle.message("messate.text.update.error"));
     }
 
     SvnUpdateConfigurable config = (SvnUpdateConfigurable)(myConfigurable instanceof SvnUpdateConfigurable ? myConfigurable : null);
@@ -90,7 +93,7 @@ public class SvnUpdateEnvironment implements UpdateEnvironment {
             if (conflictedFiles != null && !conflictedFiles.isEmpty()) {
               List<VirtualFile> vfFiles = new ArrayList<VirtualFile>();
               for (Iterator paths = conflictedFiles.iterator(); paths.hasNext();) {
-                String path = (String)paths.next();
+                @NonNls String path = (String)paths.next();
                 path = "file://" + path.replace(File.separatorChar, '/');
                 VirtualFile vf = VirtualFileManager.getInstance().findFileByUrl(path);
                 if (vf != null) {
@@ -137,6 +140,7 @@ public class SvnUpdateEnvironment implements UpdateEnvironment {
     private final UpdatedFiles myUpdatedFiles;
     private int myExternalsCount;
     private SvnVcs myVCS;
+    @NonNls public static final String SKIP_ID = "skip";
 
     public UpdateEventHandler(SvnVcs vcs, ProgressIndicator progressIndicator, UpdatedFiles updatedFiles) {
       myProgressIndicator = progressIndicator;
@@ -153,24 +157,24 @@ public class SvnUpdateEnvironment implements UpdateEnvironment {
       String displayPath = event.getFile().getName();
       if (event.getAction() == SVNEventAction.UPDATE_ADD ||
           event.getAction() == SVNEventAction.ADD) {
-        myProgressIndicator.setText2("Added " + displayPath);
+        myProgressIndicator.setText2(SvnBundle.message("progress.text2.added", displayPath));
         myUpdatedFiles.getGroupById(FileGroup.CREATED_ID).add(path);
       }
       else if (event.getAction() == SVNEventAction.UPDATE_DELETE) {
-        myProgressIndicator.setText2("Deleted " + displayPath);
+        myProgressIndicator.setText2(SvnBundle.message("progress.text2.deleted", displayPath));
         myUpdatedFiles.getGroupById(FileGroup.REMOVED_FROM_REPOSITORY_ID).add(path);
       }
       else if (event.getAction() == SVNEventAction.UPDATE_UPDATE) {
         if (event.getContentsStatus() == SVNStatusType.CONFLICTED || event.getPropertiesStatus() == SVNStatusType.CONFLICTED) {
           myUpdatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).add(path);
-          myProgressIndicator.setText2("Conflicted " + displayPath);
+          myProgressIndicator.setText2(SvnBundle.message("progress.text2.conflicted", displayPath));
         }
         else if (event.getContentsStatus() == SVNStatusType.MERGED || event.getPropertiesStatus() == SVNStatusType.MERGED) {
-          myProgressIndicator.setText2("Merged " + displayPath);
+          myProgressIndicator.setText2(SvnBundle.message("progres.text2.merged", displayPath));
           myUpdatedFiles.getGroupById(FileGroup.MERGED_ID).add(path);
         }
         else if (event.getContentsStatus() == SVNStatusType.CHANGED || event.getPropertiesStatus() == SVNStatusType.CHANGED) {
-          myProgressIndicator.setText2("Updated " + displayPath);
+          myProgressIndicator.setText2(SvnBundle.message("progres.text2.updated", displayPath));
           myUpdatedFiles.getGroupById(FileGroup.UPDATED_ID).add(path);
         }
         else {
@@ -180,37 +184,41 @@ public class SvnUpdateEnvironment implements UpdateEnvironment {
       }
       else if (event.getAction() == SVNEventAction.UPDATE_EXTERNAL) {
         myExternalsCount++;
-        if (myUpdatedFiles.getGroupById("external") == null) {
-          myUpdatedFiles.registerGroup(new FileGroup("Externals", "Externals", false, "external", true));
+        if (myUpdatedFiles.getGroupById(SvnStatusEnvironment.EXTERNAL_ID) == null) {
+          myUpdatedFiles.registerGroup(new FileGroup(SvnBundle.message("status.group.name.externals"),
+                                                     SvnBundle.message("status.group.name.externals"),
+                                                     false, SvnStatusEnvironment.EXTERNAL_ID, true));
         }
-        myUpdatedFiles.getGroupById("external").add(path);
-        myProgressIndicator.setText("Updating external location at '" + event.getFile().getAbsolutePath() + "'");
+        myUpdatedFiles.getGroupById(SvnStatusEnvironment.EXTERNAL_ID).add(path);
+        myProgressIndicator.setText(SvnBundle.message("progress.text.updating.external.location", event.getFile().getAbsolutePath()));
       }
       else if (event.getAction() == SVNEventAction.RESTORE) {
-        myProgressIndicator.setText2("Restored " + displayPath);
+        myProgressIndicator.setText2(SvnBundle.message("progress.text2.restored.file", displayPath));
         myUpdatedFiles.getGroupById(FileGroup.RESTORED_ID).add(path);
       }
       else if (event.getAction() == SVNEventAction.UPDATE_COMPLETED && event.getRevision() >= 0) {
         myExternalsCount--;
-        myProgressIndicator.setText2("Updated to revision " + event.getRevision() + ".");
+        myProgressIndicator.setText2(SvnBundle.message("progres.text2.updated.to.revision", event.getRevision()));
         if (myExternalsCount == 0) {
           myExternalsCount = 1;
-          WindowManager.getInstance().getStatusBar(myVCS.getProject()).setInfo("Updated to revision " + event.getRevision() + ".");
+          WindowManager.getInstance().getStatusBar(myVCS.getProject()).setInfo(
+            SvnBundle.message("status.text.updated.to.revision", event.getRevision()));
         }
       }
       else if (event.getAction() == SVNEventAction.SKIP) {
-        myProgressIndicator.setText2("Skipped " + displayPath);
-        if (myUpdatedFiles.getGroupById("skip") == null) {
-          myUpdatedFiles.registerGroup(new FileGroup("Skipped", "Skipped", false, "skip", true));
+        myProgressIndicator.setText2(SvnBundle.message("progress.text2.skipped.file", displayPath));
+        if (myUpdatedFiles.getGroupById(SKIP_ID) == null) {
+          myUpdatedFiles.registerGroup(new FileGroup(SvnBundle.message("update.group.name.skipped"),
+                                                     SvnBundle.message("update.group.name.skipped"), false, SKIP_ID, true));
         }
-        myUpdatedFiles.getGroupById("skip").add(path);
+        myUpdatedFiles.getGroupById(SKIP_ID).add(path);
       }
     }
 
     public void checkCancelled() throws SVNCancelException {
       myProgressIndicator.checkCanceled();
       if (myProgressIndicator.isCanceled()) {
-        throw new SVNCancelException("Operation cancelled");
+        throw new SVNCancelException(SvnBundle.message("exception.text.update.operation.cancelled"));
       }
     }
   }
@@ -248,14 +256,14 @@ public class SvnUpdateEnvironment implements UpdateEnvironment {
       if (progress != null) {
         if (merge) {
           if (dryRun) {
-            progress.setText("Merging (dry run) changes into '" + root.getAbsolutePath() + "'");
+            progress.setText(SvnBundle.message("progress.text.merging.dry.run..changes", root.getAbsolutePath()));
           }
           else {
-            progress.setText("Merging changes into '" + root.getAbsolutePath() + "'");
+            progress.setText(SvnBundle.message("progress.text.merging.changes", root.getAbsolutePath()));
           }
         }
         else {
-          progress.setText("Updating '" + root.getAbsolutePath() + "'");
+          progress.setText(SvnBundle.message("progress.text.updating", root.getAbsolutePath()));
         }
       }
       try {
@@ -286,7 +294,7 @@ public class SvnUpdateEnvironment implements UpdateEnvironment {
         }
         if (rev < 0) {
           throw new SVNException(
-            "svn: " + root + " was not properly updated; may be it is already removed from the repository along with its parent.");
+            SvnBundle.message("exception.text.root.was.not.properly.updated", root));
         }
       }
       catch (SVNException e) {
@@ -303,7 +311,7 @@ public class SvnUpdateEnvironment implements UpdateEnvironment {
         statusClient.setIgnoreExternals(false);
 
         if (progress != null) {
-          progress.setText("Computing post-update status of '" + root.getAbsolutePath() + "'");
+          progress.setText(SvnBundle.message("progress.text.update.computing.post.update.status", root.getAbsolutePath()));
         }
         statusClient.doStatus(root, true, false, false, false, new ISVNStatusHandler() {
           public void handleStatus(SVNStatus status) {

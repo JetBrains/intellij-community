@@ -39,6 +39,7 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.SVNInfo;
@@ -49,7 +50,7 @@ import java.io.File;
 
 public class CleanupAction extends BasicAction {
   protected String getActionName(AbstractVcs vcs) {
-    return "Cleanup";
+    return SvnBundle.message("action.Subversion.Clenaup.text");
   }
 
   protected boolean needsAllFiles() {
@@ -93,7 +94,7 @@ public class CleanupAction extends BasicAction {
 
   protected void batchPerform(Project project, SvnVcs activeVcs, VirtualFile[] file, DataContext context, AbstractVcsHelper helper)
     throws VcsException {
-    throw new VcsException("CleanupAction.batchPerform not implemented");
+    throw new VcsException(SvnBundle.message("exception.text.cleanupaction.batchperform.not.implemented"));
   }
 
   protected boolean isBatchAction() {

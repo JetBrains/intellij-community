@@ -39,6 +39,7 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.*;
 
@@ -48,7 +49,7 @@ import java.util.List;
 
 public class ResolveAction extends BasicAction {
   protected String getActionName(AbstractVcs vcs) {
-    return "Resolve Conflict";
+    return SvnBundle.message("action.name.resolve.conflict");
   }
 
   protected boolean needsAllFiles() {

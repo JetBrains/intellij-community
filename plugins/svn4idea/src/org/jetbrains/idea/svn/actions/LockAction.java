@@ -40,6 +40,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.SVNInfo;
@@ -50,7 +51,7 @@ import java.io.File;
 
 public class LockAction extends BasicAction {
   protected String getActionName(AbstractVcs vcs) {
-    return "Lock files";
+    return SvnBundle.message("action.Subversion.Lock.description");
   }
 
   protected boolean needsAllFiles() {

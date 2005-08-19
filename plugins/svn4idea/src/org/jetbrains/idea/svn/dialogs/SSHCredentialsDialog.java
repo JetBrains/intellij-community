@@ -33,6 +33,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.svn.SvnBundle;
+
 /**
  * Created by IntelliJ IDEA.
  * User: alex
@@ -57,7 +60,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
   private JLabel myPassphraseLabel;
   private Project myProject;
 
-  private static final String HELP_ID = "vcs.subversion.authentication";
+  @NonNls private static final String HELP_ID = "vcs.subversion.authentication";
 
   protected SSHCredentialsDialog(Project project) {
     super(project, true);
@@ -98,7 +101,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
     gb.anchor = GridBagConstraints.WEST;
     gb.fill = GridBagConstraints.HORIZONTAL;
 
-    JLabel label = new JLabel("Authentication realm: '" + myRealm + "'");
+    JLabel label = new JLabel(SvnBundle.message("label.ssh.authentication.realm", myRealm));
     panel.add(label, gb);
 
     // user name
@@ -107,7 +110,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
     gb.weightx = 0;
     gb.fill = GridBagConstraints.NONE;
 
-    label = new JLabel("&User name:");
+    label = new JLabel(SvnBundle.message("label.ssh.user.name"));
     panel.add(label, gb);
 
     // user name field
@@ -132,7 +135,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
     gb.fill = GridBagConstraints.NONE;
     gb.gridwidth = 3;
     // password type
-    myPasswordButton = new JRadioButton("Authentication &with password");
+    myPasswordButton = new JRadioButton(SvnBundle.message("radio.ssh.authentication.with.password"));
     DialogUtil.registerMnemonic(myPasswordButton);
     panel.add(myPasswordButton, gb);
 
@@ -143,7 +146,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
     gb.fill = GridBagConstraints.NONE;
     gb.gridwidth = 1;
 
-    myPasswordLabel = new JLabel("&Password:");
+    myPasswordLabel = new JLabel(SvnBundle.message("label.ssh.password"));
     panel.add(myPasswordLabel, gb);
 
     // passworde field
@@ -161,7 +164,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
     gb.gridx = 0;
     gb.fill = GridBagConstraints.NONE;
     gb.gridwidth = 3;
-    myKeyButton = new JRadioButton("Authentication with private &key");
+    myKeyButton = new JRadioButton(SvnBundle.message("radio.ssh.authentication.private.key"));
     DialogUtil.registerMnemonic(myKeyButton);
     panel.add(myKeyButton, gb);
 
@@ -173,7 +176,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
     gb.fill = GridBagConstraints.NONE;
     gb.gridwidth = 1;
 
-    myKeyFileLabel = new JLabel("Key &File:");
+    myKeyFileLabel = new JLabel(SvnBundle.message("label.ssh.key.file"));
     panel.add(myKeyFileLabel, gb);
 
     // key field
@@ -194,7 +197,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
     gb.fill = GridBagConstraints.NONE;
     gb.gridwidth = 1;
 
-    myPassphraseLabel = new JLabel("Passph&rase:");
+    myPassphraseLabel = new JLabel(SvnBundle.message("label.ssh.passphrase"));
     panel.add(myPassphraseLabel, gb);
 
     // key field
@@ -222,7 +225,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
     gb.weightx = 1;
     gb.anchor = GridBagConstraints.WEST;
     gb.fill = GridBagConstraints.HORIZONTAL;
-    myAllowSaveCheckBox = new JCheckBox("Keep only for current &IDEA session");
+    myAllowSaveCheckBox = new JCheckBox(SvnBundle.message("checkbox.ssh.keep.for.current.session"));
     DialogUtil.registerMnemonic(myAllowSaveCheckBox);
     panel.add(myAllowSaveCheckBox, gb);
     gb.gridy += 1;
@@ -315,7 +318,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
       updateFields();
     }
     else {
-      String path = myKeyFileText.getText();
+      @NonNls String path = myKeyFileText.getText();
       VirtualFile file;
       if (path != null && path.trim().length() > 0) {
         path = "file://" + path.replace(File.separatorChar, '/');
@@ -329,12 +332,12 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
       FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false);
 
       descriptor.setShowFileSystemRoots(true);
-      descriptor.setTitle("OpenSSH v2 Private Key");
-      descriptor.setDescription("Select private key file for SSH authentication");
+      descriptor.setTitle(SvnBundle.message("dialog.title.openssh.v2.private.key"));
+      descriptor.setDescription(SvnBundle.message("dialog.description.openssh.v2.private.key"));
       descriptor.setHideIgnored(false);
 
       String oldValue = PropertiesComponent.getInstance().getValue("FileChooser.showHiddens");
-      PropertiesComponent.getInstance().setValue("FileChooser.showHiddens", "true");
+      PropertiesComponent.getInstance().setValue("FileChooser.showHiddens", Boolean.TRUE.toString());
 
       VirtualFile[] files = FileChooser.chooseFiles(myProject, descriptor, file);
 

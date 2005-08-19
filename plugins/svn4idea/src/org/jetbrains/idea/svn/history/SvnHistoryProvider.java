@@ -26,6 +26,7 @@ import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.actions.ShowAllSubmittedFilesAction;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNException;
@@ -72,14 +73,14 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
       public void run() {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         if (indicator != null) {
-          indicator.setText("Collecting revisions history for '" + file.getName() + "'");
+          indicator.setText(SvnBundle.message("progress.text2.collecting.history", file.getName()));
         }
         try {
           SVNWCClient wcClient = myVcs.createWCClient();
           SVNInfo info = wcClient.doInfo(new File(file.getIOFile().getAbsolutePath()), SVNRevision.WORKING);
           final String url = info.getURL() == null ? null : info.getURL().toString();
           if (indicator != null) {
-            indicator.setText2("Establishing connection to '" + url + "'");
+            indicator.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", url));
           }
           final SVNRevision pegRevision = info.getRevision();
           SVNLogClient client = myVcs.createLogClient();
@@ -87,7 +88,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
                        new ISVNLogEntryHandler() {
                          public void handleLogEntry(SVNLogEntry logEntry) {
                            if (indicator != null) {
-                             indicator.setText2("Revision '" + logEntry.getRevision() + " processed");
+                             indicator.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
                            }
                            Date date = logEntry.getDate();
                            String author = logEntry.getAuthor();
@@ -105,7 +106,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
     };
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      ApplicationManager.getApplication().runProcessWithProgressSynchronously(command, "Revisions History", false, myVcs.getProject());
+      ApplicationManager.getApplication().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.title.revisions.history"), false, myVcs.getProject());
     }
     else {
       command.run();

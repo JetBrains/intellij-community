@@ -24,6 +24,9 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.svn.SvnBundle;
+
 /**
  * Created by IntelliJ IDEA.
  * User: alex
@@ -40,7 +43,7 @@ public class SimpleCredentialsDialog extends DialogWrapper implements DocumentLi
   private JCheckBox myAllowSaveCheckBox;
   private JPasswordField myPasswordText;
 
-  private static final String HELP_ID = "vcs.subversion.authentication";
+  @NonNls private static final String HELP_ID = "vcs.subversion.authentication";
 
   protected SimpleCredentialsDialog(Project project) {
     super(project, true);
@@ -79,7 +82,7 @@ public class SimpleCredentialsDialog extends DialogWrapper implements DocumentLi
     gb.anchor = GridBagConstraints.WEST;
     gb.fill = GridBagConstraints.HORIZONTAL;
 
-    JLabel label = new JLabel("Authentication realm: '" + myRealm + "'");
+    JLabel label = new JLabel(SvnBundle.message("label.auth.authentication.realm", myRealm));
     panel.add(label, gb);
 
     // user name
@@ -88,7 +91,7 @@ public class SimpleCredentialsDialog extends DialogWrapper implements DocumentLi
     gb.weightx = 0;
     gb.fill = GridBagConstraints.NONE;
 
-    label = new JLabel("&User name:");
+    label = new JLabel(SvnBundle.message("label.auth.user.name"));
     panel.add(label, gb);
 
     // user name field
@@ -112,7 +115,7 @@ public class SimpleCredentialsDialog extends DialogWrapper implements DocumentLi
     gb.fill = GridBagConstraints.NONE;
     gb.gridwidth = 1;
 
-    label = new JLabel("&Password:");
+    label = new JLabel(SvnBundle.message("label.auth.password"));
     panel.add(label, gb);
 
     // passworde field
@@ -129,7 +132,7 @@ public class SimpleCredentialsDialog extends DialogWrapper implements DocumentLi
     gb.gridwidth = 2;
     gb.weightx = 1;
     gb.fill = GridBagConstraints.HORIZONTAL;
-    myAllowSaveCheckBox = new JCheckBox("Keep only for current &IDEA session");
+    myAllowSaveCheckBox = new JCheckBox(SvnBundle.message("checkbox.auth.keep.for.current.session"));
     DialogUtil.registerMnemonic(myAllowSaveCheckBox);
     panel.add(myAllowSaveCheckBox, gb);
     gb.gridy += 1;

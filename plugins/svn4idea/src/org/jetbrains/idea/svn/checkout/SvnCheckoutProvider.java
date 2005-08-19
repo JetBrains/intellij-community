@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
@@ -54,7 +55,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
           ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
           client.setEventHandler(new CheckoutEventHandler(SvnVcs.getInstance(project), progressIndicator));
           try {
-            progressIndicator.setText("Checking out files to '" + target.getAbsolutePath() + "'");
+            progressIndicator.setText(SvnBundle.message("progress.text.checking.out", target.getAbsolutePath()));
             client.doCheckout(SVNURL.parseURIEncoded(url), target, SVNRevision.UNDEFINED, SVNRevision.HEAD, true);
           }
           catch (SVNException e) {
@@ -64,13 +65,13 @@ public class SvnCheckoutProvider implements CheckoutProvider {
             client.setEventHandler(null);
           }
         }
-      }, "Check Out from Subversion", false, null);
+      }, SvnBundle.message("message.title.check.out"), false, null);
       if (exception[0] != null) {
         throw exception[0];
       }
     }
     catch (SVNException e1) {
-      Messages.showErrorDialog("Cannot checkout from svn: " + e1.getMessage(), "Check Out from Subversion");
+      Messages.showErrorDialog(SvnBundle.message("message.text.cannot.checkout", e1.getMessage()), SvnBundle.message("message.title.check.out"));
     }
   }
 
@@ -102,22 +103,22 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     public void handleEvent(SVNEvent event, double progress) {
       if (event.getAction() == SVNEventAction.UPDATE_EXTERNAL) {
         myExternalsCount++;
-        myIndicator.setText("Fetching external location to '" + event.getFile().getAbsolutePath() + "'");
+        myIndicator.setText(SvnBundle.message("progress.text2.fetching.external.location", event.getFile().getAbsolutePath()));
         myIndicator.setText2("");
       }
       else if (event.getAction() == SVNEventAction.UPDATE_ADD) {
-        myIndicator.setText2("Checked out " + event.getFile().getName());
+        myIndicator.setText2(SvnBundle.message("progress.text2.checked.out", event.getFile().getName()));
       }
       else if (event.getAction() == SVNEventAction.UPDATE_COMPLETED) {
         myExternalsCount--;
-        myIndicator.setText2("Checked out revision " + event.getRevision() + ".");
+        myIndicator.setText2(SvnBundle.message("progress.text2.checked.out.revision", event.getRevision()));
         if (myExternalsCount == 0 && event.getRevision() >= 0 && myVCS != null) {
           myExternalsCount = 1;
           Project project = myVCS.getProject();
           if (project != null) {
             StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
             if (statusBar != null) {
-              statusBar.setInfo("Checked out revision " + event.getRevision() + ".");
+              statusBar.setInfo(SvnBundle.message("status.text.checked.out.revision", event.getRevision()));
             }
           }
         }

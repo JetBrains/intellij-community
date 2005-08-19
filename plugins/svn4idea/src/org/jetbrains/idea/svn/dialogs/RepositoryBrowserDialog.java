@@ -24,8 +24,11 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.CommonBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.annotations.NonNls;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -64,14 +67,16 @@ public class RepositoryBrowserDialog extends DialogWrapper implements ActionList
   private JButton myPasteButton;
   private SVNDirEntry myCopiedEntry;
 
-  private static final String HELP_ID = "vcs.subversion.browseSVN";
+  @NonNls private static final String HELP_ID = "vcs.subversion.browseSVN";
+  @NonNls public static final String COPY_OF_PREFIX = "CopyOf";
+  @NonNls public static final String NEW_FOLDER_POSTFIX = "NewFolder";
 
   public RepositoryBrowserDialog(Project project) {
     super(project, true);
     myProject = project;
-    setTitle("Browse SVN Repository");
+    setTitle(SvnBundle.message("dialog.title.browser.browse.repository"));
     setResizable(true);
-    setOKButtonText("Close");
+    setOKButtonText(CommonBundle.getCloseButtonText());
     getHelpAction().setEnabled(true);
     init();
   }
@@ -206,7 +211,7 @@ public class RepositoryBrowserDialog extends DialogWrapper implements ActionList
     gc.weightx = 0;
     gc.weighty = 0;
 
-    JLabel label = new JLabel("Repository &URL:");
+    JLabel label = new JLabel(SvnBundle.message("label.text.browser.repository.url"));
     panel.add(label, gc);
     gc.gridx += 1;
     gc.fill = GridBagConstraints.HORIZONTAL;
@@ -264,10 +269,10 @@ public class RepositoryBrowserDialog extends DialogWrapper implements ActionList
 
     panel.add(myRepositoryBrowser, gc);
 
-    myMkDirButton = new JButton("&New Folder...");
-    myDeleteButton = new JButton("&Delete...");
-    myCopyButton = new JButton("&Copy");
-    myPasteButton = new JButton("&Paste...");
+    myMkDirButton = new JButton(SvnBundle.message("button.text.new.folder"));
+    myDeleteButton = new JButton(SvnBundle.message("button.text.delete"));
+    myCopyButton = new JButton(SvnBundle.message("button.text.copy"));
+    myPasteButton = new JButton(SvnBundle.message("button.text.paste"));
 
     gc.gridx += 1;
     gc.gridheight = 1;
@@ -335,8 +340,8 @@ public class RepositoryBrowserDialog extends DialogWrapper implements ActionList
       updateState();
     }
     else if (e.getSource() == myPasteButton) {
-      String url1 = myCopiedURL;
-      url = SVNPathUtil.append(url, "CopyOf" + SVNPathUtil.tail(url1));
+      @NonNls String url1 = myCopiedURL;
+      url = SVNPathUtil.append(url, COPY_OF_PREFIX + SVNPathUtil.tail(url1));
       RepositoryBrowserCommitDialog dialog = new RepositoryBrowserCommitDialog(myProject,
                                                                                RepositoryBrowserCommitDialog.COPY, url1, url,
                                                                                !"/".equals(entry.getPath()));
@@ -355,7 +360,7 @@ public class RepositoryBrowserDialog extends DialogWrapper implements ActionList
       }
     }
     else if (e.getSource() == myMkDirButton) {
-      url = SVNPathUtil.append(url, "NewFolder");
+      url = SVNPathUtil.append(url, NEW_FOLDER_POSTFIX);
       RepositoryBrowserCommitDialog dialog = new RepositoryBrowserCommitDialog(myProject,
                                                                                RepositoryBrowserCommitDialog.MKDIR, url, null, false);
       dialog.show();
@@ -373,7 +378,7 @@ public class RepositoryBrowserDialog extends DialogWrapper implements ActionList
       public void run() {
         ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
         if (progress != null) {
-          progress.setText("Deleting " + url);
+          progress.setText(SvnBundle.message("progres.text.deleting", url));
         }
         SvnVcs vcs = SvnVcs.getInstance(myProject);
         try {
@@ -386,9 +391,9 @@ public class RepositoryBrowserDialog extends DialogWrapper implements ActionList
       }
     };
     ApplicationManager.getApplication().runProcessWithProgressSynchronously(command,
-                                                                            "Delete", false, myProject);
+                                                                            SvnBundle.message("progress.title.browser.delete"), false, myProject);
     if (exception[0] != null) {
-      Messages.showErrorDialog(exception[0].getMessage(), "Error");
+      Messages.showErrorDialog(exception[0].getMessage(), SvnBundle.message("message.text.error"));
     }
   }
 
@@ -398,7 +403,7 @@ public class RepositoryBrowserDialog extends DialogWrapper implements ActionList
       public void run() {
         ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
         if (progress != null) {
-          progress.setText("Creating " + url);
+          progress.setText(SvnBundle.message("progress.text.browser.creating", url));
         }
         SvnVcs vcs = SvnVcs.getInstance(myProject);
         try {
@@ -411,9 +416,9 @@ public class RepositoryBrowserDialog extends DialogWrapper implements ActionList
       }
     };
     ApplicationManager.getApplication().runProcessWithProgressSynchronously(command,
-                                                                            "Create Remote Folder", false, myProject);
+                                                                            SvnBundle.message("progress.text.create.remote.folder"), false, myProject);
     if (exception[0] != null) {
-      Messages.showErrorDialog(exception[0].getMessage(), "Error");
+      Messages.showErrorDialog(exception[0].getMessage(), SvnBundle.message("message.text.error"));
     }
   }
 
@@ -423,8 +428,8 @@ public class RepositoryBrowserDialog extends DialogWrapper implements ActionList
       public void run() {
         ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
         if (progress != null) {
-          progress.setText((move ? "Moving " : "Copying ") + src);
-          progress.setText2("To " + dst);
+          progress.setText((move ? SvnBundle.message("progress.text.browser.moving") : SvnBundle.message("progress.text.browser.copying")) + src);
+          progress.setText2(SvnBundle.message("progress.text.browser.remote.destination", dst));
         }
         SvnVcs vcs = SvnVcs.getInstance(myProject);
         try {
@@ -437,15 +442,15 @@ public class RepositoryBrowserDialog extends DialogWrapper implements ActionList
       }
     };
     ApplicationManager.getApplication().runProcessWithProgressSynchronously(command,
-                                                                            move ? "Move" : "Copy", false, myProject);
+                                                                            move ? SvnBundle.message("progress.title.browser.move") : SvnBundle.message("progress.title.browser.copy"), false, myProject);
     if (exception[0] != null) {
-      Messages.showErrorDialog(exception[0].getMessage(), "Error");
+      Messages.showErrorDialog(exception[0].getMessage(), SvnBundle.message("message.text.error"));
     }
   }
 
   private class RefreshAction extends AnAction {
     public void update(AnActionEvent anActionEvent) {
-      anActionEvent.getPresentation().setText("Refresh");
+      anActionEvent.getPresentation().setText(SvnBundle.message("action.name.refresh"));
       anActionEvent.getPresentation().setIcon(IconLoader.findIcon("/actions/sync.png"));
       String url = (String)myRepositoryBox.getEditor().getItem();
       try {

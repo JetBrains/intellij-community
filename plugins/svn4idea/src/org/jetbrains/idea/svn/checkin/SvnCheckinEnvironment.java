@@ -35,6 +35,7 @@ import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.dialogs.DialogUtil;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
@@ -143,19 +144,19 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
             return;
           }
           if (event.getAction() == SVNEventAction.COMMIT_ADDED) {
-            progress.setText2("Adding '" + path + "'");
+            progress.setText2(SvnBundle.message("progress.text2.adding", path));
           }
           else if (event.getAction() == SVNEventAction.COMMIT_DELETED) {
-            progress.setText2("Deleting '" + path + "'");
+            progress.setText2(SvnBundle.message("progress.text2.deleting", path));
           }
           else if (event.getAction() == SVNEventAction.COMMIT_MODIFIED) {
-            progress.setText2("Sending '" + path + "'");
+            progress.setText2(SvnBundle.message("progress.text2.sending", path));
           }
           else if (event.getAction() == SVNEventAction.COMMIT_REPLACED) {
-            progress.setText2("Replacing '" + path + "'");
+            progress.setText2(SvnBundle.message("progress.text2.replacing", path));
           }
           else if (event.getAction() == SVNEventAction.COMMIT_DELTA_SENT) {
-            progress.setText2("Transmitting delta for  '" + path + "'");
+            progress.setText2(SvnBundle.message("progress.text2.transmitting.delta", path));
           }
         }
 
@@ -173,7 +174,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
           ProgressIndicator p = ProgressManager.getInstance().getProgressIndicator();
           doCommit(committables, p, committer, comment, force, recursive, exception);
         }
-      }, "Commit", false, mySvnVcs.getProject());
+      }, SvnBundle.message("progress.title.commit"), false, mySvnVcs.getProject());
     }
     else {
       doCommit(committables, progress, committer, comment, force, recursive, exception);
@@ -195,7 +196,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
         continue;
       }
       if (progress != null) {
-        progress.setText("Committing changes below '" + root.getAbsolutePath() + "'");
+        progress.setText(SvnBundle.message("progress.text.committing.changes.below", root.getAbsolutePath()));
       }
 
       File[] filesArray = (File[])files.toArray(new File[files.size()]);
@@ -203,7 +204,8 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       try {
         SVNCommitInfo result = committer.doCommit(filesArray, keepLocks, comment, force, recursive);
         if (result != SVNCommitInfo.NULL && result.getNewRevision() >= 0) {
-          WindowManager.getInstance().getStatusBar(mySvnVcs.getProject()).setInfo("Committed revision " + result.getNewRevision() + ".");
+          WindowManager.getInstance().getStatusBar(mySvnVcs.getProject()).setInfo(
+            SvnBundle.message("status.text.committed.revision", result.getNewRevision()));
         }
       }
       catch (SVNException e) {
@@ -249,7 +251,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   public String getCheckinOperationName() {
-    return "Checkin";
+    return SvnBundle.message("checkin.operation.name");
   }
 
   private class KeepLocksComponent implements RefreshableOnComponent {
@@ -260,12 +262,12 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     public JComponent getComponent() {
       if (myPanel == null) {
         myPanel = new JPanel(new BorderLayout());
-        myKeepLocksBox = new JCheckBox("Keep files &locked");
+        myKeepLocksBox = new JCheckBox(SvnBundle.message("checkbox.chckin.keep.files.locked"));
         myKeepLocksBox.setSelected(myIsKeepLocks);
         DialogUtil.registerMnemonic(myKeepLocksBox);
 
         myPanel.add(myKeepLocksBox, BorderLayout.CENTER);
-        myPanel.setBorder(new TitledBorder("Subversion"));
+        myPanel.setBorder(new TitledBorder(SvnBundle.message("border.show.changes.dialog.subversion.group")));
       }
       return myPanel;
     }

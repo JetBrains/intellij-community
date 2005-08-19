@@ -50,6 +50,7 @@ import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 import org.jetbrains.idea.svn.status.SvnStatusEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
+import org.jetbrains.annotations.NonNls;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
@@ -88,8 +89,11 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
   private VcsShowConfirmationOption myAddConfirmation;
   private SvnEditFileProvider myEditFilesProvider;
 
+  @NonNls public static final String LOG_PARAMETER_NAME = "javasvn.log";
+  public static final String pathToEntries = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.ENTRIES_FILE_NAME;
+
   static {
-    SVNDebugLog.setLogger(new JavaSVNDebugLogger(Boolean.getBoolean("javasvn.log"), LOG));
+    SVNDebugLog.setLogger(new JavaSVNDebugLogger(Boolean.getBoolean(LOG_PARAMETER_NAME), LOG));
 
     DAVRepositoryFactory.setup();
     SVNRepositoryFactoryImpl.setup();
@@ -275,7 +279,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     SVNStatusHolder value = (SVNStatusHolder) vFile.getUserData(STATUS_KEY);
     File file = new File(vFile.getPath());
     File entriesFile = getEntriesFile(file);
-    File lockFile = new File(entriesFile.getParentFile(), "lock");
+    File lockFile = new File(entriesFile.getParentFile(), SvnUtil.LOCK_FILE_NAME);
     if (value != null && value.getEntriesTimestamp() == entriesFile.lastModified() &&
       value.getFileTimestamp() == vFile.getTimeStamp() && value.isLocked() == lockFile.exists()) {
       return value;
@@ -359,7 +363,8 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
   }
 
   private static File getEntriesFile(File file) {
-    return file.isDirectory() ? new File(file, ".svn/entries") : new File(file.getParentFile(), ".svn/entries");
+    return file.isDirectory() ? new File(file, pathToEntries)
+           : new File(file.getParentFile(), pathToEntries);
   }
 
   public static class SVNStatusHolder {
@@ -421,6 +426,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
   private static class JavaSVNDebugLogger extends SVNDebugLoggerAdapter {
     private final boolean myLoggingEnabled;
     private final Logger myLog;
+    @NonNls public static final String TRACE_LOG_PARAMETER_NAME = "javasvn.log.trace";
 
     public JavaSVNDebugLogger(boolean loggingEnabled, Logger log) {
       myLoggingEnabled = loggingEnabled;
@@ -457,14 +463,14 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     }
 
     public InputStream createLogStream(InputStream is) {
-      if (myLoggingEnabled && Boolean.getBoolean("javasvn.log.trace")) {
+      if (myLoggingEnabled && Boolean.getBoolean(TRACE_LOG_PARAMETER_NAME)) {
         return new SVNLogInputStream(is, this);
       }
       return is;
     }
 
     public OutputStream createLogStream(OutputStream os) {
-      if (myLoggingEnabled && Boolean.getBoolean("javasvn.log.trace")) {
+      if (myLoggingEnabled && Boolean.getBoolean(TRACE_LOG_PARAMETER_NAME)) {
         return new SVNLogOutputStream(os, this);
       }
       return os;

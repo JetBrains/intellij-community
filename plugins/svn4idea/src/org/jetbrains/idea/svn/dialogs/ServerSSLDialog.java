@@ -18,6 +18,8 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,15 +39,16 @@ public class ServerSSLDialog extends DialogWrapper {
   private X509Certificate myCertificate;
   private Action myTempAction;
   private int myResult;
+  @NonNls public static final String ALGORITHM_SHA1 = "SHA1";
 
   protected ServerSSLDialog(final Project project, X509Certificate cert, boolean store) {
     super(project, true);
     myCertificate = cert;
     myResult = ISVNAuthenticationProvider.REJECTED;
-    setOKButtonText("_Accept");
+    setOKButtonText(SvnBundle.message("button.text.ssl.accept"));
     setOKActionEnabled(store);
-    setCancelButtonText("_Reject");
-    setTitle("Examine Server Crertificate");
+    setCancelButtonText(SvnBundle.message("button.text.ssl.reject"));
+    setTitle(SvnBundle.message("dialog.title.ssl.examine.server.crertificate"));
     setResizable(true);
     init();
   }
@@ -90,7 +93,7 @@ public class ServerSSLDialog extends DialogWrapper {
 
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout(5,5));
-    panel.add(new JLabel("Server provided the following certificate:"), BorderLayout.NORTH);
+    panel.add(new JLabel(SvnBundle.message("label.ssl.server.provided.certificate")), BorderLayout.NORTH);
     JTextArea area = new JTextArea(5, 50);
     area.setText(getServerCertificateInfo(myCertificate));
     area.setEditable(false);
@@ -102,7 +105,7 @@ public class ServerSSLDialog extends DialogWrapper {
   private static String getFingerprint(X509Certificate cert) {
         StringBuffer s = new StringBuffer();
         try  {
-           MessageDigest md = MessageDigest.getInstance("SHA1");
+           MessageDigest md = MessageDigest.getInstance(ALGORITHM_SHA1);
            md.update(cert.getEncoded());
            byte[] digest = md.digest();
            for (int i= 0; i < digest.length; i++)  {
@@ -122,6 +125,7 @@ public class ServerSSLDialog extends DialogWrapper {
         return s.toString();
      }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static String getServerCertificateInfo(X509Certificate cert) {
       StringBuffer info = new StringBuffer();
       info.append(" - Subject: ");

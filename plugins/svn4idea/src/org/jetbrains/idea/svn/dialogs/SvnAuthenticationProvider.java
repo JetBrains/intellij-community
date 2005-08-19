@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.project.Project;
 import org.tmatesoft.svn.core.auth.*;
 import org.tmatesoft.svn.core.SVNURL;
+import org.jetbrains.idea.svn.SvnBundle;
 
 import javax.swing.*;
 import java.io.File;
@@ -54,10 +55,10 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
           SimpleCredentialsDialog dialog = new SimpleCredentialsDialog(myProject);
           dialog.setup(realm, userName, authMayBeStored);
           if (previousAuth == null) {
-            dialog.setTitle("Authentication Required");
+            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
           }
           else {
-            dialog.setTitle("Authentication Required (Authentication Failed)");
+            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required.was.failed"));
           }
           dialog.show();
           if (dialog.isOK()) {
@@ -72,10 +73,10 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
           SSHCredentialsDialog dialog = new SSHCredentialsDialog(myProject);
           dialog.setup(realm, userName, authMayBeStored);
           if (previousAuth == null) {
-            dialog.setTitle("Authentication Required");
+            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
           }
           else {
-            dialog.setTitle("Authentication Required (Authentication Failed)");
+            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required.was.failed"));
           }
           dialog.show();
           if (dialog.isOK()) {

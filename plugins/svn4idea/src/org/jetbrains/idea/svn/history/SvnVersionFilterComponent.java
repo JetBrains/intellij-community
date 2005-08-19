@@ -24,15 +24,18 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.SimpleDateFormat;
 
+import org.jetbrains.annotations.NonNls;
+
 public class SvnVersionFilterComponent extends StandardVersionFilterComponent {
   private JCheckBox myUseAuthorFilter;
   private JTextField myAuthorField;
   private JPanel myPanel;
   private JPanel myStandardPanel;
   private final Project myProject;
+  @NonNls public static final String FORMAT = "yyyy/MM/dd hh:mm:ss";
 
   public SvnVersionFilterComponent(Project project) {
-    super(project, new SimpleDateFormat("yyyy/MM/dd hh:mm:ss"));
+    super(project, new SimpleDateFormat(FORMAT));
     myStandardPanel.setLayout(new BorderLayout());
     myStandardPanel.add(getStandardPanel(), BorderLayout.CENTER);
     myProject = project;

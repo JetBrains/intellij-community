@@ -27,6 +27,8 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.help.HelpManager;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.annotations.NonNls;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -60,12 +62,12 @@ public class CheckoutDialog extends DialogWrapper implements ActionListener {
   private boolean myIsDialogClosed;
   private boolean myIsDstChanged;
 
-  private static final String HELP_ID = "vcs.subversion.checkoutSVN";
+  @NonNls private static final String HELP_ID = "vcs.subversion.checkoutSVN";
 
   public CheckoutDialog(Project project) {
     super(project, true);
     myProject = project;
-    setTitle("Check Out from Repository");
+    setTitle(SvnBundle.message("dialog.text.check.out"));
     getHelpAction().setEnabled(true);
     init();
   }
@@ -212,7 +214,7 @@ public class CheckoutDialog extends DialogWrapper implements ActionListener {
     gc.weightx = 0;
     gc.weighty = 0;
 
-    JLabel label = new JLabel("Repository &URL:");
+    JLabel label = new JLabel(SvnBundle.message("label.text.checkout.repository.url"));
     panel.add(label, gc);
     gc.gridx += 1;
     gc.fill = GridBagConstraints.HORIZONTAL;
@@ -250,7 +252,7 @@ public class CheckoutDialog extends DialogWrapper implements ActionListener {
     gc.gridwidth = 1;
     gc.fill = GridBagConstraints.NONE;
 
-    panel.add(new JLabel("Checkout From:"), gc);
+    panel.add(new JLabel(SvnBundle.message("label.text.checkout.checkout.from")), gc);
     gc.gridx += 1;
     gc.gridwidth = 2;
     gc.weightx = 1;
@@ -297,7 +299,7 @@ public class CheckoutDialog extends DialogWrapper implements ActionListener {
     gc.gridwidth = 1;
     gc.fill = GridBagConstraints.NONE;
 
-    JLabel checkoutFileLabel = new JLabel("Checkout &To:");
+    JLabel checkoutFileLabel = new JLabel(SvnBundle.message("label.checkout.checkout.to"));
     panel.add(checkoutFileLabel, gc);
     gc.gridx += 1;
     gc.gridwidth = 2;
@@ -342,11 +344,11 @@ public class CheckoutDialog extends DialogWrapper implements ActionListener {
     if (myBrowserDescriptor == null) {
       myBrowserDescriptor = new FileChooserDescriptor(false, true, false, false, false, true);
       myBrowserDescriptor.setShowFileSystemRoots(true);
-      myBrowserDescriptor.setTitle("Select Checkout Destination");
-      myBrowserDescriptor.setDescription("Select directory to checkout remote directory into or create new one");
+      myBrowserDescriptor.setTitle(SvnBundle.message("dialof.title.select.checkout.destination"));
+      myBrowserDescriptor.setDescription(SvnBundle.message("dialog.description.select.checkout.destination"));
       myBrowserDescriptor.setHideIgnored(false);
     }
-    String path = myDestinationText.getText().trim();
+    @NonNls String path = myDestinationText.getText().trim();
     path = "file://" + path.replace(File.separatorChar, '/');
     VirtualFile root = VirtualFileManager.getInstance().findFileByUrl(path);
     VirtualFile[] files = FileChooser.chooseFiles(myDestinationText, myBrowserDescriptor, root);
@@ -365,7 +367,7 @@ public class CheckoutDialog extends DialogWrapper implements ActionListener {
 
   private class RefreshAction extends AnAction {
     public void update(AnActionEvent anActionEvent) {
-      anActionEvent.getPresentation().setText("Refresh");
+      anActionEvent.getPresentation().setText(SvnBundle.message("action.name.refresh"));
       anActionEvent.getPresentation().setIcon(IconLoader.findIcon("/actions/sync.png"));
       String url = (String)myRepositoryBox.getEditor().getItem();
       try {

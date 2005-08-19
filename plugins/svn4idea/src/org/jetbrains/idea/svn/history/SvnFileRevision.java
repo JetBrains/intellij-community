@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -96,7 +97,7 @@ public class SvnFileRevision implements VcsFileRevision {
     if (ApplicationManager.getApplication().isDispatchThread() &&
         !myRevision.isLocal()) {
       ApplicationManager.getApplication().runProcessWithProgressSynchronously(loader,
-                                                                              "Loading Remote File Content", false, null);
+                                                                              SvnBundle.message("progress.title.loading.file.content"), false, null);
     }
     else {
       loader.run();
@@ -134,8 +135,8 @@ public class SvnFileRevision implements VcsFileRevision {
     public void run() {
       ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
       if (progress != null) {
-        progress.setText("Loading contents of '" + myURL + "'");
-        progress.setText2("Revision " + myRevision);
+        progress.setText(SvnBundle.message("progress.text.loading.contents", myURL));
+        progress.setText2(SvnBundle.message("progress.text2.revision.information", myRevision));
       }
       try {
         SVNWCClient client = myVCS.createWCClient();

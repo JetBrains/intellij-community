@@ -43,6 +43,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.dialogs.CopyDialog;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
@@ -53,7 +54,7 @@ import java.io.File;
 
 public class CopyAction extends BasicAction {
   protected String getActionName(AbstractVcs vcs) {
-    return "Branch or Tag...";
+    return SvnBundle.message("action.Subversion.Copy.text");
   }
 
   protected boolean needsAllFiles() {
@@ -102,12 +103,13 @@ public class CopyAction extends BasicAction {
             ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
             SVNCopyClient client = activeVcs.createCopyClient();
             if (progress != null) {
-              progress.setText("Copy to '" + dstURL + "'");
+              progress.setText(SvnBundle.message("progress.text.copy.to", dstURL));
               client.setEventHandler(new CopyEventHandler(progress));
             }
             SVNCommitInfo result = client.doCopy(srcFile, revision, SVNURL.parseURIEncoded(dstURL), comment);
             if (result != null && result != SVNCommitInfo.NULL) {
-              WindowManager.getInstance().getStatusBar(project).setInfo("Comitted revision " + result.getNewRevision() + ".");
+              WindowManager.getInstance().getStatusBar(project).setInfo(
+                SvnBundle.message("status.text.comitted.revision", result.getNewRevision()));
             }
           }
           catch (SVNException e) {
@@ -115,7 +117,7 @@ public class CopyAction extends BasicAction {
           }
         }
       };
-      ApplicationManager.getApplication().runProcessWithProgressSynchronously(copyCommand, "Subversion Copy", false, project);
+      ApplicationManager.getApplication().runProcessWithProgressSynchronously(copyCommand, SvnBundle.message("progress.title.copy"), false, project);
       if (exception[0] != null) {
         throw new VcsException(exception[0]);
       }
@@ -143,19 +145,19 @@ public class CopyAction extends BasicAction {
         return;
       }
       if (event.getAction() == SVNEventAction.COMMIT_ADDED) {
-        myProgress.setText2("Adding '" + path + "'");
+        myProgress.setText2(SvnBundle.message("progress.text2.adding", path));
       }
       else if (event.getAction() == SVNEventAction.COMMIT_DELETED) {
-        myProgress.setText2("Deleting '" + path + "'");
+        myProgress.setText2(SvnBundle.message("progress.text2.deleting", path));
       }
       else if (event.getAction() == SVNEventAction.COMMIT_MODIFIED) {
-        myProgress.setText2("Sending '" + path + "'");
+        myProgress.setText2(SvnBundle.message("progress.text2.sending", path));
       }
       else if (event.getAction() == SVNEventAction.COMMIT_REPLACED) {
-        myProgress.setText2("Replacing '" + path + "'");
+        myProgress.setText2(SvnBundle.message("progress.text2.replacing", path));
       }
       else if (event.getAction() == SVNEventAction.COMMIT_DELTA_SENT) {
-        myProgress.setText2("Transmitting delta for  '" + path + "'");
+        myProgress.setText2(SvnBundle.message("progress.text2.transmitting.delta", path));
       }
     }
 

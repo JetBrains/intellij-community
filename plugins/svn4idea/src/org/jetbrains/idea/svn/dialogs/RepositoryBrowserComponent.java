@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
@@ -25,6 +26,8 @@ import javax.swing.*;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
+
+import com.intellij.CommonBundle;
 
 /**
  * Created by IntelliJ IDEA.
@@ -54,7 +57,7 @@ public class RepositoryBrowserComponent extends JPanel implements TreeCellRender
 
   public void setRepositoryURL(String url, boolean showFiles) {
     if (url == null || "".equals(url)) {
-      RepositoryTreeModel.ErrorNode node = new RepositoryTreeModel.ErrorNode("Type valid URL and click 'Refresh' to select location",
+      RepositoryTreeModel.ErrorNode node = new RepositoryTreeModel.ErrorNode(SvnBundle.message("node.text.browser.type.valid.url"),
                                                                              false);
       DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode(node));
       myRepositoryTree.setModel(model);
@@ -146,7 +149,7 @@ public class RepositoryBrowserComponent extends JPanel implements TreeCellRender
     gc.gridx = 0;
     gc.anchor = GridBagConstraints.SOUTHWEST;
 
-    JLabel topLabel = new JLabel("&Select location in repository:");
+    JLabel topLabel = new JLabel(SvnBundle.message("label.browser.select.location"));
     add(topLabel, gc);
 
     gc.gridy += 1;
@@ -188,7 +191,7 @@ public class RepositoryBrowserComponent extends JPanel implements TreeCellRender
     }
     else if (value == RepositoryTreeModel.LOADING_NODE) {
       noIcon = true;
-      value = "Loading...";
+      value = CommonBundle.getLoadingTreeNodeText();
     }
     else if (value instanceof RepositoryTreeModel.ErrorNode) {
       noIcon = true;

@@ -55,7 +55,7 @@ public class SvnEditFileProvider implements EditFileProvider {
         SVNPropertyData property = client
           .doGetProperty(ioFiles[i], SVNProperty.NEEDS_LOCK, SVNRevision.WORKING, SVNRevision.WORKING, false);
         if (property == null || property.getValue() == null) {
-          throw new VcsException("File '" + ioFiles[i].getName() + "' is readonly, but miss svn:needs-lock property");
+          throw new VcsException(SvnBundle.message("exception.text.file.miss.svn", ioFiles[i].getName()));
         }
       }
       catch (SVNException e) {
@@ -66,6 +66,6 @@ public class SvnEditFileProvider implements EditFileProvider {
   }
 
   public String getRequestText() {
-    return "File(s) you're are going to edit needs to be locked before editing";
+    return SvnBundle.message("confirmation.text.edit.file");
   }
 }

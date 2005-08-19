@@ -27,6 +27,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
 
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.svn.SvnBundle;
+
 /**
  * Created by IntelliJ IDEA.
  * User: alex
@@ -44,7 +47,7 @@ public class SelectFilesDialog extends DialogWrapper implements ActionListener {
   private String myHelpID;
 
   public SelectFilesDialog(final Project project, String label, String title, String actionName, String[] paths,
-                           String helpID) {
+                           @NonNls String helpID) {
     super(project, true);
     myHelpID = helpID;
     setOKButtonText(actionName);
@@ -116,8 +119,8 @@ public class SelectFilesDialog extends DialogWrapper implements ActionListener {
     panel.add(new JScrollPane(myFilesList), BorderLayout.CENTER);
 
     JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    mySelectAllButton = new JButton("Select &All");
-    myDeselectAllButton = new JButton("&Deselect All");
+    mySelectAllButton = new JButton(SvnBundle.message("button.text.select.all"));
+    myDeselectAllButton = new JButton(SvnBundle.message("button.text.deselect.all"));
 
     DialogUtil.registerMnemonic(mySelectAllButton);
     DialogUtil.registerMnemonic(myDeselectAllButton);

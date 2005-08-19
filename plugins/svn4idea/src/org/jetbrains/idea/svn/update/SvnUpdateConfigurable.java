@@ -19,8 +19,10 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.dialogs.DialogUtil;
 import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
+import org.jetbrains.annotations.NonNls;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
@@ -49,7 +51,8 @@ public class SvnUpdateConfigurable implements Configurable, ActionListener {
   private JLabel myMergeRevisionLabel2;
   private JTextField myMergeRevisionText2;
   private JCheckBox myDryRunCheckbox;
-  private static final String HELP_ID = "vcs.subversion.updateProject";
+  @NonNls private static final String HELP_ID = "vcs.subversion.updateProject";
+  @NonNls public static final String HEAD_REVISION = "HEAD";
 
   public SvnUpdateConfigurable(SvnVcs vcs, String url) {
     myVCS = vcs;
@@ -57,7 +60,7 @@ public class SvnUpdateConfigurable implements Configurable, ActionListener {
   }
 
   public String getDisplayName() {
-    return "Update/Switch";
+    return SvnBundle.message("update.switch.configurable.name");
   }
 
   public Icon getIcon() {
@@ -145,7 +148,7 @@ public class SvnUpdateConfigurable implements Configurable, ActionListener {
     gc.anchor = GridBagConstraints.WEST;
     gc.fill = GridBagConstraints.NONE;
 
-    myUpdateButton = new JRadioButton("U&pdate or Switch");
+    myUpdateButton = new JRadioButton(SvnBundle.message("radio.update.switch.configurable.update.or.switch"));
     Font boldFont = myUpdateButton.getFont().deriveFont(Font.BOLD);
     myUpdateButton.setFont(boldFont);
 
@@ -155,7 +158,7 @@ public class SvnUpdateConfigurable implements Configurable, ActionListener {
     gc.gridy += 1;
     gc.gridwidth = 1;
 
-    myURLLabel = new JLabel("&URL:");
+    myURLLabel = new JLabel(SvnBundle.message("label.update.switch.configurable.url"));
     component.add(myURLLabel, gc);
 
     gc.gridx += 1;
@@ -174,7 +177,7 @@ public class SvnUpdateConfigurable implements Configurable, ActionListener {
     gc.weightx = 0;
     gc.gridwidth = 2;
     gc.fill = GridBagConstraints.NONE;
-    myRevisionBox = new JCheckBox("Update/Switch to specific &revision: ");
+    myRevisionBox = new JCheckBox(SvnBundle.message("checkbox.update.switch.configurable.to.specific.revision"));
     component.add(myRevisionBox, gc);
     DialogUtil.registerMnemonic(myRevisionBox);
     myRevisionBox.addActionListener(this);
@@ -184,7 +187,7 @@ public class SvnUpdateConfigurable implements Configurable, ActionListener {
 
     myRevisionText = new JTextField(8);
     myRevisionText.setMinimumSize(myRevisionText.getPreferredSize());
-    myRevisionText.setText("HEAD");
+    myRevisionText.setText(HEAD_REVISION);
     myRevisionText.selectAll();
     component.add(myRevisionText, gc);
 
@@ -200,14 +203,14 @@ public class SvnUpdateConfigurable implements Configurable, ActionListener {
     gc.weightx = 0;
     gc.fill = GridBagConstraints.NONE;
 
-    myMergeButton = new JRadioButton("&Merge");
+    myMergeButton = new JRadioButton(SvnBundle.message("radio.update.switch.configurable.merge"));
     myMergeButton.setFont(boldFont);
     component.add(myMergeButton, gc);
     DialogUtil.registerMnemonic(myMergeButton);
 
     gc.gridy += 1;
     gc.gridwidth = 1;
-    myMergeURLLabel1 = new JLabel("URL &1:");
+    myMergeURLLabel1 = new JLabel(SvnBundle.message("label.update.switch.configurable.url1"));
     component.add(myMergeURLLabel1, gc);
 
     gc.gridx += 1;
@@ -223,7 +226,7 @@ public class SvnUpdateConfigurable implements Configurable, ActionListener {
     gc.gridx = 0;
     gc.weightx = 0;
     gc.fill = GridBagConstraints.NONE;
-    myMergeRevisionLabel1 = new JLabel("Re&vision:");
+    myMergeRevisionLabel1 = new JLabel(SvnBundle.message("label.update.switch.configurable.revision1"));
     component.add(myMergeRevisionLabel1, gc);
 
     gc.gridx += 1;
@@ -239,7 +242,7 @@ public class SvnUpdateConfigurable implements Configurable, ActionListener {
     gc.gridx = 0;
     gc.weightx = 0;
     gc.fill = GridBagConstraints.NONE;
-    myMergeURLLabel2 = new JLabel("URL &2:");
+    myMergeURLLabel2 = new JLabel(SvnBundle.message("lable.update.switch.configurable.url2"));
     component.add(myMergeURLLabel2, gc);
 
     gc.gridx += 1;
@@ -255,7 +258,7 @@ public class SvnUpdateConfigurable implements Configurable, ActionListener {
     gc.gridx = 0;
     gc.weightx = 0;
     gc.fill = GridBagConstraints.NONE;
-    myMergeRevisionLabel2 = new JLabel("R&evision:");
+    myMergeRevisionLabel2 = new JLabel(SvnBundle.message("update.switch.configurable.revision2"));
     component.add(myMergeRevisionLabel2, gc);
 
     gc.gridx += 1;
@@ -274,7 +277,7 @@ public class SvnUpdateConfigurable implements Configurable, ActionListener {
     gc.gridwidth = 4;
     gc.gridy += 1;
 
-    myDryRunCheckbox = new JCheckBox("&Try merge, but make no changes");
+    myDryRunCheckbox = new JCheckBox(SvnBundle.message("checkbox.update.switch.configurable.try.merge.without.changes"));
     component.add(myDryRunCheckbox, gc);
     DialogUtil.registerMnemonic(myDryRunCheckbox);
 
@@ -287,13 +290,13 @@ public class SvnUpdateConfigurable implements Configurable, ActionListener {
 
     // common part
 
-    myRecursiveBox = new JCheckBox("&Descend into child directories");
+    myRecursiveBox = new JCheckBox(SvnBundle.message("checkbox.update.switch.configurable.descend.into.child.directories"));
     component.add(myRecursiveBox, gc);
     DialogUtil.registerMnemonic(myRecursiveBox);
 
     gc.gridy += 1;
 
-    myStatusBox = new JCheckBox("Run &status after update");
+    myStatusBox = new JCheckBox(SvnBundle.message("checkbox.update.switch.configurable.run.status"));
     component.add(myStatusBox, gc);
     DialogUtil.registerMnemonic(myStatusBox);
 
@@ -319,9 +322,9 @@ public class SvnUpdateConfigurable implements Configurable, ActionListener {
       myURLText.setText(myURL);
     }
 
-    myMergeRevisionText1.setText("HEAD");
+    myMergeRevisionText1.setText(HEAD_REVISION);
     myMergeRevisionText1.selectAll();
-    myMergeRevisionText2.setText("HEAD");
+    myMergeRevisionText2.setText(HEAD_REVISION);
     myMergeRevisionText2.selectAll();
     if (myURL != null) {
       myMergeText1.setText(myURL);
@@ -399,7 +402,7 @@ public class SvnUpdateConfigurable implements Configurable, ActionListener {
   public void apply() throws ConfigurationException {
     SVNRevision revision = getTargetRevision();
     if (revision == null) {
-      throw new ConfigurationException("Invalid revision '" + myRevisionText.getText() + "'");
+      throw new ConfigurationException(SvnBundle.message("exception.text.invalid.revision", myRevisionText.getText()));
     }
   }
 

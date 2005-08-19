@@ -42,6 +42,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.*;
@@ -55,7 +56,7 @@ public class AddAction extends BasicAction {
 
   protected String getActionName(AbstractVcs vcs) {
     log.debug("enter: getActionName");
-    return "Adding files to " + vcs.getName();
+    return SvnBundle.message("action.name.add.files", vcs.getName());
   }
 
   protected boolean isEnabled(Project project, SvnVcs vcs, VirtualFile file) {

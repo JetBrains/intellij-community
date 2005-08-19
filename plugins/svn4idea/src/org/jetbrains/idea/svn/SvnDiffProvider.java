@@ -58,7 +58,7 @@ public class SvnDiffProvider implements DiffProvider {
         if (ApplicationManager.getApplication().isDispatchThread() &&
             !svnRevision.isLocal()) {
           ApplicationManager.getApplication().runProcessWithProgressSynchronously(loader,
-                                                                                  "Loading Remote File Content", false, null);
+                                                                                  SvnBundle.message("progress.title.loading.file.content"), false, null);
         }
         else {
           loader.run();
@@ -94,8 +94,8 @@ public class SvnDiffProvider implements DiffProvider {
     public void run() {
       ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
       if (progress != null) {
-        progress.setText("Loading contents of '" + myFile.getName() + "'");
-        progress.setText2("Revision " + myRevision);
+        progress.setText(SvnBundle.message("progress.text.loading.contents", myFile.getName()));
+        progress.setText2(SvnBundle.message("progress.text2.revision.information", myRevision));
       }
       try {
         SVNWCClient client = myVcs.createWCClient();

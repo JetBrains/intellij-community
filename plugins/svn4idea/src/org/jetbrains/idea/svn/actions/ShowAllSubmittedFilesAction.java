@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.checkin.AbstractSvnRevisionsFactory;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
 import org.jetbrains.idea.svn.history.SvnVersionRevisions;
@@ -47,7 +48,7 @@ import java.util.Map;
 
 public class ShowAllSubmittedFilesAction extends AnAction {
   public ShowAllSubmittedFilesAction() {
-    super("Show all paths affected in selected transaction", null, IconLoader.findIcon("/icons/allRevisions.png"));
+    super(SvnBundle.message("action.name.show.all.paths.affected"), null, IconLoader.findIcon("/icons/allRevisions.png"));
   }
 
   public void update(AnActionEvent e) {
@@ -79,7 +80,7 @@ public class ShowAllSubmittedFilesAction extends AnAction {
   }
 
   private static String getTitle(long revisionNumber) {
-    return "Paths Affected in Transaction '" + revisionNumber + "'";
+    return SvnBundle.message("dialog.title.affected.paths", revisionNumber);
   }
 
   private ArrayList<AbstractRevisions> loadRevisions(final Project project, final SvnFileRevision svnRevision) {
@@ -97,17 +98,17 @@ public class ShowAllSubmittedFilesAction extends AnAction {
       ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           try {
-            ProgressManager.getInstance().getProgressIndicator().setText("Loading revision log...");
+            ProgressManager.getInstance().getProgressIndicator().setText(SvnBundle.message("progress.text.loading.log"));
             repos.log(new String[]{"/"}, targetRevision.getNumber(), targetRevision.getNumber(), true, true, 0, new ISVNLogEntryHandler() {
               public void handleLogEntry(SVNLogEntry currentLogEntry) {
                 logEntry[0] = currentLogEntry;
               }
             });
             if (logEntry[0] == null) {
-              throw new VcsException("Cannot load repository version " + number);
+              throw new VcsException(SvnBundle.message("exception.text.cannot.load.version", number));
             }
 
-            ProgressManager.getInstance().getProgressIndicator().setText("Processing changes...");
+            ProgressManager.getInstance().getProgressIndicator().setText(SvnBundle.message("progress.text.processing.changes"));
             AbstractSvnRevisionsFactory<SVNLogEntryPath> factory = new EntryRevisionsFactory(vcs, logEntry[0], repos);
             revisions.addAll(factory.createRevisionsListOn(new String[]{File.separator}));
           }
@@ -119,8 +120,8 @@ public class ShowAllSubmittedFilesAction extends AnAction {
       if (ex[0] != null) throw ex[0];
     }
     catch (Exception e1) {
-      Messages.showErrorDialog("Cannot load repository version " + number + " :" + e1.getLocalizedMessage(),
-                               "Error Fetching Affected Paths");
+      Messages.showErrorDialog(SvnBundle.message("message.text.cannot.load.version", number, e1.getLocalizedMessage()),
+                               SvnBundle.message("message.title.error.fetching.affected.paths"));
       return null;
     }
 
