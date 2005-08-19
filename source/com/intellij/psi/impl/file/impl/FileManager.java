@@ -3,8 +3,8 @@ package com.intellij.psi.impl.file.impl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.Collection;
 
 public interface FileManager {
@@ -12,23 +12,23 @@ public interface FileManager {
 
   void runStartupActivity();
 
-  PsiFile findFile(VirtualFile vFile);
+  PsiFile findFile(@NotNull VirtualFile vFile);
 
-  PsiDirectory findDirectory(VirtualFile vFile);
+  PsiDirectory findDirectory(@NotNull VirtualFile vFile);
 
-  PsiPackage findPackage(String packageName);
+  PsiPackage findPackage(@NotNull String packageName);
 
   PsiDirectory[] getRootDirectories(int rootType);
 
-  PsiClass findClass(String qName, GlobalSearchScope scope);
-  PsiClass[] findClasses(String qName, GlobalSearchScope scope);
+  PsiClass findClass(@NotNull String qName, @NotNull GlobalSearchScope scope);
+  PsiClass[] findClasses(@NotNull String qName, @NotNull GlobalSearchScope scope);
 
-  void reloadFromDisk(PsiFile file); //Q: move to PsiFile(Impl)?
+  void reloadFromDisk(@NotNull PsiFile file); //Q: move to PsiFile(Impl)?
 
-  PsiFile getCachedPsiFile(VirtualFile vFile);
+  PsiFile getCachedPsiFile(@NotNull VirtualFile vFile);
 
-  GlobalSearchScope getResolveScope(PsiElement element);
-  GlobalSearchScope getUseScope(PsiElement element);
+  GlobalSearchScope getResolveScope(@NotNull PsiElement element);
+  GlobalSearchScope getUseScope(@NotNull PsiElement element);
   Collection<String> getNonTrivialPackagePrefixes();
 
   void cleanupForNextTest();

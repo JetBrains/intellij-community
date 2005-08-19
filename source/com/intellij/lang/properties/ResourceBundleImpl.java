@@ -44,13 +44,14 @@ public class ResourceBundleImpl implements ResourceBundle {
     RenameHandlerRegistry.getInstance().registerHandler(ResourceBundleRenameHandler.INSTANCE);
   }
 
+  @NotNull
   public List<PropertiesFile> getPropertiesFiles(final Project project) {
     VirtualFile[] children = myBaseDirectory.getChildren();
     List<PropertiesFile> result = new SmartList<PropertiesFile>();
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     PsiManager psiManager = PsiManager.getInstance(project);
     for (VirtualFile file : children) {
-      if (fileTypeManager.getFileTypeByFile(file) != StdFileTypes.PROPERTIES) continue;
+      if (!file.isValid() || fileTypeManager.getFileTypeByFile(file) != StdFileTypes.PROPERTIES) continue;
       if (Comparing.strEqual(PropertiesUtil.getBaseName(file), myBaseName)) {
         PsiFile psiFile = psiManager.findFile(file);
         if (psiFile instanceof PropertiesFile) {
@@ -61,6 +62,7 @@ public class ResourceBundleImpl implements ResourceBundle {
     return result;
   }
 
+  @NotNull
   public String getBaseName() {
     return myBaseName;
   }
@@ -78,8 +80,7 @@ public class ResourceBundleImpl implements ResourceBundle {
   }
 
   public int hashCode() {
-    int result;
-    result = myBaseDirectory.hashCode();
+    int result = myBaseDirectory.hashCode();
     result = 29 * result + myBaseName.hashCode();
     return result;
   }
