@@ -5,6 +5,7 @@
     <description>Enables image files viewing in IDEA editors</description>
     <version>1.1</version>
     <idea-version since-build="3378"/>
+  <resource-bundle xmlns="">org.intellij.images.IconsBundle</resource-bundle>
     <resource-bundle>org.intellij.images.IconsBundle</resource-bundle>
 
     <extensions xmlns="com.intellij">
@@ -44,9 +45,7 @@
             <add-to-group anchor="after" group-id="CommanderPopupMenu" relative-to-action="EditSource"/>
         </action>
         <action class="org.intellij.images.actions.ShowThumbnailsAction"
-                text="Show Thumbnails"
-                id="Images.ShowThumbnails"
-                description="Show thumnails view for current directory">
+                id="Images.ShowThumbnails">
             <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="AddToFavorites"/>
             <add-to-group anchor="after" group-id="CommanderPopupMenu" relative-to-action="AddToFavorites"/>
         </action>
@@ -88,8 +87,8 @@
             <reference id="ExternalToolsGroup" />
         </group>
         <group id="Images.ThumbnailsToolbar">
-            <action class="org.intellij.images.thumbnail.actions.UpFolderAction" text="Level Up"
-                    id="Images.Thumbnails.UpFolder" description="Level up"
+            <action class="org.intellij.images.thumbnail.actions.UpFolderAction"
+                    id="Images.Thumbnails.UpFolder"
                     icon="/nodes/upFolder.png"/>
             <action class="org.intellij.images.thumbnail.actions.ToggleRecursiveAction"
                     id="Images.Thumbnails.ToggleRecursive"
