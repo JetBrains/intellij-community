@@ -2,9 +2,9 @@
 <idea-plugin>
     <vendor>Alexey Efimov</vendor>
     <name>Images</name>
-    <description>Enables image files viewing in IDEA editors</description>
     <version>1.1</version>
     <idea-version since-build="3378"/>
+  
   <resource-bundle xmlns="">org.intellij.images.IconsBundle</resource-bundle>
     <resource-bundle>org.intellij.images.IconsBundle</resource-bundle>
 
