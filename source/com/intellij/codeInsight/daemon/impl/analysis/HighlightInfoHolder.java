@@ -8,10 +8,10 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.SmartList;
 
-import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /** @fabrique **/
 public class HighlightInfoHolder extends ArrayList<HighlightInfo> {
@@ -84,5 +84,41 @@ public class HighlightInfoHolder extends ArrayList<HighlightInfo> {
       added |= add(highlightInfo);
     }
     return added;
+  }
+
+  public HighlightInfo set(final int index, final HighlightInfo element) {
+    throw new UnsupportedOperationException();
+  }
+
+  public void add(final int index, final HighlightInfo element) {
+    throw new UnsupportedOperationException();
+  }
+
+  public HighlightInfo remove(final int index) {
+    throw new UnsupportedOperationException();
+  }
+
+  public boolean remove(final Object o) {
+    throw new UnsupportedOperationException();
+  }
+
+  public boolean addAll(final int index, final Collection<? extends HighlightInfo> c) {
+    throw new UnsupportedOperationException();
+  }
+
+  protected void removeRange(final int fromIndex, final int toIndex) {
+    throw new UnsupportedOperationException();
+  }
+
+  public boolean removeAll(final Collection<?> c) {
+    throw new UnsupportedOperationException();
+  }
+
+  public boolean retainAll(final Collection<?> c) {
+    throw new UnsupportedOperationException();
+  }
+
+  public List<HighlightInfo> subList(final int fromIndex, final int toIndex) {
+    throw new UnsupportedOperationException();
   }
 }
