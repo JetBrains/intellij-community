@@ -1,10 +1,10 @@
 <idea-plugin version="2">
     <name>Intention Power Pack</name>
     <id>IntentionPowerPack</id>
-    <description>Adds over 30 new intention actions for IDEA.</description>
     <version>0.9</version>
     <vendor>InspectionGadgets Software</vendor>
     <idea-version min="4.0" max="4.1"/>
+    <resource-bundle>com.siyeh.IntentionPowerPakBundle</resource-bundle>
 
     <extensions xmlns="com.intellij">
       <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
