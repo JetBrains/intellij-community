@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NonNls;
 import java.util.ResourceBundle;
 
 public class CvsBundle {
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.intellij.CvsBundle");
+  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.intellij.cvsSupport2.CvsBundle");
 
   private CvsBundle() {}
 
