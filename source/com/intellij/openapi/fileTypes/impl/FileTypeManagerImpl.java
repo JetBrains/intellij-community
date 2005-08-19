@@ -64,7 +64,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   public FileTypeManagerImpl() {
     registerStandardFileTypes();
-    loadAllFileTypes();
+    boolean standardFileTypeRead = loadAllFileTypes();
+    if (standardFileTypeRead) {
+      restoreStandardFileExtensions();
+    }
   }
 
   public File[] getExportFiles() {
@@ -106,8 +109,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   @NotNull
   public FileType getFileTypeByFile(VirtualFile file) {
     // first let file recognize its type
-    for (int i = 0; i < mySpecialFileTypes.size(); i++) {
-      FakeFileType fileType = mySpecialFileTypes.get(i);
+    for (FakeFileType fileType : mySpecialFileTypes) {
       if (fileType.isMyFileType(file)) return fileType;
     }
 
@@ -281,7 +283,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     while (iterator.hasNext()) {
       FileType fileType = iterator.next();
 
-      if (!(fileType instanceof CustomFileType) || shouldNotSave(fileType)) continue;
+      if (!(fileType instanceof CustomFileType) || !shouldSave(fileType)) continue;
       if (myDefaultTypes.contains(fileType) && !isDefaultModified(fileType)) continue;
 
       Element root = new Element("filetype");
@@ -298,7 +300,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
     JDOMUtil.updateFileSet(files,
                            filePaths.toArray(new String[filePaths.size()]),
-                           documents.toArray(new Document[documents.size()]), CodeStyleSettingsManager.getSettings(null).getLineSeparator());
+                           documents.toArray(new Document[documents.size()]),
+                           CodeStyleSettingsManager.getSettings(null).getLineSeparator());
   }
 
   private boolean isDefaultModified(FileType fileType) {
@@ -333,21 +336,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       else if ("extensionMap".equals(e.getName())) {
         List mappings = e.getChildren("mapping");
 
-        for (int i = 0; i < mappings.size(); i++) {
-          Element mapping = (Element)mappings.get(i);
+        for (Object mapping1 : mappings) {
+          Element mapping = (Element)mapping1;
           String ext = mapping.getAttributeValue("ext");
           String name = mapping.getAttributeValue("type");
           FileType type = getFileTypeByName(name);
 
           if (type != null) {
-            if (savedVersion < VERSION &&
-                (type == StdFileTypes.XML &&
-                 (ext.equals("dtd") || ext.equals("xhtml") || ext.equals("jspx") || ext.equals("tagx"))
-                ) ||
-                  ext.equals("css")
-              ) {
-              continue;
-            }
             associateExtension(type, ext, false);
           }
           else {
@@ -357,22 +352,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         }
 
         List removedMappings = e.getChildren("removed_mapping");
-        for (int i = 0; i < removedMappings.size(); i++) {
-          Element mapping = (Element)removedMappings.get(i);
+        for (Object removedMapping : removedMappings) {
+          Element mapping = (Element)removedMapping;
           String ext = mapping.getAttributeValue("ext");
           String name = mapping.getAttributeValue("type");
           FileType type = getFileTypeByName(name);
 
           if (type != null) {
-            if (savedVersion < VERSION) {
-              if ((type == StdFileTypes.DTD && ext.equals("dtd")) ||
-                  (type == StdFileTypes.XHTML && ext.equals("xhtml")) ||
-                  ext.equals("css") ||
-                  (type == StdFileTypes.JSPX && (ext.equals("tagx") || ext.equals("jspx")))
-                ) {
-                continue;
-              }
-            }
             removeAssociation(type, ext, false);
           }
         }
@@ -383,6 +369,36 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       if (!myIgnoredFileMasksSet.contains(".svn")) {
         myIgnorePatterns.add(PatternUtil.fromMask(".svn"));
         myIgnoredFileMasksSet.add(".svn");
+      }
+    }
+    if (savedVersion < VERSION) {
+      restoreStandardFileExtensions();
+    }
+  }
+
+  private void restoreStandardFileExtensions() {
+    restoreStandardFileExtensions(StdFileTypes.JSP);
+    restoreStandardFileExtensions(StdFileTypes.JSPX);
+    restoreStandardFileExtensions(StdFileTypes.DTD);
+    restoreStandardFileExtensions(StdFileTypes.HTML);
+    restoreStandardFileExtensions(StdFileTypes.PROPERTIES);
+    restoreStandardFileExtensions(StdFileTypes.XHTML);
+  }
+
+  private void restoreStandardFileExtensions(FileType fileType) {
+    String[] extensions = getAssociatedExtensions(fileType);
+
+    for (String ext : extensions) {
+      FileType defaultFileType = myInitialAssociations.get(ext);
+      if (defaultFileType != null && defaultFileType != fileType) {
+        removeAssociation(fileType, ext, false);
+        associateExtension(defaultFileType, ext, false);
+      }
+    }
+    for (String ext : myInitialAssociations.keySet()) {
+      FileType defaultFileType = myInitialAssociations.get(ext);
+      if (defaultFileType == fileType) {
+        associateExtension(defaultFileType, ext, false);
       }
     }
   }
@@ -415,7 +431,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         if (defaultMappings.get(ext) == type) {
           defaultMappings.remove(ext);
         }
-        else if (!shouldNotSave(type)) {
+        else if (shouldSave(type)) {
           Element mapping = new Element("mapping");
           mapping.setAttribute("ext", ext);
           mapping.setAttribute("type", type.getName());
@@ -534,11 +550,14 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return fileList.toArray(new File[fileList.size()]);
   }
 
-  private void loadAllFileTypes() {
+  // returns true if at least one standard file type has been read
+  private boolean loadAllFileTypes() {
     File[] files = getFileTypeFiles();
+    boolean standardFileTypeRead = false;
     for (File file : files) {
       try {
-        loadFileType(file);
+        FileType fileType = loadFileType(file);
+        standardFileTypeRead |= myInitialAssociations.values().contains(fileType);
       }
       catch (JDOMException e) {
       }
@@ -547,6 +566,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       catch (IOException e) {
       }
     }
+    return standardFileTypeRead;
   }
 
   private FileType loadFileType(File file) throws JDOMException, InvalidDataException, IOException {
@@ -574,17 +594,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
 
     FileType type = getFileTypeByName(fileTypeName);
-
-    if (!isDefaults) {
-      if (type == StdFileTypes.XML) {
-        extensionsStr = removeExtension(extensionsStr,"dtd");
-        extensionsStr = removeExtension(extensionsStr,"xhtml");
-        extensionsStr = removeExtension(extensionsStr,"jspx");
-        extensionsStr = removeExtension(extensionsStr,"tagx");
-      } else if (extensionsStr != null && extensionsStr.indexOf("css") != -1) {
-        extensionsStr = removeExtension(extensionsStr,"css");
-      }
-    }
 
     String[] exts = parse(extensionsStr);
     if (type != null) {
@@ -629,20 +638,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
 
     return type;
-  }
-
-  private static String removeExtension(String extensionsStr, String extension) {
-    int index = extensionsStr.indexOf(extension);
-
-    if (index != -1) {
-      final int extensionLength = extension.length();
-      boolean islastext = index + extensionLength == extensionsStr.length();
-      StringBuffer buf = new StringBuffer(extensionsStr);
-      final int start = index - (islastext ? 1 : 0);
-      buf.delete(start,start + 1 + extensionLength);
-      extensionsStr = buf.toString();
-    }
-    return extensionsStr;
   }
 
   private static SyntaxTable readSyntaxTable(Element root) {
@@ -726,8 +721,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return directory;
   }
 
-  private static boolean shouldNotSave(FileType fileType) {
-    return fileType == StdFileTypes.UNKNOWN || fileType.isReadOnly();
+  private static boolean shouldSave(FileType fileType) {
+    return fileType != StdFileTypes.UNKNOWN && !fileType.isReadOnly();
   }
 
   private static void writeHeader(Element root, FileType fileType) {
