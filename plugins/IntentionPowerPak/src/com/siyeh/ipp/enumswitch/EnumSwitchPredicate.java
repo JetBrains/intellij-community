@@ -44,7 +44,7 @@ class EnumSwitchPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiClass enumClass = ((PsiClassType) type).resolve();
-        if(!enumClass.isEnum()){
+        if(enumClass == null || !enumClass.isEnum()){
             return false;
         }
         final PsiField[] fields = enumClass.getFields();

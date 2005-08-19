@@ -31,9 +31,9 @@ public class FlipCommutativeMethodCallIntention extends MutablyNamedIntention{
         assert methodName != null;
         if("equals".equals(methodName) || "equalsIgnoreCase".equals(methodName))
         {
-            return "Flip ." + methodName + "()";
+            return "Flip \'." + methodName + "()\'";
         } else{
-            return "Unsafe flip ." + methodName + "()";
+            return "Flip \'." + methodName + "()\' (may change semantics)";
         }
     }
 

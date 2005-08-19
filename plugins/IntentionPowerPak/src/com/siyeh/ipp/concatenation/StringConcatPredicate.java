@@ -44,13 +44,21 @@ class StringConcatPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiType type = binaryExpression.getType();
-        if(type == null){
-            return false;
-        }
-        if(!type.equalsToText("java.lang.String")){
-            return false;
-        }
-        final PsiExpression subexpression = getSubexpression(binaryExpression);
+	    if (type == null || !type.equalsToText("java.lang.String")) {
+		    return false;
+	    }
+	    final PsiBinaryExpression subexpression = getSubexpression(binaryExpression);
+	    if (subexpression == null) {
+		    return false;
+	    }
+	    final PsiExpression lOperand = subexpression.getLOperand();
+	    if (lOperand instanceof PsiPrefixExpression) {
+		    final PsiType prefixExpressionType = lOperand.getType();
+		    if (prefixExpressionType == null ||
+		        prefixExpressionType.equalsToText("java.lang.String")) {
+			    return false;
+		    }
+	    }
         return PsiUtil.isConstantExpression(subexpression);
     }
 

@@ -135,7 +135,7 @@ public abstract class Intention implements IntentionAction{
         final PsiManager mgr = statement.getManager();
         final PsiElementFactory factory = mgr.getElementFactory();
         final PsiStatement newCall =
-                factory.createStatementFromText(newStatement, null);
+                factory.createStatementFromText(newStatement, statement);
         final PsiElement insertedElement = statement.replace(newCall);
         final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
         codeStyleManager.reformat(insertedElement);
