@@ -2,10 +2,10 @@
     <name>Inspection Gadgets</name>
     <id>InspectionGadgets</id>
     <category>inspection</category>
-    <description>Adds over 400 new automated code inspections for IntelliJ IDEA.</description>
     <vendor>InspectionGadgets Software</vendor>
     <version>1.0</version>
     <idea-version min="4.0" max="4.1"/>
+    <resource-bundle>com.siyeh.InspectionGadgetsBundle</resource-bundle>
 
     <extensions xmlns="com.intellij">
       <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
