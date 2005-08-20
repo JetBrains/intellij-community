@@ -9,6 +9,7 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.properties.findUsages.PropertiesFindUsagesProvider;
 import com.intellij.lang.properties.parsing.PropertiesParserDefinition;
+import com.intellij.lang.properties.parsing.PropertiesElementTypes;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.structureView.PropertiesFileStructureViewComponent;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
@@ -17,6 +18,8 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -42,17 +45,18 @@ public class PropertiesLanguage extends Language {
     return new PropertiesHighlighter();
   }
 
-  //public FoldingBuilder getFoldingBuilder() {
-  //  return new JavaScriptFoldingBuilder();
-  //}
-  //
-  //public PseudoTextBuilder getFormatter() {
-  //  return new JavaScriptPseudoTextBuilder();
-  //}
-  //
-  //public PairedBraceMatcher getPairedBraceMatcher() {
-  //  return new JSBraceMatcher();
-  //}
+  private TokenSet myReadableTextContainerElements;
+  
+  @NotNull
+  public TokenSet getReadableTextContainerElements() {
+    if (myReadableTextContainerElements == null) {
+      myReadableTextContainerElements = TokenSet.orSet(
+        super.getReadableTextContainerElements(), 
+        TokenSet.create(new IElementType[] { PropertiesElementTypes.PROPERTY })
+      );
+    }
+    return myReadableTextContainerElements;
+  }
 
   public Annotator getAnnotator() {
     return ANNOTATOR;
