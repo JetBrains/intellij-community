@@ -127,18 +127,20 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
 
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(getProject());
     if (fileEditorManager.getSelectedTextEditor() != null) {
-      model.addElement(new ScopeDescriptor(new LocalSearchScope(PsiDocumentManager.getInstance(getProject()).getPsiFile(
-        fileEditorManager.getSelectedTextEditor().getDocument()), "Current File")));
+      final PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(fileEditorManager.getSelectedTextEditor().getDocument());
+      if (psiFile != null) {
+        model.addElement(new ScopeDescriptor(new LocalSearchScope(psiFile, "Current File")));
 
-      if (fileEditorManager.getSelectedTextEditor().getSelectionModel().hasSelection()) {
-        PsiElement[] elements = CodeInsightUtil.findStatementsInRange(
-          PsiDocumentManager.getInstance(getProject()).getPsiFile(fileEditorManager.getSelectedTextEditor().getDocument()),
-          fileEditorManager.getSelectedTextEditor().getSelectionModel().getSelectionStart(),
-          fileEditorManager.getSelectedTextEditor().getSelectionModel().getSelectionEnd()
-        );
+        if (fileEditorManager.getSelectedTextEditor().getSelectionModel().hasSelection()) {
+          PsiElement[] elements = CodeInsightUtil.findStatementsInRange(
+            psiFile,
+            fileEditorManager.getSelectedTextEditor().getSelectionModel().getSelectionStart(),
+            fileEditorManager.getSelectedTextEditor().getSelectionModel().getSelectionEnd()
+          );
 
-        if (elements != null) {
-          model.addElement(new ScopeDescriptor(new LocalSearchScope(elements, "Selection")));
+          if (elements != null) {
+            model.addElement(new ScopeDescriptor(new LocalSearchScope(elements, "Selection")));
+          }
         }
       }
     }
