@@ -129,11 +129,12 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
         if (currentSubstitution == null) continue;
         final ConstraintType constraintType = currentSubstitution.getSecond();
         final PsiType type = currentSubstitution.getFirst();
+        if (type == null) return null;
         switch(constraintType) {
           case EQUALS:
             return type;
           case SUPERTYPE:
-            if (lowerBound == null) {
+            if (lowerBound == PsiType.NULL) {
               lowerBound = type;
             } else {
               if (!lowerBound.equals(type)) {
