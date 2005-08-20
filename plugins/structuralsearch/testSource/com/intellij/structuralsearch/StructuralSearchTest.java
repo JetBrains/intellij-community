@@ -8,6 +8,8 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.idea.IdeaTestUtil;
 
+import java.util.Calendar;
+
 /**
  * Created by IntelliJ IDEA.
  * User: Maxim.Mossienko
@@ -571,7 +573,7 @@ public class StructuralSearchTest extends IdeaTestCase {
       findMatchesCount(s9,s10_2)
     );
 
-    if (!IdeaTestUtil.bombExplodes(2005,7,20,12,0,"maxim.mossienko","Covariant array types")) return;
+    if (!IdeaTestUtil.bombExplodes(2005, Calendar.SEPTEMBER,20,12,0,"-maxim.mossienko","Covariant array types")) return;
     String s11 = "class A {\n" +
                  "  void main(String[] argv);" +
                  "}";
