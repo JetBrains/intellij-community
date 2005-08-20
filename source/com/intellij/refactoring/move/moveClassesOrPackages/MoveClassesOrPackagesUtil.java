@@ -186,9 +186,12 @@ public class MoveClassesOrPackagesUtil {
     final VirtualFile sourceVFile = dir.getVirtualFile();
     if (movedPaths.contains(sourceVFile)) return;
     String targetName = dir.getName();
-    final String sourcePackageName = dir.getPackage().getName();
-    if (!targetName.equals(sourcePackageName)) {
-      targetName = sourcePackageName;
+    final PsiPackage aPackage = dir.getPackage();
+    if (aPackage != null) {
+      final String sourcePackageName = aPackage.getName();
+      if (!targetName.equals(sourcePackageName)) {
+        targetName = sourcePackageName;
+      }
     }
     final PsiDirectory subdirectoryInDest;
     final boolean isSourceRoot = RefactoringUtil.isSourceRoot(dir);
