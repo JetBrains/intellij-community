@@ -625,9 +625,9 @@ public class SystemBuilder {
       }
 
       if (element instanceof PsiParameter) {
-        final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-
-        if (method != null) {
+        final PsiElement declarationScope = ((PsiParameter)element).getDeclarationScope();
+        if (declarationScope instanceof PsiMethod) {
+          final PsiMethod method = ((PsiMethod)declarationScope);
           final PsiSearchHelper helper = myManager.getSearchHelper();
           SearchScope scope = getScope(helper, method);
 
