@@ -42,7 +42,7 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
     PsiMethodCallExpression call = (PsiMethodCallExpression) manager.getElementFactory().createExpressionFromText("java.text.MessageFormat.format()", concatenation);
     PsiExpressionList argumentList = call.getArgumentList();
     LOG.assertTrue(argumentList != null);
-    String format = repeatSingleQuotes(StringUtil.escapeStringCharacters(formatString.toString()));
+    String format = prepareString(formatString.toString());
     PsiExpression formatArgument = manager.getElementFactory().createExpressionFromText("\"" + format + "\"", null);
     argumentList.add(formatArgument);
     for (PsiExpression arg : args) {
@@ -53,7 +53,11 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
     concatenation.replace(call);
   }
 
-  private String repeatSingleQuotes(String s) {
+  public static String prepareString(final String s) {
+    return repeatSingleQuotes(StringUtil.escapeStringCharacters(s));
+  }
+
+  private static String repeatSingleQuotes(String s) {
     StringBuffer buffer = new StringBuffer();
     for (int i = 0; i < s.length(); i++) {
       final char c = s.charAt(i);
