@@ -119,7 +119,6 @@ public abstract class PsiClassType extends PsiType {
    * Checks whether this type is a raw type. <br>
    * Raw type is a class type for a class <i>with type parameters</i> which does not assign
    * any value to them. If a class does not have any type parameters, it cannot generate any raw type.
-   * @return
    */
   public boolean isRaw() {
     return isRaw(resolveGenerics());
