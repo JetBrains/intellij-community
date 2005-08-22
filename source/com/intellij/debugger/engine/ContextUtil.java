@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.Location;
 
@@ -125,6 +126,7 @@ public class ContextUtil {
     }
 
     PsiElement element;
+    final PsiElement rootElement = psiFile instanceof JspFile? ((JspFile)psiFile).getJavaRoot() : psiFile;
     while(true) {
       final CharSequence charsSequence = document.getCharsSequence();
       for (; startOffset < charsSequence.length(); startOffset++) {
@@ -133,7 +135,7 @@ public class ContextUtil {
           break;
         }
       }
-      element = psiFile.findElementAt(startOffset);
+      element = rootElement.findElementAt(startOffset);
 
       if(element instanceof PsiComment) {
         startOffset = element.getTextRange().getEndOffset() + 1;
