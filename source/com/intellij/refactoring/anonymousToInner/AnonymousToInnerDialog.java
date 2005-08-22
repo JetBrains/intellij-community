@@ -43,8 +43,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
 
     setTitle(REFACTORING_NAME);
 
-    for (int idx = 0; idx < variableInfos.length; idx++) {
-      VariableInfo info = variableInfos[idx];
+    for (VariableInfo info : variableInfos) {
       myVariableToInfoMap.put(info.variable, info);
     }
     myVariableData = new ParameterTablePanel.VariableData[variableInfos.length];
@@ -124,8 +123,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
       if (targetContainer instanceof PsiClass) {
         PsiClass targetClass = (PsiClass)targetContainer;
         PsiClass[] innerClasses = targetClass.getInnerClasses();
-        for (int idx = 0; idx < innerClasses.length; idx++) {
-          PsiClass innerClass = innerClasses[idx];
+        for (PsiClass innerClass : innerClasses) {
           if (innerClassName.equals(innerClass.getName())) {
             errorString =
               "Inner class named '" + innerClassName + "' is already defined\n" +

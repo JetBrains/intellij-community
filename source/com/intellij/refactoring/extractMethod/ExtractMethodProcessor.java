@@ -35,6 +35,7 @@ import com.intellij.util.containers.IntArrayList;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Comparator;
 
 public class ExtractMethodProcessor implements MatchProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractMethod.ExtractMethodProcessor");
@@ -206,6 +207,15 @@ public class ExtractMethodProcessor implements MatchProvider {
                            ControlFlowUtil.returnPresentBetween(myControlFlow, myFlowStart, myFlowEnd);
 
     myInputVariables = ControlFlowUtil.getInputVariables(myControlFlow, myFlowStart, myFlowEnd);
+
+    //varargs variables go last
+    Arrays.sort(myInputVariables, new Comparator<PsiVariable>() {
+      public int compare(final PsiVariable v1, final PsiVariable v2) {
+        return v1.getType() instanceof PsiEllipsisType ? 1 :
+               v2.getType() instanceof PsiEllipsisType ? -1 : 0;
+      }
+    });
+
     myOutputVariables = ControlFlowUtil.getOutputVariables(myControlFlow, myFlowStart, myFlowEnd, exitPoint);
 
     chooseTargetClass();
@@ -304,7 +314,8 @@ public class ExtractMethodProcessor implements MatchProvider {
                                                          myTypeParameterList,
                                                          myThrownExceptions,
                                                          myStatic,
-                                                         myCanBeStatic, myInitialMethodName,
+                                                         myCanBeStatic,
+                                                         myInitialMethodName,
                                                          myRefactoringName,
                                                          myHelpId);
     dialog.show();
@@ -608,7 +619,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     PsiParameterList list = newMethod.getParameterList();
     for (ParameterTablePanel.VariableData data : myVariableDatas) {
       if (data.passAsParameter) {
-        PsiParameter parm = myElementFactory.createParameter(data.name, data.variable.getType());
+        PsiParameter parm = myElementFactory.createParameter(data.name, data.type);
         if (isFinal) {
           parm.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
         }
@@ -627,7 +638,8 @@ public class ExtractMethodProcessor implements MatchProvider {
         PsiDeclarationStatement declaration = (PsiDeclarationStatement)myElementFactory.createStatementFromText(text,
                                                                                                                 null);
         declaration = (PsiDeclarationStatement)myStyleManager.reformat(declaration);
-        ((PsiVariable)declaration.getDeclaredElements()[0]).getTypeElement().replace(data.variable.getTypeElement());
+        final PsiTypeElement typeElement = myElementFactory.createTypeElement(data.type);
+        ((PsiVariable)declaration.getDeclaredElements()[0]).getTypeElement().replace(typeElement);
         declaration = (PsiDeclarationStatement)body.add(declaration);
 
         PsiExpression initializer = ((PsiVariable)declaration.getDeclaredElements()[0]).getInitializer();

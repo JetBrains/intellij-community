@@ -4,6 +4,7 @@ package com.intellij.refactoring.util;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiType;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
@@ -31,11 +32,18 @@ public abstract class ParameterTablePanel extends JPanel{
 
   public static class VariableData {
     public final PsiVariable variable;
+    public final PsiType type;
     public String name;
     public boolean passAsParameter;
 
-    public VariableData(PsiVariable variable) {
-      this.variable = variable;
+    public VariableData(PsiVariable var) {
+      variable = var;
+      type = var.getType();
+    }
+
+    public VariableData(PsiVariable var, PsiType type) {
+      variable = var;
+      this.type = type;
     }
   }
 
@@ -68,14 +76,14 @@ public abstract class ParameterTablePanel extends JPanel{
         int[] rows = myTable.getSelectedRows();
         if (rows.length > 0){
           boolean valueToBeSet = false;
-          for(int idx = 0; idx < rows.length; idx++){
-            if (!myVariableData[rows[idx]].passAsParameter){
+          for (int row : rows) {
+            if (!myVariableData[row].passAsParameter) {
               valueToBeSet = true;
               break;
             }
           }
-          for(int idx = 0; idx < rows.length; idx++){
-            myVariableData[rows[idx]].passAsParameter = valueToBeSet;
+          for (int row : rows) {
+            myVariableData[row].passAsParameter = valueToBeSet;
           }
           myTableModel.fireTableRowsUpdated(rows[0], rows[rows.length - 1]);
           TableUtil.selectRows(myTable, rows);
@@ -316,7 +324,7 @@ public abstract class ParameterTablePanel extends JPanel{
     ) {
       super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       VariableData data = myVariableData[row];
-      String type = data.variable.getType().getPresentableText();
+      String type = data.type.getPresentableText();
       setText(type+" "+data.name);
       return this;
     }

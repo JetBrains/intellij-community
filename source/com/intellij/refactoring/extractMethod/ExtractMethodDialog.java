@@ -21,7 +21,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.ArrayList;
+import java.util.*;
+import java.util.List;
 
 
 class ExtractMethodDialog extends DialogWrapper {
@@ -55,9 +56,8 @@ class ExtractMethodDialog extends DialogWrapper {
     myStaticFlag = isStatic;
     myCanBeStatic = canBeStatic;
 
-    final java.util.List variableData = new ArrayList(inputVariables.length);
-    for (int i = 0; i < inputVariables.length; i++) {
-      PsiVariable var = inputVariables[i];
+    final List<ParameterTablePanel.VariableData> variableData = new ArrayList<ParameterTablePanel.VariableData>(inputVariables.length);
+    for (PsiVariable var : inputVariables) {
       String name = var.getName();
       if (!(var instanceof PsiParameter)) {
         CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myProject);
@@ -65,12 +65,17 @@ class ExtractMethodDialog extends DialogWrapper {
         name = codeStyleManager.variableNameToPropertyName(name, kind);
         name = codeStyleManager.propertyNameToVariableName(name, VariableKind.PARAMETER);
       }
-      ParameterTablePanel.VariableData data = new ParameterTablePanel.VariableData(var);
+      PsiType type = var.getType();
+      if (type instanceof PsiEllipsisType && var != inputVariables[inputVariables.length - 1]) {
+        type = ((PsiEllipsisType)type).toArrayType();
+      }
+
+      ParameterTablePanel.VariableData data = new ParameterTablePanel.VariableData(var, type);
       data.name = name;
       data.passAsParameter = true;
       variableData.add(data);
     }
-    myVariableData = (ParameterTablePanel.VariableData[]) variableData.toArray(new ParameterTablePanel.VariableData[variableData.size()]);
+    myVariableData = variableData.toArray(new ParameterTablePanel.VariableData[variableData.size()]);
 
     setTitle(title);
     myHelpId = helpId;
@@ -232,10 +237,9 @@ class ExtractMethodDialog extends DialogWrapper {
               myReturnType
       );
       if (myTypeParameterList != null) prototype.getTypeParameterList().replace(myTypeParameterList);
-      for (int idx = 0; idx < myVariableData.length; idx++) {
-        ParameterTablePanel.VariableData data = myVariableData[idx];
+      for (ParameterTablePanel.VariableData data : myVariableData) {
         if (data.passAsParameter) {
-          prototype.getParameterList().add(factory.createParameter(data.name, data.variable.getType()));
+          prototype.getParameterList().add(factory.createParameter(data.name, data.type));
         }
       }
       // set the modifiers with which the method is supposed to be created
@@ -272,12 +276,11 @@ class ExtractMethodDialog extends DialogWrapper {
     buffer.append("(");
     int count = 0;
     final String INDENT = "    ";
-    for (int idx = 0; idx < myVariableData.length; idx++) {
-      ParameterTablePanel.VariableData data = myVariableData[idx];
+    for (ParameterTablePanel.VariableData data : myVariableData) {
       if (data.passAsParameter) {
         //String typeAndModifiers = PsiFormatUtil.formatVariable(data.variable,
         //  PsiFormatUtil.SHOW_MODIFIERS | PsiFormatUtil.SHOW_TYPE);
-        String type = PsiManager.getInstance(myProject).getElementFactory().createTypeElement(data.variable.getType()).getText();
+        String type = PsiManager.getInstance(myProject).getElementFactory().createTypeElement(data.type).getText();
         if (count > 0) {
           buffer.append(",");
         }
@@ -296,8 +299,7 @@ class ExtractMethodDialog extends DialogWrapper {
     if (myExceptions.length > 0) {
       buffer.append("\n");
       buffer.append("throws\n");
-      for (int i = 0; i < myExceptions.length; i++) {
-        PsiType exception = myExceptions[i];
+      for (PsiType exception : myExceptions) {
         buffer.append(INDENT);
         buffer.append(PsiFormatUtil.formatType(exception, 0, PsiSubstitutor.EMPTY));
         buffer.append("\n");
