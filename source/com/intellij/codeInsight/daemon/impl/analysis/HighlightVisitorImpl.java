@@ -29,6 +29,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.jsp.el.ELExpressionHolder;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiSuperMethodUtil;
@@ -325,8 +326,11 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     PsiElement nextSibling = element.getNextSibling();
 
     if (nextSibling == null) {
-      nextSibling = element.getContainingFile().findElementAt(element.getTextOffset()+1);
-      if (nextSibling != null) nextSibling = nextSibling.getParent();
+      final PsiFile containingFile = element.getContainingFile();
+      if (containingFile instanceof JspFile) {
+        nextSibling = ((JspFile)containingFile).getBaseLanguageRoot().findElementAt(element.getTextOffset()+1);
+        //if (nextSibling != null) nextSibling = nextSibling.getParent();
+      }
     }
 
     while (nextSibling instanceof PsiWhiteSpace) {
