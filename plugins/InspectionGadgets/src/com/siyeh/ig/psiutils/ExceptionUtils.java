@@ -58,7 +58,7 @@ public class ExceptionUtils{
             return false;
         }
         final PsiClassType classType = (PsiClassType) exceptionType;
-        final String className = classType.getClassName();
+        final String className = classType.getCanonicalText();
         return s_genericExceptionTypes.contains(className);
     }
 
