@@ -232,8 +232,7 @@ public class MethodSignatureUtil {
 
   public static PsiMethod findMethodBySignature(final PsiClass aClass, MethodSignature methodSignature, boolean checkBases) {
     List<Pair<PsiMethod, PsiSubstitutor>> pairs = aClass.findMethodsAndTheirSubstitutorsByName(methodSignature.getName(), checkBases);
-    for (int i = 0; i < pairs.size(); i++) {
-      Pair<PsiMethod, PsiSubstitutor> pair = pairs.get(i);
+    for (Pair<PsiMethod, PsiSubstitutor> pair : pairs) {
       PsiMethod method = pair.first;
       PsiSubstitutor substitutor = pair.second;
       MethodSignature foundMethodSignature = method.getSignature(substitutor);
@@ -244,8 +243,7 @@ public class MethodSignatureUtil {
 
   public static PsiMethod findMethodBySuperSignature(final PsiClass aClass, MethodSignature methodSignature) {
     List<Pair<PsiMethod, PsiSubstitutor>> pairs = aClass.findMethodsAndTheirSubstitutorsByName(methodSignature.getName(), false);
-    for (int i = 0; i < pairs.size(); i++) {
-      Pair<PsiMethod, PsiSubstitutor> pair = pairs.get(i);
+    for (Pair<PsiMethod, PsiSubstitutor> pair : pairs) {
       PsiMethod method = pair.first;
       PsiSubstitutor substitutor = pair.second;
       MethodSignature foundMethodSignature = method.getSignature(substitutor);
@@ -381,21 +379,16 @@ public class MethodSignatureUtil {
     if (checkDifferentSignaturesLightweight(superSignature, subSignature)) return false;
     PsiSubstitutor unifyingSubstitutor = getSuperMethodSignatureSubstitutor(superSignature, subSignature);
     if (!checkSignaturesEqualInner(superSignature, subSignature, unifyingSubstitutor)) {
-      if (!superSignature.isInGenericContext()) {
-        if (subSignature.getTypeParameters().length > 0) return false;
-        final PsiType[] subParameterTypes = subSignature.getParameterTypes();
-        final PsiType[] superParameterTypes = superSignature.getParameterTypes();
-        for (int i = 0; i < subParameterTypes.length; i++) {
-          PsiType type1 = subParameterTypes[i];
-          PsiType type2 = TypeConversionUtil.erasure(superParameterTypes[i]);
-          if (!Comparing.equal(type1, type2)) {
-            return false;
-          }
-        }
-
-        return true;
+      if (subSignature.getTypeParameters().length > 0) return false;
+      final PsiType[] subParameterTypes = subSignature.getParameterTypes();
+      final PsiType[] superParameterTypes = superSignature.getParameterTypes();
+      for (int i = 0; i < subParameterTypes.length; i++) {
+        PsiType type1 = subParameterTypes[i];
+        PsiType type2 = TypeConversionUtil.erasure(superParameterTypes[i]);
+        if (!Comparing.equal(type1, type2)) return false;
       }
-      return false;
+
+      return true;
     }
 
     return true;
