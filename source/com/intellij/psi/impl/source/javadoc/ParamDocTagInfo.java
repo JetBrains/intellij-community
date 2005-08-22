@@ -57,7 +57,8 @@ class ParamDocTagInfo implements JavadocTagInfo {
   }
 
   public PsiReference getReference(PsiDocTagValue value) {
-    return value.getReference();
+    if (value instanceof PsiDocParamRef) return value.getReference();
+    return null;
   }
 
 
