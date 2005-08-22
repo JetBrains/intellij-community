@@ -241,7 +241,7 @@ public class ReplaceDialog extends SearchDialog {
   }
 
   public void setValuesFromConfig(Configuration configuration) {
-    replaceCriteriaEdit.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, configuration);
+    //replaceCriteriaEdit.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, configuration);
 
     if (configuration instanceof ReplaceConfiguration) {
       final ReplaceConfiguration config = (ReplaceConfiguration)configuration;

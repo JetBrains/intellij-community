@@ -203,7 +203,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   }
 
   public void setValuesFromConfig(Configuration configuration) {
-    searchCriteriaEdit.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, configuration);
+    //searchCriteriaEdit.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, configuration);
 
     setTitle(getDefaultTitle()+" - " + configuration.getName());
     final MatchOptions matchOptions = configuration.getMatchOptions();
