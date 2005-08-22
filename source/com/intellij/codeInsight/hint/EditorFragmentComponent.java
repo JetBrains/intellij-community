@@ -177,9 +177,9 @@ public class EditorFragmentComponent extends JPanel {
     else if (container instanceof PsiClass){
       PsiClass aClass = (PsiClass)container;
       if (aClass instanceof PsiAnonymousClass){
-        PsiNewExpression newExpr = (PsiNewExpression)aClass.getParent();
-        int startOffset = newExpr.getTextRange().getStartOffset();
-        int endOffset = newExpr.getArgumentList().getTextRange().getEndOffset();
+        PsiConstructorCall call = (PsiConstructorCall)aClass.getParent();
+        int startOffset = call.getTextRange().getStartOffset();
+        int endOffset = call.getArgumentList().getTextRange().getEndOffset();
         return new TextRange(startOffset, endOffset);
       }
       else{
