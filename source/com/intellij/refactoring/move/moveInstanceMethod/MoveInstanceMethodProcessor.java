@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -336,7 +337,8 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
                   return;
                 } else {
                   PsiClass classReferencedByThis = MoveInstanceMembersUtil.getClassReferencedByThis(expression);
-                  if (classReferencedByThis != null) {
+                  if (classReferencedByThis != null &&
+                    !PsiTreeUtil.isAncestor(myMethod, classReferencedByThis, false)) {
                     final String paramName = getParameterNameToCreate(classReferencedByThis);
                     PsiReferenceExpression qualified = (PsiReferenceExpression)factory.createExpressionFromText(paramName + ".f", null);
                     qualified.getReferenceNameElement().replace(expression.getReferenceNameElement());

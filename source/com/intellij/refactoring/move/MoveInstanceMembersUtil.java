@@ -27,7 +27,8 @@ public class MoveInstanceMembersUtil {
       final PsiExpression expression = (PsiExpression)scope;
       if (!(scope instanceof PsiReferenceExpression) || !((PsiReferenceExpression)scope).isReferenceTo(refMember)) {
         final PsiMember member = getMemberReferencedByThis(expression);
-        if (member != null && member.getContainingClass() != null) {
+        if (member != null && member.getContainingClass() != null &&
+          !PsiTreeUtil.isAncestor(refMember, member, false)) {
           addReferencedMember(map, member.getContainingClass(), member);
         }
 
