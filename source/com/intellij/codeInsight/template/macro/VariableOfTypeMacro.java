@@ -4,6 +4,7 @@ import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 
@@ -70,7 +71,8 @@ public class VariableOfTypeMacro implements Macro {
         if (!manager.areElementsEquivalent(varClass, placeClass)) continue;
       }
       else if (var instanceof PsiLocalVariable) {
-        if (var.getNameIdentifier().getTextRange().contains(offset)) {
+        final TextRange range = var.getNameIdentifier().getTextRange();
+        if (range != null && range.contains(offset)) {
           continue;
         }
       }
