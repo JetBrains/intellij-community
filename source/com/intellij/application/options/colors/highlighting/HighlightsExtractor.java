@@ -86,7 +86,12 @@ public class HighlightsExtractor {
         sb.append(text.substring(index, text.length()));
         break;
       }
-      int to = text.indexOf('>', index);
+      int to = text.indexOf('>', from+1);
+      if (to == -1) {
+        sb.append(text.substring(index, text.length()));
+        break;
+      }
+
       String tag;
       if (text.charAt(from + 1) == '/') {
         tag = text.substring(from + 2, to);
