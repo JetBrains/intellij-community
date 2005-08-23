@@ -57,6 +57,11 @@ public class IncrementalSearchHandler {
     String lastSearch;
   }
 
+  public static boolean isHintVisible(final Editor editor) {
+    final PerEditorSearchData data = (PerEditorSearchData) editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
+    return data != null && data.hint != null && data.hint.isVisible();
+  }
+
   public void invoke(Project project, final Editor editor) {
     if (!ourActionsRegistered){
       ourActionsRegistered = true;

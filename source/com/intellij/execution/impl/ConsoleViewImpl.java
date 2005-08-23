@@ -1,6 +1,7 @@
 package com.intellij.execution.impl;
 
 import com.intellij.codeInsight.CodeInsightColors;
+import com.intellij.codeInsight.navigation.IncrementalSearchHandler;
 import com.intellij.execution.filters.*;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
@@ -18,6 +19,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -158,8 +160,10 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
     if (myState.isFinished() && !hasDeferredOutput()) {
       myEditor.getCaretModel().moveToOffset(offset);
       myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    } else
+    }
+    else {
       myEditor.getScrollingModel().scrollTo(myEditor.offsetToLogicalPosition(offset), ScrollType.MAKE_VISIBLE);
+    }
   }
 
   private static void assertIsDispatchThread() {
@@ -255,8 +259,12 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
         }
       }
     };
-    if (EventQueue.isDispatchThread()) requestFlush.run();
-    else SwingUtilities.invokeLater(requestFlush);
+    if (EventQueue.isDispatchThread()) {
+      requestFlush.run();
+    }
+    else {
+      SwingUtilities.invokeLater(requestFlush);
+    }
   }
 
   private void requestFlushImmediately() {
@@ -653,11 +661,12 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
 
   private static abstract class ConsoleAction extends AnAction {
     public void actionPerformed(final AnActionEvent e) {
-      final ConsoleViewImpl console = RUNNINT_CONSOLE.from(e.getDataContext());
-      execute(console);
+      final DataContext context = e.getDataContext();
+      final ConsoleViewImpl console = RUNNINT_CONSOLE.from(context);
+      execute(console, context);
     }
 
-    protected abstract void execute(ConsoleViewImpl console);
+    protected abstract void execute(ConsoleViewImpl console, final DataContext context);
 
     public void update(final AnActionEvent e) {
       final ConsoleViewImpl console = RUNNINT_CONSOLE.from(e.getDataContext());
@@ -666,14 +675,14 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
   }
 
   private static class EnterHandler extends ConsoleAction {
-    public void execute(final ConsoleViewImpl consoleView) {
+    public void execute(final ConsoleViewImpl consoleView, final DataContext context) {
       consoleView.print("\n", ConsoleViewContentType.USER_INPUT);
       consoleView.flushDeferredText();
     }
   }
 
   private static class PasteHandler extends ConsoleAction {
-    public void execute(final ConsoleViewImpl consoleView) {
+    public void execute(final ConsoleViewImpl consoleView, final DataContext context) {
       final Transferable content = CopyPasteManager.getInstance().getContents();
       if (content == null) return;
       String s = null;
@@ -690,34 +699,46 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
   }
 
   private static class BackSpaceHandler extends ConsoleAction {
-    public void execute(final ConsoleViewImpl consoleView) {
+    public void execute(final ConsoleViewImpl consoleView, final DataContext context) {
       final Editor editor = consoleView.myEditor;
+
+      if (IncrementalSearchHandler.isHintVisible(editor)) {
+        getDefaultActionHandler().execute(editor, context);
+        return;
+      }
+
       final Document document = editor.getDocument();
-        final int length = document.getTextLength();
-        if (length == 0) return;
+      final int length = document.getTextLength();
+      if (length == 0) {
+        return;
+      }
 
-        synchronized(consoleView.LOCK){
-          if (consoleView.myTokens.size() == 0) return;
-          final TokenInfo info = consoleView.myTokens.get(consoleView.myTokens.size() - 1);
-          if (info.contentType != ConsoleViewContentType.USER_INPUT) return;
-          if (consoleView.myDeferredUserInput.length() == 0) return;
+      synchronized(consoleView.LOCK){
+        if (consoleView.myTokens.size() == 0) return;
+        final TokenInfo info = consoleView.myTokens.get(consoleView.myTokens.size() - 1);
+        if (info.contentType != ConsoleViewContentType.USER_INPUT) return;
+        if (consoleView.myDeferredUserInput.length() == 0) return;
 
-          consoleView.myDeferredUserInput.setLength(consoleView.myDeferredUserInput.length() - 1);
-          info.endOffset -= 1;
-          if (info.startOffset == info.endOffset){
-            consoleView.myTokens.remove(consoleView.myTokens.size() - 1);
-          }
-          consoleView.myContentSize--;
+        consoleView.myDeferredUserInput.setLength(consoleView.myDeferredUserInput.length() - 1);
+        info.endOffset -= 1;
+        if (info.startOffset == info.endOffset){
+          consoleView.myTokens.remove(consoleView.myTokens.size() - 1);
         }
+        consoleView.myContentSize--;
+      }
 
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            document.deleteString(length - 1, length);
-            editor.getCaretModel().moveToOffset(length - 1);
-            editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-            editor.getSelectionModel().removeSelection();
-          }
-        });
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          document.deleteString(length - 1, length);
+          editor.getCaretModel().moveToOffset(length - 1);
+          editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+          editor.getSelectionModel().removeSelection();
+        }
+      });
+    }
+
+    private EditorActionHandler getDefaultActionHandler() {
+      return EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE);
     }
   }
 
