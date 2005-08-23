@@ -1,8 +1,12 @@
 package com.intellij.uiDesigner;
 
+import com.intellij.CommonBundle;
+
 import java.util.ResourceBundle;
 import java.util.MissingResourceException;
 import java.text.MessageFormat;
+
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -16,19 +20,7 @@ public class UIDesignerBundle {
 
   private UIDesignerBundle() {}
 
-  public static String message(String key, Object... params) {
-    String value;
-    try {
-      value = ourBundle.getString(key);
-    }
-    catch (MissingResourceException e) {
-      return "!" + key + "!";
-    }
-
-    if (params.length > 0) {
-      return MessageFormat.format(value, params);
-    }
-
-    return value;
+  public static String message(@NonNls String key, Object... params) {
+    return CommonBundle.message(ourBundle, key, params);
   }
 }
