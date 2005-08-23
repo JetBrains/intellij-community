@@ -49,7 +49,7 @@ class CustomFileTypeBraceMatcher implements BraceMatchingUtil.BraceMatcher {
   }
 
   public IElementType getTokenType(char ch, HighlighterIterator iterator) {
-    if (!(iterator.getTokenType() instanceof CustomHighlighterTokenType.CustomElementType)) {
+    if (iterator.atEnd() || !(iterator.getTokenType() instanceof CustomHighlighterTokenType.CustomElementType)) {
       return null;
     }
 
