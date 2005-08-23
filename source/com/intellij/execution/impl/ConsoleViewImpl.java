@@ -75,6 +75,8 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
 
   private final DisposedPsiManagerCheck myPsiDisposedCheck;
   private ConsoleState myState = ConsoleState.NOT_STARTED;
+  private final int CYCLIC_BUFFER_SIZE = GeneralSettings.getInstance().getCyclicBufferSize();
+  private final boolean USE_CYCLIC_BUFFER = GeneralSettings.getInstance().isUseCyclicBuffer();
 
   private static class TokenInfo{
     final ConsoleViewContentType contentType;
@@ -135,8 +137,13 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
 
     synchronized(LOCK){
       myContentSize = 0;
-      myDeferredOutput.setLength(0);
-      myDeferredUserInput.setLength(0);
+      if (USE_CYCLIC_BUFFER) {
+        myDeferredOutput = new StringBuffer(Math.min(myDeferredOutput.length(), CYCLIC_BUFFER_SIZE));
+      }
+      else {
+        myDeferredOutput = new StringBuffer();
+      }
+      myDeferredUserInput = new StringBuffer();
       if (myEditor != null){
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
@@ -219,7 +226,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
       myFlushAlarm.cancelAllRequests();
       EditorFactory.getInstance().releaseEditor(myEditor);
       synchronized (LOCK) {
-        myDeferredOutput.setLength(0);
+        myDeferredOutput = new StringBuffer();
       }
       myEditor = null;
     }
@@ -230,6 +237,9 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
       s = StringUtil.convertLineSeparators(s,  "\n");
       myContentSize += s.length();
       myDeferredOutput.append(s);
+      if (USE_CYCLIC_BUFFER && myDeferredOutput.length() > CYCLIC_BUFFER_SIZE) {
+        myDeferredOutput.delete(0, myDeferredOutput.length() - CYCLIC_BUFFER_SIZE);
+      }
       if (contentType == ConsoleViewContentType.USER_INPUT){
         myDeferredUserInput.append(s);
       }
@@ -293,7 +303,12 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
 
     if (myEditor != null) {
       final String text = myDeferredOutput.substring(0, myDeferredOutput.length());
-      myDeferredOutput.setLength(0);
+      if (USE_CYCLIC_BUFFER) {
+        myDeferredOutput = new StringBuffer(Math.min(myDeferredOutput.length(), CYCLIC_BUFFER_SIZE));
+      }
+      else {
+        myDeferredOutput.setLength(0);
+      }
       final Document document = myEditor.getDocument();
       final int oldLineCount = document.getLineCount();
       final boolean isAtEndOfDocument = myEditor.getCaretModel().getOffset() == myEditor.getDocument().getTextLength();
@@ -385,7 +400,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
         final EditorFactory editorFactory = EditorFactory.getInstance();
         final Document editorDocument = editorFactory.createDocument("");
 
-        final int bufferSize = GeneralSettings.getInstance().isUseCyclicBuffer() ? GeneralSettings.getInstance().getCyclicBufferSize() : 0;
+        final int bufferSize = USE_CYCLIC_BUFFER ? CYCLIC_BUFFER_SIZE : 0;
         editorDocument.setCyclicBufferSize(bufferSize);
 
         final EditorEx editor = (EditorEx) editorFactory.createViewer(editorDocument,myProject);
