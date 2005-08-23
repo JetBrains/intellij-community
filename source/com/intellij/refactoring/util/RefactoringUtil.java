@@ -202,7 +202,7 @@ public class RefactoringUtil {
         public int compare(final UsageInfo usage1, final UsageInfo usage2) {
           final PsiElement element1 = usage1.getElement();
           final PsiElement element2 = usage2.getElement();
-          LOG.assertTrue(element1 != null && element2 != null);
+          if (element1 == null || element2 == null) return 0;
           return element2.getTextRange().getStartOffset() - element1.getTextRange().getStartOffset();
         }
       });
