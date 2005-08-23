@@ -17,9 +17,14 @@ public class CommonBundle {
   private CommonBundle() {}
 
   public static String message(String key, Object... params) {
+    return message(ourBundle, key, params);
+  }
+
+  public static String message(final ResourceBundle bundle, final String key, final Object... params) {
     String value;
     try {
-      value = ourBundle.getString(key);
+
+      value = bundle.getString(key);
     }
     catch (MissingResourceException e) {
       return "!" + key + "!";
@@ -30,5 +35,42 @@ public class CommonBundle {
     }
 
     return value;
+  }
+
+  public static String getCancelButtonText() {
+    return message("button.cancel");
+  }
+
+  public static String getErrorTitle() {
+    return message("title.error");
+  }
+
+  public static String getLoadingTreeNodeText() {
+    return CommonBundle.message("tree.node.loading");
+  }
+
+  public static String getOkButtonText(){
+    return message("button.ok");
+  }
+
+  public static String getYesButtonText(){
+    return CommonBundle.message("button.yes");
+  }
+
+  public static String getNoButtonText(){
+    return CommonBundle.message("button.no");
+  }
+
+  public static String getContinueButtonText(){
+    return CommonBundle.message("button.continue");
+  }
+
+
+  public static String getYesForAllButtonText() {
+    return CommonBundle.message("button.yes.for.all");
+  }
+
+  public static String getCloseButtonText() {
+    return "Close";
   }
 }
