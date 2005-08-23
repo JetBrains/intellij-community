@@ -366,13 +366,13 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
       Document[] documents = TextEditorProvider.getDocuments(editor);
       if (documents == null || documents.length == 0) return false;
 
-      for (int i = 0; i < documents.length; i++) {
-        Document document = documents[i];
-        if (!myLastMerger.isEmpty(DocumentReferenceByDocument.createDocumentReference(document)))
+      for (Document document : documents) {
+        if (myLastMerger != null && !myLastMerger.isEmpty(DocumentReferenceByDocument.createDocumentReference(document))) {
           return true;
+        }
 
         LinkedList localStack = getUndoStacksHolder().getStack(document);
-        if (!localStack.isEmpty()){
+        if (!localStack.isEmpty()) {
           return true;
         }
       }
@@ -381,7 +381,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
     }
     else {
-      if ((myLastMerger != null) &&  myLastMerger.isComplex() && !myLastMerger.isEmpty()) return true;
+      if (myLastMerger != null &&  myLastMerger.isComplex() && !myLastMerger.isEmpty()) return true;
       return !myUndoStacksHolder.getGlobalStack().isEmpty();
     }
   }
