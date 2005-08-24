@@ -193,7 +193,7 @@ public class LineMarkerInfo {
 
   private static String composeText(PsiElement[] elements, String start, String formatPattern) {
     StringBuffer result = new StringBuffer();
-    result.append("<html>");
+    result.append("<html><body>");
     result.append(start);
     Set<String> names = new LinkedHashSet<String>();
     for (PsiElement element : elements) {
@@ -220,7 +220,7 @@ public class LineMarkerInfo {
       result.append(name);
     }
 
-    result.append("</html>");
+    result.append("</body></html>");
     return result.toString();
   }
 }
