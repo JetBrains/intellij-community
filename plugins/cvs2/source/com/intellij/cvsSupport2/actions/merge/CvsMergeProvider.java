@@ -41,7 +41,8 @@ public class CvsMergeProvider implements MergeProvider {
   @NotNull
   private final Map<VirtualFile, List<String>> myFileToRevisions;
 
-  private MergeDataProvider myMergeData;
+  private final Map<VirtualFile, MergeDataProvider> myFileToMergeData = new HashMap<VirtualFile, MergeDataProvider>();
+
   private final Project myProject;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.actions.merge.CvsMergeProvider");
@@ -53,31 +54,28 @@ public class CvsMergeProvider implements MergeProvider {
 
   @NotNull
   public MergeData loadRevisions(final VirtualFile file) throws VcsException {
-    ensureMergeData(file);
-    return myMergeData.createData();
+    return ensureMergeData(file).createData();
   }
 
   public void conflictResolvedForFile(VirtualFile file) {
     CvsUtil.resolveConflict(file);
   }
 
-  private void ensureMergeData(final VirtualFile file) {
-    if (myMergeData != null) return;
+  private MergeDataProvider ensureMergeData(final VirtualFile file) {
+    if (myFileToMergeData.containsKey(file)) return myFileToMergeData.get(file);
 
 
     final List<String> revisions = getRevisions(file);
 
     if (revisions.isEmpty()) {
-      myMergeData = parseConflictsInFile(file);
-      return;
+      return saveMergeData(file, parseConflictsInFile(file));
     }
 
     final String lastRevision = CvsUtil.getEntryFor(file).getRevision();
 
     if (revisions.size() == 1) {
       final String original = revisions.get(0);
-      myMergeData = new MergeInfo(true, original, original, lastRevision, file, myProject);
-      return;
+      return saveMergeData(file, new MergeInfo(true, original, original, lastRevision, file, myProject));
     }
     Collection<String> candidates = new LinkedHashSet<String>();
     final String original = revisions.get(0);
@@ -93,8 +91,7 @@ public class CvsMergeProvider implements MergeProvider {
     final ArrayList<String> candidatesList = new ArrayList<String>(candidates);
 
     if (candidatesList.size() == 2) {
-      myMergeData = new MergeInfo(true, original, candidatesList.get(1), lastRevision, file, myProject);
-      return;
+      return saveMergeData(file, new MergeInfo(true, original, candidatesList.get(1), lastRevision, file, myProject));
     }
 
     final String originalCandidate = candidatesList.get(0);
@@ -106,20 +103,24 @@ public class CvsMergeProvider implements MergeProvider {
     }
 
     if (candidates.size() == 3) {
-      myMergeData
-        = new MergeInfo(useStored, resultRevision, candidatesList.get(2), candidatesList.get(1),
-                        file, myProject);
+      return saveMergeData(file ,new MergeInfo(useStored, resultRevision, candidatesList.get(2), candidatesList.get(1),
+                        file, myProject));
     }
     else {
       if (useStored) {
         candidatesList.remove(0);
       }
-      myMergeData = parseConflictsInFile(file);
+      return saveMergeData(file ,parseConflictsInFile(file));
     }
 
   }
 
-  private MergeDataProvider parseConflictsInFile(final VirtualFile file) {
+  private MergeDataProvider saveMergeData(final VirtualFile file, final MergeDataProvider result) {
+    myFileToMergeData.put(file, result);
+    return result;
+  }
+
+  @NotNull private MergeDataProvider parseConflictsInFile(final VirtualFile file) {
 
     return new MergeDataProvider() {
       public MergeData createData() throws VcsException {
