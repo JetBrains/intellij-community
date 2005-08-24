@@ -26,7 +26,7 @@ public class TestLogger extends com.intellij.openapi.diagnostic.Logger {
     myLogger.debug(t);
   }
 
-  public void error(String message, Throwable t, String[] details) {
+  public void error(String message, Throwable t, String... details) {
     LoggedErrorProcessor.getInstance().processError(message, t, details, myLogger);
   }
 

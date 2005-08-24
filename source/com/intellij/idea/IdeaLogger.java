@@ -70,11 +70,10 @@ public class IdeaLogger extends Logger {
     myLogger.debug("", t);
   }
 
-  public void error(String message, Throwable t, String[] details) {
+  public void error(String message, Throwable t, String... details) {
     t.printStackTrace();
     String detailString = "";
-    for (int i = 0; i < details.length; i++) {
-      String detail = details[i];
+    for (String detail : details) {
       detailString += (detail + "\n");
     }
 

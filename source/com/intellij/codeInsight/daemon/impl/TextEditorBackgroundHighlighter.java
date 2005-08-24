@@ -207,13 +207,12 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
         PsiFile file = dirtyScope.getContainingFile();
         if (file.getTextLength() != document.getTextLength()) {
           LOG.error("Length wrong! dirtyScope:" + dirtyScope,
-                    new String[]{
-                      "file length:" + file.getTextLength(),
-                      "document length:" + document.getTextLength(),
-                      "file stamp:" + file.getModificationStamp(),
-                      "document stamp:" + document.getModificationStamp(),
-                      "file text:" + file.getText(),
-                      "document text:" + document.getText()});
+                    "file length:" + file.getTextLength(),
+                    "document length:" + document.getTextLength(),
+                    "file stamp:" + file.getModificationStamp(),
+                    "document stamp:" + document.getModificationStamp(),
+                    "file text:" + file.getText(),
+                    "document text:" + document.getText());
         }
         if (LOG.isDebugEnabled()) {
           LOG.debug("Dirty block optimization works");

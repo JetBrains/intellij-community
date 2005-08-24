@@ -577,10 +577,9 @@ public class Helper {
         ASTNode leaf = element.findLeafElementAt(offset);
         if (!mayShiftIndentInside(leaf)) {
           LOG.error("Error",
-                    new String[]{
-                      leaf.getElementType().toString(),
-                      "Type: " + leaf.getElementType() + " text: " + leaf.getText()
-                    });
+                    leaf.getElementType().toString(),
+                    "Type: " + leaf.getElementType() + " text: " + leaf.getText()
+                    );
         }
 
         if (offset1 < text.length()) {

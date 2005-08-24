@@ -32,13 +32,13 @@ public class DefaultLogger extends Logger {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public void error(String message, Throwable t, String[] details) {
+  public void error(String message, Throwable t, String... details) {
     System.err.println("ERROR: " + message);
     t.printStackTrace();
     if (details != null && details.length > 0) {
       System.out.println("details: ");
-      for (int i = 0; i < details.length; i++) {
-        System.out.println(details[i]);
+      for (String detail : details) {
+        System.out.println(detail);
       }
     }
 

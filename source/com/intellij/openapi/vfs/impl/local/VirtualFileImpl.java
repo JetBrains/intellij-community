@@ -121,10 +121,9 @@ public class VirtualFileImpl extends VirtualFile {
     appendPath(buffer, separatorChar);
     if (buffer.length() != length){
       LOG.error("buffer.length() != length",
-                new String [] {
-                  "length=" + length,
-                  "buffer=" + buffer.toString()
-                });
+                 "length=" + length,
+                 "buffer=" + buffer.toString()
+                );
     }
     return buffer.toString();
   }

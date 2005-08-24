@@ -17,6 +17,7 @@ package com.intellij.openapi.diagnostic;
 
 import org.apache.log4j.Level;
 import org.jetbrains.annotations.NonNls;
+import com.intellij.util.ArrayUtil;
 
 public abstract class Logger {
   public interface Factory {
@@ -43,22 +44,22 @@ public abstract class Logger {
   public abstract void debug(Throwable t);
 
   public void error(@NonNls String message) {
-    error(message, new Throwable(), new String[0]);
+    error(message, new Throwable(), ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
-  public void error(String message, String[] details) {
+  public void error(@NonNls String message, @NonNls String... details) {
     error(message, new Throwable(), details);
   }
 
   public void error(@NonNls String message, Throwable e) {
-    error(message, e, new String[0]);
+    error(message, e, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
   public void error(Throwable t) {
-    error("", t, new String[0]);
+    error("", t, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
-  public abstract void error(String message, Throwable t, String[] details);
+  public abstract void error(@NonNls String message, Throwable t, @NonNls String... details);
 
   public abstract void info(@NonNls String message);
 
