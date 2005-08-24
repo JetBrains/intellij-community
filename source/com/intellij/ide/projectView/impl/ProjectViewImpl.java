@@ -1289,12 +1289,18 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   public abstract static class GroupByTypeComparator implements Comparator<NodeDescriptor> {
     public int compare(NodeDescriptor o1, NodeDescriptor o2) {
       if (!isSortByType() && o1 instanceof ResourceBundleNode) {
-        o1 = ((ResourceBundleNode)o1).getChildren().iterator().next();
-        o1.update();
+        final Collection<AbstractTreeNode> children = ((ResourceBundleNode)o1).getChildren();
+        if (!children.isEmpty()) {
+          o1 = children.iterator().next();
+          o1.update();
+        }
       }
       if (!isSortByType() && o2 instanceof ResourceBundleNode) {
-        o2 = ((ResourceBundleNode)o2).getChildren().iterator().next();
-        o2.update();
+        final Collection<AbstractTreeNode> children = ((ResourceBundleNode)o2).getChildren();
+        if (!children.isEmpty()) {
+          o2 = children.iterator().next();
+          o2.update();
+        }
       }
       if (o1 instanceof PsiDirectoryNode != o2 instanceof PsiDirectoryNode) {
         return o1 instanceof PsiDirectoryNode ? -1 : 1;
