@@ -19,6 +19,8 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreen;
 import javax.swing.*;
 import java.awt.*;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -142,6 +144,7 @@ public class IdeRootPane extends JRootPane{
     myStatusBar = new StatusBarImpl(myActionManager, myUISettings);
   }
 
+  @Nullable
   final StatusBarEx getStatusBar() {
     return myStatusBar;
   }

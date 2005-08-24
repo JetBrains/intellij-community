@@ -168,7 +168,10 @@ public class IdeFrame extends JFrame implements DataProvider {
   }
 
   public void dispose() {
-    ((StatusBarImpl)myRootPane.getStatusBar()).disposeListeners();
+    final StatusBarImpl statusBar = ((StatusBarImpl)myRootPane.getStatusBar());
+    if (statusBar != null) {
+      statusBar.disposeListeners();
+    }
     myRootPane = null;
     super.dispose();
   }
