@@ -208,7 +208,13 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     final int i = myTabbedPane.indexOfComponent(pane.getComponent());
     myTabbedPane.removeTabAt(i);
     if (idToRemove.equals(myCurrentViewId)) {
-      myCurrentViewId = myId2Pane.keySet().toArray(ArrayUtil.EMPTY_STRING_ARRAY)[0];
+      final String[] paneIds = myId2Pane.keySet().toArray(ArrayUtil.EMPTY_STRING_ARRAY);
+      if (paneIds.length == 0) {
+        myCurrentViewId = null;
+      }
+      else {
+        myCurrentViewId = paneIds[0];
+      }
     }
   }
 
