@@ -1,6 +1,7 @@
 package com.intellij.uiDesigner;
 
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Attribute;
 import org.jdom.Element;
 
@@ -95,7 +96,7 @@ public final class XmlWriter{
    * Helper method
    */
   public void addAttribute(final String name, final String value){
-    addAttributeImpl(name, XmlUtil.escapeString(value));
+    addAttributeImpl(name, StringUtil.convertLineSeparators(XmlUtil.escapeString(value)));
   }
 
   /**
