@@ -579,7 +579,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
     private void resolveOldReferences(PsiElement expr, PsiElement oldExpr)
             throws IncorrectOperationException {
-      if (expr == null || oldExpr == null) return;
+      if (expr == null || !expr.isValid() || oldExpr == null) return;
       PsiElementFactory factory = myManager.getElementFactory();
       PsiElement newExpr = expr;  // references continue being resolved in the children of newExpr
 
