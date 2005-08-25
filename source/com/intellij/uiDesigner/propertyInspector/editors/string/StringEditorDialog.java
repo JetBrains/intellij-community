@@ -10,12 +10,9 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.uiDesigner.ResourceBundleLoader;
 import com.intellij.uiDesigner.ReferenceUtil;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 
@@ -24,8 +21,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.ResourceBundle;
-import java.net.URL;
 
 /**
  * @author Anton Katilin
@@ -166,7 +161,7 @@ final class StringEditorDialog extends DialogWrapper{
     }
 
     public void setDescriptor(final StringDescriptor descriptor){
-      myTfValue.setText(ResourceBundleLoader.resolve(myModule, descriptor));
+      myTfValue.setText(ReferenceUtil.resolve(myModule, descriptor));
     }
   }
 
@@ -194,12 +189,7 @@ final class StringEditorDialog extends DialogWrapper{
         new ActionListener() {
           public void actionPerformed(final ActionEvent e) {
             Project project = myModule.getProject();
-            VirtualFile initialVirtualFile = null;
-            URL resource = new ResourceBundleLoader(myModule).getResource(myTfBundleName.getText()+".properties");
-            if (resource != null) {
-              initialVirtualFile = VfsUtil.findFileByURL(resource);
-            }
-            PsiFile initialPropertiesFile = initialVirtualFile == null ? null : PsiManager.getInstance(project).findFile(initialVirtualFile);
+            PsiFile initialPropertiesFile = ReferenceUtil.getPropertiesFile(MyResourceBundleCard.this.myTfBundleName.getText(), myModule);
             final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesScope(myModule);
             TreeFileChooser fileChooser = TreeClassChooserFactory.getInstance(project).createFileChooser("Choose Poperties File", initialPropertiesFile,
                                                                                                          StdFileTypes.PROPERTIES, new TreeFileChooser.PsiFileFilter() {
@@ -245,7 +235,7 @@ final class StringEditorDialog extends DialogWrapper{
               );
               return;
             }
-            final ResourceBundle bundle = ResourceBundleLoader.getResourceBundle(myModule, bundleName);
+            final PropertiesFile bundle = ReferenceUtil.getPropertiesFile(bundleName, myModule);
             if(bundle == null){
               Messages.showErrorDialog(
                 "Bundle \"" + bundleName + "\" does not exist",
@@ -284,7 +274,7 @@ final class StringEditorDialog extends DialogWrapper{
       LOG.assertTrue(key != null);
       myTfBundleName.setText(descriptor.getBundleName());
       myTfKey.setText(key);
-      myTfValue.setText(ResourceBundleLoader.resolve(myModule, descriptor));
+      myTfValue.setText(ReferenceUtil.resolve(myModule, descriptor));
     }
   }
 

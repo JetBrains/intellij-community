@@ -73,7 +73,7 @@ public final class RadTabbedPane extends RadContainer{
     }
     final String value = titleDescriptor.getValue();
     if (value == null) { // from res bundle
-      return ResourceBundleLoader.resolve(getModule(), titleDescriptor);
+      return ReferenceUtil.resolve(getModule(), titleDescriptor);
     }
     return value;
   }
@@ -213,7 +213,7 @@ public final class RadTabbedPane extends RadContainer{
       }
 
       // 2. Apply real string value to JComponent peer
-      getTabbedPane().setTitleAt(myIndex, ResourceBundleLoader.resolve(getModule(), descriptor));
+      getTabbedPane().setTitleAt(myIndex, ReferenceUtil.resolve(getModule(), descriptor));
     }
 
     public Property[] getChildren() {

@@ -44,19 +44,11 @@ final class ResourceBundleKeyReference extends ReferenceInForm {
     if (module == null) {
       return null;
     }
-    URL resource = new ResourceBundleLoader(module).getResource(myBundleName + ".properties");
-    if (resource == null) {
+    final PropertiesFile propertiesFile = ReferenceUtil.getPropertiesFile(myBundleName, module);
+    if (propertiesFile == null) {
       return null;
     }
-    final VirtualFile vFile = VfsUtil.findFileByURL(resource);
-    if (vFile == null) {
-      return null;
-    }
-    final PsiFile propertrtiesFile = PsiManager.getInstance(project).findFile(vFile);
-    if (!(propertrtiesFile instanceof PropertiesFile)) {
-      return null;
-    }
-    return ((PropertiesFile)propertrtiesFile).findPropertyByKey(getRangeText());
+    return propertiesFile.findPropertyByKey(getRangeText());
   }
 
   public PsiElement bindToElement(final PsiElement element) throws IncorrectOperationException {

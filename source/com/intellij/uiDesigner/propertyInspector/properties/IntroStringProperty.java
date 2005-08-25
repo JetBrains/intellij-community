@@ -1,8 +1,8 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.uiDesigner.RadComponent;
-import com.intellij.uiDesigner.ResourceBundleLoader;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.ReferenceUtil;
 import com.intellij.uiDesigner.core.SupportCode;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
@@ -128,7 +128,7 @@ public final class IntroStringProperty extends IntrospectedProperty{
     }
 
     if (result != null) {
-      result.setResolvedValue(ResourceBundleLoader.resolve(component.getModule(), result));
+      result.setResolvedValue(ReferenceUtil.resolve(component.getModule(), result));
     }
     return result;
   }
@@ -145,7 +145,7 @@ public final class IntroStringProperty extends IntrospectedProperty{
 
     // 2. Apply real string value to JComponent peer
     final JComponent delegee = component.getDelegee();
-    final String resolvedValue = ResourceBundleLoader.resolve(component.getModule(), descriptor);
+    final String resolvedValue = ReferenceUtil.resolve(component.getModule(), descriptor);
     if (descriptor != null) {
       descriptor.setResolvedValue(resolvedValue);
     }

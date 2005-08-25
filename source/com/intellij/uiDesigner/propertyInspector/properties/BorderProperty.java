@@ -2,7 +2,7 @@ package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.uiDesigner.RadComponent;
 import com.intellij.uiDesigner.RadContainer;
-import com.intellij.uiDesigner.ResourceBundleLoader;
+import com.intellij.uiDesigner.ReferenceUtil;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
@@ -109,7 +109,7 @@ public final class BorderProperty extends Property{
     public Object getValue(final RadComponent component){
       final RadContainer container = (RadContainer)component;
       final StringDescriptor descriptor = container.getBorderTitle();
-      final String resolvedValue = ResourceBundleLoader.resolve(component.getModule(), descriptor);
+      final String resolvedValue = ReferenceUtil.resolve(component.getModule(), descriptor);
       if (descriptor != null) {
         descriptor.setResolvedValue(resolvedValue);
       }
@@ -119,7 +119,7 @@ public final class BorderProperty extends Property{
     protected void setValueImpl(final RadComponent component,final Object value) throws Exception{
       final RadContainer container=(RadContainer)component;
       StringDescriptor title=(StringDescriptor)value;
-      if(title != null && ResourceBundleLoader.resolve(component.getModule(), title).length()==0){
+      if(title != null && ReferenceUtil.resolve(component.getModule(), title).length()==0){
         title=null;
       }
       container.setBorderTitle(title);

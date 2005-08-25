@@ -1,5 +1,7 @@
 package com.intellij.uiDesigner.propertyInspector.editors.string;
 
+import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ScrollPaneFactory;
@@ -12,7 +14,10 @@ import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author Anton Katilin
@@ -28,16 +33,13 @@ public final class KeyChooserDialog extends DialogWrapper{
 
   /**
    * @param bundle resource bundle to be shown.
-   *
-   * @param bundleName name of the resource bundle to be shown. We need this
+   *@param bundleName name of the resource bundle to be shown. We need this
    * name to create StringDescriptor in {@link #getDescriptor()} method.
-   *
-   * @param keyToPreselect describes row that should be selected in the
-   * table with key/value pairs.
+   *@param keyToPreselect describes row that should be selected in the
    */
   public KeyChooserDialog(
-    final Component parent, 
-    final ResourceBundle bundle,
+    final Component parent,
+    final PropertiesFile bundle,
     final String bundleName,
     final String keyToPreselect
   ) {
@@ -58,10 +60,13 @@ public final class KeyChooserDialog extends DialogWrapper{
     // Read key/value pairs from resource bundle
     myPairs = new ArrayList<Pair<String, String>>();
 
-    for(Enumeration keys = bundle.getKeys(); keys.hasMoreElements();){
-      final String key = (String)keys.nextElement();
-      final String value = bundle.getString(key);
-      myPairs.add(new Pair<String, String>(key, value));
+    final List<Property> properties = bundle.getProperties();
+    for (Property property : properties) {
+      final String key = property.getKey();
+      final String value = property.getValue();
+      if (key != null) {
+        myPairs.add(new Pair<String, String>(key, value != null? value : "null"));
+      }
     }
     Collections.sort(myPairs, new MyPairComparator());
 

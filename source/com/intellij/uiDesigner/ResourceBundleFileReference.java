@@ -43,16 +43,7 @@ final class ResourceBundleFileReference extends ReferenceInForm {
     if (module == null) {
       return null;
     }
-    URL resource = new ResourceBundleLoader(module).getResource(getRangeText() + ".properties");
-    if (resource == null) {
-      return null;
-    }
-    final VirtualFile vFile = VfsUtil.findFileByURL(resource);
-    if (vFile == null) {
-      return null;
-    }
-    final PsiFile propertrtiesFile = PsiManager.getInstance(project).findFile(vFile);
-    return (propertrtiesFile instanceof PropertiesFile) ? propertrtiesFile : null;
+    return ReferenceUtil.getPropertiesFile(getRangeText(), module);
   }
 
   public PsiElement handleElementRename(final String newElementName){
