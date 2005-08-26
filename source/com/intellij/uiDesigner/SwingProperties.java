@@ -10,6 +10,5 @@ import org.jetbrains.annotations.NonNls;
  * To change this template use File | Settings | File Templates.
  */
 public class SwingProperties {
-  @NonNls
-  public static final String TEXT = "text";
+  @NonNls public static final String TEXT = "text";
 }
