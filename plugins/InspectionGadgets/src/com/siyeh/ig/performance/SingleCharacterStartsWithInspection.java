@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 public class SingleCharacterStartsWithInspection extends ExpressionInspection {
 
     public String getDisplayName() {
-        return "Single character .startsWith() or .endsWith()";
+        return "Single character '.startsWith()' or '.endsWith()'";
     }
 
     public String getGroupDisplayName() {
@@ -33,7 +33,7 @@ public class SingleCharacterStartsWithInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Single character #ref() should be replaced by .charAt() #loc";
+        return "Single character '.#ref()' could be replaced by '.charAt(0)' expression #loc";
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -86,7 +86,5 @@ public class SingleCharacterStartsWithInspection extends ExpressionInspection {
             }
             return value.length() == 1;
         }
-
     }
-
 }
