@@ -959,7 +959,9 @@ public class CompileDriver {
         }
         else {
           if (toCompile.contains(sourceFile)) {
-            shouldDelete = true;
+            // some crazy users store their resources (which is source file for us) directly in the output dir
+            // we should not delete files with are both output and source files
+            shouldDelete = !FileUtil.pathsEqual(outputPath, VirtualFileManager.extractPath(sourceUrl));
           }
           else {
             final String currentOutputDir = getModuleOutputDirForFile(context, sourceFile);
