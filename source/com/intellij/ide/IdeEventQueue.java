@@ -234,6 +234,8 @@ public class IdeEventQueue extends EventQueue {
     return myCurrentEvent;
   }
 
+  //[jeka] commented for performance reasons
+  /*
   public void postEvent(final AWTEvent e) {
     // [vova] sometime people call SwingUtilities.invokeLater(null). To
     // find such situations we will specially check InvokationEvents
@@ -252,6 +254,7 @@ public class IdeEventQueue extends EventQueue {
     }
     super.postEvent(e);
   }
+  */
 
   public void dispatchEvent(final AWTEvent e) {
     boolean wasInputEvent = myIsInInputEvent;
