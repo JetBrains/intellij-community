@@ -5,11 +5,13 @@
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
+import com.intellij.util.EventDispatcher;
 import org.apache.log4j.Category;
 import org.apache.log4j.Priority;
 import org.apache.log4j.spi.LoggingEvent;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MessagePool {
 
@@ -19,7 +21,7 @@ public class MessagePool {
 
   private List<AbstractMessage> myIdeFatals = new ArrayList<AbstractMessage>();
 
-  private Set<MessagePoolListener> myListeners = new HashSet<MessagePoolListener>();
+  private EventDispatcher<MessagePoolListener> myListeners = EventDispatcher.create(MessagePoolListener.class);
 
   private MessageGrouper myFatalsGrouper;
   private boolean ourJvmIsShuttingDown = false;
@@ -83,25 +85,20 @@ public class MessagePool {
   }
 
   public void addListener(MessagePoolListener aListener) {
-    myListeners.add(aListener);
+    myListeners.addListener(aListener);
   }
 
   public void removeListener(MessagePoolListener aListener) {
-    myListeners.remove(aListener);
+    myListeners.removeListener(aListener);
   }
 
   private void notifyListenersAdd() {
     if (ourJvmIsShuttingDown) return;
-    for (Iterator<MessagePoolListener> iterator = myListeners.iterator(); iterator.hasNext();) {
-      iterator.next().newEntryAdded();
-    }
+    myListeners.getMulticaster().newEntryAdded();
   }
 
   private void notifyListenersClear() {
-    final MessagePoolListener[] messagePoolListeners = myListeners.toArray(new MessagePoolListener[myListeners.size()]);
-    for (int i = 0; i < messagePoolListeners.length; i++) {
-      messagePoolListeners[i].poolCleared();
-    }
+    myListeners.getMulticaster().poolCleared();
   }
 
   public void setJvmIsShuttingDown() {

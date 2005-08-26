@@ -4,7 +4,9 @@
  */
 package com.intellij.diagnostic;
 
-public interface MessagePoolListener {
+import java.util.EventListener;
+
+public interface MessagePoolListener extends EventListener {
 
   void newEntryAdded();
   void poolCleared();
