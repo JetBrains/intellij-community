@@ -127,10 +127,10 @@ public class FileGroupingRule implements UsageGroupingRule {
 
     public Object getData(String dataId) {
       if (DataConstants.VIRTUAL_FILE.equals(dataId)) {
-        return myFile;
+        return myFile != null && myFile.isValid()? myFile : null;
       }
       if (DataConstants.PSI_ELEMENT.equals(dataId)) {
-        return getPsiFile();
+        return myFile != null && myFile.isValid()? getPsiFile() : null;
       }
       return null;
     }
