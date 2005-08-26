@@ -1,6 +1,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeView;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -17,17 +18,19 @@ import com.intellij.util.IncorrectOperationException;
 
 public class CreateClassAction extends CreateElementActionBase {
   public CreateClassAction() {
-    super("Create New Class", "Create New Class", Icons.CLASS_ICON);
+    super(IdeBundle.message("action.create.new.class"),
+          IdeBundle.message("action.create.new.class"), Icons.CLASS_ICON);
   }
 
   protected PsiElement[] invokeDialog(Project project, PsiDirectory directory) {
     CreateElementActionBase.MyInputValidator validator = new CreateElementActionBase.MyInputValidator(project, directory);
-    Messages.showInputDialog(project, "Enter a new class name:", "New Class", Messages.getQuestionIcon(), "", validator);
+    Messages.showInputDialog(project, IdeBundle.message("prompt.enter.new.class.name"),
+                             IdeBundle.message("title.new.class"), Messages.getQuestionIcon(), "", validator);
     return validator.getCreatedElements();
   }
 
   protected String getCommandName() {
-    return "Create class";
+    return IdeBundle.message("command.create.class");
   }
 
   protected void checkBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException {
@@ -35,7 +38,7 @@ public class CreateClassAction extends CreateElementActionBase {
   }
 
   protected String getErrorTitle() {
-    return "Cannot Create Class";
+    return IdeBundle.message("title.cannot.create.class");
   }
 
   public void update(AnActionEvent e) {
@@ -60,7 +63,7 @@ public class CreateClassAction extends CreateElementActionBase {
   }
 
   protected String getActionName(PsiDirectory directory, String newName) {
-    return "Creating class " + directory.getPackage().getQualifiedName() + "." + newName;
+    return IdeBundle.message("progress.creating.class", directory.getPackage().getQualifiedName(), newName);
   }
 
   protected PsiElement[] create(String newName, PsiDirectory directory) throws IncorrectOperationException {

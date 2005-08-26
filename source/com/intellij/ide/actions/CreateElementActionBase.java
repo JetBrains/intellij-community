@@ -1,6 +1,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeView;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
@@ -14,8 +15,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
+
+import org.jetbrains.annotations.NonNls;
 
 public abstract class CreateElementActionBase extends AnAction {
   protected CreateElementActionBase(String text, String description, Icon icon) {
@@ -83,7 +87,7 @@ public abstract class CreateElementActionBase extends AnAction {
 
   protected static String filterMessage(String message) {
     if (message == null) return null;
-    final String ioExceptionPrefix = "java.io.IOException:";
+    @NonNls final String ioExceptionPrefix = "java.io.IOException:";
     if (message.startsWith(ioExceptionPrefix)) {
       message = message.substring(ioExceptionPrefix.length());
     }
@@ -107,7 +111,8 @@ public abstract class CreateElementActionBase extends AnAction {
 
     public boolean canClose(final String inputString) {
       if (inputString.length() == 0) {
-        Messages.showMessageDialog(myProject, "A name should be specified", "Error", Messages.getErrorIcon());
+        Messages.showMessageDialog(myProject, IdeBundle.message("error.name.should.be.specified"),
+                                   CommonBundle.getErrorTitle(), Messages.getErrorIcon());
         return false;
       }
 
