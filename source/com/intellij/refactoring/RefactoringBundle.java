@@ -17,4 +17,12 @@ public class RefactoringBundle {
   public static String message(@NonNls String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
+
+  public static String getSearchInCommentsAndStringsText() {
+    return message("search.in.comments.and.strings");
+  }
+
+  public static String getSearchForTextOccurencesText() {
+    return message("search.for.text.occurences");
+  }
 }
