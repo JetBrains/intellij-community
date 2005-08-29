@@ -9,8 +9,11 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.codeInspection.ex.InspectionToolsPanel;
+import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Comparing;
 
 import java.util.Comparator;
 
@@ -31,14 +34,22 @@ public class InspectionResultsViewComparator implements Comparator {
       return InspectionToolsPanel.getDisplayTextToSort(((InspectionNode)node1).toString()).compareToIgnoreCase(InspectionToolsPanel.getDisplayTextToSort(((InspectionNode)node2).toString()));
     }
 
-    if (node1 instanceof RefElementNode && node2 instanceof RefElementNode){
-      final PsiElement element1 = ((RefElementNode)node1).getElement().getElement();
-      final PsiElement element2 = ((RefElementNode)node2).getElement().getElement();
-      if (element1 != null && element2 != null){
-        final TextRange textRange1 = element1.getTextRange();
-        final TextRange textRange2 = element2.getTextRange();
-        if (textRange1 != null && textRange2 != null) {
-          return textRange1.getStartOffset() - textRange2.getStartOffset();
+    if (node1 instanceof RefElementNode && node2 instanceof RefElementNode){   //sort by filename and inside file by start offset
+      final RefElement refElement1 = ((RefElementNode)node1).getElement();
+      final RefElement refElement2 = ((RefElementNode)node2).getElement();
+      final PsiElement element1 = refElement1.getElement();
+      final PsiElement element2 = refElement2.getElement();
+      if (element1 != null && element2 != null) {
+        final PsiFile psiFile1 = element1.getContainingFile();
+        final PsiFile psiFile2 = element2.getContainingFile();
+        if (Comparing.equal(psiFile1, psiFile2)){
+          final TextRange textRange1 = element1.getTextRange();
+          final TextRange textRange2 = element2.getTextRange();
+          if (textRange1 != null && textRange2 != null) {
+            return textRange1.getStartOffset() - textRange2.getStartOffset();
+          }
+        } else if (psiFile1 != null && psiFile2 != null){
+          return psiFile1.getName().compareTo(psiFile2.getName());
         }
       }
     }
