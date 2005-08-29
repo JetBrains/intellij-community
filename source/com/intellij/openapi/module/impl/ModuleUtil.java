@@ -59,7 +59,7 @@ public class ModuleUtil {
     }
   }
 
-  public static String getModuleNameInReadAction(final Module module) {
+  public static String getModuleNameInReadAction(@NotNull final Module module) {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       public String compute() {
         return module.getName();
