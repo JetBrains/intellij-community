@@ -63,7 +63,6 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
         setShow(prc, myShowLogs.isSelected());
       }
     });
-    myShowLogs.setMnemonic('S');
     myModules.addActionListener(new ActionListener() {
       @SuppressWarnings({"HardCodedStringLiteral"})
       public void actionPerformed(ActionEvent e) {

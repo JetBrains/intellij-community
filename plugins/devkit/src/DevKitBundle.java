@@ -1,5 +1,7 @@
 package org.jetbrains.idea.devkit;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.util.ResourceBundle;
 import java.util.MissingResourceException;
 import java.text.MessageFormat;
@@ -13,7 +15,7 @@ public class DevKitBundle {
 
   private  DevKitBundle(){}
 
-  public static String message(String key, Object... params) {
+  public static String message(@NonNls String key, Object... params) {
     String value;
     try {
       value = ourBundle.getString(key);
