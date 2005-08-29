@@ -35,6 +35,8 @@ public class ResourceUtil {
     final List<String> bundles = calculateBundleNames(basePath, Locale.getDefault());
     for (String bundle : bundles) {
       URL url = loaderClass.getResource(basePath + "/" + fileName);
+      if (url == null) continue;
+
       try {
         final URLConnection connection = url.openConnection();
       }
