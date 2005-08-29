@@ -7,10 +7,12 @@ import com.intellij.CommonBundle;
 
 import java.util.ResourceBundle;
 
-public class SvnBundle {
-  private final static ResourceBundle ourBundle = ResourceBundle.getBundle("org.jetbrains.idea.svn.SvnBundle");
+import org.jetbrains.annotations.NonNls;
 
-  public static String message(String key, Object... params) {
+public class SvnBundle {
+  @NonNls private final static ResourceBundle ourBundle = ResourceBundle.getBundle("org.jetbrains.idea.svn.SvnBundle");
+
+  public static String message(@NonNls String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

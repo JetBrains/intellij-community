@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.util.ui.DialogUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -121,7 +122,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
 
     myUserNameText = new JTextField();
     panel.add(myUserNameText, gb);
-    DialogUtil.registerMnemonic(label, myUserNameText);
+    label.setLabelFor(myUserNameText);
 
     if (myUserName != null) {
       myUserNameText.setText(myUserName);
@@ -136,7 +137,6 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
     gb.gridwidth = 3;
     // password type
     myPasswordButton = new JRadioButton(SvnBundle.message("radio.ssh.authentication.with.password"));
-    DialogUtil.registerMnemonic(myPasswordButton);
     panel.add(myPasswordButton, gb);
 
     gb.gridy += 1;
@@ -157,7 +157,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
 
     myPasswordText = new JPasswordField();
     panel.add(myPasswordText, gb);
-    DialogUtil.registerMnemonic(myPasswordLabel, myPasswordText);
+    myPasswordLabel.setLabelFor(myPasswordText);
 
     gb.gridy += 1;
     gb.weightx = 0;
@@ -165,7 +165,6 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
     gb.fill = GridBagConstraints.NONE;
     gb.gridwidth = 3;
     myKeyButton = new JRadioButton(SvnBundle.message("radio.ssh.authentication.private.key"));
-    DialogUtil.registerMnemonic(myKeyButton);
     panel.add(myKeyButton, gb);
 
     // key file.
@@ -188,7 +187,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
     myKeyFileText = new TextFieldWithBrowseButton(this);
     myKeyFileText.setEditable(false);
     panel.add(myKeyFileText, gb);
-    DialogUtil.registerMnemonic(myKeyFileLabel, myKeyFileText);
+    myKeyFileLabel.setLabelFor(myKeyFileText);
 
     gb.gridy += 1;
     gb.weightx = 0;
@@ -210,7 +209,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
     panel.add(myPassphraseText, gb);
     myPassphraseText.getDocument().addDocumentListener(this);
 
-    DialogUtil.registerMnemonic(myPassphraseLabel, myPassphraseText);
+    myPassphraseLabel.setLabelFor(myPassphraseText);
 
 
     ButtonGroup group = new ButtonGroup();
@@ -226,7 +225,6 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
     gb.anchor = GridBagConstraints.WEST;
     gb.fill = GridBagConstraints.HORIZONTAL;
     myAllowSaveCheckBox = new JCheckBox(SvnBundle.message("checkbox.ssh.keep.for.current.session"));
-    DialogUtil.registerMnemonic(myAllowSaveCheckBox);
     panel.add(myAllowSaveCheckBox, gb);
     gb.gridy += 1;
     panel.add(new JSeparator(), gb);

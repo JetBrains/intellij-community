@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.util.ui.DialogUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.annotations.NonNls;
@@ -208,14 +209,13 @@ public class SetPropertyDialog extends DialogWrapper {
       myPropertyNameBox.getEditor().setItem(myPropertyName);
       myPropertyNameBox.getEditor().selectAll();
     }
-    DialogUtil.registerMnemonic(nameLabel, myPropertyNameBox);
+    nameLabel.setLabelFor(myPropertyNameBox);
 
     gc.gridx = 0;
     gc.gridwidth = 2;
     gc.gridy += 1;
     mySetPropertyButton = new JRadioButton(SvnBundle.message("radio.set.property.set.property.value"));
     panel.add(mySetPropertyButton, gc);
-    DialogUtil.registerMnemonic(mySetPropertyButton);
     mySetPropertyButton.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
         if (mySetPropertyButton.isSelected()) {
@@ -241,14 +241,12 @@ public class SetPropertyDialog extends DialogWrapper {
 
     myDeletePropertyButton = new JRadioButton(SvnBundle.message("radio.set.property.delete.property"));
     panel.add(myDeletePropertyButton, gc);
-    DialogUtil.registerMnemonic(myDeletePropertyButton);
 
     gc.gridy += 1;
     panel.add(new JSeparator(), gc);
     gc.gridy += 1;
     myRecursiveButton = new JCheckBox(SvnBundle.message("checkbox.set.property.update.properties.recursively"));
     panel.add(myRecursiveButton, gc);
-    DialogUtil.registerMnemonic(myRecursiveButton);
 
     myRecursiveButton.setEnabled(myIsRecursionAllowed);
 

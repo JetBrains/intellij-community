@@ -42,12 +42,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import org.jetbrains.idea.svn.dialogs.DialogUtil;
+import com.intellij.util.ui.DialogUtil;
 import org.jetbrains.annotations.NonNls;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNCancelException;
 
 import javax.swing.*;
 import java.awt.*;
@@ -88,7 +86,6 @@ public class SvnConfigurable implements Configurable, ActionListener {
     gb.anchor = GridBagConstraints.WEST;
     gb.gridwidth = 3;
     myUseDefaultCheckBox = new JCheckBox(SvnBundle.message("checkbox.configure.use.system.default.configuration.directory"));
-    DialogUtil.registerMnemonic(myUseDefaultCheckBox);
     add(myUseDefaultCheckBox, gb);
     myUseDefaultCheckBox.addActionListener(this);
 
@@ -124,7 +121,7 @@ public class SvnConfigurable implements Configurable, ActionListener {
       }
     });
     myConfigurationDirectoryText.setEditable(false);
-    DialogUtil.registerMnemonic(label, myConfigurationDirectoryText);
+    label.setLabelFor(myConfigurationDirectoryText);
     add(label, gb);
 
     gb.gridy += 1;
@@ -143,7 +140,6 @@ public class SvnConfigurable implements Configurable, ActionListener {
     gb.gridx = 0;
     gb.gridy += 1;
     myClearAuthButton = new JButton(SvnBundle.message("button.text.clear.authentication.cache"));
-    DialogUtil.registerMnemonic(myClearAuthButton);
     myClearAuthButton.addActionListener(this);
     add(myClearAuthButton, gb);
     gb.gridwidth = 2;

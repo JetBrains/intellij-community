@@ -28,6 +28,7 @@ import javax.swing.tree.*;
 import java.awt.*;
 
 import com.intellij.CommonBundle;
+import com.intellij.util.ui.DialogUtil;
 
 /**
  * Created by IntelliJ IDEA.
@@ -166,7 +167,7 @@ public class RepositoryBrowserComponent extends JPanel implements TreeCellRender
     JScrollPane scrollPane = new JScrollPane(myRepositoryTree,
                                              JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
     add(scrollPane, gc);
-    DialogUtil.registerMnemonic(topLabel, myRepositoryTree);
+    topLabel.setLabelFor(myRepositoryTree);
 
     myRepositoryTree.setCellRenderer(this);
   }

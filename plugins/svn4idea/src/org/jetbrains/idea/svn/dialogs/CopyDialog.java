@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.util.ui.DialogUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.annotations.NonNls;
@@ -157,7 +158,7 @@ public class CopyDialog extends DialogWrapper implements ActionListener {
     myFromURLText.setEditable(false);
 
     panel.add(myFromURLText, gc);
-    DialogUtil.registerMnemonic(fromLabel, myFromURLText);
+    fromLabel.setLabelFor(myFromURLText);
 
     JLabel toLabel = new JLabel(SvnBundle.message("label.copy.to"));
     gc.gridy += 1;
@@ -177,7 +178,7 @@ public class CopyDialog extends DialogWrapper implements ActionListener {
     myToURLText.setEditable(false);
     panel.add(myToURLText, gc);
 
-    DialogUtil.registerMnemonic(toLabel, myToURLText);
+    toLabel.setLabelFor(myToURLText);
 
     gc.gridy += 1;
     gc.gridx = 0;
@@ -194,10 +195,6 @@ public class CopyDialog extends DialogWrapper implements ActionListener {
     myWorkingRevisionButton.addActionListener(this);
     myHEADRevisionButton.addActionListener(this);
     mySpecificRevisionButton.addActionListener(this);
-
-    DialogUtil.registerMnemonic(myWorkingRevisionButton);
-    DialogUtil.registerMnemonic(myHEADRevisionButton);
-    DialogUtil.registerMnemonic(mySpecificRevisionButton);
 
     ButtonGroup group = new ButtonGroup();
     group.add(myWorkingRevisionButton);
@@ -250,7 +247,7 @@ public class CopyDialog extends DialogWrapper implements ActionListener {
     myCommentText = new JTextArea(7, 25);
     panel.add(new JScrollPane(myCommentText), gc);
 
-    DialogUtil.registerMnemonic(commentLabel, myCommentText);
+    commentLabel.setLabelFor(myCommentText);
 
     return panel;
   }

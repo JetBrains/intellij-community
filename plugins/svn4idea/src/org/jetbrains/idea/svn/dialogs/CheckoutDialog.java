@@ -25,6 +25,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.util.ui.DialogUtil;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -223,7 +224,7 @@ public class CheckoutDialog extends DialogWrapper implements ActionListener {
     myRepositoryBox = new JComboBox();
     myRepositoryBox.setEditable(true);
     panel.add(myRepositoryBox, gc);
-    DialogUtil.registerMnemonic(label, myRepositoryBox);
+    label.setLabelFor(myRepositoryBox);
 
     gc.gridx += 1;
     gc.fill = GridBagConstraints.NONE;
@@ -317,7 +318,7 @@ public class CheckoutDialog extends DialogWrapper implements ActionListener {
     gc.fill = GridBagConstraints.HORIZONTAL;
     gc.anchor = GridBagConstraints.WEST;
 
-    DialogUtil.registerMnemonic(checkoutFileLabel, myDestinationText);
+    checkoutFileLabel.setLabelFor(myDestinationText);
     panel.add(new JSeparator(), gc);
 
     return panel;

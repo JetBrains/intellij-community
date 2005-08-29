@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.CommonBundle;
+import com.intellij.util.ui.DialogUtil;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -220,7 +221,7 @@ public class RepositoryBrowserDialog extends DialogWrapper implements ActionList
     myRepositoryBox = new JComboBox();
     myRepositoryBox.setEditable(true);
     panel.add(myRepositoryBox, gc);
-    DialogUtil.registerMnemonic(label, myRepositoryBox);
+    label.setLabelFor(myRepositoryBox);
 
     gc.gridx += 1;
     gc.fill = GridBagConstraints.NONE;
@@ -290,11 +291,6 @@ public class RepositoryBrowserDialog extends DialogWrapper implements ActionList
     panel.add(myPasteButton, gc);
     gc.gridy += 1;
     panel.add(myDeleteButton, gc);
-
-    DialogUtil.registerMnemonic(myMkDirButton);
-    DialogUtil.registerMnemonic(myDeleteButton);
-    DialogUtil.registerMnemonic(myCopyButton);
-    DialogUtil.registerMnemonic(myPasteButton);
 
     myMkDirButton.addActionListener(this);
     myDeleteButton.addActionListener(this);

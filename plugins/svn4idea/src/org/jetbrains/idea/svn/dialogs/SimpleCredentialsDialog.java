@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.util.ui.DialogUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -101,7 +102,7 @@ public class SimpleCredentialsDialog extends DialogWrapper implements DocumentLi
 
     myUserNameText = new JTextField();
     panel.add(myUserNameText, gb);
-    DialogUtil.registerMnemonic(label, myUserNameText);
+    label.setLabelFor(myUserNameText);
 
     if (myUserName != null) {
       myUserNameText.setText(myUserName);
@@ -125,7 +126,7 @@ public class SimpleCredentialsDialog extends DialogWrapper implements DocumentLi
 
     myPasswordText = new JPasswordField();
     panel.add(myPasswordText, gb);
-    DialogUtil.registerMnemonic(label, myPasswordText);
+    label.setLabelFor(myPasswordText);
 
     gb.gridy += 1;
     gb.gridx = 0;
@@ -133,7 +134,6 @@ public class SimpleCredentialsDialog extends DialogWrapper implements DocumentLi
     gb.weightx = 1;
     gb.fill = GridBagConstraints.HORIZONTAL;
     myAllowSaveCheckBox = new JCheckBox(SvnBundle.message("checkbox.auth.keep.for.current.session"));
-    DialogUtil.registerMnemonic(myAllowSaveCheckBox);
     panel.add(myAllowSaveCheckBox, gb);
     gb.gridy += 1;
     panel.add(new JSeparator(), gb);

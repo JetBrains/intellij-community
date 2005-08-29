@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.util.ui.DialogUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.annotations.NonNls;
@@ -142,7 +143,7 @@ public class SelectLocationDialog extends DialogWrapper {
         }
       });
 
-      DialogUtil.registerMnemonic(dstLabel, myDstText);
+      dstLabel.setLabelFor(myDstText);
       gc.gridx = 0;
       gc.gridy += 1;
       gc.gridwidth = 2;

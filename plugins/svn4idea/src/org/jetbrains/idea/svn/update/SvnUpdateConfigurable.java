@@ -18,9 +18,9 @@ package org.jetbrains.idea.svn.update;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.util.ui.DialogUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.dialogs.DialogUtil;
 import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
 import org.jetbrains.annotations.NonNls;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -152,7 +152,6 @@ public class SvnUpdateConfigurable implements Configurable, ActionListener {
     Font boldFont = myUpdateButton.getFont().deriveFont(Font.BOLD);
     myUpdateButton.setFont(boldFont);
 
-    DialogUtil.registerMnemonic(myUpdateButton);
     component.add(myUpdateButton, gc);
 
     gc.gridy += 1;
@@ -169,7 +168,7 @@ public class SvnUpdateConfigurable implements Configurable, ActionListener {
     myURLText = new TextFieldWithBrowseButton(this);
     myURLText.setEditable(false);
     component.add(myURLText, gc);
-    DialogUtil.registerMnemonic(myURLLabel, myURLText);
+    myURLLabel.setLabelFor(myURLText);
 
 
     gc.gridy += 1;
@@ -179,7 +178,6 @@ public class SvnUpdateConfigurable implements Configurable, ActionListener {
     gc.fill = GridBagConstraints.NONE;
     myRevisionBox = new JCheckBox(SvnBundle.message("checkbox.update.switch.configurable.to.specific.revision"));
     component.add(myRevisionBox, gc);
-    DialogUtil.registerMnemonic(myRevisionBox);
     myRevisionBox.addActionListener(this);
 
     gc.gridx += 2;
@@ -206,7 +204,6 @@ public class SvnUpdateConfigurable implements Configurable, ActionListener {
     myMergeButton = new JRadioButton(SvnBundle.message("radio.update.switch.configurable.merge"));
     myMergeButton.setFont(boldFont);
     component.add(myMergeButton, gc);
-    DialogUtil.registerMnemonic(myMergeButton);
 
     gc.gridy += 1;
     gc.gridwidth = 1;
@@ -235,7 +232,7 @@ public class SvnUpdateConfigurable implements Configurable, ActionListener {
     myMergeRevisionText1.setMinimumSize(myMergeRevisionText1.getPreferredSize());
     component.add(myMergeRevisionText1, gc);
 
-    DialogUtil.registerMnemonic(myMergeRevisionLabel1, myMergeRevisionText1);
+    myMergeRevisionLabel1.setLabelFor(myMergeRevisionText1);
 
     gc.gridy += 1;
     gc.gridwidth = 1;
@@ -268,10 +265,10 @@ public class SvnUpdateConfigurable implements Configurable, ActionListener {
     myMergeRevisionText2.setMinimumSize(myMergeRevisionText2.getPreferredSize());
     component.add(myMergeRevisionText2, gc);
 
-    DialogUtil.registerMnemonic(myMergeRevisionLabel2, myMergeRevisionText2);
+    myMergeRevisionLabel2.setLabelFor(myMergeRevisionText2);
 
-    DialogUtil.registerMnemonic(myMergeURLLabel1, myMergeText1);
-    DialogUtil.registerMnemonic(myMergeURLLabel2, myMergeText2);
+    myMergeURLLabel1.setLabelFor(myMergeText1);
+    myMergeURLLabel2.setLabelFor(myMergeText2);
 
     gc.gridx = 0;
     gc.gridwidth = 4;
@@ -279,7 +276,6 @@ public class SvnUpdateConfigurable implements Configurable, ActionListener {
 
     myDryRunCheckbox = new JCheckBox(SvnBundle.message("checkbox.update.switch.configurable.try.merge.without.changes"));
     component.add(myDryRunCheckbox, gc);
-    DialogUtil.registerMnemonic(myDryRunCheckbox);
 
     gc.fill = GridBagConstraints.HORIZONTAL;
     gc.weightx = 1;
@@ -292,13 +288,11 @@ public class SvnUpdateConfigurable implements Configurable, ActionListener {
 
     myRecursiveBox = new JCheckBox(SvnBundle.message("checkbox.update.switch.configurable.descend.into.child.directories"));
     component.add(myRecursiveBox, gc);
-    DialogUtil.registerMnemonic(myRecursiveBox);
 
     gc.gridy += 1;
 
     myStatusBox = new JCheckBox(SvnBundle.message("checkbox.update.switch.configurable.run.status"));
     component.add(myStatusBox, gc);
-    DialogUtil.registerMnemonic(myStatusBox);
 
     gc.gridy += 1;
     gc.fill = GridBagConstraints.BOTH;

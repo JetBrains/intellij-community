@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.ui.OrderPanel;
 import com.intellij.ui.OrderPanelListener;
+import com.intellij.util.ui.DialogUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -121,9 +122,6 @@ public class SelectFilesDialog extends DialogWrapper implements ActionListener {
     JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
     mySelectAllButton = new JButton(SvnBundle.message("button.text.select.all"));
     myDeselectAllButton = new JButton(SvnBundle.message("button.text.deselect.all"));
-
-    DialogUtil.registerMnemonic(mySelectAllButton);
-    DialogUtil.registerMnemonic(myDeselectAllButton);
 
     buttonsPanel.add(mySelectAllButton);
     buttonsPanel.add(myDeselectAllButton);

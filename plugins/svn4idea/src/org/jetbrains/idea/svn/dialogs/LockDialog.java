@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.util.ui.DialogUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -95,7 +96,7 @@ public class LockDialog extends DialogWrapper {
                                              JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setMinimumSize(scrollPane.getPreferredSize());
     panel.add(scrollPane, gc);
-    DialogUtil.registerMnemonic(commentLabel, myLockTextArea);
+    commentLabel.setLabelFor(myLockTextArea);
 
     gc.gridy += 1;
     gc.weightx = 0;
@@ -104,7 +105,6 @@ public class LockDialog extends DialogWrapper {
 
     myForceCheckBox = new JCheckBox(SvnBundle.message("label.locl.steal.existing"));
     panel.add(myForceCheckBox, gc);
-    DialogUtil.registerMnemonic(myForceCheckBox);
 
     gc.gridy += 1;
     gc.weightx = 1;

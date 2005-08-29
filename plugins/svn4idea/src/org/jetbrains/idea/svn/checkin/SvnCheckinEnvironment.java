@@ -36,7 +36,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.dialogs.DialogUtil;
+import com.intellij.util.ui.DialogUtil;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.*;
@@ -264,7 +264,6 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
         myPanel = new JPanel(new BorderLayout());
         myKeepLocksBox = new JCheckBox(SvnBundle.message("checkbox.chckin.keep.files.locked"));
         myKeepLocksBox.setSelected(myIsKeepLocks);
-        DialogUtil.registerMnemonic(myKeepLocksBox);
 
         myPanel.add(myKeepLocksBox, BorderLayout.CENTER);
         myPanel.setBorder(new TitledBorder(SvnBundle.message("border.show.changes.dialog.subversion.group")));
