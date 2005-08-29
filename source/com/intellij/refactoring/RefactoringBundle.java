@@ -45,4 +45,8 @@ public class RefactoringBundle {
   public static String getVisibilityAsIs() {
     return message("visibility.as.is");
   }
+
+  public static String getCannotPerformRefactoringMessage(final String message) {
+    return message("cannot.perform.refactoring")  + "\n" + message;
+  }
 }
