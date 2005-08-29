@@ -13,17 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger;
+package com.intellij.idea;
 
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ResourceBundle;
 
-public class DebuggerBundle {
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.intellij.debugger.DebuggerBundle");
+/**
+ * @author Eugene Zhuravlev
+ *         Date: Aug 29, 2005
+ */
+public class ActionsBundle {
+  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("idea.ActionsBundle");
 
-  private DebuggerBundle() {
+  public static String actionText(@NonNls String actionId) {
+    return message("action." + actionId + ".text");
+  }
+
+  public static String actionDescription(@NonNls String actionId) {
+    return message("action." + actionId + ".description");
   }
 
   public static String message(@NonNls String key, Object... params) {
