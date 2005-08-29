@@ -25,4 +25,24 @@ public class RefactoringBundle {
   public static String getSearchForTextOccurencesText() {
     return message("search.for.text.occurences");
   }
+
+  public static String getVisibilityPackageLocal() {
+    return message("visibility.package.local");
+  }
+
+  public static String getVisibilityPrivate() {
+    return message("visibility.private");
+  }
+
+  public static String getVisibilityProtected() {
+    return message("visibility.protected");
+  }
+
+  public static String getVisibilityPublic() {
+    return message("visibility.public");
+  }
+
+  public static String getVisibilityAsIs() {
+    return message("visibility.as.is");
+  }
 }
