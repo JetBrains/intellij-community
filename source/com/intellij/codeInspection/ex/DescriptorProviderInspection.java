@@ -111,6 +111,9 @@ public abstract class DescriptorProviderInspection extends InspectionTool {
   public void cleanup() {
     super.cleanup();
     myProblemElements.clear();
+    myProblemToElements.clear();
+    myQuickFixActions.clear();
+    myPackageContents = null;
   }
 
   public ProblemDescriptor[] getDescriptions(RefElement refElement) {

@@ -63,4 +63,9 @@ public abstract class FilteringInspectionTool extends InspectionTool {
   public Map<String, Set<RefElement>> getPackageContent() {
     return myPackageContents;
   }
+
+  public void cleanup() {
+    super.cleanup();
+    myPackageContents = null;
+  }
 }
