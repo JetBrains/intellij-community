@@ -1,19 +1,20 @@
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.pom.java.LanguageLevel;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author ven
@@ -22,11 +23,11 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.ConcatenationToMessageFormatAction");
 
   public String getFamilyName() {
-    return "Replace Concatenation with Formatted Output";
+    return CodeInsightBundle.message("intention.replace.concatenation.with.formatted.output.family");
   }
 
   public String getText() {
-    return "Replace + with java.text.MessageFormat call";
+    return CodeInsightBundle.message("intention.replace.concatenation.with.formatted.output.text");
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
