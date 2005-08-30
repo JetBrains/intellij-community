@@ -6,6 +6,8 @@ import java.util.ResourceBundle;
 import java.util.MissingResourceException;
 import java.text.MessageFormat;
 
+import com.intellij.CommonBundle;
+
 /**
  * User: anna
  * Date: Aug 11, 2005
@@ -16,18 +18,6 @@ public class DevKitBundle {
   private  DevKitBundle(){}
 
   public static String message(@NonNls String key, Object... params) {
-    String value;
-    try {
-      value = ourBundle.getString(key);
-    }
-    catch (MissingResourceException e) {
-      return "!" + key + "!";
-    }
-
-    if (params.length > 0) {
-      return MessageFormat.format(value, params);
-    }
-
-    return value;
+    return CommonBundle.message(ourBundle, key, params);
   }
 }
