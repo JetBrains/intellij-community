@@ -1,5 +1,7 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.CommonBundle;
+
 import java.util.ResourceBundle;
 import java.util.MissingResourceException;
 import java.text.MessageFormat;
@@ -11,18 +13,6 @@ public class SSRBundle {
   private SSRBundle() {}
 
   public static String message(String key, Object... params) {
-    String value;
-    try {
-      value = ourBundle.getString(key);
-    }
-    catch (MissingResourceException e) {
-      return "!" + key + "!";
-    }
-
-    if (params.length > 0) {
-      return MessageFormat.format(value, params);
-    }
-
-    return value;
+    return CommonBundle.message(ourBundle, key, params);
   }
 }
