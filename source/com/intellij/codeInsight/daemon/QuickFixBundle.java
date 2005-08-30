@@ -7,6 +7,8 @@ import com.intellij.CommonBundle;
 
 import java.util.ResourceBundle;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author max
  */
@@ -15,7 +17,7 @@ public class QuickFixBundle {
 
   private QuickFixBundle() {}
 
-  public static String message(String key, Object... params) {
+  public static String message(@NonNls String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }
