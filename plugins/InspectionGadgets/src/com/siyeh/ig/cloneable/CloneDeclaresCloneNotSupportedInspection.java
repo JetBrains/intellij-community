@@ -24,6 +24,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class CloneDeclaresCloneNotSupportedInspection extends MethodInspection{
@@ -34,7 +36,7 @@ public class CloneDeclaresCloneNotSupportedInspection extends MethodInspection{
     }
 
     public String getDisplayName(){
-        return "'clone()' doesn't declare CloneNotSupportedException";
+        return InspectionGadgetsBundle.message("clone.doesnt.declare.clonenotsupportedexception.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -46,7 +48,7 @@ public class CloneDeclaresCloneNotSupportedInspection extends MethodInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "#ref() doesn't declare CloneNotSupportedException #loc";
+        return InspectionGadgetsBundle.message("clone.doesnt.declare.clonenotsupportedexception.problem.descriptor");
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
@@ -56,7 +58,7 @@ public class CloneDeclaresCloneNotSupportedInspection extends MethodInspection{
     private static class CloneDeclaresCloneNotSupportedInspectionFix
                                                                      extends InspectionGadgetsFix{
         public String getName(){
-            return "Declare CloneNotSupportedException";
+            return InspectionGadgetsBundle.message("clone.doesnt.declare.clonenotsupportedexception.declare.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
@@ -78,8 +80,8 @@ public class CloneDeclaresCloneNotSupportedInspection extends MethodInspection{
         public void visitMethod(@NotNull PsiMethod method){
             //note: no call to super;
             final String methodName = method.getName();
-            if(!"clone".equals(methodName)){
-                return;
+            if(!HardcodedMethodConstants.CLONE.equals(methodName)) {
+              return;
             }
             final PsiParameterList parameterList = method.getParameterList();
             if(parameterList == null){

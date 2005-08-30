@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class EqualsUsesNonFinalVariableInspection extends ExpressionInspection{
@@ -28,7 +29,7 @@ public class EqualsUsesNonFinalVariableInspection extends ExpressionInspection{
     }
 
     public String getDisplayName(){
-        return "Non-final field referenced in 'equals()'";
+        return InspectionGadgetsBundle.message("non.final.field.in.equals.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -36,7 +37,7 @@ public class EqualsUsesNonFinalVariableInspection extends ExpressionInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "Non-final field #ref accessed in equals()  #loc";
+        return InspectionGadgetsBundle.message("non.final.field.in.equals.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){

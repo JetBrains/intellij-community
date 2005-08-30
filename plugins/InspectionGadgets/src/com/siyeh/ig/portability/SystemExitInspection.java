@@ -19,14 +19,16 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class SystemExitInspection extends ExpressionInspection {
     public String getID(){
         return "CallToSystemExit";
     }
     public String getDisplayName() {
-        return "Call to 'System.exit()' or related methods";
+        return InspectionGadgetsBundle.message("system.exit.call.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -41,7 +43,7 @@ public class SystemExitInspection extends ExpressionInspection {
         assert method != null;
         final PsiClass containingClass = method.getContainingClass();
         assert containingClass != null;
-        return "Call to " + containingClass.getName() + ".#ref() is non-portable #loc";
+        return InspectionGadgetsBundle.message("system.exit.call.problem.descriptor", containingClass.getName());
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -67,7 +69,9 @@ public class SystemExitInspection extends ExpressionInspection {
             final PsiReferenceExpression methodExpression = expression.getMethodExpression();
 
             final String methodName = methodExpression.getReferenceName();
-            if (!"exit".equals(methodName) && !"halt".equals(methodName)) {
+            @NonNls final String exit = "exit";
+            @NonNls final String halt = "halt";
+            if (!exit.equals(methodName) && !halt.equals(methodName)) {
                 return false;
             }
             final PsiMethod method = expression.resolveMethod();
@@ -96,7 +100,7 @@ public class SystemExitInspection extends ExpressionInspection {
                 return false;
             }
             return !(!"java.lang.System".equals(className) &&
-                    !"java.lang.Runtime".equals(className));
+                     !"java.lang.Runtime".equals(className));
         }
     }
 

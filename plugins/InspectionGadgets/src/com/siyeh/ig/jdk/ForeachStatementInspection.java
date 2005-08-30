@@ -25,13 +25,15 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class ForeachStatementInspection extends StatementInspection{
     private final ForEachFix fix = new ForEachFix();
 
     public String getDisplayName(){
-        return "Extended 'for' statement";
+        return InspectionGadgetsBundle.message("extended.for.statement.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -39,7 +41,7 @@ public class ForeachStatementInspection extends StatementInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "'Extended #ref' statement #loc";
+        return InspectionGadgetsBundle.message("extended.for.statement.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
@@ -48,7 +50,7 @@ public class ForeachStatementInspection extends StatementInspection{
 
     private static class ForEachFix extends InspectionGadgetsFix{
         public String getName(){
-            return "Replace with old-style 'for' statement";
+            return InspectionGadgetsBundle.message("extended.for.statement.replace.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
@@ -60,12 +62,12 @@ public class ForeachStatementInspection extends StatementInspection{
             final CodeStyleManager codeStyleManager =
                     CodeStyleManager.getInstance(project);
             assert statement != null;
-            final StringBuffer newStatement=new StringBuffer();
+            @NonNls final StringBuffer newStatement=new StringBuffer();
             final PsiExpression iteratedValue = statement.getIteratedValue();
             if(iteratedValue.getType() instanceof PsiArrayType){
                 final String index = codeStyleManager.suggestUniqueVariableName("i",
-                                                                   statement,
-                                                                   true);
+                                                                                statement,
+                                                                                true);
                 newStatement.append("for(int " + index + " = 0;" + index + '<');
                 newStatement.append(iteratedValue.getText());
                 newStatement.append(".length;" + index + "++)");
@@ -95,7 +97,7 @@ public class ForeachStatementInspection extends StatementInspection{
             } else{
 
                 final String iterator =  codeStyleManager.suggestUniqueVariableName("it", statement,
-                                                                  true);
+                                                                                    true);
                 final String typeText = statement.getIterationParameter()
                                 .getType()
                                 .getPresentableText();

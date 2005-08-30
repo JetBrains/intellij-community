@@ -23,6 +23,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -42,7 +43,7 @@ public class LocalVariableHidingMemberVariableInspection extends MethodInspectio
     }
 
     public String getDisplayName() {
-        return "Local variable hides member variable";
+        return InspectionGadgetsBundle.message("local.variable.hides.member.variable.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -58,14 +59,14 @@ public class LocalVariableHidingMemberVariableInspection extends MethodInspectio
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Local variable '#ref' hides member variable #loc";
+        return InspectionGadgetsBundle.message("local.variable.hides.member.variable.problem.descriptor");
     }
 
     public JComponent createOptionsPanel() {
         final JPanel panel = new JPanel(new GridBagLayout());
-        final JCheckBox ignoreInvisibleCheckBox = new JCheckBox("Ignore superclass fields not visible from subclass",
+        final JCheckBox ignoreInvisibleCheckBox = new JCheckBox(InspectionGadgetsBundle.message("field.name.hides.in.superclass.ignore.option"),
                 m_ignoreInvisibleFields);
-        final JCheckBox ignoreStaticCheckBox = new JCheckBox("Ignore local variables in static methods",
+        final JCheckBox ignoreStaticCheckBox = new JCheckBox(InspectionGadgetsBundle.message("local.variable.hides.member.variable.ignore.option"),
                 m_ignoreStaticMethods);
 
         final ButtonModel ignoreInvisibleModel = ignoreInvisibleCheckBox.getModel();

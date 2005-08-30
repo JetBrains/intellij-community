@@ -20,13 +20,15 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class CovariantCompareToInspection extends MethodInspection {
-    private static final String COMPARE_TO_METHOD_NAME = "compareTo";
+    private static final String COMPARE_TO_METHOD_NAME = HardcodedMethodConstants.COMPARE_TO;
 
-    public String getDisplayName() {
-        return "Covariant 'compareTo()'";
+  public String getDisplayName() {
+        return InspectionGadgetsBundle.message("covariant.compareto.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -34,7 +36,7 @@ public class CovariantCompareToInspection extends MethodInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "#ref should take Object as its argument #loc";
+        return InspectionGadgetsBundle.message("covariant.compareto.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -76,13 +78,12 @@ public class CovariantCompareToInspection extends MethodInspection {
             }
             final PsiClassType[] implementsListTypes = aClass.getImplementsListTypes();
             for(final PsiClassType implementedType : implementsListTypes){
-                final String implementedClassName = implementedType.getClassName();
-                if(("java.lang.Comparable".equals(implementedClassName) ||
-                        "Comparable".equals(implementedClassName)
-                )
-                        && implementedType.hasParameters()){
-                    return;
+              if(implementedType.hasParameters()) {
+                final PsiClass resolved = implementedType.resolve();
+                if (resolved != null && "java.lang.Comparable".equals(resolved.getQualifiedName())) {
+                  return;
                 }
+              }
             }
             registerMethodError(method);
         }

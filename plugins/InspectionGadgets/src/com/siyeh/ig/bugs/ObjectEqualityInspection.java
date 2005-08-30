@@ -28,6 +28,8 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -44,7 +46,7 @@ public class ObjectEqualityInspection extends ExpressionInspection {
     private final EqualityToEqualsFix fix = new EqualityToEqualsFix();
 
     public String getDisplayName() {
-        return "Object comparison using ==, instead of '.equals()'";
+        return InspectionGadgetsBundle.message("object.comparison.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -54,7 +56,7 @@ public class ObjectEqualityInspection extends ExpressionInspection {
     public JComponent createOptionsPanel() {
         final GridBagLayout layout = new GridBagLayout();
         final JPanel panel = new JPanel(layout);
-        final JCheckBox arrayCheckBox = new JCheckBox("Ignore == between enumerated types", m_ignoreEnums);
+        final JCheckBox arrayCheckBox = new JCheckBox(InspectionGadgetsBundle.message("object.comparison.enumerated.ignore.option"), m_ignoreEnums);
         final ButtonModel enumeratedObjectModel = arrayCheckBox.getModel();
         enumeratedObjectModel.addChangeListener(new ChangeListener() {
 
@@ -62,7 +64,7 @@ public class ObjectEqualityInspection extends ExpressionInspection {
                 m_ignoreEnums = enumeratedObjectModel.isSelected();
             }
         });
-        final JCheckBox classObjectCheckbox = new JCheckBox("Ignore == on java.lang.Class objects", m_ignoreClassObjects);
+        final JCheckBox classObjectCheckbox = new JCheckBox(InspectionGadgetsBundle.message("object.comparison.klass.ignore.option"), m_ignoreClassObjects);
         final ButtonModel classObjectModel = classObjectCheckbox.getModel();
         classObjectModel.addChangeListener(new ChangeListener() {
 
@@ -83,7 +85,7 @@ public class ObjectEqualityInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Object values are compared using '#ref', not '.equals()' #loc";
+        return InspectionGadgetsBundle.message("object.comparison.problem.description");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -96,9 +98,10 @@ public class ObjectEqualityInspection extends ExpressionInspection {
 
     private static class EqualityToEqualsFix extends InspectionGadgetsFix {
         public String getName() {
-            return "Replace with .equals()";
+            return InspectionGadgetsBundle.message("object.comparison.replace.quickfix");
         }
 
+        @SuppressWarnings({"HardCodedStringLiteral"})
         public void doFix(Project project, ProblemDescriptor descriptor)
                                                                          throws IncorrectOperationException{
             final PsiElement comparisonToken = descriptor.getPsiElement();
@@ -166,7 +169,7 @@ public class ObjectEqualityInspection extends ExpressionInspection {
                                                             PsiMethod.class);
             if(method != null) {
                 final String methodName = method.getName();
-                if ("equals".equals(methodName)) {
+                if (HardcodedMethodConstants.EQUALS.equals(methodName)) {
                     return;
                 }
             }

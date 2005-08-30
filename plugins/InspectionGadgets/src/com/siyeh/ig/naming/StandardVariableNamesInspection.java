@@ -34,24 +34,29 @@ public class StandardVariableNamesInspection extends VariableInspection {
     private final RenameFix fix = new RenameFix();
 
     static {
-        s_expectedTypes.put("b", "byte");
-        s_expectedTypes.put("c", "char");
-        s_expectedTypes.put("ch", "char");
-        s_expectedTypes.put("d", "double");
-        s_expectedTypes.put("f", "float");
-        s_expectedTypes.put("i", "int");
-        s_expectedTypes.put("j", "int");
-        s_expectedTypes.put("k", "int");
-        s_expectedTypes.put("m", "int");
-        s_expectedTypes.put("n", "int");
-        s_expectedTypes.put("l", "long");
-        s_expectedTypes.put("s", "java.lang.String");
-        s_expectedTypes.put("str", "java.lang.String");
+      initExpectedTypes();
     }
 
-    public String getDisplayName() {
-        return "Standard variable names";
-    }
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private static void initExpectedTypes() {
+    s_expectedTypes.put("b", "byte");
+    s_expectedTypes.put("c", "char");
+    s_expectedTypes.put("ch", "char");
+    s_expectedTypes.put("d", "double");
+    s_expectedTypes.put("f", "float");
+    s_expectedTypes.put("i", "int");
+    s_expectedTypes.put("j", "int");
+    s_expectedTypes.put("k", "int");
+    s_expectedTypes.put("m", "int");
+    s_expectedTypes.put("n", "int");
+    s_expectedTypes.put("l", "long");
+    s_expectedTypes.put("s", "java.lang.String");
+    s_expectedTypes.put("str", "java.lang.String");
+  }
+
+  public String getDisplayName() {
+      return "Standard variable names";
+  }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
         return fix;

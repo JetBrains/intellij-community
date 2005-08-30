@@ -78,9 +78,9 @@ public class BooleanConstructorInspection extends ExpressionInspection{
             final LanguageLevel languageLevel =
                     psiManager.getEffectiveLanguageLevel();
             final String newExpression;
-            if("true".equals(text) || "\"true\"".equalsIgnoreCase(text)){
+            if(PsiKeyword.TRUE.equals(text) || "\"true\"".equalsIgnoreCase(text)){
                 newExpression = "Boolean.TRUE";
-            } else if("false".equals(text) || "\"false\"".equalsIgnoreCase(text)){
+            } else if(PsiKeyword.FALSE.equals(text) || "\"false\"".equalsIgnoreCase(text)){
                 newExpression = "Boolean.FALSE";
             } else if(languageLevel.equals(LanguageLevel.JDK_1_3)){
                 final PsiType argType = arg.getType();

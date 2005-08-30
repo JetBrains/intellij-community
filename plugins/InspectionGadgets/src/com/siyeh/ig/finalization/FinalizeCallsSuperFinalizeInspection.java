@@ -20,6 +20,8 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,7 +35,7 @@ public class FinalizeCallsSuperFinalizeInspection extends MethodInspection{
     }
 
     public String getDisplayName(){
-        return "'finalize()' doesn't call 'super.finalize()'";
+        return InspectionGadgetsBundle.message("finalize.doesnt.call.super.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -45,13 +47,13 @@ public class FinalizeCallsSuperFinalizeInspection extends MethodInspection{
     }
 
     public JComponent createOptionsPanel(){
-        return new SingleCheckboxOptionsPanel("Ignore for direct subclasses of java.lang.Object",
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("finalize.doesnt.call.super.ignore.option.label"),
                                               this,
                                               "m_ignoreForObjectSubclasses");
     }
 
     public String buildErrorString(PsiElement location){
-        return "#ref() doesn't call super.finalize()";
+        return InspectionGadgetsBundle.message("finalize.doesnt.call.super.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -62,7 +64,7 @@ public class FinalizeCallsSuperFinalizeInspection extends MethodInspection{
         public void visitMethod(@NotNull PsiMethod method){
             //note: no call to super;
             final String methodName = method.getName();
-            if(!"finalize".equals(methodName)){
+            if(!HardcodedMethodConstants.FINALIZE.equals(methodName)){
                 return;
             }
             if(method.hasModifierProperty(PsiModifier.NATIVE) ||

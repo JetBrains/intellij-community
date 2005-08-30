@@ -20,12 +20,14 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class EqualsWhichDoesntCheckParameterClassInspection
         extends MethodInspection{
     public String getDisplayName(){
-        return "'equals()' method which doesn't check class of parameter";
+        return InspectionGadgetsBundle.message("equals.doesnt.check.class.parameter.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -33,7 +35,7 @@ public class EqualsWhichDoesntCheckParameterClassInspection
     }
 
     public String buildErrorString(PsiElement location){
-        return "#ref should check the class of its parameter #loc";
+        return InspectionGadgetsBundle.message("equals.doesnt.check.class.parameter.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -42,10 +44,10 @@ public class EqualsWhichDoesntCheckParameterClassInspection
 
     private static class EqualsWhichDoesntCheckParameterClassVisitor
             extends BaseInspectionVisitor{
-        private static final String EQUALS_METHOD_NAME = "equals";
+        private static final String EQUALS_METHOD_NAME = HardcodedMethodConstants.EQUALS;
 
 
-        public void visitMethod(@NotNull PsiMethod method){
+      public void visitMethod(@NotNull PsiMethod method){
             // note: no call to super
             final String name = method.getName();
             if(!EQUALS_METHOD_NAME.equals(name)){
@@ -78,7 +80,7 @@ public class EqualsWhichDoesntCheckParameterClassInspection
         }
 
         private static boolean isParameterChecked(PsiCodeBlock body,
-                                           PsiParameter parameter){
+                                                  PsiParameter parameter){
             final ParameterClassCheckVisitor visitor =
                     new ParameterClassCheckVisitor(parameter);
             body.accept(visitor);

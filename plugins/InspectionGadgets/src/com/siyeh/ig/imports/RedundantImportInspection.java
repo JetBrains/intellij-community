@@ -23,6 +23,7 @@ import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DeleteImportFix;
 import com.siyeh.ig.psiutils.ImportUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -32,7 +33,7 @@ public class RedundantImportInspection extends ClassInspection {
     private final DeleteImportFix fix = new DeleteImportFix();
 
     public String getDisplayName() {
-        return "Redundant import";
+        return InspectionGadgetsBundle.message("redundant.import.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -40,7 +41,7 @@ public class RedundantImportInspection extends ClassInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Redundant import '#ref' #loc";
+        return InspectionGadgetsBundle.message("redundant.import.problem.descriptor");
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {

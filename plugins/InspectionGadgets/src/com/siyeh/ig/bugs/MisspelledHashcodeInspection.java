@@ -23,13 +23,14 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class MisspelledHashcodeInspection extends MethodInspection{
     private final RenameFix fix = new RenameFix("hashCode");
 
     public String getDisplayName(){
-        return "'hashcode()' instead of 'hashCode()'";
+        return InspectionGadgetsBundle.message("misspelled.hashcode.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -41,7 +42,7 @@ public class MisspelledHashcodeInspection extends MethodInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "#ref() should probably be hashCode() #loc";
+        return InspectionGadgetsBundle.message("misspelled.hashcode.problem.descriptor");
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
@@ -56,6 +57,7 @@ public class MisspelledHashcodeInspection extends MethodInspection{
                                                    extends BaseInspectionVisitor{
 
 
+        @SuppressWarnings({"HardCodedStringLiteral"})
         public void visitMethod(@NotNull PsiMethod method){
             //note: no call to super
             final String methodName = method.getName();

@@ -23,6 +23,7 @@ import com.intellij.psi.PsiParameterList;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -72,8 +73,8 @@ public class ThreeNegationsPerMethodInspection extends MethodInspection {
             }
             if(m_ignoreInEquals){
                 final String methodName = method.getName();
-                if("equals".equals(methodName)){
-                    final PsiParameterList parameterList =
+                if(HardcodedMethodConstants.EQUALS.equals(methodName)) {
+                  final PsiParameterList parameterList =
                             method.getParameterList();
                     final PsiParameter[] parameters = parameterList.getParameters();
                     if(parameters != null && parameters.length == 1){

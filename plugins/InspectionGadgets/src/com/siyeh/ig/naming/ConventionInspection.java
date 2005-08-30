@@ -20,6 +20,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.RegExFormatter;
 import com.siyeh.ig.RegExInputVerifier;
 import com.siyeh.ig.ui.FormattedTextFieldMacFix;
+import com.siyeh.HardcodedMethodConstants;
 import org.jdom.Element;
 
 import javax.swing.*;
@@ -67,8 +68,8 @@ public abstract class ConventionInspection extends BaseInspection {
         if (length > m_maxLength) {
             return false;
         }
-        if ("serialVersionUID".equals(name)) {
-            return true;
+        if (HardcodedMethodConstants.SERIAL_VERSION_UID.equals(name)) {
+          return true;
         }
         final Matcher matcher = m_regexPattern.matcher(name);
         return matcher.matches();

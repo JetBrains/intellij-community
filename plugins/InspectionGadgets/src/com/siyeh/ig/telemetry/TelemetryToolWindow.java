@@ -15,9 +15,11 @@
  */
 package com.siyeh.ig.telemetry;
 
+import org.jetbrains.annotations.NonNls;
+
 
 public interface TelemetryToolWindow{
-    String CYCLE_TOOL_WINDOW_ID = "IG Telemetry";
+    @NonNls String CYCLE_TOOL_WINDOW_ID = "IG Telemetry";
 
     void register();
 

@@ -22,11 +22,12 @@ import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ShiftOutOfRangeInspection extends ExpressionInspection{
     public String getDisplayName(){
-        return "Shift operation by inappropriate constant";
+        return InspectionGadgetsBundle.message("shift.operation.by.inappropriate.constant.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -44,9 +45,9 @@ public class ShiftOutOfRangeInspection extends ExpressionInspection{
         final Integer value = (Integer) ConstantExpressionUtil.computeCastTo(rhs,
                                                                   PsiType.INT);
         if(value>0){
-            return "Shift operation #ref by overly large constant value #loc";
+            return InspectionGadgetsBundle.message("shift.operation.by.inappropriate.constant.problem.descriptor.too.large");
         } else{
-            return "Shift operation #ref by negative constant value #loc";
+            return InspectionGadgetsBundle.message("shift.operation.by.inappropriate.constant.problem.descriptor.negative");
         }
     }
 

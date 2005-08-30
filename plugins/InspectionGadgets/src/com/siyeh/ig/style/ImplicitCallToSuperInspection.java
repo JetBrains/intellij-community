@@ -140,7 +140,7 @@ public class ImplicitCallToSuperInspection extends MethodInspection{
             }
             final String text = methodExpression.getText();
 
-            return "super".equals(text) || "this".equals(text);
+            return PsiKeyword.SUPER.equals(text) || PsiKeyword.THIS.equals(text);
         }
     }
 }

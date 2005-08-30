@@ -168,7 +168,7 @@ public class CallToSimpleGetterInClassInspection extends ExpressionInspection{
 
         final PsiReferenceExpression reference = (PsiReferenceExpression) value;
         final PsiExpression qualifier = reference.getQualifierExpression();
-        if(qualifier != null && !"this".equals(qualifier.getText())){
+        if(qualifier != null && !PsiKeyword.THIS.equals(qualifier.getText())){
             return false;
         }
         final PsiElement referent = reference.resolve();

@@ -25,6 +25,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.siyeh.ig.InspectionGadgetsPlugin;
+import com.siyeh.InspectionGadgetsBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -39,8 +40,7 @@ public class TelemetryToolWindowImpl implements TelemetryToolWindow{
         super();
         this.project = project;
         final Application application = ApplicationManager.getApplication();
-        final InspectionGadgetsPlugin plugin =
-                (InspectionGadgetsPlugin) application.getComponent("InspectionGadgets");
+        final InspectionGadgetsPlugin plugin = application.getComponent(InspectionGadgetsPlugin.class);
         final InspectionGadgetsTelemetry telemetry = plugin.getTelemetry();
         telemetryDisplay = new TelemetryDisplayImpl(telemetry);
         final DefaultActionGroup toolbarGroup = new DefaultActionGroup();
@@ -65,7 +65,7 @@ public class TelemetryToolWindowImpl implements TelemetryToolWindow{
                 toolWindowManager.registerToolWindow(CYCLE_TOOL_WINDOW_ID,
                                                      myContentPanel,
                                                      ToolWindowAnchor.BOTTOM);
-        myToolWindow.setTitle("IG Telemetry");
+        myToolWindow.setTitle(InspectionGadgetsBundle.message("telemetry.toolwindow.title"));
         myToolWindow.setAvailable(true, null);
     }
 

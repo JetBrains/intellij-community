@@ -25,6 +25,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.lang.reflect.Method;
 
@@ -33,6 +34,7 @@ public abstract class BaseInspection extends LocalInspectionTool{
     private InspectionRunListener listener = null;
     private boolean telemetryEnabled = true;
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     public String getShortName(){
         if(m_shortName == null){
             final Class<? extends BaseInspection> aClass = getClass();
@@ -140,6 +142,7 @@ public abstract class BaseInspection extends LocalInspectionTool{
         }
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     private void initializeTelemetryIfNecessary(){
         if(telemetryEnabled && listener == null){
             final Application application = ApplicationManager.getApplication();
@@ -156,6 +159,7 @@ public abstract class BaseInspection extends LocalInspectionTool{
         return super.checkField(field, manager, isOnTheFly);
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     public boolean hasQuickFix(){
         final Method[] methods = getClass().getDeclaredMethods();
         for(final Method method : methods){

@@ -65,10 +65,10 @@ public class MakeInitializerExplicitFix extends InspectionGadgetsFix{
         } else if(PsiType.BYTE.equals(type)){
             return "(byte)0";
         } else if(PsiType.BOOLEAN.equals(type)){
-            return "false";
+          return PsiKeyword.FALSE;
         } else if(PsiType.CHAR.equals(type)){
             return "(char)0";
         }
-        return "null";
+      return PsiKeyword.NULL;
     }
 }

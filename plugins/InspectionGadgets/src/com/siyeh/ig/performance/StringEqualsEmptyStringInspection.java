@@ -25,6 +25,7 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class StringEqualsEmptyStringInspection extends ExpressionInspection {
@@ -82,8 +83,8 @@ public class StringEqualsEmptyStringInspection extends ExpressionInspection {
             super.visitMethodCallExpression(call);
             final PsiReferenceExpression methodExpression = call.getMethodExpression();
             final String methodName = methodExpression.getReferenceName();
-            if (!"equals".equals(methodName)) {
-                return;
+            if (!HardcodedMethodConstants.EQUALS.equals(methodName)) {
+              return;
             }
             final PsiExpressionList argumentList = call.getArgumentList();
             if (argumentList == null) {

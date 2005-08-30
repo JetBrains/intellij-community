@@ -16,6 +16,7 @@
 package com.siyeh.ig.finalization;
 
 import com.intellij.psi.*;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 class CallToSuperFinalizeVisitor extends PsiRecursiveElementVisitor{
@@ -42,7 +43,7 @@ class CallToSuperFinalizeVisitor extends PsiRecursiveElementVisitor{
             return;
         }
         final String methodName = methodExpression.getReferenceName();
-        if(!"finalize".equals(methodName)){
+        if(!HardcodedMethodConstants.FINALIZE.equals(methodName)){
             return;
         }
         callToSuperFinalizeFound = true;

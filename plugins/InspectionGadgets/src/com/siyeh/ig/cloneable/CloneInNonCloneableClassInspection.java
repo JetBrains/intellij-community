@@ -22,13 +22,15 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.MakeCloneableFix;
 import com.siyeh.ig.psiutils.CloneUtils;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class CloneInNonCloneableClassInspection extends MethodInspection {
 
     private InspectionGadgetsFix fix = new MakeCloneableFix();
     public String getDisplayName() {
-        return "'clone()' method in non-Cloneable class";
+        return InspectionGadgetsBundle.message("clone.method.in.non.cloneable.class.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -36,7 +38,7 @@ public class CloneInNonCloneableClassInspection extends MethodInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "#ref() defined in non-Cloneable class #loc";
+        return InspectionGadgetsBundle.message("clone.method.in.non.cloneable.class.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
@@ -52,9 +54,8 @@ public class CloneInNonCloneableClassInspection extends MethodInspection {
         public void visitMethod(@NotNull PsiMethod method){
             final PsiClass containingClass = method.getContainingClass();
             final String name = method.getName();
-            if(!"clone".equals(name))
-            {
-                return;
+            if(!HardcodedMethodConstants.CLONE.equals(name)) {
+              return;
             }
             final PsiParameterList parameterList = method.getParameterList();
             if(parameterList == null)

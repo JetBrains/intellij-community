@@ -24,13 +24,14 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class AssignmentUsedAsConditionInspection extends ExpressionInspection {
     private final AssignmentUsedAsConditionFix fix = new AssignmentUsedAsConditionFix();
 
     public String getDisplayName() {
-        return "Assignment used as condition";
+        return InspectionGadgetsBundle.message("assignment.used.as.condition.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -38,7 +39,7 @@ public class AssignmentUsedAsConditionInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "#ref used as condition #loc";
+        return InspectionGadgetsBundle.message("assignment.used.as.condition.problem.descriptor");
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -47,7 +48,7 @@ public class AssignmentUsedAsConditionInspection extends ExpressionInspection {
 
     private static class AssignmentUsedAsConditionFix extends InspectionGadgetsFix {
         public String getName() {
-            return "replace '=' with '=='";
+            return InspectionGadgetsBundle.message("assignment.used.as.condition.replace.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)

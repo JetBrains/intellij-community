@@ -20,6 +20,8 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class StringEqualsInspection extends ExpressionInspection {
@@ -27,7 +29,7 @@ public class StringEqualsInspection extends ExpressionInspection {
         return "CallToStringEquals";
     }
     public String getDisplayName() {
-        return "Call to String.equals()";
+        return InspectionGadgetsBundle.message("string.equals.call.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -35,7 +37,7 @@ public class StringEqualsInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "String.#ref() in an internationalized context #loc";
+        return InspectionGadgetsBundle.message("string.equals.call.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -51,8 +53,8 @@ public class StringEqualsInspection extends ExpressionInspection {
                 return;
             }
             final String methodName = methodExpression.getReferenceName();
-            if (!"equals".equals(methodName)) {
-                return;
+            if (!HardcodedMethodConstants.EQUALS.equals(methodName)) {
+              return;
             }
             final PsiMethod method = expression.resolveMethod();
             if (method == null) {

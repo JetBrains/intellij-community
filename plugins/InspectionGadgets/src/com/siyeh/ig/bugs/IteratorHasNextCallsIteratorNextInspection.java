@@ -21,13 +21,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class IteratorHasNextCallsIteratorNextInspection
         extends MethodInspection{
 
     public String getDisplayName(){
-        return "'Iterator.hasNext()' which calls 'next()'";
+        return InspectionGadgetsBundle.message("iterator.hasnext.which.calls.next.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -35,7 +36,7 @@ public class IteratorHasNextCallsIteratorNextInspection
     }
 
     public String buildErrorString(PsiElement location){
-        return "Iterator.#ref() contains call to next() #loc";
+        return InspectionGadgetsBundle.message("iterator.hasnext.which.calls.next.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -45,6 +46,7 @@ public class IteratorHasNextCallsIteratorNextInspection
     private static class IteratorHasNextCallsIteratorNext
             extends BaseInspectionVisitor{
 
+        @SuppressWarnings({"HardCodedStringLiteral"})
         public void visitMethod(@NotNull PsiMethod method){
             // note: no call to super
             final String name = method.getName();
@@ -94,6 +96,7 @@ public class IteratorHasNextCallsIteratorNextInspection
             }
         }
 
+        @SuppressWarnings({"HardCodedStringLiteral"})
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             if(doesCallIteratorNext){
                 return;

@@ -25,6 +25,8 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -41,7 +43,7 @@ public class FieldHidesSuperclassFieldInspection extends FieldInspection {
     }
 
     public String getDisplayName() {
-        return "Field name hides field in superclass";
+        return InspectionGadgetsBundle.message("field.name.hides.in.superclass.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -57,11 +59,11 @@ public class FieldHidesSuperclassFieldInspection extends FieldInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Field '#ref' hides field in superclass #loc";
+        return InspectionGadgetsBundle.message("field.name.hides.in.superclass.problem.descriptor");
     }
 
     public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel("Ignore superclass fields not visible from subclass",
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("field.name.hides.in.superclass.ignore.option"),
                 this, "m_ignoreInvisibleFields");
     }
 
@@ -78,7 +80,7 @@ public class FieldHidesSuperclassFieldInspection extends FieldInspection {
                 return;
             }
             final String fieldName = field.getName();
-            if ("serialVersionUID".equals(fieldName)) {
+            if (HardcodedMethodConstants.SERIAL_VERSION_UID.equals(fieldName)) {
                 return;    //special case
             }
             PsiClass ancestorClass = aClass.getSuperClass();

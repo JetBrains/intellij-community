@@ -19,10 +19,12 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiKeyword;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class CharacterComparisonInspection extends ExpressionInspection {
@@ -30,7 +32,7 @@ public class CharacterComparisonInspection extends ExpressionInspection {
         return "CharacterComparison";
     }
     public String getDisplayName() {
-        return "Character comparison";
+        return InspectionGadgetsBundle.message("character.comparison.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -38,7 +40,7 @@ public class CharacterComparisonInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Character comparison #ref in an internationalized context #loc";
+        return InspectionGadgetsBundle.message("character.comparison.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -73,7 +75,7 @@ public class CharacterComparisonInspection extends ExpressionInspection {
     }
 
     private static boolean isCharacter(PsiExpression lhs) {
-       return  TypeUtils.expressionHasType("char", lhs) ||
+       return  TypeUtils.expressionHasType(PsiKeyword.CHAR, lhs) ||
                        TypeUtils.expressionHasType("java.lang.Character", lhs);
     }
 

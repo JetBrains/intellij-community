@@ -23,13 +23,14 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.FieldInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.EncapsulateVariableFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class PackageVisibleFieldInspection extends FieldInspection {
     private final EncapsulateVariableFix fix = new EncapsulateVariableFix();
 
     public String getDisplayName() {
-        return "Package-visible field";
+        return InspectionGadgetsBundle.message("package.visible.field.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -37,7 +38,7 @@ public class PackageVisibleFieldInspection extends FieldInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Package-visible field #ref #loc";
+        return InspectionGadgetsBundle.message("package.visible.field.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {

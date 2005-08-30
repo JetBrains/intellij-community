@@ -26,12 +26,13 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class OverriddenMethodCallInConstructorInspection
                                                          extends MethodInspection{
     public String getDisplayName(){
-        return "Overridden method call in constructor";
+        return InspectionGadgetsBundle.message("overridden.method.call.in.constructor.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -39,7 +40,7 @@ public class OverriddenMethodCallInConstructorInspection
     }
 
     public String buildErrorString(PsiElement location){
-        return "Call to overridden method #ref during object construction #loc";
+        return InspectionGadgetsBundle.message("overridden.method.call.in.constructor.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){

@@ -19,6 +19,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.PsiType;
+import com.siyeh.HardcodedMethodConstants;
 
 public class MethodUtils{
     private MethodUtils(){
@@ -26,14 +27,14 @@ public class MethodUtils{
     }
 
     public static boolean isCompareTo(PsiMethod method){
-        return methodMatches(method, "compareTo", 1, PsiType.INT);
+        return methodMatches(method, HardcodedMethodConstants.COMPARE_TO, 1, PsiType.INT);
     }
     public static boolean isHashCode(PsiMethod method){
-        return methodMatches(method, "hashCode", 0, PsiType.INT);
+        return methodMatches(method, HardcodedMethodConstants.HASH_CODE, 0, PsiType.INT);
     }
 
     public static boolean isEquals(PsiMethod method){
-        return methodMatches(method, "equals", 1, PsiType.BOOLEAN);
+        return methodMatches(method, HardcodedMethodConstants.EQUALS, 1, PsiType.BOOLEAN);
     }
 
     private static boolean methodMatches(PsiMethod method,

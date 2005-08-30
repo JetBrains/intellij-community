@@ -20,6 +20,8 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class StringEqualsIgnoreCaseInspection extends ExpressionInspection {
@@ -27,7 +29,7 @@ public class StringEqualsIgnoreCaseInspection extends ExpressionInspection {
         return "CallToStringEqualsIgnoreCase";
     }
     public String getDisplayName() {
-        return "Call to String.equalsIgnoreCase()";
+        return InspectionGadgetsBundle.message("string.equalsignorecase.call.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -35,7 +37,7 @@ public class StringEqualsIgnoreCaseInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "String.#ref() in an internationalized context #loc";
+        return InspectionGadgetsBundle.message("string.equalsignorecase.call.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -52,7 +54,7 @@ public class StringEqualsIgnoreCaseInspection extends ExpressionInspection {
                 return;
             }
             final String methodName = methodExpression.getReferenceName();
-            if (!"equalsIgnoreCase".equals(methodName)) {
+            if (!HardcodedMethodConstants.EQUALS_IGNORE_CASE.equals(methodName)) {
                 return;
             }
             final PsiMethod method = expression.resolveMethod();

@@ -108,8 +108,8 @@ public class NestedMethodCallInspection extends ExpressionInspection {
                 final PsiReferenceExpression methodExpression =
                         surroundingCall.getMethodExpression();
                 final String callName = methodExpression.getReferenceName();
-                if("this".equals(callName) || "super".equals(callName)){
-                    return;     //ignore nested method calls at the start of a constructor,
+                if(PsiKeyword.THIS.equals(callName) || PsiKeyword.SUPER.equals(callName)) {
+                  return;     //ignore nested method calls at the start of a constructor,
                     //where they can't be extracted
                 }
             }

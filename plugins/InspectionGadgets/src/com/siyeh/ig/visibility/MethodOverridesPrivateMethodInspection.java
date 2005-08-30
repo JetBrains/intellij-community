@@ -21,6 +21,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -34,7 +35,7 @@ public class MethodOverridesPrivateMethodInspection extends MethodInspection{
     }
 
     public String getDisplayName(){
-        return "Method overrides private method of superclass";
+        return InspectionGadgetsBundle.message("method.overrides.private.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -50,7 +51,7 @@ public class MethodOverridesPrivateMethodInspection extends MethodInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "Method '#ref' overrides a private method of a superclass #loc";
+        return InspectionGadgetsBundle.message("method.overrides.private.display.name.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){

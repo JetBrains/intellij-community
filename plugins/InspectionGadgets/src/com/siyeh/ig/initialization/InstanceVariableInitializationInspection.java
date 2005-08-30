@@ -25,6 +25,7 @@ import com.siyeh.ig.fixes.MakeInitializerExplicitFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.InitializationUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -41,7 +42,7 @@ public class InstanceVariableInitializationInspection extends FieldInspection{
     }
 
     public String getDisplayName(){
-        return "Instance variable may not be initialized";
+        return InspectionGadgetsBundle.message("instance.variable.may.not.be.initialized.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -49,11 +50,11 @@ public class InstanceVariableInitializationInspection extends FieldInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "Instance variable #ref may not be initialized during object construction #loc";
+        return InspectionGadgetsBundle.message("instance.variable.may.not.be.initialized.problem.descriptor");
     }
 
     public JComponent createOptionsPanel(){
-        return new SingleCheckboxOptionsPanel("Ignore primitive fields",
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("primitive.fields.ignore.option"),
                                               this, "m_ignorePrimitives");
     }
 

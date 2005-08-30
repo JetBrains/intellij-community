@@ -24,12 +24,13 @@ import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.TestUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class PublicMethodNotExposedInInterfaceInspection extends MethodInspection {
 
     public String getDisplayName() {
-        return "Public method not exposed in interface";
+        return InspectionGadgetsBundle.message("public.method.not.in.interface.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -37,7 +38,7 @@ public class PublicMethodNotExposedInInterfaceInspection extends MethodInspectio
     }
 
     protected String buildErrorString(PsiElement location) {
-        return "Public method '#ref' is not exposed via an interface #loc";
+        return InspectionGadgetsBundle.message("public.method.not.in.interface.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

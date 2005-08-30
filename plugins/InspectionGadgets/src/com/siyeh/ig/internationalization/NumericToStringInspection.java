@@ -20,6 +20,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class NumericToStringInspection extends ExpressionInspection{
@@ -28,7 +30,7 @@ public class NumericToStringInspection extends ExpressionInspection{
     }
 
     public String getDisplayName(){
-        return "Call to Numeric .toString()";
+        return InspectionGadgetsBundle.message("call.to.numeric.tostring.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -36,7 +38,7 @@ public class NumericToStringInspection extends ExpressionInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "Numeric .#ref()  called in an internationalized context #loc";
+        return InspectionGadgetsBundle.message("call.to.numeric.tostring.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -53,8 +55,8 @@ public class NumericToStringInspection extends ExpressionInspection{
                 return;
             }
             final String methodName = methodExpression.getReferenceName();
-            if(!"toString".equals(methodName)){
-                return;
+            if(!HardcodedMethodConstants.TO_STRING.equals(methodName)) {
+              return;
             }
             final PsiMethod method = expression.resolveMethod();
             if(method == null){

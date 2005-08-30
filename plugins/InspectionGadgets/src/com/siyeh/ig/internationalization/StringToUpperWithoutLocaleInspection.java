@@ -19,6 +19,8 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class StringToUpperWithoutLocaleInspection extends ExpressionInspection {
@@ -26,7 +28,7 @@ public class StringToUpperWithoutLocaleInspection extends ExpressionInspection {
         return "StringToUpperCaseOrToLowerCaseWithoutLocale";
     }
     public String getDisplayName() {
-        return "Call to String.toUpperCase() or .toLowerCase() without a Locale";
+        return InspectionGadgetsBundle.message("string.touppercase.tolowercase.without.locale.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -34,7 +36,7 @@ public class StringToUpperWithoutLocaleInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "String.#ref() called without specifying a Locale in an internationalized context #loc";
+        return InspectionGadgetsBundle.message("string.touppercase.tolowercase.without.locale.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -50,7 +52,7 @@ public class StringToUpperWithoutLocaleInspection extends ExpressionInspection {
                 return;
             }
             final String methodName = methodExpression.getReferenceName();
-            if (!"toUpperCase".equals(methodName) && !"toLowerCase".equals(methodName)) {
+            if (!HardcodedMethodConstants.TO_UPPER_CASE.equals(methodName) && !HardcodedMethodConstants.TO_LOWER_CASE.equals(methodName)) {
                 return;
             }
             final PsiMethod method = expression.resolveMethod();

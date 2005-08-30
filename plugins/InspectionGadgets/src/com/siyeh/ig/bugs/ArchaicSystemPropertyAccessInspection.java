@@ -24,6 +24,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,7 @@ public class ArchaicSystemPropertyAccessInspection extends ExpressionInspection{
     }
 
     public String getDisplayName(){
-        return "Use of archaic system property accessors";
+        return InspectionGadgetsBundle.message("archaic.system.property.accessors.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -53,19 +54,20 @@ public class ArchaicSystemPropertyAccessInspection extends ExpressionInspection{
         final PsiMethodCallExpression call =
                 (PsiMethodCallExpression) parent.getParent();
         if(isIntegerGetInteger(call)){
-            return "Call to Integer.#ref() accesses system properties, perhaps confusingly #loc";
+            return InspectionGadgetsBundle.message("archaic.system.property.accessors.problem.descriptor.Integer");
         } else if(isLongGetLong(call)){
-            return "Call to Long.#ref() accesses system properties, perhaps confusingly #loc";
+            return InspectionGadgetsBundle.message("archaic.system.property.accessors.problem.descriptor.Long");
         } else{
-            return "Call to Boolean.#ref()accesses system properties, perhaps confusingly #loc";
+            return InspectionGadgetsBundle.message("archaic.system.property.accessors.problem.descriptor.Boolean");
         }
     }
 
     private static class ReplaceWithParseMethodFix extends InspectionGadgetsFix{
         public String getName(){
-            return "Replace with parse method";
+            return InspectionGadgetsBundle.message("archaic.system.property.accessors.replace.parse.quickfix");
         }
 
+        @SuppressWarnings({"HardCodedStringLiteral"})
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
             final PsiIdentifier location =
@@ -94,9 +96,10 @@ public class ArchaicSystemPropertyAccessInspection extends ExpressionInspection{
     private static class ReplaceWithStandardPropertyAccessFix
             extends InspectionGadgetsFix{
         public String getName(){
-            return "Replace with standard property access";
+            return InspectionGadgetsBundle.message("archaic.system.property.accessors.replace.standard.quickfix");
         }
 
+        @SuppressWarnings({"HardCodedStringLiteral"})
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
             final PsiIdentifier location =
@@ -152,6 +155,7 @@ public class ArchaicSystemPropertyAccessInspection extends ExpressionInspection{
         }
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     private static boolean isIntegerGetInteger(
             PsiMethodCallExpression expression){
         final PsiReferenceExpression methodExpression = expression
@@ -178,6 +182,7 @@ public class ArchaicSystemPropertyAccessInspection extends ExpressionInspection{
         return "java.lang.Integer".equals(className);
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     private static boolean isLongGetLong(PsiMethodCallExpression expression){
         final PsiReferenceExpression methodExpression = expression
                 .getMethodExpression();
@@ -185,7 +190,7 @@ public class ArchaicSystemPropertyAccessInspection extends ExpressionInspection{
             return false;
         }
         final String methodName = methodExpression.getReferenceName();
-        if(!"getInteger".equals(methodName)){
+        if(!"getLong".equals(methodName)){
             return false;
         }
         final PsiMethod method = expression.resolveMethod();
@@ -200,9 +205,10 @@ public class ArchaicSystemPropertyAccessInspection extends ExpressionInspection{
         if(className == null){
             return false;
         }
-        return "java.lang.Integer".equals(className);
+        return "java.lang.Long".equals(className);
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     private static boolean isBooleanGetBoolean(
             PsiMethodCallExpression expression){
         final PsiReferenceExpression methodExpression = expression

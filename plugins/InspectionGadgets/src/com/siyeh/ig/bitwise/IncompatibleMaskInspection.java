@@ -23,6 +23,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +33,7 @@ public class IncompatibleMaskInspection extends ExpressionInspection{
     }
 
     public String getDisplayName(){
-        return "Incompatible bitwise mask operation";
+        return InspectionGadgetsBundle.message("incompatible.mask.operation.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -49,9 +50,9 @@ public class IncompatibleMaskInspection extends ExpressionInspection{
         final PsiJavaToken operationSign = binaryExpression.getOperationSign();
         final IElementType tokenType = operationSign.getTokenType();
         if(tokenType.equals(JavaTokenType.EQEQ)){
-            return "#ref is always false #loc";
+            return InspectionGadgetsBundle.message("incompatible.mask.operation.problem.descriptor.always.false");
         } else{
-            return "#ref is always true #loc";
+            return InspectionGadgetsBundle.message("incompatible.mask.operation.problem.descriptor.always.true");
         }
     }
 

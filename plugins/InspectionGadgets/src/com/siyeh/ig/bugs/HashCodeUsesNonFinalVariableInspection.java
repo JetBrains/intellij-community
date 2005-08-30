@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class HashCodeUsesNonFinalVariableInspection extends ExpressionInspection {
@@ -27,7 +28,7 @@ public class HashCodeUsesNonFinalVariableInspection extends ExpressionInspection
         return "NonFinalFieldReferencedInHashCode";
     }
     public String getDisplayName() {
-        return "Non-final field referenced in 'hashCode()'";
+        return InspectionGadgetsBundle.message("non.final.field.in.hashcode.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -36,7 +37,7 @@ public class HashCodeUsesNonFinalVariableInspection extends ExpressionInspection
 
 
     public String buildErrorString(PsiElement location) {
-        return "Non-final field #ref accessed in hashCode()  #loc";
+        return InspectionGadgetsBundle.message("non.final.field.in.hashcode.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

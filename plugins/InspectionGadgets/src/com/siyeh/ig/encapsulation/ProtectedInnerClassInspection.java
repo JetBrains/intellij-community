@@ -24,13 +24,14 @@ import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MoveClassFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ProtectedInnerClassInspection extends ClassInspection {
     private final MoveClassFix fix = new MoveClassFix();
 
     public String getDisplayName() {
-        return "Protected inner class";
+        return InspectionGadgetsBundle.message("protected.inner.class.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -38,7 +39,7 @@ public class ProtectedInnerClassInspection extends ClassInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Protected inner class #ref #loc";
+        return InspectionGadgetsBundle.message("protected.inner.class.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {

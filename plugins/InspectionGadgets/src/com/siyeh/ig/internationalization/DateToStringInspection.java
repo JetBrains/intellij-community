@@ -24,6 +24,8 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class DateToStringInspection extends ExpressionInspection {
@@ -31,7 +33,7 @@ public class DateToStringInspection extends ExpressionInspection {
         return "CallToDateToString";
     }
     public String getDisplayName() {
-        return "Call to Date.toString()";
+        return InspectionGadgetsBundle.message("call.to.date.tostring.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -39,7 +41,7 @@ public class DateToStringInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Date.#ref() used in an internationalized context #loc";
+        return InspectionGadgetsBundle.message("call.to.date.tostring.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -51,8 +53,8 @@ public class DateToStringInspection extends ExpressionInspection {
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final String methodName = MethodCallUtils.getMethodName(expression);
-            if (!"toString".equals(methodName)) {
-                return;
+            if (!HardcodedMethodConstants.TO_STRING.equals(methodName)) {
+              return;
             }
             final PsiType targetType = MethodCallUtils.getTargetType(expression);
             if (!TypeUtils.typeEquals("java.util.Date", targetType)) {

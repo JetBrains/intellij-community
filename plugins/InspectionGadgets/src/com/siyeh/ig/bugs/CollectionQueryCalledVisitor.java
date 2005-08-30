@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 class CollectionQueryCalledVisitor extends PsiRecursiveElementVisitor{
     /**
          * @noinspection StaticCollection

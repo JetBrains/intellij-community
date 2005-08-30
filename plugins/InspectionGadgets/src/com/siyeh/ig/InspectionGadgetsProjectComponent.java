@@ -33,6 +33,7 @@ public class InspectionGadgetsProjectComponent implements ProjectComponent{
     }
 
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     public void projectOpened(){
         final Application application = ApplicationManager.getApplication();
         final InspectionGadgetsPlugin plugin =

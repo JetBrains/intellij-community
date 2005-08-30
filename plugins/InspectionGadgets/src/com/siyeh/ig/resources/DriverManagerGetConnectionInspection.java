@@ -19,6 +19,8 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class DriverManagerGetConnectionInspection extends ExpressionInspection {
@@ -27,7 +29,7 @@ public class DriverManagerGetConnectionInspection extends ExpressionInspection {
     }
 
     public String getDisplayName() {
-        return "Use of DriverManager to get JDBC connection";
+        return InspectionGadgetsBundle.message("drivermanager.call.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -35,7 +37,7 @@ public class DriverManagerGetConnectionInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Call to DriverManager.#ref() #loc";
+        return InspectionGadgetsBundle.message("drivermanager.call.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -62,7 +64,7 @@ public class DriverManagerGetConnectionInspection extends ExpressionInspection {
             final PsiReferenceExpression methodExpression = expression.getMethodExpression();
 
             final String methodName = methodExpression.getReferenceName();
-            if (!"getConnection".equals(methodName) ) {
+            if (!HardcodedMethodConstants.GET_CONNECTION.equals(methodName) ) {
                 return false;
             }
             final PsiMethod method = expression.resolveMethod();

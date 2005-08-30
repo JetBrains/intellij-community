@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
 
 import javax.swing.*;
 
@@ -31,7 +32,7 @@ public class OverlyLargePrimitiveArrayInitializerInspection
     public int m_limit = 64;
 
     public String getDisplayName(){
-        return "Overly large initializer for array of primitive type";
+        return InspectionGadgetsBundle.message("large.initializer.primitive.type.array.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -41,12 +42,11 @@ public class OverlyLargePrimitiveArrayInitializerInspection
     public String buildErrorString(PsiElement location){
         final PsiExpression expression = (PsiExpression) location;
         final int numElements = calculateNumElements(expression);
-        return "Primitive array initializer with too many elements (" +
-                numElements + ") #loc";
+        return InspectionGadgetsBundle.message("large.initializer.primitive.type.array.problem.descriptor", numElements);
     }
 
     public JComponent createOptionsPanel(){
-        return new SingleIntegerFieldOptionsPanel("Maximum number of elements ",
+        return new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("large.initializer.primitive.type.array.maximum.number.of.elements.option"),
                                                   this, "m_limit");
     }
 

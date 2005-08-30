@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class NonFinalCloneInspection extends MethodInspection{
@@ -43,8 +44,8 @@ public class NonFinalCloneInspection extends MethodInspection{
         public void visitMethod(@NotNull PsiMethod method){
             super.visitMethod(method);
             final String name = method.getName();
-            if(!"clone".equals(name)){
-                return;
+            if(!HardcodedMethodConstants.CLONE.equals(name)) {
+              return;
             }
             final PsiParameterList parameterList = method.getParameterList();
             if(parameterList == null){

@@ -21,6 +21,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.CollectionUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ReturnOfCollectionFieldInspection extends StatementInspection{
@@ -29,7 +30,7 @@ public class ReturnOfCollectionFieldInspection extends StatementInspection{
     }
 
     public String getDisplayName(){
-        return "Return of Collection or array field";
+        return InspectionGadgetsBundle.message("return.of.collection.array.field.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -41,9 +42,9 @@ public class ReturnOfCollectionFieldInspection extends StatementInspection{
         assert field != null;
         final PsiType type = field.getType();
         if(type.getArrayDimensions() > 0){
-            return "'return' of array field #ref #loc";
+            return InspectionGadgetsBundle.message("return.of.collection.array.field.problem.descriptor.array");
         } else{
-            return "'return' of Collection field #ref #loc";
+            return InspectionGadgetsBundle.message("return.of.collection.array.field.problem.descriptor.collection");
         }
     }
 

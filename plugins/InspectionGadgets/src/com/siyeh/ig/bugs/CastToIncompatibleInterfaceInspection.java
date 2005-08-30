@@ -19,11 +19,12 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class CastToIncompatibleInterfaceInspection extends ExpressionInspection{
     public String getDisplayName(){
-        return "Casting to incompatible interface";
+        return InspectionGadgetsBundle.message("casting.to.incompatible.interface.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -31,7 +32,7 @@ public class CastToIncompatibleInterfaceInspection extends ExpressionInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "Cast to incompatible interface #ref #loc";
+        return InspectionGadgetsBundle.message("casting.to.incompatible.interface.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){

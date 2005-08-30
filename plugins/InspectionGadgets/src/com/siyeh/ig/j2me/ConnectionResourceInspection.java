@@ -20,7 +20,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class ConnectionResourceInspection extends ExpressionInspection{
     public String getID(){
@@ -28,7 +31,7 @@ public class ConnectionResourceInspection extends ExpressionInspection{
     }
 
     public String getDisplayName(){
-        return "Connection opened but not safely closed";
+        return InspectionGadgetsBundle.message("connection.opened.not.safely.closed.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -39,8 +42,7 @@ public class ConnectionResourceInspection extends ExpressionInspection{
         final PsiExpression expression = (PsiExpression) location;
         final PsiType type = expression.getType();
         final String text = type.getPresentableText();
-        return text +
-                       " should be opened in a try block, and closed in a finally block #loc";
+        return InspectionGadgetsBundle.message("resource.opened.not.closed.problem.descriptor", text);
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -48,7 +50,7 @@ public class ConnectionResourceInspection extends ExpressionInspection{
     }
 
     private static class RecordStoreResourceVisitor extends BaseInspectionVisitor{
-    
+
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             if(!isConnectionFactoryMethod(expression)) {
@@ -142,7 +144,8 @@ public class ConnectionResourceInspection extends ExpressionInspection{
                 return;
             }
             final String methodName = methodExpression.getReferenceName();
-            if(!"closeRecordStore".equals(methodName)){
+            @NonNls final String closeStore = "closeRecordStore";
+            if(!closeStore.equals(methodName)){
                 return;
             }
             final PsiExpression qualifier =
@@ -172,8 +175,8 @@ public class ConnectionResourceInspection extends ExpressionInspection{
             return false;
         }
         final String methodName = methodExpression.getReferenceName();
-        if(!"open".equals(methodName)) {
-            return false;
+        if(!HardcodedMethodConstants.OPEN.equals(methodName)) {
+          return false;
         }
         final PsiMethod method = expression.resolveMethod();
         if(method == null)
@@ -186,7 +189,8 @@ public class ConnectionResourceInspection extends ExpressionInspection{
             return false;
         }
         final String className = containingClass.getQualifiedName();
-        return "javax.microedition.io.Connector".equals(className);
+        @NonNls final String microeditionConnector = "javax.microedition.io.Connector";
+        return microeditionConnector.equals(className);
     }
 
 }

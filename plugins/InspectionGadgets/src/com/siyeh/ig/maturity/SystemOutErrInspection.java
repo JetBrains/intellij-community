@@ -19,6 +19,8 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class SystemOutErrInspection extends ExpressionInspection {
@@ -26,7 +28,7 @@ public class SystemOutErrInspection extends ExpressionInspection {
         return "UseOfSystemOutOrSystemErr";
     }
     public String getDisplayName() {
-        return "Use of System.out or System.err";
+        return InspectionGadgetsBundle.message("use.system.out.err.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -36,7 +38,7 @@ public class SystemOutErrInspection extends ExpressionInspection {
 
 
     public String buildErrorString(PsiElement location) {
-        return "Uses of System.out and System.err should probably be replaced with more robust logging #loc";
+        return InspectionGadgetsBundle.message("use.system.out.err.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -49,7 +51,7 @@ public class SystemOutErrInspection extends ExpressionInspection {
             super.visitReferenceExpression(expression);
 
             final String name = expression.getReferenceName();
-            if (!"out".equals(name) && !"err".equals(name)) {
+            if (!HardcodedMethodConstants.OUT.equals(name) && !HardcodedMethodConstants.ERR.equals(name)) {
                 return;
             }
             final PsiElement referent = expression.resolve();

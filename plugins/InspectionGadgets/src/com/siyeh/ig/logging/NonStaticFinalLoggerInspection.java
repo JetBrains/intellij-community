@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.RegExInputVerifier;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -37,7 +38,7 @@ public class NonStaticFinalLoggerInspection extends ClassInspection {
     }
 
     public String getDisplayName() {
-        return "Non-constant logger";
+        return InspectionGadgetsBundle.message("non.constant.logger.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -49,7 +50,7 @@ public class NonStaticFinalLoggerInspection extends ClassInspection {
         final GridBagLayout layout = new GridBagLayout();
         final JPanel panel = new JPanel(layout);
 
-        final JLabel classNameLabel = new JLabel("Logger class name:");
+        final JLabel classNameLabel = new JLabel(InspectionGadgetsBundle.message("logger.name.option"));
         classNameLabel.setHorizontalAlignment(SwingConstants.TRAILING);
 
         final JTextField loggerClassNameField = new JTextField();
@@ -96,7 +97,7 @@ public class NonStaticFinalLoggerInspection extends ClassInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Non-constant logger field #ref #loc";
+        return InspectionGadgetsBundle.message("non.constant.logger.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

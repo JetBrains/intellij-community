@@ -16,6 +16,7 @@
 package com.siyeh.ig.cloneable;
 
 import com.intellij.psi.*;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 class CallToSuperCloneVisitor extends PsiRecursiveElementVisitor{
@@ -42,7 +43,7 @@ class CallToSuperCloneVisitor extends PsiRecursiveElementVisitor{
             return;
         }
         final String methodName = methodExpression.getReferenceName();
-        if(!"clone".equals(methodName)){
+        if(!HardcodedMethodConstants.CLONE.equals(methodName)){
             return;
         }
         callToSuperCloneFound = true;

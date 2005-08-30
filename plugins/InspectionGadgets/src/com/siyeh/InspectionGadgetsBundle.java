@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2000-2005 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.telemetry;
+package com.siyeh;
 
-import org.jetbrains.annotations.NonNls;
+import com.intellij.CommonBundle;
 
-import javax.swing.*;
-import java.net.URL;
+import java.text.MessageFormat;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
 
-class IconHelper{
-    private IconHelper(){
-        super();
-    }
+/**
+ * @author max
+ */
+public class InspectionGadgetsBundle {
+  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.siyeh.InspectionGadgetsBundle");
 
-    public static ImageIcon getIcon(@NonNls String location){
-        final Class<IconHelper> thisClass = IconHelper.class;
-        final URL resource = thisClass.getResource(location);
-        return new ImageIcon(resource);
-    }
+  private InspectionGadgetsBundle() {}
+
+  public static String message(String key, Object... params) {
+    return CommonBundle.message(key, params);
+  }
 }

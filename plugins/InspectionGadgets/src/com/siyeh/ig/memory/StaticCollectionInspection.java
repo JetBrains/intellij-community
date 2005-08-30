@@ -24,6 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.VariableInspection;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -34,7 +35,7 @@ public class StaticCollectionInspection extends VariableInspection {
     public boolean m_ignoreWeakCollections = false;
 
     public String getDisplayName() {
-        return "Static collection";
+        return InspectionGadgetsBundle.message("static.collection.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -42,11 +43,11 @@ public class StaticCollectionInspection extends VariableInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Static collection #ref #loc";
+        return InspectionGadgetsBundle.message("static.collection.problem.descriptor");
     }
 
     public JComponent createOptionsPanel(){
-        return new SingleCheckboxOptionsPanel("Ignore weak static collections or maps",
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("static.collection.ignore.option"),
                                               this, "m_ignoreWeakCollections");
     }
     public BaseInspectionVisitor buildVisitor() {

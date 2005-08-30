@@ -34,19 +34,24 @@ public class TrivialStringConcatenationInspection extends ExpressionInspection{
     private static final Map<String,String> s_typeToWrapperMap = new HashMap<String, String>(6);
 
     static{
-        s_typeToWrapperMap.put("char", "Character");
-        s_typeToWrapperMap.put("short", "Short");
-        s_typeToWrapperMap.put("int", "Integer");
-        s_typeToWrapperMap.put("long", "Long");
-        s_typeToWrapperMap.put("float", "Float");
-        s_typeToWrapperMap.put("double", "Double");
-        s_typeToWrapperMap.put("boolean", "Boolean");
-        s_typeToWrapperMap.put("byte", "Byte");
+      initTypeToWrapperMap();
     }
 
-    public String getID(){
-        return "ConcatenationWithEmptyString";
-    }
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private static void initTypeToWrapperMap() {
+    s_typeToWrapperMap.put("char", "Character");
+    s_typeToWrapperMap.put("short", "Short");
+    s_typeToWrapperMap.put("int", "Integer");
+    s_typeToWrapperMap.put("long", "Long");
+    s_typeToWrapperMap.put("float", "Float");
+    s_typeToWrapperMap.put("double", "Double");
+    s_typeToWrapperMap.put("boolean", "Boolean");
+    s_typeToWrapperMap.put("byte", "Byte");
+  }
+
+  public String getID(){
+      return "ConcatenationWithEmptyString";
+  }
 
     public String getDisplayName(){
         return "Concatenation with empty string";

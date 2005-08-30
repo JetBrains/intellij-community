@@ -72,6 +72,6 @@ public class BoolUtils {
             return false;
         }
         final String text = test.getText();
-        return "true".equals(text);
+        return PsiKeyword.TRUE.equals(text);
     }
 }

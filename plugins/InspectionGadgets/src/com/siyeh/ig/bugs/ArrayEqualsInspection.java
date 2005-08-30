@@ -24,13 +24,14 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ArrayEqualsInspection extends ExpressionInspection{
     private InspectionGadgetsFix fix = new ArrayEqualsFix();
 
     public String getDisplayName(){
-        return "'.equals()' called on array type";
+        return InspectionGadgetsBundle.message("equals.called.on.array.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -38,7 +39,7 @@ public class ArrayEqualsInspection extends ExpressionInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return ".#ref() between arrays should probably be Arrays.equals() #loc";
+        return InspectionGadgetsBundle.message("equals.called.on.array.problem.descriptor");
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
@@ -47,9 +48,10 @@ public class ArrayEqualsInspection extends ExpressionInspection{
 
     private static class ArrayEqualsFix extends InspectionGadgetsFix{
         public String getName(){
-            return "replace with Arrays.equals";
+            return InspectionGadgetsBundle.message("equals.called.on.array.replace.quickfix");
         }
 
+        @SuppressWarnings({"HardCodedStringLiteral"})
         public void doFix(Project project, ProblemDescriptor descriptor)
                                                                          throws IncorrectOperationException{
             final PsiIdentifier name =

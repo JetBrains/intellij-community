@@ -17,6 +17,8 @@ package com.siyeh.ig.telemetry;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.CommonBundle;
+import com.siyeh.InspectionGadgetsBundle;
 
 import javax.swing.*;
 
@@ -28,7 +30,7 @@ class ResetTelemetryAction extends AnAction{
             IconHelper.getIcon("/actions/reset.png");
     public ResetTelemetryAction(InspectionGadgetsTelemetry telemetry,
                                 TelemetryDisplay display){
-        super("Reset" , "Reset telemetry data", resetIcon);
+        super(CommonBundle.message("button.reset") , InspectionGadgetsBundle.message("action.reset.telemetry.description"), resetIcon);
         this.telemetry = telemetry;
         this.display = display;
     }

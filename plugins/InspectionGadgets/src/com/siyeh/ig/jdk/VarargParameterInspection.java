@@ -22,6 +22,7 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class VarargParameterInspection extends MethodInspection {
@@ -29,7 +30,7 @@ public class VarargParameterInspection extends MethodInspection {
         return "VariableArgumentMethod";
     }
     public String getDisplayName() {
-        return "Variable argument method";
+        return InspectionGadgetsBundle.message("variable.argument.method.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -37,7 +38,7 @@ public class VarargParameterInspection extends MethodInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Variable argument method '#ref' #loc";
+        return InspectionGadgetsBundle.message("variable.argument.method.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

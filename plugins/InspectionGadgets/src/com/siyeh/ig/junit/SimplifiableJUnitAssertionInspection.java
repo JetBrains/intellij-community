@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
@@ -350,7 +351,7 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
         if(testArg == null){
             return false;
         }
-        return "false".equals(testArg.getText());
+        return PsiKeyword.FALSE.equals(testArg.getText());
     }
 
     private static boolean isAssertFalseThatCouldBeFail(PsiMethodCallExpression expression){
@@ -392,7 +393,7 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
         if(testArg == null){
             return false;
         }
-        return "true".equals(testArg.getText());
+        return PsiKeyword.TRUE.equals(testArg.getText());
     }
 
     private static boolean isAssertEqualsThatCouldBeAssertLiteral(PsiMethodCallExpression expression){
@@ -449,11 +450,11 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
             return false;
         }
         final String text = arg.getText();
-        return "null".equals(text) || "true".equals(text) ||
-                       "false".equals(text);
+        return PsiKeyword.NULL.equals(text) || PsiKeyword.TRUE.equals(text) ||
+               PsiKeyword.FALSE.equals(text);
     }
 
-    private static boolean isEqualityComparison(PsiExpression testArg){
+  private static boolean isEqualityComparison(PsiExpression testArg){
         if(testArg instanceof PsiBinaryExpression){
             final PsiJavaToken sign =
                     ((PsiBinaryExpression) testArg).getOperationSign();
@@ -478,8 +479,8 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
             final PsiReferenceExpression methodExpression =
                     call.getMethodExpression();
             final String methodName = methodExpression.getReferenceName();
-            if(!"equals".equals(methodName)){
-                return false;
+            if(!HardcodedMethodConstants.EQUALS.equals(methodName)) {
+              return false;
             }
             final PsiExpressionList argumentList = call.getArgumentList();
             if(argumentList == null){

@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -34,12 +35,14 @@ public class MalformedFormatStringInspection extends ExpressionInspection{
     private static final Set<String> formatMethodNames = new HashSet<String>(5);
 
     static {
-        formatMethodNames.add("format");
-        formatMethodNames.add("printf");
+      //noinspection HardCodedStringLiteral
+      formatMethodNames.add("format");
+      //noinspection HardCodedStringLiteral
+      formatMethodNames.add("printf");
     }
 
     public String getDisplayName(){
-        return "Malformed format string";
+        return InspectionGadgetsBundle.message("malformed.format.string.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -73,16 +76,16 @@ public class MalformedFormatStringInspection extends ExpressionInspection{
         try{
             validators = FormatDecode.decode(value);
         }  catch(Exception ignore){
-            return "Format string #ref is malformed #loc";
+            return InspectionGadgetsBundle.message("malformed.format.string.problem.descriptor.malformed");
         }
         final int numArgs = args.length - (formatArgPosition + 1);
         if(validators.length < numArgs){
-            return "Too many arguments for format string #ref #loc";
+            return InspectionGadgetsBundle.message("malformed.format.string.problem.descriptor.too.many.arguments");
         }
         if(validators.length > numArgs){
-            return "Too few arguments for format string #ref #loc";
+            return InspectionGadgetsBundle.message("malformed.format.string.problem.descriptor.too.few.arguments");
         }
-        return "Format string #ref does not match the type of its arguments #loc";
+        return InspectionGadgetsBundle.message("malformed.format.string.problem.descriptor.arguments.do.not.match.type");
     }
 
     public BaseInspectionVisitor buildVisitor(){

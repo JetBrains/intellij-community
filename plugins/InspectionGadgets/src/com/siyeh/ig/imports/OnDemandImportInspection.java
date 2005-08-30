@@ -20,12 +20,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class OnDemandImportInspection extends ClassInspection {
 
     public String getDisplayName() {
-        return "* import";
+        return InspectionGadgetsBundle.message("import.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -33,7 +34,7 @@ public class OnDemandImportInspection extends ClassInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Importing package #ref.*  #loc";
+        return InspectionGadgetsBundle.message("import.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

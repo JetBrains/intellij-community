@@ -20,12 +20,13 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class MethodCallInLoopConditionInspection extends StatementInspection {
 
     public String getDisplayName() {
-        return "Method call in loop condition";
+        return InspectionGadgetsBundle.message("method.call.in.loop.condition.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -33,7 +34,7 @@ public class MethodCallInLoopConditionInspection extends StatementInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Call to method '#ref()' in loop condition #loc";
+        return InspectionGadgetsBundle.message("method.call.in.loop.condition.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

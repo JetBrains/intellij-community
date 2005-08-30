@@ -19,12 +19,13 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.VariableInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class UseOfProcessBuilderInspection extends VariableInspection {
 
     public String getDisplayName() {
-        return "Use of java.lang.ProcessBuilder class";
+        return InspectionGadgetsBundle.message("use.processbuilder.class.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -32,7 +33,7 @@ public class UseOfProcessBuilderInspection extends VariableInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Use of #ref is non-portable #loc";
+        return InspectionGadgetsBundle.message("use.processbuilder.class.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

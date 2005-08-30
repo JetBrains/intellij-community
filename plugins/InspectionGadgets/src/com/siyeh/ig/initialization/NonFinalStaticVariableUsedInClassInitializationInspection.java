@@ -21,11 +21,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.InspectionGadgetsBundle;
 
 public class NonFinalStaticVariableUsedInClassInitializationInspection
                                                                        extends ExpressionInspection{
     public String getDisplayName(){
-        return "Non-final static variable is used during class initialization";
+        return InspectionGadgetsBundle.message("non.final.static.variable.initialization.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -33,7 +34,7 @@ public class NonFinalStaticVariableUsedInClassInitializationInspection
     }
 
     public String buildErrorString(PsiElement location){
-        return "Non-final static variable #ref used during class initialization #loc";
+        return InspectionGadgetsBundle.message("non.final.static.variable.initialization.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -66,7 +67,7 @@ public class NonFinalStaticVariableUsedInClassInitializationInspection
                     PsiTreeUtil.getParentOfType(expression,
                                                 PsiClassInitializer.class);
             if(initializer != null &&
-                    initializer.hasModifierProperty(PsiModifier.STATIC)){
+               initializer.hasModifierProperty(PsiModifier.STATIC)){
                 if(!PsiUtil.isOnAssignmentLeftHand(expression)){
                     return true;
                 }
@@ -74,7 +75,7 @@ public class NonFinalStaticVariableUsedInClassInitializationInspection
             final PsiField field =
                     PsiTreeUtil.getParentOfType(expression, PsiField.class);
             return field != null &&
-                    field.hasModifierProperty(PsiModifier.STATIC);
+                   field.hasModifierProperty(PsiModifier.STATIC);
         }
     }
 }

@@ -21,6 +21,8 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameterList;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class FinalizeInspection extends MethodInspection {
@@ -29,7 +31,7 @@ public class FinalizeInspection extends MethodInspection {
     }
 
     public String getDisplayName() {
-        return "'finalize()' declaration";
+        return InspectionGadgetsBundle.message("finalize.declaration.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -37,7 +39,7 @@ public class FinalizeInspection extends MethodInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "#ref() declared #loc";
+        return InspectionGadgetsBundle.message("finalize.declaration.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -49,7 +51,7 @@ public class FinalizeInspection extends MethodInspection {
         public void visitMethod(@NotNull PsiMethod method) {
             //note: no call to super;
             final String methodName = method.getName();
-            if (!"finalize".equals(methodName)) {
+            if (!HardcodedMethodConstants.FINALIZE.equals(methodName)) {
                 return;
             }
             final PsiParameterList parameterList = method.getParameterList();

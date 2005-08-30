@@ -25,9 +25,12 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import org.jetbrains.annotations.NonNls;
 
 public class AutoBoxingInspection extends ExpressionInspection {
     /** @noinspection StaticCollection*/
@@ -35,26 +38,31 @@ public class AutoBoxingInspection extends ExpressionInspection {
     private final AutoBoxingFix fix = new AutoBoxingFix();
 
     static {
-        s_boxingClasses.put("int", "Integer");
-        s_boxingClasses.put("short", "Short");
-        s_boxingClasses.put("boolean", "Boolean");
-        s_boxingClasses.put("long", "Long");
-        s_boxingClasses.put("byte", "Byte");
-        s_boxingClasses.put("float", "Float");
-        s_boxingClasses.put("double", "Double");
-        s_boxingClasses.put("char", "Character");
+      initBoxingClasses();
     }
 
-    public String getDisplayName() {
-        return "Auto-boxing";
-    }
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private static void initBoxingClasses() {
+    s_boxingClasses.put("int", "Integer");
+    s_boxingClasses.put("short", "Short");
+    s_boxingClasses.put("boolean", "Boolean");
+    s_boxingClasses.put("long", "Long");
+    s_boxingClasses.put("byte", "Byte");
+    s_boxingClasses.put("float", "Float");
+    s_boxingClasses.put("double", "Double");
+    s_boxingClasses.put("char", "Character");
+  }
+
+  public String getDisplayName() {
+      return InspectionGadgetsBundle.message("auto.boxing.display.name");
+  }
 
     public String getGroupDisplayName() {
         return GroupNames.JDK_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Auto-boxing #ref #loc";
+        return InspectionGadgetsBundle.message("auto.boxing.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -67,7 +75,7 @@ public class AutoBoxingInspection extends ExpressionInspection {
 
     private static class AutoBoxingFix extends InspectionGadgetsFix {
         public String getName() {
-            return "Make boxing explicit";
+            return InspectionGadgetsBundle.message("auto.boxing.make.boxing.explicit.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
@@ -77,13 +85,14 @@ public class AutoBoxingInspection extends ExpressionInspection {
             assert expectedType != null;
             final String newExpression;
             if (expectedType.equals(PsiType.BOOLEAN)) {
-                newExpression = "Boolean.valueOf(" + expression.getText() + ')';
+              @NonNls final String booleanValueOf = "Boolean.valueOf";
+              newExpression = booleanValueOf + "(" + expression.getText() + ')';
             } else if (s_boxingClasses.containsValue(expectedType.getPresentableText())) {
                 final String classToConstruct = expectedType.getPresentableText();
-                newExpression = "new " + classToConstruct + '(' + expression.getText() + ')';
+                newExpression = PsiKeyword.NEW + " " + classToConstruct + '(' + expression.getText() + ')';
             } else {
                 final String classToConstruct = s_boxingClasses.get(expression.getType().getPresentableText());
-                newExpression = "new " + classToConstruct + '(' + expression.getText() + ')';
+                newExpression = PsiKeyword.NEW + " " + classToConstruct + '(' + expression.getText() + ')';
             }
             replaceExpression(expression, newExpression);
         }

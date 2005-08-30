@@ -21,12 +21,13 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
+import com.siyeh.InspectionGadgetsBundle;
 
 public class TypeParameterHidesVisibleTypeInspection extends ClassInspection{
     private final RenameFix fix = new RenameFix();
 
     public String getDisplayName(){
-        return "Type parameter hides visible type";
+        return InspectionGadgetsBundle.message("type.parameter.hides.visible.type.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -51,8 +52,7 @@ public class TypeParameterHidesVisibleTypeInspection extends ClassInspection{
         final PsiClass aClass =
                 resolveHelper.resolveReferencedClass(unqualifiedClassName,
                                                      containingFile);
-        return "Type parameter '#ref' hides a visible type '" +
-                aClass .getQualifiedName() + "'#loc";
+        return InspectionGadgetsBundle.message("type.parameter.hides.visible.type.problem.descriptor", aClass .getQualifiedName());
     }
 
     public BaseInspectionVisitor buildVisitor(){

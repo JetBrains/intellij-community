@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -28,7 +29,7 @@ import java.util.List;
 public class ForLoopThatDoesntUseLoopVariableInspection
         extends StatementInspection{
     public String getDisplayName(){
-        return "'for' loop where update or condition doesn't use loop variable";
+        return InspectionGadgetsBundle.message("for.loop.not.use.loop.variable.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -36,29 +37,29 @@ public class ForLoopThatDoesntUseLoopVariableInspection
     }
 
     public String buildErrorString(PsiElement location){
-        final List<String> compenentsMissing = new ArrayList<String>(3);
         final PsiJavaToken forToken = (PsiJavaToken) location;
         final PsiForStatement forStatement =
                 (PsiForStatement) forToken.getParent();
 
+        boolean isCondition = false;
+        int count = 0;
         if(!conditionUsesInitializer(forStatement)){
-            compenentsMissing.add("condition");
+            isCondition = true;
+            count ++;
         }
         if(!updateUsesInitializer(forStatement)){
-            compenentsMissing.add("update");
+            count ++;
         }
-        final String missingComponents;
-        final String doString;
-        if(compenentsMissing.size() == 1){
-            missingComponents = compenentsMissing.get(0);
-            doString = "does";
+        if(count == 1){
+          if (isCondition){
+            return InspectionGadgetsBundle.message("for.loop.not.use.loop.variable.problem.descriptor.condition");
+          } else {
+            return InspectionGadgetsBundle.message("for.loop.not.use.loop.variable.problem.descriptor.update");
+          }
         } else{
-            missingComponents = compenentsMissing.get(0) + " and " +
-                    compenentsMissing.get(1);
-            doString = "do";
+          return InspectionGadgetsBundle.message("for.loop.not.use.loop.variable.problem.descriptor.both.condition.and.update");
         }
-        return "#ref statement has " + missingComponents + " which " +
-                       doString + " not use the for loop variable #loc";
+
     }
 
     public BaseInspectionVisitor buildVisitor(){

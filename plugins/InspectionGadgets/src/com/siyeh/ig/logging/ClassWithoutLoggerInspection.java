@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.RegExInputVerifier;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,7 +34,7 @@ public class ClassWithoutLoggerInspection extends ClassInspection {
     public String loggerClassName = "java.util.logging.Logger";
 
     public String getDisplayName() {
-        return "Class without logger";
+        return InspectionGadgetsBundle.message("no.logger.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -45,7 +46,7 @@ public class ClassWithoutLoggerInspection extends ClassInspection {
         final GridBagLayout layout = new GridBagLayout();
         final JPanel panel = new JPanel(layout);
 
-        final JLabel classNameLabel = new JLabel("Logger class name:");
+        final JLabel classNameLabel = new JLabel(InspectionGadgetsBundle.message("logger.name.option"));
         classNameLabel.setHorizontalAlignment(SwingConstants.TRAILING);
 
         final JTextField loggerClassNameField = new JTextField();
@@ -91,7 +92,7 @@ public class ClassWithoutLoggerInspection extends ClassInspection {
         return panel;
     }
     public String buildErrorString(PsiElement location) {
-        return "Class #ref does not declare a logger #loc";
+        return InspectionGadgetsBundle.message("no.logger.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

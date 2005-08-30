@@ -31,21 +31,26 @@ public class IntegerDivisionInFloatingPointContextInspection extends ExpressionI
     private static final Set<String> s_integralTypes = new HashSet<String>(10);
 
     static {
-        s_integralTypes.add("int");
-        s_integralTypes.add("long");
-        s_integralTypes.add("short");
-        s_integralTypes.add("byte");
-        s_integralTypes.add("char");
-        s_integralTypes.add("java.lang.Integer");
-        s_integralTypes.add("java.lang.Long");
-        s_integralTypes.add("java.lang.Short");
-        s_integralTypes.add("java.lang.Byte");
-        s_integralTypes.add("java.lang.Char");
+      initIntegralTypes();
     }
 
-    public String getDisplayName() {
-        return "Integer division in floating point context";
-    }
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private static void initIntegralTypes() {
+    s_integralTypes.add("int");
+    s_integralTypes.add("long");
+    s_integralTypes.add("short");
+    s_integralTypes.add("byte");
+    s_integralTypes.add("char");
+    s_integralTypes.add("java.lang.Integer");
+    s_integralTypes.add("java.lang.Long");
+    s_integralTypes.add("java.lang.Short");
+    s_integralTypes.add("java.lang.Byte");
+    s_integralTypes.add("java.lang.Character");
+  }
+
+  public String getDisplayName() {
+      return "Integer division in floating point context";
+  }
 
     public String getGroupDisplayName() {
         return GroupNames.NUMERIC_GROUP_NAME;

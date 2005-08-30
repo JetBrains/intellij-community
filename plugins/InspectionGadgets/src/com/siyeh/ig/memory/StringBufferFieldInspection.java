@@ -21,12 +21,13 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiType;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.FieldInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class StringBufferFieldInspection extends FieldInspection {
 
     public String getDisplayName() {
-        return "StringBuffer field";
+        return InspectionGadgetsBundle.message("stringbuffer.field.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -38,7 +39,7 @@ public class StringBufferFieldInspection extends FieldInspection {
         assert field != null;
         final PsiType type = field.getType();
         final String typeName = type.getPresentableText();
-        return typeName+ " field '#ref' #loc";
+        return InspectionGadgetsBundle.message("stringbuffer.field.problem.descriptor", typeName);
     }
 
     public BaseInspectionVisitor buildVisitor() {

@@ -19,10 +19,12 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ObjectEqualsNullInspection extends ExpressionInspection {
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     public String getDisplayName() {
         return "Object.equals(null)";
     }
@@ -36,7 +38,7 @@ public class ObjectEqualsNullInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return ".equals(#ref) is probably not what was intended #loc";
+        return InspectionGadgetsBundle.message("object.equals.null.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -65,7 +67,7 @@ public class ObjectEqualsNullInspection extends ExpressionInspection {
                 return false;
             }
             final String text = arg.getText();
-            return "null".equals(text);
+            return PsiKeyword.NULL.equals(text);
         }
 
     }

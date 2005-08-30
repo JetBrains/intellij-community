@@ -26,6 +26,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.AddSerialVersionUIDFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -102,8 +103,8 @@ public class SerializableInnerClassHasSerialVersionUIDFieldInspection extends Cl
             boolean hasSerialVersionUID = false;
             for(PsiField field : fields){
                 final String fieldName = field.getName();
-                if("serialVersionUID".equals(fieldName)){
-                    hasSerialVersionUID = true;
+                if(HardcodedMethodConstants.SERIAL_VERSION_UID.equals(fieldName)) {
+                  hasSerialVersionUID = true;
                 }
             }
             return hasSerialVersionUID;

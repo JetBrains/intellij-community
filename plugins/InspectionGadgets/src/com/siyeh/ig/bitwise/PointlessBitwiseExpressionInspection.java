@@ -26,6 +26,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -37,14 +38,14 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection{
 
     public JComponent createOptionsPanel(){
         return new SingleCheckboxOptionsPanel(
-                "Ignore named constant in determinining pointless expressions",
+                InspectionGadgetsBundle.message("pointless.bitwise.expression.ignore.option.label"),
                 this, "m_ignoreExpressionsContainingConstants");
     }
 
     private final PointlessBitwiseFix fix = new PointlessBitwiseFix();
 
     public String getDisplayName(){
-        return "Pointless bitwise expression";
+        return InspectionGadgetsBundle.message("pointless.bitwise.expression.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -56,9 +57,8 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "#ref can be replaced with " +
-                calculateReplacementExpression((PsiExpression) location)
-                + " #loc";
+        return InspectionGadgetsBundle
+          .message("pointless.bitwise.expression.problem.descriptor", calculateReplacementExpression((PsiExpression)location));
     }
 
     private String calculateReplacementExpression(PsiExpression expression){
@@ -110,7 +110,7 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection{
 
     private class PointlessBitwiseFix extends InspectionGadgetsFix{
         public String getName(){
-            return "Simplify";
+            return InspectionGadgetsBundle.message("pointless.bitwise.expression.simplify.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)

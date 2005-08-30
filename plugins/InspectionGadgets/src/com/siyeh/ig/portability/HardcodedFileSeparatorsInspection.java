@@ -22,7 +22,9 @@ import com.intellij.psi.PsiType;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,13 +37,13 @@ public class HardcodedFileSeparatorsInspection extends ExpressionInspection{
          * be date formats. <code>Pattern</font></b> instances are immutable, so
          * caching the pattern like this is still thread-safe.
          */
-    private static final Pattern DATE_FORMAT_PATTERN =
+    @NonNls private static final Pattern DATE_FORMAT_PATTERN =
             Pattern.compile("\\b[dDmM]+/[dDmM]+(/[yY]+)?");
     /**
          * A regular expression pattern that matches strings which start with a URL
          * protocol, as they're likely to actually be URLs.
          */
-    private static final Pattern URL_PATTERN =
+    @NonNls private static final Pattern URL_PATTERN =
             Pattern.compile("^[a-z][a-z0-9+\\-.]+://.*$");
 
     public String getID(){
@@ -49,7 +51,7 @@ public class HardcodedFileSeparatorsInspection extends ExpressionInspection{
     }
 
     public String getDisplayName(){
-        return "Hardcoded file separator";
+        return InspectionGadgetsBundle.message("hardcoded.file.separator.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -57,7 +59,7 @@ public class HardcodedFileSeparatorsInspection extends ExpressionInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "Hardcoded file separator #ref #loc";
+        return InspectionGadgetsBundle.message("hardcoded.file.separator.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){

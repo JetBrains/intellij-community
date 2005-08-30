@@ -23,6 +23,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class StringBufferToStringInConcatenationInspection extends ExpressionInspection {
@@ -107,8 +108,8 @@ public class StringBufferToStringInConcatenationInspection extends ExpressionIns
             if (methodName == null) {
                 return false;
             }
-            if (!"toString".equals(methodName)) {
-                return false;
+            if (!HardcodedMethodConstants.TO_STRING.equals(methodName)) {
+              return false;
             }
             final PsiParameterList parameterList = method.getParameterList();
             if (parameterList == null) {

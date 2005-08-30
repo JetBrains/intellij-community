@@ -23,6 +23,7 @@ import com.siyeh.ig.FieldInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.InitializationReadUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -37,7 +38,7 @@ public class InstanceVariableUninitializedUseInspection
         return "InstanceVariableUsedBeforeInitialized";
     }
     public String getDisplayName() {
-        return "Instance variable used before initialized";
+        return InspectionGadgetsBundle.message("instance.variable.used.before.initialized.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -45,11 +46,11 @@ public class InstanceVariableUninitializedUseInspection
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Instance variable #ref used before initialized #loc";
+        return InspectionGadgetsBundle.message("instance.variable.used.before.initialized.problem.descriptor");
     }
 
     public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel("Ignore primitive fields",
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("primitive.fields.ignore.option"),
                 this, "m_ignorePrimitives");
     }
 

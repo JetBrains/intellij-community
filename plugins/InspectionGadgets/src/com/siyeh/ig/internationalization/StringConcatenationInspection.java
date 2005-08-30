@@ -21,12 +21,13 @@ import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class StringConcatenationInspection extends ExpressionInspection {
 
     public String getDisplayName() {
-        return "String concatenation";
+        return InspectionGadgetsBundle.message("string.concatenation.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -34,7 +35,7 @@ public class StringConcatenationInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "String concatenation (#ref) in an internationalized context #loc";
+        return InspectionGadgetsBundle.message("string.concatenation.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

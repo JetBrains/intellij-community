@@ -23,19 +23,19 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class EnumAsNameInspection extends BaseInspection{
-    private static final String ENUM_STRING = "enum";
 
-    private final RenameFix fix = new RenameFix();
+  private final RenameFix fix = new RenameFix();
 
     public String getID(){
         return "EnumAsIdentifier";
     }
 
     public String getDisplayName(){
-        return "Use of 'enum' as identifier";
+        return InspectionGadgetsBundle.message("use.enum.as.identifier.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -43,7 +43,7 @@ public class EnumAsNameInspection extends BaseInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "Use of '#ref' as identifier #loc";
+        return InspectionGadgetsBundle.message("use.enum.as.identifier.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
@@ -110,7 +110,7 @@ public class EnumAsNameInspection extends BaseInspection{
         public void visitVariable(@NotNull PsiVariable variable){
             super.visitVariable(variable);
             final String variableName = variable.getName();
-            if(!ENUM_STRING.equals(variableName)){
+            if(!PsiKeyword.ENUM.equals(variableName)) {
                 return;
             }
             registerVariableError(variable);
@@ -119,8 +119,8 @@ public class EnumAsNameInspection extends BaseInspection{
         public void visitMethod(@NotNull PsiMethod method){
             super.visitMethod(method);
             final String name = method.getName();
-            if(!ENUM_STRING.equals(name)){
-                return;
+            if(!PsiKeyword.ENUM.equals(name)) {
+              return;
             }
             registerMethodError(method);
         }
@@ -128,8 +128,8 @@ public class EnumAsNameInspection extends BaseInspection{
         public void visitClass(@NotNull PsiClass aClass){
             //note: no call to super, to avoid drill-down
             final String name = aClass.getName();
-            if(!ENUM_STRING.equals(name)){
-                return;
+            if(!PsiKeyword.ENUM.equals(name)) {
+              return;
             }
             final PsiTypeParameterList params = aClass.getTypeParameterList();
             if(params != null){
@@ -141,8 +141,8 @@ public class EnumAsNameInspection extends BaseInspection{
         public void visitTypeParameter(PsiTypeParameter parameter){
             super.visitTypeParameter(parameter);
             final String name = parameter.getName();
-            if(!ENUM_STRING.equals(name)){
-                return;
+            if(!PsiKeyword.ENUM.equals(name)) {
+              return;
             }
             registerTypeParameterError(parameter);
         }

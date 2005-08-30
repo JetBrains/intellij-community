@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class InstanceofChainInspection extends StatementInspection {
@@ -29,7 +30,7 @@ public class InstanceofChainInspection extends StatementInspection {
     }
 
     public String getDisplayName() {
-        return "Chain of 'instanceof' checks";
+        return InspectionGadgetsBundle.message("chain.of.instanceof.checks.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -37,7 +38,7 @@ public class InstanceofChainInspection extends StatementInspection {
     }
 
     protected String buildErrorString(PsiElement location) {
-        return "Chain of 'instanceof' checks indicates abstraction failure #loc";
+        return InspectionGadgetsBundle.message("chain.of.instanceof.checks.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

@@ -20,12 +20,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class CloneCallsConstructorsInspection extends ExpressionInspection {
 
     public String getDisplayName() {
-        return "'clone()' instantiates objects with constructor";
+        return InspectionGadgetsBundle.message("clone.instantiates.objects.with.constructor.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -33,7 +35,7 @@ public class CloneCallsConstructorsInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "clone() instantiates objects with constructor new #ref() #loc";
+        return InspectionGadgetsBundle.message("clone.instantiates.objects.with.constructor.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -47,7 +49,7 @@ public class CloneCallsConstructorsInspection extends ExpressionInspection {
             boolean wasInClone = m_inClone;
             final String methodName = method.getName();
             final PsiParameterList parameterList = method.getParameterList();
-            final boolean isClone = "clone".equals(methodName) &&
+            final boolean isClone = HardcodedMethodConstants.CLONE.equals(methodName) &&
                     parameterList.getParameters().length == 0;
             if (isClone) {
                 wasInClone = m_inClone;

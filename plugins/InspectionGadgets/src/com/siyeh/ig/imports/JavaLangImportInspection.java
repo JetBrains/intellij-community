@@ -23,13 +23,15 @@ import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DeleteImportFix;
 import com.siyeh.ig.psiutils.ImportUtils;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaLangImportInspection extends ClassInspection{
     private final DeleteImportFix fix = new DeleteImportFix();
 
     public String getDisplayName(){
-        return "java.lang import";
+        return InspectionGadgetsBundle.message("java.lang.import.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -37,7 +39,7 @@ public class JavaLangImportInspection extends ClassInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "Unnecessary import from package java.lang #loc";
+        return InspectionGadgetsBundle.message("java.lang.import.problem.descriptor");
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
@@ -81,7 +83,7 @@ public class JavaLangImportInspection extends ClassInspection{
                 final String text = importStatement.getQualifiedName();
                 if(text != null){
                     if(importStatement.isOnDemand()){
-                        if("java.lang".equals(text)){
+                        if(HardcodedMethodConstants.JAVA_LANG.equals(text)){
                             registerError(importStatement);
                         }
                     } else{
@@ -91,7 +93,7 @@ public class JavaLangImportInspection extends ClassInspection{
                         }
                         final String parentName = text
                                 .substring(0, classNameIndex);
-                        if("java.lang".equals(parentName)){
+                        if(HardcodedMethodConstants.JAVA_LANG.equals(parentName)){
                             if(!ImportUtils
                                     .hasOnDemandImportConflict(text, file)){
                                 registerError(importStatement);

@@ -20,12 +20,13 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class CompareToUsesNonFinalVariableInspection extends ExpressionInspection {
 
     public String getDisplayName() {
-        return "Non-final field referenced in 'compareTo()'";
+        return InspectionGadgetsBundle.message("non.final.field.compareto.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -34,7 +35,7 @@ public class CompareToUsesNonFinalVariableInspection extends ExpressionInspectio
 
 
     public String buildErrorString(PsiElement location) {
-        return "Non-final field #ref accessed in compareTo() #loc";
+        return InspectionGadgetsBundle.message("non.final.field.compareto.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

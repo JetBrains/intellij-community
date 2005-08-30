@@ -24,6 +24,7 @@ public class FormattedTextFieldMacFix{
         super();
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     public static void apply( JFormattedTextField field)
     {
         if(isMacOs()) {
@@ -39,6 +40,7 @@ public class FormattedTextFieldMacFix{
         }
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     private static boolean isMacOs(){
         final String osName = System.getProperty("os.name").toLowerCase();
         if(osName == null)

@@ -26,11 +26,14 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import org.jetbrains.annotations.NonNls;
 
 public class AutoUnboxingInspection extends ExpressionInspection{
     /**
@@ -44,17 +47,9 @@ public class AutoUnboxingInspection extends ExpressionInspection{
     private final AutoUnboxingFix fix = new AutoUnboxingFix();
 
     static{
-        s_unboxingMethods.put("int", "intValue");
-        s_unboxingMethods.put("short", "shortValue");
-        s_unboxingMethods.put("boolean", "booleanValue");
-        s_unboxingMethods.put("long", "longValue");
-        s_unboxingMethods.put("byte", "byteValue");
-        s_unboxingMethods.put("float", "floatValue");
-        s_unboxingMethods.put("long", "longValue");
-        s_unboxingMethods.put("double", "doubleValue");
-        s_unboxingMethods.put("char", "charValue");
+      initUnboxingMethods();
 
-        s_numberTypes.add("java.lang.Integer");
+      s_numberTypes.add("java.lang.Integer");
         s_numberTypes.add("java.lang.Short");
         s_numberTypes.add("java.lang.Long");
         s_numberTypes.add("java.lang.Double");
@@ -64,16 +59,29 @@ public class AutoUnboxingInspection extends ExpressionInspection{
         s_numberTypes.add("java.lang.Number");
     }
 
-    public String getDisplayName(){
-        return "Auto-unboxing";
-    }
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private static void initUnboxingMethods() {
+    s_unboxingMethods.put("int", "intValue");
+    s_unboxingMethods.put("short", "shortValue");
+    s_unboxingMethods.put("boolean", "booleanValue");
+    s_unboxingMethods.put("long", "longValue");
+    s_unboxingMethods.put("byte", "byteValue");
+    s_unboxingMethods.put("float", "floatValue");
+    s_unboxingMethods.put("long", "longValue");
+    s_unboxingMethods.put("double", "doubleValue");
+    s_unboxingMethods.put("char", "charValue");
+  }
+
+  public String getDisplayName(){
+      return InspectionGadgetsBundle.message("auto.unboxing.display.name");
+  }
 
     public String getGroupDisplayName(){
         return GroupNames.JDK_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location){
-        return "Auto-unboxing #ref #loc";
+        return InspectionGadgetsBundle.message("auto.unboxing.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -86,7 +94,7 @@ public class AutoUnboxingInspection extends ExpressionInspection{
 
     private static class AutoUnboxingFix extends InspectionGadgetsFix{
         public String getName(){
-            return "Make unboxing explicit";
+            return InspectionGadgetsBundle.message("auto.unboxing.make.unboxing.explicit.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
@@ -109,8 +117,9 @@ public class AutoUnboxingInspection extends ExpressionInspection{
                 replaceExpression(expression,
                                   expressionText + '.' + boxClassName + "()");
             } else{
-                replaceExpression(expression,
-                                  "((Number)" + expressionText + ")." + boxClassName + "()");
+              @NonNls final String numberKlass = "Number";
+              replaceExpression(expression,
+                                "((" + numberKlass + ")" + expressionText + ")." + boxClassName + "()");
             }
         }
     }

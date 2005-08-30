@@ -19,12 +19,13 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class AssignmentToNullInspection extends ExpressionInspection {
 
     public String getDisplayName() {
-        return "Assignment to 'null'";
+        return InspectionGadgetsBundle.message("assignment.to.null.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -32,7 +33,7 @@ public class AssignmentToNullInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Assignment of variable #ref to null #loc";
+        return InspectionGadgetsBundle.message("assignment.to.null.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -40,11 +41,12 @@ public class AssignmentToNullInspection extends ExpressionInspection {
     }
 
     private static class AssignmentToNullVisitor extends BaseInspectionVisitor {
+        @SuppressWarnings({"HardCodedStringLiteral"})
         public void visitLiteralExpression(@NotNull PsiLiteralExpression value) {
             super.visitLiteralExpression(value);
             final String text = value.getText();
-            if (!"null".equals(text)) {
-                return;
+            if (!PsiKeyword.NULL.equals(text)) {
+              return;
             }
             PsiElement parent = value.getParent();
             while (parent instanceof PsiParenthesizedExpression ||

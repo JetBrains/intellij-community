@@ -21,12 +21,13 @@ import com.intellij.psi.PsiTypeCastExpression;
 import com.intellij.psi.PsiTypeElement;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class CastToConcreteClassInspection extends ExpressionInspection {
 
     public String getDisplayName() {
-        return "Cast to a concrete class";
+        return InspectionGadgetsBundle.message("cast.to.concrete.class.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -34,7 +35,7 @@ public class CastToConcreteClassInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Cast to concrete class #ref #loc";
+        return InspectionGadgetsBundle.message("cast.to.concrete.class.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

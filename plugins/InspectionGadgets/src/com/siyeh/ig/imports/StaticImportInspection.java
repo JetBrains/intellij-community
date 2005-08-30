@@ -24,13 +24,14 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class StaticImportInspection extends ClassInspection{
     private final StaticImportFix fix = new StaticImportFix();
 
     public String getDisplayName(){
-        return "Static import";
+        return InspectionGadgetsBundle.message("static.import.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -38,7 +39,7 @@ public class StaticImportInspection extends ClassInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "Static import #ref  #loc";
+        return InspectionGadgetsBundle.message("static.import.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -51,7 +52,7 @@ public class StaticImportInspection extends ClassInspection{
 
     public static class StaticImportFix extends InspectionGadgetsFix{
         public String getName(){
-            return "Replace with non-static import";
+            return InspectionGadgetsBundle.message("static.import.replace.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)

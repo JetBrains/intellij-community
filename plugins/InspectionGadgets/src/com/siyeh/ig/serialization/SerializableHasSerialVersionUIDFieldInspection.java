@@ -23,6 +23,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.AddSerialVersionUIDFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -97,7 +98,7 @@ public class SerializableHasSerialVersionUIDFieldInspection extends ClassInspect
 
         private boolean isSerialVersionUID(PsiField field) {
             final String methodName = field.getName();
-            return "serialVersionUID".equals(methodName);
+            return HardcodedMethodConstants.SERIAL_VERSION_UID.equals(methodName);
         }
 
     }

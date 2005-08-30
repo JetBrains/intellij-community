@@ -23,6 +23,8 @@ import com.intellij.psi.PsiReferenceExpression;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class ThrowablePrintStackTraceInspection extends ExpressionInspection {
@@ -30,7 +32,7 @@ public class ThrowablePrintStackTraceInspection extends ExpressionInspection {
         return "CallToPrintStackTrace";
     }
     public String getDisplayName() {
-        return "Call to 'printStackTrace()'";
+        return InspectionGadgetsBundle.message("printstacktrace.call.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -38,7 +40,7 @@ public class ThrowablePrintStackTraceInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Call to #ref() should probably be replaced with more robust logging #loc";
+        return InspectionGadgetsBundle.message("printstacktrace.call.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -50,7 +52,7 @@ public class ThrowablePrintStackTraceInspection extends ExpressionInspection {
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final String methodName = MethodCallUtils.getMethodName(expression);
-            if (!"printStackTrace".equals(methodName)) {
+            if (!HardcodedMethodConstants.PRINT_STACK_TRACE.equals(methodName)) {
                 return;
             }
             final PsiExpressionList argumentList = expression.getArgumentList();

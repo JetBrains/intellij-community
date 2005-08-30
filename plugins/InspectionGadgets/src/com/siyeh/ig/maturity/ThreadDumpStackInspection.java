@@ -20,6 +20,8 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class ThreadDumpStackInspection extends ExpressionInspection {
@@ -27,7 +29,7 @@ public class ThreadDumpStackInspection extends ExpressionInspection {
         return "CallToThreadDumpStack";
     }
     public String getDisplayName() {
-        return "Call to 'Thread.dumpStack()'";
+        return InspectionGadgetsBundle.message("dumpstack.call.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -35,7 +37,7 @@ public class ThreadDumpStackInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Call to Thread.#ref() should probably be replaced with more robust logging #loc";
+        return InspectionGadgetsBundle.message("dumpstack.call.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -47,7 +49,7 @@ public class ThreadDumpStackInspection extends ExpressionInspection {
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final String methodName = MethodCallUtils.getMethodName(expression);
-            if (!"dumpStack".equals(methodName)) {
+            if (!HardcodedMethodConstants.DUMP_STACKTRACE.equals(methodName)) {
                 return;
             }
             final PsiExpressionList argumentList = expression.getArgumentList();

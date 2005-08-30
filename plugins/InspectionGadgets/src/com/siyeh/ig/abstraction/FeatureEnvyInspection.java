@@ -22,6 +22,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiNamedElement;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -29,7 +30,7 @@ import java.util.Set;
 public class FeatureEnvyInspection extends MethodInspection {
 
     public String getDisplayName() {
-        return "Feature Envy";
+        return InspectionGadgetsBundle.message("feature.envy.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -38,7 +39,7 @@ public class FeatureEnvyInspection extends MethodInspection {
 
     public String buildErrorString(Object arg) {
         final String className = ((PsiNamedElement) arg).getName();
-        return "Class " + className + " accessed repeatedly in method #ref #loc";
+        return InspectionGadgetsBundle.message("feature.envy.problem.descriptor", className);
     }
 
 

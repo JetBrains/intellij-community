@@ -21,12 +21,13 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class CollectionAddedToSelfInspection extends ExpressionInspection {
 
     public String getDisplayName() {
-        return "Collection added to self";
+        return InspectionGadgetsBundle.message("collection.added.to.self.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -35,7 +36,7 @@ public class CollectionAddedToSelfInspection extends ExpressionInspection {
 
 
     public String buildErrorString(PsiElement location) {
-        return "Collection '#ref' is added to self #loc";
+        return InspectionGadgetsBundle.message("collection.added.to.self.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -54,6 +55,7 @@ public class CollectionAddedToSelfInspection extends ExpressionInspection {
             }
         }
 
+        @SuppressWarnings({"HardCodedStringLiteral"})
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
             super.visitMethodCallExpression(call);
             final PsiReferenceExpression methodExpression = call.getMethodExpression();

@@ -20,12 +20,13 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class TextLabelInSwitchStatementInspection extends StatementInspection {
 
     public String getDisplayName() {
-        return "Text label in 'switch' statement";
+        return InspectionGadgetsBundle.message("text.label.in.switch.statement.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -33,7 +34,7 @@ public class TextLabelInSwitchStatementInspection extends StatementInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Text label #ref: in 'switch' statement #loc ";
+        return InspectionGadgetsBundle.message("text.label.in.switch.statement.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

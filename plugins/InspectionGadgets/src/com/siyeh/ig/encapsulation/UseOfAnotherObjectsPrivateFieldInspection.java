@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class UseOfAnotherObjectsPrivateFieldInspection
@@ -29,7 +30,7 @@ public class UseOfAnotherObjectsPrivateFieldInspection
     }
 
     public String getDisplayName(){
-        return "Accessing a non-public field of another object";
+        return InspectionGadgetsBundle.message("accessing.non.public.field.of.another.object.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -37,7 +38,7 @@ public class UseOfAnotherObjectsPrivateFieldInspection
     }
 
     public String buildErrorString(PsiElement location){
-        return "Direct access of non-public field #ref on another object #loc";
+        return InspectionGadgetsBundle.message("accessing.non.public.field.of.another.object.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){

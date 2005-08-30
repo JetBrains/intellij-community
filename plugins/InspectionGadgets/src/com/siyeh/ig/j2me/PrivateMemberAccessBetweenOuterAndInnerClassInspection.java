@@ -25,13 +25,14 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
         extends ClassInspection{
     public String getDisplayName(){
-        return "Private member access between outer and inner classes";
+        return InspectionGadgetsBundle.message("private.member.access.between.outer.and.inner.classes.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -39,7 +40,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
     }
 
     protected String buildErrorString(Object arg){
-        return "Access to private member of class '" + arg + "' #loc";
+        return InspectionGadgetsBundle.message("private.member.access.between.outer.and.inner.classes.problem.descriptor", arg);
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
@@ -63,7 +64,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
         }
 
         public String getName(){
-            return "Make '" + elementName + "' package local";
+            return InspectionGadgetsBundle.message("private.member.access.between.outer.and.inner.classes.make.local.quickfix", elementName);
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)

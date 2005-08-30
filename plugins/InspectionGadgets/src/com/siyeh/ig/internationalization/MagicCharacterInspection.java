@@ -22,6 +22,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.IntroduceConstantFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -37,7 +38,7 @@ public class MagicCharacterInspection extends ExpressionInspection {
     }
 
     public String getDisplayName() {
-        return "\"Magic character\"";
+        return InspectionGadgetsBundle.message("magic.character.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -45,7 +46,7 @@ public class MagicCharacterInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "\"Magic character\" #ref in an internationalized context #loc";
+        return InspectionGadgetsBundle.message("magic.character.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {

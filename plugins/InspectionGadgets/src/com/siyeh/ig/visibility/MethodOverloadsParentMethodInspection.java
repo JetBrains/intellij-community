@@ -22,6 +22,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -35,7 +36,7 @@ public class MethodOverloadsParentMethodInspection extends MethodInspection{
     }
 
     public String getDisplayName(){
-        return "Method overloads method of superclass";
+        return InspectionGadgetsBundle.message("method.overloads.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -51,7 +52,7 @@ public class MethodOverloadsParentMethodInspection extends MethodInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "Method '#ref' overloads a compatible method of a superclass, when overriding might have been intended #loc";
+        return InspectionGadgetsBundle.message("method.overloads.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){

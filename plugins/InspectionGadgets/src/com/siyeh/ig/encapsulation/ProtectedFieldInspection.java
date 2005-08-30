@@ -23,13 +23,14 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.FieldInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.EncapsulateVariableFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ProtectedFieldInspection extends FieldInspection {
     private final EncapsulateVariableFix fix = new EncapsulateVariableFix();
 
     public String getDisplayName() {
-        return "Protected field";
+        return InspectionGadgetsBundle.message("protected.field.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -37,7 +38,7 @@ public class ProtectedFieldInspection extends FieldInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Protected field #ref #loc";
+        return InspectionGadgetsBundle.message("protected.field.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {

@@ -22,6 +22,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.ExceptionUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -33,7 +34,7 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
     }
 
     public String getDisplayName(){
-        return "'Iterator.next()' which can't throw NoSuchElementException";
+        return InspectionGadgetsBundle.message("iterator.next.no.throw.nosuchelementexception.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -41,7 +42,7 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
     }
 
     public String buildErrorString(PsiElement location){
-        return "Iterator.#ref() which can't throw NoSuchElementException #loc";
+        return InspectionGadgetsBundle.message("iterator.next.no.throw.nosuchelementexception.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -51,6 +52,7 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
     private static class IteratorNextDoesNotThrowNoSuchElementExceptionVisitor
             extends BaseInspectionVisitor{
 
+        @SuppressWarnings({"HardCodedStringLiteral"})
         public void visitMethod(@NotNull PsiMethod method){
             // note: no call to super
             final String name = method.getName();
@@ -113,6 +115,7 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
             }
         }
 
+        @SuppressWarnings({"HardCodedStringLiteral"})
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             if(doesCallIteratorNext){
                 return;

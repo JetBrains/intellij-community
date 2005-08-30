@@ -20,12 +20,14 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class ArrayLengthInLoopConditionInspection extends StatementInspection {
 
     public String getDisplayName() {
-        return "Array.length in loop condition";
+        return InspectionGadgetsBundle.message("array.length.in.loop.condition.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -33,7 +35,7 @@ public class ArrayLengthInLoopConditionInspection extends StatementInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Check of array .#ref in loop condition #loc";
+        return InspectionGadgetsBundle.message("array.length.in.loop.condition.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -77,7 +79,7 @@ public class ArrayLengthInLoopConditionInspection extends StatementInspection {
                 public void visitReferenceExpression(@NotNull PsiReferenceExpression expression){
                     super.visitReferenceExpression(expression);
                     final String name = expression.getReferenceName();
-                    if(!"length".equals(name))
+                    if(!HardcodedMethodConstants.LENGTH.equals(name))
                     {
                         return;
                     }

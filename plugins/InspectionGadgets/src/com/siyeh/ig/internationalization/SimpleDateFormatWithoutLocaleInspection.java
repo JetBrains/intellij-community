@@ -20,12 +20,13 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class SimpleDateFormatWithoutLocaleInspection extends ExpressionInspection {
 
     public String getDisplayName() {
-        return "Instantiating a SimpleDateFormat without a Locale";
+        return InspectionGadgetsBundle.message("instantiating.simpledateformat.without.locale.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -33,7 +34,7 @@ public class SimpleDateFormatWithoutLocaleInspection extends ExpressionInspectio
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Instantiating a #ref without specifying a Locale in an internationalized context #loc";
+        return InspectionGadgetsBundle.message("instantiating.simpledateformat.without.locale.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -44,7 +45,7 @@ public class SimpleDateFormatWithoutLocaleInspection extends ExpressionInspectio
 
         public void visitNewExpression(@NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);
-            if(!TypeUtils.expressionHasType("java.util.SimpleDateFormat", expression))
+            if(!TypeUtils.expressionHasType("java.text.SimpleDateFormat", expression))
             {
                 return;
             }

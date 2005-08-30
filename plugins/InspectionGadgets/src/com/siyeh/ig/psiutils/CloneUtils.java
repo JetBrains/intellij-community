@@ -17,6 +17,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class CloneUtils{
@@ -43,8 +44,8 @@ public class CloneUtils{
 
     public static boolean isClone(@NotNull PsiMethod method){
         final String methodName = method.getName();
-        if(!"clone".equals(methodName)){
-            return false;
+        if(!HardcodedMethodConstants.CLONE.equals(methodName)) {
+          return false;
         }
         final PsiParameterList parameterList = method.getParameterList();
         final PsiParameter[] parameters = parameterList.getParameters();

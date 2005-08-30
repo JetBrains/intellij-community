@@ -22,6 +22,7 @@ import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.performance.VariableAccessVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -36,7 +37,7 @@ public class FieldRepeatedlyAccessedInspection extends MethodInspection {
     }
 
     public String getDisplayName() {
-        return "Field repeatedly accessed in method";
+        return InspectionGadgetsBundle.message("field.repeatedly.accessed.in.method.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -45,11 +46,11 @@ public class FieldRepeatedlyAccessedInspection extends MethodInspection {
 
     public String buildErrorString(Object arg) {
         final String fieldName = ((PsiNamedElement) arg).getName();
-        return "Field " + fieldName + " accessed repeatedly in method #ref #loc";
+        return InspectionGadgetsBundle.message("field.repeatedly.accessed.in.method.problem.descriptor", fieldName);
     }
 
     public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel("Ignore final fields",
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("field.repeatedly.accessed.in.method.ignore.option"),
                 this, "m_ignoreFinalFields");
     }
 

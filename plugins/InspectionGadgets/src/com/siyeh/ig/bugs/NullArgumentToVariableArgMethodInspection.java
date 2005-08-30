@@ -20,11 +20,12 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class NullArgumentToVariableArgMethodInspection extends ExpressionInspection{
     public String getDisplayName(){
-        return "Confusing 'null' argument to var-arg method";
+        return InspectionGadgetsBundle.message("null.argument.to.var.arg.method.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -36,7 +37,7 @@ public class NullArgumentToVariableArgMethodInspection extends ExpressionInspect
     }
 
     public String buildErrorString(PsiElement location){
-        return "Confusing '#ref' argument to var-arg method #loc";
+        return InspectionGadgetsBundle.message("null.argument.to.var.arg.method.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -96,7 +97,7 @@ public class NullArgumentToVariableArgMethodInspection extends ExpressionInspect
                 return false;
             }
             final String text = arg.getText();
-            return "null".equals(text);
+            return PsiKeyword.NULL.equals(text);
         }
     }
 }

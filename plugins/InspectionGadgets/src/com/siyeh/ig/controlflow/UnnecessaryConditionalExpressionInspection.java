@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiKeyword;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
@@ -110,12 +111,12 @@ public class UnnecessaryConditionalExpressionInspection
 
     private static boolean isFalse(PsiExpression expression) {
         final String text = expression.getText();
-        return "false".equals(text);
+        return PsiKeyword.FALSE.equals(text);
     }
 
-    private static boolean isTrue(PsiExpression expression) {
+  private static boolean isTrue(PsiExpression expression) {
         final String text = expression.getText();
-        return "true".equals(text);
+        return PsiKeyword.TRUE.equals(text);
     }
 
 

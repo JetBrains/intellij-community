@@ -20,12 +20,13 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class EnumClassInspection extends ClassInspection {
 
     public String getDisplayName() {
-        return "Enumerated class";
+        return InspectionGadgetsBundle.message("enumerated.class.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -33,7 +34,7 @@ public class EnumClassInspection extends ClassInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Enumerated class '#ref' #loc";
+        return InspectionGadgetsBundle.message("enumerated.class.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

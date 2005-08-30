@@ -19,6 +19,8 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class CloneCallsSuperCloneInspection extends MethodInspection {
@@ -26,7 +28,7 @@ public class CloneCallsSuperCloneInspection extends MethodInspection {
         return "CloneDoesntCallSuperClone";
     }
     public String getDisplayName() {
-        return "'clone()' doesn't call 'super.clone()'";
+        return InspectionGadgetsBundle.message("clone.doesnt.call.super.clone.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -34,7 +36,7 @@ public class CloneCallsSuperCloneInspection extends MethodInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "#ref() doesn't call super.clone()";
+        return InspectionGadgetsBundle.message("clone.doesnt.call.super.clone.problem.descriptor");
     }
 
     public boolean isEnabledByDefault(){
@@ -49,8 +51,8 @@ public class CloneCallsSuperCloneInspection extends MethodInspection {
         public void visitMethod(@NotNull PsiMethod method) {
             //note: no call to super;
             final String methodName = method.getName();
-            if (!"clone".equals(methodName)) {
-                return;
+            if (!HardcodedMethodConstants.CLONE.equals(methodName)) {
+              return;
             }
             if(method.hasModifierProperty(PsiModifier.ABSTRACT) ||
                     method.hasModifierProperty(PsiModifier.NATIVE))

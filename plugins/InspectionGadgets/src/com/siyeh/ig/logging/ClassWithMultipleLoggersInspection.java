@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.RegExInputVerifier;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,7 +34,7 @@ public class ClassWithMultipleLoggersInspection extends ClassInspection {
     public String loggerClassName = "java.util.logging.Logger";
 
     public String getDisplayName() {
-        return "Class with multiple loggers";
+        return InspectionGadgetsBundle.message("multiple.loggers.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -45,7 +46,7 @@ public class ClassWithMultipleLoggersInspection extends ClassInspection {
         final GridBagLayout layout = new GridBagLayout();
         final JPanel panel = new JPanel(layout);
 
-        final JLabel classNameLabel = new JLabel("Logger class name:");
+        final JLabel classNameLabel = new JLabel(InspectionGadgetsBundle.message("logger.name.option"));
         classNameLabel.setHorizontalAlignment(SwingConstants.TRAILING);
 
         final JTextField loggerClassNameField = new JTextField();
@@ -92,7 +93,7 @@ public class ClassWithMultipleLoggersInspection extends ClassInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Class #ref declares multiple loggers #loc";
+        return InspectionGadgetsBundle.message("multiple.loggers.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

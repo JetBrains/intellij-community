@@ -22,13 +22,14 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DeleteImportFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class SamePackageImportInspection extends ClassInspection{
     private final DeleteImportFix fix = new DeleteImportFix();
 
     public String getDisplayName(){
-        return "Import from same package";
+        return InspectionGadgetsBundle.message("import.from.same.package.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -36,7 +37,7 @@ public class SamePackageImportInspection extends ClassInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "Unnecessary import from same package '#ref' #loc";
+        return InspectionGadgetsBundle.message("import.from.same.package.problem.descriptor");
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){

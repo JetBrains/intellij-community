@@ -20,6 +20,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class NoExplicitFinalizeCallsInspection extends ExpressionInspection{
@@ -28,7 +30,7 @@ public class NoExplicitFinalizeCallsInspection extends ExpressionInspection{
     }
 
     public String getDisplayName(){
-        return "'finalize()' called explicitly";
+        return InspectionGadgetsBundle.message("finalize.called.explicitly.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -36,7 +38,7 @@ public class NoExplicitFinalizeCallsInspection extends ExpressionInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "#ref() called explicitly #loc";
+        return InspectionGadgetsBundle.message("finalize.called.explicitly.problem.descriptor");
     }
 
     public boolean isEnabledByDefault(){
@@ -58,8 +60,8 @@ public class NoExplicitFinalizeCallsInspection extends ExpressionInspection{
                 return;
             }
             final String methodName = methodExpression.getReferenceName();
-            if(!"finalize".equals(methodName)){
-                return;
+            if(!HardcodedMethodConstants.FINALIZE.equals(methodName)) {
+              return;
             }
             final PsiExpressionList argumentList = expression.getArgumentList();
             if(argumentList == null){
@@ -76,8 +78,8 @@ public class NoExplicitFinalizeCallsInspection extends ExpressionInspection{
             final String containingMethodName = containingMethod.getName();
             final PsiParameterList parameterList = containingMethod
                     .getParameterList();
-            if("finalize".equals(containingMethodName)
-                    && parameterList.getParameters().length == 0){
+            if(HardcodedMethodConstants.FINALIZE.equals(containingMethodName)
+               && parameterList.getParameters().length == 0){
                 return;
             }
             registerMethodCallError(expression);

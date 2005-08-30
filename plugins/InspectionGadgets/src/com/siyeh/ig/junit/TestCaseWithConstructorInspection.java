@@ -95,7 +95,7 @@ public class TestCaseWithConstructorInspection extends ClassInspection {
                 return false;
             }
             final String text = ref.getText();
-            return "super".equals(text);
+            return PsiKeyword.SUPER.equals(text);
         }
 
     }

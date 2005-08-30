@@ -68,6 +68,8 @@ import com.siyeh.ig.visibility.*;
 import java.io.*;
 import java.util.*;
 
+import org.jetbrains.annotations.NonNls;
+
 @SuppressWarnings({"OverlyCoupledClass",
         "OverlyCoupledMethod",
         "OverlyLongMethod",
@@ -77,7 +79,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     private static final int NUM_INSPECTIONS = 500;
     private final List<Class<? extends LocalInspectionTool>> m_inspectionClasses =
             new ArrayList<Class<? extends LocalInspectionTool>>(NUM_INSPECTIONS);
-    private static final String DESCRIPTION_DIRECTORY_NAME =
+    @NonNls private static final String DESCRIPTION_DIRECTORY_NAME =
             "C:/My Open Source Projects/InspectionGadgetsSVN/src/inspectionDescriptions/";
     private final InspectionGadgetsTelemetry telemetry = new InspectionGadgetsTelemetry();
     private static final boolean TELEMETRY_ENABLED = false;
@@ -99,6 +101,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         plugin.createDocumentation(out);
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     private void createDocumentation(PrintStream out){
         final Class<? extends LocalInspectionTool>[] classes = getInspectionClasses();
         Arrays.sort(classes, new InspectionComparator());
@@ -168,7 +171,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
             final String simpleClassName =
                     className.substring(className.lastIndexOf('.') + 1,
                                         className.length() -
-                                                "Inspection".length());
+                                        "Inspection".length());
             final String fileName =
                     DESCRIPTION_DIRECTORY_NAME + simpleClassName + ".html";
             final File descriptionFile = new File(fileName);
@@ -183,6 +186,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         }
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     private static void printInspectionDescription(LocalInspectionTool inspection,
                                                    PrintStream out){
         final boolean hasQuickFix = ((BaseInspection) inspection).hasQuickFix();
@@ -200,6 +204,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         out.println();
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     private static int countQuickFixes(Class<? extends LocalInspectionTool>[] classes, PrintStream out){
         int numQuickFixes = 0;
         for(final Class<? extends LocalInspectionTool> aClass : classes){

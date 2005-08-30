@@ -21,11 +21,12 @@ import com.intellij.psi.PsiElement;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
+import com.siyeh.InspectionGadgetsBundle;
 
 public class AssertStatementInspection extends StatementInspection {
 
     public String getDisplayName() {
-        return "'assert' statement";
+        return InspectionGadgetsBundle.message("assert.statement.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -33,7 +34,7 @@ public class AssertStatementInspection extends StatementInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "'#ref' statement #loc";
+        return InspectionGadgetsBundle.message("assert.statement.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

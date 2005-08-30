@@ -19,12 +19,14 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.VariableInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class UseOfSunClassesInspection extends VariableInspection {
 
     public String getDisplayName() {
-        return "Use of sun.* classes";
+        return InspectionGadgetsBundle.message("use.sun.classes.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -32,7 +34,7 @@ public class UseOfSunClassesInspection extends VariableInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Use of Sun-supplied class #ref is non-portable #loc";
+        return InspectionGadgetsBundle.message("use.sun.classes.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -40,7 +42,7 @@ public class UseOfSunClassesInspection extends VariableInspection {
     }
 
     private static class ObsoleteCollectionVisitor extends BaseInspectionVisitor {
-
+        @NonNls private final String prefix = "sun.";
         public void visitVariable(@NotNull PsiVariable variable) {
             super.visitVariable(variable);
             final PsiType type = variable.getType();
@@ -56,7 +58,8 @@ public class UseOfSunClassesInspection extends VariableInspection {
             }
             final PsiClassType classType = (PsiClassType) deepComponentType;
             final String className = classType.getCanonicalText();
-            if(className == null || !className.startsWith("sun.")) {
+
+            if(className == null || !className.startsWith(prefix)) {
                 return;
             }
             final PsiTypeElement typeElement = variable.getTypeElement();
@@ -75,7 +78,7 @@ public class UseOfSunClassesInspection extends VariableInspection {
             }
             final PsiClassType classType = (PsiClassType) type;
             final String className = classType.getCanonicalText();
-            if (className==null || !className.startsWith("sun.")) {
+            if (className==null || !className.startsWith(prefix)) {
                 return;
             }
             final PsiJavaCodeReferenceElement classNameElement = newExpression.getClassReference();

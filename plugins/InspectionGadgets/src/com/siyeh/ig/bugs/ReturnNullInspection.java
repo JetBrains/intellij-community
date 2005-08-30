@@ -21,6 +21,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -38,7 +39,7 @@ public class ReturnNullInspection extends StatementInspection {
         return "ReturnOfNull";
     }
     public String getDisplayName() {
-        return "Return of 'null'";
+        return InspectionGadgetsBundle.message("return.of.null.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -46,13 +47,13 @@ public class ReturnNullInspection extends StatementInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Return of '#ref' #loc";
+        return InspectionGadgetsBundle.message("return.of.null.problem.descriptor");
     }
 
     public JComponent createOptionsPanel() {
         final GridBagLayout layout = new GridBagLayout();
         final JPanel panel = new JPanel(layout);
-        final JCheckBox arrayCheckBox = new JCheckBox("Methods that return arrays", m_reportArrayMethods);
+        final JCheckBox arrayCheckBox = new JCheckBox(InspectionGadgetsBundle.message("return.of.null.arrays.option"), m_reportArrayMethods);
         final ButtonModel arrayModel = arrayCheckBox.getModel();
         arrayModel.addChangeListener(new ChangeListener() {
 
@@ -60,7 +61,7 @@ public class ReturnNullInspection extends StatementInspection {
                 m_reportArrayMethods = arrayModel.isSelected();
             }
         });
-        final JCheckBox objectCheckBox = new JCheckBox("Methods that return objects", m_reportObjectMethods);
+        final JCheckBox objectCheckBox = new JCheckBox(InspectionGadgetsBundle.message("return.of.null.objects.option"), m_reportObjectMethods);
         final ButtonModel model = objectCheckBox.getModel();
         model.addChangeListener(new ChangeListener() {
 
@@ -89,7 +90,7 @@ public class ReturnNullInspection extends StatementInspection {
         public void visitLiteralExpression(@NotNull PsiLiteralExpression value) {
             super.visitLiteralExpression(value);
             final String text = value.getText();
-            if (!"null".equals(text)) {
+            if (!PsiKeyword.NULL.equals(text)) {
                 return;
             }
             PsiElement parent = value.getParent();

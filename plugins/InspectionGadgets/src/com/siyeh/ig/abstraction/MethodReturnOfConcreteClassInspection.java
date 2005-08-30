@@ -21,12 +21,13 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiTypeElement;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class MethodReturnOfConcreteClassInspection extends MethodInspection {
 
     public String getDisplayName() {
-        return "Method return of concrete class";
+        return InspectionGadgetsBundle.message("method.return.concrete.class.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -34,7 +35,7 @@ public class MethodReturnOfConcreteClassInspection extends MethodInspection {
     }
 
     protected String buildErrorString(PsiElement location) {
-        return "Method returns a concrete class #ref #loc";
+        return InspectionGadgetsBundle.message("method.return.concrete.class.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

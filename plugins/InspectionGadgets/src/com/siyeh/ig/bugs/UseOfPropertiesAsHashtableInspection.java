@@ -21,11 +21,13 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class UseOfPropertiesAsHashtableInspection extends ExpressionInspection{
     public String getDisplayName(){
-        return "Use of Properties object as a Hashtable";
+        return InspectionGadgetsBundle.message("properties.object.as.hashtable.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -34,7 +36,7 @@ public class UseOfPropertiesAsHashtableInspection extends ExpressionInspection{
 
     public String buildErrorString(PsiElement location){
 
-        return "Call to Hashtable.#ref() on properties object #loc";
+        return InspectionGadgetsBundle.message("properties.object.as.hashtable.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -79,7 +81,7 @@ public class UseOfPropertiesAsHashtableInspection extends ExpressionInspection{
         }
 
         private static boolean isHashtableMethod(String name){
-            return "put".equals(name) || "putAll".equals(name) || "get"
+            return HardcodedMethodConstants.PUT.equals(name) || HardcodedMethodConstants.PUTALL.equals(name) || HardcodedMethodConstants.GET
                     .equals(name);
         }
 

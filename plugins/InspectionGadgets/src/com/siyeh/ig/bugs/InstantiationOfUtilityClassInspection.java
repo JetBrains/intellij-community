@@ -20,12 +20,13 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.UtilityClassUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class InstantiationOfUtilityClassInspection extends ExpressionInspection{
 
     public String getDisplayName(){
-        return "Instantiation of utility class";
+        return InspectionGadgetsBundle.message("instantiation.utility.class.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -33,7 +34,7 @@ public class InstantiationOfUtilityClassInspection extends ExpressionInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "Instantiation of utility class '#ref' #loc";
+        return InspectionGadgetsBundle.message("instantiation.utility.class.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){

@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.PsiKeyword;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
@@ -64,8 +65,8 @@ public class FinallyBlockCannotCompleteNormallyInspection extends StatementInspe
             final PsiElement[] children = statement.getChildren();
             for(final PsiElement child : children){
                 final String childText = child.getText();
-                if("finally".equals(childText)){
-                    registerError(child);
+                if(PsiKeyword.FINALLY.equals(childText)) {
+                  registerError(child);
                     return;
                 }
             }

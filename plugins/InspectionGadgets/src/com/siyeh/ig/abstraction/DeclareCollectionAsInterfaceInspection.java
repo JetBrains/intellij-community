@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.VariableInspection;
 import com.siyeh.ig.psiutils.CollectionUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class DeclareCollectionAsInterfaceInspection extends VariableInspection {
@@ -29,7 +30,7 @@ public class DeclareCollectionAsInterfaceInspection extends VariableInspection {
     }
 
     public String getDisplayName() {
-        return "Collection declared by class, not interface";
+        return InspectionGadgetsBundle.message("collection.declared.by.class.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -39,7 +40,7 @@ public class DeclareCollectionAsInterfaceInspection extends VariableInspection {
     public String buildErrorString(PsiElement location) {
         final String type = location.getText();
         final String interfaceName = CollectionUtils.getInterfaceForClass(type);
-        return "Declaration of #ref should probably be weakened to " + interfaceName + " #loc";
+        return InspectionGadgetsBundle.message("collection.declarated.by.class.problem.descriptor", interfaceName);
     }
 
     public BaseInspectionVisitor buildVisitor() {

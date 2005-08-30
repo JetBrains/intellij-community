@@ -20,12 +20,14 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.psiutils.UtilityClassUtil;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class ClassWithoutToStringInspection extends ClassInspection {
 
     public String getDisplayName() {
-        return "Class without 'toString()'";
+        return InspectionGadgetsBundle.message("class.without.tostring.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -33,7 +35,7 @@ public class ClassWithoutToStringInspection extends ClassInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Class #ref should probably implement .toString(), for debugging purposes";
+        return InspectionGadgetsBundle.message("class.without.tostring.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -62,7 +64,7 @@ public class ClassWithoutToStringInspection extends ClassInspection {
                 final String methodName = method.getName();
                 final PsiParameterList paramList = method.getParameterList();
                 final PsiParameter[] parameters = paramList.getParameters();
-                if("toString".equals(methodName) && parameters.length == 0){
+                if(HardcodedMethodConstants.TO_STRING.equals(methodName) && parameters.length == 0){
                     return;
                 }
             }

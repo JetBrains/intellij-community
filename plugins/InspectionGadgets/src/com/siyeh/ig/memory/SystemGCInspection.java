@@ -19,6 +19,8 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class SystemGCInspection extends ExpressionInspection {
@@ -27,7 +29,7 @@ public class SystemGCInspection extends ExpressionInspection {
     }
 
     public String getDisplayName() {
-        return "Calls to System.gc() or Runtime.gc()";
+        return InspectionGadgetsBundle.message("gc.call.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -35,7 +37,7 @@ public class SystemGCInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "#ref should not be called in production code #loc";
+        return InspectionGadgetsBundle.message("gc.call.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -51,7 +53,7 @@ public class SystemGCInspection extends ExpressionInspection {
                 return;
             }
             final String methodName = methodExpression.getReferenceName();
-            if (!"gc".equals(methodName)) {
+            if (!HardcodedMethodConstants.GC.equals(methodName)) {
                 return;
             }
             final PsiMethod method = expression.resolveMethod();

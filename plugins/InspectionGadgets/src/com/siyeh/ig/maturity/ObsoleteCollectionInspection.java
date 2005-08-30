@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.VariableInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -38,7 +39,7 @@ public class ObsoleteCollectionInspection extends VariableInspection{
     }
 
     public String getDisplayName(){
-        return "Use of obsolete collection type";
+        return InspectionGadgetsBundle.message("use.obsolete.collection.type.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -46,7 +47,7 @@ public class ObsoleteCollectionInspection extends VariableInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "Obsolete collection type #ref used #loc";
+        return InspectionGadgetsBundle.message("use.obsolete.collection.type.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){

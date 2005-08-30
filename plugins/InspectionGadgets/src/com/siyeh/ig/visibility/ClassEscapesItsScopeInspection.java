@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MemberInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ClassEscapesItsScopeInspection extends MemberInspection {
@@ -26,7 +27,7 @@ public class ClassEscapesItsScopeInspection extends MemberInspection {
         return "ClassEscapesDefinedScope";
     }
     public String getDisplayName() {
-        return "Class escapes defined scope";
+        return InspectionGadgetsBundle.message("class.escapes.defined.scope.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -34,7 +35,7 @@ public class ClassEscapesItsScopeInspection extends MemberInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Class '#ref' is made visible outside its defined scope #loc";
+        return InspectionGadgetsBundle.message("class.escapes.defined.scope.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

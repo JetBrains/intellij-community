@@ -22,6 +22,7 @@ import com.intellij.psi.PsiType;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class HardcodedLineSeparatorsInspection extends ExpressionInspection {
@@ -29,7 +30,7 @@ public class HardcodedLineSeparatorsInspection extends ExpressionInspection {
     private static final int RETURN_CHAR = (int) '\r';
 
     public String getDisplayName() {
-        return "Hardcoded line separator";
+        return InspectionGadgetsBundle.message("hardcoded.line.separator.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -41,7 +42,7 @@ public class HardcodedLineSeparatorsInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Hardcoded line separator #ref #loc";
+        return InspectionGadgetsBundle.message("hardcoded.line.separator.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

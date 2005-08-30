@@ -20,11 +20,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class AbstractMethodCallInConstructorInspection extends MethodInspection{
     public String getDisplayName(){
-        return "Abstract method call in constructor";
+        return InspectionGadgetsBundle.message("abstract.method.call.in.constructor.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -32,7 +33,7 @@ public class AbstractMethodCallInConstructorInspection extends MethodInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "Call to abstract method #ref during object construction #loc";
+        return InspectionGadgetsBundle.message("abstract.method.call.in.constructor.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){

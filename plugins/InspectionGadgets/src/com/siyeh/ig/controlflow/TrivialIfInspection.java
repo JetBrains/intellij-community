@@ -294,8 +294,8 @@ public class TrivialIfInspection extends StatementInspection{
         }
 
         final PsiStatement elseBranch = (PsiStatement) nextStatement;
-        return ConditionalUtils.isReturn(thenBranch, "true")
-                && ConditionalUtils.isReturn(elseBranch, "false");
+        return ConditionalUtils.isReturn(thenBranch, PsiKeyword.TRUE)
+                && ConditionalUtils.isReturn(elseBranch, PsiKeyword.FALSE);
     }
 
     public static boolean isSimplifiableImplicitReturnNegated(PsiIfStatement ifStatement){
@@ -313,8 +313,8 @@ public class TrivialIfInspection extends StatementInspection{
             return false;
         }
         final PsiStatement elseBranch = (PsiStatement) nextStatement;
-        return ConditionalUtils.isReturn(thenBranch, "false")
-                && ConditionalUtils.isReturn(elseBranch, "true");
+        return ConditionalUtils.isReturn(thenBranch, PsiKeyword.FALSE)
+                && ConditionalUtils.isReturn(elseBranch, PsiKeyword.TRUE);
     }
 
     public static boolean isSimplifiableReturn(PsiIfStatement ifStatement){
@@ -322,8 +322,8 @@ public class TrivialIfInspection extends StatementInspection{
         thenBranch = ConditionalUtils.stripBraces(thenBranch);
         PsiStatement elseBranch = ifStatement.getElseBranch();
         elseBranch = ConditionalUtils.stripBraces(elseBranch);
-        return ConditionalUtils.isReturn(thenBranch, "true")
-                && ConditionalUtils.isReturn(elseBranch, "false");
+        return ConditionalUtils.isReturn(thenBranch, PsiKeyword.TRUE)
+                && ConditionalUtils.isReturn(elseBranch, PsiKeyword.FALSE);
     }
 
     public static boolean isSimplifiableReturnNegated(PsiIfStatement ifStatement){
@@ -331,8 +331,8 @@ public class TrivialIfInspection extends StatementInspection{
         thenBranch = ConditionalUtils.stripBraces(thenBranch);
         PsiStatement elseBranch = ifStatement.getElseBranch();
         elseBranch = ConditionalUtils.stripBraces(elseBranch);
-        return ConditionalUtils.isReturn(thenBranch, "false")
-                && ConditionalUtils.isReturn(elseBranch, "true");
+        return ConditionalUtils.isReturn(thenBranch, PsiKeyword.FALSE)
+                && ConditionalUtils.isReturn(elseBranch, PsiKeyword.TRUE);
     }
 
     public static boolean isSimplifiableAssignment(PsiIfStatement ifStatement){
@@ -340,8 +340,8 @@ public class TrivialIfInspection extends StatementInspection{
         thenBranch = ConditionalUtils.stripBraces(thenBranch);
         PsiStatement elseBranch = ifStatement.getElseBranch();
         elseBranch = ConditionalUtils.stripBraces(elseBranch);
-        if(ConditionalUtils.isAssignment(thenBranch, "true") &&
-                ConditionalUtils.isAssignment(elseBranch, "false")){
+        if(ConditionalUtils.isAssignment(thenBranch, PsiKeyword.TRUE) &&
+                ConditionalUtils.isAssignment(elseBranch, PsiKeyword.FALSE)){
             final PsiAssignmentExpression thenExpression =
                     (PsiAssignmentExpression) ((PsiExpressionStatement) thenBranch).getExpression();
             final PsiAssignmentExpression elseExpression =
@@ -365,8 +365,8 @@ public class TrivialIfInspection extends StatementInspection{
         thenBranch = ConditionalUtils.stripBraces(thenBranch);
         PsiStatement elseBranch = ifStatement.getElseBranch();
         elseBranch = ConditionalUtils.stripBraces(elseBranch);
-        if(ConditionalUtils.isAssignment(thenBranch, "false") &&
-                ConditionalUtils.isAssignment(elseBranch, "true")){
+        if(ConditionalUtils.isAssignment(thenBranch, PsiKeyword.FALSE) &&
+                ConditionalUtils.isAssignment(elseBranch, PsiKeyword.TRUE)){
             final PsiAssignmentExpression thenExpression =
                     (PsiAssignmentExpression) ((PsiExpressionStatement) thenBranch).getExpression();
             final PsiAssignmentExpression elseExpression =
@@ -401,8 +401,8 @@ public class TrivialIfInspection extends StatementInspection{
         PsiStatement elseBranch = (PsiStatement) nextStatement;
 
         elseBranch = ConditionalUtils.stripBraces(elseBranch);
-        if(ConditionalUtils.isAssignment(thenBranch, "true") &&
-                ConditionalUtils.isAssignment(elseBranch, "false")){
+        if(ConditionalUtils.isAssignment(thenBranch, PsiKeyword.TRUE) &&
+                ConditionalUtils.isAssignment(elseBranch, PsiKeyword.FALSE)){
             final PsiAssignmentExpression thenExpression =
                     (PsiAssignmentExpression) ((PsiExpressionStatement) thenBranch).getExpression();
             final PsiAssignmentExpression elseExpression =
@@ -437,8 +437,8 @@ public class TrivialIfInspection extends StatementInspection{
         PsiStatement elseBranch = (PsiStatement) nextStatement;
 
         elseBranch = ConditionalUtils.stripBraces(elseBranch);
-        if(ConditionalUtils.isAssignment(thenBranch, "false") &&
-                ConditionalUtils.isAssignment(elseBranch, "true")){
+        if(ConditionalUtils.isAssignment(thenBranch, PsiKeyword.FALSE) &&
+                ConditionalUtils.isAssignment(elseBranch, PsiKeyword.TRUE)){
             final PsiAssignmentExpression thenExpression =
                     (PsiAssignmentExpression) ((PsiExpressionStatement) thenBranch).getExpression();
             final PsiAssignmentExpression elseExpression =

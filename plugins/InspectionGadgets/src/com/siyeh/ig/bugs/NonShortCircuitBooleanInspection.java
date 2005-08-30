@@ -24,6 +24,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class NonShortCircuitBooleanInspection extends ExpressionInspection {
@@ -33,7 +34,7 @@ public class NonShortCircuitBooleanInspection extends ExpressionInspection {
     private final InspectionGadgetsFix fix = new NonShortCircuitBooleanFix();
 
     public String getDisplayName() {
-        return "Non-short-circuit boolean expression";
+        return InspectionGadgetsBundle.message("non.short.circuit.boolean.expression.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -41,7 +42,7 @@ public class NonShortCircuitBooleanInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Non-short-circuit boolean expression #ref #loc";
+        return InspectionGadgetsBundle.message("non.short.circuit.boolean.expression.problem.descriptor");
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -50,7 +51,7 @@ public class NonShortCircuitBooleanInspection extends ExpressionInspection {
 
     private static class NonShortCircuitBooleanFix extends InspectionGadgetsFix {
         public String getName() {
-            return "Replace with short circuit expression";
+            return InspectionGadgetsBundle.message("non.short.circuit.boolean.expression.replace.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)

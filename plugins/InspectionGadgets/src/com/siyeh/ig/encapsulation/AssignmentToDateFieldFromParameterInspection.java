@@ -22,12 +22,13 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class AssignmentToDateFieldFromParameterInspection extends ExpressionInspection {
 
     public String getDisplayName() {
-        return "Assignment to Date or Calendar field from parameter";
+        return InspectionGadgetsBundle.message("assignment.to.date.calendar.field.from.parameter.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -45,7 +46,8 @@ public class AssignmentToDateFieldFromParameterInspection extends ExpressionInsp
         assert field != null;
         final PsiType type = field.getType();
         assert rhs != null;
-        return "assignment to " + type.getPresentableText() + " field #ref from parameter " + rhs.getText() + "#loc";
+        return InspectionGadgetsBundle
+          .message("assignment.to.date.calendar.field.from.parameter.problem.descriptor", type.getPresentableText(), rhs.getText());
     }
 
     public BaseInspectionVisitor buildVisitor() {

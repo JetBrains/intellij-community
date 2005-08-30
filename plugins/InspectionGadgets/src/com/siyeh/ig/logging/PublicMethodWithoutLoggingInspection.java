@@ -21,6 +21,7 @@ import com.intellij.psi.util.PropertyUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.RegExInputVerifier;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -36,7 +37,7 @@ public class PublicMethodWithoutLoggingInspection extends MethodInspection{
     public String loggerClassName = "java.util.logging.Logger";
 
     public String getDisplayName(){
-        return "Public method without logging";
+        return InspectionGadgetsBundle.message("public.method.without.logging.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -47,7 +48,7 @@ public class PublicMethodWithoutLoggingInspection extends MethodInspection{
         final GridBagLayout layout = new GridBagLayout();
         final JPanel panel = new JPanel(layout);
 
-        final JLabel classNameLabel = new JLabel("Logger class name:");
+        final JLabel classNameLabel = new JLabel(InspectionGadgetsBundle.message("logger.name.option"));
         classNameLabel.setHorizontalAlignment(SwingConstants.TRAILING);
 
         final JTextField loggerClassNameField = new JTextField();
@@ -95,7 +96,7 @@ public class PublicMethodWithoutLoggingInspection extends MethodInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "Public method without logging #ref #loc";
+        return InspectionGadgetsBundle.message("public.method.without.logging.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){

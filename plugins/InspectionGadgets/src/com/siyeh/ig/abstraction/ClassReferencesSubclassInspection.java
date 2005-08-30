@@ -20,11 +20,12 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ClassReferencesSubclassInspection extends ClassInspection{
     public String getDisplayName(){
-        return "Class references one of its subclasses";
+        return InspectionGadgetsBundle.message("class.references.subclass.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -36,8 +37,7 @@ public class ClassReferencesSubclassInspection extends ClassInspection{
                 ClassUtils.getContainingClass(location);
         assert containingClass != null;
         final String containingClassName = containingClass.getName();
-        return "Class " + containingClassName +
-                " references subclass #ref #loc";
+        return InspectionGadgetsBundle.message("class.references.subclass.problem.descriptor", containingClassName);
     }
 
     public BaseInspectionVisitor buildVisitor(){

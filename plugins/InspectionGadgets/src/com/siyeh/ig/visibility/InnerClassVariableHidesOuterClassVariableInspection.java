@@ -26,6 +26,8 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -40,7 +42,7 @@ public class InnerClassVariableHidesOuterClassVariableInspection extends FieldIn
     }
 
     public String getDisplayName() {
-        return "Inner class field hides outer class field";
+        return InspectionGadgetsBundle.message("inner.class.field.hides.outer.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -52,7 +54,7 @@ public class InnerClassVariableHidesOuterClassVariableInspection extends FieldIn
     }
 
     public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel("Ignore outer fields not visible from inner class",
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("inner.class.field.hides.outer.ignore.option"),
                 this, "m_ignoreInvisibleFields");
     }
 
@@ -61,7 +63,7 @@ public class InnerClassVariableHidesOuterClassVariableInspection extends FieldIn
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Inner class field '#ref' hides outer class field #loc";
+        return InspectionGadgetsBundle.message("inner.class.field.hides.outer.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -76,8 +78,8 @@ public class InnerClassVariableHidesOuterClassVariableInspection extends FieldIn
                 return;
             }
             final String fieldName = field.getName();
-            if ("serialVersionUID".equals(fieldName)) {
-                return;    //special case
+            if (HardcodedMethodConstants.SERIAL_VERSION_UID.equals(fieldName)) {
+              return;    //special case
             }
             boolean reportStaticsOnly = false;
             if(aClass.hasModifierProperty(PsiModifier.STATIC))

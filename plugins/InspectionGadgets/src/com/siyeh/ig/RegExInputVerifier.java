@@ -16,6 +16,7 @@
 package com.siyeh.ig;
 
 import com.intellij.openapi.ui.Messages;
+import com.siyeh.InspectionGadgetsBundle;
 
 import javax.swing.*;
 import java.text.ParseException;
@@ -39,7 +40,7 @@ public class RegExInputVerifier extends InputVerifier {
                 } catch (final ParseException e) {
                     SwingUtilities.invokeLater(new Runnable() {
                         public void run() {
-                            Messages.showErrorDialog(e.getMessage(), "Malformed Naming Pattern");
+                            Messages.showErrorDialog(e.getMessage(), InspectionGadgetsBundle.message("error.message.regexp.malformed.naming.pattern"));
                         }
                     });
                 }

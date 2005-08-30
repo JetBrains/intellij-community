@@ -153,9 +153,9 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
     private  String calculateSimplifiedPrefixExpression(PsiPrefixExpression expression){
         final PsiExpression operand = expression.getOperand();
         if(isTrue(operand)){
-            return "false";
+          return PsiKeyword.FALSE;
         } else{
-            return "true";
+          return PsiKeyword.TRUE;
         }
     }
 

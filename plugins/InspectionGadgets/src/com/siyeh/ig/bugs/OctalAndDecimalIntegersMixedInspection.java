@@ -19,13 +19,14 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.InspectionGadgetsBundle;
 
 public class OctalAndDecimalIntegersMixedInspection extends ExpressionInspection {
     public String getID(){
         return "OctalAndDecimalIntegersInSameArray";
     }
     public String getDisplayName() {
-        return "Octal and decimal integers in same array";
+        return InspectionGadgetsBundle.message("octal.and.decimal.integers.in.same.array.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -33,7 +34,7 @@ public class OctalAndDecimalIntegersMixedInspection extends ExpressionInspection
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Octal and decimal integers are in the same array initializer  #loc ";
+        return InspectionGadgetsBundle.message("octal.and.decimal.integers.in.same.array.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -66,7 +67,7 @@ public class OctalAndDecimalIntegersMixedInspection extends ExpressionInspection
         private static boolean isDecimalLiteral(PsiLiteralExpression literal) {
             final PsiType type = literal.getType();
             if (!PsiType.INT.equals(type) &&
-                    !PsiType.LONG.equals(type)) {
+                !PsiType.LONG.equals(type)) {
                 return false;
             }
             final String text = literal.getText();
@@ -76,6 +77,7 @@ public class OctalAndDecimalIntegersMixedInspection extends ExpressionInspection
             return text.charAt(0) != '0';
         }
 
+        @SuppressWarnings({"HardCodedStringLiteral"})
         private static boolean isOctalLiteral(PsiLiteralExpression literal) {
             final PsiType type = literal.getType();
             if (!PsiType.INT.equals(type) && !PsiType.LONG.equals(type)) {

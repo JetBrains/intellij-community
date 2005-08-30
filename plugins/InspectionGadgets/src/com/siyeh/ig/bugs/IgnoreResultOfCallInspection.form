@@ -16,15 +16,15 @@
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
-        <border type="etched" title="Ignored calls to report"/>
+        <border type="etched" title-resource-bundle="com/siyeh/InspectionGadgetsBundle" title-key="result.of.method.call.ignored.table.panel.title"/>
         <children>
           <component id="f6174" class="javax.swing.JButton" binding="deleteButton">
             <constraints>
-              <xy x="115" y="168" width="90" height="25"/>
+              <xy x="138" y="168" width="67" height="25"/>
               <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1"/>
             </constraints>
             <properties>
-              <text value="Delete"/>
+              <text resource-bundle="com/intellij/CommonBundle" key="button.delete"/>
             </properties>
           </component>
           <scrollpane id="14807">
@@ -43,16 +43,16 @@
           </scrollpane>
           <component id="52926" class="javax.swing.JButton" binding="addButton">
             <constraints>
-              <xy x="50" y="168" width="55" height="25"/>
+              <xy x="73" y="168" width="55" height="25"/>
               <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1"/>
             </constraints>
             <properties>
-              <text value="Add"/>
+              <text resource-bundle="com/intellij/CommonBundle" key="button.add"/>
             </properties>
           </component>
           <hspacer id="ddfd8">
             <constraints>
-              <xy x="6" y="175" width="44" height="11"/>
+              <xy x="6" y="175" width="67" height="11"/>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
             </constraints>
           </hspacer>
@@ -64,7 +64,7 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
         </constraints>
         <properties>
-          <text value="Report all ignored non-library calls"/>
+          <text resource-bundle="com/siyeh/InspectionGadgetsBundle" key="result.of.method.call.ignored.non.library.option"/>
         </properties>
       </component>
     </children>

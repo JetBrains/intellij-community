@@ -23,6 +23,7 @@ import com.intellij.psi.PsiVariable;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.VariableInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class StringTokenizerInspection extends VariableInspection {
@@ -30,7 +31,7 @@ public class StringTokenizerInspection extends VariableInspection {
         return "UseOfStringTokenizer";
     }
     public String getDisplayName() {
-        return "Use of StringTokenizer";
+        return InspectionGadgetsBundle.message("use.stringtokenizer.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -38,7 +39,7 @@ public class StringTokenizerInspection extends VariableInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "#ref in an internationalized context #loc";
+        return InspectionGadgetsBundle.message("use.stringtokenizer.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

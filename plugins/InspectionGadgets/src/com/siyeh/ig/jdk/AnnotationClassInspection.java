@@ -20,12 +20,13 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class AnnotationClassInspection extends ClassInspection {
 
     public String getDisplayName() {
-        return "Annotation class";
+        return InspectionGadgetsBundle.message("annotation.class.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -33,7 +34,7 @@ public class AnnotationClassInspection extends ClassInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Annotation class '#ref' #loc";
+        return InspectionGadgetsBundle.message("annotation.class.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

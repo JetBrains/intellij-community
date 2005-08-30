@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.psiutils.SerializationUtils;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class SerialVersionUIDNotStaticFinalInspection extends ClassInspection {
@@ -78,7 +79,7 @@ public class SerialVersionUIDNotStaticFinalInspection extends ClassInspection {
 
         private static boolean isSerialVersionUID(PsiField field) {
             final String fieldName = field.getName();
-            return "serialVersionUID".equals(fieldName);
+            return HardcodedMethodConstants.SERIAL_VERSION_UID.equals(fieldName);
         }
 
     }

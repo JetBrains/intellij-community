@@ -20,12 +20,13 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.VariableInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class UseOfAWTPeerClassInspection extends VariableInspection {
 
     public String getDisplayName() {
-        return "Use of AWT peer class";
+        return InspectionGadgetsBundle.message("use.of.awt.peer.class.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -33,7 +34,7 @@ public class UseOfAWTPeerClassInspection extends VariableInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Use of AWT peer class #ref is non-portable #loc";
+        return InspectionGadgetsBundle.message("use.of.awt.peer.class.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

@@ -24,6 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.InspectionGadgetsBundle;
 
 public class StaticFieldReferenceOnSubclassInspection
         extends ExpressionInspection{
@@ -34,7 +35,7 @@ public class StaticFieldReferenceOnSubclassInspection
     private final StaticCallOnSubclassFix fix = new StaticCallOnSubclassFix();
 
     public String getDisplayName(){
-        return "Static field referenced via subclass";
+        return InspectionGadgetsBundle.message("static.field.via.subclass.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -53,8 +54,7 @@ public class StaticFieldReferenceOnSubclassInspection
         final PsiElement qualifier = methodExpression.getQualifier();
         assert qualifier != null;
         final String referencedClass = qualifier.getText();
-        return "Static field '#ref' declared on class " + declaringClass
-                + " but referenced via class " + referencedClass + "    #loc";
+        return InspectionGadgetsBundle.message("static.field.via.subclass.problem.descriptor", declaringClass, referencedClass);
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
@@ -63,7 +63,7 @@ public class StaticFieldReferenceOnSubclassInspection
 
     private static class StaticCallOnSubclassFix extends InspectionGadgetsFix{
         public String getName(){
-            return "Rationalize static field access";
+            return InspectionGadgetsBundle.message("static.field.via.subclass.rationalize.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)

@@ -27,13 +27,14 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class StringEqualityInspection extends ExpressionInspection {
     private final EqualityToEqualsFix fix = new EqualityToEqualsFix();
 
     public String getDisplayName() {
-        return "String comparison using '==', instead of '.equals()'";
+        return InspectionGadgetsBundle.message("string.comparison.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -45,7 +46,7 @@ public class StringEqualityInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "String values are compared using '#ref', not '.equals()' #loc";
+        return InspectionGadgetsBundle.message("string.comparison.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -58,9 +59,10 @@ public class StringEqualityInspection extends ExpressionInspection {
 
     private static class EqualityToEqualsFix extends InspectionGadgetsFix {
         public String getName() {
-            return "Replace with .equals()";
+            return InspectionGadgetsBundle.message("string.comparison.replace.quickfix");
         }
 
+        @SuppressWarnings({"HardCodedStringLiteral"})
         public void doFix(Project project, ProblemDescriptor descriptor)
                                                                          throws IncorrectOperationException{
             final PsiElement comparisonToken = descriptor.getPsiElement();
@@ -114,12 +116,12 @@ public class StringEqualityInspection extends ExpressionInspection {
                 return;
             }
             final String lhsText = lhs.getText();
-            if ("null".equals(lhsText)) {
+            if (PsiKeyword.NULL.equals(lhsText)) {
                 return;
             }
             assert rhs != null;
             final String rhsText = rhs.getText();
-            if ("null".equals(rhsText)) {
+            if (PsiKeyword.NULL.equals(rhsText)) {
                 return;
             }
             final PsiJavaToken sign = expression.getOperationSign();

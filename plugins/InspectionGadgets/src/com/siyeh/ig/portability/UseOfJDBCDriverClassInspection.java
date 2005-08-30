@@ -20,12 +20,13 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.VariableInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class UseOfJDBCDriverClassInspection extends VariableInspection {
 
     public String getDisplayName() {
-        return "Use of concrete JDBC driver class";
+        return InspectionGadgetsBundle.message("use.of.concrete.jdbc.driver.class.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -33,7 +34,7 @@ public class UseOfJDBCDriverClassInspection extends VariableInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Use of concrete JDBC driver class #ref is non-portable #loc";
+        return InspectionGadgetsBundle.message("use.of.concrete.jdbc.driver.class.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

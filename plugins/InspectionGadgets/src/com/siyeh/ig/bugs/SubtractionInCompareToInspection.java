@@ -22,11 +22,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class SubtractionInCompareToInspection extends ExpressionInspection{
     public String getDisplayName(){
-        return "Subtraction in compareTo()";
+        return InspectionGadgetsBundle.message("subtraction.in.compareto.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -34,7 +35,7 @@ public class SubtractionInCompareToInspection extends ExpressionInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "Subtraction (#ref) in compareTo() may result in overflow errors #loc";
+        return InspectionGadgetsBundle.message("subtraction.in.compareto.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){

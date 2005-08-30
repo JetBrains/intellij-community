@@ -19,13 +19,14 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ResultOfObjectAllocationIgnoredInspection extends ExpressionInspection {
 
 
     public String getDisplayName() {
-        return "Result of object allocation ignored";
+        return InspectionGadgetsBundle.message("result.of.object.allocation.ignored.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -33,7 +34,7 @@ public class ResultOfObjectAllocationIgnoredInspection extends ExpressionInspect
     }
 
     public String buildErrorString(PsiElement location) {
-        return "result of new #ref() is ignored. #loc ";
+        return InspectionGadgetsBundle.message("result.of.object.allocation.ignored.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

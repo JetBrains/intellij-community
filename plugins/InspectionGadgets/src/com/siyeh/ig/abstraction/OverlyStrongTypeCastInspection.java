@@ -27,6 +27,7 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class OverlyStrongTypeCastInspection extends ExpressionInspection {
@@ -34,7 +35,7 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
     private final OverlyStrongCastFix fix = new OverlyStrongCastFix();
 
     public String getDisplayName() {
-        return "Overly-strong type cast";
+        return InspectionGadgetsBundle.message("overly.strong.type.cast.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -42,7 +43,7 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Cast to #ref can be weakened #loc";
+        return InspectionGadgetsBundle.message("overly.strong.type.cast.problem.descriptor");
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -51,7 +52,7 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
 
     private static class OverlyStrongCastFix extends InspectionGadgetsFix {
         public String getName() {
-            return "Weaken overly-strong cast";
+            return InspectionGadgetsBundle.message("overly.strong.type.cast.weaken.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)

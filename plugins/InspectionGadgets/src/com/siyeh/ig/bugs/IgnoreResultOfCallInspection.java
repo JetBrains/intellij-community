@@ -23,8 +23,10 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.LibraryUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -43,7 +45,7 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
     public boolean m_reportAllNonLibraryCalls = false;
 
     /** @noinspection PublicField*/
-    public String callCheckString = "java.io.InputStream,read," +
+    @NonNls public String callCheckString = "java.io.InputStream,read," +
         "java.io.InputStream,skip," +
         "java.lang.StringBuffer,toString," +
         "java.lang.StringBuilder,toString," +
@@ -108,7 +110,7 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
     }
 
     public String getDisplayName(){
-        return "Result of method call ignored";
+        return InspectionGadgetsBundle.message("result.of.method.call.ignored.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -135,7 +137,7 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
         final PsiClass containingClass = method.getContainingClass();
         assert containingClass != null;
         final String className = containingClass.getName();
-        return "result of " + className + ".#ref() is ignored. #loc ";
+        return InspectionGadgetsBundle.message("result.of.method.call.ignored.problem.descriptor", className);
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -270,9 +272,9 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
 
         public String getColumnName(int columnIndex){
             if(columnIndex == 0){
-                return "Class name";
+                return InspectionGadgetsBundle.message("result.of.method.call.ignored.class.column.title");
             }
-            return "Method name";
+            return InspectionGadgetsBundle.message("result.of.method.call.ignored.method.column.title");
         }
 
         public Class getColumnClass(int columnIndex){

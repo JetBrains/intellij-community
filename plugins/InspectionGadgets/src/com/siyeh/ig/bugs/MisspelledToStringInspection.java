@@ -23,13 +23,14 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class MisspelledToStringInspection extends MethodInspection {
     private final RenameFix fix = new RenameFix("toString");
 
     public String getDisplayName() {
-        return "'tostring()' instead of 'toString()'";
+        return InspectionGadgetsBundle.message("misspelled.tostring.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -45,7 +46,7 @@ public class MisspelledToStringInspection extends MethodInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "#ref() method should probably be toString() #loc";
+        return InspectionGadgetsBundle.message("misspelled.tostring.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -54,6 +55,7 @@ public class MisspelledToStringInspection extends MethodInspection {
 
     private static class MisspelledToStringVisitor extends BaseInspectionVisitor {
 
+        @SuppressWarnings({"HardCodedStringLiteral"})
         public void visitMethod(@NotNull PsiMethod method) {
             //note: no call to super
             final String methodName = method.getName();

@@ -22,12 +22,14 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class ObjectToStringInspection extends ExpressionInspection {
 
     public String getDisplayName() {
-        return "Call to default .toString()";
+        return InspectionGadgetsBundle.message("default.tostring.call.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -35,7 +37,7 @@ public class ObjectToStringInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Call to default toString() #ref #loc";
+        return InspectionGadgetsBundle.message("default.tostring.call.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -92,7 +94,7 @@ public class ObjectToStringInspection extends ExpressionInspection {
                 return;
             }
             final String name = methodExpression.getReferenceName();
-            if(!"toString".equals(name))
+            if(!HardcodedMethodConstants.TO_STRING.equals(name))
             {
                 return;
             }
@@ -167,7 +169,7 @@ public class ObjectToStringInspection extends ExpressionInspection {
 
         private boolean isToString(PsiMethod method){
             final String methodName = method.getName();
-            if(!"toString".equals(methodName))
+            if(!HardcodedMethodConstants.TO_STRING.equals(methodName))
             {
                 return false;
             }

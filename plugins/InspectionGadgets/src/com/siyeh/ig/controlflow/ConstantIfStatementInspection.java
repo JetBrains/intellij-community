@@ -229,11 +229,11 @@ public class ConstantIfStatementInspection
 
     private static boolean isFalse(PsiExpression expression){
         final String text = expression.getText();
-        return "false".equals(text);
+        return PsiKeyword.FALSE.equals(text);
     }
 
-    private static boolean isTrue(PsiExpression expression){
+  private static boolean isTrue(PsiExpression expression){
         final String text = expression.getText();
-        return "true".equals(text);
+        return PsiKeyword.TRUE.equals(text);
     }
 }

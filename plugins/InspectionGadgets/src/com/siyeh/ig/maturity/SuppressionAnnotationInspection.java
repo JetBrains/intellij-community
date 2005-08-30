@@ -20,10 +20,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
+import com.siyeh.InspectionGadgetsBundle;
 
 public class SuppressionAnnotationInspection extends ClassInspection{
     public String getDisplayName(){
-        return "Inspection suppression annotation";
+        return InspectionGadgetsBundle.message("inspection.suppression.annotation.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -31,7 +32,7 @@ public class SuppressionAnnotationInspection extends ClassInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "Inspection suppression annotation #ref #loc";
+        return InspectionGadgetsBundle.message("inspection.suppression.annotation.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -40,12 +41,13 @@ public class SuppressionAnnotationInspection extends ClassInspection{
 
     private static class SuppressionAnnotationVisitor
             extends BaseInspectionVisitor{
+        @SuppressWarnings({"HardCodedStringLiteral"})
         public void visitComment(PsiComment comment){
             super.visitComment(comment);
             final String commentText = comment.getText();
             final IElementType tokenType = comment.getTokenType();
             if(!tokenType.equals(JavaTokenType.END_OF_LINE_COMMENT)
-                    && !tokenType.equals(JavaTokenType.C_STYLE_COMMENT)){
+               && !tokenType.equals(JavaTokenType.C_STYLE_COMMENT)){
                 return;
             }
             final String strippedComment = commentText.substring(2).trim();
@@ -54,6 +56,7 @@ public class SuppressionAnnotationInspection extends ClassInspection{
             }
         }
 
+        @SuppressWarnings({"HardCodedStringLiteral"})
         public void visitAnnotation(PsiAnnotation annotation){
             super.visitAnnotation(annotation);
             final PsiJavaCodeReferenceElement reference =

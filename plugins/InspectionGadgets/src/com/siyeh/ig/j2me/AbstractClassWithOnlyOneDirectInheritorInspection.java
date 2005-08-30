@@ -21,12 +21,13 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class AbstractClassWithOnlyOneDirectInheritorInspection extends ClassInspection {
 
     public String getDisplayName() {
-        return "Abstract class which has only one direct inheritor";
+        return InspectionGadgetsBundle.message("abstract.class.one.inheritor.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -34,7 +35,7 @@ public class AbstractClassWithOnlyOneDirectInheritorInspection extends ClassInsp
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Abstract class #ref has only one direct inheritor #loc";
+        return InspectionGadgetsBundle.message("abstract.class.one.inheritor.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

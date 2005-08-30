@@ -23,13 +23,15 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class FinalizeNotProtectedInspection extends MethodInspection{
     private final ProtectedFinalizeFix fix = new ProtectedFinalizeFix();
 
     public String getDisplayName(){
-        return "'finalize()' not declared 'protected'";
+        return InspectionGadgetsBundle.message("finalize.not.declared.protected.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -37,7 +39,7 @@ public class FinalizeNotProtectedInspection extends MethodInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "#ref() not declared 'protected' #loc";
+        return InspectionGadgetsBundle.message("finalize.not.declared.protected.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -50,7 +52,7 @@ public class FinalizeNotProtectedInspection extends MethodInspection{
 
     private static class ProtectedFinalizeFix extends InspectionGadgetsFix{
         public String getName(){
-            return "Make 'protected'";
+            return InspectionGadgetsBundle.message("finalize.not.declared.protected.make.protected.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
@@ -70,8 +72,8 @@ public class FinalizeNotProtectedInspection extends MethodInspection{
         public void visitMethod(@NotNull PsiMethod method){
             //note: no call to super;
             final String methodName = method.getName();
-            if(!"finalize".equals(methodName)){
-                return;
+            if(!HardcodedMethodConstants.FINALIZE.equals(methodName)) {
+              return;
             }
             final PsiParameterList parameterList = method.getParameterList();
             if(parameterList.getParameters().length != 0){

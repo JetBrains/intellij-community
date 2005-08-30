@@ -21,6 +21,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class NativeMethodsInspection extends MethodInspection{
@@ -29,7 +30,7 @@ public class NativeMethodsInspection extends MethodInspection{
     }
 
     public String getDisplayName(){
-        return "Native method";
+        return InspectionGadgetsBundle.message("native.method.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -37,7 +38,7 @@ public class NativeMethodsInspection extends MethodInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "Methods declared '#ref' are non-portable #loc";
+        return InspectionGadgetsBundle.message("native.method.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){

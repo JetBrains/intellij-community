@@ -20,12 +20,14 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class CovariantEqualsInspection extends MethodInspection {
 
     public String getDisplayName() {
-        return "Covariant 'equals()'";
+        return InspectionGadgetsBundle.message("covariant.equals.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -33,7 +35,7 @@ public class CovariantEqualsInspection extends MethodInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "#ref should take Object as its argument #loc";
+        return InspectionGadgetsBundle.message("covariant.equals.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -41,9 +43,9 @@ public class CovariantEqualsInspection extends MethodInspection {
     }
 
     private static class CovariantEqualsVisitor extends BaseInspectionVisitor {
-        private static final String EQUALS_METHOD_NAME = "equals";
+        private static final String EQUALS_METHOD_NAME = HardcodedMethodConstants.EQUALS;
 
-        public void visitMethod(@NotNull PsiMethod method) {
+      public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super
             final String name = method.getName();
             if (!EQUALS_METHOD_NAME.equals(name)) {

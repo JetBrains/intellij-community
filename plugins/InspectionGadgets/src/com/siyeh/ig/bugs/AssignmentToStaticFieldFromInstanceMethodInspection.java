@@ -21,12 +21,13 @@ import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class AssignmentToStaticFieldFromInstanceMethodInspection
         extends ExpressionInspection{
     public String getDisplayName(){
-        return "Assignment to static field from instance method";
+        return InspectionGadgetsBundle.message("assignment.to.static.field.from.instance.method.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -34,7 +35,7 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
     }
 
     public String buildErrorString(PsiElement location){
-        return "Assignment to static field '#ref' from an instance method #loc";
+        return InspectionGadgetsBundle.message("assignment.to.static.field.from.instance.method.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){

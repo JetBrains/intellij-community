@@ -21,12 +21,13 @@ import com.intellij.psi.PsiInstanceOfExpression;
 import com.intellij.psi.PsiTypeElement;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class InstanceofInterfacesInspection extends ExpressionInspection {
 
     public String getDisplayName() {
-        return "'instanceof' a concrete class";
+        return InspectionGadgetsBundle.message("instanceof.concrete.class.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -34,7 +35,7 @@ public class InstanceofInterfacesInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "'instanceof' concrete class #ref #loc";
+        return InspectionGadgetsBundle.message("instanceof.concrete.class.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

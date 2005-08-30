@@ -23,13 +23,14 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class MisspelledCompareToInspection extends MethodInspection {
     private final RenameFix fix = new RenameFix("compareTo");
 
     public String getDisplayName() {
-        return "'compareto()' instead of 'compareTo()'";
+        return InspectionGadgetsBundle.message("misspelled.compareto.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -41,7 +42,7 @@ public class MisspelledCompareToInspection extends MethodInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "#ref() method should probably be compareTo() #loc";
+        return InspectionGadgetsBundle.message("misspelled.compareto.problem.descriptor");
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
@@ -54,6 +55,7 @@ public class MisspelledCompareToInspection extends MethodInspection {
 
     private static class MisspelledCompareToVisitor extends BaseInspectionVisitor {
 
+        @SuppressWarnings({"HardCodedStringLiteral"})
         public void visitMethod(@NotNull PsiMethod method) {
             //note: no call to super
             final String methodName = method.getName();

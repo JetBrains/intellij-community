@@ -22,6 +22,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class AssignmentToCollectionFieldFromParameterInspection
@@ -31,7 +32,7 @@ public class AssignmentToCollectionFieldFromParameterInspection
     }
 
     public String getDisplayName(){
-        return "Assignment to Collection or array field from parameter";
+        return InspectionGadgetsBundle.message("assignment.collection.array.field.from.parameter.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -50,13 +51,11 @@ public class AssignmentToCollectionFieldFromParameterInspection
         assert field != null;
         final PsiType type = field.getType();
         if(type.getArrayDimensions() > 0){
-            return "assignment to array field #ref from parameter " +
-                    rhs.getText() +
-                    "#loc";
+            return InspectionGadgetsBundle
+              .message("assignment.collection.array.field.from.parameter.problem.descriptor.array", rhs.getText());
         } else{
-            return "assignment to Collection field #ref from parameter " +
-                    rhs.getText() +
-                    "#loc";
+            return InspectionGadgetsBundle
+              .message("assignment.collection.array.field.from.parameter.problem.descriptor.collection", rhs.getText());
         }
     }
 

@@ -24,13 +24,14 @@ import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MoveClassFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class PackageVisibleInnerClassInspection extends ClassInspection {
     private final MoveClassFix fix = new MoveClassFix();
 
     public String getDisplayName() {
-        return "Package-visible inner class";
+        return InspectionGadgetsBundle.message("package.visible.inner.class.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -38,7 +39,7 @@ public class PackageVisibleInnerClassInspection extends ClassInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Package-visible inner class #ref #loc";
+        return InspectionGadgetsBundle.message("package.visible.inner.class.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {

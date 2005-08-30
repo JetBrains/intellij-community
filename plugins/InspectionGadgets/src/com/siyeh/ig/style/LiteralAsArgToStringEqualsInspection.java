@@ -25,6 +25,7 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class LiteralAsArgToStringEqualsInspection extends ExpressionInspection {
@@ -87,7 +88,7 @@ public class LiteralAsArgToStringEqualsInspection extends ExpressionInspection {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression = expression.getMethodExpression();
             final String methodName = methodExpression.getReferenceName();
-            if (!"equals".equals(methodName) && !"equalsIgnoreCase".equals(methodName)) {
+            if (!HardcodedMethodConstants.EQUALS.equals(methodName) && !"equalsIgnoreCase".equals(methodName)) {
                 return;
             }
             final PsiExpressionList argList = expression.getArgumentList();

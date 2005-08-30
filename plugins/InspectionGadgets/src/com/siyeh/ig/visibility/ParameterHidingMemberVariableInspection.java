@@ -23,6 +23,8 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -48,7 +50,7 @@ public class ParameterHidingMemberVariableInspection extends MethodInspection{
     }
 
     public String getDisplayName(){
-        return "Parameter hides member variable";
+        return InspectionGadgetsBundle.message("parameter.hides.member.variable.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -64,7 +66,7 @@ public class ParameterHidingMemberVariableInspection extends MethodInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "Parameter '#ref' hides member variable #loc";
+        return InspectionGadgetsBundle.message("parameter.hides.member.variable.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -96,7 +98,7 @@ public class ParameterHidingMemberVariableInspection extends MethodInspection{
             if(m_ignoreForPropertySetters){
                 final String methodName = method.getName();
                 final PsiType returnType = method.getReturnType();
-                if(methodName.startsWith("set") &&
+                if(methodName.startsWith(HardcodedMethodConstants.SET) &&
                         PsiType.VOID.equals(returnType)){
                     return;
                 }
@@ -142,7 +144,7 @@ public class ParameterHidingMemberVariableInspection extends MethodInspection{
         final GridBagLayout layout = new GridBagLayout();
         final JPanel panel = new JPanel(layout);
         final JCheckBox settersCheckBox =
-                new JCheckBox("Ignore for property setters",
+                new JCheckBox(InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.setters.option"),
                               m_ignoreForPropertySetters);
         final ButtonModel settersModel = settersCheckBox.getModel();
         settersModel.addChangeListener(new ChangeListener(){
@@ -151,7 +153,7 @@ public class ParameterHidingMemberVariableInspection extends MethodInspection{
             }
         });
         final JCheckBox ignoreInvisibleFieldsCheck =
-                new JCheckBox("Ignore superclass fields not visible from subclass",
+                new JCheckBox(InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.superclass.option"),
                               m_ignoreInvisibleFields);
 
         final ButtonModel invisibleFieldsModel =
@@ -163,7 +165,7 @@ public class ParameterHidingMemberVariableInspection extends MethodInspection{
         });
 
         final JCheckBox constructorCheckBox =
-                new JCheckBox("Ignore for constructors",
+                new JCheckBox(InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.constructors.option"),
                               m_ignoreForConstructors);
         final ButtonModel constructorModel = constructorCheckBox.getModel();
         constructorModel.addChangeListener(new ChangeListener(){
@@ -172,7 +174,7 @@ public class ParameterHidingMemberVariableInspection extends MethodInspection{
             }
         });
         final JCheckBox abstractMethodsCheckbox =
-                new JCheckBox("Ignore for abstract methods",
+                new JCheckBox(InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.abstract.methods.option"),
                               m_ignoreForAbstractMethods);
         final ButtonModel abstractMethodsModel =
                 abstractMethodsCheckbox.getModel();
@@ -183,7 +185,7 @@ public class ParameterHidingMemberVariableInspection extends MethodInspection{
         });
 
         final JCheckBox staticMethodsCheckbox =
-                new JCheckBox("Ignore for static method parameters hiding instance fields",
+                new JCheckBox(InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.static.parameters.option"),
                               m_ignoreStaticMethodParametersHidingInstanceFields);
         final ButtonModel staticMethodsModel = staticMethodsCheckbox.getModel();
         staticMethodsModel.addChangeListener(new ChangeListener(){

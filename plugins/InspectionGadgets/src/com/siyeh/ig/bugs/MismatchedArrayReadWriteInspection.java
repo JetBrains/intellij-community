@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.VariableInspection;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class MismatchedArrayReadWriteInspection extends VariableInspection{
@@ -30,7 +31,7 @@ public class MismatchedArrayReadWriteInspection extends VariableInspection{
     }
 
     public String getDisplayName(){
-        return "Mismatched read and write of array";
+        return InspectionGadgetsBundle.message("mismatched.read.write.array.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -52,9 +53,9 @@ public class MismatchedArrayReadWriteInspection extends VariableInspection{
         }
         final boolean written = arrayContentsAreWritten(variable, context);
         if(written){
-            return "Contents of array #ref are written to, but never read #loc";
+            return InspectionGadgetsBundle.message("mismatched.read.write.array.problem.descriptor.write.not.read");
         } else{
-            return "Contents of array #ref are read, but never written to #loc";
+            return InspectionGadgetsBundle.message("mismatched.read.write.array.problem.descriptor.read.not.write");
         }
     }
 

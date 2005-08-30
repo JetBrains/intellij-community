@@ -20,14 +20,16 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class SystemGetenvInspection extends ExpressionInspection {
     public String getID(){
         return "CallToSystemGetenv";
     }
     public String getDisplayName() {
-        return "Call to 'System.getenv()'";
+        return InspectionGadgetsBundle.message("system.getenv.call.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -35,7 +37,7 @@ public class SystemGetenvInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Call to System.#ref() is non-portable #loc";
+        return InspectionGadgetsBundle.message("system.getenv.call.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -52,7 +54,8 @@ public class SystemGetenvInspection extends ExpressionInspection {
                 return;
             }
             final String methodName = methodExpression.getReferenceName();
-            if (!"getenv".equals(methodName)) {
+            @NonNls final String getenv = "getenv";
+            if (!getenv.equals(methodName)) {
                 return;
             }
             final PsiMethod method = expression.resolveMethod();

@@ -23,6 +23,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.StatementInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class EmptyInitializerInspection extends StatementInspection{
@@ -31,7 +32,7 @@ public class EmptyInitializerInspection extends StatementInspection{
     }
 
     public String getDisplayName(){
-        return "Empty class initializer";
+        return InspectionGadgetsBundle.message("empty.class.initializer.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -39,7 +40,7 @@ public class EmptyInitializerInspection extends StatementInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "Empty class initializer #loc";
+        return InspectionGadgetsBundle.message("empty.class.initializer.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
@@ -48,7 +49,7 @@ public class EmptyInitializerInspection extends StatementInspection{
 
     private static class EmptyInitializerFix extends InspectionGadgetsFix{
         public String getName(){
-            return "Delete empty class initializer";
+            return InspectionGadgetsBundle.message("empty.class.initializer.delete.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)

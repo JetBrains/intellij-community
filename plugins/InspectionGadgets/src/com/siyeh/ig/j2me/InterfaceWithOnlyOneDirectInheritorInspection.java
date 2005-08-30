@@ -23,12 +23,13 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class InterfaceWithOnlyOneDirectInheritorInspection extends ClassInspection {
 
     public String getDisplayName() {
-        return "Interface which has only one direct inheritor";
+        return InspectionGadgetsBundle.message("interface.one.inheritor.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -36,7 +37,7 @@ public class InterfaceWithOnlyOneDirectInheritorInspection extends ClassInspecti
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Interface #ref has only one direct inheritor #loc";
+        return InspectionGadgetsBundle.message("interface.one.inheritor.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

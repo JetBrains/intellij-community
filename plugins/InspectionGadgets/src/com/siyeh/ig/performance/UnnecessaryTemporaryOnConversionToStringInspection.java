@@ -23,6 +23,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -109,8 +110,8 @@ public class UnnecessaryTemporaryOnConversionToStringInspection extends Expressi
                 return;
             }
             final String methodName = methodExpression.getReferenceName();
-            if(!"toString".equals(methodName)){
-                return;
+            if(!HardcodedMethodConstants.TO_STRING.equals(methodName)) {
+              return;
             }
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();

@@ -25,13 +25,14 @@ import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MoveAnonymousToInnerClassFix;
 import com.siyeh.ig.performance.InnerClassReferenceVisitor;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class AnonymousInnerClassMayBeStaticInspection extends ClassInspection {
     private final MoveAnonymousToInnerClassFix fix = new MoveAnonymousToInnerClassFix() ;
 
     public String getDisplayName() {
-        return "Anonymous inner class may be a named static inner class";
+        return InspectionGadgetsBundle.message("anonymous.inner.may.be.named.static.inner.class.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -39,7 +40,7 @@ public class AnonymousInnerClassMayBeStaticInspection extends ClassInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Anonymous inner class #ref may be name static inner class #loc";
+        return InspectionGadgetsBundle.message("anonymous.inner.may.be.named.static.inner.class.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {

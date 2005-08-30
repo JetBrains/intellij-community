@@ -34,20 +34,25 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
     private final UnnecessaryBoxingFix fix = new UnnecessaryBoxingFix();
 
     static {
-        s_boxingArgs.put("java.lang.Integer", "int");
-        s_boxingArgs.put("java.lang.Short", "short");
-        s_boxingArgs.put("java.lang.Boolean", "boolean");
-        s_boxingArgs.put("java.lang.Long", "long");
-        s_boxingArgs.put("java.lang.Byte", "byte");
-        s_boxingArgs.put("java.lang.Float", "float");
-        s_boxingArgs.put("java.lang.Double", "double");
-        s_boxingArgs.put("java.lang.Long", "long");
-        s_boxingArgs.put("java.lang.Character", "char");
+      initBoxingArgs();
     }
 
-    public String getDisplayName() {
-        return "Unnecessary boxing";
-    }
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private static void initBoxingArgs() {
+    s_boxingArgs.put("java.lang.Integer", "int");
+    s_boxingArgs.put("java.lang.Short", "short");
+    s_boxingArgs.put("java.lang.Boolean", "boolean");
+    s_boxingArgs.put("java.lang.Long", "long");
+    s_boxingArgs.put("java.lang.Byte", "byte");
+    s_boxingArgs.put("java.lang.Float", "float");
+    s_boxingArgs.put("java.lang.Double", "double");
+    s_boxingArgs.put("java.lang.Long", "long");
+    s_boxingArgs.put("java.lang.Character", "char");
+  }
+
+  public String getDisplayName() {
+      return "Unnecessary boxing";
+  }
 
     public String getGroupDisplayName() {
         return GroupNames.JDK15_SPECIFIC_GROUP_NAME;

@@ -22,6 +22,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,7 @@ public class ThisEscapedInConstructorInspection extends ClassInspection{
     }
 
     public String getDisplayName(){
-        return "'this' reference escaped in object construction";
+        return InspectionGadgetsBundle.message("this.reference.escaped.in.construction.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -39,7 +40,7 @@ public class ThisEscapedInConstructorInspection extends ClassInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "Escape of '#ref' during object construction #loc";
+        return InspectionGadgetsBundle.message("this.reference.escaped.in.construction.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){

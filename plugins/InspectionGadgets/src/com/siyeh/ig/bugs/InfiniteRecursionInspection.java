@@ -22,12 +22,13 @@ import com.intellij.psi.PsiModifier;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.RecursionUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class InfiniteRecursionInspection extends MethodInspection {
 
     public String getDisplayName() {
-        return "Infinite recursion";
+        return InspectionGadgetsBundle.message("infinite.recursion.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -38,7 +39,7 @@ public class InfiniteRecursionInspection extends MethodInspection {
         return true;
     }
     public String buildErrorString(PsiElement location) {
-        return "Method #ref recurses infinitely, and can only end by throw an exception #loc";
+        return InspectionGadgetsBundle.message("infinite.recursion.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

@@ -17,6 +17,8 @@ package com.siyeh.ig.telemetry;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.CommonBundle;
+import com.siyeh.InspectionGadgetsBundle;
 
 import javax.swing.*;
 
@@ -27,7 +29,7 @@ class UpdateTelemetryViewAction extends AnAction{
             IconHelper.getIcon("/actions/sync.png");
 
     public UpdateTelemetryViewAction(TelemetryDisplay telemetryDisplay){
-        super("Refresh", "Refresh telemetry display", refreshIcon);
+        super(CommonBundle.message("action.refresh"), InspectionGadgetsBundle.message("action.telemetry.refresh.description"), refreshIcon);
         this.telemetryDisplay = telemetryDisplay;
     }
 

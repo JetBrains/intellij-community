@@ -18,10 +18,7 @@ package com.siyeh.ig.style;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiThisExpression;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
@@ -61,7 +58,7 @@ public class UnnecessaryQualifierForThisInspection extends ExpressionInspection 
                                                                          throws IncorrectOperationException{
             final PsiElement qualifier = descriptor.getPsiElement();
             final PsiThisExpression thisExpression = (PsiThisExpression) qualifier.getParent();
-            replaceExpression(thisExpression, "this");
+            replaceExpression(thisExpression, PsiKeyword.THIS);
         }
 
     }

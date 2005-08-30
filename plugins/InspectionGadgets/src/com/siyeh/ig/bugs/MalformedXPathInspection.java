@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.xpath.XPath;
@@ -36,12 +37,14 @@ public class MalformedXPathInspection extends ExpressionInspection{
 
     static
     {
-        xpathMethodNames.add("compile");
-        xpathMethodNames.add("evaluate");
+      //noinspection HardCodedStringLiteral
+      xpathMethodNames.add("compile");
+      //noinspection HardCodedStringLiteral
+      xpathMethodNames.add("evaluate");
     }
 
     public String getDisplayName(){
-        return "Malformed XPath expression";
+        return InspectionGadgetsBundle.message("malformed.xpath.expression.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -53,7 +56,7 @@ public class MalformedXPathInspection extends ExpressionInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "XPath expression #ref is malformed #loc";
+        return InspectionGadgetsBundle.message("malformed.xpath.expression.problem.description");
     }
 
     public BaseInspectionVisitor buildVisitor(){

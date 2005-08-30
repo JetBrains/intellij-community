@@ -76,8 +76,8 @@ public class UnnecessarySuperConstructorInspection extends ExpressionInspection 
                 return;
             }
             final String methodText = methodExpression.getText();
-            if (!"super".equals(methodText)) {
-                return;
+            if (!PsiKeyword.SUPER.equals(methodText)) {
+              return;
             }
             final PsiExpressionList argumentList = call.getArgumentList();
             if (argumentList == null) {

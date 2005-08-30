@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -34,7 +35,7 @@ public class CheckForOutOfMemoryOnLargeArrayAllocationInspection
     public int m_limit = 64;
 
     public String getDisplayName(){
-        return "Large array allocation with no OutOfMemoryError check";
+        return InspectionGadgetsBundle.message("large.array.allocation.no.outofmemoryerror.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -42,11 +43,11 @@ public class CheckForOutOfMemoryOnLargeArrayAllocationInspection
     }
 
     public String buildErrorString(PsiElement location){
-        return "Large array allocation which is not checked for out-of-memory condition #loc";
+        return InspectionGadgetsBundle.message("large.array.allocation.no.outofmemoryerror.problem.descriptor");
     }
 
     public JComponent createOptionsPanel(){
-        return new SingleIntegerFieldOptionsPanel("Maximum number of elements ",
+        return new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("large.array.allocation.no.outofmemoryerror.maximum.number.of.elements.option"),
                                                   this, "m_limit");
     }
 

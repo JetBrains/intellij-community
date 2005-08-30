@@ -21,15 +21,21 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class HibernateResourceInspection extends ExpressionInspection{
-    public String getID(){
-        return "HibernateResourceOpenedButNotSafelyClosed";
-    }
+  @NonNls
+  private static final String SESSION_FACTORY_CLASS = "org.hibernate.SessionFactory";
+
+  public String getID(){
+      return "HibernateResourceOpenedButNotSafelyClosed";
+  }
 
     public String getDisplayName(){
-        return "Hibernate resource opened but not safely closed";
+        return InspectionGadgetsBundle.message("hibernate.resource.opened.not.closed.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -40,8 +46,7 @@ public class HibernateResourceInspection extends ExpressionInspection{
         final PsiExpression expression = (PsiExpression) location;
         final PsiType type = expression.getType();
         final String text = type.getPresentableText();
-        return text +
-                       " should be opened in a try block, and closed in a finally block #loc";
+        return InspectionGadgetsBundle.message("hibernate.resource.opened.not.closed.problem.descriptor", text);
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -78,7 +83,7 @@ public class HibernateResourceInspection extends ExpressionInspection{
             while(true){
                 final PsiTryStatement tryStatement =
                         PsiTreeUtil.getParentOfType(currentContext,
-                                                                      PsiTryStatement.class);
+                                                    PsiTryStatement.class);
                 if(tryStatement == null) {
                     registerError(expression);
                     return;
@@ -145,8 +150,8 @@ public class HibernateResourceInspection extends ExpressionInspection{
                 return;
             }
             final String methodName = methodExpression.getReferenceName();
-            if(!"close".equals(methodName)){
-                return;
+            if(!HardcodedMethodConstants.CLOSE.equals(methodName)) {
+              return;
             }
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
@@ -176,7 +181,7 @@ public class HibernateResourceInspection extends ExpressionInspection{
             return false;
         }
         final String methodName = methodExpression.getReferenceName();
-        if(!"openSession".equals(methodName))
+        if(!HardcodedMethodConstants.OPEN_SESSION.equals(methodName))
         {
             return false;
         }
@@ -185,7 +190,7 @@ public class HibernateResourceInspection extends ExpressionInspection{
         {
             return false;
         }
-        return TypeUtils.expressionHasTypeOrSubtype("org.hibernate.SessionFactory",
+        return TypeUtils.expressionHasTypeOrSubtype(SESSION_FACTORY_CLASS,
                                                     qualifier);
     }
 }

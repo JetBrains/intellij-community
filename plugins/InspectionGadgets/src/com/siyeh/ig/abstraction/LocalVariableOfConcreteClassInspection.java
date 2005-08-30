@@ -20,12 +20,13 @@ import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiTypeElement;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class LocalVariableOfConcreteClassInspection extends ExpressionInspection {
 
     public String getDisplayName() {
-        return "Local variable of concrete class";
+        return InspectionGadgetsBundle.message("local.variable.of.concrete.class.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -33,7 +34,7 @@ public class LocalVariableOfConcreteClassInspection extends ExpressionInspection
     }
 
     public String buildErrorString(Object arg) {
-        return "Local variable " + arg + " of concrete class #ref #loc";
+        return InspectionGadgetsBundle.message("local.variable.of.concrete.class.problem.descriptor", arg);
     }
 
     public BaseInspectionVisitor buildVisitor() {

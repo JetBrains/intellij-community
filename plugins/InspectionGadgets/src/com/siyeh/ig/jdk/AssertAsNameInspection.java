@@ -23,6 +23,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class AssertAsNameInspection extends BaseInspection {
@@ -32,7 +33,7 @@ public class AssertAsNameInspection extends BaseInspection {
         return "AssertAsIdentifier";
     }
     public String getDisplayName() {
-        return "Use of 'assert' as identifier";
+        return InspectionGadgetsBundle.message("use.assert.as.identifier.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -40,7 +41,7 @@ public class AssertAsNameInspection extends BaseInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Use of '#ref' as identifier #loc";
+        return InspectionGadgetsBundle.message("use.assert.as.identifier.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
@@ -94,13 +95,12 @@ public class AssertAsNameInspection extends BaseInspection {
     }
 
     private static class AssertAsNameVisitor extends BaseInspectionVisitor {
-        private static final String ASSERT_STRING = "assert";
 
 
         public void visitVariable(@NotNull PsiVariable variable) {
             super.visitVariable(variable);
             final String variableName = variable.getName();
-            if (!ASSERT_STRING.equals(variableName)) {
+            if (!PsiKeyword.ASSERT.equals(variableName)) {
                 return;
             }
             registerVariableError(variable);
@@ -109,7 +109,7 @@ public class AssertAsNameInspection extends BaseInspection {
         public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
             final String name = method.getName();
-            if (!ASSERT_STRING.equals(name)) {
+            if (!PsiKeyword.ASSERT.equals(name)) {
                 return;
             }
             registerMethodError(method);
@@ -118,7 +118,7 @@ public class AssertAsNameInspection extends BaseInspection {
         public void visitClass(@NotNull PsiClass aClass) {
             //note: no call to super, to avoid drill-down
             final String name = aClass.getName();
-            if (!ASSERT_STRING.equals(name)) {
+            if (!PsiKeyword.ASSERT.equals(name)) {
                 return;
             }
             final PsiTypeParameterList params = aClass.getTypeParameterList();
@@ -132,7 +132,7 @@ public class AssertAsNameInspection extends BaseInspection {
         public void visitTypeParameter(PsiTypeParameter parameter) {
             super.visitTypeParameter(parameter);
             final String name = parameter.getName();
-            if (!ASSERT_STRING.equals(name)) {
+            if (!PsiKeyword.ASSERT.equals(name)) {
                 return;
             }
             registerTypeParameterError(parameter);

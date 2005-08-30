@@ -20,7 +20,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -30,17 +33,16 @@ public class JDBCResourceInspection extends ExpressionInspection{
             new String[]{
                 "java.sql.Driver",
                 "java.sql.DriverManager",
-                "java.sql.DataSource",
+                "javax.sql.DataSource",
                 "java.sql.Connection",
                 "java.sql.Connection",
                 "java.sql.Connection",
                 "java.sql.Statement",
                 "java.sql.Statement",
             };
-    private static final String[] creationMethodName =
+    @NonNls private static final String[] creationMethodName =
             new String[]{
                 "connect",
-                "getConnection",
                 "getConnection",
                 "createStatement",
                 "prepareStatement",
@@ -66,7 +68,7 @@ public class JDBCResourceInspection extends ExpressionInspection{
     }
 
     public String getDisplayName(){
-        return "JDBC resource opened but not safely closed";
+        return InspectionGadgetsBundle.message("jdbc.resource.opened.not.closed.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -77,8 +79,7 @@ public class JDBCResourceInspection extends ExpressionInspection{
         final PsiExpression expression = (PsiExpression) location;
         final PsiType type = expression.getType();
         final String text = type.getPresentableText();
-        return "JDBC " + text +
-                " should be opened in a try block, and closed in a finally block #loc";
+        return InspectionGadgetsBundle.message("jdbc.resource.opened.not.closed.problem.descriptor", text);
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -182,8 +183,8 @@ public class JDBCResourceInspection extends ExpressionInspection{
                 return;
             }
             final String methodName = methodExpression.getReferenceName();
-            if(!"close".equals(methodName)){
-                return;
+            if(!HardcodedMethodConstants.CLOSE.equals(methodName)) {
+              return;
             }
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();

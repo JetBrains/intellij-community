@@ -24,6 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class StaticCallOnSubclassInspection extends ExpressionInspection {
@@ -34,7 +35,7 @@ public class StaticCallOnSubclassInspection extends ExpressionInspection {
 
 
     public String getDisplayName() {
-        return "Static method referenced via subclass";
+        return InspectionGadgetsBundle.message("static.method.via.subclass.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -54,7 +55,7 @@ public class StaticCallOnSubclassInspection extends ExpressionInspection {
         final PsiElement qualifier = methodExpression.getQualifier();
         assert qualifier != null;
         final String referencedClass = qualifier.getText();
-        return "Static method '#ref' declared on class " + declaringClass + " but referenced via class " + referencedClass + "    #loc";
+        return InspectionGadgetsBundle.message("static.method.via.subclass.problem.descriptor", declaringClass, referencedClass);
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
@@ -63,7 +64,7 @@ public class StaticCallOnSubclassInspection extends ExpressionInspection {
 
     private static class StaticCallOnSubclassFix extends InspectionGadgetsFix {
         public String getName() {
-            return "Rationalize static method call";
+            return InspectionGadgetsBundle.message("static.method.via.subclass.rationalize.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)

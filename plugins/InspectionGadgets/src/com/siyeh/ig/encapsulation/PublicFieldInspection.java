@@ -23,13 +23,14 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.FieldInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.EncapsulateVariableFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class PublicFieldInspection extends FieldInspection {
     private final EncapsulateVariableFix fix = new EncapsulateVariableFix();
 
     public String getDisplayName() {
-        return "Public field";
+        return InspectionGadgetsBundle.message("public.field.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -37,7 +38,7 @@ public class PublicFieldInspection extends FieldInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Public field #ref #loc";
+        return InspectionGadgetsBundle.message("public.field.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {

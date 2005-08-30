@@ -21,12 +21,13 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiTypeElement;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.FieldInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class StaticVariableOfConcreteClassInspection extends FieldInspection {
 
     public String getDisplayName() {
-        return "Static variable of concrete class";
+        return InspectionGadgetsBundle.message("static.variable.of.concrete.class.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -34,7 +35,7 @@ public class StaticVariableOfConcreteClassInspection extends FieldInspection {
     }
 
     public String buildErrorString(Object arg) {
-        return "Static variable " + arg + " of concrete class #ref #loc";
+        return InspectionGadgetsBundle.message("static.variable.of.concrete.class.problem.descriptor", arg);
     }
 
     public BaseInspectionVisitor buildVisitor() {

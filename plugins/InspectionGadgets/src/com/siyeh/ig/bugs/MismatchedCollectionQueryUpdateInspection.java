@@ -23,6 +23,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.VariableInspection;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class MismatchedCollectionQueryUpdateInspection
@@ -32,7 +33,7 @@ public class MismatchedCollectionQueryUpdateInspection
     }
 
     public String getDisplayName(){
-        return "Mismatched query and update of collection";
+        return InspectionGadgetsBundle.message("mismatched.update.collection.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -54,9 +55,9 @@ public class MismatchedCollectionQueryUpdateInspection
         }
         final boolean updated = collectionContentsAreUpdated(variable, context);
         if(updated){
-            return "Contents of collection #ref are updated, but never queried #loc";
+            return InspectionGadgetsBundle.message("mismatched.update.collection.problem.descriptor.updated.not.queried");
         } else{
-            return "Contents of collection #ref are queried, but never updated #loc";
+            return InspectionGadgetsBundle.message("mismatched.update.collection.problem.description.queried.not.updated");
         }
     }
 

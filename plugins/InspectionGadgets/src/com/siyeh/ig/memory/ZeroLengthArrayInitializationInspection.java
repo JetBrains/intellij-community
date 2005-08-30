@@ -22,6 +22,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.IntroduceConstantFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ZeroLengthArrayInitializationInspection extends ExpressionInspection {
@@ -32,7 +33,7 @@ public class ZeroLengthArrayInitializationInspection extends ExpressionInspectio
     }
 
     public String getDisplayName() {
-        return "Zero-length array allocation";
+        return InspectionGadgetsBundle.message("array.allocation.zero.length.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -40,7 +41,7 @@ public class ZeroLengthArrayInitializationInspection extends ExpressionInspectio
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Allocation of zero length array #loc";
+        return InspectionGadgetsBundle.message("array.allocation.zero.length.problem.description");
     }
 
     public BaseInspectionVisitor buildVisitor() {

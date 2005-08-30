@@ -135,7 +135,7 @@ public class NegatedIfElseInspection extends StatementInspection {
                     if (m_ignoreNegatedNullComparison) {
                         final String lhsText = lhs.getText();
                         final String rhsText = rhs.getText();
-                        return !"null".equals(lhsText) && !"null".equals(rhsText);
+                        return !PsiKeyword.NULL.equals(lhsText) && !PsiKeyword.NULL.equals(rhsText);
                     } else {
                         return true;
                     }

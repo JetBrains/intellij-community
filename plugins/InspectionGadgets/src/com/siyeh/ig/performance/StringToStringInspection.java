@@ -23,6 +23,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class StringToStringInspection extends ExpressionInspection {
@@ -79,8 +80,8 @@ public class StringToStringInspection extends ExpressionInspection {
                 return;
             }
             final String methodName = methodExpression.getReferenceName();
-            if (!"toString".equals(methodName)) {
-                return;
+            if (!HardcodedMethodConstants.TO_STRING.equals(methodName)) {
+              return;
             }
 
             final PsiMethod method = expression.resolveMethod();

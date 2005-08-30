@@ -21,6 +21,7 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiTypeElement;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ParameterOfConcreteClassInspection extends MethodInspection {
@@ -28,7 +29,7 @@ public class ParameterOfConcreteClassInspection extends MethodInspection {
         return "MethodParameterOfConcreteClass";
     }
     public String getDisplayName() {
-        return "Method parameter of concrete class";
+        return InspectionGadgetsBundle.message("concrete.class.method.parameter.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -36,7 +37,7 @@ public class ParameterOfConcreteClassInspection extends MethodInspection {
     }
 
     public String buildErrorString(Object arg) {
-        return "Parameter " + arg + " of concrete class #ref #loc";
+        return InspectionGadgetsBundle.message("concrete.class.method.parameter.problem.descriptor", arg);
     }
 
     public BaseInspectionVisitor buildVisitor() {

@@ -25,7 +25,9 @@ import com.siyeh.ig.fixes.IntroduceConstantFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.HashSet;
@@ -34,7 +36,7 @@ import java.util.Set;
 public class MagicNumberInspection extends ExpressionInspection {
 
     private static final int NUM_SPECIAL_CASE_LITERALS = 22;
-    private static final String[] s_specialCaseLiteralArray =
+    @NonNls private static final String[] s_specialCaseLiteralArray =
             new String[]{
                 "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "0L",
                 "1L", "2L", "0l", "1l", "2l", "0.0", "1.0", "0.0F", "1.0F", "0.0f", "1.0f"
@@ -53,7 +55,7 @@ public class MagicNumberInspection extends ExpressionInspection {
     }
 
     public String getDisplayName() {
-        return "\"Magic number\"";
+        return InspectionGadgetsBundle.message("magic.number.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -61,11 +63,11 @@ public class MagicNumberInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Magic number '#ref' #loc";
+        return InspectionGadgetsBundle.message("magic.number.problem.descriptor");
     }
 
     public JComponent createOptionsPanel(){
-        return new SingleCheckboxOptionsPanel("Ignore constants in hashCode() methods",
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("magic.number.ignore.option.label"),
                                               this, "m_ignoreInHashCode");
     }
 

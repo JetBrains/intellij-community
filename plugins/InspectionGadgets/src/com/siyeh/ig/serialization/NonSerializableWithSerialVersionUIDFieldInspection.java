@@ -27,6 +27,7 @@ import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MakeSerializableFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class NonSerializableWithSerialVersionUIDFieldInspection extends ClassInspection {
@@ -97,7 +98,7 @@ public class NonSerializableWithSerialVersionUIDFieldInspection extends ClassIns
 
         private static boolean isSerialVersionUID(PsiField field) {
             final String methodName = field.getName();
-            return "serialVersionUID".equals(methodName);
+            return HardcodedMethodConstants.SERIAL_VERSION_UID.equals(methodName);
         }
 
     }

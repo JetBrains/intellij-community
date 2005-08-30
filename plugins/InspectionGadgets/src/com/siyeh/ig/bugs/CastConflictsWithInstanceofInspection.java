@@ -21,11 +21,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class CastConflictsWithInstanceofInspection extends ExpressionInspection{
     public String getDisplayName(){
-        return "Cast conflicts with 'instanceof'";
+        return InspectionGadgetsBundle.message("cast.conflicts.with.instanceof.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -33,7 +34,7 @@ public class CastConflictsWithInstanceofInspection extends ExpressionInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "Cast to #ref conflicts with surrounding 'instanceof' check #loc";
+        return InspectionGadgetsBundle.message("cast.conflicts.with.instanceof.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){

@@ -19,14 +19,16 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class RuntimeExecInspection extends ExpressionInspection {
     public String getID(){
         return "CallToRuntimeExec";
     }
     public String getDisplayName() {
-        return "Call to 'Runtime.exec()'";
+        return InspectionGadgetsBundle.message("runtime.exec.call.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -34,7 +36,7 @@ public class RuntimeExecInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Call to Runtime.#ref() is non-portable #loc";
+        return InspectionGadgetsBundle.message("runtime.exec.call.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -50,7 +52,8 @@ public class RuntimeExecInspection extends ExpressionInspection {
                 return;
             }
             final String methodName = methodExpression.getReferenceName();
-            if (!"exec".equals(methodName)) {
+            @NonNls final String exec = "exec";
+            if (!exec.equals(methodName)) {
                 return;
             }
             final PsiMethod method = expression.resolveMethod();

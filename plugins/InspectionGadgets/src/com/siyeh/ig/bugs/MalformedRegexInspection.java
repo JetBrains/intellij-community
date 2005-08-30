@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -35,15 +36,20 @@ public class MalformedRegexInspection extends ExpressionInspection{
 
     static
     {
-        regexMethodNames.add("compile");
-        regexMethodNames.add("matches");
-        regexMethodNames.add("replaceFirst");
-        regexMethodNames.add("replaceAll");
-        regexMethodNames.add("split");
+      //noinspection HardCodedStringLiteral
+      regexMethodNames.add("compile");
+      //noinspection HardCodedStringLiteral
+      regexMethodNames.add("matches");
+      //noinspection HardCodedStringLiteral
+      regexMethodNames.add("replaceFirst");
+      //noinspection HardCodedStringLiteral
+      regexMethodNames.add("replaceAll");
+      //noinspection HardCodedStringLiteral
+      regexMethodNames.add("split");
     }
 
     public String getDisplayName(){
-        return "Malformed regular expression";
+        return InspectionGadgetsBundle.message("malformed.regular.expression.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -55,7 +61,7 @@ public class MalformedRegexInspection extends ExpressionInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "Regular expression #ref is malformed #loc";
+        return InspectionGadgetsBundle.message("malformed.regular.expression.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){

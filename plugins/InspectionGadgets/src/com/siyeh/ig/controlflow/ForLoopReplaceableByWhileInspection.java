@@ -105,7 +105,7 @@ public class ForLoopReplaceableByWhileInspection extends StatementInspection {
                     return;
                 }
                 final String conditionText = condition.getText();
-                if("true".equals(conditionText)){
+                if(PsiKeyword.TRUE.equals(conditionText)){
                     return;
                 }
             }

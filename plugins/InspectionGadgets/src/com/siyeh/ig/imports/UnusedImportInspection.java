@@ -22,13 +22,14 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DeleteImportFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class UnusedImportInspection extends ClassInspection{
     private final DeleteImportFix fix = new DeleteImportFix();
 
     public String getDisplayName(){
-        return "Unused import";
+        return InspectionGadgetsBundle.message("unused.import.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -36,7 +37,7 @@ public class UnusedImportInspection extends ClassInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "Unused import '#ref' #loc";
+        return InspectionGadgetsBundle.message("unused.import.problem.descriptor");
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){

@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ResultSetIndexZeroInspection extends ExpressionInspection {
@@ -29,7 +30,7 @@ public class ResultSetIndexZeroInspection extends ExpressionInspection {
         return "UseOfIndexZeroInJDBCResultSet";
     }
     public String getDisplayName() {
-        return "Use of index 0 in JDBC ResultSet";
+        return InspectionGadgetsBundle.message("use.0index.in.jdbc.resultset.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -37,7 +38,7 @@ public class ResultSetIndexZeroInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Use on index 0 with JDBC ResultSet #loc";
+        return InspectionGadgetsBundle.message("use.0index.in.jdbc.resultset.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -46,6 +47,7 @@ public class ResultSetIndexZeroInspection extends ExpressionInspection {
 
     private static class ResultSetIndexZeroVisitor extends BaseInspectionVisitor {
 
+        @SuppressWarnings({"HardCodedStringLiteral"})
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression = expression.getMethodExpression();
@@ -73,7 +75,7 @@ public class ResultSetIndexZeroInspection extends ExpressionInspection {
                 return;
             }
             final PsiExpression arg = args[0];
-            if (!TypeUtils.expressionHasType("int", arg)) {
+            if (!TypeUtils.expressionHasType(PsiKeyword.INT, arg)) {
                 return;
             }
             if(!PsiUtil.isConstantExpression(arg))

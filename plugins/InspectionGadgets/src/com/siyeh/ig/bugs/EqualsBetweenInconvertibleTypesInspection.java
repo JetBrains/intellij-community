@@ -20,12 +20,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class EqualsBetweenInconvertibleTypesInspection extends ExpressionInspection {
 
     public String getDisplayName() {
-        return "'equals()' between objects of inconvertible types";
+        return InspectionGadgetsBundle.message("equals.between.inconvertible.types.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -46,9 +47,8 @@ public class EqualsBetweenInconvertibleTypesInspection extends ExpressionInspect
         final PsiExpression qualifier = methodExpression.getQualifierExpression();
         final PsiType comparisonType = qualifier.getType();
 
-        return "#ref() between objects of inconvertible types "
-                + comparisonType.getPresentableText() + " and "
-                + comparedType.getPresentableText() + " #loc";
+        return InspectionGadgetsBundle.message("equals.between.inconvertible.types.problem.descriptor", comparisonType.getPresentableText(),
+                                               comparedType.getPresentableText());
     }
 
     public BaseInspectionVisitor buildVisitor() {

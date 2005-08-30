@@ -20,6 +20,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.table.DefaultTableModel;
 import java.text.NumberFormat;
 
+import com.siyeh.InspectionGadgetsBundle;
+
 class TelemetryTableModel extends DefaultTableModel{
     private final InspectionGadgetsTelemetry telemetry;
     private final NumberFormat format = NumberFormat.getNumberInstance();
@@ -77,13 +79,13 @@ class TelemetryTableModel extends DefaultTableModel{
     public @Nullable String getColumnName(int column){
         switch(column){
             case 0:
-                return "Inspection Name";
+                return InspectionGadgetsBundle.message("telemetry.table.column.inspection.name");
             case 1:
-                return "Total Run Time (msecs)";
+                return InspectionGadgetsBundle.message("telemetry.table.column.total.time");
             case 2:
-                return "Average Run Time (msecs)";
+                return InspectionGadgetsBundle.message("telemetry.table.column.average.time");
             case 3:
-                return "Total Run Count";
+                return InspectionGadgetsBundle.message("telemetry.table.column.run.count");
             default:
                 return null;
         }

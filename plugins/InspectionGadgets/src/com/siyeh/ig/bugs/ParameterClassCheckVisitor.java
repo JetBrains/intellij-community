@@ -16,6 +16,7 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 class ParameterClassCheckVisitor
@@ -46,7 +47,7 @@ class ParameterClassCheckVisitor
             return;
         }
         final String methodName = methodExpression.getReferenceName();
-        if(!"getClass".equals(methodName)){
+        if(!HardcodedMethodConstants.GET_CLASS.equals(methodName)){
             return;
         }
         final PsiExpressionList argList = expression.getArgumentList();

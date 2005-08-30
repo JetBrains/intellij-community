@@ -21,11 +21,12 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ReturnOfDateFieldInspection extends StatementInspection{
     public String getDisplayName(){
-        return "Return of Date or Calendar field";
+        return InspectionGadgetsBundle.message("return.date.calendar.field.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -36,7 +37,7 @@ public class ReturnOfDateFieldInspection extends StatementInspection{
         final PsiField field = (PsiField) ((PsiReference) location).resolve();
         assert field != null;
         final PsiType type = field.getType();
-        return "'return' of " + type.getPresentableText() + " field #ref #loc";
+        return InspectionGadgetsBundle.message("return.date.calendar.field.problem.descriptor", type.getPresentableText());
     }
 
     public BaseInspectionVisitor buildVisitor(){

@@ -20,10 +20,11 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
+import com.siyeh.InspectionGadgetsBundle;
 
 public class TodoCommentInspection extends ClassInspection {
     public String getDisplayName() {
-        return "TODO comment";
+        return InspectionGadgetsBundle.message("todo.comment.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -31,7 +32,7 @@ public class TodoCommentInspection extends ClassInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "TODO comment #ref #loc";
+        return InspectionGadgetsBundle.message("todo.comment.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
