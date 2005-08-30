@@ -20,9 +20,17 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.JComponent;
+
 public class RefusedBequestInspection extends MethodInspection{
+
+    /** @noinspection PublicField*/
+    public boolean ignoreEmptySuperMethods = false;
+
     public String getDisplayName(){
         return "Refused bequest";
     }
@@ -35,12 +43,17 @@ public class RefusedBequestInspection extends MethodInspection{
         return "Method #ref ignores defined method in superclass #loc";
     }
 
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(
+                "<html>Ignore empty super methods (degrades performance of " +
+                "this inspection)</html>", this, "ignoreEmptySuperMethods");
+    }
+
     public BaseInspectionVisitor buildVisitor(){
         return new RefusedBequestVisitor();
     }
 
-    private static class RefusedBequestVisitor extends BaseInspectionVisitor{
-
+    private class RefusedBequestVisitor extends BaseInspectionVisitor{
 
         public void visitMethod(@NotNull PsiMethod method){
             super.visitMethod(method);
@@ -55,7 +68,7 @@ public class RefusedBequestInspection extends MethodInspection{
                 final PsiClass containingClass =
                         superMethod.getContainingClass();
                 if(!superMethod.hasModifierProperty(PsiModifier.ABSTRACT) &&
-                        !containingClass.isInterface()){
+                   !containingClass.isInterface()){
                     leastConcreteSuperMethod = superMethod;
                     break;
                 }
@@ -69,19 +82,28 @@ public class RefusedBequestInspection extends MethodInspection{
             if("java.lang.Object".equals(className)){
                 return;
             }
+            if (ignoreEmptySuperMethods) {
+                final PsiMethod navigationElement = (PsiMethod)
+                        leastConcreteSuperMethod.getNavigationElement();
+                if (MethodUtils.isEmpty(navigationElement)) {
+                    return;
+                }
+            }
             if(containsSuperCall(body, leastConcreteSuperMethod)){
                 return;
             }
 
             registerMethodError(method);
         }
-    }
 
-    private static boolean containsSuperCall(PsiCodeBlock body,
-                                             PsiMethod method){
-        final SuperCallVisitor visitor = new SuperCallVisitor(method);
-        body.accept(visitor);
-        return visitor.hasSuperCall();
+        private boolean containsSuperCall(PsiCodeBlock body,
+                                          PsiMethod method){
+            final SuperCallVisitor visitor = new SuperCallVisitor(method);
+            body.accept(visitor);
+            return visitor.hasSuperCall();
+        }
+
+
     }
 
     private static class SuperCallVisitor extends PsiRecursiveElementVisitor{
