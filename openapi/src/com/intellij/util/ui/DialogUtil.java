@@ -16,6 +16,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 
@@ -30,26 +31,12 @@ public class DialogUtil {
   public static void registerMnemonic(AbstractButton button) {
     String text = button.getText();
 
-    if (SystemInfo.isMac) {
-      final int doubleAmpPosition = text.indexOf("&&");
-      if (doubleAmpPosition >= 0) {
-        final String beforeAmp = text.substring(0, doubleAmpPosition);
-        if (doubleAmpPosition < text.length() - 2) {
-          final String afterAmp = text.substring(doubleAmpPosition + 2);
-
-          text = beforeAmp.replaceAll("&", "") + "&" + afterAmp.replaceAll("&", "");
-        }
-      }
-    } else {
-      text = text.replaceAll("&&", "");
-    }
-
     StringBuffer realText = new StringBuffer();
     char mnemonic = '\0';
     int index = -1;
     for (int i = 0; i < text.length(); i++) {
       char ch = text.charAt(i);
-      if (ch != '&') {
+      if (ch != CommonBundle.MNEMONIC) {
         realText.append(ch);
       }
       else if (i + 1 < text.length()) {
@@ -72,7 +59,7 @@ public class DialogUtil {
       int index = -1;
       for (int i = 0; i < text.length(); i++) {
         char ch = text.charAt(i);
-        if (ch != '&') {
+        if (ch != CommonBundle.MNEMONIC) {
           realText.append(ch);
         }
         else if (i + 1 == text.length()) {
