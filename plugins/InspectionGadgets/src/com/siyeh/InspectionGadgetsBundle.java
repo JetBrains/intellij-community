@@ -16,9 +16,8 @@
 package com.siyeh;
 
 import com.intellij.CommonBundle;
+import org.jetbrains.annotations.PropertyKey;
 
-import java.text.MessageFormat;
-import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 /**
@@ -29,7 +28,7 @@ public class InspectionGadgetsBundle {
 
   private InspectionGadgetsBundle() {}
 
-  public static String message(String key, Object... params) {
+  public static String message(@PropertyKey String key, Object... params) {
     return CommonBundle.message(key, params);
   }
 }
