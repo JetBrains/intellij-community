@@ -14,7 +14,7 @@ package com.intellij;/*
  * limitations under the License.
  */
 
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
 
@@ -23,7 +23,7 @@ public class CvsBundle {
 
   private CvsBundle() {}
 
-  public static String message(@NonNls  String key, Object... params) {
+  public static String message(@PropertyKey String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 

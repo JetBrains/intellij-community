@@ -4,6 +4,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.CommonBundle;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
 
@@ -15,7 +16,7 @@ public class CodeInsightBundle {
 
   private CodeInsightBundle() {}
 
-  public static String message(String key, Object... params) {
+  public static String message(@PropertyKey String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

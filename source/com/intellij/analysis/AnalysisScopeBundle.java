@@ -4,6 +4,7 @@
 package com.intellij.analysis;
 
 import com.intellij.CommonBundle;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
 
@@ -13,7 +14,7 @@ import java.util.ResourceBundle;
 public class AnalysisScopeBundle {
   private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.intellij.analysis.AnalysisScopeBundle");
 
-  public static String message(String key, Object... params) {
+  public static String message(@PropertyKey String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

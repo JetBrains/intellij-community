@@ -4,6 +4,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.CommonBundle;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
 
@@ -15,7 +16,7 @@ public class CompletionBundle {
 
   private CompletionBundle() {}
 
-  public static String message(String key, Object... params) {
+  public static String message(@PropertyKey String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

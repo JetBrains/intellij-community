@@ -17,6 +17,7 @@ package com.intellij.idea;
 
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
 
@@ -27,15 +28,17 @@ import java.util.ResourceBundle;
 public class ActionsBundle {
   private static final ResourceBundle ourBundle = ResourceBundle.getBundle("idea.ActionsBundle");
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static String actionText(@NonNls String actionId) {
     return message("action." + actionId + ".text");
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static String actionDescription(@NonNls String actionId) {
     return message("action." + actionId + ".description");
   }
 
-  public static String message(@NonNls String key, Object... params) {
+  public static String message(@PropertyKey String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

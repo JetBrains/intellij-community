@@ -4,10 +4,9 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.CommonBundle;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author max
@@ -17,7 +16,7 @@ public class QuickFixBundle {
 
   private QuickFixBundle() {}
 
-  public static String message(@NonNls String key, Object... params) {
+  public static String message(@PropertyKey String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

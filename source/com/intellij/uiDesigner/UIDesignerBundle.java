@@ -1,12 +1,9 @@
 package com.intellij.uiDesigner;
 
 import com.intellij.CommonBundle;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
-import java.util.MissingResourceException;
-import java.text.MessageFormat;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -20,7 +17,7 @@ public class UIDesignerBundle {
 
   private UIDesignerBundle() {}
 
-  public static String message(@NonNls String key, Object... params) {
+  public static String message(@PropertyKey String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

@@ -16,7 +16,7 @@
 package com.intellij.debugger;
 
 import com.intellij.CommonBundle;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
 
@@ -26,7 +26,7 @@ public class DebuggerBundle {
   private DebuggerBundle() {
   }
 
-  public static String message(@NonNls String key, Object... params) {
+  public static String message(@PropertyKey String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

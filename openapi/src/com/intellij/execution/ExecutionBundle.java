@@ -3,11 +3,11 @@
  */
 package com.intellij.execution;
 
+import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
-
-import com.intellij.CommonBundle;
 
 /**
  * Created by IntelliJ IDEA.
@@ -21,7 +21,7 @@ public class ExecutionBundle {
   protected static final String PATH_TO_BUNDLE = "com.intellij.execution.ExecutionBundle";
   private final static ResourceBundle ourResourceBundle = ResourceBundle.getBundle(PATH_TO_BUNDLE);
 
-  public static String message(@NonNls String key, Object... params) {
+  public static String message(@PropertyKey String key, Object... params) {
     return CommonBundle.message(ourResourceBundle, key, params);
   }
 

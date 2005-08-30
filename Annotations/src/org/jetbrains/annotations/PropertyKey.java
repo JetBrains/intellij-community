@@ -13,22 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.application;
+package org.jetbrains.annotations;
 
-import com.intellij.CommonBundle;
-import org.jetbrains.annotations.PropertyKey;
-
-import java.util.ResourceBundle;
+import java.lang.annotation.*;
 
 /**
- * Provides access to localized properties for the application component of IDEA.
+ * @author max
  */
-public class ApplicationBundle {
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.intellij.openapi.application.ApplicationBundle");
-
-  private ApplicationBundle() {}
-
-  public static String message(@PropertyKey String key, Object... params) {
-    return CommonBundle.message(ourBundle, key, params);
-  }
+@Documented
+@Retention(RetentionPolicy.CLASS)
+@Target({ElementType.PARAMETER})
+public @interface PropertyKey {
 }
