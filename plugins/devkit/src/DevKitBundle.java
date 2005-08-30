@@ -1,12 +1,9 @@
 package org.jetbrains.idea.devkit;
 
-import org.jetbrains.annotations.NonNls;
+import com.intellij.CommonBundle;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
-import java.util.MissingResourceException;
-import java.text.MessageFormat;
-
-import com.intellij.CommonBundle;
 
 /**
  * User: anna
@@ -17,7 +14,7 @@ public class DevKitBundle {
 
   private  DevKitBundle(){}
 
-  public static String message(@NonNls String key, Object... params) {
+  public static String message(@PropertyKey String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }
