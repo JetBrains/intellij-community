@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.CommonBundle;
+
 import java.text.MessageFormat;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
@@ -28,18 +30,6 @@ public class InspectionsBundle {
   private InspectionsBundle() {}
 
   public static String message(String key, Object... params) {
-    String value;
-    try {
-      value = ourBundle.getString(key);
-    }
-    catch (MissingResourceException e) {
-      return "!" + key + "!";
-    }
-
-    if (params.length > 0) {
-      return MessageFormat.format(value, params);
-    }
-
-    return value;
+    return CommonBundle.message(ourBundle, key, params);
   }
 }
