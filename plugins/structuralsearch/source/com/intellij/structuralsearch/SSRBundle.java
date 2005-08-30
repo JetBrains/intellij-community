@@ -1,10 +1,9 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.CommonBundle;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
-import java.util.MissingResourceException;
-import java.text.MessageFormat;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class SSRBundle {
@@ -12,7 +11,7 @@ public class SSRBundle {
 
   private SSRBundle() {}
 
-  public static String message(String key, Object... params) {
+  public static String message(@PropertyKey String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }
