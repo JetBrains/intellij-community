@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.performance;
+package com.siyeh.ig.j2me;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
@@ -29,7 +29,7 @@ public class SingleCharacterStartsWithInspection extends ExpressionInspection {
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.PERFORMANCE_GROUP_NAME;
+        return GroupNames.J2ME_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location) {
