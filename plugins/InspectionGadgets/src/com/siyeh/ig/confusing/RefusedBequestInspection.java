@@ -102,8 +102,6 @@ public class RefusedBequestInspection extends MethodInspection{
             body.accept(visitor);
             return visitor.hasSuperCall();
         }
-
-
     }
 
     private static class SuperCallVisitor extends PsiRecursiveElementVisitor{
