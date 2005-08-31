@@ -27,7 +27,10 @@ class RemovePropertyFix implements IntentionAction {
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    return file.isValid();
+    return file.isValid()
+           && myOrigProperty != null
+           && myOrigProperty.isValid()
+      ;
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
