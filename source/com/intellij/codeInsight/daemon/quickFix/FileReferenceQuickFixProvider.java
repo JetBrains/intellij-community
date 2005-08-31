@@ -1,25 +1,27 @@
-package com.intellij.psi.impl.source.resolve.reference.impl.providers;
+package com.intellij.codeInsight.daemon.quickFix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.RenameFileFix;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.jsp.WebDirectoryElement;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
-import com.intellij.openapi.project.Project;
+import com.intellij.ide.highlighter.UnknownFileType;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
+import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.ide.highlighter.UnknownFileType;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Collection;
 
 /**
@@ -134,11 +136,13 @@ public class FileReferenceQuickFixProvider {
       info,
       new IntentionAction() {
         public String getText() {
-          return (isdirectory?"Create Directory ":"Create File ") + newFileName;
+          return isdirectory ?
+                 QuickFixBundle.message("create.directory.text", newFileName) :
+                 QuickFixBundle.message("create.file.text", newFileName);
         }
 
         public String getFamilyName() {
-          return "Create";
+          return QuickFixBundle.message("create.file.family");
         }
 
         public boolean isAvailable(Project project, Editor editor, PsiFile file) {
@@ -172,11 +176,11 @@ public class FileReferenceQuickFixProvider {
     }
 
     public String getText() {
-      return "Rename File Reference to "+myExistingElementName;
+      return QuickFixBundle.message("rename.file.reference.text", myExistingElementName);
     }
 
     public String getFamilyName() {
-      return "Rename File Reference";
+      return QuickFixBundle.message("rename.file.reference.family");
     }
 
     public boolean isAvailable(Project project, Editor editor, PsiFile file) {
