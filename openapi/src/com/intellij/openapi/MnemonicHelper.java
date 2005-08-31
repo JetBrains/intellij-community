@@ -8,6 +8,10 @@ import com.intellij.util.ui.DialogUtil;
 
 import javax.swing.*;
 import java.awt.*;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeEvent;
+
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -17,6 +21,18 @@ import java.awt.*;
  * To change this template use File | Settings | File Templates.
  */
 public class MnemonicHelper extends ComponentTreeWatcher {
+  public static final PropertyChangeListener TEXT_LISTENER = new PropertyChangeListener() {
+   public void propertyChange(PropertyChangeEvent evt) {
+     final Object source = evt.getSource();
+     if (source instanceof AbstractButton) {
+       DialogUtil.registerMnemonic(((AbstractButton)source));
+     } else if (source instanceof JLabel) {
+       DialogUtil.registerMnemonic(((JLabel)source), null);
+     }
+   }
+  };
+  @NonNls public static final String TEXT_CHANGED_PROPERTY = "text";
+
   public MnemonicHelper() {
     super(new Class[0]);
   }
@@ -24,11 +40,13 @@ public class MnemonicHelper extends ComponentTreeWatcher {
   protected void processComponent(Component parentComponent) {
     if (parentComponent instanceof AbstractButton) {
       final AbstractButton abstractButton = ((AbstractButton)parentComponent);
-      if (abstractButton.getMnemonic() <= 0){
+      abstractButton.addPropertyChangeListener(AbstractButton.TEXT_CHANGED_PROPERTY, TEXT_LISTENER);
+      if (abstractButton.getMnemonic() < 0){
         DialogUtil.registerMnemonic(abstractButton);
       }
     } else if (parentComponent instanceof JLabel) {
       final JLabel jLabel = ((JLabel)parentComponent);
+      jLabel.addPropertyChangeListener(TEXT_CHANGED_PROPERTY, TEXT_LISTENER);
       if (jLabel.getDisplayedMnemonicIndex() < 0) {
         DialogUtil.registerMnemonic(jLabel, null);
       }
