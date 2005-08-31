@@ -931,7 +931,7 @@ class JavaDocInfoGenerator {
   }
 
   private static boolean areWeakEqual(String one, String two) {
-    return one.equals(two) || one.endsWith(two) || two.endsWith(one);
+    return one.equals(two) || one.endsWith("." + two) || two.endsWith("." + one);
   }
 
   private void generateThrowsSection(StringBuffer buffer, PsiMethod method) {
