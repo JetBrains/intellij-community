@@ -17,6 +17,7 @@ package com.intellij.openapi.application;
 
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ResourceBundle;
 
@@ -28,7 +29,7 @@ public class ApplicationBundle {
 
   private ApplicationBundle() {}
 
-  public static String message(@PropertyKey String key, Object... params) {
+  public static String message(@NonNls @PropertyKey String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }
