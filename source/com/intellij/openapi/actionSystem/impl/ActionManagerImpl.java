@@ -21,6 +21,11 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.IdeFrame;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -790,6 +795,17 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     return myPrevPerformedActionId;
   }
 
+  private boolean haveActiveFrames() {
+    final Project[] projects = ProjectManager.getInstance().getOpenProjects();
+    final WindowManagerEx wmanager = WindowManagerEx.getInstanceEx();
+    if (wmanager == null) return false;
+    for (Project project : projects) {
+      final IdeFrame frame = wmanager.getFrame(project);
+      if (frame != null && frame.getState() != JFrame.ICONIFIED) return true;
+    }
+    return false;
+  }
+
   private class MyTimer extends Timer implements ActionListener {
     private final List<TimerListener> myTimerListeners = Collections.synchronizedList(new ArrayList<TimerListener>());
 
@@ -809,7 +825,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     }
 
     public void actionPerformed(ActionEvent e) {
-      if (myLastTimeEditorWasTypedIn + UPDATE_DELAY_AFTER_TYPING > System.currentTimeMillis()) return;
+      if (myLastTimeEditorWasTypedIn + UPDATE_DELAY_AFTER_TYPING > System.currentTimeMillis() || !haveActiveFrames()) {
+        return;
+      }
 
       TimerListener[] listeners = myTimerListeners.toArray(new TimerListener[myTimerListeners.size()]);
       for (TimerListener listener : listeners) {
