@@ -17,6 +17,7 @@ package com.intellij.util;
 
 /**
  * Utility wrappers for accessing system properties.
+ *
  * @author yole
  */
 
@@ -27,6 +28,7 @@ public class SystemProperties {
 
   /**
    * Returns the value of the user.home system property.
+   *
    * @return the property value
    */
   public static String getUserHome() {
@@ -35,9 +37,37 @@ public class SystemProperties {
 
   /**
    * Returns the value of the line.separator system property.
+   *
    * @return the property value
    */
   public static String getLineSeparator() {
     return System.getProperty("line.separator");
+  }
+
+  /**
+   * Returns the value of the os.name system property.
+   *
+   * @return the property value
+   */
+  public static String getOsName() {
+    return System.getProperty("os.name");
+  }
+
+  /**
+   * Returns the value of the java.version system property.
+   *
+   * @return the property value
+   */
+  public static String getJavaVersion() {
+    return System.getProperty("java.version");
+  }
+
+  /**
+   * Returns the value of the java.vm.vendor system property.
+   *
+   * @return the property value
+   */
+  public static String getJavaVmVendor() {
+    return System.getProperty("java.vm.vendor");
   }
 }
