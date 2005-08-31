@@ -41,15 +41,11 @@ public class MnemonicHelper extends ComponentTreeWatcher {
     if (parentComponent instanceof AbstractButton) {
       final AbstractButton abstractButton = ((AbstractButton)parentComponent);
       abstractButton.addPropertyChangeListener(AbstractButton.TEXT_CHANGED_PROPERTY, TEXT_LISTENER);
-      if (abstractButton.getMnemonic() < 0){
-        DialogUtil.registerMnemonic(abstractButton);
-      }
+      DialogUtil.registerMnemonic(abstractButton);
     } else if (parentComponent instanceof JLabel) {
       final JLabel jLabel = ((JLabel)parentComponent);
       jLabel.addPropertyChangeListener(TEXT_CHANGED_PROPERTY, TEXT_LISTENER);
-      if (jLabel.getDisplayedMnemonicIndex() < 0) {
-        DialogUtil.registerMnemonic(jLabel, null);
-      }
+      DialogUtil.registerMnemonic(jLabel, null);
     }
   }
 
