@@ -284,7 +284,12 @@ public class EnterHandler extends EditorWriteActionHandler {
       }
       if (tokenType == JavaTokenType.STRING_LITERAL || tokenType == JavaTokenType.CHARACTER_LITERAL) {
         String text = commentText.substring(lexer.getTokenStart(), lexer.getTokenEnd());
-        if (text.endsWith(DOC_COMMENT_SUFFIX)) return true;
+        int endOffset = comment.getTextRange().getEndOffset();
+        if (text.endsWith(DOC_COMMENT_SUFFIX) &&
+            endOffset < comment.getContainingFile().getTextLength()-1 &&
+            comment.getContainingFile().getText().charAt(endOffset+1) == '\n') {
+          return true;
+        }
       }
       if (lexer.getTokenEnd() == commentText.length()) {
         return lexer.getTokenEnd() - lexer.getTokenStart() == 1;
