@@ -15,9 +15,6 @@
  */
 package com.intellij.util.ui;
 
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.CommonBundle;
-
 import javax.swing.*;
 
 /**
@@ -36,7 +33,7 @@ public class DialogUtil {
     int index = -1;
     for (int i = 0; i < text.length(); i++) {
       char ch = text.charAt(i);
-      if (ch != CommonBundle.MNEMONIC) {
+      if (ch != UIUtil.MNEMONIC) {
         realText.append(ch);
       }
       else if (i + 1 < text.length()) {
@@ -59,7 +56,7 @@ public class DialogUtil {
       int index = -1;
       for (int i = 0; i < text.length(); i++) {
         char ch = text.charAt(i);
-        if (ch != CommonBundle.MNEMONIC) {
+        if (ch != UIUtil.MNEMONIC) {
           realText.append(ch);
         }
         else if (i + 1 == text.length()) {
