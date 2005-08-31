@@ -16,6 +16,7 @@
 package com.intellij.debugger;
 
 import com.intellij.CommonBundle;
+import com.intellij.execution.configurations.RemoteConnection;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
@@ -28,5 +29,13 @@ public class DebuggerBundle {
 
   public static String message(@PropertyKey String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
+  }
+
+  public static String getAddressDisplayName(final RemoteConnection connection) {
+    return connection.isUseSockets()? connection.getHostName() + ":" + connection.getAddress() : connection.getAddress();
+  }
+
+  public static String getTransportName(final RemoteConnection connection) {
+    return connection.isUseSockets() ? message("transport.name.socket") : message("transport.name.shared.memory");
   }
 }
