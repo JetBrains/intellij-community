@@ -62,7 +62,7 @@ public class BuildRecipeImpl implements BuildRecipe {
                                      String outputRelativePath,
                                      FileFilter fileFilter) {
     if (fileFilter == null || fileFilter.accept(file)) {
-      addInstruction(new FileCopyInstructionImpl(file, isDirectory, module, MakeUtil.trimForwardSlashes(outputRelativePath)));
+      addInstruction(new FileCopyInstructionImpl(file, isDirectory, module, MakeUtil.trimForwardSlashes(outputRelativePath),fileFilter));
     }
   }
 

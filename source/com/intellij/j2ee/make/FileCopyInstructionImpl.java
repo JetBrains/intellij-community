@@ -3,15 +3,18 @@ package com.intellij.j2ee.make;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.ZipUtil;
+import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.jar.JarOutputStream;
 
 public class FileCopyInstructionImpl extends BuildInstructionBase implements FileCopyInstruction {
@@ -19,12 +22,15 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
   private boolean myIsDirectory;
   // for a directory keep the subset of changed files that need to be copied
   private List<FileCopyInstructionImpl> myChangedSet;
+  private @Nullable final FileFilter myFileFilter;
 
   public FileCopyInstructionImpl(File source,
                                  boolean isDirectory,
                                  Module module,
-                                 String outputRelativePath) {
+                                 String outputRelativePath,
+                                 @Nullable final FileFilter fileFilter) {
     super(outputRelativePath, module);
+    myFileFilter = fileFilter;
     setFile(source, isDirectory);
   }
 
@@ -79,7 +85,7 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
       boolean ok = ZipUtil.addFileOrDirRecursively(outputStream, jarFile, file, outputRelativePath, fileFilter, writtenRelativePaths);
       if (!ok) {
         MakeUtil.reportRecursiveCopying(context, file.getPath(), jarFile.getPath(), "",
-                                                      "Please setup jar file location outside directory '" + file.getPath() + "'.");
+                                        "Please setup jar file location outside directory '" + file.getPath() + "'.");
       }
     }
   }
@@ -109,7 +115,7 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
     final FileCopyInstruction item = (FileCopyInstruction) o;
 
     if (getFile() != null ? !getFile().equals(item.getFile()) : item.getFile() != null) return false;
-    
+
     if (getOutputRelativePath() != null) {
       if (!getOutputRelativePath().equals( item.getOutputRelativePath() )) return false;
     } else if ( item.getOutputRelativePath() != null ) {
@@ -120,7 +126,7 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
   }
 
   public int hashCode() {
-    return (getFile() != null ? getFile().hashCode() : 0) + 
+    return (getFile() != null ? getFile().hashCode() : 0) +
            (getOutputRelativePath() != null ? getOutputRelativePath().hashCode():0);
   }
 
@@ -148,5 +154,68 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
 
   public void clearChangedSet() {
     myChangedSet = new ArrayList<FileCopyInstructionImpl>();
+  }
+
+  public void addFlattenDirectoryItems(Map<VirtualFile, InstructionProcessingItem> items,
+                                       Module targetModule,
+                                       final boolean isExplodedEnabled,
+                                       final VirtualFile fileInExplodedPath,
+                                       final boolean jarEnabled,
+                                       final VirtualFile jarFile,
+                                       Map<String, VirtualFile> explodedFilesMap) {
+    LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
+    VirtualFile virtualFile = localFileSystem.findFileByPath(FileUtil.toSystemIndependentName(getFile().getPath()));
+    if (virtualFile == null) return;
+
+    addFileItemsRecursively(virtualFile, getOutputRelativePath(), fileInExplodedPath, explodedFilesMap, items, targetModule, isExplodedEnabled, jarEnabled, jarFile);
+  }
+
+  private void addFileItemsRecursively(@NotNull final VirtualFile virtualFile,
+                                       final String outputRelativePath,
+                                       final VirtualFile fileInExplodedPath,
+                                       Map<String, VirtualFile> explodedFilesMap,
+                                       final Map<VirtualFile, InstructionProcessingItem> items,
+                                       final Module targetModule,
+                                       final boolean isExplodedEnabled,
+                                       final boolean jarEnabled,
+                                       final VirtualFile jarFile
+  ) {
+    if (myFileFilter != null && !myFileFilter.accept(new File(virtualFile.getPath()))) return;
+    if (virtualFile.isDirectory()) {
+      VirtualFile[] children = virtualFile.getChildren();
+      VirtualFile[] explodedChildren = fileInExplodedPath == null ? null : fileInExplodedPath.getChildren();
+      if (explodedChildren == null) explodedChildren = VirtualFile.EMPTY_ARRAY;
+      if (explodedFilesMap == null) {
+        explodedFilesMap = new THashMap<String, VirtualFile>();
+      }
+      for (VirtualFile file : explodedChildren) {
+        String childRelativePath = MakeUtil.appendToPath(outputRelativePath, file.getName());
+        explodedFilesMap.put(childRelativePath, file);
+      }
+
+      for (final VirtualFile child : children) {
+        String childRelativePath = MakeUtil.appendToPath(outputRelativePath, child.getName());
+        VirtualFile childFileInExploded = fileInExplodedPath == null ? null : explodedFilesMap.get(childRelativePath);
+        addFileItemsRecursively(child,
+                                childRelativePath,
+                                childFileInExploded,
+                                explodedFilesMap,
+                                items,
+                                targetModule,
+                                isExplodedEnabled,
+                                jarEnabled,
+                                jarFile
+        );
+      }
+    }
+    else {
+      InstructionProcessingItem processingItem = items.get(virtualFile);
+      if (processingItem == null) {
+        processingItem = new InstructionProcessingItem(virtualFile);
+        items.put(virtualFile, processingItem);
+      }
+      boolean targetFileExists = (!isExplodedEnabled || fileInExplodedPath != null) && (!jarEnabled || jarFile != null);
+      processingItem.addInstructionInfo(new InstructionProcessingItem.InstructionInfo(this, outputRelativePath, targetModule, targetFileExists));
+    }
   }
 }

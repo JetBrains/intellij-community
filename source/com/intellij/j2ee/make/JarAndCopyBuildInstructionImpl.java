@@ -25,8 +25,8 @@ public class JarAndCopyBuildInstructionImpl extends FileCopyInstructionImpl impl
 
   public JarAndCopyBuildInstructionImpl(Module module,
                                         File directoryToJar,
-                                        String outputRelativePath) {
-    super(directoryToJar, false, module, outputRelativePath);
+                                        String outputRelativePath, final FileFilter fileFilter) {
+    super(directoryToJar, false, module, outputRelativePath, fileFilter);
   }
 
   public void addFilesToExploded(CompileContext context,
