@@ -1,5 +1,7 @@
 package com.siyeh;
 
+import com.intellij.psi.PsiKeyword;
+
 /**
  * User: anna
  * Date: 30-Aug-2005
@@ -33,4 +35,8 @@ public class HardcodedMethodConstants {
   public static final String GET_CONNECTION = "getConnection";
   public static final String OPEN_SESSION = "openSession";
   public static final String LENGTH = "length";
+  public static final String MAIN = "main";
+  public static final String VOID = PsiKeyword.VOID;
+  public static final String STARTS_WITH = "startsWith";
+  public static final String ENDS_WITH = "endsWith";
 }

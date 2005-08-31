@@ -19,27 +19,24 @@ import com.intellij.psi.*;
 
 import java.lang.reflect.Modifier;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author <A href="bas@carp-technologies.nl">Bas Leijdekkers</a>
  */
 public class MemberSignature implements Comparable
 {
-    private static final String CONSTRUCTOR_NAME = "<init>";
-    private static final String INITIALIZER_SIGNATURE = "()V";
-
-    private static final MemberSignature ASSERTIONS_DISABLED_FIELD =
+    @NonNls private static final String CONSTRUCTOR_NAME = "<init>";
+    @NonNls private static final String INITIALIZER_SIGNATURE = "()V";
+    @NonNls private static final MemberSignature ASSERTIONS_DISABLED_FIELD =
             new MemberSignature("$assertionsDisabled", Modifier.STATIC | Modifier.FINAL, "Z");
-
-    private static final MemberSignature CLASS_ACCESS_METHOD =
+    @NonNls private static final MemberSignature CLASS_ACCESS_METHOD =
             new MemberSignature("class$", Modifier.STATIC, "(Ljava.lang.String;)Ljava.lang.Class;");
-
-    private static final MemberSignature PACKAGE_PRIVATE_CONSTRUCTOR =
+    @NonNls private static final MemberSignature PACKAGE_PRIVATE_CONSTRUCTOR =
             new MemberSignature(CONSTRUCTOR_NAME, 0, INITIALIZER_SIGNATURE);
-
-    private static final MemberSignature PUBLIC_CONSTRUCTOR =
+    @NonNls private static final MemberSignature PUBLIC_CONSTRUCTOR =
             new MemberSignature(CONSTRUCTOR_NAME, Modifier.PUBLIC, INITIALIZER_SIGNATURE);
-
-    private static final MemberSignature STATIC_INITIALIZER =
+    @NonNls private static final MemberSignature STATIC_INITIALIZER =
             new MemberSignature("<clinit>", Modifier.STATIC, INITIALIZER_SIGNATURE);
 
     private final int modifiers;
@@ -66,7 +63,7 @@ public class MemberSignature implements Comparable
         }
     }
 
-    public MemberSignature(String name, int modifiers, String signature)
+    public MemberSignature(String name, int modifiers, @NonNls String signature)
     {
         super();
         this.name = name;
@@ -162,7 +159,7 @@ public class MemberSignature implements Comparable
 
     public static String createPrimitiveType(PsiPrimitiveType primitiveType)
     {
-        final String primitypeTypeSignature;
+        @NonNls final String primitypeTypeSignature;
         if (primitiveType.equals(PsiType.INT))
         {
             primitypeTypeSignature = "I";
@@ -229,17 +226,17 @@ public class MemberSignature implements Comparable
             {
                 final PsiClassType classType = (PsiClassType)internalType;
                 PsiClass psiClass = classType.resolve();
-				if (psiClass != null)
-				{
-					final StringBuffer postFix = new StringBuffer("");
-					PsiClass containingClass = psiClass.getContainingClass();
-					while (containingClass != null)
-					{
-						// construct name for inner classes
-						postFix.insert(0, psiClass.getName()).insert(0, '$');
-						psiClass = containingClass;
-						containingClass = psiClass.getContainingClass();
-					}
+                                if (psiClass != null)
+                                {
+                                        final StringBuffer postFix = new StringBuffer("");
+                                        PsiClass containingClass = psiClass.getContainingClass();
+                                        while (containingClass != null)
+                                        {
+                                                // construct name for inner classes
+                                                postFix.insert(0, psiClass.getName()).insert(0, '$');
+                                                psiClass = containingClass;
+                                                containingClass = psiClass.getContainingClass();
+                                        }
                     final String qualifiedName = psiClass.getQualifiedName();
                     if(qualifiedName == null)
                     {
@@ -250,7 +247,7 @@ public class MemberSignature implements Comparable
                     {
                         buffer.append(qualifiedName.replace('.', '/') + postFix);
                     }
-				}
+                                }
             }
             else
             {

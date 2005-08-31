@@ -24,40 +24,33 @@ import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ReturnFromFinallyBlockInspection extends StatementInspection{
-    public String getID(){
-        return "ReturnInsideFinallyBlock";
-    }
+public class ReturnFromFinallyBlockInspection extends StatementInspection {
 
-    public String getDisplayName(){
-        return "'return' inside 'finally' block";
-    }
+  public String getID() {
+    return "ReturnInsideFinallyBlock";
+  }
 
-    public String getGroupDisplayName(){
-        return GroupNames.ERRORHANDLING_GROUP_NAME;
-    }
+  public String getGroupDisplayName() {
+    return GroupNames.ERRORHANDLING_GROUP_NAME;
+  }
 
-    public boolean isEnabledByDefault(){
-        return true;
-    }
+  public boolean isEnabledByDefault() {
+    return true;
+  }
 
-    public String buildErrorString(PsiElement location){
-        return "'#ref' inside 'finally' block #loc";
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new ReturnFromFinallyBlockVisitor();
+  }
 
-    public BaseInspectionVisitor buildVisitor(){
-        return new ReturnFromFinallyBlockVisitor();
-    }
+  private static class ReturnFromFinallyBlockVisitor
+    extends StatementInspectionVisitor {
 
-    private static class ReturnFromFinallyBlockVisitor
-            extends StatementInspectionVisitor{
-
-        public void visitReturnStatement(@NotNull PsiReturnStatement statement){
-            super.visitReturnStatement(statement);
-            if(!ControlFlowUtils.isInFinallyBlock(statement)){
-                return;
-            }
-            registerStatementError(statement);
-        }
+    public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
+      super.visitReturnStatement(statement);
+      if (!ControlFlowUtils.isInFinallyBlock(statement)) {
+        return;
+      }
+      registerStatementError(statement);
     }
+  }
 }

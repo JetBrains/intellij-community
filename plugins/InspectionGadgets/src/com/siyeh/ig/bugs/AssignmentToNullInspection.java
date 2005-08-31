@@ -41,7 +41,6 @@ public class AssignmentToNullInspection extends ExpressionInspection {
     }
 
     private static class AssignmentToNullVisitor extends BaseInspectionVisitor {
-        @SuppressWarnings({"HardCodedStringLiteral"})
         public void visitLiteralExpression(@NotNull PsiLiteralExpression value) {
             super.visitLiteralExpression(value);
             final String text = value.getText();

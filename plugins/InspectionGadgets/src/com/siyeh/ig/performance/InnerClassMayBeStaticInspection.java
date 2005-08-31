@@ -27,82 +27,75 @@ import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
-public class InnerClassMayBeStaticInspection extends ClassInspection{
-    private final InnerClassMayBeStaticFix fix = new InnerClassMayBeStaticFix();
+public class InnerClassMayBeStaticInspection extends ClassInspection {
 
-    public String getDisplayName(){
-        return "Inner class may be 'static'";
+  private final InnerClassMayBeStaticFix fix = new InnerClassMayBeStaticFix();
+
+  public String getGroupDisplayName() {
+    return GroupNames.PERFORMANCE_GROUP_NAME;
+  }
+
+  protected InspectionGadgetsFix buildFix(PsiElement location) {
+    return fix;
+  }
+
+  private static class InnerClassMayBeStaticFix extends InspectionGadgetsFix {
+    public String getName() {
+      return "Make static";
     }
 
-    public String getGroupDisplayName(){
-        return GroupNames.PERFORMANCE_GROUP_NAME;
-    }
-
-    public String buildErrorString(PsiElement location){
-        return "Inner class #ref may be 'static' #loc";
-    }
-
-    protected InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
-    }
-
-    private static class InnerClassMayBeStaticFix extends InspectionGadgetsFix{
-        public String getName(){
-            return "Make static";
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiJavaToken classNameToken = (PsiJavaToken)descriptor
+        .getPsiElement();
+      final PsiClass innerClass = (PsiClass)classNameToken.getParent();
+      assert innerClass != null;
+      final PsiManager manager = innerClass.getManager();
+      final PsiSearchHelper searchHelper = manager.getSearchHelper();
+      final SearchScope useScope = innerClass.getUseScope();
+      final PsiReference[] references = searchHelper
+        .findReferences(innerClass, useScope, false);
+      for (final PsiReference reference : references) {
+        final PsiElement element = reference.getElement();
+        final PsiElement parent = element.getParent();
+        if (parent instanceof PsiNewExpression) {
+          final PsiNewExpression newExpression = (PsiNewExpression)parent;
+          final PsiExpression qualifier = newExpression
+            .getQualifier();
+          if (qualifier != null) {
+            qualifier.delete();
+          }
         }
+      }
+      final PsiModifierList modifiers = innerClass.getModifierList();
+      modifiers.setModifierProperty(PsiModifier.STATIC, true);
+    }
+  }
 
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException{
-            final PsiJavaToken classNameToken = (PsiJavaToken) descriptor
-                    .getPsiElement();
-            final PsiClass innerClass = (PsiClass) classNameToken.getParent();
-            assert innerClass != null;
-            final PsiManager manager = innerClass.getManager();
-            final PsiSearchHelper searchHelper = manager.getSearchHelper();
-            final SearchScope useScope = innerClass.getUseScope();
-            final PsiReference[] references = searchHelper
-                    .findReferences(innerClass, useScope, false);
-            for(final PsiReference reference : references){
-                final PsiElement element = reference.getElement();
-                final PsiElement parent = element.getParent();
-                if(parent instanceof PsiNewExpression){
-                    final PsiNewExpression newExpression = (PsiNewExpression) parent;
-                    final PsiExpression qualifier = newExpression
-                            .getQualifier();
-                    if(qualifier != null){
-                        qualifier.delete();
-                    }
-                }
-            }
-            final PsiModifierList modifiers = innerClass.getModifierList();
-            modifiers.setModifierProperty(PsiModifier.STATIC, true);
+  public BaseInspectionVisitor buildVisitor() {
+    return new InnerClassCanBeStaticVisitor();
+  }
+
+  private static class InnerClassCanBeStaticVisitor
+    extends BaseInspectionVisitor {
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so that it doesn't drill down to inner classes
+      if (aClass.getContainingClass() != null && !aClass
+        .hasModifierProperty(PsiModifier.STATIC)) {
+        // inner class cannot have static declarations
+        return;
+      }
+      final PsiClass[] innerClasses = aClass.getInnerClasses();
+      for (final PsiClass innerClass : innerClasses) {
+        if (!innerClass.hasModifierProperty(PsiModifier.STATIC)) {
+          final InnerClassReferenceVisitor visitor = new InnerClassReferenceVisitor(
+            innerClass);
+          innerClass.accept(visitor);
+          if (visitor.areReferenceStaticallyAccessible()) {
+            registerClassError(innerClass);
+          }
         }
+      }
     }
-
-    public BaseInspectionVisitor buildVisitor(){
-        return new InnerClassCanBeStaticVisitor();
-    }
-
-    private static class InnerClassCanBeStaticVisitor
-            extends BaseInspectionVisitor{
-        public void visitClass(@NotNull PsiClass aClass){
-            // no call to super, so that it doesn't drill down to inner classes
-            if(aClass.getContainingClass() != null && !aClass
-                    .hasModifierProperty(PsiModifier.STATIC)){
-                // inner class cannot have static declarations
-                return;
-            }
-            final PsiClass[] innerClasses = aClass.getInnerClasses();
-            for(final PsiClass innerClass : innerClasses){
-                if(!innerClass.hasModifierProperty(PsiModifier.STATIC)){
-                    final InnerClassReferenceVisitor visitor = new InnerClassReferenceVisitor(
-                            innerClass);
-                    innerClass.accept(visitor);
-                    if(visitor.areReferenceStaticallyAccessible()){
-                        registerClassError(innerClass);
-                    }
-                }
-            }
-        }
-    }
+  }
 }

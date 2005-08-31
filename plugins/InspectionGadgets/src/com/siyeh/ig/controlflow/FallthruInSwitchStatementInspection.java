@@ -24,46 +24,40 @@ import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class FallthruInSwitchStatementInspection extends StatementInspection {
-    public String getID(){
-        return "fallthrough";
-    }
-    public String getDisplayName() {
-        return "Fallthrough in 'switch' statement";
-    }
 
-    public String getGroupDisplayName() {
-        return GroupNames.CONTROL_FLOW_GROUP_NAME;
-    }
+  public String getID() {
+    return "fallthrough";
+  }
 
-    public String buildErrorString(PsiElement location) {
-        return "#ref fallthrough in 'switch' statement #loc";
-    }
+  public String getGroupDisplayName() {
+    return GroupNames.CONTROL_FLOW_GROUP_NAME;
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new FallthroughInSwitchStatementVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new FallthroughInSwitchStatementVisitor();
+  }
 
-    private static class FallthroughInSwitchStatementVisitor extends StatementInspectionVisitor {
+  private static class FallthroughInSwitchStatementVisitor extends StatementInspectionVisitor {
 
-        public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
-            super.visitSwitchStatement(statement);
-            final PsiCodeBlock body = statement.getBody();
-            if (body == null) {
-                return;
-            }
-            boolean switchLabelValid=true;
-            final PsiStatement[] statements = body.getStatements();
-            for(final PsiStatement child : statements){
-                if(child instanceof PsiSwitchLabelStatement){
-                    if(!switchLabelValid){
-                        registerError(child);
-                    }
-                    switchLabelValid = true;
-                } else{
-                    switchLabelValid = !ControlFlowUtils.statementMayCompleteNormally(child);
-                }
-            }
+    public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
+      super.visitSwitchStatement(statement);
+      final PsiCodeBlock body = statement.getBody();
+      if (body == null) {
+        return;
+      }
+      boolean switchLabelValid = true;
+      final PsiStatement[] statements = body.getStatements();
+      for (final PsiStatement child : statements) {
+        if (child instanceof PsiSwitchLabelStatement) {
+          if (!switchLabelValid) {
+            registerError(child);
+          }
+          switchLabelValid = true;
         }
+        else {
+          switchLabelValid = !ControlFlowUtils.statementMayCompleteNormally(child);
+        }
+      }
     }
-
+  }
 }

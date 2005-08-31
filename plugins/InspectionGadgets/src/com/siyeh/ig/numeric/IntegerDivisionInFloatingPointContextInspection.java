@@ -22,20 +22,19 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public class IntegerDivisionInFloatingPointContextInspection extends ExpressionInspection {
-    /** @noinspection StaticCollection*/
-    private static final Set<String> s_integralTypes = new HashSet<String>(10);
 
-    static {
-      initIntegralTypes();
-    }
+  /**
+   * @noinspection StaticCollection
+   */
+  @NonNls private static final Set<String> s_integralTypes = new HashSet<String>(10);
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static void initIntegralTypes() {
+  static {
     s_integralTypes.add("int");
     s_integralTypes.add("long");
     s_integralTypes.add("short");
@@ -48,89 +47,79 @@ public class IntegerDivisionInFloatingPointContextInspection extends ExpressionI
     s_integralTypes.add("java.lang.Character");
   }
 
-  public String getDisplayName() {
-      return "Integer division in floating point context";
+  public String getGroupDisplayName() {
+    return GroupNames.NUMERIC_GROUP_NAME;
   }
 
-    public String getGroupDisplayName() {
-        return GroupNames.NUMERIC_GROUP_NAME;
+  public BaseInspectionVisitor buildVisitor() {
+    return new FloatingPointEqualityComparisonVisitor();
+  }
+
+  private static class FloatingPointEqualityComparisonVisitor extends BaseInspectionVisitor {
+
+    public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
+      super.visitBinaryExpression(expression);
+      if (!(expression.getROperand() != null)) {
+        return;
+      }
+      final PsiJavaToken sign = expression.getOperationSign();
+      final IElementType tokenType = sign.getTokenType();
+      if (!tokenType.equals(JavaTokenType.DIV)) {
+        return;
+      }
+      final PsiExpression lhs = expression.getLOperand();
+      final PsiType lhsType = lhs.getType();
+      if (!isIntegral(lhsType)) {
+        return;
+      }
+      final PsiExpression rhs = expression.getROperand();
+      if (rhs == null) {
+        return;
+      }
+      final PsiType rhsType = rhs.getType();
+      if (!isIntegral(rhsType)) {
+        return;
+      }
+      final PsiExpression context = getContainingExpression(expression);
+      if (context == null) {
+        return;
+      }
+      final PsiType contextType = ExpectedTypeUtils.findExpectedType(context, true);
+      if (contextType == null) {
+        return;
+      }
+      if (!(contextType.equals(PsiType.FLOAT)
+            || contextType.equals(PsiType.DOUBLE))) {
+        return;
+      }
+      registerError(expression);
     }
 
-    public String buildErrorString(PsiElement location) {
-        return "#ref: integer division in floating-point context #loc";
+
+    private PsiExpression getContainingExpression(PsiExpression expression) {
+      final PsiElement parent = expression.getParent();
+      if (parent == null) {
+        return expression;
+      }
+      if (parent instanceof PsiPrefixExpression ||
+          parent instanceof PsiPostfixExpression ||
+          parent instanceof PsiBinaryExpression ||
+          parent instanceof PsiParenthesizedExpression) {
+        return getContainingExpression((PsiExpression)parent);
+      }
+      return expression;
     }
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new FloatingPointEqualityComparisonVisitor();
+  private static boolean isIntegral(PsiType type) {
+
+    if (type == null) {
+      return false;
     }
-
-    private static class FloatingPointEqualityComparisonVisitor extends BaseInspectionVisitor {
-
-        public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
-            super.visitBinaryExpression(expression);
-            if(!(expression.getROperand() != null)){
-                return;
-            }
-            final PsiJavaToken sign = expression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
-            if (!tokenType.equals(JavaTokenType.DIV)) {
-                return;
-            }
-            final PsiExpression lhs = expression.getLOperand();
-            final PsiType lhsType = lhs.getType();
-            if (!isIntegral(lhsType)) {
-                return;
-            }
-            final PsiExpression rhs = expression.getROperand();
-            if(rhs== null)
-            {
-                return;
-            }
-            final PsiType rhsType = rhs.getType();
-            if (!isIntegral(rhsType)) {
-                return;
-            }
-            final PsiExpression context = getContainingExpression(expression);
-            if (context == null) {
-                return;
-            }
-            final PsiType contextType = ExpectedTypeUtils.findExpectedType(context, true);
-            if (contextType == null) {
-                return;
-            }
-            if (!(contextType.equals(PsiType.FLOAT)
-                    || contextType.equals(PsiType.DOUBLE))) {
-                return;
-            }
-            registerError(expression);
-        }
-
-
-        private PsiExpression getContainingExpression(PsiExpression expression) {
-            final PsiElement parent = expression.getParent();
-            if (parent == null) {
-                return expression;
-            }
-            if (parent instanceof PsiPrefixExpression ||
-                    parent instanceof PsiPostfixExpression ||
-                    parent instanceof PsiBinaryExpression ||
-                    parent instanceof PsiParenthesizedExpression) {
-                return getContainingExpression((PsiExpression) parent);
-            }
-            return expression;
-        }
+    final String text = type.getCanonicalText();
+    if (text == null) {
+      return false;
     }
-
-    private static boolean isIntegral(PsiType type) {
-
-        if (type == null) {
-            return false;
-        }
-        final String text = type.getCanonicalText();
-        if (text == null) {
-            return false;
-        }
-        return s_integralTypes.contains(text);
-    }
-
+    return s_integralTypes.contains(text);
+  }
 }

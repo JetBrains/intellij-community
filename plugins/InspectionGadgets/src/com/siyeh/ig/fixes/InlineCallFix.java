@@ -23,11 +23,12 @@ import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.InspectionGadgetsBundle;
 
 public class InlineCallFix extends InspectionGadgetsFix {
 
     public String getName() {
-        return "Inline call";
+        return InspectionGadgetsBundle.message("inline.call.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor) {

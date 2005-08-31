@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.ui.FormattedTextFieldMacFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -41,7 +42,7 @@ public class FieldCountInspection
         return "ClassWithTooManyFields";
     }
     public String getDisplayName() {
-        return "Class with too many fields";
+        return InspectionGadgetsBundle.message("too.many.fields.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -53,7 +54,7 @@ public class FieldCountInspection
     }
 
     protected String getConfigurationLabel() {
-        return "Field count limit:";
+        return InspectionGadgetsBundle.message("too.many.fields.count.limit.option");
     }
 
     public JComponent createOptionsPanel() {
@@ -85,7 +86,7 @@ public class FieldCountInspection
             }
         });
 
-        final JCheckBox checkBox = new JCheckBox("Include constant fields", m_countConstantFields);
+        final JCheckBox checkBox = new JCheckBox(InspectionGadgetsBundle.message("too.many.fields.include.constant.option"), m_countConstantFields);
         final ButtonModel model = checkBox.getModel();
         model.addChangeListener(new ChangeListener() {
 
@@ -120,7 +121,7 @@ public class FieldCountInspection
     public String buildErrorString(PsiElement location) {
         final PsiClass aClass = (PsiClass) location.getParent();
         final int count = countFields(aClass);
-        return "#ref has too many fields (field count = " + count + ") #loc";
+        return InspectionGadgetsBundle.message("too.many.fields.problem.descriptor", count);
     }
 
     public BaseInspectionVisitor buildVisitor() {

@@ -27,42 +27,36 @@ import com.siyeh.ig.fixes.MoveAnonymousToInnerClassFix;
 import org.jetbrains.annotations.NotNull;
 
 public class AnonymousInnerClassInspection extends ClassInspection {
-    private final MoveAnonymousToInnerClassFix fix =
-            new MoveAnonymousToInnerClassFix();
 
-    public String getDisplayName() {
-        return "Anonymous inner class";
+  private final MoveAnonymousToInnerClassFix fix =
+    new MoveAnonymousToInnerClassFix();
+
+  public String getGroupDisplayName() {
+    return GroupNames.CLASSLAYOUT_GROUP_NAME;
+  }
+
+  protected InspectionGadgetsFix buildFix(PsiElement location) {
+    return fix;
+  }
+
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new AnonymousInnerClassVisitor();
+  }
+
+  private static class AnonymousInnerClassVisitor extends BaseInspectionVisitor {
+
+    public void visitClass(@NotNull PsiClass aClass) {
+      //no call to super here, to avoid double counting
     }
 
-    public String getGroupDisplayName() {
-        return GroupNames.CLASSLAYOUT_GROUP_NAME;
+    public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
+      super.visitAnonymousClass(aClass);
+      final PsiJavaCodeReferenceElement classReference = aClass.getBaseClassReference();
+      registerError(classReference);
     }
-
-    public String buildErrorString(PsiElement location) {
-        return "Anonymous inner class #ref #loc";
-    }
-
-    protected InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
-    }
-
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
-        return true;
-    }
-    public BaseInspectionVisitor buildVisitor() {
-        return new AnonymousInnerClassVisitor();
-    }
-
-    private static class AnonymousInnerClassVisitor extends BaseInspectionVisitor {
-
-        public void visitClass(@NotNull PsiClass aClass) {
-           //no call to super here, to avoid double counting
-        }
-
-        public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
-            super.visitAnonymousClass(aClass);
-            final PsiJavaCodeReferenceElement classReference = aClass.getBaseClassReference();
-            registerError(classReference);
-        }
-    }
+  }
 }

@@ -26,38 +26,27 @@ import org.jetbrains.annotations.NotNull;
 
 public class ClassLoader2InstantiationInspection extends ExpressionInspection {
 
-    public String getDisplayName() {
-        return "ClassLoader instantiation";
+  public String getGroupDisplayName() {
+    return GroupNames.SECURITY_GROUP_NAME;
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new ClassLoaderInstantiationVisitor();
+  }
+
+  private static class ClassLoaderInstantiationVisitor extends BaseInspectionVisitor {
+
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
+      super.visitNewExpression(expression);
+      if (!TypeUtils.expressionHasTypeOrSubtype("java.lang.ClassLoader", expression)) {
+        return;
+      }
+      final PsiJavaCodeReferenceElement reference = expression.getClassReference();
+      if (reference == null) {
+        return;
+      }
+      registerError(reference);
     }
 
-    public String getGroupDisplayName() {
-        return GroupNames.SECURITY_GROUP_NAME;
-    }
-
-    public String buildErrorString(PsiElement location) {
-
-        return "Instantiation of #ref may pose security concerns #loc";
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new ClassLoaderInstantiationVisitor();
-    }
-
-    private static class ClassLoaderInstantiationVisitor extends BaseInspectionVisitor {
-
-        public void visitNewExpression(@NotNull PsiNewExpression expression){
-            super.visitNewExpression(expression);
-            if(!TypeUtils.expressionHasTypeOrSubtype("java.lang.ClassLoader", expression )){
-                return;
-            }
-            final PsiJavaCodeReferenceElement reference = expression.getClassReference();
-            if(reference == null)
-            {
-                return;
-            }
-            registerError(reference);
-        }
-
-    }
-
+  }
 }

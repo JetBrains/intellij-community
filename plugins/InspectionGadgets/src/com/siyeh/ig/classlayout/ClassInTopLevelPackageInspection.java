@@ -28,53 +28,46 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ClassInTopLevelPackageInspection extends ClassInspection {
-    private final MoveClassFix fix = new MoveClassFix();
 
-    public String getID(){
-        return "ClassWithoutPackageStatement";
-    }
-    public String getDisplayName() {
-        return "Class without package statement";
-    }
+  private final MoveClassFix fix = new MoveClassFix();
 
-    public String getGroupDisplayName() {
-        return GroupNames.CLASSLAYOUT_GROUP_NAME;
-    }
+  public String getID() {
+    return "ClassWithoutPackageStatement";
+  }
 
-    public String buildErrorString(PsiElement location) {
-        return "Class #ref lacks a package statement #loc";
-    }
+  public String getGroupDisplayName() {
+    return GroupNames.CLASSLAYOUT_GROUP_NAME;
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ClassInTopLevelPackageVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new ClassInTopLevelPackageVisitor();
+  }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
-    }
+  protected InspectionGadgetsFix buildFix(PsiElement location) {
+    return fix;
+  }
 
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-        return true;
-    }
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
 
-    private static class ClassInTopLevelPackageVisitor extends BaseInspectionVisitor {
+  private static class ClassInTopLevelPackageVisitor extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
-            // no call to super, so that it doesn't drill down to inner classes
-            if (ClassUtils.isInnerClass(aClass)) {
-                return;
-            }
-            final PsiFile file = aClass.getContainingFile();
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so that it doesn't drill down to inner classes
+      if (ClassUtils.isInnerClass(aClass)) {
+        return;
+      }
+      final PsiFile file = aClass.getContainingFile();
 
-            if (file == null || !(file instanceof PsiJavaFile)) {
-                return;
-            }
-            if (((PsiJavaFile) file).getPackageStatement() != null) {
-                return;
-            }
-            registerClassError(aClass);
-        }
-
+      if (file == null || !(file instanceof PsiJavaFile)) {
+        return;
+      }
+      if (((PsiJavaFile)file).getPackageStatement() != null) {
+        return;
+      }
+      registerClassError(aClass);
     }
 
+  }
 }

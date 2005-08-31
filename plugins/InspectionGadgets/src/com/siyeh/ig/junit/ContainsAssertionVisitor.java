@@ -20,6 +20,7 @@ import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.PsiReferenceExpression;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 class ContainsAssertionVisitor extends PsiRecursiveElementVisitor{
     private boolean containsAssertion = false;
@@ -40,7 +41,7 @@ class ContainsAssertionVisitor extends PsiRecursiveElementVisitor{
         if(methodExpression == null){
             return;
         }
-        final String methodName = methodExpression.getReferenceName();
+        @NonNls final String methodName = methodExpression.getReferenceName();
         if(methodName == null)
         {
             return;

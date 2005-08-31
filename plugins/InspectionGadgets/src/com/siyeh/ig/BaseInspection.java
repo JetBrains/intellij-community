@@ -24,6 +24,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 
@@ -55,11 +56,13 @@ public abstract class BaseInspection extends LocalInspectionTool{
     }
 
     @Nullable protected String buildErrorString(PsiElement location){
-        return null;
+        @NonNls final String problemDescriptor = ".problem.descriptor";
+        return InspectionGadgetsBundle.message(getPrefix(getShortName()) + problemDescriptor);
     }
 
     @Nullable protected String buildErrorString(Object arg){
-        return null;
+        @NonNls final String problemDescriptor = ".problem.descriptor";
+        return InspectionGadgetsBundle.message(getPrefix(getShortName()) + problemDescriptor);
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
@@ -142,12 +145,11 @@ public abstract class BaseInspection extends LocalInspectionTool{
         }
     }
 
-    @SuppressWarnings({"HardCodedStringLiteral"})
     private void initializeTelemetryIfNecessary(){
         if(telemetryEnabled && listener == null){
             final Application application = ApplicationManager.getApplication();
             final InspectionGadgetsPlugin plugin =
-                    (InspectionGadgetsPlugin) application.getComponent("InspectionGadgets");
+                     application.getComponent(InspectionGadgetsPlugin.class);
             telemetryEnabled = plugin.isTelemetryEnabled();
             listener = plugin.getTelemetry();
         }
@@ -159,11 +161,10 @@ public abstract class BaseInspection extends LocalInspectionTool{
         return super.checkField(field, manager, isOnTheFly);
     }
 
-    @SuppressWarnings({"HardCodedStringLiteral"})
     public boolean hasQuickFix(){
         final Method[] methods = getClass().getDeclaredMethods();
         for(final Method method : methods){
-            final String methodName = method.getName();
+            @NonNls final String methodName = method.getName();
             if("buildFix".equals(methodName)){
                 return true;
             }
@@ -172,4 +173,28 @@ public abstract class BaseInspection extends LocalInspectionTool{
     }
 
     public abstract BaseInspectionVisitor buildVisitor();
+
+    private String getPropertyPrefixForInspection(){
+      String shortName = getShortName();
+      return getPrefix(shortName);
+    }
+
+  public String getPrefix(final String shortName) {
+    StringBuffer buf = new StringBuffer(shortName.length() + 10);
+    buf.append(Character.toLowerCase(shortName.charAt(0)));
+    for (int i = 1; i < shortName.length(); i++){
+      final char c = shortName.charAt(i);
+      if (Character.isUpperCase(c)){
+        buf.append('.').append(Character.toLowerCase(c));
+      } else {
+        buf.append(c);
+      }
+    }
+    return buf.toString();
+  }
+
+  public String getDisplayName() {
+    @NonNls final String displayNameSuffix = ".display.name";
+    return InspectionGadgetsBundle.message(getPropertyPrefixForInspection() + displayNameSuffix);
+  }
 }

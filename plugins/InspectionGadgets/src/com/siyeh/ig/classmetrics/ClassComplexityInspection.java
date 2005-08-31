@@ -21,6 +21,7 @@ import com.intellij.psi.PsiClassInitializer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ClassComplexityInspection
@@ -31,7 +32,7 @@ public class ClassComplexityInspection
     private static final int DEFAULT_COMPLEXITY_LIMIT = 80;
 
     public String getDisplayName() {
-        return "Overly complex class";
+        return InspectionGadgetsBundle.message("overly.complex.class.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -43,13 +44,13 @@ public class ClassComplexityInspection
     }
 
     protected String getConfigurationLabel() {
-        return "Cyclomatic complexity limit:";
+        return InspectionGadgetsBundle.message("cyclomatic.complexity.limit.option");
     }
 
     public String buildErrorString(PsiElement location) {
         final PsiClass aClass = (PsiClass) location.getParent();
         final int totalComplexity = calculateTotalComplexity(aClass);
-        return "#ref is overly complex (cyclomatic complexity = " + totalComplexity + ") #loc";
+        return InspectionGadgetsBundle.message("overly.complex.class.problem.descriptor", totalComplexity);
     }
 
     public BaseInspectionVisitor buildVisitor() {

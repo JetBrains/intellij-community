@@ -20,11 +20,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.InspectionGadgetsBundle;
 
 public class AddSerialVersionUIDFix extends InspectionGadgetsFix{
 
     public String getName(){
-        return "Add serialVersionUIDField";
+        return InspectionGadgetsBundle.message("add.serialversionuidfield.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)
@@ -39,7 +40,7 @@ public class AddSerialVersionUIDFix extends InspectionGadgetsFix{
                 SerialVersionUIDBuilder.computeDefaultSUID(aClass);
         final PsiField field =
                 elementFactory.createFieldFromText("private static final long serialVersionUID = " +
-                        serialVersionUID + "L;", aClass);
+                                                   serialVersionUID + "L;", aClass);
         aClass.add(field);
     }
 }

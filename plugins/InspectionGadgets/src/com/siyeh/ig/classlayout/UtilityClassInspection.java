@@ -25,31 +25,23 @@ import org.jetbrains.annotations.NotNull;
 
 public class UtilityClassInspection extends ClassInspection {
 
-    public String getDisplayName() {
-        return "Utility class";
+  public String getGroupDisplayName() {
+    return GroupNames.CLASSLAYOUT_GROUP_NAME;
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new UtilityClassVisitor();
+  }
+
+  private static class UtilityClassVisitor extends BaseInspectionVisitor {
+
+
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so that it doesn't drill down to inner classes
+      if (!UtilityClassUtil.isUtilityClass(aClass)) {
+        return;
+      }
+      registerClassError(aClass);
     }
-
-    public String getGroupDisplayName() {
-        return GroupNames.CLASSLAYOUT_GROUP_NAME;
-    }
-
-    public String buildErrorString(PsiElement location) {
-        return "Class #ref has only 'static' members, indicating procedural construction #loc";
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new UtilityClassVisitor();
-    }
-
-    private static class UtilityClassVisitor extends BaseInspectionVisitor {
-
-
-        public void visitClass(@NotNull PsiClass aClass) {
-            // no call to super, so that it doesn't drill down to inner classes
-            if (!UtilityClassUtil.isUtilityClass(aClass)) {
-                return;
-            }
-            registerClassError(aClass);
-        }
-    }
+  }
 }

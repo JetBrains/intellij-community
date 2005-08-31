@@ -21,56 +21,50 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class StaticSuiteInspection extends MethodInspection {
-    public String getID(){
-        return "SuiteNotDeclaredStatic";
-    }
-    public String getDisplayName() {
-        return "'suite()' method not declared 'static'";
-    }
 
-    public String getGroupDisplayName() {
-        return GroupNames.JUNIT_GROUP_NAME;
-    }
+  public String getID() {
+    return "SuiteNotDeclaredStatic";
+  }
 
-    public String buildErrorString(PsiElement location) {
-        return "JUnit #ref() methods not declared 'static' #loc";
-    }
+  public String getGroupDisplayName() {
+    return GroupNames.JUNIT_GROUP_NAME;
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new StaticSuiteVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new StaticSuiteVisitor();
+  }
 
-    private static class StaticSuiteVisitor extends BaseInspectionVisitor {
+  private static class StaticSuiteVisitor extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
-            //note: no call to super
-            final String methodName = method.getName();
-            if(!"suite".equals(methodName)){
-                return;
-            }
-            final PsiClass aClass = method.getContainingClass();
-            if (aClass == null) {
-                return;
-            }
-            if (!ClassUtils.isSubclass(aClass, "junit.framework.TestCase")) {
-                return;
-            }
+    public void visitMethod(@NotNull PsiMethod method) {
+      //note: no call to super
+      @NonNls final String methodName = method.getName();
+      if (!"suite".equals(methodName)) {
+        return;
+      }
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null) {
+        return;
+      }
+      if (!ClassUtils.isSubclass(aClass, "junit.framework.TestCase")) {
+        return;
+      }
 
-            final PsiParameterList parameterList = method.getParameterList();
-            if (parameterList == null) {
-                return;
-            }
-            if (parameterList.getParameters().length != 0) {
-                return;
-            }
-            if (method.hasModifierProperty(PsiModifier.STATIC)) {
-                return;
-            }
-            registerMethodError(method);
-        }
-
+      final PsiParameterList parameterList = method.getParameterList();
+      if (parameterList == null) {
+        return;
+      }
+      if (parameterList.getParameters().length != 0) {
+        return;
+      }
+      if (method.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      registerMethodError(method);
     }
 
+  }
 }

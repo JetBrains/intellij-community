@@ -28,50 +28,42 @@ import org.jetbrains.annotations.NotNull;
 
 public class EmptyFinallyBlockInspection extends StatementInspection {
 
-    public String getDisplayName() {
-        return "Empty 'finally' block";
-    }
+  public String getGroupDisplayName() {
+    return GroupNames.ERRORHANDLING_GROUP_NAME;
+  }
 
-    public String getGroupDisplayName() {
-        return GroupNames.ERRORHANDLING_GROUP_NAME;
-    }
+  public boolean isEnabledByDefault() {
+    return true;
+  }
 
-    public boolean isEnabledByDefault(){
-        return true;
-    }
-    public String buildErrorString(PsiElement location) {
-        return "Empty #ref block #loc";
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new EmptyFinallyBlockVisitor();
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new EmptyFinallyBlockVisitor();
-    }
-
-    private static class EmptyFinallyBlockVisitor extends StatementInspectionVisitor {
+  private static class EmptyFinallyBlockVisitor extends StatementInspectionVisitor {
 
 
-        public void visitTryStatement(@NotNull PsiTryStatement statement) {
-            super.visitTryStatement(statement);
+    public void visitTryStatement(@NotNull PsiTryStatement statement) {
+      super.visitTryStatement(statement);
 
-            if(statement.getContainingFile() instanceof JspFile){
-                return;
-            }
-            final PsiCodeBlock finallyBlock = statement.getFinallyBlock();
-            if (finallyBlock == null) {
-                return;
-            }
-            if (finallyBlock.getStatements().length != 0) {
-                return;
-            }
-            final PsiElement[] children = statement.getChildren();
-            for(final PsiElement child : children){
-                final String childText = child.getText();
-                if(PsiKeyword.FINALLY.equals(childText)) {
-                  registerError(child);
-                    return;
-                }
-            }
+      if (statement.getContainingFile() instanceof JspFile) {
+        return;
+      }
+      final PsiCodeBlock finallyBlock = statement.getFinallyBlock();
+      if (finallyBlock == null) {
+        return;
+      }
+      if (finallyBlock.getStatements().length != 0) {
+        return;
+      }
+      final PsiElement[] children = statement.getChildren();
+      for (final PsiElement child : children) {
+        final String childText = child.getText();
+        if (PsiKeyword.FINALLY.equals(childText)) {
+          registerError(child);
+          return;
         }
+      }
     }
-
+  }
 }

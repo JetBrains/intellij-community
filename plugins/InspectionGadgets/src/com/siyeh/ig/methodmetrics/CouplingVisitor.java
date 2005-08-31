@@ -21,6 +21,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -140,7 +141,7 @@ class CouplingVisitor extends PsiRecursiveElementVisitor {
         if (baseType.equalsToText(qualifiedName)) {
             return;
         }
-        final String baseTypeName = baseType.getCanonicalText();
+        @NonNls final String baseTypeName = baseType.getCanonicalText();
         if (!m_includeJavaClasses &&
                     (baseTypeName.startsWith("java.") ||
                     baseTypeName.startsWith("javax."))) {

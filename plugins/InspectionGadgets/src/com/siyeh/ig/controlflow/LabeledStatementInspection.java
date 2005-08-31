@@ -25,31 +25,22 @@ import com.siyeh.ig.StatementInspectionVisitor;
 
 public class LabeledStatementInspection extends StatementInspection {
 
-    public String getDisplayName() {
-        return "Labeled statement";
-    }
+  public String getGroupDisplayName() {
+    return GroupNames.CONTROL_FLOW_GROUP_NAME;
+  }
 
-    public String getGroupDisplayName() {
-        return GroupNames.CONTROL_FLOW_GROUP_NAME;
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new LabeledStatementVisitor();
+  }
 
-    public String buildErrorString(PsiElement location) {
-        return "Labeled statement #ref: #loc";
-    }
+  private static class LabeledStatementVisitor extends StatementInspectionVisitor {
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new LabeledStatementVisitor();
-    }
-
-    private static class LabeledStatementVisitor extends StatementInspectionVisitor {
-
-        public void visitLabeledStatement(PsiLabeledStatement statement) {
-            super.visitLabeledStatement(statement);
-            PsiIdentifier labelIdentifier = statement.getLabelIdentifier();
-            registerError(labelIdentifier);
-
-        }
+    public void visitLabeledStatement(PsiLabeledStatement statement) {
+      super.visitLabeledStatement(statement);
+      PsiIdentifier labelIdentifier = statement.getLabelIdentifier();
+      registerError(labelIdentifier);
 
     }
 
+  }
 }

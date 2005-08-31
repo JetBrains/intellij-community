@@ -25,32 +25,23 @@ import org.jetbrains.annotations.NotNull;
 
 public class CustomSecurityManagerInspection extends ClassInspection {
 
-    public String getDisplayName() {
-        return "Custom SecurityManager";
-    }
+  public String getGroupDisplayName() {
+    return GroupNames.SECURITY_GROUP_NAME;
+  }
 
-    public String getGroupDisplayName() {
-        return GroupNames.SECURITY_GROUP_NAME;
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new CustomSecurityManagerVisitor();
+  }
 
-    public String buildErrorString(PsiElement location) {
-        return "Custom SecurityManager class '#ref' #loc";
+  private static class CustomSecurityManagerVisitor extends BaseInspectionVisitor {
+    public void visitClass(@NotNull PsiClass aClass) {
+      if (!ClassUtils.isSubclass(aClass, "java.lang.SecurityManager")) {
+        return;
+      }
+      if ("java.lang.SecurityManager".equals(aClass.getQualifiedName())) {
+        return;
+      }
+      registerClassError(aClass);
     }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new CustomSecurityManagerVisitor();
-    }
-
-    private static class CustomSecurityManagerVisitor extends BaseInspectionVisitor {
-        public void visitClass(@NotNull PsiClass aClass){
-            if(!ClassUtils.isSubclass(aClass, "java.lang.SecurityManager")) {
-                return;
-            }
-            if("java.lang.SecurityManager".equals(aClass.getQualifiedName())) {
-                return;
-            }
-            registerClassError(aClass);
-        }
-    }
-
+  }
 }

@@ -31,6 +31,7 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -101,7 +102,6 @@ public class ObjectEqualityInspection extends ExpressionInspection {
             return InspectionGadgetsBundle.message("object.comparison.replace.quickfix");
         }
 
-        @SuppressWarnings({"HardCodedStringLiteral"})
         public void doFix(Project project, ProblemDescriptor descriptor)
                                                                          throws IncorrectOperationException{
             final PsiElement comparisonToken = descriptor.getPsiElement();
@@ -122,7 +122,7 @@ public class ObjectEqualityInspection extends ExpressionInspection {
             }
             final PsiExpression strippedRhs = ParenthesesUtils.stripParentheses(rhs);
 
-            final String expString;
+            @NonNls final String expString;
             if (ParenthesesUtils.getPrecendence(strippedLhs) > ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
                 expString = '(' + strippedLhs.getText() + ").equals(" + strippedRhs.getText() + ')';
             } else {

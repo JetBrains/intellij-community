@@ -43,7 +43,7 @@ public class RenameFix extends InspectionGadgetsFix {
         if (m_targetName == null) {
             return InspectionGadgetsBundle.message("quickfix.rename");
         } else {
-            return InspectionGadgetsBundle.message("quickfix.renameto", m_targetName);
+            return InspectionGadgetsBundle.message("renameto.quickfix", m_targetName);
         }
     }
 

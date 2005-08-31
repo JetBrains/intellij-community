@@ -27,86 +27,78 @@ import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class StringToStringInspection extends ExpressionInspection {
-    private final StringToStringFix fix = new StringToStringFix();
 
-    public String getID(){
-        return "RedundantStringToString";
+  private final StringToStringFix fix = new StringToStringFix();
+
+  public String getID() {
+    return "RedundantStringToString";
+  }
+
+  public String getGroupDisplayName() {
+    return GroupNames.PERFORMANCE_GROUP_NAME;
+  }
+
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new StringToStringVisitor();
+  }
+
+  public InspectionGadgetsFix buildFix(PsiElement location) {
+    return fix;
+  }
+
+  private static class StringToStringFix extends InspectionGadgetsFix {
+    public String getName() {
+      return "Simplify";
     }
 
-    public String getDisplayName() {
-        return "Redundant 'String.toString()'";
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiMethodCallExpression call = (PsiMethodCallExpression)descriptor.getPsiElement();
+      final PsiReferenceExpression expression = call.getMethodExpression();
+      final PsiExpression qualifier = expression.getQualifierExpression();
+      final String qualifierText = qualifier.getText();
+      replaceExpression(call, qualifierText);
     }
+  }
 
-    public String getGroupDisplayName() {
-        return GroupNames.PERFORMANCE_GROUP_NAME;
+  private static class StringToStringVisitor extends BaseInspectionVisitor {
+
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+      if (methodExpression == null) {
+        return;
+      }
+      final String methodName = methodExpression.getReferenceName();
+      if (!HardcodedMethodConstants.TO_STRING.equals(methodName)) {
+        return;
+      }
+
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      final PsiParameterList paramList = method.getParameterList();
+      if (paramList == null) {
+        return;
+      }
+      final PsiParameter[] parameters = paramList.getParameters();
+      if (parameters.length != 0) {
+        return;
+      }
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null) {
+        return;
+      }
+      final String className = aClass.getQualifiedName();
+      if (!"java.lang.String".equals(className)) {
+        return;
+      }
+      registerError(expression);
     }
-
-    public boolean isEnabledByDefault(){
-        return true;
-    }
-    public String buildErrorString(PsiElement location) {
-        return "#ref is redundant #loc";
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new StringToStringVisitor();
-    }
-
-    public InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
-    }
-
-    private static class StringToStringFix extends InspectionGadgetsFix {
-        public String getName() {
-            return "Simplify";
-        }
-
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
-            final PsiMethodCallExpression call = (PsiMethodCallExpression) descriptor.getPsiElement();
-            final PsiReferenceExpression expression = call.getMethodExpression();
-            final PsiExpression qualifier = expression.getQualifierExpression();
-            final String qualifierText = qualifier.getText();
-            replaceExpression(call, qualifierText);
-        }
-    }
-
-    private static class StringToStringVisitor extends BaseInspectionVisitor {
-
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-            if (methodExpression == null) {
-                return;
-            }
-            final String methodName = methodExpression.getReferenceName();
-            if (!HardcodedMethodConstants.TO_STRING.equals(methodName)) {
-              return;
-            }
-
-            final PsiMethod method = expression.resolveMethod();
-            if (method == null) {
-                return;
-            }
-            final PsiParameterList paramList = method.getParameterList();
-            if (paramList == null) {
-                return;
-            }
-            final PsiParameter[] parameters = paramList.getParameters();
-            if (parameters.length != 0) {
-                return;
-            }
-            final PsiClass aClass = method.getContainingClass();
-            if(aClass == null)
-            {
-                return;
-            }
-            final String className = aClass.getQualifiedName();
-            if (!"java.lang.String".equals(className)) {
-                return;
-            }
-            registerError(expression);
-        }
-    }
-
+  }
 }

@@ -34,24 +34,19 @@ import org.jetbrains.annotations.NonNls;
 
 public class AutoBoxingInspection extends ExpressionInspection {
     /** @noinspection StaticCollection*/
-    private static final Map<String,String> s_boxingClasses = new HashMap<String, String>(8);
+    @NonNls private static final Map<String,String> s_boxingClasses = new HashMap<String, String>(8);
     private final AutoBoxingFix fix = new AutoBoxingFix();
 
     static {
-      initBoxingClasses();
+      s_boxingClasses.put("int", "Integer");
+      s_boxingClasses.put("short", "Short");
+      s_boxingClasses.put("boolean", "Boolean");
+      s_boxingClasses.put("long", "Long");
+      s_boxingClasses.put("byte", "Byte");
+      s_boxingClasses.put("float", "Float");
+      s_boxingClasses.put("double", "Double");
+      s_boxingClasses.put("char", "Character");
     }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static void initBoxingClasses() {
-    s_boxingClasses.put("int", "Integer");
-    s_boxingClasses.put("short", "Short");
-    s_boxingClasses.put("boolean", "Boolean");
-    s_boxingClasses.put("long", "Long");
-    s_boxingClasses.put("byte", "Byte");
-    s_boxingClasses.put("float", "Float");
-    s_boxingClasses.put("double", "Double");
-    s_boxingClasses.put("char", "Character");
-  }
 
   public String getDisplayName() {
       return InspectionGadgetsBundle.message("auto.boxing.display.name");

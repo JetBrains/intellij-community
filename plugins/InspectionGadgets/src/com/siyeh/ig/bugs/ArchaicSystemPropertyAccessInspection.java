@@ -27,6 +27,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 public class ArchaicSystemPropertyAccessInspection extends ExpressionInspection{
     public String getID(){
@@ -67,7 +68,6 @@ public class ArchaicSystemPropertyAccessInspection extends ExpressionInspection{
             return InspectionGadgetsBundle.message("archaic.system.property.accessors.replace.parse.quickfix");
         }
 
-        @SuppressWarnings({"HardCodedStringLiteral"})
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
             final PsiIdentifier location =
@@ -81,7 +81,7 @@ public class ArchaicSystemPropertyAccessInspection extends ExpressionInspection{
             assert argList != null;
             final PsiExpression[] args = argList.getExpressions();
             final String argText = args[0].getText();
-            final String parseMethodCall;
+            @NonNls final String parseMethodCall;
             if(isIntegerGetInteger(call)){
                 parseMethodCall = "Integer.valueOf(" + argText + ')';
             } else if(isLongGetLong(call)){
@@ -99,7 +99,6 @@ public class ArchaicSystemPropertyAccessInspection extends ExpressionInspection{
             return InspectionGadgetsBundle.message("archaic.system.property.accessors.replace.standard.quickfix");
         }
 
-        @SuppressWarnings({"HardCodedStringLiteral"})
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
             final PsiIdentifier location =
@@ -113,26 +112,26 @@ public class ArchaicSystemPropertyAccessInspection extends ExpressionInspection{
             assert argList != null;
             final PsiExpression[] args = argList.getExpressions();
             final String argText = args[0].getText();
-            final String parseMethodCall;
+            @NonNls final String parseMethodCall;
             if(isIntegerGetInteger(call)){
                 parseMethodCall = "Integer.parseInt(System.getProperty("
-                        + argText + "))";
+                                  + argText + "))";
             } else if(isLongGetLong(call)){
                 parseMethodCall = "Long.parseLong(System.getProperty("
-                        + argText + "))";
+                                  + argText + "))";
             } else{
                 final PsiManager manager = call.getManager();
                 final LanguageLevel languageLevel =
                         manager.getEffectiveLanguageLevel();
                 if(languageLevel.equals(LanguageLevel.JDK_1_3) ||
-                        languageLevel.equals(LanguageLevel.JDK_1_4)){
+                   languageLevel.equals(LanguageLevel.JDK_1_4)){
                     parseMethodCall = "Boolean.valueOf(System.getProperty("
-                            + argText + ")).booleanValue()";
+                                      + argText + ")).booleanValue()";
                 } else{
                     parseMethodCall = "Boolean.parseBoolean(System.getProperty("
-                            + argText + "))";
+                                      + argText + "))";
                 }
-            }                        
+            }
             replaceExpression(call, parseMethodCall);
         }
     }
@@ -148,14 +147,13 @@ public class ArchaicSystemPropertyAccessInspection extends ExpressionInspection{
             super.visitMethodCallExpression(expression);
 
             if(isIntegerGetInteger(expression) ||
-                    isLongGetLong(expression) ||
-                    isBooleanGetBoolean(expression)){
+               isLongGetLong(expression) ||
+               isBooleanGetBoolean(expression)){
                 registerMethodCallError(expression);
             }
         }
     }
 
-    @SuppressWarnings({"HardCodedStringLiteral"})
     private static boolean isIntegerGetInteger(
             PsiMethodCallExpression expression){
         final PsiReferenceExpression methodExpression = expression
@@ -163,7 +161,7 @@ public class ArchaicSystemPropertyAccessInspection extends ExpressionInspection{
         if(methodExpression == null){
             return false;
         }
-        final String methodName = methodExpression.getReferenceName();
+        @NonNls final String methodName = methodExpression.getReferenceName();
         if(!"getInteger".equals(methodName)){
             return false;
         }
@@ -182,14 +180,13 @@ public class ArchaicSystemPropertyAccessInspection extends ExpressionInspection{
         return "java.lang.Integer".equals(className);
     }
 
-    @SuppressWarnings({"HardCodedStringLiteral"})
     private static boolean isLongGetLong(PsiMethodCallExpression expression){
         final PsiReferenceExpression methodExpression = expression
                 .getMethodExpression();
         if(methodExpression == null){
             return false;
         }
-        final String methodName = methodExpression.getReferenceName();
+        @NonNls final String methodName = methodExpression.getReferenceName();
         if(!"getLong".equals(methodName)){
             return false;
         }
@@ -208,7 +205,6 @@ public class ArchaicSystemPropertyAccessInspection extends ExpressionInspection{
         return "java.lang.Long".equals(className);
     }
 
-    @SuppressWarnings({"HardCodedStringLiteral"})
     private static boolean isBooleanGetBoolean(
             PsiMethodCallExpression expression){
         final PsiReferenceExpression methodExpression = expression
@@ -216,7 +212,7 @@ public class ArchaicSystemPropertyAccessInspection extends ExpressionInspection{
         if(methodExpression == null){
             return false;
         }
-        final String methodName = methodExpression.getReferenceName();
+        @NonNls final String methodName = methodExpression.getReferenceName();
         if(!"getBoolean".equals(methodName)){
             return false;
         }

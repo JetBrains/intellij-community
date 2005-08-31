@@ -21,6 +21,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class SerialVersionUIDNotStaticFinalInspection extends ClassInspection {
@@ -28,7 +29,7 @@ public class SerialVersionUIDNotStaticFinalInspection extends ClassInspection {
         return "SerialVersionUIDWithWrongSignature";
     }
     public String getDisplayName() {
-        return "'serialVersionUID' field not declared 'private static final long'";
+        return InspectionGadgetsBundle.message("serialversionuid.private.static.final.long.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -36,7 +37,7 @@ public class SerialVersionUIDNotStaticFinalInspection extends ClassInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "#ref field of a Serializable class is not declared 'private static final long' #loc ";
+        return InspectionGadgetsBundle.message("serialversionuid.private.static.final.long.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

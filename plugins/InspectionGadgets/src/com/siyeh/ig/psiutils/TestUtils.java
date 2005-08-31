@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class TestUtils{
     private TestUtils(){
@@ -40,11 +41,12 @@ public class TestUtils{
 
     public static boolean isJUnitTestMethod(PsiMethod method){
         final String methodName = method.getName();
-        if(!methodName.startsWith("test")){
+        @NonNls final String test = "test";
+        if(!methodName.startsWith(test)){
             return false;
         }
         if(method.hasModifierProperty(PsiModifier.ABSTRACT) ||
-                !method.hasModifierProperty(PsiModifier.PUBLIC)){
+           !method.hasModifierProperty(PsiModifier.PUBLIC)){
             return false;
         }
         final PsiType returnType = method.getReturnType();
@@ -71,6 +73,6 @@ public class TestUtils{
 
     private static boolean isJUnitTestClass(PsiClass targetClass){
         return targetClass == null ||
-                !ClassUtils.isSubclass(targetClass, "junit.framework.TestCase");
+               !ClassUtils.isSubclass(targetClass, "junit.framework.TestCase");
     }
 }

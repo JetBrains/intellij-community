@@ -57,7 +57,7 @@ public class ClassUtils {
         primitiveNumericTypes.add(PsiType.DOUBLE);
 
         immutableTypes.add("java.lang.Boolean");
-        immutableTypes.add("java.lang.Char");
+        immutableTypes.add("java.lang.Character");
         immutableTypes.add("java.lang.Short");
         immutableTypes.add("java.lang.Integer");
         immutableTypes.add("java.lang.Long");

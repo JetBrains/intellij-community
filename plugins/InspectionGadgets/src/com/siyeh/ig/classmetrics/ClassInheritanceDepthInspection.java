@@ -21,6 +21,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTypeParameter;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -35,7 +36,7 @@ public class ClassInheritanceDepthInspection
     private static final int CLASS_INHERITANCE_LIMIT = 2;
 
     public String getDisplayName(){
-        return "Class too deep in inheritance tree";
+        return InspectionGadgetsBundle.message("class.too.deep.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -47,14 +48,13 @@ public class ClassInheritanceDepthInspection
     }
 
     protected String getConfigurationLabel(){
-        return "Inheritance depth limit:";
+        return InspectionGadgetsBundle.message("class.too.deep.inheritance.depth.limit.option");
     }
 
     public String buildErrorString(PsiElement location){
         final PsiClass aClass = (PsiClass) location.getParent();
         final int count = getInheritanceDepth(aClass, new HashSet<PsiClass>());
-        return "#ref is too deep in inheritance tree (inheritance depth = "
-                + count + ") #loc";
+        return InspectionGadgetsBundle.message("class.too.deep.problem.descriptor", count);
     }
 
     public BaseInspectionVisitor buildVisitor(){

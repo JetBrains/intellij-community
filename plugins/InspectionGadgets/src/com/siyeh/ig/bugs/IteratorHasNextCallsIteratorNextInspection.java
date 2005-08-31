@@ -23,6 +23,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class IteratorHasNextCallsIteratorNextInspection
         extends MethodInspection{
@@ -46,10 +47,9 @@ public class IteratorHasNextCallsIteratorNextInspection
     private static class IteratorHasNextCallsIteratorNext
             extends BaseInspectionVisitor{
 
-        @SuppressWarnings({"HardCodedStringLiteral"})
         public void visitMethod(@NotNull PsiMethod method){
             // note: no call to super
-            final String name = method.getName();
+            @NonNls final String name = method.getName();
             if(!"hasNext".equals(name)){
                 return;
             }
@@ -96,7 +96,7 @@ public class IteratorHasNextCallsIteratorNextInspection
             }
         }
 
-        @SuppressWarnings({"HardCodedStringLiteral"})
+
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             if(doesCallIteratorNext){
                 return;
@@ -107,7 +107,7 @@ public class IteratorHasNextCallsIteratorNextInspection
             if(methodExpression == null){
                 return;
             }
-            final String methodName = methodExpression.getReferenceName();
+            @NonNls final String methodName = methodExpression.getReferenceName();
             if(!"next".equals(methodName)){
                 return;
             }

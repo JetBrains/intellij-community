@@ -24,77 +24,79 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class SerializableHasSerializationMethodsInspection extends ClassInspection {
-    /** @noinspection PublicField*/
-    public boolean m_ignoreSerializableDueToInheritance = true;
 
-    public String getDisplayName() {
-        return "Serializable class without 'readObject()' and 'writeObject()'";
+  /**
+   * @noinspection PublicField
+   */
+  public boolean m_ignoreSerializableDueToInheritance = true;
+
+  public String getGroupDisplayName() {
+    return GroupNames.SERIALIZATION_GROUP_NAME;
+  }
+
+  public String buildErrorString(PsiElement location) {
+    final PsiClass aClass = (PsiClass)location.getParent();
+    assert aClass != null;
+    final boolean hasReadObject = SerializationUtils.hasReadObject(aClass);
+    final boolean hasWriteObject = SerializationUtils.hasWriteObject(aClass);
+
+    if (!hasReadObject && !hasWriteObject) {
+      return InspectionGadgetsBundle.message("serializable.has.serialization.methods.problem.descriptor");
     }
-
-    public String getGroupDisplayName() {
-        return GroupNames.SERIALIZATION_GROUP_NAME;
+    else if (hasReadObject) {
+      return InspectionGadgetsBundle.message("serializable.has.serialization.methods.problem.descriptor1");
     }
+    else {
+      return InspectionGadgetsBundle.message("serializable.has.serialization.methods.problem.descriptor2");
+    }
+  }
 
-    public String buildErrorString(PsiElement location) {
-        final PsiClass aClass = (PsiClass) location.getParent();
-        assert aClass != null;
-        final boolean hasReadObject = SerializationUtils.hasReadObject(aClass);
-        final boolean hasWriteObject = SerializationUtils.hasWriteObject(aClass);
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("serializable.has.serialization.methods.ignore.option"),
+                                          this, "m_ignoreSerializableDueToInheritance");
+  }
 
-        if (!hasReadObject && !hasWriteObject) {
-            return "#ref doesn't define readObject() or writeObject() #loc";
-        } else if (hasReadObject) {
-            return "#ref doesn't define writeObject() #loc";
-        } else {
-            return "#ref doesn't define readObject() #loc";
+  public BaseInspectionVisitor buildVisitor() {
+    return new SerializableDefinesMethodsVisitor();
+  }
+
+  private class SerializableDefinesMethodsVisitor extends BaseInspectionVisitor {
+
+
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so it doesn't drill down
+      if (aClass.isInterface() || aClass.isAnnotationType() ||
+          aClass.isEnum()) {
+        return;
+      }
+      if (aClass instanceof PsiTypeParameter ||
+          aClass instanceof PsiAnonymousClass) {
+        return;
+      }
+      if (m_ignoreSerializableDueToInheritance) {
+        if (!SerializationUtils.isDirectlySerializable(aClass)) {
+          return;
         }
-    }
-
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel("Ignore classes serializable due to inheritance",
-                this, "m_ignoreSerializableDueToInheritance");
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new SerializableDefinesMethodsVisitor();
-    }
-
-    private class SerializableDefinesMethodsVisitor extends BaseInspectionVisitor {
-
-
-        public void visitClass(@NotNull PsiClass aClass) {
-            // no call to super, so it doesn't drill down
-            if (aClass.isInterface() || aClass.isAnnotationType() ||
-                        aClass.isEnum()) {
-                return;
-            }
-            if(aClass instanceof PsiTypeParameter ||
-                    aClass instanceof PsiAnonymousClass){
-                return;
-            }
-            if (m_ignoreSerializableDueToInheritance) {
-                if (!SerializationUtils.isDirectlySerializable(aClass)) {
-                    return;
-                }
-            } else {
-                if (!SerializationUtils.isSerializable(aClass)) {
-                    return;
-                }
-            }
-            final boolean hasReadObject = SerializationUtils.hasReadObject(aClass);
-            final boolean hasWriteObject = SerializationUtils.hasWriteObject(aClass);
-
-            if (hasWriteObject && hasReadObject) {
-                return;
-            }
-            registerClassError(aClass);
+      }
+      else {
+        if (!SerializationUtils.isSerializable(aClass)) {
+          return;
         }
+      }
+      final boolean hasReadObject = SerializationUtils.hasReadObject(aClass);
+      final boolean hasWriteObject = SerializationUtils.hasWriteObject(aClass);
 
+      if (hasWriteObject && hasReadObject) {
+        return;
+      }
+      registerClassError(aClass);
     }
 
+  }
 }

@@ -18,6 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class LibraryUtil {
     private LibraryUtil() {
@@ -27,7 +28,8 @@ public class LibraryUtil {
     public static boolean classIsInLibrary(@NotNull PsiClass aClass) {
         final PsiFile file = aClass.getContainingFile();
         final String fileName = file.getName();
-        return !fileName.endsWith(".java");
+        @NonNls final String java = ".java";
+        return !fileName.endsWith(java);
     }
 }
 

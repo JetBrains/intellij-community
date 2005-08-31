@@ -39,7 +39,7 @@ public class AutoUnboxingInspection extends ExpressionInspection{
     /**
          * @noinspection StaticCollection
          */
-    private static final Map<String,String> s_unboxingMethods = new HashMap<String, String>(8);
+    @NonNls private static final Map<String,String> s_unboxingMethods = new HashMap<String, String>(8);
     /**
          * @noinspection StaticCollection
          */
@@ -47,9 +47,17 @@ public class AutoUnboxingInspection extends ExpressionInspection{
     private final AutoUnboxingFix fix = new AutoUnboxingFix();
 
     static{
-      initUnboxingMethods();
+        s_unboxingMethods.put("int", "intValue");
+        s_unboxingMethods.put("short", "shortValue");
+        s_unboxingMethods.put("boolean", "booleanValue");
+        s_unboxingMethods.put("long", "longValue");
+        s_unboxingMethods.put("byte", "byteValue");
+        s_unboxingMethods.put("float", "floatValue");
+        s_unboxingMethods.put("long", "longValue");
+        s_unboxingMethods.put("double", "doubleValue");
+        s_unboxingMethods.put("char", "charValue");
 
-      s_numberTypes.add("java.lang.Integer");
+        s_numberTypes.add("java.lang.Integer");
         s_numberTypes.add("java.lang.Short");
         s_numberTypes.add("java.lang.Long");
         s_numberTypes.add("java.lang.Double");
@@ -58,19 +66,6 @@ public class AutoUnboxingInspection extends ExpressionInspection{
         s_numberTypes.add("java.lang.Character");
         s_numberTypes.add("java.lang.Number");
     }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static void initUnboxingMethods() {
-    s_unboxingMethods.put("int", "intValue");
-    s_unboxingMethods.put("short", "shortValue");
-    s_unboxingMethods.put("boolean", "booleanValue");
-    s_unboxingMethods.put("long", "longValue");
-    s_unboxingMethods.put("byte", "byteValue");
-    s_unboxingMethods.put("float", "floatValue");
-    s_unboxingMethods.put("long", "longValue");
-    s_unboxingMethods.put("double", "doubleValue");
-    s_unboxingMethods.put("char", "charValue");
-  }
 
   public String getDisplayName(){
       return InspectionGadgetsBundle.message("auto.unboxing.display.name");

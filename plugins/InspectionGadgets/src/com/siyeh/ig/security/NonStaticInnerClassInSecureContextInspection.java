@@ -26,36 +26,28 @@ import org.jetbrains.annotations.NotNull;
 
 public class NonStaticInnerClassInSecureContextInspection extends ClassInspection {
 
-    public String getDisplayName() {
-        return "Non-static inner class in secure context";
-    }
+  public String getGroupDisplayName() {
+    return GroupNames.SECURITY_GROUP_NAME;
+  }
 
-    public String getGroupDisplayName() {
-        return GroupNames.SECURITY_GROUP_NAME;
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new NonStaticInnerClassInSecureContextVisitor();
+  }
 
-    public String buildErrorString(PsiElement location) {
-        return "Non-static inner class #ref, compromising security #loc";
-    }
+  private static class NonStaticInnerClassInSecureContextVisitor extends BaseInspectionVisitor {
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new NonStaticInnerClassInSecureContextVisitor();
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so it doesn't drill down
+      if (aClass.isInterface() || aClass.isAnnotationType()) {
+        return;
+      }
+      if (aClass.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      if (!ClassUtils.isInnerClass(aClass)) {
+        return;
+      }
+      registerClassError(aClass);
     }
-
-    private static class NonStaticInnerClassInSecureContextVisitor extends BaseInspectionVisitor {
-    
-        public void visitClass(@NotNull PsiClass aClass) {
-            // no call to super, so it doesn't drill down
-            if (aClass.isInterface() || aClass.isAnnotationType()) {
-                return;
-            }
-            if (aClass.hasModifierProperty(PsiModifier.STATIC)) {
-                return;
-            }
-            if (!ClassUtils.isInnerClass(aClass)) {
-                return;
-            }
-            registerClassError(aClass);
-        }
-    }
+  }
 }

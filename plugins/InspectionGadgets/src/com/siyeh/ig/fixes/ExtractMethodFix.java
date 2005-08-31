@@ -22,11 +22,12 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.InspectionGadgetsBundle;
 
 public class ExtractMethodFix extends InspectionGadgetsFix {
 
     public String getName() {
-        return "Extract method";
+        return InspectionGadgetsBundle.message("extract.method.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor) {

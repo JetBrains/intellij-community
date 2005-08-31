@@ -25,6 +25,7 @@ import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class MisspelledToStringInspection extends MethodInspection {
     private final RenameFix fix = new RenameFix("toString");
@@ -55,10 +56,9 @@ public class MisspelledToStringInspection extends MethodInspection {
 
     private static class MisspelledToStringVisitor extends BaseInspectionVisitor {
 
-        @SuppressWarnings({"HardCodedStringLiteral"})
         public void visitMethod(@NotNull PsiMethod method) {
             //note: no call to super
-            final String methodName = method.getName();
+            @NonNls final String methodName = method.getName();
             if (!"tostring".equals(methodName)) {
                 return;
             }

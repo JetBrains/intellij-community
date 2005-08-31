@@ -26,59 +26,52 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
+import com.siyeh.InspectionGadgetsBundle;
 
-public class ConditionalExpressionWithIdenticalBranchesInspection extends ExpressionInspection{
-    private InspectionGadgetsFix fix = new CollapseConditional();
+public class ConditionalExpressionWithIdenticalBranchesInspection extends ExpressionInspection {
 
-    public String getDisplayName(){
-        return "Conditional expression with identical branches";
+  private InspectionGadgetsFix fix = new CollapseConditional();
+
+  public String getGroupDisplayName() {
+    return GroupNames.CONTROL_FLOW_GROUP_NAME;
+  }
+
+  public InspectionGadgetsFix buildFix(PsiElement location) {
+    return fix;
+  }
+
+  private static class CollapseConditional extends InspectionGadgetsFix {
+    public String getName() {
+      return InspectionGadgetsBundle.message("conditional.expression.with.identical.branches.collapse.quickfix");
     }
 
-    public String getGroupDisplayName(){
-        return GroupNames.CONTROL_FLOW_GROUP_NAME;
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiConditionalExpression expression =
+        (PsiConditionalExpression)descriptor.getPsiElement();
+
+      final PsiExpression thenExpression = expression.getThenExpression();
+      assert thenExpression != null;
+      final String bodyText = thenExpression.getText();
+      replaceExpression(expression, bodyText);
+    }
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new ConditionalExpressionWithIdenticalBranchesVisitor();
+  }
+
+  private static class ConditionalExpressionWithIdenticalBranchesVisitor extends BaseInspectionVisitor {
+
+
+    public void visitConditionalExpression(PsiConditionalExpression expression) {
+      super.visitConditionalExpression(expression);
+      final PsiExpression thenExpression = expression.getThenExpression();
+      final PsiExpression elseExpression = expression.getElseExpression();
+      if (EquivalenceChecker.expressionsAreEquivalent(thenExpression, elseExpression)) {
+        registerError(expression);
+      }
     }
 
-    public String buildErrorString(PsiElement location){
-        return "Conditional expression #ref with identical branches #loc";
-    }
-
-    public InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
-    }
-
-    private static class CollapseConditional extends InspectionGadgetsFix{
-        public String getName(){
-            return "Collapse conditional expression";
-        }
-
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
-            final PsiConditionalExpression expression =
-                    (PsiConditionalExpression) descriptor.getPsiElement();
-
-            final PsiExpression thenExpression = expression.getThenExpression();
-            assert thenExpression != null;
-            final String bodyText = thenExpression.getText();
-            replaceExpression(expression, bodyText);
-        }
-    }
-
-    public BaseInspectionVisitor buildVisitor(){
-        return new ConditionalExpressionWithIdenticalBranchesVisitor();
-    }
-
-    private static class ConditionalExpressionWithIdenticalBranchesVisitor extends BaseInspectionVisitor{
-
-
-        public void visitConditionalExpression(PsiConditionalExpression expression){
-            super.visitConditionalExpression(expression);
-            final PsiExpression thenExpression = expression.getThenExpression();
-            final PsiExpression elseExpression = expression.getElseExpression();
-            if(EquivalenceChecker.expressionsAreEquivalent(thenExpression, elseExpression))
-            {
-                registerError(expression);
-            }
-        }
-
-    }
+  }
 }

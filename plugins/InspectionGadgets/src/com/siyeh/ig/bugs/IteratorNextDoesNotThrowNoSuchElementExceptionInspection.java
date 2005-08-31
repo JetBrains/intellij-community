@@ -24,6 +24,7 @@ import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.ExceptionUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Set;
 
@@ -52,10 +53,9 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
     private static class IteratorNextDoesNotThrowNoSuchElementExceptionVisitor
             extends BaseInspectionVisitor{
 
-        @SuppressWarnings({"HardCodedStringLiteral"})
         public void visitMethod(@NotNull PsiMethod method){
             // note: no call to super
-            final String name = method.getName();
+            @NonNls final String name = method.getName();
             if(!"next".equals(name)){
                 return;
             }
@@ -115,7 +115,6 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
             }
         }
 
-        @SuppressWarnings({"HardCodedStringLiteral"})
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             if(doesCallIteratorNext){
                 return;
@@ -126,7 +125,7 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
             if(methodExpression == null){
                 return;
             }
-            final String methodName = methodExpression.getReferenceName();
+            @NonNls final String methodName = methodExpression.getReferenceName();
             if(!"next".equals(methodName)){
                 return;
             }

@@ -22,6 +22,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -35,7 +36,7 @@ import java.util.*;
  * @author <A href="bas@carp-technologies.nl">Bas Leijdekkers</a>
  */
 public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor{
-    private static final String ACCESS_METHOD_NAME_PREFIX = "access$";
+    @NonNls private static final String ACCESS_METHOD_NAME_PREFIX = "access$";
 
     private static final String SERIALIZABLE_CLASS_NAME = "java.io.Serializable";
 
@@ -76,7 +77,7 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor{
             return name1.compareTo(name2);
         }
     };
-    private static final String CLASS_ACCESS_METHOD_PREFIX = "class$";
+    @NonNls private static final String CLASS_ACCESS_METHOD_PREFIX = "class$";
 
     private SerialVersionUIDBuilder(PsiClass clazz){
         super();
@@ -226,7 +227,8 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor{
             }
 
             dataOutputStream.flush();
-            final MessageDigest digest = MessageDigest.getInstance("SHA");
+            @NonNls final String algorithm = "SHA";
+            final MessageDigest digest = MessageDigest.getInstance(algorithm);
             final byte[] digestBytes = digest.digest(byteArrayOutputStream.toByteArray());
             long serialVersionUID = 0L;
             for(int i = Math.min(digestBytes.length, 8) - 1; i >= 0; i--){
@@ -254,9 +256,10 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor{
             nonPrivateMethods.add(syntheticMethod);
         }
         PsiType unwrappedType = type;
-        final StringBuffer fieldNameBuffer;
+        @NonNls final StringBuffer fieldNameBuffer;
         if(type instanceof PsiArrayType){
-            fieldNameBuffer = new StringBuffer("array");
+            fieldNameBuffer = new StringBuffer();
+            fieldNameBuffer.append("array");
             while(unwrappedType instanceof PsiArrayType){
                 final PsiArrayType arrayType = (PsiArrayType) unwrappedType;
                 unwrappedType = arrayType.getComponentType();
@@ -517,7 +520,8 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor{
                     final String returnTypeSignature =
                             MemberSignature.createTypeSignature(method.getReturnType())
                                     .replace('/', '.');
-                    final StringBuffer signatureBuffer = new StringBuffer("(L");
+                    @NonNls final StringBuffer signatureBuffer = new StringBuffer();
+                    signatureBuffer.append("(L");
                     signatureBuffer.append(clazz.getQualifiedName())
                             .append(';');
                     final PsiParameter[] parameters = method.getParameterList()

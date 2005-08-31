@@ -52,7 +52,7 @@ public class FinalizeNotProtectedInspection extends MethodInspection{
 
     private static class ProtectedFinalizeFix extends InspectionGadgetsFix{
         public String getName(){
-            return InspectionGadgetsBundle.message("finalize.not.declared.protected.make.protected.quickfix");
+            return InspectionGadgetsBundle.message("make.protected.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)

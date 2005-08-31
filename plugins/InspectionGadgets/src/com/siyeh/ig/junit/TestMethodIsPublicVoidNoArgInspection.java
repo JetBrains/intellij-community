@@ -20,61 +20,60 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class TestMethodIsPublicVoidNoArgInspection extends MethodInspection {
-    public String getID(){
-        return "TestMethodWithIncorrectSignature";
-    }
-    public String getDisplayName() {
-        return "Test method with incorrect signature";
-    }
 
-    public String getGroupDisplayName() {
-        return GroupNames.JUNIT_GROUP_NAME;
-    }
+  public String getID() {
+    return "TestMethodWithIncorrectSignature";
+  }
 
-    public String buildErrorString(PsiElement location) {
-        return "#ref() is not declared 'public void " + location.getText() + "()";
-    }
+  public String getGroupDisplayName() {
+    return GroupNames.JUNIT_GROUP_NAME;
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new TestMethodIsPublicVoidNoArgVisitor();
-    }
+  public String buildErrorString(PsiElement location) {
+    return InspectionGadgetsBundle.message("test.method.is.public.void.no.arg.problem.descriptor", location.getText());
+  }
 
-    private static class TestMethodIsPublicVoidNoArgVisitor extends BaseInspectionVisitor {
+  public BaseInspectionVisitor buildVisitor() {
+    return new TestMethodIsPublicVoidNoArgVisitor();
+  }
 
-        public void visitMethod(@NotNull PsiMethod method) {
-            //note: no call to super;
-            final String methodName = method.getName();
-            if (!methodName.startsWith("test")) {
-                return;
-            }
-            final PsiType returnType = method.getReturnType();
-            if (returnType == null) {
-                return;
-            }
-            final PsiParameterList parameterList = method.getParameterList();
-            if (parameterList == null) {
-                return;
-            }
-            final PsiParameter[] parameters = parameterList.getParameters();
-            if (parameters == null) {
-                return;
-            }
-            if (parameters.length == 0
-                    && returnType.equals(PsiType.VOID)
-                    && method.hasModifierProperty(PsiModifier.PUBLIC)) {
-                return;
-            }
-            final PsiClass targetClass = method.getContainingClass();
-            if (targetClass == null ||
-                        !ClassUtils.isSubclass(targetClass, "junit.framework.TestCase")) {
-                return;
-            }
-            registerMethodError(method);
-        }
+  private static class TestMethodIsPublicVoidNoArgVisitor extends BaseInspectionVisitor {
 
+    public void visitMethod(@NotNull PsiMethod method) {
+      //note: no call to super;
+      @NonNls final String methodName = method.getName();
+      if (!methodName.startsWith("test")) {
+        return;
+      }
+      final PsiType returnType = method.getReturnType();
+      if (returnType == null) {
+        return;
+      }
+      final PsiParameterList parameterList = method.getParameterList();
+      if (parameterList == null) {
+        return;
+      }
+      final PsiParameter[] parameters = parameterList.getParameters();
+      if (parameters == null) {
+        return;
+      }
+      if (parameters.length == 0
+          && returnType.equals(PsiType.VOID)
+          && method.hasModifierProperty(PsiModifier.PUBLIC)) {
+        return;
+      }
+      final PsiClass targetClass = method.getContainingClass();
+      if (targetClass == null ||
+          !ClassUtils.isSubclass(targetClass, "junit.framework.TestCase")) {
+        return;
+      }
+      registerMethodError(method);
     }
 
+  }
 }

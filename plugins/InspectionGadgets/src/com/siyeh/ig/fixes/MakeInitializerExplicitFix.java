@@ -21,10 +21,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.InspectionGadgetsBundle;
+import org.jetbrains.annotations.NonNls;
 
 public class MakeInitializerExplicitFix extends InspectionGadgetsFix{
     public String getName(){
-        return "Make initialization explicit";
+        return InspectionGadgetsBundle.message("make.initialization.explicit.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)
@@ -41,8 +43,8 @@ public class MakeInitializerExplicitFix extends InspectionGadgetsFix{
         final PsiClass containingClass = field.getContainingClass();
         final String newFieldText =
                 modifiers.getText() + ' ' + type.getPresentableText() +
-                        ' ' + name +
-                        '=' + getDefaultValue(type) + ';';
+                ' ' + name +
+                '=' + getDefaultValue(type) + ';';
         final PsiField newField = factory
                 .createFieldFromText(newFieldText, containingClass);
         final CodeStyleManager styleManager =
@@ -51,7 +53,7 @@ public class MakeInitializerExplicitFix extends InspectionGadgetsFix{
         styleManager.reformat(replacedField);
     }
 
-    private String getDefaultValue(PsiType type){
+    @NonNls private String getDefaultValue(PsiType type){
         if(PsiType.INT.equals(type)){
             return "0";
         } else if(PsiType.LONG.equals(type)){

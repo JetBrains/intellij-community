@@ -21,7 +21,9 @@ import com.siyeh.ig.RegExFormatter;
 import com.siyeh.ig.RegExInputVerifier;
 import com.siyeh.ig.ui.FormattedTextFieldMacFix;
 import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -42,7 +44,7 @@ public abstract class ConventionInspection extends BaseInspection {
     public int m_maxLength = getDefaultMaxLength();    // this is public for the DefaultJDomExternalizer
     protected Pattern m_regexPattern = Pattern.compile(m_regex);
 
-    protected abstract String getDefaultRegex();
+    @NonNls protected abstract String getDefaultRegex();
 
     protected abstract int getDefaultMinLength();
 
@@ -86,11 +88,11 @@ public abstract class ConventionInspection extends BaseInspection {
         final GridBagLayout layout = new GridBagLayout();
         final JPanel panel = new JPanel(layout);
 
-        final JLabel patternLabel = new JLabel("Pattern:");
+        final JLabel patternLabel = new JLabel(InspectionGadgetsBundle.message("convention.pattern.option"));
         patternLabel.setHorizontalAlignment(SwingConstants.TRAILING);
-        final JLabel minLengthLabel = new JLabel("Min Length:");
+        final JLabel minLengthLabel = new JLabel(InspectionGadgetsBundle.message("convention.min.length.option"));
         minLengthLabel.setHorizontalAlignment(SwingConstants.TRAILING);
-        final JLabel maxLengthLabel = new JLabel("Max Length:");
+        final JLabel maxLengthLabel = new JLabel(InspectionGadgetsBundle.message("convention.max.length.option"));
         maxLengthLabel.setHorizontalAlignment(SwingConstants.TRAILING);
 
         final NumberFormat numberFormat = NumberFormat.getIntegerInstance();

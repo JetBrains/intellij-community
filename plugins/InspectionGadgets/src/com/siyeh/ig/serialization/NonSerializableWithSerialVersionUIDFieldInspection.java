@@ -28,6 +28,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MakeSerializableFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class NonSerializableWithSerialVersionUIDFieldInspection extends ClassInspection {
@@ -39,7 +40,7 @@ public class NonSerializableWithSerialVersionUIDFieldInspection extends ClassIns
     }
 
     public String getDisplayName() {
-        return "Non-serializable class with 'serialVersionUID'";
+        return InspectionGadgetsBundle.message("non.serializable.with.serialversionuid.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -47,7 +48,7 @@ public class NonSerializableWithSerialVersionUIDFieldInspection extends ClassIns
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Non-serializable class #ref defines a serialVersionUID field #loc";
+        return InspectionGadgetsBundle.message("non.serializable.with.serialversionuid.problem.descriptor");
     }
 
     protected InspectionGadgetsFix[] buildFixes(PsiElement location){
@@ -56,7 +57,7 @@ public class NonSerializableWithSerialVersionUIDFieldInspection extends ClassIns
 
     private static class RemoveSerialVersionUIDFix extends InspectionGadgetsFix{
         public String getName(){
-            return "Remove serialVersionUID field";
+            return InspectionGadgetsBundle.message("non.serializable.with.serialversionuid.remove.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)

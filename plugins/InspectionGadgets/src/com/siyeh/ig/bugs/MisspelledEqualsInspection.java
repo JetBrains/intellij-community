@@ -25,6 +25,7 @@ import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class MisspelledEqualsInspection extends MethodInspection {
     private final RenameFix fix = new RenameFix("equals");
@@ -55,10 +56,9 @@ public class MisspelledEqualsInspection extends MethodInspection {
 
     private static class MisspelledEqualsVisitor extends BaseInspectionVisitor {
 
-        @SuppressWarnings({"HardCodedStringLiteral"})
         public void visitMethod(@NotNull PsiMethod method) {
             //note: no call to super
-            final String methodName = method.getName();
+            @NonNls final String methodName = method.getName();
             if (!"equal".equals(methodName)) {
                 return;
             }

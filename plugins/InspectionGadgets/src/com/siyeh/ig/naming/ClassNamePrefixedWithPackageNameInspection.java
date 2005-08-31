@@ -27,67 +27,59 @@ import org.jetbrains.annotations.NotNull;
 import java.util.StringTokenizer;
 
 public class ClassNamePrefixedWithPackageNameInspection extends ClassInspection {
-    private final RenameFix fix = new RenameFix();
 
-    public String getDisplayName() {
-        return "Class name prefixed with package name";
+  private final RenameFix fix = new RenameFix();
+
+  public String getGroupDisplayName() {
+    return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
+  }
+
+  protected InspectionGadgetsFix buildFix(PsiElement location) {
+    return fix;
+  }
+
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new ClassNameBePrefixedWithPackageNameVisitor();
+  }
+
+  private static class ClassNameBePrefixedWithPackageNameVisitor extends BaseInspectionVisitor {
+
+
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so it doesn't drill down into inner classes
+      final String className = aClass.getName();
+      final String qualifiedName = aClass.getQualifiedName();
+      if (className == null) {
+        return;
+      }
+      if (qualifiedName == null) {
+        return;
+      }
+      if (className.equals(qualifiedName)) {
+        return;
+      }
+      final StringTokenizer tokenizer = new StringTokenizer(qualifiedName, ".");
+      String currentPackageName = null;
+      String lastPackageName = null;
+      while (tokenizer.hasMoreTokens()) {
+        lastPackageName = currentPackageName;
+        currentPackageName = tokenizer.nextToken();
+      }
+
+      if (lastPackageName == null) {
+        return;
+      }
+      final String lowercaseClassName = className.toLowerCase();
+      final String lowercasePackageName = lastPackageName.toLowerCase();
+      if (!lowercaseClassName.startsWith(lowercasePackageName)) {
+        return;
+      }
+      registerClassError(aClass);
     }
 
-    public String getGroupDisplayName() {
-        return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
-    }
-
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
-    }
-
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-        return true;
-    }
-
-    public String buildErrorString(PsiElement location) {
-        return "Class name '#ref' begins with its package name #loc";
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new ClassNameBePrefixedWithPackageNameVisitor();
-    }
-
-    private static class ClassNameBePrefixedWithPackageNameVisitor extends BaseInspectionVisitor {
-       
-
-        public void visitClass(@NotNull PsiClass aClass) {
-            // no call to super, so it doesn't drill down into inner classes
-            final String className = aClass.getName();
-            final String qualifiedName = aClass.getQualifiedName();
-            if (className == null) {
-                return;
-            }
-            if (qualifiedName == null) {
-                return;
-            }
-            if (className.equals(qualifiedName)) {
-                return;
-            }
-            final StringTokenizer tokenizer = new StringTokenizer(qualifiedName, ".");
-            String currentPackageName = null;
-            String lastPackageName = null;
-            while (tokenizer.hasMoreTokens()) {
-                lastPackageName = currentPackageName;
-                currentPackageName = tokenizer.nextToken();
-            }
-
-            if (lastPackageName == null) {
-                return;
-            }
-            final String lowercaseClassName = className.toLowerCase();
-            final String lowercasePackageName = lastPackageName.toLowerCase();
-            if (!lowercaseClassName.startsWith(lowercasePackageName)) {
-                return;
-            }
-            registerClassError(aClass);
-        }
-
-    }
-
+  }
 }

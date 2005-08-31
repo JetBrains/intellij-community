@@ -25,29 +25,20 @@ import org.jetbrains.annotations.NotNull;
 
 public class ContinueStatementInspection extends StatementInspection {
 
-    public String getDisplayName() {
-        return "'continue' statement";
+  public String getGroupDisplayName() {
+    return GroupNames.CONTROL_FLOW_GROUP_NAME;
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new ContinueStatementVisitor();
+  }
+
+  private static class ContinueStatementVisitor extends StatementInspectionVisitor {
+
+    public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
+      super.visitContinueStatement(statement);
+      registerStatementError(statement);
     }
 
-    public String getGroupDisplayName() {
-        return GroupNames.CONTROL_FLOW_GROUP_NAME;
-    }
-
-    public String buildErrorString(PsiElement location) {
-        return "#ref statement #loc";
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new ContinueStatementVisitor();
-    }
-
-    private static class ContinueStatementVisitor extends StatementInspectionVisitor {
-
-        public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
-            super.visitContinueStatement(statement);
-            registerStatementError(statement);
-        }
-
-    }
-
+  }
 }

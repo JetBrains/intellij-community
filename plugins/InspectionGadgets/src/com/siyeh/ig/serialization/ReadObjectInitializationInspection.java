@@ -21,6 +21,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.psiutils.InitializationUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ReadObjectInitializationInspection extends ClassInspection {
@@ -28,7 +29,7 @@ public class ReadObjectInitializationInspection extends ClassInspection {
         return "InstanceVariableMayNotBeInitializedByReadObject";
     }
     public String getDisplayName() {
-        return "Instance variable may not be initialized by 'readObject()'";
+        return InspectionGadgetsBundle.message("readobject.initialization.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -36,7 +37,7 @@ public class ReadObjectInitializationInspection extends ClassInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Instance variable #ref may not be initialized during call to readObject #loc";
+        return InspectionGadgetsBundle.message("readobject.initialization.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

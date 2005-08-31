@@ -24,31 +24,22 @@ import com.siyeh.ig.ExpressionInspection;
 
 public class NestedConditionalExpressionInspection extends ExpressionInspection {
 
-    public String getDisplayName() {
-        return "Nested conditional expression";
+  public String getGroupDisplayName() {
+    return GroupNames.CONTROL_FLOW_GROUP_NAME;
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new NestedConditionalExpressionVisitor();
+  }
+
+  private static class NestedConditionalExpressionVisitor extends BaseInspectionVisitor {
+
+    public void visitConditionalExpression(PsiConditionalExpression exp) {
+      super.visitConditionalExpression(exp);
+      if (PsiTreeUtil.getParentOfType(exp, PsiConditionalExpression.class) != null) {
+        registerError(exp);
+      }
     }
 
-    public String getGroupDisplayName() {
-        return GroupNames.CONTROL_FLOW_GROUP_NAME;
-    }
-
-    public String buildErrorString(PsiElement location) {
-        return "Nested conditional expression #ref #loc";
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new NestedConditionalExpressionVisitor();
-    }
-
-    private static class NestedConditionalExpressionVisitor extends BaseInspectionVisitor {
-
-        public void visitConditionalExpression(PsiConditionalExpression exp) {
-            super.visitConditionalExpression(exp);
-            if (PsiTreeUtil.getParentOfType(exp, PsiConditionalExpression.class) != null) {
-                registerError(exp);
-            }
-        }
-
-    }
-
+  }
 }

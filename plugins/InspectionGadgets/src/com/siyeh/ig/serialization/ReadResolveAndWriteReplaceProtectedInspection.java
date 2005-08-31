@@ -25,13 +25,14 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.MakeProtectedFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ReadResolveAndWriteReplaceProtectedInspection extends MethodInspection {
     private final MakeProtectedFix fix = new MakeProtectedFix();
 
     public String getDisplayName() {
-        return "'readResolve()' or 'writeReplace()' not declared 'protected'";
+        return InspectionGadgetsBundle.message("readresolve.writereplace.protected.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -39,7 +40,7 @@ public class ReadResolveAndWriteReplaceProtectedInspection extends MethodInspect
     }
 
     public String buildErrorString(PsiElement location) {
-        return "#ref() not declared 'protected' #loc";
+        return InspectionGadgetsBundle.message("readresolve.writereplace.protected.problem.descriptor");
 
     }
 

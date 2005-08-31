@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.InspectionGadgetsBundle;
+import org.jetbrains.annotations.NonNls;
 
 public class OctalAndDecimalIntegersMixedInspection extends ExpressionInspection {
     public String getID(){
@@ -77,13 +78,12 @@ public class OctalAndDecimalIntegersMixedInspection extends ExpressionInspection
             return text.charAt(0) != '0';
         }
 
-        @SuppressWarnings({"HardCodedStringLiteral"})
         private static boolean isOctalLiteral(PsiLiteralExpression literal) {
             final PsiType type = literal.getType();
             if (!PsiType.INT.equals(type) && !PsiType.LONG.equals(type)) {
                 return false;
             }
-            final String text = literal.getText();
+            @NonNls final String text = literal.getText();
             if ("0".equals(text) || "0L".equals(text)) {
                 return false;
             }

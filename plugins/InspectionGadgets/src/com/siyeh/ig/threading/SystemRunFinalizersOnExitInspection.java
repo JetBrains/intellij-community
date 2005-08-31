@@ -20,64 +20,58 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class SystemRunFinalizersOnExitInspection extends ExpressionInspection {
-    public String getID(){
-        return "CallToSystemRunFinalizersOnExit";
-    }
-    public String getDisplayName() {
-        return "Call to 'System.runFinalizersOnExit()'";
-    }
 
-    public String getGroupDisplayName() {
-        return GroupNames.THREADING_GROUP_NAME;
-    }
+  public String getID() {
+    return "CallToSystemRunFinalizersOnExit";
+  }
 
-    public String buildErrorString(PsiElement location) {
+  public String getGroupDisplayName() {
+    return GroupNames.THREADING_GROUP_NAME;
+  }
 
-        return "Call to System.#ref() #loc";
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new SystemRunFinalizersOnExitVisitor();
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new SystemRunFinalizersOnExitVisitor();
-    }
+  private static class SystemRunFinalizersOnExitVisitor extends BaseInspectionVisitor {
 
-    private static class SystemRunFinalizersOnExitVisitor extends BaseInspectionVisitor {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
 
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-
-            final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-            if (methodExpression == null) {
-                return;
-            }
-            if (!isRunFinalizersOnExit(expression)) {
-                return;
-            }
-            registerMethodCallError(expression);
-        }
-
-        private static boolean isRunFinalizersOnExit(PsiMethodCallExpression expression) {
-            final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-
-            final String methodName = methodExpression.getReferenceName();
-            if (!"runFinalizersOnExit".equals(methodName) ) {
-                return false;
-            }
-            final PsiMethod method = expression.resolveMethod();
-            if (method == null) {
-                return false;
-            }
-            final PsiClass aClass = method.getContainingClass();
-            if (aClass == null) {
-                return false;
-            }
-            final String className = aClass.getQualifiedName();
-            if (className == null) {
-                return false;
-            }
-            return "java.lang.System".equals(className);
-        }
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+      if (methodExpression == null) {
+        return;
+      }
+      if (!isRunFinalizersOnExit(expression)) {
+        return;
+      }
+      registerMethodCallError(expression);
     }
 
+    private static boolean isRunFinalizersOnExit(PsiMethodCallExpression expression) {
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+
+      final String methodName = methodExpression.getReferenceName();
+      @NonNls final String runFinalizers = "runFinalizersOnExit";
+      if (!runFinalizers.equals(methodName)) {
+        return false;
+      }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return false;
+      }
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null) {
+        return false;
+      }
+      final String className = aClass.getQualifiedName();
+      if (className == null) {
+        return false;
+      }
+      return "java.lang.System".equals(className);
+    }
+  }
 }

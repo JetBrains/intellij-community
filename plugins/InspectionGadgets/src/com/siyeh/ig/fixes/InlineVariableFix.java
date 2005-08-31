@@ -22,11 +22,12 @@ import com.intellij.psi.PsiLocalVariable;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.InspectionGadgetsBundle;
 
 public class InlineVariableFix extends InspectionGadgetsFix {
 
     public String getName() {
-        return "Inline variable";
+        return InspectionGadgetsBundle.message("inline.variable.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor) {

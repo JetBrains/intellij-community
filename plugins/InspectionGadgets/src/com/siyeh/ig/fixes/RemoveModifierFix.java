@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.InspectionGadgetsBundle;
 
 public class RemoveModifierFix extends InspectionGadgetsFix {
     private final PsiElement modifier;
@@ -30,7 +31,7 @@ public class RemoveModifierFix extends InspectionGadgetsFix {
     }
 
     public String getName() {
-        return "Remove '" + modifier.getText() + "' modifier";
+        return InspectionGadgetsBundle.message("remove.modifier.quickfix", modifier.getText());
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

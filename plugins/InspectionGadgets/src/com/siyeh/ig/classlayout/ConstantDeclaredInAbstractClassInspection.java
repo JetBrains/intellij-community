@@ -26,42 +26,34 @@ import org.jetbrains.annotations.NotNull;
 
 public class ConstantDeclaredInAbstractClassInspection extends FieldInspection {
 
-    public String getDisplayName() {
-        return "Constant declared in abstract class";
-    }
+  public String getGroupDisplayName() {
+    return GroupNames.CLASSLAYOUT_GROUP_NAME;
+  }
 
-    public String getGroupDisplayName() {
-        return GroupNames.CLASSLAYOUT_GROUP_NAME;
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new ConstantDeclaredInAbstractClassVisitor();
+  }
 
-    public String buildErrorString(PsiElement location) {
-        return "Constant '#ref' declared in abstract class #loc";
-    }
+  private static class ConstantDeclaredInAbstractClassVisitor extends BaseInspectionVisitor {
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ConstantDeclaredInAbstractClassVisitor();
+    public void visitField(@NotNull PsiField field) {
+      //no call to super, so we don't drill into anonymous classes
+      if (!field.hasModifierProperty(PsiModifier.STATIC) ||
+          !field.hasModifierProperty(PsiModifier.PUBLIC) ||
+          !field.hasModifierProperty(PsiModifier.FINAL)) {
+        return;
+      }
+      final PsiClass containingClass = field.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      if (containingClass.isInterface() || containingClass.isAnnotationType()) {
+        return;
+      }
+      if (!containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return;
+      }
+      registerFieldError(field);
     }
-
-    private static class ConstantDeclaredInAbstractClassVisitor extends BaseInspectionVisitor {
-
-        public void visitField(@NotNull PsiField field) {
-            //no call to super, so we don't drill into anonymous classes
-            if (!field.hasModifierProperty(PsiModifier.STATIC) ||
-                    !field.hasModifierProperty(PsiModifier.PUBLIC) ||
-                    !field.hasModifierProperty(PsiModifier.FINAL)) {
-                return;
-            }
-            final PsiClass containingClass = field.getContainingClass();
-            if (containingClass == null) {
-                return;
-            }
-            if (containingClass.isInterface() || containingClass.isAnnotationType()) {
-                return;
-            }
-            if (!containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-                return;
-            }
-            registerFieldError(field);
-        }
-    }
+  }
 }

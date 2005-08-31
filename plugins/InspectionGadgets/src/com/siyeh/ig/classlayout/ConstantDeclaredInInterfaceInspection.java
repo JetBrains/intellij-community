@@ -25,34 +25,26 @@ import org.jetbrains.annotations.NotNull;
 
 public class ConstantDeclaredInInterfaceInspection extends FieldInspection {
 
-    public String getDisplayName() {
-        return "Constant declared in interface";
-    }
+  public String getGroupDisplayName() {
+    return GroupNames.CLASSLAYOUT_GROUP_NAME;
+  }
 
-    public String getGroupDisplayName() {
-        return GroupNames.CLASSLAYOUT_GROUP_NAME;
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new ConstantDeclaredInInterfaceVisitor();
+  }
 
-    public String buildErrorString(PsiElement location) {
-        return "Constant '#ref' declared in interface #loc";
-    }
+  private static class ConstantDeclaredInInterfaceVisitor extends BaseInspectionVisitor {
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ConstantDeclaredInInterfaceVisitor();
+    public void visitField(@NotNull PsiField field) {
+      //no call to super, so we don't drill into anonymous classes
+      final PsiClass containingClass = field.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      if (!containingClass.isInterface() && !containingClass.isAnnotationType()) {
+        return;
+      }
+      registerFieldError(field);
     }
-
-    private static class ConstantDeclaredInInterfaceVisitor extends BaseInspectionVisitor {
-
-        public void visitField(@NotNull PsiField field) {
-            //no call to super, so we don't drill into anonymous classes
-            final PsiClass containingClass = field.getContainingClass();
-            if (containingClass == null) {
-                return;
-            }
-            if (!containingClass.isInterface() && !containingClass.isAnnotationType()) {
-                return;
-            }
-            registerFieldError(field);
-        }
-    }
+  }
 }

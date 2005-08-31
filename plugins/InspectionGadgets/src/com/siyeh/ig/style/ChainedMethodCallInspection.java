@@ -30,105 +30,98 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class ChainedMethodCallInspection extends ExpressionInspection{
-    /**
-     * @noinspection PublicField
-     */
-    public boolean m_ignoreFieldInitializations = true;
-    private final ChainedMethodCallFix fix = new ChainedMethodCallFix();
+public class ChainedMethodCallInspection extends ExpressionInspection {
 
-    public String getDisplayName(){
-        return "Chained method calls";
+  /**
+   * @noinspection PublicField
+   */
+  public boolean m_ignoreFieldInitializations = true;
+  private final ChainedMethodCallFix fix = new ChainedMethodCallFix();
+
+  public String getGroupDisplayName() {
+    return GroupNames.STYLE_GROUP_NAME;
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new ChainedMethodCallVisitor();
+  }
+
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(
+      "Ignore chained method calls in field initializers",
+      this, "m_ignoreFieldInitializations");
+  }
+
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  protected InspectionGadgetsFix buildFix(PsiElement location) {
+    return fix;
+  }
+
+  private static class ChainedMethodCallFix extends InspectionGadgetsFix {
+    public String getName() {
+      return "Introduce variable";
     }
 
-    public String getGroupDisplayName(){
-        return GroupNames.STYLE_GROUP_NAME;
+    public void doFix(Project project, ProblemDescriptor descriptor) {
+      final RefactoringActionHandlerFactory factory =
+        RefactoringActionHandlerFactory.getInstance();
+      final RefactoringActionHandler introduceHandler =
+        factory.createIntroduceVariableHandler();
+      final PsiElement methodNameElement = descriptor.getPsiElement();
+      final PsiReferenceExpression methodCallExpression =
+        (PsiReferenceExpression)methodNameElement.getParent();
+      assert methodCallExpression != null;
+      final PsiExpression qualifier =
+        methodCallExpression.getQualifierExpression();
+      introduceHandler.invoke(project,
+                              new PsiElement[]{qualifier},
+                              null);
     }
+  }
 
-    public String buildErrorString(PsiElement location){
-        return "Chained method call #ref() #loc";
-    }
+  private class ChainedMethodCallVisitor extends BaseInspectionVisitor {
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      final PsiReferenceExpression reference = expression
+        .getMethodExpression();
+      if (reference == null) {
+        return;
+      }
+      final PsiExpression qualifier = reference.getQualifierExpression();
+      if (qualifier == null) {
+        return;
+      }
+      if (!isCallExpression(qualifier)) {
+        return;
+      }
 
-    public BaseInspectionVisitor buildVisitor(){
-        return new ChainedMethodCallVisitor();
-    }
-
-    public JComponent createOptionsPanel(){
-        return new SingleCheckboxOptionsPanel(
-                "Ignore chained method calls in field initializers",
-                this, "m_ignoreFieldInitializations");
-    }
-
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
-        return true;
-    }
-
-    protected InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
-    }
-
-    private static class ChainedMethodCallFix extends InspectionGadgetsFix{
-        public String getName(){
-            return "Introduce variable";
+      if (m_ignoreFieldInitializations) {
+        final PsiElement field = PsiTreeUtil
+          .getParentOfType(expression, PsiField.class);
+        if (field != null) {
+          return;
         }
-
-        public void doFix(Project project, ProblemDescriptor descriptor){
-            final RefactoringActionHandlerFactory factory =
-                    RefactoringActionHandlerFactory.getInstance();
-            final RefactoringActionHandler introduceHandler =
-                    factory.createIntroduceVariableHandler();
-            final PsiElement methodNameElement = descriptor.getPsiElement();
-            final PsiReferenceExpression methodCallExpression =
-                    (PsiReferenceExpression) methodNameElement.getParent();
-            assert methodCallExpression != null;
-            final PsiExpression qualifier =
-                    methodCallExpression.getQualifierExpression();
-            introduceHandler.invoke(project,
-                                    new PsiElement[]{qualifier},
-                                    null);
-        }
+      }
+      registerMethodCallError(expression);
     }
+  }
 
-    private class ChainedMethodCallVisitor extends BaseInspectionVisitor{
-        public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression){
-            super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression reference = expression
-                    .getMethodExpression();
-            if(reference == null){
-                return;
-            }
-            final PsiExpression qualifier = reference.getQualifierExpression();
-            if(qualifier == null){
-                return;
-            }
-            if(!isCallExpression(qualifier)){
-                return;
-            }
-
-            if(m_ignoreFieldInitializations){
-                final PsiElement field = PsiTreeUtil
-                        .getParentOfType(expression, PsiField.class);
-                if(field != null){
-                    return;
-                }
-            }
-            registerMethodCallError(expression);
-        }
+  private static boolean isCallExpression(PsiExpression expression) {
+    if (expression instanceof PsiMethodCallExpression ||
+        expression instanceof PsiNewExpression) {
+      return true;
     }
-
-    private static boolean isCallExpression(PsiExpression expression){
-        if(expression instanceof PsiMethodCallExpression ||
-                expression instanceof PsiNewExpression){
-            return true;
-        }
-        if(expression instanceof PsiParenthesizedExpression){
-            final PsiParenthesizedExpression parenthesizedExpression =
-                    (PsiParenthesizedExpression) expression;
-            final PsiExpression containedExpression =
-                    parenthesizedExpression.getExpression();
-            return isCallExpression(containedExpression);
-        }
-        return false;
+    if (expression instanceof PsiParenthesizedExpression) {
+      final PsiParenthesizedExpression parenthesizedExpression =
+        (PsiParenthesizedExpression)expression;
+      final PsiExpression containedExpression =
+        parenthesizedExpression.getExpression();
+      return isCallExpression(containedExpression);
     }
+    return false;
+  }
 }

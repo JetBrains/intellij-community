@@ -24,66 +24,66 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class ThreeNegationsPerMethodInspection extends MethodInspection {
-    /** @noinspection PublicField*/
-    public boolean m_ignoreInEquals = true;
 
-    public String getID(){
-        return "MethodWithMoreThanThreeNegations";
-    }
-    public String getDisplayName() {
-        return "Method with more than three negations";
-    }
+  /**
+   * @noinspection PublicField
+   */
+  public boolean m_ignoreInEquals = true;
 
-    public String getGroupDisplayName() {
-        return GroupNames.METHODMETRICS_GROUP_NAME;
-    }
+  public String getID() {
+    return "MethodWithMoreThanThreeNegations";
+  }
 
-    public JComponent createOptionsPanel(){
-        return new SingleCheckboxOptionsPanel("Ignore negations in equals() methods",
-                                              this, "m_ignoreInEquals");
-    }
+  public String getGroupDisplayName() {
+    return GroupNames.METHODMETRICS_GROUP_NAME;
+  }
 
-    public String buildErrorString(PsiElement location) {
-        final PsiMethod method = (PsiMethod) location.getParent();
-        assert method != null;
-        final NegationCountVisitor visitor=new NegationCountVisitor();
-        method.accept(visitor);
-        final int negationCount = visitor.getCount();
-        return "#ref contains " + negationCount + " negations #loc";
-    }
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("three.negations.per.method.ignore.option"),
+                                          this, "m_ignoreInEquals");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ThreeNegationsPerMethodVisitor();
-    }
+  public String buildErrorString(PsiElement location) {
+    final PsiMethod method = (PsiMethod)location.getParent();
+    assert method != null;
+    final NegationCountVisitor visitor = new NegationCountVisitor();
+    method.accept(visitor);
+    final int negationCount = visitor.getCount();
+    return InspectionGadgetsBundle.message("three.negations.per.method.problem.descriptor", negationCount);
+  }
 
-    private class ThreeNegationsPerMethodVisitor extends BaseInspectionVisitor {
+  public BaseInspectionVisitor buildVisitor() {
+    return new ThreeNegationsPerMethodVisitor();
+  }
 
-        public void visitMethod(@NotNull PsiMethod method) {
-            // note: no call to super
-            final NegationCountVisitor visitor = new NegationCountVisitor();
-            method.accept(visitor);
-            final int negationCount = visitor.getCount();
-            if (negationCount <= 3) {
-                return;
-            }
-            if(m_ignoreInEquals){
-                final String methodName = method.getName();
-                if(HardcodedMethodConstants.EQUALS.equals(methodName)) {
-                  final PsiParameterList parameterList =
-                            method.getParameterList();
-                    final PsiParameter[] parameters = parameterList.getParameters();
-                    if(parameters != null && parameters.length == 1){
-                        return;
-                    }
-                }
-            }
-            registerMethodError(method);
+  private class ThreeNegationsPerMethodVisitor extends BaseInspectionVisitor {
+
+    public void visitMethod(@NotNull PsiMethod method) {
+      // note: no call to super
+      final NegationCountVisitor visitor = new NegationCountVisitor();
+      method.accept(visitor);
+      final int negationCount = visitor.getCount();
+      if (negationCount <= 3) {
+        return;
+      }
+      if (m_ignoreInEquals) {
+        final String methodName = method.getName();
+        if (HardcodedMethodConstants.EQUALS.equals(methodName)) {
+          final PsiParameterList parameterList =
+            method.getParameterList();
+          final PsiParameter[] parameters = parameterList.getParameters();
+          if (parameters != null && parameters.length == 1) {
+            return;
+          }
         }
+      }
+      registerMethodError(method);
     }
-
+  }
 }

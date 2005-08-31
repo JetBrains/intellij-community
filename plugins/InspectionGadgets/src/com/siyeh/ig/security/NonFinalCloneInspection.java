@@ -22,53 +22,46 @@ import com.siyeh.ig.MethodInspection;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
-public class NonFinalCloneInspection extends MethodInspection{
-    public String getDisplayName(){
-        return "Non-final 'clone()' in secure context";
+public class NonFinalCloneInspection extends MethodInspection {
+
+  public String getGroupDisplayName() {
+    return GroupNames.SECURITY_GROUP_NAME;
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new NonFinalCloneVisitor();
+  }
+
+  private static class NonFinalCloneVisitor extends BaseInspectionVisitor {
+
+    public void visitMethod(@NotNull PsiMethod method) {
+      super.visitMethod(method);
+      final String name = method.getName();
+      if (!HardcodedMethodConstants.CLONE.equals(name)) {
+        return;
+      }
+      final PsiParameterList parameterList = method.getParameterList();
+      if (parameterList == null) {
+        return;
+      }
+      final PsiParameter[] parameters = parameterList.getParameters();
+      if (parameters == null || parameters.length != 0) {
+        return;
+      }
+      if (method.hasModifierProperty(PsiModifier.FINAL)
+          || method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+
+      if (containingClass.hasModifierProperty(PsiModifier.FINAL)
+          || containingClass.isInterface()) {
+        return;
+      }
+      registerMethodError(method);
     }
-
-    public String getGroupDisplayName(){
-        return GroupNames.SECURITY_GROUP_NAME;
-    }
-
-    public String buildErrorString(PsiElement location){
-        return "Non-final '#ref()' method, compromising security #loc";
-    }
-
-    public BaseInspectionVisitor buildVisitor(){
-        return new NonFinalCloneVisitor();
-    }
-
-    private static class NonFinalCloneVisitor extends BaseInspectionVisitor{
-
-        public void visitMethod(@NotNull PsiMethod method){
-            super.visitMethod(method);
-            final String name = method.getName();
-            if(!HardcodedMethodConstants.CLONE.equals(name)) {
-              return;
-            }
-            final PsiParameterList parameterList = method.getParameterList();
-            if(parameterList == null){
-                return;
-            }
-            final PsiParameter[] parameters = parameterList.getParameters();
-            if(parameters == null || parameters.length != 0){
-                return;
-            }
-            if(method.hasModifierProperty(PsiModifier.FINAL)
-                    || method.hasModifierProperty(PsiModifier.ABSTRACT)){
-                return;
-            }
-            final PsiClass containingClass = method.getContainingClass();
-            if(containingClass == null){
-                return;
-            }
-
-            if(containingClass.hasModifierProperty(PsiModifier.FINAL)
-                    || containingClass.isInterface()){
-                return;
-            }
-            registerMethodError(method);
-        }
-    }
+  }
 }

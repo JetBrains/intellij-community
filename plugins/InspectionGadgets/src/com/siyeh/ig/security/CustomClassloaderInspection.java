@@ -25,33 +25,24 @@ import org.jetbrains.annotations.NotNull;
 
 public class CustomClassloaderInspection extends ClassInspection {
 
-    public String getDisplayName() {
-        return "Custom ClassLoader";
+  public String getGroupDisplayName() {
+    return GroupNames.SECURITY_GROUP_NAME;
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new CustomClassloaderVisitor();
+  }
+
+  private static class CustomClassloaderVisitor extends BaseInspectionVisitor {
+
+    public void visitClass(@NotNull PsiClass aClass) {
+      if (!ClassUtils.isSubclass(aClass, "java.lang.ClassLoader")) {
+        return;
+      }
+      if ("java.lang.ClassLoader".equals(aClass.getQualifiedName())) {
+        return;
+      }
+      registerClassError(aClass);
     }
-
-    public String getGroupDisplayName() {
-        return GroupNames.SECURITY_GROUP_NAME;
-    }
-
-    public String buildErrorString(PsiElement location) {
-        return "Custom ClassLoader class '#ref' #loc";
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new CustomClassloaderVisitor();
-    }
-
-    private static class CustomClassloaderVisitor extends BaseInspectionVisitor {
-
-        public void visitClass(@NotNull PsiClass aClass){
-            if(!ClassUtils.isSubclass(aClass, "java.lang.ClassLoader")) {
-                return;
-            }
-            if("java.lang.ClassLoader".equals(aClass.getQualifiedName())) {
-                return;
-            }
-            registerClassError(aClass);
-        }
-    }
-
+  }
 }

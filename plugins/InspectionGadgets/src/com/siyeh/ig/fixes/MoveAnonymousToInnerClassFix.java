@@ -22,10 +22,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.InspectionGadgetsBundle;
 
 public class MoveAnonymousToInnerClassFix extends InspectionGadgetsFix {
     public String getName() {
-        return "Make named inner class";
+        return InspectionGadgetsBundle.message("move.anonymous.to.inner.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor) {

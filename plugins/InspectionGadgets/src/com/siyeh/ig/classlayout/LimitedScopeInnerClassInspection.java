@@ -27,35 +27,29 @@ import org.jetbrains.annotations.NotNull;
 
 public class LimitedScopeInnerClassInspection extends ClassInspection {
 
-    private final MoveClassFix fix = new MoveClassFix();
-    public String getDisplayName() {
-        return "Limited-scope inner class";
-    }
+  private final MoveClassFix fix = new MoveClassFix();
 
-    public String getGroupDisplayName() {
-        return GroupNames.CLASSLAYOUT_GROUP_NAME;
-    }
+  public String getGroupDisplayName() {
+    return GroupNames.CLASSLAYOUT_GROUP_NAME;
+  }
 
-    public String buildErrorString(PsiElement location) {
-        return "Limited-scope inner class #ref #loc";
-    }
+  protected InspectionGadgetsFix buildFix(PsiElement location) {
+    return fix;
+  }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
-    }
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
 
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
-        return true;
-    }
-    public BaseInspectionVisitor buildVisitor() {
-        return new LimitedScopeInnerClassVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new LimitedScopeInnerClassVisitor();
+  }
 
-    private static class LimitedScopeInnerClassVisitor extends BaseInspectionVisitor {
-        public void visitClass(@NotNull PsiClass aClass) {
-            if (aClass.getParent() instanceof PsiDeclarationStatement) {
-                registerClassError(aClass);
-            }
-        }
+  private static class LimitedScopeInnerClassVisitor extends BaseInspectionVisitor {
+    public void visitClass(@NotNull PsiClass aClass) {
+      if (aClass.getParent() instanceof PsiDeclarationStatement) {
+        registerClassError(aClass);
+      }
     }
+  }
 }

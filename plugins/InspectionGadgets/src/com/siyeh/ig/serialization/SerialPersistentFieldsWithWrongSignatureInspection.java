@@ -20,12 +20,14 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.psiutils.SerializationUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class SerialPersistentFieldsWithWrongSignatureInspection
                                                                 extends ClassInspection{
     public String getDisplayName(){
-        return "'serialPersistentFields' field not declared 'private static final ObjectStreamField[]'";
+        return InspectionGadgetsBundle.message("serialpersistentfields.with.wrong.signature.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -33,7 +35,7 @@ public class SerialPersistentFieldsWithWrongSignatureInspection
     }
 
     public String buildErrorString(PsiElement location){
-        return "#ref field of a Serializable class is not declared 'private static final ObjectStreamField[]' #loc ";
+        return InspectionGadgetsBundle.message("serialpersistentfields.with.wrong.signature.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -54,14 +56,14 @@ public class SerialPersistentFieldsWithWrongSignatureInspection
                 if(isSerialPersistentFields(field)){
 
                     if(!field.hasModifierProperty(PsiModifier.PRIVATE) ||
-                            !field.hasModifierProperty(PsiModifier.STATIC) ||
-                            !field.hasModifierProperty(PsiModifier.FINAL)){
+                       !field.hasModifierProperty(PsiModifier.STATIC) ||
+                       !field.hasModifierProperty(PsiModifier.FINAL)){
                         badSerialPersistentFields = field;
                         break;
                     } else{
                         final PsiType type = field.getType();
                         if(type != null
-                                && !type.equalsToText("java.io.ObjectStreamField[]"))
+                           && !type.equalsToText("java.io.ObjectStreamField" + "[]"))
                         {
                             badSerialPersistentFields = field;
                             break;
@@ -80,7 +82,8 @@ public class SerialPersistentFieldsWithWrongSignatureInspection
 
         private static boolean isSerialPersistentFields(PsiField field){
             final String fieldName = field.getName();
-            return "serialPersistentFields".equals(fieldName);
+            @NonNls final String serialPersistentFields = "serialPersistentFields";
+            return serialPersistentFields.equals(fieldName);
         }
     }
 }

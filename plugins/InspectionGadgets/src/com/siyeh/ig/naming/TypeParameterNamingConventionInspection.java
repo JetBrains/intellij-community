@@ -24,83 +24,80 @@ import com.intellij.psi.PsiTypeParameter;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
+import com.siyeh.InspectionGadgetsBundle;
 
-public class TypeParameterNamingConventionInspection
-                                                     extends ConventionInspection{
-    private static final int DEFAULT_MIN_LENGTH = 1;
-    private static final int DEFAULT_MAX_LENGTH = 1;
-    private final RenameFix fix = new RenameFix();
+public class TypeParameterNamingConventionInspection extends ConventionInspection {
 
-    public String getDisplayName(){
-        return "Type parameter naming convention";
+  private static final int DEFAULT_MIN_LENGTH = 1;
+  private static final int DEFAULT_MAX_LENGTH = 1;
+  private final RenameFix fix = new RenameFix();
+
+  public String getGroupDisplayName() {
+    return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
+  }
+
+  protected InspectionGadgetsFix buildFix(PsiElement location) {
+    return fix;
+  }
+
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  public String buildErrorString(PsiElement location) {
+    final PsiClass aClass = (PsiClass)location.getParent();
+    assert aClass != null;
+    final String className = aClass.getName();
+    if (className.length() < getMinLength()) {
+      return InspectionGadgetsBundle.message("type.parameter.naming.convention.problem.descriptor.short");
     }
-
-    public String getGroupDisplayName(){
-        return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
+    else if (className.length() > getMaxLength()) {
+      return InspectionGadgetsBundle.message("type.parameter.naming.convention.problem.descriptor.long");
     }
+    return InspectionGadgetsBundle.message("enumerated.class.naming.convention.problem.descriptor.regex.mismatch", getRegex());
+  }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+  protected String getDefaultRegex() {
+    return "[A-Z]";
+  }
+
+  protected int getDefaultMinLength() {
+    return DEFAULT_MIN_LENGTH;
+  }
+
+  protected int getDefaultMaxLength() {
+    return DEFAULT_MAX_LENGTH;
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new NamingConventionsVisitor();
+  }
+
+  public ProblemDescriptor[] doCheckClass(PsiClass aClass,
+                                          InspectionManager manager,
+                                          boolean isOnTheFly) {
+
+    if (!aClass.isPhysical()) {
+      return super.doCheckClass(aClass, manager, isOnTheFly);
     }
+    final BaseInspectionVisitor visitor = createVisitor(manager,
+                                                        isOnTheFly);
+    aClass.accept(visitor);
 
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
-        return true;
+    return visitor.getErrors();
+  }
+
+  private class NamingConventionsVisitor extends BaseInspectionVisitor {
+    public void visitTypeParameter(PsiTypeParameter parameter) {
+      super.visitTypeParameter(parameter);
+      final String name = parameter.getName();
+      if (name == null) {
+        return;
+      }
+      if (isValid(name)) {
+        return;
+      }
+      registerError(parameter.getNameIdentifier());
     }
-
-    public String buildErrorString(PsiElement location){
-        final PsiClass aClass = (PsiClass) location.getParent();
-        assert aClass != null;
-        final String className = aClass.getName();
-        if(className.length() < getMinLength()){
-            return "Type parameter name '#ref' is too short #loc";
-        } else if(className.length() > getMaxLength()){
-            return "Type parameter name '#ref' is too long #loc";
-        }
-        return "Enumerated class name '#ref' doesn't match regex '" +
-                getRegex() + "' #loc";
-    }
-
-    protected String getDefaultRegex(){
-        return "[A-Z]";
-    }
-
-    protected int getDefaultMinLength(){
-        return DEFAULT_MIN_LENGTH;
-    }
-
-    protected int getDefaultMaxLength(){
-        return DEFAULT_MAX_LENGTH;
-    }
-
-    public BaseInspectionVisitor buildVisitor(){
-        return new NamingConventionsVisitor();
-    }
-
-    public ProblemDescriptor[] doCheckClass(PsiClass aClass,
-                                            InspectionManager manager,
-                                            boolean isOnTheFly){
-
-        if(!aClass.isPhysical()){
-            return super.doCheckClass(aClass, manager, isOnTheFly);
-        }
-        final BaseInspectionVisitor visitor = createVisitor(manager,
-                                                            isOnTheFly);
-        aClass.accept(visitor);
-
-        return visitor.getErrors();
-    }
-
-    private class NamingConventionsVisitor extends BaseInspectionVisitor{
-        public void visitTypeParameter(PsiTypeParameter parameter){
-            super.visitTypeParameter(parameter);
-            final String name = parameter.getName();
-            if(name == null){
-                return;
-            }
-            if(isValid(name)){
-                return;
-            }
-            registerError(parameter.getNameIdentifier());
-        }
-    }
+  }
 }

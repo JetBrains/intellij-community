@@ -17,16 +17,16 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.HashSet;
 import java.util.Set;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
 class CollectionQueryCalledVisitor extends PsiRecursiveElementVisitor{
     /**
          * @noinspection StaticCollection
          */
-    private static final Set<String> queryNames = new HashSet<String>(10);
+    @NonNls private static final Set<String> queryNames = new HashSet<String>(10);
 
     static{
         queryNames.add("clone");

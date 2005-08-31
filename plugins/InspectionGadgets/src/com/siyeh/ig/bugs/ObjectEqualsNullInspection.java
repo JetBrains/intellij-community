@@ -21,11 +21,11 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class ObjectEqualsNullInspection extends ExpressionInspection {
 
-    @SuppressWarnings({"HardCodedStringLiteral"})
-    public String getDisplayName() {
+    @NonNls public String getDisplayName() {
         return "Object.equals(null)";
     }
 

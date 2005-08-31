@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class SerializationUtils{
     private static final String SERIALIZABLE_CLASS_NAME = "java.io.Serializable";
@@ -90,7 +91,8 @@ public class SerializationUtils{
 
     public static boolean isReadObject(@NotNull PsiMethod method){
         final String methodName = method.getName();
-        if(!"readObject".equals(methodName)){
+        @NonNls final String readObject = "readObject";
+        if(!readObject.equals(methodName)){
             return false;
         }
         final PsiParameterList parameterList = method.getParameterList();
@@ -103,12 +105,13 @@ public class SerializationUtils{
             return false;
         }
         final PsiType returnType = method.getReturnType();
-        return TypeUtils.typeEquals("void", returnType);
+        return TypeUtils.typeEquals(PsiKeyword.VOID, returnType);
     }
 
     public static boolean isWriteObject(@NotNull PsiMethod method){
         final String methodName = method.getName();
-        if(!"writeObject".equals(methodName)){
+        @NonNls final String writeObject = "writeObject";
+        if(!writeObject.equals(methodName)){
             return false;
         }
         final PsiParameterList parameterList = method.getParameterList();
@@ -121,12 +124,13 @@ public class SerializationUtils{
             return false;
         }
         final PsiType returnType = method.getReturnType();
-        return TypeUtils.typeEquals("void", returnType);
+        return TypeUtils.typeEquals(PsiKeyword.VOID, returnType);
     }
 
     public static boolean isReadResolve(@NotNull PsiMethod method){
         final String methodName = method.getName();
-        if(!"readResolve".equals(methodName)){
+        @NonNls final String readResolve = "readResolve";
+        if(!readResolve.equals(methodName)){
             return false;
         }
         final PsiParameterList parameterList = method.getParameterList();
@@ -140,7 +144,8 @@ public class SerializationUtils{
 
     public static boolean isWriteReplace(@NotNull PsiMethod method){
         final String methodName = method.getName();
-        if(!"writeReplace".equals(methodName)){
+        @NonNls final String writeReplace = "writeReplace";
+        if(!writeReplace.equals(methodName)){
             return false;
         }
         final PsiParameterList parameterList = method.getParameterList();

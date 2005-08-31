@@ -21,6 +21,7 @@ import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.InspectionGadgetsBundle;
+import org.jetbrains.annotations.NonNls;
 
 public class SuppressionAnnotationInspection extends ClassInspection{
     public String getDisplayName(){
@@ -41,7 +42,6 @@ public class SuppressionAnnotationInspection extends ClassInspection{
 
     private static class SuppressionAnnotationVisitor
             extends BaseInspectionVisitor{
-        @SuppressWarnings({"HardCodedStringLiteral"})
         public void visitComment(PsiComment comment){
             super.visitComment(comment);
             final String commentText = comment.getText();
@@ -50,13 +50,12 @@ public class SuppressionAnnotationInspection extends ClassInspection{
                && !tokenType.equals(JavaTokenType.C_STYLE_COMMENT)){
                 return;
             }
-            final String strippedComment = commentText.substring(2).trim();
+            @NonNls final String strippedComment = commentText.substring(2).trim();
             if(strippedComment.startsWith("noinspection")){
                 registerError(comment);
             }
         }
 
-        @SuppressWarnings({"HardCodedStringLiteral"})
         public void visitAnnotation(PsiAnnotation annotation){
             super.visitAnnotation(annotation);
             final PsiJavaCodeReferenceElement reference =
@@ -65,10 +64,10 @@ public class SuppressionAnnotationInspection extends ClassInspection{
             {
                 return;
             }
-            final String text = reference.getText();
+            @NonNls final String text = reference.getText();
 
             if("SuppressWarnings".equals(text) ||
-                    "java.lang.SuppressWarnings".equals(text)){
+               "java.lang.SuppressWarnings".equals(text)){
                 registerError(annotation);
             }
         }

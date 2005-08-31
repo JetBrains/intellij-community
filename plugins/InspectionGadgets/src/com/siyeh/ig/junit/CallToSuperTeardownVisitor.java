@@ -17,6 +17,7 @@ package com.siyeh.ig.junit;
 
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 class CallToSuperTeardownVisitor extends PsiRecursiveElementVisitor{
     private boolean callToSuperTearDownFound = false;
@@ -37,7 +38,7 @@ class CallToSuperTeardownVisitor extends PsiRecursiveElementVisitor{
         if(methodExpression == null){
             return;
         }
-        final String methodName = methodExpression.getReferenceName();
+        @NonNls final String methodName = methodExpression.getReferenceName();
         if(!"tearDown".equals(methodName)){
             return;
         }

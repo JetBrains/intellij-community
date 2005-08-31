@@ -16,6 +16,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import com.siyeh.HardcodedMethodConstants;
 
 public class ImportUtils{
     private ImportUtils(){
@@ -131,9 +132,9 @@ public class ImportUtils{
                 }
             }
         }
-        if(!"java.lang".equals(packageName)){
-            final PsiManager manager = file.getManager();
-            final PsiPackage javaLangPackage = manager.findPackage("java.lang");
+        if(!HardcodedMethodConstants.JAVA_LANG.equals(packageName)) {
+          final PsiManager manager = file.getManager();
+            final PsiPackage javaLangPackage = manager.findPackage(HardcodedMethodConstants.JAVA_LANG);
             if(javaLangPackage == null){
                 return false;
             }
@@ -200,13 +201,13 @@ public class ImportUtils{
             final PsiElement element = ref.resolve();
 
             if(element instanceof PsiClass
-                    && !(element instanceof PsiTypeParameter)){
+               && !(element instanceof PsiTypeParameter)){
                 final PsiClass aClass = (PsiClass) element;
                 final String testClassName = aClass.getName();
                 final String testClassQualifiedName = aClass.getQualifiedName();
                 if(testClassQualifiedName != null && testClassName != null
-                        && !testClassQualifiedName.equals(fullyQualifiedName) &&
-                        testClassName.equals(m_name)){
+                   && !testClassQualifiedName.equals(fullyQualifiedName) &&
+                   testClassName.equals(m_name)){
                     m_referenceFound = true;
                 }
             }

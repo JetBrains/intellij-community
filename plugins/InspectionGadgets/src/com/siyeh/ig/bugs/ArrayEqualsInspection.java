@@ -26,6 +26,7 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class ArrayEqualsInspection extends ExpressionInspection{
     private InspectionGadgetsFix fix = new ArrayEqualsFix();
@@ -51,7 +52,6 @@ public class ArrayEqualsInspection extends ExpressionInspection{
             return InspectionGadgetsBundle.message("equals.called.on.array.replace.quickfix");
         }
 
-        @SuppressWarnings({"HardCodedStringLiteral"})
         public void doFix(Project project, ProblemDescriptor descriptor)
                                                                          throws IncorrectOperationException{
             final PsiIdentifier name =
@@ -68,7 +68,7 @@ public class ArrayEqualsInspection extends ExpressionInspection{
             assert argumentList != null;
             final PsiExpression[] args = argumentList.getExpressions();
             final String argText = args[0].getText();
-            final String newExpressionText =
+            @NonNls final String newExpressionText =
                     "java.util.Arrays.equals(" + qualifierText + ", " +
                     argText + ')';
             replaceExpressionAndShorten(project, call, newExpressionText);

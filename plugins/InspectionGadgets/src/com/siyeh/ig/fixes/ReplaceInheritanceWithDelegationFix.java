@@ -22,10 +22,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.InspectionGadgetsBundle;
 
 public class ReplaceInheritanceWithDelegationFix extends InspectionGadgetsFix {
     public String getName() {
-        return "Replace inheritance with delegation";
+        return InspectionGadgetsBundle.message("replace.inheritance.with.delegation.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor) {

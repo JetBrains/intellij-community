@@ -23,22 +23,19 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.VariableInspection;
 import com.siyeh.ig.fixes.RenameFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class StandardVariableNamesInspection extends VariableInspection {
 
-    private static final Map<String,String> s_expectedTypes = new HashMap<String, String>(10);
-    private final RenameFix fix = new RenameFix();
+  @NonNls private static final Map<String, String> s_expectedTypes = new HashMap<String, String>(10);
+  private final RenameFix fix = new RenameFix();
 
-    static {
-      initExpectedTypes();
-    }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static void initExpectedTypes() {
+  static {
     s_expectedTypes.put("b", "byte");
     s_expectedTypes.put("c", "char");
     s_expectedTypes.put("ch", "char");
@@ -54,53 +51,48 @@ public class StandardVariableNamesInspection extends VariableInspection {
     s_expectedTypes.put("str", "java.lang.String");
   }
 
-  public String getDisplayName() {
-      return "Standard variable names";
+  protected InspectionGadgetsFix buildFix(PsiElement location) {
+    return fix;
   }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  public String getGroupDisplayName() {
+    return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
+  }
+
+  public String buildErrorString(PsiElement location) {
+    final String variableName = location.getText();
+    final String expectedType = s_expectedTypes.get(variableName);
+    return InspectionGadgetsBundle.message("standard.variable.names.problem.descriptor", expectedType);
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new ExceptionNameDoesntEndWithExceptionVisitor();
+  }
+
+  private static class ExceptionNameDoesntEndWithExceptionVisitor extends BaseInspectionVisitor {
+
+    public void visitVariable(@NotNull PsiVariable var) {
+      super.visitVariable(var);
+      final String variableName = var.getName();
+      final String expectedType = s_expectedTypes.get(variableName);
+      if (expectedType == null) {
+        return;
+      }
+      final PsiType type = var.getType();
+      if (type == null) {
+        return;
+      }
+      final String typeText = type.getCanonicalText();
+      if (typeText.equals(expectedType)) {
+        return;
+      }
+      registerVariableError(var);
     }
 
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-        return true;
-    }
 
-    public String getGroupDisplayName() {
-        return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
-    }
-
-    public String buildErrorString(PsiElement location) {
-        final String variableName = location.getText();
-        final String expectedType = s_expectedTypes.get(variableName);
-        return "Variable name '#ref' doesn't have type " + expectedType + " #loc";
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new ExceptionNameDoesntEndWithExceptionVisitor();
-    }
-
-    private static class ExceptionNameDoesntEndWithExceptionVisitor extends BaseInspectionVisitor {
-
-        public void visitVariable(@NotNull PsiVariable var) {
-            super.visitVariable(var);
-            final String variableName = var.getName();
-            final String expectedType = s_expectedTypes.get(variableName);
-            if (expectedType == null) {
-                return;
-            }
-            final PsiType type = var.getType();
-            if (type == null) {
-                return;
-            }
-            final String typeText = type.getCanonicalText();
-            if (typeText.equals(expectedType)) {
-                return;
-            }
-            registerVariableError(var);
-        }
-
-
-    }
-
+  }
 }

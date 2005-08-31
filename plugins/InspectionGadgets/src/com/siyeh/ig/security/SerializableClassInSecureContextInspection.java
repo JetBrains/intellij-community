@@ -27,41 +27,33 @@ import org.jetbrains.annotations.NotNull;
 
 public class SerializableClassInSecureContextInspection extends ClassInspection {
 
-    public String getDisplayName() {
-        return "Serializable class in secure context";
-    }
+  public String getGroupDisplayName() {
+    return GroupNames.SECURITY_GROUP_NAME;
+  }
 
-    public String getGroupDisplayName() {
-        return GroupNames.SECURITY_GROUP_NAME;
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new SerializableClassInSecureContextVisitor();
+  }
 
-    public String buildErrorString(PsiElement location) {
-        return "Class #ref may be serialized, compromising security #loc";
-    }
+  private static class SerializableClassInSecureContextVisitor extends BaseInspectionVisitor {
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new SerializableClassInSecureContextVisitor();
-    }
-
-    private static class SerializableClassInSecureContextVisitor extends BaseInspectionVisitor {
-
-        public void visitClass(@NotNull PsiClass aClass) {
-            // no call to super, so it doesn't drill down
-            if (aClass.isInterface() || aClass.isAnnotationType()|| aClass.isEnum()) {
-                return;
-            }
-            if (!SerializationUtils.isSerializable(aClass)) {
-                return;
-            }
-            final PsiMethod[] methods = aClass.getMethods();
-            for(final PsiMethod method : methods){
-                if(SerializationUtils.isWriteObject(method)){
-                    if(ControlFlowUtils.methodAlwaysThrowsException(method)){
-                        return;
-                    }
-                }
-            }
-            registerClassError(aClass);
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so it doesn't drill down
+      if (aClass.isInterface() || aClass.isAnnotationType() || aClass.isEnum()) {
+        return;
+      }
+      if (!SerializationUtils.isSerializable(aClass)) {
+        return;
+      }
+      final PsiMethod[] methods = aClass.getMethods();
+      for (final PsiMethod method : methods) {
+        if (SerializationUtils.isWriteObject(method)) {
+          if (ControlFlowUtils.methodAlwaysThrowsException(method)) {
+            return;
+          }
         }
+      }
+      registerClassError(aClass);
     }
+  }
 }

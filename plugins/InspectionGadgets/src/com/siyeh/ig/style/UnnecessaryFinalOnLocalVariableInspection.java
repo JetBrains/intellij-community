@@ -26,80 +26,76 @@ import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryFinalOnLocalVariableInspection extends MethodInspection {
-    public String getDisplayName() {
-        return "Unnecessary 'final' for local variable";
-    }
 
-    public String getGroupDisplayName() {
-        return GroupNames.STYLE_GROUP_NAME;
-    }
+  public String getGroupDisplayName() {
+    return GroupNames.STYLE_GROUP_NAME;
+  }
 
-    public String buildErrorString(PsiElement location) {
-        final PsiModifierList modifierList = (PsiModifierList) location.getParent();
-        assert modifierList != null;
-        final PsiVariable parameter = (PsiVariable) modifierList.getParent();
-        assert parameter != null;
-        final String parameterName = parameter.getName();
-        return "Unnecessary #ref for variable " + parameterName + " #loc";
-    }
+  public String buildErrorString(PsiElement location) {
+    final PsiModifierList modifierList = (PsiModifierList)location.getParent();
+    assert modifierList != null;
+    final PsiVariable parameter = (PsiVariable)modifierList.getParent();
+    assert parameter != null;
+    final String parameterName = parameter.getName();
+    return "Unnecessary #ref for variable " + parameterName + " #loc";
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new UnnecessaryFinalOnLocalVariableVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new UnnecessaryFinalOnLocalVariableVisitor();
+  }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
-        return new RemoveModifierFix(location);
-    }
+  public InspectionGadgetsFix buildFix(PsiElement location) {
+    return new RemoveModifierFix(location);
+  }
 
-    private static class UnnecessaryFinalOnLocalVariableVisitor extends BaseInspectionVisitor {
+  private static class UnnecessaryFinalOnLocalVariableVisitor extends BaseInspectionVisitor {
 
-        public void visitDeclarationStatement(PsiDeclarationStatement statement) {
-            super.visitDeclarationStatement(statement);
-            final PsiElement[] declaredElements =
-                    statement.getDeclaredElements();
-            if (declaredElements.length == 0) {
-                return;
-            }
-            for(final PsiElement declaredElement : declaredElements){
-                if(!(declaredElement instanceof PsiLocalVariable)){
-                    return;
-                }
-                final PsiLocalVariable variable = (PsiLocalVariable) declaredElement;
-                if(!variable.hasModifierProperty(PsiModifier.FINAL)){
-                    return;
-                }
-            }
-            final PsiCodeBlock containingBlock =
-                    PsiTreeUtil.getParentOfType(statement, PsiCodeBlock.class);
-            if (containingBlock == null) {
-                return;
-            }
-            for(PsiElement declaredElement1 : declaredElements){
-                final PsiLocalVariable variable = (PsiLocalVariable) declaredElement1;
-                if(VariableAccessUtils.variableIsUsedInInnerClass(variable, containingBlock)){
-                    return;
-                }
-            }
-            final PsiLocalVariable variable1 = (PsiLocalVariable) statement.getDeclaredElements()[0];
-            registerModifierError(PsiModifier.FINAL, variable1);
+    public void visitDeclarationStatement(PsiDeclarationStatement statement) {
+      super.visitDeclarationStatement(statement);
+      final PsiElement[] declaredElements =
+        statement.getDeclaredElements();
+      if (declaredElements.length == 0) {
+        return;
+      }
+      for (final PsiElement declaredElement : declaredElements) {
+        if (!(declaredElement instanceof PsiLocalVariable)) {
+          return;
         }
-
-        public void visitTryStatement(@NotNull PsiTryStatement statement) {
-            super.visitTryStatement(statement);
-            final PsiCatchSection[] catchSections = statement.getCatchSections();
-            for(PsiCatchSection catchSection : catchSections){
-                final PsiParameter parameter = catchSection.getParameter();
-                final PsiCodeBlock catchBlock = catchSection.getCatchBlock();
-                if(parameter == null || catchBlock == null){
-                    continue;
-                }
-                if(parameter.hasModifierProperty(PsiModifier.FINAL) &&
-                        !VariableAccessUtils.variableIsUsedInInnerClass(parameter, catchBlock )){
-                    registerModifierError(PsiModifier.FINAL, parameter);
-                }
-            }
+        final PsiLocalVariable variable = (PsiLocalVariable)declaredElement;
+        if (!variable.hasModifierProperty(PsiModifier.FINAL)) {
+          return;
         }
-
+      }
+      final PsiCodeBlock containingBlock =
+        PsiTreeUtil.getParentOfType(statement, PsiCodeBlock.class);
+      if (containingBlock == null) {
+        return;
+      }
+      for (PsiElement declaredElement1 : declaredElements) {
+        final PsiLocalVariable variable = (PsiLocalVariable)declaredElement1;
+        if (VariableAccessUtils.variableIsUsedInInnerClass(variable, containingBlock)) {
+          return;
+        }
+      }
+      final PsiLocalVariable variable1 = (PsiLocalVariable)statement.getDeclaredElements()[0];
+      registerModifierError(PsiModifier.FINAL, variable1);
     }
 
+    public void visitTryStatement(@NotNull PsiTryStatement statement) {
+      super.visitTryStatement(statement);
+      final PsiCatchSection[] catchSections = statement.getCatchSections();
+      for (PsiCatchSection catchSection : catchSections) {
+        final PsiParameter parameter = catchSection.getParameter();
+        final PsiCodeBlock catchBlock = catchSection.getCatchBlock();
+        if (parameter == null || catchBlock == null) {
+          continue;
+        }
+        if (parameter.hasModifierProperty(PsiModifier.FINAL) &&
+            !VariableAccessUtils.variableIsUsedInInnerClass(parameter, catchBlock)) {
+          registerModifierError(PsiModifier.FINAL, parameter);
+        }
+      }
+    }
+
+  }
 }

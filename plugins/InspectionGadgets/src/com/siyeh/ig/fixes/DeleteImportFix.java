@@ -20,10 +20,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.InspectionGadgetsBundle;
 
 public  class DeleteImportFix extends InspectionGadgetsFix {
     public String getName() {
-        return "Delete unnecessary import";
+        return InspectionGadgetsBundle.message("delete.import.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

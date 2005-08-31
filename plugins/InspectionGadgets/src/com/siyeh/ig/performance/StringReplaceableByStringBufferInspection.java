@@ -24,52 +24,44 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class StringReplaceableByStringBufferInspection extends ExpressionInspection {
-    public String getID(){
-        return "NonConstantStringShouldBeStringBuffer";
+
+  public String getID() {
+    return "NonConstantStringShouldBeStringBuffer";
+  }
+
+  public String getGroupDisplayName() {
+    return GroupNames.PERFORMANCE_GROUP_NAME;
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new StringReplaceableByStringBufferVisitor();
+  }
+
+  private static class StringReplaceableByStringBufferVisitor extends BaseInspectionVisitor {
+
+
+    public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
+      super.visitLocalVariable(variable);
+      final PsiCodeBlock codeBlock =
+        PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+      if (codeBlock == null) {
+        return;
+      }
+      final PsiType type = variable.getType();
+      if (!TypeUtils.typeEquals("java.lang.String", type)) {
+        return;
+      }
+      if (!variableIsAppendedTo(variable, codeBlock)) {
+        return;
+      }
+      registerVariableError(variable);
     }
 
-    public String getDisplayName() {
-        return "Non-constant String should be StringBuffer";
+    public static boolean variableIsAppendedTo(PsiVariable variable, PsiElement context) {
+      final StringVariableIsAppendedToVisitor visitor = new StringVariableIsAppendedToVisitor(variable);
+      context.accept(visitor);
+      return visitor.isAppendedTo();
     }
 
-    public String getGroupDisplayName() {
-        return GroupNames.PERFORMANCE_GROUP_NAME;
-    }
-
-    public String buildErrorString(PsiElement location) {
-        return "Non-constant String #ref should probably be declared as StringBuffer #loc";
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new StringReplaceableByStringBufferVisitor();
-    }
-
-    private static class StringReplaceableByStringBufferVisitor extends BaseInspectionVisitor {
-
-
-        public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
-            super.visitLocalVariable(variable);
-            final PsiCodeBlock codeBlock =
-                    PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
-            if (codeBlock == null) {
-                return;
-            }
-            final PsiType type = variable.getType();
-            if (!TypeUtils.typeEquals("java.lang.String", type)) {
-                return;
-            }
-            if (!variableIsAppendedTo(variable, codeBlock)) {
-                return;
-            }
-            registerVariableError(variable);
-        }
-
-        public static boolean variableIsAppendedTo(PsiVariable variable, PsiElement context) {
-            final StringVariableIsAppendedToVisitor visitor = new StringVariableIsAppendedToVisitor(variable);
-            context.accept(visitor);
-            return visitor.isAppendedTo();
-        }
-
-    }
-
+  }
 }

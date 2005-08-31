@@ -23,106 +23,101 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class AssertsWithoutMessagesInspection extends ExpressionInspection{
-    private static final Set<String> s_assertMethods = new HashSet<String>(10);
+public class AssertsWithoutMessagesInspection extends ExpressionInspection {
 
-    static {
-        s_assertMethods.add("assertTrue");
-        s_assertMethods.add("assertFalse");
-        s_assertMethods.add("assertEquals");
-        s_assertMethods.add("assertNull");
-        s_assertMethods.add("assertNotNull");
-        s_assertMethods.add("assertSame");
-        s_assertMethods.add("assertNotSame");
-        s_assertMethods.add("fail");
-    }
+  @NonNls private static final Set<String> s_assertMethods = new HashSet<String>(10);
 
-    public String getID(){
-        return "MessageMissingOnJUnitAssertion";
-    }
+  static {
+    s_assertMethods.add("assertTrue");
+    s_assertMethods.add("assertFalse");
+    s_assertMethods.add("assertEquals");
+    s_assertMethods.add("assertNull");
+    s_assertMethods.add("assertNotNull");
+    s_assertMethods.add("assertSame");
+    s_assertMethods.add("assertNotSame");
+    s_assertMethods.add("fail");
+  }
 
-    public String getDisplayName(){
-        return "Message missing on JUnit assertion";
-    }
+  public String getID() {
+    return "MessageMissingOnJUnitAssertion";
+  }
 
-    public String getGroupDisplayName(){
-        return GroupNames.JUNIT_GROUP_NAME;
-    }
+  public String getGroupDisplayName() {
+    return GroupNames.JUNIT_GROUP_NAME;
+  }
 
-    public String buildErrorString(PsiElement location){
-        return "JUnit #ref() without message #loc";
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new AssertionsWithoutMessagesVisitor();
+  }
 
-    public BaseInspectionVisitor buildVisitor(){
-        return new AssertionsWithoutMessagesVisitor();
-    }
-
-    private static class AssertionsWithoutMessagesVisitor
-            extends BaseInspectionVisitor{
+  private static class AssertionsWithoutMessagesVisitor
+    extends BaseInspectionVisitor {
 
 
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
-            super.visitMethodCallExpression(expression);
-            if(!isJUnitAssertion(expression)){
-                return;
-            }
-            final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      if (!isJUnitAssertion(expression)) {
+        return;
+      }
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
 
-            final PsiMethod method = (PsiMethod) methodExpression.resolve();
-            if(method == null){
-                return;
-            }
-            final PsiParameterList paramList = method.getParameterList();
-            if(paramList == null){
-                return;
-            }
-            final PsiParameter[] parameters = paramList.getParameters();
-            final String methodName = method.getName();
-            if(parameters.length < 2 && methodName.startsWith("assert")){
-                registerMethodCallError(expression);
-                return;
-            }
-            if(parameters.length < 1){
-                registerMethodCallError(expression);
-                return;
-            }
-            final PsiManager psiManager = expression.getManager();
+      final PsiMethod method = (PsiMethod)methodExpression.resolve();
+      if (method == null) {
+        return;
+      }
+      final PsiParameterList paramList = method.getParameterList();
+      if (paramList == null) {
+        return;
+      }
+      final PsiParameter[] parameters = paramList.getParameters();
+      @NonNls final String methodName = method.getName();
+      if (parameters.length < 2 && methodName.startsWith("assert")) {
+        registerMethodCallError(expression);
+        return;
+      }
+      if (parameters.length < 1) {
+        registerMethodCallError(expression);
+        return;
+      }
+      final PsiManager psiManager = expression.getManager();
 
-            final Project project = psiManager.getProject();
-            final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-            final PsiType stringType = PsiType.getJavaLangString(psiManager,
-                                                                 scope);
-            final PsiType paramType1 = parameters[0].getType();
-            if(paramType1.equals(stringType)){
-                if(parameters.length == 2){
-                    final PsiType paramType2 = parameters[1].getType();
-                    if(paramType2.equals(stringType)){
-                        registerMethodCallError(expression);
-                    }
-                }
-            } else{
-                registerMethodCallError(expression);
-            }
+      final Project project = psiManager.getProject();
+      final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+      final PsiType stringType = PsiType.getJavaLangString(psiManager,
+                                                           scope);
+      final PsiType paramType1 = parameters[0].getType();
+      if (paramType1.equals(stringType)) {
+        if (parameters.length == 2) {
+          final PsiType paramType2 = parameters[1].getType();
+          if (paramType2.equals(stringType)) {
+            registerMethodCallError(expression);
+          }
         }
-
-        private static boolean isJUnitAssertion(PsiMethodCallExpression expression){
-            final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
-            if(!s_assertMethods.contains(methodName)){
-                return false;
-            }
-            final PsiMethod method = (PsiMethod) methodExpression.resolve();
-            if(method == null){
-                return false;
-            }
-
-            final PsiClass targetClass = method.getContainingClass();
-            return targetClass != null &&
-                    ClassUtils.isSubclass(targetClass, "junit.framework.Assert");
-        }
+      }
+      else {
+        registerMethodCallError(expression);
+      }
     }
+
+    private static boolean isJUnitAssertion(PsiMethodCallExpression expression) {
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+      final String methodName = methodExpression.getReferenceName();
+      if (!s_assertMethods.contains(methodName)) {
+        return false;
+      }
+      final PsiMethod method = (PsiMethod)methodExpression.resolve();
+      if (method == null) {
+        return false;
+      }
+
+      final PsiClass targetClass = method.getContainingClass();
+      return targetClass != null &&
+             ClassUtils.isSubclass(targetClass, "junit.framework.Assert");
+    }
+  }
 }

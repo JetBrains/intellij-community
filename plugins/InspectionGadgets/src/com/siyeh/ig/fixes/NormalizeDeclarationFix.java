@@ -21,10 +21,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiVariable;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.InspectionGadgetsBundle;
 
 public class NormalizeDeclarationFix extends InspectionGadgetsFix{
     public String getName(){
-        return "Split into multiple declarations";
+        return InspectionGadgetsBundle.message("normalize.declaration.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

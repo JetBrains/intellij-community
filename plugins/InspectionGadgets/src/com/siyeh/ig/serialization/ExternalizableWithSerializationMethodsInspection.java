@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.psiutils.SerializationUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ExternalizableWithSerializationMethodsInspection extends ClassInspection {
@@ -28,7 +29,7 @@ public class ExternalizableWithSerializationMethodsInspection extends ClassInspe
         return "ExternalizableClassWithSerializationMethods";
     }
     public String getDisplayName() {
-        return "Externalizable class with 'readObject()' or 'writeObject()'";
+        return InspectionGadgetsBundle.message("externalizable.with.serialization.methods.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -41,11 +42,11 @@ public class ExternalizableWithSerializationMethodsInspection extends ClassInspe
         final boolean hasReadObject = SerializationUtils.hasReadObject(aClass);
         final boolean hasWriteObject = SerializationUtils.hasWriteObject(aClass);
         if (hasReadObject && hasWriteObject) {
-            return "Externalizable class #ref defines readObject() and writeObject() #loc";
+            return InspectionGadgetsBundle.message("externalizable.with.serialization.methods.problem.descriptor.both");
         } else if (hasWriteObject) {
-            return "Externalizable class #ref defines writeObject() #loc";
+            return InspectionGadgetsBundle.message("externalizable.with.serialization.methods.problem.descriptor.write");
         } else {
-            return "Externalizable class #ref defines readObject() #loc";
+            return InspectionGadgetsBundle.message("externalizable.with.serialization.methods.problem.descriptor.read");
         }
     }
 

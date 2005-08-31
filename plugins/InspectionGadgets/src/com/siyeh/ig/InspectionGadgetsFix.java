@@ -25,6 +25,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public abstract class InspectionGadgetsFix implements LocalQuickFix{
     //to appear in "Apply Fix" statement when multiple Quick Fixes exist
@@ -60,7 +61,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
     }
 
     protected static void replaceExpression(PsiExpression expression,
-                                     String newExpression)
+                                            @NonNls String newExpression)
             throws IncorrectOperationException{
         final PsiManager psiManager = expression.getManager();
         final PsiElementFactory factory = psiManager.getElementFactory();
@@ -71,7 +72,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
         styleManager.reformat(replacementExp);
     }
     protected static void replaceExpressionAndShorten(PsiExpression expression,
-                                     String newExpression)
+                                                      String newExpression)
             throws IncorrectOperationException{
         final PsiManager psiManager = expression.getManager();
         final PsiElementFactory factory = psiManager.getElementFactory();
@@ -84,7 +85,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
     }
 
     protected static void replaceStatement(PsiStatement statement,
-                                    String newStatement)
+                                           @NonNls String newStatement)
             throws IncorrectOperationException{
         final PsiManager psiManager = statement.getManager();
         final PsiElementFactory factory = psiManager.getElementFactory();
@@ -95,7 +96,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
         styleManager.reformat(replacementExp);
     }
     protected static void replaceStatementAndShortenClassNames(PsiStatement statement,
-                                    String newStatement)
+                                                               String newStatement)
             throws IncorrectOperationException{
         final PsiManager psiManager = statement.getManager();
         final PsiElementFactory factory = psiManager.getElementFactory();

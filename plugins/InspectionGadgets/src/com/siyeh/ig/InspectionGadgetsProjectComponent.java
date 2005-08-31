@@ -33,11 +33,10 @@ public class InspectionGadgetsProjectComponent implements ProjectComponent{
     }
 
 
-    @SuppressWarnings({"HardCodedStringLiteral"})
     public void projectOpened(){
         final Application application = ApplicationManager.getApplication();
         final InspectionGadgetsPlugin plugin =
-                (InspectionGadgetsPlugin) application.getComponent("InspectionGadgets");
+                application.getComponent(InspectionGadgetsPlugin.class);
         telemetryEnabled = plugin.isTelemetryEnabled();
         if(telemetryEnabled){
             toolWindow = new TelemetryToolWindowImpl(project);

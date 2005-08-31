@@ -20,76 +20,93 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ForLoopWithMissingComponentInspection extends StatementInspection {
 
-    public String getDisplayName() {
-        return "'for' loop with missing components";
+  public String getGroupDisplayName() {
+    return GroupNames.CONTROL_FLOW_GROUP_NAME;
+  }
+
+  public String buildErrorString(PsiElement location) {
+    final PsiJavaToken forToken = (PsiJavaToken)location;
+    final PsiForStatement forStatement = (PsiForStatement)forToken.getParent();
+    boolean hasInitializer = false;
+    boolean hasCondition = false;
+    boolean hasUpdate = false;
+    int count = 0;
+    if (!hasInitializer(forStatement)) {
+      hasInitializer = true;
+      count++;
     }
-
-    public String getGroupDisplayName() {
-        return GroupNames.CONTROL_FLOW_GROUP_NAME;
+    if (!hasCondition(forStatement)) {
+      hasCondition = true;
+      count++;
     }
-
-    public String buildErrorString(PsiElement location) {
-        final List<String> components = new ArrayList<String>(3);
-        final PsiJavaToken forToken = (PsiJavaToken) location;
-        final PsiForStatement forStatement = (PsiForStatement) forToken.getParent();
-
-        if (!hasInitializer(forStatement)) {
-            components.add("initializer");
-        }
-        if (!hasCondition(forStatement)) {
-            components.add("condition");
-        }
-        if (!hasUpdate(forStatement)) {
-            components.add("update");
-        }
-        final String missingComponents;
-        if (components.size() == 1) {
-            missingComponents = components.get(0);
-        } else if (components.size() == 2) {
-            missingComponents = components.get(0) + " and " + components.get(1);
+    if (!hasUpdate(forStatement)) {
+      hasUpdate = true;
+      count++;
+    }
+    if (count == 1) {
+      if (hasInitializer){
+        return InspectionGadgetsBundle.message("for.loop.with.missing.component.problem.descriptor1");
+      } else if (hasCondition){
+        return InspectionGadgetsBundle.message("for.loop.with.missing.component.problem.descriptor2");
+      } else {
+        return InspectionGadgetsBundle.message("for.loop.with.missing.component.problem.descriptor3");
+      }
+    }
+    else if (count == 2) {
+      if (hasInitializer){
+        if (hasCondition){
+          return InspectionGadgetsBundle.message("for.loop.with.missing.component.problem.descriptor4");
         } else {
-            missingComponents = components.get(0) + ", " + components.get(1) + " and " + components.get(2);
+          return InspectionGadgetsBundle.message("for.loop.with.missing.component.problem.descriptor5");
         }
-        return "#ref statement lacks " + missingComponents + " #loc";
+      } else {
+        return InspectionGadgetsBundle.message("for.loop.with.missing.component.problem.descriptor6");
+      }
+    }
+    else {
+      return InspectionGadgetsBundle.message("for.loop.with.missing.component.problem.descriptor7");
     }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ForLoopWithMissingComponentVisitor();
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new ForLoopWithMissingComponentVisitor();
+  }
+
+  private static class ForLoopWithMissingComponentVisitor extends StatementInspectionVisitor {
+
+    public void visitForStatement(@NotNull PsiForStatement statement) {
+      super.visitForStatement(statement);
+
+      if (hasCondition(statement)
+          && hasInitializer(statement)
+          && hasUpdate(statement)) {
+        return;
+      }
+      registerStatementError(statement);
     }
+  }
 
-    private static class ForLoopWithMissingComponentVisitor extends StatementInspectionVisitor {
+  private static boolean hasCondition(PsiForStatement statement) {
+    return statement.getCondition() != null;
+  }
 
-        public void visitForStatement(@NotNull PsiForStatement statement) {
-            super.visitForStatement(statement);
+  private static boolean hasInitializer(PsiForStatement statement) {
+    final PsiStatement initialization = statement.getInitialization();
+    return initialization != null && !(initialization instanceof PsiEmptyStatement);
+  }
 
-            if (hasCondition(statement)
-                    && hasInitializer(statement)
-                    && hasUpdate(statement)) {
-                return;
-            }
-            registerStatementError(statement);
-        }
-    }
-
-    private static boolean hasCondition(PsiForStatement statement) {
-        return statement.getCondition() != null;
-    }
-
-    private static boolean hasInitializer(PsiForStatement statement) {
-        final PsiStatement initialization = statement.getInitialization();
-        return initialization != null && !(initialization instanceof PsiEmptyStatement);
-    }
-
-    private static boolean hasUpdate(PsiForStatement statement) {
-        final PsiStatement update = statement.getUpdate();
-        return update != null && !(update instanceof PsiEmptyStatement);
-    }
-
+  private static boolean hasUpdate(PsiForStatement statement) {
+    final PsiStatement update = statement.getUpdate();
+    return update != null && !(update instanceof PsiEmptyStatement);
+  }
 }

@@ -25,33 +25,25 @@ import org.jetbrains.annotations.NotNull;
 
 public class UncheckedExceptionClassInspection extends ClassInspection {
 
-    public String getDisplayName() {
-        return "Unchecked exception class";
-    }
+  public String getGroupDisplayName() {
+    return GroupNames.ERRORHANDLING_GROUP_NAME;
+  }
 
-    public String getGroupDisplayName() {
-        return GroupNames.ERRORHANDLING_GROUP_NAME;
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new UncheckedExceptionClassVisitor();
+  }
 
-    public String buildErrorString(PsiElement location) {
-        return "Unchecked exception class #ref #loc";
-    }
+  private static class UncheckedExceptionClassVisitor extends BaseInspectionVisitor {
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new UncheckedExceptionClassVisitor();
+    public void visitClass(@NotNull PsiClass aClass) {
+      if (!ClassUtils.isSubclass(aClass, "java.lang.Throwable")) {
+        return;
+      }
+      if (ClassUtils.isSubclass(aClass, "java.lang.Exception") &&
+          !ClassUtils.isSubclass(aClass, "java.lang.RuntimeException")) {
+        return;
+      }
+      registerClassError(aClass);
     }
-
-    private static class UncheckedExceptionClassVisitor extends BaseInspectionVisitor {
-
-        public void visitClass(@NotNull PsiClass aClass) {
-            if (!ClassUtils.isSubclass(aClass, "java.lang.Throwable")) {
-                return;
-            }
-            if (ClassUtils.isSubclass(aClass, "java.lang.Exception") &&
-                    !ClassUtils.isSubclass(aClass, "java.lang.RuntimeException")) {
-                return;
-            }
-            registerClassError(aClass);
-        }
-    }
+  }
 }

@@ -25,6 +25,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.MakePrivateFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ReadObjectAndWriteObjectPrivateInspection extends MethodInspection {
@@ -34,7 +35,7 @@ public class ReadObjectAndWriteObjectPrivateInspection extends MethodInspection 
         return "NonPrivateSerializationMethod";
     }
     public String getDisplayName() {
-        return "'readObject()' or 'writeObject()' not declared 'private'";
+        return InspectionGadgetsBundle.message("readwriteobject.private.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -42,7 +43,7 @@ public class ReadObjectAndWriteObjectPrivateInspection extends MethodInspection 
     }
 
     public String buildErrorString(PsiElement location) {
-        return "#ref not declared 'private' #loc ";
+        return InspectionGadgetsBundle.message("readwriteobject.private.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

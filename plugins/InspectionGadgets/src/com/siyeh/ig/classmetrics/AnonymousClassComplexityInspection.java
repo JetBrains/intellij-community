@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MoveAnonymousToInnerClassFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class AnonymousClassComplexityInspection
@@ -31,7 +32,7 @@ public class AnonymousClassComplexityInspection
     private final MoveAnonymousToInnerClassFix fix = new MoveAnonymousToInnerClassFix();
 
     public String getDisplayName() {
-        return "Overly complex anonymous inner class";
+        return InspectionGadgetsBundle.message("overly.complex.anonymous.inner.class.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -43,7 +44,7 @@ public class AnonymousClassComplexityInspection
     }
 
     protected String getConfigurationLabel() {
-        return "Cyclomatic complexity limit:";
+        return InspectionGadgetsBundle.message("cyclomatic.complexity.limit.option");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
@@ -57,7 +58,7 @@ public class AnonymousClassComplexityInspection
     public String buildErrorString(PsiElement location) {
         final PsiClass aClass = (PsiClass) location.getParent();
         final int totalComplexity = calculateTotalComplexity(aClass);
-        return "Overly complex anonymous inner class (cyclomatic complexity = " + totalComplexity + ") #loc";
+        return InspectionGadgetsBundle.message("overly.complex.anonymous.inner.class.problem.descriptor", totalComplexity);
     }
 
     public BaseInspectionVisitor buildVisitor() {

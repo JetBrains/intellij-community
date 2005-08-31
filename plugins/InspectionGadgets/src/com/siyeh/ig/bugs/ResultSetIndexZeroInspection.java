@@ -24,6 +24,7 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class ResultSetIndexZeroInspection extends ExpressionInspection {
     public String getID(){
@@ -47,14 +48,13 @@ public class ResultSetIndexZeroInspection extends ExpressionInspection {
 
     private static class ResultSetIndexZeroVisitor extends BaseInspectionVisitor {
 
-        @SuppressWarnings({"HardCodedStringLiteral"})
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression = expression.getMethodExpression();
             if (methodExpression == null) {
                 return;
             }
-            final String methodName = methodExpression.getReferenceName();
+            @NonNls final String methodName = methodExpression.getReferenceName();
             if(methodName == null)
             {
                 return;

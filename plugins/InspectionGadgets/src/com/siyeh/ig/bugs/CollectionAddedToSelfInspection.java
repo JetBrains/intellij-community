@@ -23,6 +23,7 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class CollectionAddedToSelfInspection extends ExpressionInspection {
 
@@ -55,14 +56,13 @@ public class CollectionAddedToSelfInspection extends ExpressionInspection {
             }
         }
 
-        @SuppressWarnings({"HardCodedStringLiteral"})
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
             super.visitMethodCallExpression(call);
             final PsiReferenceExpression methodExpression = call.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
+            @NonNls final String methodName = methodExpression.getReferenceName();
             if (!"put".equals(methodName) &&
-                        !"set".equals(methodName) &&
-                        !"add".equals(methodName)) {
+                !"set".equals(methodName) &&
+                !"add".equals(methodName)) {
                 return;
             }
             final PsiExpression qualifier = methodExpression.getQualifierExpression();
@@ -106,8 +106,8 @@ public class CollectionAddedToSelfInspection extends ExpressionInspection {
                 return;
             }
             if(!ClassUtils.isSubclass(qualifierClass, "java.util.Collection") &&
-                       !ClassUtils.isSubclass(qualifierClass,
-                                              "java.util.Map")){
+               !ClassUtils.isSubclass(qualifierClass,
+                                      "java.util.Map")){
 
                 return;
             }

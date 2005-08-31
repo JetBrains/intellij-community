@@ -17,6 +17,7 @@ package com.siyeh.ig.junit;
 
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 class CallToSuperSetupVisitor extends PsiRecursiveElementVisitor{
     private boolean callToSuperSetupFound = false;
@@ -37,7 +38,7 @@ class CallToSuperSetupVisitor extends PsiRecursiveElementVisitor{
         if(methodExpression == null){
             return;
         }
-        final String methodName = methodExpression.getReferenceName();
+        @NonNls final String methodName = methodExpression.getReferenceName();
         if(!"setUp".equals(methodName)){
             return;
         }

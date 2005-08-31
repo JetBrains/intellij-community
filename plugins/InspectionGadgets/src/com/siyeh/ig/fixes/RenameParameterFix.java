@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringFactory;
 import com.intellij.refactoring.RenameRefactoring;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.InspectionGadgetsBundle;
 
 public class RenameParameterFix extends InspectionGadgetsFix {
     private final String m_targetName;
@@ -32,7 +33,7 @@ public class RenameParameterFix extends InspectionGadgetsFix {
     }
 
     public String getName() {
-        return "Rename to '" + m_targetName + '\'';
+        return InspectionGadgetsBundle.message("renameto.quickfix", m_targetName);
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor) {

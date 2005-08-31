@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ClassNestingDepthInspection
@@ -29,7 +30,7 @@ public class ClassNestingDepthInspection
         return "InnerClassTooDeeplyNested";
     }
     public String getDisplayName() {
-        return "Inner class too deeply nested";
+        return InspectionGadgetsBundle.message("inner.class.too.deeply.nested.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -41,13 +42,13 @@ public class ClassNestingDepthInspection
     }
 
     protected String getConfigurationLabel() {
-        return "Nesting limit:";
+        return InspectionGadgetsBundle.message("inner.class.too.deeply.nested.nesting.limit.option");
     }
 
     public String buildErrorString(PsiElement location) {
         final PsiClass aClass = (PsiClass) location.getParent();
         final int count = getNestingLevel(aClass);
-        return "#ref is too deeply nested (nesting level = " + count + ") #loc";
+        return InspectionGadgetsBundle.message("inner.class.too.deeply.nested.problem.descriptor", count);
     }
 
     public BaseInspectionVisitor buildVisitor() {

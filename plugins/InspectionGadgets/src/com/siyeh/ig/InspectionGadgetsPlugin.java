@@ -71,813 +71,879 @@ import java.util.*;
 import org.jetbrains.annotations.NonNls;
 
 @SuppressWarnings({"OverlyCoupledClass",
-        "OverlyCoupledMethod",
-        "OverlyLongMethod",
-        "ClassWithTooManyMethods"})
+  "OverlyCoupledMethod",
+  "OverlyLongMethod",
+  "ClassWithTooManyMethods"})
 public class InspectionGadgetsPlugin implements ApplicationComponent,
-                                                InspectionToolProvider{
-    private static final int NUM_INSPECTIONS = 500;
-    private final List<Class<? extends LocalInspectionTool>> m_inspectionClasses =
-            new ArrayList<Class<? extends LocalInspectionTool>>(NUM_INSPECTIONS);
-    @NonNls private static final String DESCRIPTION_DIRECTORY_NAME =
-            "C:/My Open Source Projects/InspectionGadgetsSVN/src/inspectionDescriptions/";
-    private final InspectionGadgetsTelemetry telemetry = new InspectionGadgetsTelemetry();
-    private static final boolean TELEMETRY_ENABLED = false;
+                                                InspectionToolProvider {
+  private static final int NUM_INSPECTIONS = 500;
+  private final List<Class<? extends LocalInspectionTool>> m_inspectionClasses =
+    new ArrayList<Class<? extends LocalInspectionTool>>(NUM_INSPECTIONS);
+  @NonNls
+  private static final String DESCRIPTION_DIRECTORY_NAME =
+    "C:/My Open Source Projects/InspectionGadgetsSVN/src/inspectionDescriptions/";
+  private final InspectionGadgetsTelemetry telemetry = new InspectionGadgetsTelemetry();
+  private static final boolean TELEMETRY_ENABLED = false;
 
-    public static void main(String[] args) {
-        final PrintStream out;
-        if (args.length == 0) {
-            out = System.out;
-        } else {
-            final OutputStream stream;
-            try {
-                stream = new FileOutputStream(args[0]);
-            } catch (final FileNotFoundException e) {
-                return;
-            }
-            out = new PrintStream(stream);
-        }
-        final InspectionGadgetsPlugin plugin=new InspectionGadgetsPlugin();
-        plugin.createDocumentation(out);
+  public static void main(String[] args) {
+    final PrintStream out;
+    if (args.length == 0) {
+      out = System.out;
     }
-
-    @SuppressWarnings({"HardCodedStringLiteral"})
-    private void createDocumentation(PrintStream out){
-        final Class<? extends LocalInspectionTool>[] classes = getInspectionClasses();
-        Arrays.sort(classes, new InspectionComparator());
-
-        final int numQuickFixes = countQuickFixes(classes, out);
-        out.println(classes.length + " Inspections");
-        out.println(numQuickFixes + " Quick Fixes");
-        String currentGroupName="";
-
-        for(final Class<? extends LocalInspectionTool> aClass : classes){
-            final String className = aClass.getName();
-            try{
-                final LocalInspectionTool inspection =
-                         aClass.newInstance();
-                final String groupDisplayName =
-                        inspection.getGroupDisplayName();
-                if(!groupDisplayName.equals(currentGroupName)){
-                    currentGroupName = groupDisplayName;
-                    out.println();
-                    out.print("   * ");
-                    out.println(currentGroupName);
-                }
-                printInspectionDescription(inspection, out);
-            } catch(InstantiationException ignore){
-                out.print("Couldn't instantiate ");
-                out.println(className);
-            } catch(IllegalAccessException ignore){
-                out.print("Couldn't access ");
-                out.println(className);
-            } catch(ClassCastException ignore){
-                out.print("Couldn't cast ");
-                out.println(className);
-            }
-        }
-
-        out.println();
-        out.println("Inspections enabled by default:");
-        for(final Class<? extends LocalInspectionTool> aClass : classes){
-            final String className = aClass.getName();
-            try{
-                final LocalInspectionTool inspection =
-                        aClass.newInstance();
-                if(inspection.isEnabledByDefault()){
-                    out.println('\t' + inspection.getDisplayName());
-                }
-            } catch(InstantiationException ignore){
-                out.print("Couldn't instantiate ");
-                out.println(className);
-            } catch(IllegalAccessException ignore){
-                out.print("Couldn't access ");
-                out.println(className);
-            } catch(ClassCastException ignore){
-                out.print("Couldn't cast ");
-                out.println(className);
-            }
-        }
-        final File descriptionDirectory = new File(DESCRIPTION_DIRECTORY_NAME);
-        final File[] descriptionFiles = descriptionDirectory.listFiles();
-        final Set<File> descriptionFilesSet = new HashSet<File>(descriptionFiles.length);
-        for(File descriptionFile1 : descriptionFiles){
-            if(!descriptionFile1.getName().startsWith(".")){
-                descriptionFilesSet.add(descriptionFile1);
-            }
-        }
-        for(final Class<? extends LocalInspectionTool> aClass : classes){
-            final String className = aClass.getName();
-            final String simpleClassName =
-                    className.substring(className.lastIndexOf('.') + 1,
-                                        className.length() -
-                                        "Inspection".length());
-            final String fileName =
-                    DESCRIPTION_DIRECTORY_NAME + simpleClassName + ".html";
-            final File descriptionFile = new File(fileName);
-            if(descriptionFile.exists()){
-                descriptionFilesSet.remove(descriptionFile);
-            } else{
-                out.println("Couldn't find documentation file: " + fileName);
-            }
-        }
-        for(final File file : descriptionFilesSet){
-            out.println("Unused documentation file: " + file.getAbsolutePath());
-        }
-    }
-
-    @SuppressWarnings({"HardCodedStringLiteral"})
-    private static void printInspectionDescription(LocalInspectionTool inspection,
-                                                   PrintStream out){
-        final boolean hasQuickFix = ((BaseInspection) inspection).hasQuickFix();
-
-        final String displayName = inspection.getDisplayName();
-        out.print("      * ");
-        out.print(displayName);
-        if(hasQuickFix){
-            if(((BaseInspection) inspection).buildQuickFixesOnlyForOnTheFlyErrors()){
-                out.print("(r)");
-            } else{
-                out.print("(*)");
-            }
-        }
-        out.println();
-    }
-
-    @SuppressWarnings({"HardCodedStringLiteral"})
-    private static int countQuickFixes(Class<? extends LocalInspectionTool>[] classes, PrintStream out){
-        int numQuickFixes = 0;
-        for(final Class<? extends LocalInspectionTool> aClass : classes){
-            final String className = aClass.getName();
-            try{
-                final LocalInspectionTool inspection =
-                        aClass.newInstance();
-                if(((BaseInspection) inspection).hasQuickFix()){
-                    numQuickFixes++;
-                }
-            } catch(InstantiationException ignore){
-                out.print("Couldn't instantiate ");
-                out.println(className);
-            } catch(IllegalAccessException ignore){
-                out.print("Couldn't access ");
-                out.println(className);
-            } catch(ClassCastException ignore){
-                out.print("Couldn't cast ");
-                out.println(className);
-            }
-        }
-        return numQuickFixes;
-    }
-
-    public String getComponentName(){
-        return "InspectionGadgets";
-    }
-
-    public Class<? extends LocalInspectionTool>[] getInspectionClasses(){
-      if (m_inspectionClasses.isEmpty()){
-        registerNamingInspections();
-        registerBugInspections();
-        registerCloneInspections();
-        registerConfusingInspections();
-        registerAbstractionInspections();
-        registerClassLayoutInspections();
-        registerImportInspections();
-        registerEncapsulationInspections();
-        registerVisibilityInspections();
-        registerInitializerInspections();
-        registerFinalizationInspections();
-        registerExceptionInspections();
-        registerVerboseInspections();
-        registerStyleInspections();
-        registerSerializationInspections();
-        registerThreadingInspections();
-        registerMethodMetricsInspections();
-        registerClassMetricsInspections();
-        registerPortabilityInspections();
-        registerInternationalInspections();
-        registerPerformanceInspections();
-        registerMaturityInspections();
-        registerJUnitInspections();
-        registerLoggingInspections();
-        registerSecurityInspections();
-        registerResourceManagementInspections();
-        registerJ2MEInspections();
+    else {
+      final OutputStream stream;
+      try {
+        stream = new FileOutputStream(args[0]);
       }
-      final int numInspections = m_inspectionClasses.size();
-      return m_inspectionClasses.toArray(new Class[numInspections]);
+      catch (final FileNotFoundException e) {
+        return;
+      }
+      out = new PrintStream(stream);
     }
+    final InspectionGadgetsPlugin plugin = new InspectionGadgetsPlugin();
+    buildErrorStrings(plugin);
 
-    public void initComponent(){}
+  }
 
-    private void registerResourceManagementInspections(){
-        m_inspectionClasses.add(HibernateResourceInspection.class);
-        m_inspectionClasses.add(JNDIResourceInspection.class);
-        m_inspectionClasses.add(SocketResourceInspection.class);
-        m_inspectionClasses.add(IOResourceInspection.class);
-        m_inspectionClasses.add(JDBCResourceInspection.class);
-        m_inspectionClasses.add(ChannelResourceInspection.class);
-        m_inspectionClasses.add(DriverManagerGetConnectionInspection.class);
-    }
-
-    private void registerLoggingInspections(){
-        m_inspectionClasses.add(ClassWithoutLoggerInspection.class);
-        m_inspectionClasses.add(ClassWithMultipleLoggersInspection.class);
-        m_inspectionClasses.add(NonStaticFinalLoggerInspection.class);
-    }
-
-    private void registerSecurityInspections(){
-        m_inspectionClasses.add(DeserializableClassInSecureContextInspection.class);
-        m_inspectionClasses.add(SerializableClassInSecureContextInspection.class);
-        m_inspectionClasses.add(CloneableClassInSecureContextInspection.class);
-        m_inspectionClasses.add(NonFinalCloneInspection.class);
-        m_inspectionClasses.add(NonStaticInnerClassInSecureContextInspection.class);
-        m_inspectionClasses.add(RuntimeExecWithNonConstantStringInspection.class);
-        m_inspectionClasses.add(LoadLibraryWithNonConstantStringInspection.class);
-        m_inspectionClasses.add(JDBCExecuteWithNonConstantStringInspection.class);
-        m_inspectionClasses.add(JDBCPrepareStatementWithNonConstantStringInspection.class);
-        m_inspectionClasses.add(CustomClassloaderInspection.class);
-        m_inspectionClasses.add(CustomSecurityManagerInspection.class);
-        m_inspectionClasses.add(SystemSetSecurityManagerInspection.class);
-        m_inspectionClasses.add(ClassLoader2InstantiationInspection.class);
-        m_inspectionClasses.add(UnsecureRandomNumberGenerationInspection.class);
-        m_inspectionClasses.add(SystemPropertiesInspection.class);
-        m_inspectionClasses.add(PublicStaticArrayFieldInspection.class);
-        m_inspectionClasses.add(PublicStaticCollectionFieldInspection.class);
-    }
-
-    private void registerImportInspections(){
-        m_inspectionClasses.add(UnusedImportInspection.class);
-        m_inspectionClasses.add(RedundantImportInspection.class);
-        m_inspectionClasses.add(OnDemandImportInspection.class);
-        m_inspectionClasses.add(SingleClassImportInspection.class);
-        m_inspectionClasses.add(JavaLangImportInspection.class);
-        m_inspectionClasses.add(SamePackageImportInspection.class);
-        m_inspectionClasses.add(StaticImportInspection.class);
-    }
-
-    private void registerNamingInspections(){
-        m_inspectionClasses.add(JUnitTestClassNamingConventionInspection.class);
-        m_inspectionClasses.add(JUnitAbstractTestClassNamingConventionInspection.class);
-        m_inspectionClasses.add(ClassNamingConventionInspection.class);
-        m_inspectionClasses.add(EnumeratedClassNamingConventionInspection.class);
-        m_inspectionClasses.add(EnumeratedConstantNamingConventionInspection.class);
-        m_inspectionClasses.add(TypeParameterNamingConventionInspection.class);
-        m_inspectionClasses.add(AnnotationNamingConventionInspection.class);
-        m_inspectionClasses.add(InterfaceNamingConventionInspection.class);
-        m_inspectionClasses.add(InstanceVariableNamingConventionInspection.class);
-        m_inspectionClasses.add(StaticVariableNamingConventionInspection.class);
-        m_inspectionClasses.add(ConstantNamingConventionInspection.class);
-        m_inspectionClasses.add(InstanceMethodNamingConventionInspection.class);
-        m_inspectionClasses.add(StaticMethodNamingConventionInspection.class);
-        m_inspectionClasses.add(LocalVariableNamingConventionInspection.class);
-        m_inspectionClasses.add(ParameterNamingConventionInspection.class);
-        m_inspectionClasses.add(ParameterNameDiffersFromOverriddenParameterInspection.class);
-        m_inspectionClasses.add(ExceptionNameDoesntEndWithExceptionInspection.class);
-        m_inspectionClasses.add(NonExceptionNameEndsWithExceptionInspection.class);
-        m_inspectionClasses.add(ClassNamePrefixedWithPackageNameInspection.class);
-        m_inspectionClasses.add(ClassNameSameAsAncestorNameInspection.class);
-        m_inspectionClasses.add(MethodNameSameAsClassNameInspection.class);
-        m_inspectionClasses.add(MethodNameSameAsParentNameInspection.class);
-        m_inspectionClasses.add(StandardVariableNamesInspection.class);
-        m_inspectionClasses.add(BooleanMethodNameMustStartWithQuestionInspection.class);
-        m_inspectionClasses.add(NonBooleanMethodNameMayNotStartWithQuestionInspection.class);
-        m_inspectionClasses.add(QuestionableNameInspection.class);
-        m_inspectionClasses.add(ConfusingMainMethodInspection.class);
-        m_inspectionClasses.add(UpperCaseFieldNameNotConstantInspection.class);
-        m_inspectionClasses.add(DollarSignInNameInspection.class);
-    }
-
-    private void registerBugInspections(){
-        m_inspectionClasses.add(ObjectToStringInspection.class);
-        m_inspectionClasses.add(IntegerDivisionInFloatingPointContextInspection.class);
-        m_inspectionClasses.add(NonShortCircuitBooleanInspection.class);
-        m_inspectionClasses.add(ComparisonOfShortAndCharInspection.class);
-        m_inspectionClasses.add(AssignmentUsedAsConditionInspection.class);
-        m_inspectionClasses.add(EmptyStatementBodyInspection.class);
-        m_inspectionClasses.add(EmptyInitializerInspection.class);
-        m_inspectionClasses.add(EqualsBetweenInconvertibleTypesInspection.class);
-        m_inspectionClasses.add(CastToIncompatibleInterfaceInspection.class);
-        m_inspectionClasses.add(CastConflictsWithInstanceofInspection.class);
-        m_inspectionClasses.add(CollectionAddedToSelfInspection.class);
-        m_inspectionClasses.add(InstanceofIncompatibleInterfaceInspection.class);
-        m_inspectionClasses.add(InstantiationOfUtilityClassInspection.class);
-        m_inspectionClasses.add(BigDecimalEqualsInspection.class);
-        m_inspectionClasses.add(DivideByZeroInspection.class);
-        m_inspectionClasses.add(NonReproducibleMathCallInspection.class);
-        m_inspectionClasses.add(ConstantMathCallInspection.class);
-        m_inspectionClasses.add(CovariantCompareToInspection.class);
-        m_inspectionClasses.add(CovariantEqualsInspection.class);
-        m_inspectionClasses.add(FloatingPointEqualityInspection.class);
-        m_inspectionClasses.add(ComparisonToNaNInspection.class);
-        m_inspectionClasses.add(MisspelledCompareToInspection.class);
-        m_inspectionClasses.add(MisspelledHashcodeInspection.class);
-        m_inspectionClasses.add(MisspelledEqualsInspection.class);
-        m_inspectionClasses.add(MisspelledToStringInspection.class);
-        m_inspectionClasses.add(FallthruInSwitchStatementInspection.class);
-        m_inspectionClasses.add(SwitchStatementsWithoutDefaultInspection.class);
-        m_inspectionClasses.add(DefaultNotLastCaseInSwitchInspection.class);
-        m_inspectionClasses.add(ArrayEqualsInspection.class);
-        m_inspectionClasses.add(ObjectEqualityInspection.class);
-        m_inspectionClasses.add(ObjectEqualsNullInspection.class);
-        m_inspectionClasses.add(StringEqualityInspection.class);
-        m_inspectionClasses.add(IgnoreResultOfCallInspection.class);
-        m_inspectionClasses.add(ResultOfObjectAllocationIgnoredInspection.class);
-        m_inspectionClasses.add(ResultSetIndexZeroInspection.class);
-        m_inspectionClasses.add(LoopStatementsThatDontLoopInspection.class);
-        m_inspectionClasses.add(MalformedRegexInspection.class);
-        m_inspectionClasses.add(MalformedFormatStringInspection.class);
-        if(classExists("javax.xml.xpath.XPath"))
-        {
-            m_inspectionClasses.add(MalformedXPathInspection.class);
+  private static void buildErrorStrings(final InspectionGadgetsPlugin plugin){
+    final Class<? extends LocalInspectionTool>[] classes = plugin.getInspectionClasses();
+    for (final Class<? extends LocalInspectionTool> aClass : classes) {
+      final String className = aClass.getName();
+      try {
+        final BaseInspection inspection = (BaseInspection)aClass.newInstance();
+        if (inspection.buildErrorString(null) != null){
+          @NonNls final String problemDescriptor = ".problem.descriptor=";
+          System.out.println(inspection.getPrefix(inspection.getShortName()) + problemDescriptor + inspection.buildErrorString(null));
         }
-        m_inspectionClasses.add(MismatchedArrayReadWriteInspection.class);
-        m_inspectionClasses.add(MismatchedCollectionQueryUpdateInspection.class);
-        m_inspectionClasses.add(TextLabelInSwitchStatementInspection.class);
-        m_inspectionClasses.add(UseOfPropertiesAsHashtableInspection.class);
-        m_inspectionClasses.add(AssignmentToNullInspection.class);
-        m_inspectionClasses.add(ArchaicSystemPropertyAccessInspection.class);
-        m_inspectionClasses.add(ConditionalExpressionWithIdenticalBranchesInspection.class);
-        m_inspectionClasses.add(IfStatementWithIdenticalBranchesInspection.class);
-        m_inspectionClasses.add(DuplicateConditionInspection.class);
-        m_inspectionClasses.add(IteratorNextDoesNotThrowNoSuchElementExceptionInspection.class);
-        m_inspectionClasses.add(IteratorHasNextCallsIteratorNextInspection.class);
-        m_inspectionClasses.add(ReturnNullInspection.class);
-        m_inspectionClasses.add(ShiftOutOfRangeInspection.class);
-        m_inspectionClasses.add(AssignmentToStaticFieldFromInstanceMethodInspection.class);
-        m_inspectionClasses.add(StaticCallOnSubclassInspection.class);
-        m_inspectionClasses.add(StaticFieldReferenceOnSubclassInspection.class);
-        m_inspectionClasses.add(OctalAndDecimalIntegersMixedInspection.class);
-        m_inspectionClasses.add(IncompatibleMaskInspection.class);
-        m_inspectionClasses.add(ForLoopWithMissingComponentInspection.class);
-        m_inspectionClasses.add(ForLoopThatDoesntUseLoopVariableInspection.class);
-        m_inspectionClasses.add(InfiniteLoopStatementInspection.class);
-        m_inspectionClasses.add(InfiniteRecursionInspection.class);
-        m_inspectionClasses.add(SubtractionInCompareToInspection.class);
-        m_inspectionClasses.add(EqualsUsesNonFinalVariableInspection.class);
-        m_inspectionClasses.add(HashCodeUsesNonFinalVariableInspection.class);
-        m_inspectionClasses.add(CompareToUsesNonFinalVariableInspection.class);
-        m_inspectionClasses.add(EqualsWhichDoesntCheckParameterClassInspection.class);
-        m_inspectionClasses.add(NullArgumentToVariableArgMethodInspection.class);
-        m_inspectionClasses.add(EnumSwitchStatementWhichMissesCasesInspection.class);
+      }
+      catch (NullPointerException ignore){
+      }
+      catch (InstantiationException ignore) {
+      }
+      catch (IllegalAccessException ignore) {
+      }
+      catch (ClassCastException ignore) {
+      }
     }
+  }
 
-    private static boolean classExists(String className){
-        final Class<?> aClass;
-        try{
-            aClass = Class.forName(className);
-        } catch(ClassNotFoundException ignore){
-            return false;
+  private static void fixesProperties(final InspectionGadgetsPlugin plugin, final PrintStream out) {
+    final Class<? extends LocalInspectionTool>[] classes = plugin.getInspectionClasses();
+    for (final Class<? extends LocalInspectionTool> aClass : classes) {
+      final String className = aClass.getName();
+      try {
+        final LocalInspectionTool inspection =
+          aClass.newInstance();
+        final BaseInspection baseInspection = (BaseInspection)inspection;
+        Set<String> fixes = new HashSet<String>();
+        if (baseInspection.hasQuickFix()) {
+          final InspectionGadgetsFix[] inspectionGadgetsFixes = baseInspection.buildFixes(null);
+          for (InspectionGadgetsFix fix : inspectionGadgetsFixes) {
+            final String name = baseInspection.getPrefix(fix.getClass().getName());
+            if (!fixes.contains(name)) {
+              System.out.println(name + "=" + fix.getName());
+            }
+            fixes.add(name);
+          }
         }
-        return aClass != null;
+      }
+      catch (InstantiationException ignore) {
+      }
+      catch (IllegalAccessException ignore) {
+      }
+      catch (ClassCastException ignore) {
+      }
+    }
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private void createDocumentation(PrintStream out) {
+    final Class<? extends LocalInspectionTool>[] classes = getInspectionClasses();
+    Arrays.sort(classes, new InspectionComparator());
+
+    final int numQuickFixes = countQuickFixes(classes, out);
+    out.println(classes.length + " Inspections");
+    out.println(numQuickFixes + " Quick Fixes");
+    String currentGroupName = "";
+
+    for (final Class<? extends LocalInspectionTool> aClass : classes) {
+      final String className = aClass.getName();
+      try {
+        final LocalInspectionTool inspection =
+          aClass.newInstance();
+        final String groupDisplayName =
+          inspection.getGroupDisplayName();
+        if (!groupDisplayName.equals(currentGroupName)) {
+          currentGroupName = groupDisplayName;
+          out.println();
+          out.print("   * ");
+          out.println(currentGroupName);
+        }
+        printInspectionDescription(inspection, out);
+      }
+      catch (InstantiationException ignore) {
+        out.print("Couldn't instantiate ");
+        out.println(className);
+      }
+      catch (IllegalAccessException ignore) {
+        out.print("Couldn't access ");
+        out.println(className);
+      }
+      catch (ClassCastException ignore) {
+        out.print("Couldn't cast ");
+        out.println(className);
+      }
     }
 
-    private void registerAbstractionInspections(){
-        m_inspectionClasses.add(FeatureEnvyInspection.class);
-        m_inspectionClasses.add(InstanceofChainInspection.class);
-        m_inspectionClasses.add(LocalVariableOfConcreteClassInspection.class);
-        m_inspectionClasses.add(RawUseOfParameterizedTypeInspection.class);
-        m_inspectionClasses.add(InstanceVariableOfConcreteClassInspection.class);
-        m_inspectionClasses.add(StaticVariableOfConcreteClassInspection.class);
-        m_inspectionClasses.add(ParameterOfConcreteClassInspection.class);
-        m_inspectionClasses.add(MethodReturnOfConcreteClassInspection.class);
-        m_inspectionClasses.add(InstanceofInterfacesInspection.class);
-        m_inspectionClasses.add(CastToConcreteClassInspection.class);
-        m_inspectionClasses.add(OverlyStrongTypeCastInspection.class);
-        m_inspectionClasses.add(DeclareCollectionAsInterfaceInspection.class);
-        m_inspectionClasses.add(MagicNumberInspection.class);
-        m_inspectionClasses.add(ClassReferencesSubclassInspection.class);
-        m_inspectionClasses.add(SwitchStatementInspection.class);
-        m_inspectionClasses.add(PublicMethodNotExposedInInterfaceInspection.class);
-        m_inspectionClasses.add(InstanceofThisInspection.class);
+    out.println();
+    out.println("Inspections enabled by default:");
+    for (final Class<? extends LocalInspectionTool> aClass : classes) {
+      final String className = aClass.getName();
+      try {
+        final LocalInspectionTool inspection =
+          aClass.newInstance();
+        if (inspection.isEnabledByDefault()) {
+          out.println('\t' + inspection.getDisplayName());
+        }
+      }
+      catch (InstantiationException ignore) {
+        out.print("Couldn't instantiate ");
+        out.println(className);
+      }
+      catch (IllegalAccessException ignore) {
+        out.print("Couldn't access ");
+        out.println(className);
+      }
+      catch (ClassCastException ignore) {
+        out.print("Couldn't cast ");
+        out.println(className);
+      }
     }
+    final File descriptionDirectory = new File(DESCRIPTION_DIRECTORY_NAME);
+    final File[] descriptionFiles = descriptionDirectory.listFiles();
+    final Set<File> descriptionFilesSet = new HashSet<File>(descriptionFiles.length);
+    for (File descriptionFile1 : descriptionFiles) {
+      if (!descriptionFile1.getName().startsWith(".")) {
+        descriptionFilesSet.add(descriptionFile1);
+      }
+    }
+    for (final Class<? extends LocalInspectionTool> aClass : classes) {
+      final String className = aClass.getName();
+      final String simpleClassName =
+        className.substring(className.lastIndexOf('.') + 1,
+                            className.length() -
+                            "Inspection".length());
+      final String fileName =
+        DESCRIPTION_DIRECTORY_NAME + simpleClassName + ".html";
+      final File descriptionFile = new File(fileName);
+      if (descriptionFile.exists()) {
+        descriptionFilesSet.remove(descriptionFile);
+      }
+      else {
+        out.println("Couldn't find documentation file: " + fileName);
+      }
+    }
+    for (final File file : descriptionFilesSet) {
+      out.println("Unused documentation file: " + file.getAbsolutePath());
+    }
+  }
 
-    private void registerClassLayoutInspections(){
-        m_inspectionClasses.add(FinalClassInspection.class);
-        m_inspectionClasses.add(EmptyClassInspection.class);
-        m_inspectionClasses.add(AnonymousInnerClassInspection.class);
-        m_inspectionClasses.add(LimitedScopeInnerClassInspection.class);
-        m_inspectionClasses.add(FinalMethodInspection.class);
-        m_inspectionClasses.add(ClassInitializerInspection.class);
-        m_inspectionClasses.add(ClassMayBeInterfaceInspection.class);
-        m_inspectionClasses.add(NonProtectedConstructorInAbstractClassInspection.class);
-        m_inspectionClasses.add(ClassWithoutConstructorInspection.class);
-        m_inspectionClasses.add(AbstractClassWithoutAbstractMethodsInspection.class);
-        m_inspectionClasses.add(FinalMethodInFinalClassInspection.class);
-        m_inspectionClasses.add(ProtectedMemberInFinalClassInspection.class);
-        m_inspectionClasses.add(PublicConstructorInNonPublicClassInspection.class);
-        m_inspectionClasses.add(UtilityClassWithPublicConstructorInspection.class);
-        m_inspectionClasses.add(UtilityClassWithoutPrivateConstructorInspection.class);
-        m_inspectionClasses.add(AbstractMethodOverridesConcreteMethodInspection.class);
-        m_inspectionClasses.add(AbstractMethodWithMissingImplementationsInspection.class);
-        m_inspectionClasses.add(AbstractMethodOverridesAbstractMethodInspection.class);
-        m_inspectionClasses.add(AbstractClassExtendsConcreteClassInspection.class);
-        m_inspectionClasses.add(StaticNonFinalFieldInspection.class);
-        m_inspectionClasses.add(ConstantDeclaredInAbstractClassInspection.class);
-        m_inspectionClasses.add(ConstantDeclaredInInterfaceInspection.class);
-        m_inspectionClasses.add(StaticInheritanceInspection.class);
-        m_inspectionClasses.add(ClassInTopLevelPackageInspection.class);
-        m_inspectionClasses.add(UtilityClassInspection.class);
-        m_inspectionClasses.add(SingletonInspection.class);
-        m_inspectionClasses.add(InnerClassOnInterfaceInspection.class);
-        m_inspectionClasses.add(FinalPrivateMethodInspection.class);
-        m_inspectionClasses.add(NoopMethodInAbstractClassInspection.class);
-        m_inspectionClasses.add(FinalStaticMethodInspection.class);
-        m_inspectionClasses.add(ClassWithoutNoArgConstructorInspection.class);
-        m_inspectionClasses.add(MultipleTopLevelClassesInFileInspection.class);
-        m_inspectionClasses.add(ClassNameDiffersFromFileNameInspection.class);
-        m_inspectionClasses.add(MarkerInterfaceInspection.class);
-        m_inspectionClasses.add(FieldHasSetterButNoGetterInspection.class);
-        m_inspectionClasses.add(AbstractClassNeverImplementedInspection.class);
-        m_inspectionClasses.add(MissingDeprecatedAnnotationInspection.class);
-        m_inspectionClasses.add(MissingOverrideAnnotationInspection.class);
-        m_inspectionClasses.add(ExtendsAnnotationInspection.class);
-        m_inspectionClasses.add(ExtendsConcreteCollectionInspection.class);
-    }
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private static void printInspectionDescription(LocalInspectionTool inspection,
+                                                 PrintStream out) {
+    final boolean hasQuickFix = ((BaseInspection)inspection).hasQuickFix();
 
-    private void registerCloneInspections(){
-        m_inspectionClasses.add(CloneInNonCloneableClassInspection.class);
-        m_inspectionClasses.add(CloneableImplementsCloneInspection.class);
-        m_inspectionClasses.add(CloneCallsConstructorsInspection.class);
-        m_inspectionClasses.add(CloneCallsSuperCloneInspection.class);
-        m_inspectionClasses.add(CloneDeclaresCloneNotSupportedInspection.class);
+    final String displayName = inspection.getDisplayName();
+    out.print("      * ");
+    out.print(displayName);
+    if (hasQuickFix) {
+      if (((BaseInspection)inspection).buildQuickFixesOnlyForOnTheFlyErrors()) {
+        out.print("(r)");
+      }
+      else {
+        out.print("(*)");
+      }
     }
+    out.println();
+  }
 
-    private void registerVisibilityInspections(){
-        m_inspectionClasses.add(FieldHidesSuperclassFieldInspection.class);
-        m_inspectionClasses.add(InnerClassVariableHidesOuterClassVariableInspection.class);
-        m_inspectionClasses.add(ParameterHidingMemberVariableInspection.class);
-        m_inspectionClasses.add(LocalVariableHidingMemberVariableInspection.class);
-        m_inspectionClasses.add(MethodOverridesPrivateMethodInspection.class);
-        m_inspectionClasses.add(MethodOverridesStaticMethodInspection.class);
-        m_inspectionClasses.add(MethodOverloadsParentMethodInspection.class);
-        m_inspectionClasses.add(TypeParameterHidesVisibleTypeInspection.class);
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private static int countQuickFixes(Class<? extends LocalInspectionTool>[] classes, PrintStream out) {
+    int numQuickFixes = 0;
+    for (final Class<? extends LocalInspectionTool> aClass : classes) {
+      final String className = aClass.getName();
+      try {
+        final LocalInspectionTool inspection =
+          aClass.newInstance();
+        if (((BaseInspection)inspection).hasQuickFix()) {
+          numQuickFixes++;
+        }
+      }
+      catch (InstantiationException ignore) {
+        out.print("Couldn't instantiate ");
+        out.println(className);
+      }
+      catch (IllegalAccessException ignore) {
+        out.print("Couldn't access ");
+        out.println(className);
+      }
+      catch (ClassCastException ignore) {
+        out.print("Couldn't cast ");
+        out.println(className);
+      }
     }
+    return numQuickFixes;
+  }
 
-    private void registerEncapsulationInspections(){
-        m_inspectionClasses.add(PublicFieldInspection.class);
-        m_inspectionClasses.add(PackageVisibleFieldInspection.class);
-        m_inspectionClasses.add(ProtectedFieldInspection.class);
-        m_inspectionClasses.add(PublicInnerClassInspection.class);
-        m_inspectionClasses.add(PackageVisibleInnerClassInspection.class);
-        m_inspectionClasses.add(ProtectedInnerClassInspection.class);
-        m_inspectionClasses.add(ReturnOfCollectionFieldInspection.class);
-        m_inspectionClasses.add(ReturnOfDateFieldInspection.class);
-        m_inspectionClasses.add(UseOfAnotherObjectsPrivateFieldInspection.class);
-        m_inspectionClasses.add(AssignmentToCollectionFieldFromParameterInspection.class);
-        m_inspectionClasses.add(AssignmentToDateFieldFromParameterInspection.class);
-    }
+  public String getComponentName() {
+    return "InspectionGadgets";
+  }
 
-    private void registerInitializerInspections(){
-        m_inspectionClasses.add(StaticVariableInitializationInspection.class);
-        m_inspectionClasses.add(InstanceVariableInitializationInspection.class);
-        m_inspectionClasses.add(AbstractMethodCallInConstructorInspection.class);
-        m_inspectionClasses.add(OverridableMethodCallInConstructorInspection.class);
-        m_inspectionClasses.add(OverriddenMethodCallInConstructorInspection.class);
-        m_inspectionClasses.add(ThisEscapedInConstructorInspection.class);
-        m_inspectionClasses.add(StaticVariableUninitializedUseInspection.class);
-        m_inspectionClasses.add(InstanceVariableUninitializedUseInspection.class);
-        m_inspectionClasses.add(NonThreadSafeLazyInitializationInspection.class);
-        m_inspectionClasses.add(NonFinalStaticVariableUsedInClassInitializationInspection.class);
+  public Class<? extends LocalInspectionTool>[] getInspectionClasses() {
+    if (m_inspectionClasses.isEmpty()) {
+      registerNamingInspections();
+      registerBugInspections();
+      registerCloneInspections();
+      registerConfusingInspections();
+      registerAbstractionInspections();
+      registerClassLayoutInspections();
+      registerImportInspections();
+      registerEncapsulationInspections();
+      registerVisibilityInspections();
+      registerInitializerInspections();
+      registerFinalizationInspections();
+      registerExceptionInspections();
+      registerVerboseInspections();
+      registerStyleInspections();
+      registerSerializationInspections();
+      registerThreadingInspections();
+      registerMethodMetricsInspections();
+      registerClassMetricsInspections();
+      registerPortabilityInspections();
+      registerInternationalInspections();
+      registerPerformanceInspections();
+      registerMaturityInspections();
+      registerJUnitInspections();
+      registerLoggingInspections();
+      registerSecurityInspections();
+      registerResourceManagementInspections();
+      registerJ2MEInspections();
     }
+    final int numInspections = m_inspectionClasses.size();
+    return m_inspectionClasses.toArray(new Class[numInspections]);
+  }
 
-    private void registerConfusingInspections(){
-        m_inspectionClasses.add(ClassEscapesItsScopeInspection.class);
-        m_inspectionClasses.add(ConfusingFloatingPointLiteralInspection.class);
-        m_inspectionClasses.add(OverlyComplexArithmeticExpressionInspection.class);
-        m_inspectionClasses.add(OverlyComplexBooleanExpressionInspection.class);
-        m_inspectionClasses.add(AssignmentToMethodParameterInspection.class);
-        m_inspectionClasses.add(AssignmentToCatchBlockParameterInspection.class);
-        m_inspectionClasses.add(ReuseOfLocalVariableInspection.class);
-        m_inspectionClasses.add(AssignmentToForLoopParameterInspection.class);
-        m_inspectionClasses.add(NestedAssignmentInspection.class);
-        m_inspectionClasses.add(LabeledStatementInspection.class);
-        m_inspectionClasses.add(BreakStatementInspection.class);
-        m_inspectionClasses.add(BreakStatementWithLabelInspection.class);
-        m_inspectionClasses.add(ContinueStatementInspection.class);
-        m_inspectionClasses.add(ContinueStatementWithLabelInspection.class);
-        m_inspectionClasses.add(ConditionalExpressionInspection.class);
-        m_inspectionClasses.add(NestedConditionalExpressionInspection.class);
-        m_inspectionClasses.add(LongLiteralsEndingWithLowercaseLInspection.class);
-        m_inspectionClasses.add(IncrementDecrementUsedAsExpressionInspection.class);
-        m_inspectionClasses.add(IfStatementWithTooManyBranchesInspection.class);
-        m_inspectionClasses.add(SwitchStatementWithTooManyBranchesInspection.class);
-        m_inspectionClasses.add(SwitchStatementWithTooFewBranchesInspection.class);
-        m_inspectionClasses.add(SwitchStatementDensityInspection.class);
-        m_inspectionClasses.add(NestedSwitchStatementInspection.class);
-        m_inspectionClasses.add(ChainedMethodCallInspection.class);
-        m_inspectionClasses.add(NestedMethodCallInspection.class);
-        m_inspectionClasses.add(OctalLiteralInspection.class);
-        m_inspectionClasses.add(ChainedEqualityInspection.class);
-        m_inspectionClasses.add(ConfusingOctalEscapeInspection.class);
-        m_inspectionClasses.add(MethodNamesDifferOnlyByCaseInspection.class);
-        m_inspectionClasses.add(OverloadedMethodsWithSameNumberOfParametersInspection.class);
-        m_inspectionClasses.add(ImplicitNumericConversionInspection.class);
-        m_inspectionClasses.add(ImplicitCallToSuperInspection.class);
-        m_inspectionClasses.add(RefusedBequestInspection.class);
-        m_inspectionClasses.add(CastThatLosesPrecisionInspection.class);
-        m_inspectionClasses.add(NegatedIfElseInspection.class);
-        m_inspectionClasses.add(NegatedConditionalInspection.class);
-        m_inspectionClasses.add(ConfusingElseInspection.class);
-        m_inspectionClasses.add(SwitchStatementWithConfusingDeclarationInspection.class);
-    }
+  public void initComponent() {
+  }
 
-    private void registerVerboseInspections(){
-        m_inspectionClasses.add(UnnecessaryLabelOnBreakStatementInspection.class);
-        m_inspectionClasses.add(UnnecessaryLabelOnContinueStatementInspection.class);
-        m_inspectionClasses.add(PointlessBooleanExpressionInspection.class);
-        m_inspectionClasses.add(ReplaceAssignmentWithOperatorAssignmentInspection.class);
-        m_inspectionClasses.add(TrivialIfInspection.class);
-        m_inspectionClasses.add(UnnecessaryConditionalExpressionInspection.class);
-        m_inspectionClasses.add(SimplifiableConditionalExpressionInspection.class);
-        m_inspectionClasses.add(ConstantConditionalExpressionInspection.class);
-        m_inspectionClasses.add(ConstantIfStatementInspection.class);
-        m_inspectionClasses.add(UnnecessaryParenthesesInspection.class);
-        m_inspectionClasses.add(UnnecessaryLocalVariableInspection.class);
-        m_inspectionClasses.add(UnnecessaryThisInspection.class);
-        m_inspectionClasses.add(UnnecessaryBlockStatementInspection.class);
-        m_inspectionClasses.add(UnnecessaryInterfaceModifierInspection.class);
-        m_inspectionClasses.add(UnnecessaryEnumModifierInspection.class);
-        m_inspectionClasses.add(UnnecessaryReturnInspection.class);
-        m_inspectionClasses.add(UnnecessaryContinueInspection.class);
-        m_inspectionClasses.add(UnnecessarySemicolonInspection.class);
-        m_inspectionClasses.add(UnnecessaryFullyQualifiedNameInspection.class);
-        m_inspectionClasses.add(UnnecessaryQualifierForThisInspection.class);
-        m_inspectionClasses.add(UnusedLabelInspection.class);
-        m_inspectionClasses.add(RedundantFieldInitializationInspection.class);
-        m_inspectionClasses.add(RedundantImplementsInspection.class);
-        m_inspectionClasses.add(ExtendsObjectInspection.class);
-        m_inspectionClasses.add(TypeParameterExtendsObjectInspection.class);
-        m_inspectionClasses.add(PointlessArithmeticExpressionInspection.class);
-        m_inspectionClasses.add(PointlessBitwiseExpressionInspection.class);
-        m_inspectionClasses.add(UnnecessarySuperConstructorInspection.class);
-        m_inspectionClasses.add(UnnecessaryConstructorInspection.class);
-        m_inspectionClasses.add(ForLoopReplaceableByWhileInspection.class);
-        m_inspectionClasses.add(UnnecessaryDefaultInspection.class);
-        m_inspectionClasses.add(UnnecessaryBoxingInspection.class);
-        m_inspectionClasses.add(UnnecessaryUnboxingInspection.class);
-        m_inspectionClasses.add(UnnecessaryFinalOnParameterInspection.class);
-        m_inspectionClasses.add(UnnecessaryFinalOnLocalVariableInspection.class);
-        m_inspectionClasses.add(ForCanBeForeachInspection.class);
-        m_inspectionClasses.add(WhileCanBeForeachInspection.class);
-    }
+  private void registerResourceManagementInspections() {
+    m_inspectionClasses.add(HibernateResourceInspection.class);
+    m_inspectionClasses.add(JNDIResourceInspection.class);
+    m_inspectionClasses.add(SocketResourceInspection.class);
+    m_inspectionClasses.add(IOResourceInspection.class);
+    m_inspectionClasses.add(JDBCResourceInspection.class);
+    m_inspectionClasses.add(ChannelResourceInspection.class);
+    m_inspectionClasses.add(DriverManagerGetConnectionInspection.class);
+  }
 
-    private void registerStyleInspections(){
-        m_inspectionClasses.add(TooBroadScopeInspection.class);
-        m_inspectionClasses.add(ReturnThisInspection.class);
-        m_inspectionClasses.add(ConstantOnLHSOfComparisonInspection.class);
-        m_inspectionClasses.add(ConstantOnRHSOfComparisonInspection.class);
-        m_inspectionClasses.add(ControlFlowStatementWithoutBracesInspection.class);
-        m_inspectionClasses.add(LiteralAsArgToStringEqualsInspection.class);
-        m_inspectionClasses.add(MissortedModifiersInspection.class);
-        m_inspectionClasses.add(CStyleArrayDeclarationInspection.class);
-        m_inspectionClasses.add(MultipleDeclarationInspection.class);
-        m_inspectionClasses.add(MultipleTypedDeclarationInspection.class);
-        m_inspectionClasses.add(UnqualifiedStaticUsageInspection.class);
-        m_inspectionClasses.add(UnnecessarilyQualifiedStaticUsageInspection.class);
-    }
+  private void registerLoggingInspections() {
+    m_inspectionClasses.add(ClassWithoutLoggerInspection.class);
+    m_inspectionClasses.add(ClassWithMultipleLoggersInspection.class);
+    m_inspectionClasses.add(NonStaticFinalLoggerInspection.class);
+  }
 
-    private void registerExceptionInspections(){
-        m_inspectionClasses.add(CatchGenericClassInspection.class);
-        m_inspectionClasses.add(EmptyCatchBlockInspection.class);
-        m_inspectionClasses.add(UnusedCatchParameterInspection.class);
-        m_inspectionClasses.add(EmptyFinallyBlockInspection.class);
-        m_inspectionClasses.add(FinallyBlockCannotCompleteNormallyInspection.class);
-        m_inspectionClasses.add(EmptyTryBlockInspection.class);
-        m_inspectionClasses.add(ThrowFromFinallyBlockInspection.class);
-        m_inspectionClasses.add(ThrowCaughtLocallyInspection.class);
-        m_inspectionClasses.add(ReturnFromFinallyBlockInspection.class);
-        m_inspectionClasses.add(ContinueOrBreakFromFinallyBlockInspection.class);
-        m_inspectionClasses.add(BadExceptionThrownInspection.class);
-        m_inspectionClasses.add(BadExceptionDeclaredInspection.class);
-        m_inspectionClasses.add(BadExceptionCaughtInspection.class);
-        m_inspectionClasses.add(TooBroadCatchInspection.class);
-        m_inspectionClasses.add(CheckedExceptionClassInspection.class);
-        m_inspectionClasses.add(UncheckedExceptionClassInspection.class);
-        m_inspectionClasses.add(ThreadDeathRethrownInspection.class);
-        m_inspectionClasses.add(ErrorRethrownInspection.class);
-        m_inspectionClasses.add(NestedTryStatementInspection.class);
-        m_inspectionClasses.add(ExceptionFromCatchWhichDoesntWrapInspection.class);
-        m_inspectionClasses.add(InstanceofCatchParameterInspection.class);
-        m_inspectionClasses.add(NonFinalFieldOfExceptionInspection.class);
-    }
+  private void registerSecurityInspections() {
+    m_inspectionClasses.add(DeserializableClassInSecureContextInspection.class);
+    m_inspectionClasses.add(SerializableClassInSecureContextInspection.class);
+    m_inspectionClasses.add(CloneableClassInSecureContextInspection.class);
+    m_inspectionClasses.add(NonFinalCloneInspection.class);
+    m_inspectionClasses.add(NonStaticInnerClassInSecureContextInspection.class);
+    m_inspectionClasses.add(RuntimeExecWithNonConstantStringInspection.class);
+    m_inspectionClasses.add(LoadLibraryWithNonConstantStringInspection.class);
+    m_inspectionClasses.add(JDBCExecuteWithNonConstantStringInspection.class);
+    m_inspectionClasses.add(JDBCPrepareStatementWithNonConstantStringInspection.class);
+    m_inspectionClasses.add(CustomClassloaderInspection.class);
+    m_inspectionClasses.add(CustomSecurityManagerInspection.class);
+    m_inspectionClasses.add(SystemSetSecurityManagerInspection.class);
+    m_inspectionClasses.add(ClassLoader2InstantiationInspection.class);
+    m_inspectionClasses.add(UnsecureRandomNumberGenerationInspection.class);
+    m_inspectionClasses.add(SystemPropertiesInspection.class);
+    m_inspectionClasses.add(PublicStaticArrayFieldInspection.class);
+    m_inspectionClasses.add(PublicStaticCollectionFieldInspection.class);
+  }
 
-    private void registerFinalizationInspections(){
-        m_inspectionClasses.add(FinalizeInspection.class);
-        m_inspectionClasses.add(FinalizeNotProtectedInspection.class);
-        m_inspectionClasses.add(FinalizeCallsSuperFinalizeInspection.class);
-        m_inspectionClasses.add(NoExplicitFinalizeCallsInspection.class);
-    }
+  private void registerImportInspections() {
+    m_inspectionClasses.add(UnusedImportInspection.class);
+    m_inspectionClasses.add(RedundantImportInspection.class);
+    m_inspectionClasses.add(OnDemandImportInspection.class);
+    m_inspectionClasses.add(SingleClassImportInspection.class);
+    m_inspectionClasses.add(JavaLangImportInspection.class);
+    m_inspectionClasses.add(SamePackageImportInspection.class);
+    m_inspectionClasses.add(StaticImportInspection.class);
+  }
 
-    private void registerSerializationInspections(){
-        m_inspectionClasses.add(SerializableHasSerializationMethodsInspection.class);
-        m_inspectionClasses.add(SerializableHasSerialVersionUIDFieldInspection.class);
-        m_inspectionClasses.add(ReadObjectInitializationInspection.class);
-        m_inspectionClasses.add(ReadObjectAndWriteObjectPrivateInspection.class);
-        m_inspectionClasses.add(SerialVersionUIDNotStaticFinalInspection.class);
-        m_inspectionClasses.add(SerialPersistentFieldsWithWrongSignatureInspection.class);
-        m_inspectionClasses.add(ReadResolveAndWriteReplaceProtectedInspection.class);
-        m_inspectionClasses.add(TransientFieldInNonSerializableClassInspection.class);
-        m_inspectionClasses.add(SerializableWithUnconstructableAncestorInspection.class);
-        m_inspectionClasses.add(NonSerializableWithSerializationMethodsInspection.class);
-        m_inspectionClasses.add(ExternalizableWithSerializationMethodsInspection.class);
-        m_inspectionClasses.add(NonSerializableWithSerialVersionUIDFieldInspection.class);
-        m_inspectionClasses.add(SerializableInnerClassHasSerialVersionUIDFieldInspection.class);
-        m_inspectionClasses.add(SerializableInnerClassWithNonSerializableOuterClassInspection.class);
-    }
+  private void registerNamingInspections() {
+    m_inspectionClasses.add(JUnitTestClassNamingConventionInspection.class);
+    m_inspectionClasses.add(JUnitAbstractTestClassNamingConventionInspection.class);
+    m_inspectionClasses.add(ClassNamingConventionInspection.class);
+    m_inspectionClasses.add(EnumeratedClassNamingConventionInspection.class);
+    m_inspectionClasses.add(EnumeratedConstantNamingConventionInspection.class);
+    m_inspectionClasses.add(TypeParameterNamingConventionInspection.class);
+    m_inspectionClasses.add(AnnotationNamingConventionInspection.class);
+    m_inspectionClasses.add(InterfaceNamingConventionInspection.class);
+    m_inspectionClasses.add(InstanceVariableNamingConventionInspection.class);
+    m_inspectionClasses.add(StaticVariableNamingConventionInspection.class);
+    m_inspectionClasses.add(ConstantNamingConventionInspection.class);
+    m_inspectionClasses.add(InstanceMethodNamingConventionInspection.class);
+    m_inspectionClasses.add(StaticMethodNamingConventionInspection.class);
+    m_inspectionClasses.add(LocalVariableNamingConventionInspection.class);
+    m_inspectionClasses.add(ParameterNamingConventionInspection.class);
+    m_inspectionClasses.add(ParameterNameDiffersFromOverriddenParameterInspection.class);
+    m_inspectionClasses.add(ExceptionNameDoesntEndWithExceptionInspection.class);
+    m_inspectionClasses.add(NonExceptionNameEndsWithExceptionInspection.class);
+    m_inspectionClasses.add(ClassNamePrefixedWithPackageNameInspection.class);
+    m_inspectionClasses.add(ClassNameSameAsAncestorNameInspection.class);
+    m_inspectionClasses.add(MethodNameSameAsClassNameInspection.class);
+    m_inspectionClasses.add(MethodNameSameAsParentNameInspection.class);
+    m_inspectionClasses.add(StandardVariableNamesInspection.class);
+    m_inspectionClasses.add(BooleanMethodNameMustStartWithQuestionInspection.class);
+    m_inspectionClasses.add(NonBooleanMethodNameMayNotStartWithQuestionInspection.class);
+    m_inspectionClasses.add(QuestionableNameInspection.class);
+    m_inspectionClasses.add(ConfusingMainMethodInspection.class);
+    m_inspectionClasses.add(UpperCaseFieldNameNotConstantInspection.class);
+    m_inspectionClasses.add(DollarSignInNameInspection.class);
+  }
 
-    private void registerThreadingInspections(){
-        m_inspectionClasses.add(DoubleCheckedLockingInspection.class);
-        m_inspectionClasses.add(BusyWaitInspection.class);
-        m_inspectionClasses.add(SleepWhileHoldingLockInspection.class);
-        m_inspectionClasses.add(ArithmeticOnVolatileFieldInspection.class);
-        m_inspectionClasses.add(CallToNativeMethodWhileLockedInspection.class);
-        m_inspectionClasses.add(ObjectNotifyInspection.class);
-        m_inspectionClasses.add(ConditionSignalInspection.class);
-        m_inspectionClasses.add(ThreadWithDefaultRunMethodInspection.class);
-        m_inspectionClasses.add(ExtendsThreadInspection.class);
-        m_inspectionClasses.add(NakedNotifyInspection.class);
-        m_inspectionClasses.add(UnconditionalWaitInspection.class);
-        m_inspectionClasses.add(SystemRunFinalizersOnExitInspection.class);
-        m_inspectionClasses.add(ThreadPriorityInspection.class);
-        m_inspectionClasses.add(ThreadYieldInspection.class);
-        m_inspectionClasses.add(ThreadStopSuspendResumeInspection.class);
-        m_inspectionClasses.add(WhileLoopSpinsOnFieldInspection.class);
-        m_inspectionClasses.add(WaitNotInLoopInspection.class);
-        m_inspectionClasses.add(AwaitNotInLoopInspection.class);
-        m_inspectionClasses.add(WaitCalledOnConditionInspection.class);
-        m_inspectionClasses.add(NotifyCalledOnConditionInspection.class);
-        m_inspectionClasses.add(VolatileLongOrDoubleFieldInspection.class);
-        m_inspectionClasses.add(VolatileArrayFieldInspection.class);
-        m_inspectionClasses.add(WaitNotInSynchronizedContextInspection.class);
-        m_inspectionClasses.add(WaitWhileHoldingTwoLocksInspection.class);
-        m_inspectionClasses.add(NotifyNotInSynchronizedContextInspection.class);
-        m_inspectionClasses.add(ThreadRunInspection.class);
-        m_inspectionClasses.add(ThreadStartInConstructionInspection.class);
-        m_inspectionClasses.add(SynchronizedMethodInspection.class);
-        m_inspectionClasses.add(SynchronizeOnLockInspection.class);
-        m_inspectionClasses.add(SynchronizeOnNonFinalFieldInspection.class);
-        m_inspectionClasses.add(SynchronizeOnThisInspection.class);
-        m_inspectionClasses.add(NestedSynchronizedStatementInspection.class);
-        m_inspectionClasses.add(EmptySynchronizedStatementInspection.class);
-        m_inspectionClasses.add(NonSynchronizedMethodOverridesSynchronizedMethodInspection.class);
-        m_inspectionClasses.add(PublicFieldAccessedInSynchronizedContextInspection.class);
-        m_inspectionClasses.add(SafeLockInspection.class);
-        m_inspectionClasses.add(FieldAccessedSynchronizedAndUnsynchronizedInspection.class);
+  private void registerBugInspections() {
+    m_inspectionClasses.add(ObjectToStringInspection.class);
+    m_inspectionClasses.add(IntegerDivisionInFloatingPointContextInspection.class);
+    m_inspectionClasses.add(NonShortCircuitBooleanInspection.class);
+    m_inspectionClasses.add(ComparisonOfShortAndCharInspection.class);
+    m_inspectionClasses.add(AssignmentUsedAsConditionInspection.class);
+    m_inspectionClasses.add(EmptyStatementBodyInspection.class);
+    m_inspectionClasses.add(EmptyInitializerInspection.class);
+    m_inspectionClasses.add(EqualsBetweenInconvertibleTypesInspection.class);
+    m_inspectionClasses.add(CastToIncompatibleInterfaceInspection.class);
+    m_inspectionClasses.add(CastConflictsWithInstanceofInspection.class);
+    m_inspectionClasses.add(CollectionAddedToSelfInspection.class);
+    m_inspectionClasses.add(InstanceofIncompatibleInterfaceInspection.class);
+    m_inspectionClasses.add(InstantiationOfUtilityClassInspection.class);
+    m_inspectionClasses.add(BigDecimalEqualsInspection.class);
+    m_inspectionClasses.add(DivideByZeroInspection.class);
+    m_inspectionClasses.add(NonReproducibleMathCallInspection.class);
+    m_inspectionClasses.add(ConstantMathCallInspection.class);
+    m_inspectionClasses.add(CovariantCompareToInspection.class);
+    m_inspectionClasses.add(CovariantEqualsInspection.class);
+    m_inspectionClasses.add(FloatingPointEqualityInspection.class);
+    m_inspectionClasses.add(ComparisonToNaNInspection.class);
+    m_inspectionClasses.add(MisspelledCompareToInspection.class);
+    m_inspectionClasses.add(MisspelledHashcodeInspection.class);
+    m_inspectionClasses.add(MisspelledEqualsInspection.class);
+    m_inspectionClasses.add(MisspelledToStringInspection.class);
+    m_inspectionClasses.add(FallthruInSwitchStatementInspection.class);
+    m_inspectionClasses.add(SwitchStatementsWithoutDefaultInspection.class);
+    m_inspectionClasses.add(DefaultNotLastCaseInSwitchInspection.class);
+    m_inspectionClasses.add(ArrayEqualsInspection.class);
+    m_inspectionClasses.add(ObjectEqualityInspection.class);
+    m_inspectionClasses.add(ObjectEqualsNullInspection.class);
+    m_inspectionClasses.add(StringEqualityInspection.class);
+    m_inspectionClasses.add(IgnoreResultOfCallInspection.class);
+    m_inspectionClasses.add(ResultOfObjectAllocationIgnoredInspection.class);
+    m_inspectionClasses.add(ResultSetIndexZeroInspection.class);
+    m_inspectionClasses.add(LoopStatementsThatDontLoopInspection.class);
+    m_inspectionClasses.add(MalformedRegexInspection.class);
+    m_inspectionClasses.add(MalformedFormatStringInspection.class);
+    if (classExists("javax.xml.xpath.XPath")) {
+      m_inspectionClasses.add(MalformedXPathInspection.class);
     }
+    m_inspectionClasses.add(MismatchedArrayReadWriteInspection.class);
+    m_inspectionClasses.add(MismatchedCollectionQueryUpdateInspection.class);
+    m_inspectionClasses.add(TextLabelInSwitchStatementInspection.class);
+    m_inspectionClasses.add(UseOfPropertiesAsHashtableInspection.class);
+    m_inspectionClasses.add(AssignmentToNullInspection.class);
+    m_inspectionClasses.add(ArchaicSystemPropertyAccessInspection.class);
+    m_inspectionClasses.add(ConditionalExpressionWithIdenticalBranchesInspection.class);
+    m_inspectionClasses.add(IfStatementWithIdenticalBranchesInspection.class);
+    m_inspectionClasses.add(DuplicateConditionInspection.class);
+    m_inspectionClasses.add(IteratorNextDoesNotThrowNoSuchElementExceptionInspection.class);
+    m_inspectionClasses.add(IteratorHasNextCallsIteratorNextInspection.class);
+    m_inspectionClasses.add(ReturnNullInspection.class);
+    m_inspectionClasses.add(ShiftOutOfRangeInspection.class);
+    m_inspectionClasses.add(AssignmentToStaticFieldFromInstanceMethodInspection.class);
+    m_inspectionClasses.add(StaticCallOnSubclassInspection.class);
+    m_inspectionClasses.add(StaticFieldReferenceOnSubclassInspection.class);
+    m_inspectionClasses.add(OctalAndDecimalIntegersMixedInspection.class);
+    m_inspectionClasses.add(IncompatibleMaskInspection.class);
+    m_inspectionClasses.add(ForLoopWithMissingComponentInspection.class);
+    m_inspectionClasses.add(ForLoopThatDoesntUseLoopVariableInspection.class);
+    m_inspectionClasses.add(InfiniteLoopStatementInspection.class);
+    m_inspectionClasses.add(InfiniteRecursionInspection.class);
+    m_inspectionClasses.add(SubtractionInCompareToInspection.class);
+    m_inspectionClasses.add(EqualsUsesNonFinalVariableInspection.class);
+    m_inspectionClasses.add(HashCodeUsesNonFinalVariableInspection.class);
+    m_inspectionClasses.add(CompareToUsesNonFinalVariableInspection.class);
+    m_inspectionClasses.add(EqualsWhichDoesntCheckParameterClassInspection.class);
+    m_inspectionClasses.add(NullArgumentToVariableArgMethodInspection.class);
+    m_inspectionClasses.add(EnumSwitchStatementWhichMissesCasesInspection.class);
+  }
 
-    private void registerMethodMetricsInspections(){
-        m_inspectionClasses.add(ThreeNegationsPerMethodInspection.class);
-        m_inspectionClasses.add(MethodWithMultipleLoopsInspection.class);
-        m_inspectionClasses.add(MultipleReturnPointsPerMethodInspection.class);
-        m_inspectionClasses.add(ThrownExceptionsPerMethodInspection.class);
-        m_inspectionClasses.add(ParametersPerMethodInspection.class);
-        m_inspectionClasses.add(CyclomaticComplexityInspection.class);
-        m_inspectionClasses.add(NestingDepthInspection.class);
-        m_inspectionClasses.add(NonCommentSourceStatementsInspection.class);
-        m_inspectionClasses.add(MethodCouplingInspection.class);
+  private static boolean classExists(String className) {
+    final Class<?> aClass;
+    try {
+      aClass = Class.forName(className);
     }
+    catch (ClassNotFoundException ignore) {
+      return false;
+    }
+    return aClass != null;
+  }
 
-    private void registerClassMetricsInspections(){
-        m_inspectionClasses.add(AnonymousClassComplexityInspection.class);
-        m_inspectionClasses.add(AnonymousClassMethodCountInspection.class);
-        m_inspectionClasses.add(ClassComplexityInspection.class);
-        m_inspectionClasses.add(ClassInheritanceDepthInspection.class);
-        m_inspectionClasses.add(ClassNestingDepthInspection.class);
-        m_inspectionClasses.add(ClassCouplingInspection.class);
-        m_inspectionClasses.add(ConstructorCountInspection.class);
-        m_inspectionClasses.add(MethodCountInspection.class);
-        m_inspectionClasses.add(FieldCountInspection.class);
-    }
+  private void registerAbstractionInspections() {
+    m_inspectionClasses.add(FeatureEnvyInspection.class);
+    m_inspectionClasses.add(InstanceofChainInspection.class);
+    m_inspectionClasses.add(LocalVariableOfConcreteClassInspection.class);
+    m_inspectionClasses.add(RawUseOfParameterizedTypeInspection.class);
+    m_inspectionClasses.add(InstanceVariableOfConcreteClassInspection.class);
+    m_inspectionClasses.add(StaticVariableOfConcreteClassInspection.class);
+    m_inspectionClasses.add(ParameterOfConcreteClassInspection.class);
+    m_inspectionClasses.add(MethodReturnOfConcreteClassInspection.class);
+    m_inspectionClasses.add(InstanceofInterfacesInspection.class);
+    m_inspectionClasses.add(CastToConcreteClassInspection.class);
+    m_inspectionClasses.add(OverlyStrongTypeCastInspection.class);
+    m_inspectionClasses.add(DeclareCollectionAsInterfaceInspection.class);
+    m_inspectionClasses.add(MagicNumberInspection.class);
+    m_inspectionClasses.add(ClassReferencesSubclassInspection.class);
+    m_inspectionClasses.add(SwitchStatementInspection.class);
+    m_inspectionClasses.add(PublicMethodNotExposedInInterfaceInspection.class);
+    m_inspectionClasses.add(InstanceofThisInspection.class);
+  }
 
-    private void registerPortabilityInspections(){
-        m_inspectionClasses.add(RuntimeExecInspection.class);
-        m_inspectionClasses.add(SystemExitInspection.class);
-        m_inspectionClasses.add(SystemGetenvInspection.class);
-        m_inspectionClasses.add(HardcodedLineSeparatorsInspection.class);
-        m_inspectionClasses.add(HardcodedFileSeparatorsInspection.class);
-        m_inspectionClasses.add(NativeMethodsInspection.class);
-        m_inspectionClasses.add(AssertAsNameInspection.class);
-        m_inspectionClasses.add(EnumAsNameInspection.class);
-        m_inspectionClasses.add(AssertStatementInspection.class);
-        m_inspectionClasses.add(AutoBoxingInspection.class);
-        m_inspectionClasses.add(AutoUnboxingInspection.class);
-        m_inspectionClasses.add(VarargParameterInspection.class);
-        m_inspectionClasses.add(ForeachStatementInspection.class);
-        m_inspectionClasses.add(EnumClassInspection.class);
-        m_inspectionClasses.add(AnnotationClassInspection.class);
-        m_inspectionClasses.add(AnnotationInspection.class);
-        m_inspectionClasses.add(UseOfSunClassesInspection.class);
-        m_inspectionClasses.add(UseOfAWTPeerClassInspection.class);
-        m_inspectionClasses.add(UseOfJDBCDriverClassInspection.class);
-        m_inspectionClasses.add(UseOfProcessBuilderInspection.class);
-    }
+  private void registerClassLayoutInspections() {
+    m_inspectionClasses.add(FinalClassInspection.class);
+    m_inspectionClasses.add(EmptyClassInspection.class);
+    m_inspectionClasses.add(AnonymousInnerClassInspection.class);
+    m_inspectionClasses.add(LimitedScopeInnerClassInspection.class);
+    m_inspectionClasses.add(FinalMethodInspection.class);
+    m_inspectionClasses.add(ClassInitializerInspection.class);
+    m_inspectionClasses.add(ClassMayBeInterfaceInspection.class);
+    m_inspectionClasses.add(NonProtectedConstructorInAbstractClassInspection.class);
+    m_inspectionClasses.add(ClassWithoutConstructorInspection.class);
+    m_inspectionClasses.add(AbstractClassWithoutAbstractMethodsInspection.class);
+    m_inspectionClasses.add(FinalMethodInFinalClassInspection.class);
+    m_inspectionClasses.add(ProtectedMemberInFinalClassInspection.class);
+    m_inspectionClasses.add(PublicConstructorInNonPublicClassInspection.class);
+    m_inspectionClasses.add(UtilityClassWithPublicConstructorInspection.class);
+    m_inspectionClasses.add(UtilityClassWithoutPrivateConstructorInspection.class);
+    m_inspectionClasses.add(AbstractMethodOverridesConcreteMethodInspection.class);
+    m_inspectionClasses.add(AbstractMethodWithMissingImplementationsInspection.class);
+    m_inspectionClasses.add(AbstractMethodOverridesAbstractMethodInspection.class);
+    m_inspectionClasses.add(AbstractClassExtendsConcreteClassInspection.class);
+    m_inspectionClasses.add(StaticNonFinalFieldInspection.class);
+    m_inspectionClasses.add(ConstantDeclaredInAbstractClassInspection.class);
+    m_inspectionClasses.add(ConstantDeclaredInInterfaceInspection.class);
+    m_inspectionClasses.add(StaticInheritanceInspection.class);
+    m_inspectionClasses.add(ClassInTopLevelPackageInspection.class);
+    m_inspectionClasses.add(UtilityClassInspection.class);
+    m_inspectionClasses.add(SingletonInspection.class);
+    m_inspectionClasses.add(InnerClassOnInterfaceInspection.class);
+    m_inspectionClasses.add(FinalPrivateMethodInspection.class);
+    m_inspectionClasses.add(NoopMethodInAbstractClassInspection.class);
+    m_inspectionClasses.add(FinalStaticMethodInspection.class);
+    m_inspectionClasses.add(ClassWithoutNoArgConstructorInspection.class);
+    m_inspectionClasses.add(MultipleTopLevelClassesInFileInspection.class);
+    m_inspectionClasses.add(ClassNameDiffersFromFileNameInspection.class);
+    m_inspectionClasses.add(MarkerInterfaceInspection.class);
+    m_inspectionClasses.add(FieldHasSetterButNoGetterInspection.class);
+    m_inspectionClasses.add(AbstractClassNeverImplementedInspection.class);
+    m_inspectionClasses.add(MissingDeprecatedAnnotationInspection.class);
+    m_inspectionClasses.add(MissingOverrideAnnotationInspection.class);
+    m_inspectionClasses.add(ExtendsAnnotationInspection.class);
+    m_inspectionClasses.add(ExtendsConcreteCollectionInspection.class);
+  }
 
-    private void registerInternationalInspections(){
-        m_inspectionClasses.add(CharacterComparisonInspection.class);
-        m_inspectionClasses.add(MagicCharacterInspection.class);
-        m_inspectionClasses.add(NumericToStringInspection.class);
-        m_inspectionClasses.add(DateToStringInspection.class);
-        m_inspectionClasses.add(TimeToStringInspection.class);
-        m_inspectionClasses.add(StringCompareToInspection.class);
-        m_inspectionClasses.add(StringEqualsIgnoreCaseInspection.class);
-        m_inspectionClasses.add(StringEqualsInspection.class);
-        m_inspectionClasses.add(StringConcatenationInspection.class);
-        m_inspectionClasses.add(StringTokenizerInspection.class);
-        m_inspectionClasses.add(StringToUpperWithoutLocaleInspection.class);
-        m_inspectionClasses.add(SimpleDateFormatWithoutLocaleInspection.class);
-    }
+  private void registerCloneInspections() {
+    m_inspectionClasses.add(CloneInNonCloneableClassInspection.class);
+    m_inspectionClasses.add(CloneableImplementsCloneInspection.class);
+    m_inspectionClasses.add(CloneCallsConstructorsInspection.class);
+    m_inspectionClasses.add(CloneCallsSuperCloneInspection.class);
+    m_inspectionClasses.add(CloneDeclaresCloneNotSupportedInspection.class);
+  }
 
-    private void registerPerformanceInspections(){
-        m_inspectionClasses.add(PrivateMemberAccessBetweenOuterAndInnerClassInspection.class);
-        m_inspectionClasses.add(ObjectAllocationInLoopInspection.class);
-        m_inspectionClasses.add(InstantiatingObjectToGetClassObjectInspection.class);
-        m_inspectionClasses.add(UnnecessaryTemporaryOnConversionToStringInspection.class);
-        m_inspectionClasses.add(UnnecessaryTemporaryOnConversionFromStringInspection.class);
-        m_inspectionClasses.add(FieldMayBeStaticInspection.class);
-        m_inspectionClasses.add(MethodMayBeStaticInspection.class);
-        m_inspectionClasses.add(MapReplaceableByEnumMapInspection.class);
-        m_inspectionClasses.add(SetReplaceableByEnumSetInspection.class);
-        m_inspectionClasses.add(InnerClassMayBeStaticInspection.class);
-        m_inspectionClasses.add(AnonymousInnerClassMayBeStaticInspection.class);
-        m_inspectionClasses.add(StringBufferMustHaveInitialCapacityInspection.class);
-        m_inspectionClasses.add(StringBufferReplaceableByStringBuilderInspection.class);
-        m_inspectionClasses.add(StringBufferReplaceableByStringInspection.class);
-        m_inspectionClasses.add(StringReplaceableByStringBufferInspection.class);
-        m_inspectionClasses.add(CollectionsMustHaveInitialCapacityInspection.class);
-        m_inspectionClasses.add(StringBufferFieldInspection.class);
-        m_inspectionClasses.add(StringConcatenationInLoopsInspection.class);
-        m_inspectionClasses.add(StringConcatenationInsideStringBufferAppendInspection.class);
-        m_inspectionClasses.add(MultiplyOrDivideByPowerOfTwoInspection.class);
-        m_inspectionClasses.add(LengthOneStringsInConcatenationInspection.class);
-        m_inspectionClasses.add(BooleanConstructorInspection.class);
-        m_inspectionClasses.add(StringToStringInspection.class);
-        m_inspectionClasses.add(SubstringZeroInspection.class);
-        m_inspectionClasses.add(StringConstructorInspection.class);
-        m_inspectionClasses.add(StringBufferToStringInConcatenationInspection.class);
-        m_inspectionClasses.add(TailRecursionInspection.class);
-        m_inspectionClasses.add(TrivialStringConcatenationInspection.class);
-        m_inspectionClasses.add(SystemGCInspection.class);
-        m_inspectionClasses.add(SingleCharacterStartsWithInspection.class);
-        m_inspectionClasses.add(StringEqualsEmptyStringInspection.class);
-        m_inspectionClasses.add(RandomDoubleForRandomIntegerInspection.class);
-        m_inspectionClasses.add(FieldRepeatedlyAccessedInspection.class);
-        m_inspectionClasses.add(ManualArrayCopyInspection.class);
-        m_inspectionClasses.add(JavaLangReflectInspection.class);
-        m_inspectionClasses.add(StaticCollectionInspection.class);
-        m_inspectionClasses.add(ZeroLengthArrayInitializationInspection.class);
-        m_inspectionClasses.add(CallToSimpleGetterInClassInspection.class);
-        m_inspectionClasses.add(CallToSimpleSetterInClassInspection.class);
-    }
+  private void registerVisibilityInspections() {
+    m_inspectionClasses.add(FieldHidesSuperclassFieldInspection.class);
+    m_inspectionClasses.add(InnerClassVariableHidesOuterClassVariableInspection.class);
+    m_inspectionClasses.add(ParameterHidingMemberVariableInspection.class);
+    m_inspectionClasses.add(LocalVariableHidingMemberVariableInspection.class);
+    m_inspectionClasses.add(MethodOverridesPrivateMethodInspection.class);
+    m_inspectionClasses.add(MethodOverridesStaticMethodInspection.class);
+    m_inspectionClasses.add(MethodOverloadsParentMethodInspection.class);
+    m_inspectionClasses.add(TypeParameterHidesVisibleTypeInspection.class);
+  }
 
-    private void registerJ2MEInspections(){
-        m_inspectionClasses.add(AbstractClassWithOnlyOneDirectInheritorInspection.class);
-        m_inspectionClasses.add(InterfaceWithOnlyOneDirectInheritorInspection.class);
-        m_inspectionClasses.add(CheckForOutOfMemoryOnLargeArrayAllocationInspection.class);
-        m_inspectionClasses.add(OverlyLargePrimitiveArrayInitializerInspection.class);
-        m_inspectionClasses.add(RecordStoreResourceInspection.class);
-        m_inspectionClasses.add(ConnectionResourceInspection.class);
-        m_inspectionClasses.add(MethodCallInLoopConditionInspection.class);
-        m_inspectionClasses.add(ArrayLengthInLoopConditionInspection.class);
-    }
+  private void registerEncapsulationInspections() {
+    m_inspectionClasses.add(PublicFieldInspection.class);
+    m_inspectionClasses.add(PackageVisibleFieldInspection.class);
+    m_inspectionClasses.add(ProtectedFieldInspection.class);
+    m_inspectionClasses.add(PublicInnerClassInspection.class);
+    m_inspectionClasses.add(PackageVisibleInnerClassInspection.class);
+    m_inspectionClasses.add(ProtectedInnerClassInspection.class);
+    m_inspectionClasses.add(ReturnOfCollectionFieldInspection.class);
+    m_inspectionClasses.add(ReturnOfDateFieldInspection.class);
+    m_inspectionClasses.add(UseOfAnotherObjectsPrivateFieldInspection.class);
+    m_inspectionClasses.add(AssignmentToCollectionFieldFromParameterInspection.class);
+    m_inspectionClasses.add(AssignmentToDateFieldFromParameterInspection.class);
+  }
 
-    private void registerMaturityInspections(){
-        m_inspectionClasses.add(SuppressionAnnotationInspection.class);
-        m_inspectionClasses.add(SystemOutErrInspection.class);
-        m_inspectionClasses.add(ThrowablePrintStackTraceInspection.class);
-        m_inspectionClasses.add(TodoCommentInspection.class);
-        m_inspectionClasses.add(ThreadDumpStackInspection.class);
-        m_inspectionClasses.add(ClassWithoutToStringInspection.class);
-        m_inspectionClasses.add(ObsoleteCollectionInspection.class);
-    }
+  private void registerInitializerInspections() {
+    m_inspectionClasses.add(StaticVariableInitializationInspection.class);
+    m_inspectionClasses.add(InstanceVariableInitializationInspection.class);
+    m_inspectionClasses.add(AbstractMethodCallInConstructorInspection.class);
+    m_inspectionClasses.add(OverridableMethodCallInConstructorInspection.class);
+    m_inspectionClasses.add(OverriddenMethodCallInConstructorInspection.class);
+    m_inspectionClasses.add(ThisEscapedInConstructorInspection.class);
+    m_inspectionClasses.add(StaticVariableUninitializedUseInspection.class);
+    m_inspectionClasses.add(InstanceVariableUninitializedUseInspection.class);
+    m_inspectionClasses.add(NonThreadSafeLazyInitializationInspection.class);
+    m_inspectionClasses.add(NonFinalStaticVariableUsedInClassInitializationInspection.class);
+  }
 
-    private void registerJUnitInspections(){
-        m_inspectionClasses.add(AssertsWithoutMessagesInspection.class);
-        m_inspectionClasses.add(TestCaseWithConstructorInspection.class);
-        m_inspectionClasses.add(MisspelledSetUpInspection.class);
-        m_inspectionClasses.add(MisorderedAssertEqualsParametersInspection.class);
-        m_inspectionClasses.add(MisspelledTearDownInspection.class);
-        m_inspectionClasses.add(StaticSuiteInspection.class);
-        m_inspectionClasses.add(SetupCallsSuperSetupInspection.class);
-        m_inspectionClasses.add(TeardownCallsSuperTeardownInspection.class);
-        m_inspectionClasses.add(SetupIsPublicVoidNoArgInspection.class);
-        m_inspectionClasses.add(SimplifiableJUnitAssertionInspection.class);
-        m_inspectionClasses.add(TeardownIsPublicVoidNoArgInspection.class);
-        m_inspectionClasses.add(TestMethodIsPublicVoidNoArgInspection.class);
-        m_inspectionClasses.add(TestMethodWithoutAssertionInspection.class);
-        m_inspectionClasses.add(TestCaseWithNoTestMethodsInspection.class);
-        m_inspectionClasses.add(TestCaseInProductCodeInspection.class);
-        m_inspectionClasses.add(UnconstructableTestCaseInspection.class);
-    }
+  private void registerConfusingInspections() {
+    m_inspectionClasses.add(ClassEscapesItsScopeInspection.class);
+    m_inspectionClasses.add(ConfusingFloatingPointLiteralInspection.class);
+    m_inspectionClasses.add(OverlyComplexArithmeticExpressionInspection.class);
+    m_inspectionClasses.add(OverlyComplexBooleanExpressionInspection.class);
+    m_inspectionClasses.add(AssignmentToMethodParameterInspection.class);
+    m_inspectionClasses.add(AssignmentToCatchBlockParameterInspection.class);
+    m_inspectionClasses.add(ReuseOfLocalVariableInspection.class);
+    m_inspectionClasses.add(AssignmentToForLoopParameterInspection.class);
+    m_inspectionClasses.add(NestedAssignmentInspection.class);
+    m_inspectionClasses.add(LabeledStatementInspection.class);
+    m_inspectionClasses.add(BreakStatementInspection.class);
+    m_inspectionClasses.add(BreakStatementWithLabelInspection.class);
+    m_inspectionClasses.add(ContinueStatementInspection.class);
+    m_inspectionClasses.add(ContinueStatementWithLabelInspection.class);
+    m_inspectionClasses.add(ConditionalExpressionInspection.class);
+    m_inspectionClasses.add(NestedConditionalExpressionInspection.class);
+    m_inspectionClasses.add(LongLiteralsEndingWithLowercaseLInspection.class);
+    m_inspectionClasses.add(IncrementDecrementUsedAsExpressionInspection.class);
+    m_inspectionClasses.add(IfStatementWithTooManyBranchesInspection.class);
+    m_inspectionClasses.add(SwitchStatementWithTooManyBranchesInspection.class);
+    m_inspectionClasses.add(SwitchStatementWithTooFewBranchesInspection.class);
+    m_inspectionClasses.add(SwitchStatementDensityInspection.class);
+    m_inspectionClasses.add(NestedSwitchStatementInspection.class);
+    m_inspectionClasses.add(ChainedMethodCallInspection.class);
+    m_inspectionClasses.add(NestedMethodCallInspection.class);
+    m_inspectionClasses.add(OctalLiteralInspection.class);
+    m_inspectionClasses.add(ChainedEqualityInspection.class);
+    m_inspectionClasses.add(ConfusingOctalEscapeInspection.class);
+    m_inspectionClasses.add(MethodNamesDifferOnlyByCaseInspection.class);
+    m_inspectionClasses.add(OverloadedMethodsWithSameNumberOfParametersInspection.class);
+    m_inspectionClasses.add(ImplicitNumericConversionInspection.class);
+    m_inspectionClasses.add(ImplicitCallToSuperInspection.class);
+    m_inspectionClasses.add(RefusedBequestInspection.class);
+    m_inspectionClasses.add(CastThatLosesPrecisionInspection.class);
+    m_inspectionClasses.add(NegatedIfElseInspection.class);
+    m_inspectionClasses.add(NegatedConditionalInspection.class);
+    m_inspectionClasses.add(ConfusingElseInspection.class);
+    m_inspectionClasses.add(SwitchStatementWithConfusingDeclarationInspection.class);
+  }
 
-    public void disposeComponent(){
-    }
+  private void registerVerboseInspections() {
+    m_inspectionClasses.add(UnnecessaryLabelOnBreakStatementInspection.class);
+    m_inspectionClasses.add(UnnecessaryLabelOnContinueStatementInspection.class);
+    m_inspectionClasses.add(PointlessBooleanExpressionInspection.class);
+    m_inspectionClasses.add(ReplaceAssignmentWithOperatorAssignmentInspection.class);
+    m_inspectionClasses.add(TrivialIfInspection.class);
+    m_inspectionClasses.add(UnnecessaryConditionalExpressionInspection.class);
+    m_inspectionClasses.add(SimplifiableConditionalExpressionInspection.class);
+    m_inspectionClasses.add(ConstantConditionalExpressionInspection.class);
+    m_inspectionClasses.add(ConstantIfStatementInspection.class);
+    m_inspectionClasses.add(UnnecessaryParenthesesInspection.class);
+    m_inspectionClasses.add(UnnecessaryLocalVariableInspection.class);
+    m_inspectionClasses.add(UnnecessaryThisInspection.class);
+    m_inspectionClasses.add(UnnecessaryBlockStatementInspection.class);
+    m_inspectionClasses.add(UnnecessaryInterfaceModifierInspection.class);
+    m_inspectionClasses.add(UnnecessaryEnumModifierInspection.class);
+    m_inspectionClasses.add(UnnecessaryReturnInspection.class);
+    m_inspectionClasses.add(UnnecessaryContinueInspection.class);
+    m_inspectionClasses.add(UnnecessarySemicolonInspection.class);
+    m_inspectionClasses.add(UnnecessaryFullyQualifiedNameInspection.class);
+    m_inspectionClasses.add(UnnecessaryQualifierForThisInspection.class);
+    m_inspectionClasses.add(UnusedLabelInspection.class);
+    m_inspectionClasses.add(RedundantFieldInitializationInspection.class);
+    m_inspectionClasses.add(RedundantImplementsInspection.class);
+    m_inspectionClasses.add(ExtendsObjectInspection.class);
+    m_inspectionClasses.add(TypeParameterExtendsObjectInspection.class);
+    m_inspectionClasses.add(PointlessArithmeticExpressionInspection.class);
+    m_inspectionClasses.add(PointlessBitwiseExpressionInspection.class);
+    m_inspectionClasses.add(UnnecessarySuperConstructorInspection.class);
+    m_inspectionClasses.add(UnnecessaryConstructorInspection.class);
+    m_inspectionClasses.add(ForLoopReplaceableByWhileInspection.class);
+    m_inspectionClasses.add(UnnecessaryDefaultInspection.class);
+    m_inspectionClasses.add(UnnecessaryBoxingInspection.class);
+    m_inspectionClasses.add(UnnecessaryUnboxingInspection.class);
+    m_inspectionClasses.add(UnnecessaryFinalOnParameterInspection.class);
+    m_inspectionClasses.add(UnnecessaryFinalOnLocalVariableInspection.class);
+    m_inspectionClasses.add(ForCanBeForeachInspection.class);
+    m_inspectionClasses.add(WhileCanBeForeachInspection.class);
+  }
 
-    public boolean isTelemetryEnabled()
-    {
-        return TELEMETRY_ENABLED;
-    }
+  private void registerStyleInspections() {
+    m_inspectionClasses.add(TooBroadScopeInspection.class);
+    m_inspectionClasses.add(ReturnThisInspection.class);
+    m_inspectionClasses.add(ConstantOnLHSOfComparisonInspection.class);
+    m_inspectionClasses.add(ConstantOnRHSOfComparisonInspection.class);
+    m_inspectionClasses.add(ControlFlowStatementWithoutBracesInspection.class);
+    m_inspectionClasses.add(LiteralAsArgToStringEqualsInspection.class);
+    m_inspectionClasses.add(MissortedModifiersInspection.class);
+    m_inspectionClasses.add(CStyleArrayDeclarationInspection.class);
+    m_inspectionClasses.add(MultipleDeclarationInspection.class);
+    m_inspectionClasses.add(MultipleTypedDeclarationInspection.class);
+    m_inspectionClasses.add(UnqualifiedStaticUsageInspection.class);
+    m_inspectionClasses.add(UnnecessarilyQualifiedStaticUsageInspection.class);
+  }
 
-    public InspectionGadgetsTelemetry getTelemetry(){
-        return telemetry;
-    }
+  private void registerExceptionInspections() {
+    m_inspectionClasses.add(CatchGenericClassInspection.class);
+    m_inspectionClasses.add(EmptyCatchBlockInspection.class);
+    m_inspectionClasses.add(UnusedCatchParameterInspection.class);
+    m_inspectionClasses.add(EmptyFinallyBlockInspection.class);
+    m_inspectionClasses.add(FinallyBlockCannotCompleteNormallyInspection.class);
+    m_inspectionClasses.add(EmptyTryBlockInspection.class);
+    m_inspectionClasses.add(ThrowFromFinallyBlockInspection.class);
+    m_inspectionClasses.add(ThrowCaughtLocallyInspection.class);
+    m_inspectionClasses.add(ReturnFromFinallyBlockInspection.class);
+    m_inspectionClasses.add(ContinueOrBreakFromFinallyBlockInspection.class);
+    m_inspectionClasses.add(BadExceptionThrownInspection.class);
+    m_inspectionClasses.add(BadExceptionDeclaredInspection.class);
+    m_inspectionClasses.add(BadExceptionCaughtInspection.class);
+    m_inspectionClasses.add(TooBroadCatchInspection.class);
+    m_inspectionClasses.add(CheckedExceptionClassInspection.class);
+    m_inspectionClasses.add(UncheckedExceptionClassInspection.class);
+    m_inspectionClasses.add(ThreadDeathRethrownInspection.class);
+    m_inspectionClasses.add(ErrorRethrownInspection.class);
+    m_inspectionClasses.add(NestedTryStatementInspection.class);
+    m_inspectionClasses.add(ExceptionFromCatchWhichDoesntWrapInspection.class);
+    m_inspectionClasses.add(InstanceofCatchParameterInspection.class);
+    m_inspectionClasses.add(NonFinalFieldOfExceptionInspection.class);
+  }
+
+  private void registerFinalizationInspections() {
+    m_inspectionClasses.add(FinalizeInspection.class);
+    m_inspectionClasses.add(FinalizeNotProtectedInspection.class);
+    m_inspectionClasses.add(FinalizeCallsSuperFinalizeInspection.class);
+    m_inspectionClasses.add(NoExplicitFinalizeCallsInspection.class);
+  }
+
+  private void registerSerializationInspections() {
+    m_inspectionClasses.add(SerializableHasSerializationMethodsInspection.class);
+    m_inspectionClasses.add(SerializableHasSerialVersionUIDFieldInspection.class);
+    m_inspectionClasses.add(ReadObjectInitializationInspection.class);
+    m_inspectionClasses.add(ReadObjectAndWriteObjectPrivateInspection.class);
+    m_inspectionClasses.add(SerialVersionUIDNotStaticFinalInspection.class);
+    m_inspectionClasses.add(SerialPersistentFieldsWithWrongSignatureInspection.class);
+    m_inspectionClasses.add(ReadResolveAndWriteReplaceProtectedInspection.class);
+    m_inspectionClasses.add(TransientFieldInNonSerializableClassInspection.class);
+    m_inspectionClasses.add(SerializableWithUnconstructableAncestorInspection.class);
+    m_inspectionClasses.add(NonSerializableWithSerializationMethodsInspection.class);
+    m_inspectionClasses.add(ExternalizableWithSerializationMethodsInspection.class);
+    m_inspectionClasses.add(NonSerializableWithSerialVersionUIDFieldInspection.class);
+    m_inspectionClasses.add(SerializableInnerClassHasSerialVersionUIDFieldInspection.class);
+    m_inspectionClasses.add(SerializableInnerClassWithNonSerializableOuterClassInspection.class);
+  }
+
+  private void registerThreadingInspections() {
+    m_inspectionClasses.add(DoubleCheckedLockingInspection.class);
+    m_inspectionClasses.add(BusyWaitInspection.class);
+    m_inspectionClasses.add(SleepWhileHoldingLockInspection.class);
+    m_inspectionClasses.add(ArithmeticOnVolatileFieldInspection.class);
+    m_inspectionClasses.add(CallToNativeMethodWhileLockedInspection.class);
+    m_inspectionClasses.add(ObjectNotifyInspection.class);
+    m_inspectionClasses.add(ConditionSignalInspection.class);
+    m_inspectionClasses.add(ThreadWithDefaultRunMethodInspection.class);
+    m_inspectionClasses.add(ExtendsThreadInspection.class);
+    m_inspectionClasses.add(NakedNotifyInspection.class);
+    m_inspectionClasses.add(UnconditionalWaitInspection.class);
+    m_inspectionClasses.add(SystemRunFinalizersOnExitInspection.class);
+    m_inspectionClasses.add(ThreadPriorityInspection.class);
+    m_inspectionClasses.add(ThreadYieldInspection.class);
+    m_inspectionClasses.add(ThreadStopSuspendResumeInspection.class);
+    m_inspectionClasses.add(WhileLoopSpinsOnFieldInspection.class);
+    m_inspectionClasses.add(WaitNotInLoopInspection.class);
+    m_inspectionClasses.add(AwaitNotInLoopInspection.class);
+    m_inspectionClasses.add(WaitCalledOnConditionInspection.class);
+    m_inspectionClasses.add(NotifyCalledOnConditionInspection.class);
+    m_inspectionClasses.add(VolatileLongOrDoubleFieldInspection.class);
+    m_inspectionClasses.add(VolatileArrayFieldInspection.class);
+    m_inspectionClasses.add(WaitNotInSynchronizedContextInspection.class);
+    m_inspectionClasses.add(WaitWhileHoldingTwoLocksInspection.class);
+    m_inspectionClasses.add(NotifyNotInSynchronizedContextInspection.class);
+    m_inspectionClasses.add(ThreadRunInspection.class);
+    m_inspectionClasses.add(ThreadStartInConstructionInspection.class);
+    m_inspectionClasses.add(SynchronizedMethodInspection.class);
+    m_inspectionClasses.add(SynchronizeOnLockInspection.class);
+    m_inspectionClasses.add(SynchronizeOnNonFinalFieldInspection.class);
+    m_inspectionClasses.add(SynchronizeOnThisInspection.class);
+    m_inspectionClasses.add(NestedSynchronizedStatementInspection.class);
+    m_inspectionClasses.add(EmptySynchronizedStatementInspection.class);
+    m_inspectionClasses.add(NonSynchronizedMethodOverridesSynchronizedMethodInspection.class);
+    m_inspectionClasses.add(PublicFieldAccessedInSynchronizedContextInspection.class);
+    m_inspectionClasses.add(SafeLockInspection.class);
+    m_inspectionClasses.add(FieldAccessedSynchronizedAndUnsynchronizedInspection.class);
+  }
+
+  private void registerMethodMetricsInspections() {
+    m_inspectionClasses.add(ThreeNegationsPerMethodInspection.class);
+    m_inspectionClasses.add(MethodWithMultipleLoopsInspection.class);
+    m_inspectionClasses.add(MultipleReturnPointsPerMethodInspection.class);
+    m_inspectionClasses.add(ThrownExceptionsPerMethodInspection.class);
+    m_inspectionClasses.add(ParametersPerMethodInspection.class);
+    m_inspectionClasses.add(CyclomaticComplexityInspection.class);
+    m_inspectionClasses.add(NestingDepthInspection.class);
+    m_inspectionClasses.add(NonCommentSourceStatementsInspection.class);
+    m_inspectionClasses.add(MethodCouplingInspection.class);
+  }
+
+  private void registerClassMetricsInspections() {
+    m_inspectionClasses.add(AnonymousClassComplexityInspection.class);
+    m_inspectionClasses.add(AnonymousClassMethodCountInspection.class);
+    m_inspectionClasses.add(ClassComplexityInspection.class);
+    m_inspectionClasses.add(ClassInheritanceDepthInspection.class);
+    m_inspectionClasses.add(ClassNestingDepthInspection.class);
+    m_inspectionClasses.add(ClassCouplingInspection.class);
+    m_inspectionClasses.add(ConstructorCountInspection.class);
+    m_inspectionClasses.add(MethodCountInspection.class);
+    m_inspectionClasses.add(FieldCountInspection.class);
+  }
+
+  private void registerPortabilityInspections() {
+    m_inspectionClasses.add(RuntimeExecInspection.class);
+    m_inspectionClasses.add(SystemExitInspection.class);
+    m_inspectionClasses.add(SystemGetenvInspection.class);
+    m_inspectionClasses.add(HardcodedLineSeparatorsInspection.class);
+    m_inspectionClasses.add(HardcodedFileSeparatorsInspection.class);
+    m_inspectionClasses.add(NativeMethodsInspection.class);
+    m_inspectionClasses.add(AssertAsNameInspection.class);
+    m_inspectionClasses.add(EnumAsNameInspection.class);
+    m_inspectionClasses.add(AssertStatementInspection.class);
+    m_inspectionClasses.add(AutoBoxingInspection.class);
+    m_inspectionClasses.add(AutoUnboxingInspection.class);
+    m_inspectionClasses.add(VarargParameterInspection.class);
+    m_inspectionClasses.add(ForeachStatementInspection.class);
+    m_inspectionClasses.add(EnumClassInspection.class);
+    m_inspectionClasses.add(AnnotationClassInspection.class);
+    m_inspectionClasses.add(AnnotationInspection.class);
+    m_inspectionClasses.add(UseOfSunClassesInspection.class);
+    m_inspectionClasses.add(UseOfAWTPeerClassInspection.class);
+    m_inspectionClasses.add(UseOfJDBCDriverClassInspection.class);
+    m_inspectionClasses.add(UseOfProcessBuilderInspection.class);
+  }
+
+  private void registerInternationalInspections() {
+    m_inspectionClasses.add(CharacterComparisonInspection.class);
+    m_inspectionClasses.add(MagicCharacterInspection.class);
+    m_inspectionClasses.add(NumericToStringInspection.class);
+    m_inspectionClasses.add(DateToStringInspection.class);
+    m_inspectionClasses.add(TimeToStringInspection.class);
+    m_inspectionClasses.add(StringCompareToInspection.class);
+    m_inspectionClasses.add(StringEqualsIgnoreCaseInspection.class);
+    m_inspectionClasses.add(StringEqualsInspection.class);
+    m_inspectionClasses.add(StringConcatenationInspection.class);
+    m_inspectionClasses.add(StringTokenizerInspection.class);
+    m_inspectionClasses.add(StringToUpperWithoutLocaleInspection.class);
+    m_inspectionClasses.add(SimpleDateFormatWithoutLocaleInspection.class);
+  }
+
+  private void registerPerformanceInspections() {
+    m_inspectionClasses.add(PrivateMemberAccessBetweenOuterAndInnerClassInspection.class);
+    m_inspectionClasses.add(ObjectAllocationInLoopInspection.class);
+    m_inspectionClasses.add(InstantiatingObjectToGetClassObjectInspection.class);
+    m_inspectionClasses.add(UnnecessaryTemporaryOnConversionToStringInspection.class);
+    m_inspectionClasses.add(UnnecessaryTemporaryOnConversionFromStringInspection.class);
+    m_inspectionClasses.add(FieldMayBeStaticInspection.class);
+    m_inspectionClasses.add(MethodMayBeStaticInspection.class);
+    m_inspectionClasses.add(MapReplaceableByEnumMapInspection.class);
+    m_inspectionClasses.add(SetReplaceableByEnumSetInspection.class);
+    m_inspectionClasses.add(InnerClassMayBeStaticInspection.class);
+    m_inspectionClasses.add(AnonymousInnerClassMayBeStaticInspection.class);
+    m_inspectionClasses.add(StringBufferMustHaveInitialCapacityInspection.class);
+    m_inspectionClasses.add(StringBufferReplaceableByStringBuilderInspection.class);
+    m_inspectionClasses.add(StringBufferReplaceableByStringInspection.class);
+    m_inspectionClasses.add(StringReplaceableByStringBufferInspection.class);
+    m_inspectionClasses.add(CollectionsMustHaveInitialCapacityInspection.class);
+    m_inspectionClasses.add(StringBufferFieldInspection.class);
+    m_inspectionClasses.add(StringConcatenationInLoopsInspection.class);
+    m_inspectionClasses.add(StringConcatenationInsideStringBufferAppendInspection.class);
+    m_inspectionClasses.add(MultiplyOrDivideByPowerOfTwoInspection.class);
+    m_inspectionClasses.add(LengthOneStringsInConcatenationInspection.class);
+    m_inspectionClasses.add(BooleanConstructorInspection.class);
+    m_inspectionClasses.add(StringToStringInspection.class);
+    m_inspectionClasses.add(SubstringZeroInspection.class);
+    m_inspectionClasses.add(StringConstructorInspection.class);
+    m_inspectionClasses.add(StringBufferToStringInConcatenationInspection.class);
+    m_inspectionClasses.add(TailRecursionInspection.class);
+    m_inspectionClasses.add(TrivialStringConcatenationInspection.class);
+    m_inspectionClasses.add(SystemGCInspection.class);
+    m_inspectionClasses.add(SingleCharacterStartsWithInspection.class);
+    m_inspectionClasses.add(StringEqualsEmptyStringInspection.class);
+    m_inspectionClasses.add(RandomDoubleForRandomIntegerInspection.class);
+    m_inspectionClasses.add(FieldRepeatedlyAccessedInspection.class);
+    m_inspectionClasses.add(ManualArrayCopyInspection.class);
+    m_inspectionClasses.add(JavaLangReflectInspection.class);
+    m_inspectionClasses.add(StaticCollectionInspection.class);
+    m_inspectionClasses.add(ZeroLengthArrayInitializationInspection.class);
+    m_inspectionClasses.add(CallToSimpleGetterInClassInspection.class);
+    m_inspectionClasses.add(CallToSimpleSetterInClassInspection.class);
+  }
+
+  private void registerJ2MEInspections() {
+    m_inspectionClasses.add(AbstractClassWithOnlyOneDirectInheritorInspection.class);
+    m_inspectionClasses.add(InterfaceWithOnlyOneDirectInheritorInspection.class);
+    m_inspectionClasses.add(CheckForOutOfMemoryOnLargeArrayAllocationInspection.class);
+    m_inspectionClasses.add(OverlyLargePrimitiveArrayInitializerInspection.class);
+    m_inspectionClasses.add(RecordStoreResourceInspection.class);
+    m_inspectionClasses.add(ConnectionResourceInspection.class);
+    m_inspectionClasses.add(MethodCallInLoopConditionInspection.class);
+    m_inspectionClasses.add(ArrayLengthInLoopConditionInspection.class);
+  }
+
+  private void registerMaturityInspections() {
+    m_inspectionClasses.add(SuppressionAnnotationInspection.class);
+    m_inspectionClasses.add(SystemOutErrInspection.class);
+    m_inspectionClasses.add(ThrowablePrintStackTraceInspection.class);
+    m_inspectionClasses.add(TodoCommentInspection.class);
+    m_inspectionClasses.add(ThreadDumpStackInspection.class);
+    m_inspectionClasses.add(ClassWithoutToStringInspection.class);
+    m_inspectionClasses.add(ObsoleteCollectionInspection.class);
+  }
+
+  private void registerJUnitInspections() {
+    m_inspectionClasses.add(AssertsWithoutMessagesInspection.class);
+    m_inspectionClasses.add(TestCaseWithConstructorInspection.class);
+    m_inspectionClasses.add(MisspelledSetUpInspection.class);
+    m_inspectionClasses.add(MisorderedAssertEqualsParametersInspection.class);
+    m_inspectionClasses.add(MisspelledTearDownInspection.class);
+    m_inspectionClasses.add(StaticSuiteInspection.class);
+    m_inspectionClasses.add(SetupCallsSuperSetupInspection.class);
+    m_inspectionClasses.add(TeardownCallsSuperTeardownInspection.class);
+    m_inspectionClasses.add(SetupIsPublicVoidNoArgInspection.class);
+    m_inspectionClasses.add(SimplifiableJUnitAssertionInspection.class);
+    m_inspectionClasses.add(TeardownIsPublicVoidNoArgInspection.class);
+    m_inspectionClasses.add(TestMethodIsPublicVoidNoArgInspection.class);
+    m_inspectionClasses.add(TestMethodWithoutAssertionInspection.class);
+    m_inspectionClasses.add(TestCaseWithNoTestMethodsInspection.class);
+    m_inspectionClasses.add(TestCaseInProductCodeInspection.class);
+    m_inspectionClasses.add(UnconstructableTestCaseInspection.class);
+  }
+
+  public void disposeComponent() {
+  }
+
+  public boolean isTelemetryEnabled() {
+    return TELEMETRY_ENABLED;
+  }
+
+  public InspectionGadgetsTelemetry getTelemetry() {
+    return telemetry;
+  }
 }

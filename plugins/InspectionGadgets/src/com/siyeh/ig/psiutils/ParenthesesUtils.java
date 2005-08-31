@@ -259,7 +259,7 @@ public class ParenthesesUtils{
             PsiInstanceOfExpression instanceofExp){
         final PsiExpression body = instanceofExp.getOperand();
         final PsiTypeElement type = instanceofExp.getCheckType();
-        return removeParentheses(body) + " instanceof " + type.getText();
+        return removeParentheses(body) + " " + PsiKeyword.INSTANCEOF + " " + type.getText();
     }
 
     private static String removeParensFromBinaryExpression(
@@ -368,7 +368,7 @@ public class ParenthesesUtils{
         }
         final int length = expressionText.length();
         final StringBuffer out = new StringBuffer(length);
-        out.append("new ");
+        out.append(PsiKeyword.NEW + " ");
         final PsiType type = newExp.getType();
         final PsiType deepType = type.getDeepComponentType();
         final String text = deepType.getPresentableText();

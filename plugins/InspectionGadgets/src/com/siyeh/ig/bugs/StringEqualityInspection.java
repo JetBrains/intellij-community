@@ -29,6 +29,7 @@ import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class StringEqualityInspection extends ExpressionInspection {
     private final EqualityToEqualsFix fix = new EqualityToEqualsFix();
@@ -62,7 +63,6 @@ public class StringEqualityInspection extends ExpressionInspection {
             return InspectionGadgetsBundle.message("string.comparison.replace.quickfix");
         }
 
-        @SuppressWarnings({"HardCodedStringLiteral"})
         public void doFix(Project project, ProblemDescriptor descriptor)
                                                                          throws IncorrectOperationException{
             final PsiElement comparisonToken = descriptor.getPsiElement();
@@ -81,7 +81,7 @@ public class StringEqualityInspection extends ExpressionInspection {
 
             final PsiExpression strippedRhs = ParenthesesUtils.stripParentheses(rhs);
 
-            final String expString;
+            @NonNls final String expString;
             if (ParenthesesUtils.getPrecendence(strippedLhs) > ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
                 expString = '(' + strippedLhs.getText() + ").equals(" + strippedRhs.getText() + ')';
             } else {

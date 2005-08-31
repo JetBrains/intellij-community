@@ -19,56 +19,54 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class NonCommentSourceStatementsInspection extends MethodMetricInspection {
-    private static final int DEFAULT_LIMIT = 30;
 
-    public String getID(){
-        return "OverlyLongMethod";
+  private static final int DEFAULT_LIMIT = 30;
+
+  public String getID() {
+    return "OverlyLongMethod";
+  }
+
+  public String getGroupDisplayName() {
+    return GroupNames.METHODMETRICS_GROUP_NAME;
+  }
+
+  protected int getDefaultLimit() {
+    return DEFAULT_LIMIT;
+  }
+
+  protected String getConfigurationLabel() {
+    return InspectionGadgetsBundle.message("non.comment.source.statements.limit.option");
+  }
+
+  public String buildErrorString(PsiElement location) {
+    final PsiMethod method = (PsiMethod)location.getParent();
+    assert method != null;
+    final NCSSVisitor visitor = new NCSSVisitor();
+    method.accept(visitor);
+    final int statementCount = visitor.getStatementCount();
+    return InspectionGadgetsBundle.message("non.comment.source.statements.problem.descriptor", statementCount);
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new NonCommentSourceStatementsMethodVisitor();
+  }
+
+  private class NonCommentSourceStatementsMethodVisitor extends BaseInspectionVisitor {
+
+    public void visitMethod(@NotNull PsiMethod method) {
+      // note: no call to super
+      final NCSSVisitor visitor = new NCSSVisitor();
+      method.accept(visitor);
+      final int count = visitor.getStatementCount();
+
+      if (count <= getLimit()) {
+        return;
+      }
+      registerMethodError(method);
     }
-    public String getDisplayName() {
-        return "Overly long method ";
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.METHODMETRICS_GROUP_NAME;
-    }
-
-    protected int getDefaultLimit() {
-        return DEFAULT_LIMIT;
-    }
-
-    protected String getConfigurationLabel() {
-        return "Non-comment source statements limit:";
-    }
-
-    public String buildErrorString(PsiElement location) {
-        final PsiMethod method = (PsiMethod) location.getParent();
-        assert method != null;
-        final NCSSVisitor visitor=new NCSSVisitor();
-        method.accept(visitor);
-        final int statementCount = visitor.getStatementCount();
-        return "#ref is too long (# Non-comment source statements = " + statementCount + ") #loc";
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new NonCommentSourceStatementsMethodVisitor();
-    }
-
-    private class NonCommentSourceStatementsMethodVisitor extends BaseInspectionVisitor {
-
-        public void visitMethod(@NotNull PsiMethod method) {
-            // note: no call to super
-            final NCSSVisitor visitor = new NCSSVisitor();
-            method.accept(visitor);
-            final int count = visitor.getStatementCount();
-
-            if (count <= getLimit()) {
-                return;
-            }
-            registerMethodError(method);
-        }
-    }
-
+  }
 }

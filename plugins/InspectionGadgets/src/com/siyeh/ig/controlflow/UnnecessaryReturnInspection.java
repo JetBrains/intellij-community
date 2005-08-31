@@ -29,84 +29,82 @@ import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class UnnecessaryReturnInspection extends StatementInspection{
-    private final UnnecessaryReturnFix fix = new UnnecessaryReturnFix();
+public class UnnecessaryReturnInspection extends StatementInspection {
 
-    public String getID(){
-        return "UnnecessaryReturnStatement";
+  private final UnnecessaryReturnFix fix = new UnnecessaryReturnFix();
+
+  public String getID() {
+    return "UnnecessaryReturnStatement";
+  }
+
+  public String getGroupDisplayName() {
+    return GroupNames.CONTROL_FLOW_GROUP_NAME;
+  }
+
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  public String buildErrorString(PsiElement location) {
+    final PsiMethod method =
+      PsiTreeUtil.getParentOfType(location, PsiMethod.class);
+    assert method != null;
+    if (method.isConstructor()) {
+      return "#ref is unnecessary as the last statement in a constructor #loc";
+    }
+    else {
+      return "#ref is unnecessary as the last statement in a method returning 'void' #loc";
+    }
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new UnnecessaryReturnVisitor();
+  }
+
+  public InspectionGadgetsFix buildFix(PsiElement location) {
+    return fix;
+  }
+
+  private static class UnnecessaryReturnFix extends InspectionGadgetsFix {
+    public String getName() {
+      return "Remove unnecessary return";
     }
 
-    public String getDisplayName(){
-        return "Unnecessary 'return' statement";
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement returnKeywordElement = descriptor.getPsiElement();
+      final PsiElement returnStatement = returnKeywordElement.getParent();
+      assert returnStatement != null;
+      deleteElement(returnStatement);
     }
+  }
 
-    public String getGroupDisplayName(){
-        return GroupNames.CONTROL_FLOW_GROUP_NAME;
-    }
+  private static class UnnecessaryReturnVisitor extends StatementInspectionVisitor {
 
-    public boolean isEnabledByDefault(){
-        return true;
-    }
+    public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
+      super.visitReturnStatement(statement);
 
-    public String buildErrorString(PsiElement location){
-        final PsiMethod method =
-                PsiTreeUtil.getParentOfType(location, PsiMethod.class);
-        assert method != null;
-        if(method.isConstructor()){
-            return "#ref is unnecessary as the last statement in a constructor #loc";
-        } else{
-            return "#ref is unnecessary as the last statement in a method returning 'void' #loc";
+      if (statement.getContainingFile() instanceof JspFile) {
+        return;
+      }
+      final PsiMethod method =
+        PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
+      if (method == null) {
+        return;
+      }
+      if (!method.isConstructor()) {
+        final PsiType returnType = method.getReturnType();
+        if (!PsiType.VOID.equals(returnType)) {
+          return;
         }
+      }
+      final PsiCodeBlock body = method.getBody();
+      if (body == null) {
+        return;
+      }
+      if (ControlFlowUtils.blockCompletesWithStatement(body, statement)) {
+        registerStatementError(statement);
+      }
     }
-
-    public BaseInspectionVisitor buildVisitor(){
-        return new UnnecessaryReturnVisitor();
-    }
-
-    public InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
-    }
-
-    private static class UnnecessaryReturnFix extends InspectionGadgetsFix{
-        public String getName(){
-            return "Remove unnecessary return";
-        }
-
-        public void doFix(Project project, ProblemDescriptor descriptor)
-		        throws IncorrectOperationException{
-            final PsiElement returnKeywordElement = descriptor.getPsiElement();
-            final PsiElement returnStatement = returnKeywordElement.getParent();
-            assert returnStatement !=null;
-            deleteElement(returnStatement);
-        }
-    }
-
-    private static class UnnecessaryReturnVisitor extends StatementInspectionVisitor{
-
-        public void visitReturnStatement(@NotNull PsiReturnStatement statement){
-            super.visitReturnStatement(statement);
-
-            if(statement.getContainingFile() instanceof JspFile){
-                return;
-            }
-            final PsiMethod method =
-                    PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
-            if(method == null){
-	            return;
-            }
-            if(!method.isConstructor()){
-                final PsiType returnType = method.getReturnType();
-                if(!PsiType.VOID.equals(returnType)){
-                    return;
-                }
-            }
-            final PsiCodeBlock body = method.getBody();
-            if(body == null){
-                return;
-            }
-            if(ControlFlowUtils.blockCompletesWithStatement(body, statement)){
-                registerStatementError(statement);
-            }
-        }
-    }
+  }
 }

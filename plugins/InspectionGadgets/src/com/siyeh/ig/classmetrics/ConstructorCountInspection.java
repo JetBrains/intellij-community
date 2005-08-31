@@ -20,6 +20,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ConstructorCountInspection
@@ -30,7 +31,7 @@ public class ConstructorCountInspection
         return "ClassWithTooManyConstructors";
     }
     public String getDisplayName() {
-        return "Class with too many constructors";
+        return InspectionGadgetsBundle.message("too.many.constructors.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -42,13 +43,13 @@ public class ConstructorCountInspection
     }
 
     protected String getConfigurationLabel() {
-        return "Constructor count limit:";
+        return InspectionGadgetsBundle.message("too.many.constructors.count.limit.option");
     }
 
     public String buildErrorString(PsiElement location) {
         final PsiClass aClass = (PsiClass) location.getParent();
         final int count = calculateTotalConstructorCount(aClass);
-        return "#ref has too many constructors (constructor count = " + count + ") #loc";
+        return InspectionGadgetsBundle.message("too.many.constructors.problem.descriptor", count);
     }
 
     public BaseInspectionVisitor buildVisitor() {

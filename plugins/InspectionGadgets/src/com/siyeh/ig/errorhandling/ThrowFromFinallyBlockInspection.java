@@ -25,34 +25,26 @@ import com.siyeh.ig.psiutils.ControlFlowUtils;
 
 public class ThrowFromFinallyBlockInspection extends StatementInspection {
 
-    public String getDisplayName() {
-        return "'throw' inside 'finally' block";
-    }
+  public String getGroupDisplayName() {
+    return GroupNames.ERRORHANDLING_GROUP_NAME;
+  }
 
-    public String getGroupDisplayName() {
-        return GroupNames.ERRORHANDLING_GROUP_NAME;
-    }
+  public boolean isEnabledByDefault() {
+    return true;
+  }
 
-    public boolean isEnabledByDefault(){
-        return true;
-    }
-    public String buildErrorString(PsiElement location) {
-        return "'#ref' inside 'finally' block #loc";
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new ThrowFromFinallyBlockVisitor();
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ThrowFromFinallyBlockVisitor();
-    }
+  private static class ThrowFromFinallyBlockVisitor extends StatementInspectionVisitor {
 
-    private static class ThrowFromFinallyBlockVisitor extends StatementInspectionVisitor {
-       
-        public void visitThrowStatement(PsiThrowStatement statement) {
-            super.visitThrowStatement(statement);
-            if (!ControlFlowUtils.isInFinallyBlock(statement)) {
-                return;
-            }
-            registerStatementError(statement);
-        }
+    public void visitThrowStatement(PsiThrowStatement statement) {
+      super.visitThrowStatement(statement);
+      if (!ControlFlowUtils.isInFinallyBlock(statement)) {
+        return;
+      }
+      registerStatementError(statement);
     }
-
+  }
 }

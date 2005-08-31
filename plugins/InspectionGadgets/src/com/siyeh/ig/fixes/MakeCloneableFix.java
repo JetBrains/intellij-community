@@ -22,10 +22,11 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.InspectionGadgetsBundle;
 
 public class MakeCloneableFix extends InspectionGadgetsFix {
     public String getName() {
-        return "Make class Cloneable";
+        return InspectionGadgetsBundle.message("make.cloneable.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

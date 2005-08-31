@@ -31,101 +31,95 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class NestedMethodCallInspection extends ExpressionInspection {
-    /** @noinspection PublicField*/
-    public boolean m_ignoreFieldInitializations = true;
-    private final NestedMethodCallFix fix = new NestedMethodCallFix();
 
-    public String getDisplayName() {
-        return "Nested method call";
+  /**
+   * @noinspection PublicField
+   */
+  public boolean m_ignoreFieldInitializations = true;
+  private final NestedMethodCallFix fix = new NestedMethodCallFix();
+
+  public String getGroupDisplayName() {
+    return GroupNames.STYLE_GROUP_NAME;
+  }
+
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel("Ignore nested method calls in field initializers",
+                                          this, "m_ignoreFieldInitializations");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new NestedMethodCallVisitor();
+  }
+
+  protected InspectionGadgetsFix buildFix(PsiElement location) {
+    return fix;
+  }
+
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  private static class NestedMethodCallFix extends InspectionGadgetsFix {
+    public String getName() {
+      return "Introduce variable";
     }
 
-    public String getGroupDisplayName() {
-        return GroupNames.STYLE_GROUP_NAME;
+    public void doFix(Project project, ProblemDescriptor descriptor) {
+      final RefactoringActionHandlerFactory factory = RefactoringActionHandlerFactory.getInstance();
+      final RefactoringActionHandler introduceHandler =
+        factory.createIntroduceVariableHandler();
+      final PsiElement methodNameElement = descriptor.getPsiElement();
+      final PsiElement methodExpression = methodNameElement.getParent();
+      assert methodExpression != null;
+      final PsiElement methodCallExpression = methodExpression.getParent();
+      introduceHandler.invoke(project, new PsiElement[]{methodCallExpression}, null);
     }
+  }
 
-    public String buildErrorString(PsiElement location) {
-        return "Nested method call #ref() #loc";
-    }
+  private class NestedMethodCallVisitor extends BaseInspectionVisitor {
 
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel("Ignore nested method calls in field initializers",
-                this, "m_ignoreFieldInitializations");
-    }
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      PsiExpression outerExpression = expression;
+      while (outerExpression != null && outerExpression.getParent() instanceof PsiExpression) {
+        outerExpression = (PsiExpression)outerExpression.getParent();
+      }
+      if (outerExpression == null) {
+        return;
+      }
+      final PsiElement parent = outerExpression.getParent();
+      if (!(parent instanceof PsiExpressionList)) {
+        return;
+      }
+      final PsiElement grandParent = parent.getParent();
+      if (!(grandParent instanceof PsiCallExpression)) {
+        return;
+      }
+      if (grandParent instanceof PsiMethodCallExpression) {
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new NestedMethodCallVisitor();
-    }
-
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
-    }
-
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-        return true;
-    }
-
-    private static class NestedMethodCallFix extends InspectionGadgetsFix {
-        public String getName() {
-            return "Introduce variable";
+        final PsiMethodCallExpression surroundingCall =
+          (PsiMethodCallExpression)grandParent;
+        final PsiReferenceExpression methodExpression =
+          surroundingCall.getMethodExpression();
+        final String callName = methodExpression.getReferenceName();
+        if (PsiKeyword.THIS.equals(callName) || PsiKeyword.SUPER.equals(callName)) {
+          return;     //ignore nested method calls at the start of a constructor,
+          //where they can't be extracted
         }
-
-        public void doFix(Project project, ProblemDescriptor descriptor) {
-            final RefactoringActionHandlerFactory factory = RefactoringActionHandlerFactory.getInstance();
-            final RefactoringActionHandler introduceHandler =
-                    factory.createIntroduceVariableHandler();
-            final PsiElement methodNameElement = descriptor.getPsiElement();
-            final PsiElement methodExpression = methodNameElement.getParent();
-            assert methodExpression != null;
-            final PsiElement methodCallExpression = methodExpression.getParent();
-            introduceHandler.invoke(project, new PsiElement[]{methodCallExpression}, null);
+      }
+      final PsiReferenceExpression reference =
+        expression.getMethodExpression();
+      if (reference == null) {
+        return;
+      }
+      if (m_ignoreFieldInitializations) {
+        final PsiElement field =
+          PsiTreeUtil.getParentOfType(expression, PsiField.class);
+        if (field != null) {
+          return;
         }
+      }
+      registerMethodCallError(expression);
     }
-
-    private class NestedMethodCallVisitor extends BaseInspectionVisitor {
-
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
-            super.visitMethodCallExpression(expression);
-            PsiExpression outerExpression = expression;
-            while(outerExpression!=null && outerExpression.getParent() instanceof PsiExpression){
-                outerExpression = (PsiExpression) outerExpression.getParent();
-            }
-            if(outerExpression == null)
-            {
-                return;
-            }
-            final PsiElement parent = outerExpression.getParent();
-            if(!(parent instanceof PsiExpressionList)){
-                return;
-            }
-            final PsiElement grandParent = parent.getParent();
-            if(!(grandParent instanceof PsiCallExpression)){
-                return;
-            }
-            if(grandParent instanceof PsiMethodCallExpression){
-
-                final PsiMethodCallExpression surroundingCall =
-                        (PsiMethodCallExpression) grandParent;
-                final PsiReferenceExpression methodExpression =
-                        surroundingCall.getMethodExpression();
-                final String callName = methodExpression.getReferenceName();
-                if(PsiKeyword.THIS.equals(callName) || PsiKeyword.SUPER.equals(callName)) {
-                  return;     //ignore nested method calls at the start of a constructor,
-                    //where they can't be extracted
-                }
-            }
-            final PsiReferenceExpression reference =
-                    expression.getMethodExpression();
-            if(reference == null){
-                return;
-            }
-            if(m_ignoreFieldInitializations){
-                final PsiElement field =
-                        PsiTreeUtil.getParentOfType(expression, PsiField.class);
-                if(field != null){
-                    return;
-                }
-            }
-            registerMethodCallError(expression);
-        }
-    }
+  }
 }

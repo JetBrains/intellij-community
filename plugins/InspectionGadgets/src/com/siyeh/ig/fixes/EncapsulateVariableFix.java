@@ -22,11 +22,12 @@ import com.intellij.psi.PsiField;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.InspectionGadgetsBundle;
 
 public class EncapsulateVariableFix extends InspectionGadgetsFix {
 
     public String getName() {
-        return "Encapsulate variable";
+        return InspectionGadgetsBundle.message("encapsulate.variable.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor) {

@@ -28,63 +28,54 @@ import org.jetbrains.annotations.NotNull;
 
 public class InfiniteLoopStatementInspection extends StatementInspection {
 
-    public String getDisplayName() {
-        return "Infinite loop statement";
+  public String getGroupDisplayName() {
+    return GroupNames.CONTROL_FLOW_GROUP_NAME;
+  }
+
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new InfiniteLoopStatementsVisitor();
+  }
+
+  private static class InfiniteLoopStatementsVisitor extends StatementInspectionVisitor {
+
+
+    public void visitForStatement(@NotNull PsiForStatement statement) {
+      super.visitForStatement(statement);
+      if (ControlFlowUtils.statementMayCompleteNormally(statement)) {
+        return;
+      }
+      if (ControlFlowUtils.statementContainsReturn(statement)) {
+        return;
+      }
+      registerStatementError(statement);
     }
 
-    public String getGroupDisplayName() {
-        return GroupNames.CONTROL_FLOW_GROUP_NAME;
+    public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
+
+      super.visitWhileStatement(statement);
+      if (ControlFlowUtils.statementMayCompleteNormally(statement)) {
+        return;
+      }
+      if (ControlFlowUtils.statementContainsReturn(statement)) {
+        return;
+      }
+      registerStatementError(statement);
     }
 
-    public boolean isEnabledByDefault(){
-        return true;
+    public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
+      super.visitDoWhileStatement(statement);
+      if (ControlFlowUtils.statementMayCompleteNormally(statement)) {
+        return;
+      }
+      if (ControlFlowUtils.statementContainsReturn(statement)) {
+        return;
+      }
+      registerStatementError(statement);
     }
 
-    public String buildErrorString(PsiElement location) {
-        return "#ref statement cannot complete without throwing an exception #loc";
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new InfiniteLoopStatementsVisitor();
-    }
-
-    private static class InfiniteLoopStatementsVisitor extends StatementInspectionVisitor {
-
-
-        public void visitForStatement(@NotNull PsiForStatement statement) {
-            super.visitForStatement(statement);
-            if (ControlFlowUtils.statementMayCompleteNormally(statement)) {
-                return;
-            }
-            if (ControlFlowUtils.statementContainsReturn(statement)) {
-                return;
-            }
-            registerStatementError(statement);
-        }
-
-        public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
-
-            super.visitWhileStatement(statement);
-            if (ControlFlowUtils.statementMayCompleteNormally(statement)) {
-                return;
-            }
-            if (ControlFlowUtils.statementContainsReturn(statement)) {
-                return;
-            }
-            registerStatementError(statement);
-        }
-
-        public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
-            super.visitDoWhileStatement(statement);
-            if (ControlFlowUtils.statementMayCompleteNormally(statement)) {
-                return;
-            }
-            if (ControlFlowUtils.statementContainsReturn(statement)) {
-                return;
-            }
-            registerStatementError(statement);
-        }
-
-    }
-
+  }
 }

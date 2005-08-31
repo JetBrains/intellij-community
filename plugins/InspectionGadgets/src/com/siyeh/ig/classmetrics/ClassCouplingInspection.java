@@ -20,6 +20,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ui.FormattedTextFieldMacFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -44,7 +45,7 @@ public class ClassCouplingInspection
         return "OverlyCoupledClass";
     }
     public String getDisplayName() {
-        return "Overly coupled class";
+        return InspectionGadgetsBundle.message("overly.coupled.class.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -56,7 +57,7 @@ public class ClassCouplingInspection
     }
 
     protected String getConfigurationLabel() {
-        return "Class coupling limit:";
+        return InspectionGadgetsBundle.message("overly.coupled.class.class.coupling.limit.option");
     }
 
 
@@ -103,7 +104,7 @@ public class ClassCouplingInspection
         constraints.fill = GridBagConstraints.NONE;
         panel.add(valueField, constraints);
 
-        final JCheckBox arrayCheckBox = new JCheckBox("Include couplings to java system classes", m_includeJavaClasses);
+        final JCheckBox arrayCheckBox = new JCheckBox(InspectionGadgetsBundle.message("include.java.system.classes.option"), m_includeJavaClasses);
         final ButtonModel arrayModel = arrayCheckBox.getModel();
         arrayModel.addChangeListener(new ChangeListener() {
 
@@ -111,7 +112,7 @@ public class ClassCouplingInspection
                 m_includeJavaClasses = arrayModel.isSelected();
             }
         });
-        final JCheckBox objectCheckBox = new JCheckBox("Include couplings to library classes", m_includeLibraryClasses);
+        final JCheckBox objectCheckBox = new JCheckBox(InspectionGadgetsBundle.message("include.library.classes.option"), m_includeLibraryClasses);
         final ButtonModel model = objectCheckBox.getModel();
         model.addChangeListener(new ChangeListener() {
 
@@ -135,7 +136,7 @@ public class ClassCouplingInspection
     public String buildErrorString(PsiElement location) {
         final PsiClass aClass = (PsiClass) location.getParent();
         final int totalDependencies = calculateTotalDependencies(aClass);
-        return "#ref is overly coupled (dependencies = " + totalDependencies + ") #loc";
+        return InspectionGadgetsBundle.message("overly.coupled.class.problem.descriptor", totalDependencies);
     }
 
     public BaseInspectionVisitor buildVisitor() {

@@ -26,67 +26,59 @@ import org.jetbrains.annotations.NotNull;
 
 public class ProtectedMemberInFinalClassInspection extends MethodInspection {
 
-    public String getDisplayName() {
-        return "'protected' member in 'final' class";
-    }
+  public String getGroupDisplayName() {
+    return GroupNames.CLASSLAYOUT_GROUP_NAME;
+  }
 
-    public String getGroupDisplayName() {
-        return GroupNames.CLASSLAYOUT_GROUP_NAME;
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new ProtectedMemberInFinalClassVisitor();
+  }
 
-    public String buildErrorString(PsiElement location) {
-        return "Class member declared '#ref' in 'final' class #loc";
-    }
+  public InspectionGadgetsFix buildFix(PsiElement location) {
+    return new RemoveModifierFix(location);
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ProtectedMemberInFinalClassVisitor();
-    }
+  private static class ProtectedMemberInFinalClassVisitor extends BaseInspectionVisitor {
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
-        return new RemoveModifierFix(location);
-    }
-
-    private static class ProtectedMemberInFinalClassVisitor extends BaseInspectionVisitor {
-
-        public void visitMethod(@NotNull PsiMethod method) {
-            //no call to super, so we don't drill into anonymous classes
-            if (!method.hasModifierProperty(PsiModifier.PROTECTED)) {
-                return;
-            }
-            final PsiClass containingClass = method.getContainingClass();
-            if (containingClass == null) {
-                return;
-            }
-            if (!containingClass.hasModifierProperty(PsiModifier.FINAL)) {
-                return;
-            }
-            if (methodOverrides(method)) {
-                return;
-            }
-            registerModifierError(PsiModifier.PROTECTED, method);
-
-        }
-
-
-        private static boolean methodOverrides(PsiMethod meth) {
-            final PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods(meth);
-            return superMethods != null && superMethods.length != 0;
-        }
-
-        public void visitField(@NotNull PsiField field) {
-            //no call to super, so we don't drill into anonymous classes
-            if (!field.hasModifierProperty(PsiModifier.PROTECTED)) {
-                return;
-            }
-            final PsiClass containingClass = field.getContainingClass();
-            if (containingClass == null) {
-                return;
-            }
-            if (!containingClass.hasModifierProperty(PsiModifier.FINAL)) {
-                return;
-            }
-            registerModifierError(PsiModifier.PROTECTED, field);
-        }
+    public void visitMethod(@NotNull PsiMethod method) {
+      //no call to super, so we don't drill into anonymous classes
+      if (!method.hasModifierProperty(PsiModifier.PROTECTED)) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      if (!containingClass.hasModifierProperty(PsiModifier.FINAL)) {
+        return;
+      }
+      if (methodOverrides(method)) {
+        return;
+      }
+      registerModifierError(PsiModifier.PROTECTED, method);
 
     }
+
+
+    private static boolean methodOverrides(PsiMethod meth) {
+      final PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods(meth);
+      return superMethods != null && superMethods.length != 0;
+    }
+
+    public void visitField(@NotNull PsiField field) {
+      //no call to super, so we don't drill into anonymous classes
+      if (!field.hasModifierProperty(PsiModifier.PROTECTED)) {
+        return;
+      }
+      final PsiClass containingClass = field.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      if (!containingClass.hasModifierProperty(PsiModifier.FINAL)) {
+        return;
+      }
+      registerModifierError(PsiModifier.PROTECTED, field);
+    }
+
+  }
 }

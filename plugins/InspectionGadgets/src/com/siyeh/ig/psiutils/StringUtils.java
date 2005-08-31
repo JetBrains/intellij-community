@@ -17,71 +17,74 @@ package com.siyeh.ig.psiutils;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.HashSet;
 import java.util.Set;
 
+import com.intellij.psi.PsiKeyword;
+
 public class StringUtils{
-    private static final Set<String> keywordTable = new HashSet<String>();
+    @NonNls private static final Set<String> keywordTable = new HashSet<String>();
 
     static
     {
-        keywordTable.add("abstract");
-        keywordTable.add("assert");
-        keywordTable.add("boolean");
-        keywordTable.add("break");
-        keywordTable.add("byte");
-        keywordTable.add("case");
-        keywordTable.add("catch");
-        keywordTable.add("class");
-        keywordTable.add("continue");
-        keywordTable.add("const");
-        keywordTable.add("default");
-        keywordTable.add("do");
-        keywordTable.add("double");
-        keywordTable.add("enum");
-        keywordTable.add("else");
-        keywordTable.add("extends");
-        keywordTable.add("false");
-        keywordTable.add("final");
-        keywordTable.add("finally");
-        keywordTable.add("float");
-        keywordTable.add("for");
-        keywordTable.add("goto");
-        keywordTable.add("implements");
-        keywordTable.add("instanceof");
-        keywordTable.add("int");
-        keywordTable.add("interface");
-        keywordTable.add("if");
-        keywordTable.add("import");
-        keywordTable.add("long");
-        keywordTable.add("native");
-        keywordTable.add("new");
-        keywordTable.add("null");
-        keywordTable.add("package");
-        keywordTable.add("private");
-        keywordTable.add("protected");
-        keywordTable.add("public");
-        keywordTable.add("return");
-        keywordTable.add("short");
-        keywordTable.add("static");
-        keywordTable.add("strictfp");
-        keywordTable.add("super");
-        keywordTable.add("switch");
-        keywordTable.add("synchronized");
-        keywordTable.add("throw");
-        keywordTable.add("throws");
-        keywordTable.add("transient");
-        keywordTable.add("true");
-        keywordTable.add("try");
-        keywordTable.add("void");
-        keywordTable.add("volatile");
-        keywordTable.add("while");
+      keywordTable.add("abstract");
+      keywordTable.add("assert");
+      keywordTable.add("boolean");
+      keywordTable.add("break");
+      keywordTable.add("byte");
+      keywordTable.add("case");
+      keywordTable.add("catch");
+      keywordTable.add("class");
+      keywordTable.add("continue");
+      keywordTable.add("const");
+      keywordTable.add("default");
+      keywordTable.add("do");
+      keywordTable.add("double");
+      keywordTable.add("enum");
+      keywordTable.add("else");
+      keywordTable.add("extends");
+      keywordTable.add("false");
+      keywordTable.add("final");
+      keywordTable.add("finally");
+      keywordTable.add("float");
+      keywordTable.add("for");
+      keywordTable.add("goto");
+      keywordTable.add("implements");
+      keywordTable.add("instanceof");
+      keywordTable.add("int");
+      keywordTable.add("interface");
+      keywordTable.add("if");
+      keywordTable.add("import");
+      keywordTable.add("long");
+      keywordTable.add("native");
+      keywordTable.add("new");
+      keywordTable.add("null");
+      keywordTable.add("package");
+      keywordTable.add("private");
+      keywordTable.add("protected");
+      keywordTable.add("public");
+      keywordTable.add("return");
+      keywordTable.add("short");
+      keywordTable.add("static");
+      keywordTable.add("strictfp");
+      keywordTable.add("super");
+      keywordTable.add("switch");
+      keywordTable.add("synchronized");
+      keywordTable.add("throw");
+      keywordTable.add("throws");
+      keywordTable.add("transient");
+      keywordTable.add("true");
+      keywordTable.add("try");
+      keywordTable.add(PsiKeyword.VOID);
+      keywordTable.add("volatile");
+      keywordTable.add("while");
     }
 
-    private StringUtils(){
-        super();
-    }
+  private StringUtils(){
+      super();
+  }
 
     public static String capitalize(@NotNull String name){
         final char startChar = name.charAt(0);
@@ -93,8 +96,8 @@ public class StringUtils{
     }
 
     public static @NotNull String stripPrefixAndSuffix(@NotNull String name,
-                                              @Nullable String prefix,
-                                              @Nullable String suffix){
+                                                       @Nullable String prefix,
+                                                       @Nullable String suffix){
         String strippedName = name;
         if(prefix != null){
             final int prefixLength = prefix.length();
@@ -112,6 +115,7 @@ public class StringUtils{
         return strippedName;
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     @NotNull public static String createSingularFromName(@NotNull String name){
         final int nameLength = name.length();
         final String singularName;

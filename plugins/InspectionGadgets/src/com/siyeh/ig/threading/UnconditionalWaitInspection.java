@@ -20,109 +20,101 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class UnconditionalWaitInspection extends MethodInspection {
 
-    public String getDisplayName() {
-        return "Unconditional 'wait()' call";
+  public String getGroupDisplayName() {
+    return GroupNames.THREADING_GROUP_NAME;
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new UnconditionalWaitVisitor();
+  }
+
+  private static class UnconditionalWaitVisitor extends BaseInspectionVisitor {
+
+    public void visitMethod(@NotNull PsiMethod method) {
+      super.visitMethod(method);
+      if (!method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
+        return;
+      }
+      final PsiCodeBlock body = method.getBody();
+      if (body != null) {
+        checkBody(body);
+      }
     }
 
-    public String getGroupDisplayName() {
-        return GroupNames.THREADING_GROUP_NAME;
+    public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
+      super.visitSynchronizedStatement(statement);
+      final PsiCodeBlock body = statement.getBody();
+      if (body != null) {
+        checkBody(body);
+      }
     }
 
-    public String buildErrorString(PsiElement location) {
-        return "Unconditional call to '#ref()' #loc";
-    }
+    private void checkBody(PsiCodeBlock body) {
+      final PsiStatement[] statements = body.getStatements();
+      if (statements.length == 0) {
+        return;
+      }
+      for (final PsiStatement statement : statements) {
+        if (isConditional(statement)) {
+          return;
+        }
+        if (!(statement instanceof PsiExpressionStatement)) {
+          continue;
+        }
+        final PsiExpression firstExpression =
+          ((PsiExpressionStatement)statement).getExpression();
+        if (!(firstExpression instanceof PsiMethodCallExpression)) {
+          continue;
+        }
+        final PsiMethodCallExpression methodCallExpression =
+          (PsiMethodCallExpression)firstExpression;
+        final PsiReferenceExpression methodExpression =
+          methodCallExpression.getMethodExpression();
+        if (methodExpression == null) {
+          continue;
+        }
+        @NonNls final String methodName = methodExpression.getReferenceName();
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new UnconditionalWaitVisitor();
-    }
-
-    private static class UnconditionalWaitVisitor extends BaseInspectionVisitor {
-
-        public void visitMethod(@NotNull PsiMethod method) {
-            super.visitMethod(method);
-            if (!method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
-                return;
-            }
-            final PsiCodeBlock body = method.getBody();
-            if (body != null) {
-                checkBody(body);
-            }
+        if (!"wait".equals(methodName)) {
+          continue;
+        }
+        final PsiMethod method = methodCallExpression.resolveMethod();
+        if (method == null) {
+          continue;
+        }
+        final PsiParameterList paramList = method.getParameterList();
+        if (paramList == null) {
+          continue;
+        }
+        final PsiParameter[] parameters = paramList.getParameters();
+        final int numParams = parameters.length;
+        if (numParams > 2) {
+          continue;
+        }
+        if (numParams > 0) {
+          final PsiType parameterType = parameters[0].getType();
+          if (!parameterType.equals(PsiType.LONG)) {
+            continue;
+          }
         }
 
-        public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
-            super.visitSynchronizedStatement(statement);
-            final PsiCodeBlock body = statement.getBody();
-            if (body != null) {
-                checkBody(body);
-            }
+        if (numParams > 1) {
+          final PsiType parameterType = parameters[1].getType();
+          if (!parameterType.equals(PsiType.INT)) {
+            continue;
+          }
         }
-
-        private void checkBody(PsiCodeBlock body) {
-            final PsiStatement[] statements = body.getStatements();
-            if (statements.length == 0) {
-                return;
-            }
-            for(final PsiStatement statement : statements){
-                if(isConditional(statement)){
-                    return;
-                }
-                if(!(statement instanceof PsiExpressionStatement)){
-                    continue;
-                }
-                final PsiExpression firstExpression =
-                        ((PsiExpressionStatement) statement).getExpression();
-                if(!(firstExpression instanceof PsiMethodCallExpression)){
-                    continue;
-                }
-                final PsiMethodCallExpression methodCallExpression =
-                        (PsiMethodCallExpression) firstExpression;
-                final PsiReferenceExpression methodExpression =
-                        methodCallExpression.getMethodExpression();
-                if(methodExpression == null){
-                    continue;
-                }
-                final String methodName = methodExpression.getReferenceName();
-
-                if(!"wait".equals(methodName)){
-                    continue;
-                }
-                final PsiMethod method = methodCallExpression.resolveMethod();
-                if(method == null){
-                    continue;
-                }
-                final PsiParameterList paramList = method.getParameterList();
-                if(paramList == null){
-                    continue;
-                }
-                final PsiParameter[] parameters = paramList.getParameters();
-                final int numParams = parameters.length;
-                if(numParams > 2){
-                    continue;
-                }
-                if(numParams > 0){
-                    final PsiType parameterType = parameters[0].getType();
-                    if(!parameterType.equals(PsiType.LONG)){
-                        continue;
-                    }
-                }
-
-                if(numParams > 1){
-                    final PsiType parameterType = parameters[1].getType();
-                    if(!parameterType.equals(PsiType.INT)){
-                        continue;
-                    }
-                }
-                registerMethodCallError(methodCallExpression);
-            }
-        }
-
-        private static boolean isConditional(PsiStatement statement) {
-            return statement instanceof PsiIfStatement;
-
-        }
+        registerMethodCallError(methodCallExpression);
+      }
     }
 
+    private static boolean isConditional(PsiStatement statement) {
+      return statement instanceof PsiIfStatement;
+
+    }
+  }
 }

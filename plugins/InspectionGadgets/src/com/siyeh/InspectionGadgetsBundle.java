@@ -29,6 +29,6 @@ public class InspectionGadgetsBundle {
   private InspectionGadgetsBundle() {}
 
   public static String message(@PropertyKey String key, Object... params) {
-    return CommonBundle.message(key, params);
+    return CommonBundle.message(ourBundle, key, params);
   }
 }

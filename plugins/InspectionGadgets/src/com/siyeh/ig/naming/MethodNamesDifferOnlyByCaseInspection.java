@@ -24,65 +24,63 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class MethodNamesDifferOnlyByCaseInspection extends MethodInspection {
-    public String getID(){
-        return "MethodNamesDifferingOnlyByCase";
-    }
-    private final RenameFix fix = new RenameFix();
 
-    public String getDisplayName() {
-        return "Method names differing only by case";
-    }
+  public String getID() {
+    return "MethodNamesDifferingOnlyByCase";
+  }
 
-    public String getGroupDisplayName() {
-        return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
-    }
+  private final RenameFix fix = new RenameFix();
 
-    public String buildErrorString(Object arg) {
-        return "Method names '#ref' and '" + arg + "' differ only by case";
-    }
+  public String getGroupDisplayName() {
+    return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new OverloadedMethodsWithSameNumberOfParametersVisitor();
-    }
+  public String buildErrorString(Object arg) {
+    return InspectionGadgetsBundle.message("method.names.differ.only.by.case.problem.descriptor", arg);
+  }
 
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
-        return true;
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new OverloadedMethodsWithSameNumberOfParametersVisitor();
+  }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
-    }
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
 
-    private static class OverloadedMethodsWithSameNumberOfParametersVisitor extends BaseInspectionVisitor {
+  protected InspectionGadgetsFix buildFix(PsiElement location) {
+    return fix;
+  }
 
-        public void visitMethod(@NotNull PsiMethod method) {
-            if (method.isConstructor()) {
-                return;
-            }
-            final PsiIdentifier nameIdentifier = method.getNameIdentifier();
-            if (nameIdentifier == null) {
-                return;
-            }
-            final String methodName = method.getName();
-            if (methodName == null) {
-                return;
-            }
-            final PsiClass aClass = method.getContainingClass();
-            if (aClass == null) {
-                return;
-            }
-            final PsiMethod[] methods = aClass.getMethods();
-            for(PsiMethod testMethod : methods){
-                final String testMethName = testMethod.getName();
-                if(testMethName != null && !methodName.equals(testMethName) &&
-                        methodName.equalsIgnoreCase(testMethName)){
-                    registerError(nameIdentifier, testMethName);
-                }
-            }
+  private static class OverloadedMethodsWithSameNumberOfParametersVisitor extends BaseInspectionVisitor {
+
+    public void visitMethod(@NotNull PsiMethod method) {
+      if (method.isConstructor()) {
+        return;
+      }
+      final PsiIdentifier nameIdentifier = method.getNameIdentifier();
+      if (nameIdentifier == null) {
+        return;
+      }
+      final String methodName = method.getName();
+      if (methodName == null) {
+        return;
+      }
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null) {
+        return;
+      }
+      final PsiMethod[] methods = aClass.getMethods();
+      for (PsiMethod testMethod : methods) {
+        final String testMethName = testMethod.getName();
+        if (testMethName != null && !methodName.equals(testMethName) &&
+            methodName.equalsIgnoreCase(testMethName)) {
+          registerError(nameIdentifier, testMethName);
         }
+      }
     }
-
+  }
 }

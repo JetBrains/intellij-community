@@ -23,6 +23,7 @@ import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MakeSerializableFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class NonSerializableWithSerializationMethodsInspection
@@ -33,7 +34,7 @@ public class NonSerializableWithSerializationMethodsInspection
         return "NonSerializableClassWithSerializationMethods";
     }
     public String getDisplayName(){
-        return "Non-serializable class with 'readObject()' or 'writeObject()'";
+        return InspectionGadgetsBundle.message("non.serializable.class.with.readwriteobject.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -52,11 +53,11 @@ public class NonSerializableWithSerializationMethodsInspection
                 SerializationUtils.hasWriteObject(aClass);
 
         if(hasReadObject && hasWriteObject){
-            return "Non-serializable class #ref defines readObject() and writeObject() #loc";
+            return InspectionGadgetsBundle.message("non.serializable.class.with.readwriteobject.problem.descriptor.both");
         } else if(hasWriteObject){
-            return "Non-serializable class #ref defines writeObject() #loc";
+            return InspectionGadgetsBundle.message("non.serializable.class.with.readwriteobject.problem.descriptor.write");
         } else{
-            return "Non-serializable class #ref defines readObject() #loc";
+            return InspectionGadgetsBundle.message("non.serializable.class.with.readwriteobject.problem.descriptor.read");
         }
     }
 

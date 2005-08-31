@@ -18,16 +18,16 @@ package com.siyeh.ig.bugs;
 import com.intellij.psi.*;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.HashSet;
 import java.util.Set;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
 class CollectionUpdateCalledVisitor extends PsiRecursiveElementVisitor{
     /**
          * @noinspection StaticCollection
          */
-    private static final Set<String> updateNames = new HashSet<String>(10);
+    @NonNls private static final Set<String> updateNames = new HashSet<String>(10);
 
     static{
         updateNames.add("add");

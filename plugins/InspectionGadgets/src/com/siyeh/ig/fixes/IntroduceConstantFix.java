@@ -21,10 +21,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.InspectionGadgetsBundle;
 
 public class IntroduceConstantFix extends InspectionGadgetsFix {
     public String getName() {
-        return "Introduce constant";
+        return InspectionGadgetsBundle.message("introduce.constant.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor) {

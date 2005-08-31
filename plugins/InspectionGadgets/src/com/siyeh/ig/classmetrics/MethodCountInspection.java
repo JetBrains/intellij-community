@@ -20,6 +20,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class MethodCountInspection
@@ -30,7 +31,7 @@ public class MethodCountInspection
         return "ClassWithTooManyMethods";
     }
     public String getDisplayName() {
-        return "Class with too many methods";
+        return InspectionGadgetsBundle.message("too.many.methods.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -42,13 +43,13 @@ public class MethodCountInspection
     }
 
     protected String getConfigurationLabel() {
-        return "Method count limit:";
+        return InspectionGadgetsBundle.message("method.count.limit.option");
     }
 
     public String buildErrorString(PsiElement location) {
         final PsiClass aClass = (PsiClass) location.getParent();
         final int count = calculateTotalMethodCount(aClass);
-        return "#ref has too many methods (method count = " + count + ") #loc";
+        return InspectionGadgetsBundle.message("too.many.methods.problem.descriptor", count);
     }
 
     public BaseInspectionVisitor buildVisitor() {

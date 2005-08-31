@@ -25,47 +25,39 @@ import org.jetbrains.annotations.NotNull;
 
 public class FieldHasSetterButNoGetterInspection extends FieldInspection {
 
-    public String getDisplayName() {
-        return "Field has setter but no getter";
-    }
+  public String getGroupDisplayName() {
+    return GroupNames.JAVABEANS_GROUP_NAME;
+  }
 
-    public String getGroupDisplayName() {
-        return GroupNames.JAVABEANS_GROUP_NAME;
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new StaticNonFinalFieldVisitor();
+  }
 
-    public String buildErrorString(PsiElement location) {
-        return "Field '#ref' has setter but no getter #loc";
-    }
+  private static class StaticNonFinalFieldVisitor extends BaseInspectionVisitor {
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new StaticNonFinalFieldVisitor();
+    public void visitField(@NotNull PsiField field) {
+      final PsiManager psiManager = field.getManager();
+      final Project project = psiManager.getProject();
+      final String propertyName =
+        PropertyUtil.suggestPropertyName(project, field);
+      final boolean isStatic =
+        field.hasModifierProperty(PsiModifier.STATIC);
+      final PsiClass containingClass = field.getContainingClass();
+      final PsiMethod setter = PropertyUtil.findPropertySetter(containingClass,
+                                                               propertyName, isStatic,
+                                                               false);
+      if (setter == null) {
+        return;
+      }
+      final PsiMethod getter =
+        PropertyUtil.findPropertyGetter(containingClass,
+                                        propertyName,
+                                        isStatic,
+                                        false);
+      if (getter != null) {
+        return;
+      }
+      registerFieldError(field);
     }
-
-    private static class StaticNonFinalFieldVisitor extends BaseInspectionVisitor {
- 
-        public void visitField(@NotNull PsiField field) {
-            final PsiManager psiManager = field.getManager();
-            final Project project = psiManager.getProject();
-            final String propertyName =
-                    PropertyUtil.suggestPropertyName(project, field);
-            final boolean isStatic =
-                    field.hasModifierProperty(PsiModifier.STATIC);
-            final PsiClass containingClass = field.getContainingClass();
-            final PsiMethod setter = PropertyUtil.findPropertySetter(containingClass,
-                                                                     propertyName, isStatic,
-                                                                     false);
-            if(setter==null){
-                return;
-            }
-            final PsiMethod getter =
-                    PropertyUtil.findPropertyGetter(containingClass,
-                                                    propertyName,
-                                                    isStatic,
-                                                    false);
-            if(getter != null){
-                return;
-            }
-            registerFieldError(field);
-        }
-    }
+  }
 }

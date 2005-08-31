@@ -24,6 +24,7 @@ import com.siyeh.ig.fixes.AddSerialVersionUIDFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -37,7 +38,7 @@ public class SerializableHasSerialVersionUIDFieldInspection extends ClassInspect
         return "serial";
     }
     public String getDisplayName() {
-        return "Serializable class without serialVersionUID";
+        return InspectionGadgetsBundle.message("serializable.class.without.serialversionuid.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -45,7 +46,7 @@ public class SerializableHasSerialVersionUIDFieldInspection extends ClassInspect
     }
 
     public String buildErrorString(PsiElement location) {
-        return "#ref doesn't define a serialVersionUID field #loc";
+        return InspectionGadgetsBundle.message("serializable.class.without.serialversionuid.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
@@ -53,7 +54,7 @@ public class SerializableHasSerialVersionUIDFieldInspection extends ClassInspect
     }
 
     public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel("Ignore classes serializable due to inheritance",
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("serializable.class.without.serialversionuid.ignore.option"),
                 this, "m_ignoreSerializableDueToInheritance");
     }
 

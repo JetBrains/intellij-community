@@ -25,91 +25,89 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
 public class ForLoopReplaceableByWhileInspection extends StatementInspection {
-    /** @noinspection PublicField*/
-    public boolean m_ignoreLoopsWithoutConditions = false;
-    private final ReplaceForByWhileFix fix = new ReplaceForByWhileFix();
 
-    public String getID(){
-        return "ForLoopReplaceableByWhile";
-    }
-    public String getDisplayName() {
-        return "'for' loop may be replaced by 'while' loop";
+  /**
+   * @noinspection PublicField
+   */
+  public boolean m_ignoreLoopsWithoutConditions = false;
+  private final ReplaceForByWhileFix fix = new ReplaceForByWhileFix();
+
+  public String getID() {
+    return "ForLoopReplaceableByWhile";
+  }
+
+  public String getGroupDisplayName() {
+    return GroupNames.CONTROL_FLOW_GROUP_NAME;
+  }
+
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("for.loop.replaceable.by.while.ignore.option"),
+                                          this, "m_ignoreLoopsWithoutConditions");
+  }
+
+  public InspectionGadgetsFix buildFix(PsiElement location) {
+    return fix;
+  }
+
+  private static class ReplaceForByWhileFix extends InspectionGadgetsFix {
+    public String getName() {
+      return InspectionGadgetsBundle.message("for.loop.replaceable.by.while.replace.quickfix");
     }
 
-    public String getGroupDisplayName() {
-        return GroupNames.CONTROL_FLOW_GROUP_NAME;
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement forKeywordElement = descriptor.getPsiElement();
+      final PsiForStatement forStatement =
+        (PsiForStatement)forKeywordElement.getParent();
+      assert forStatement != null;
+      final PsiExpression condition = forStatement.getCondition();
+      final PsiStatement body = forStatement.getBody();
+      @NonNls final String whileStatement;
+      if (condition == null) {
+        whileStatement = "while(true)" + body.getText();
+      }
+      else {
+        whileStatement = "while(" + condition.getText() + ')' + body.getText();
+      }
+      replaceStatement(forStatement, whileStatement);
     }
+  }
 
-    public String buildErrorString(PsiElement location) {
-        return "'#ref' loop statement may be replace by 'while' loop #loc";
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new ForLoopReplaceableByWhileVisitor();
+  }
 
-    public JComponent createOptionsPanel(){
-        return new SingleCheckboxOptionsPanel("Ignore 'infinite' for loops without conditions",
-                                              this, "m_ignoreLoopsWithoutConditions");
-    }
+  private class ForLoopReplaceableByWhileVisitor extends StatementInspectionVisitor {
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
-    }
 
-    private static class ReplaceForByWhileFix extends InspectionGadgetsFix {
-        public String getName() {
-            return "Replace with 'while'";
+    public void visitForStatement(@NotNull PsiForStatement statement) {
+      super.visitForStatement(statement);
+      final PsiStatement initialization = statement.getInitialization();
+      if (initialization != null && !(initialization instanceof PsiEmptyStatement)) {
+        return;
+      }
+      final PsiStatement update = statement.getUpdate();
+      if (update != null && !(update instanceof PsiEmptyStatement)) {
+        return;
+      }
+      if (m_ignoreLoopsWithoutConditions) {
+        final PsiExpression condition = statement.getCondition();
+        if (condition == null) {
+          return;
         }
-
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
-            final PsiElement forKeywordElement = descriptor.getPsiElement();
-            final PsiForStatement forStatement =
-                    (PsiForStatement) forKeywordElement.getParent();
-            assert forStatement != null;
-            final PsiExpression condition = forStatement.getCondition();
-            final PsiStatement body = forStatement.getBody();
-            final String whileStatement;
-            if (condition == null) {
-                whileStatement = "while(true)" + body.getText();
-            } else {
-                whileStatement = "while(" + condition.getText() + ')' + body.getText();
-            }
-            replaceStatement(forStatement, whileStatement);
+        final String conditionText = condition.getText();
+        if (PsiKeyword.TRUE.equals(conditionText)) {
+          return;
         }
+      }
+      registerStatementError(statement);
     }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new ForLoopReplaceableByWhileVisitor();
-    }
-
-    private  class ForLoopReplaceableByWhileVisitor extends StatementInspectionVisitor {
-
-
-        public void visitForStatement(@NotNull PsiForStatement statement) {
-            super.visitForStatement(statement);
-            final PsiStatement initialization = statement.getInitialization();
-            if (initialization != null && !(initialization instanceof PsiEmptyStatement)) {
-                return;
-            }
-            final PsiStatement update = statement.getUpdate();
-            if (update != null && !(update instanceof PsiEmptyStatement)) {
-                return;
-            }
-            if(m_ignoreLoopsWithoutConditions)
-            {
-                final PsiExpression condition = statement.getCondition();
-                if(condition == null){
-                    return;
-                }
-                final String conditionText = condition.getText();
-                if(PsiKeyword.TRUE.equals(conditionText)){
-                    return;
-                }
-            }
-            registerStatementError(statement);
-        }
-    }
+  }
 }
