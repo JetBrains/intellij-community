@@ -25,7 +25,7 @@ public class UsageViewBundle {
     return "( " + message("occurence.info.usage", usagesCount, filesCount) + " )";
   }
 
-  public static String getOccurencestring(int usagesCount, int filesCount) {
+  public static String getOccurencesString(int usagesCount, int filesCount) {
     return "( " + message("occurence.info.occurence", usagesCount, filesCount) + " )";
   }
 
