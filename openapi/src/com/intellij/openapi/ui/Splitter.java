@@ -135,7 +135,7 @@ public class Splitter extends JPanel {
     return comp;
   }
 
-  protected void dispose() {
+  public void dispose() {
     myFocusWatcher.deinstall(this);
   }
 

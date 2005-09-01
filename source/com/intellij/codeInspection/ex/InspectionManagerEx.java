@@ -44,7 +44,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.AutoScrollToSourceHandler;
@@ -127,7 +126,10 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     new ContentManagerWatcher(toolWindow, myContentManager);
     myContentManager.addContentManagerListener(new ContentManagerAdapter() {
       public void contentRemoved(ContentManagerEvent event) {
-        myView = null;
+        if (myView != null) {
+          myView.dispose();
+          myView = null;
+        }
       }
     });
   }

@@ -13,6 +13,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -21,20 +22,26 @@ import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLFrameHyperlinkEvent;
 import java.awt.*;
 import java.io.IOException;
-import java.io.StringReader;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.Nullable;
 
 public class Browser extends JPanel {
   private static final String UNDER_CONSTRUCTION = "Under construction";
   private final List<ClickListener> myClickListeners;
   private RefEntity myCurrentEntity;
-  private final JEditorPane myHTMLViewer;
+  private JEditorPane myHTMLViewer;
   private InspectionResultsView myView;
+  private HyperlinkListener myHyperLinkListener;
+
+  public void dispose() {
+    removeAll();
+    myHTMLViewer.removeHyperlinkListener(myHyperLinkListener);
+    myClickListeners.clear();
+    myHTMLViewer = null;
+  }
 
   public static class ClickEvent {
     public static final int REF_ELEMENT = 1;
@@ -125,7 +132,7 @@ public class Browser extends JPanel {
 
     myHTMLViewer = new JEditorPane("text/html", "<HTML><BODY>Select tree node for detailed information</BODY></HTML>");
     myHTMLViewer.setEditable(false);
-    myHTMLViewer.addHyperlinkListener(new HyperlinkListener() {
+    myHyperLinkListener = new HyperlinkListener() {
       public void hyperlinkUpdate(HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           JEditorPane pane = (JEditorPane)e.getSource();
@@ -154,7 +161,7 @@ public class Browser extends JPanel {
               else if (ref.startsWith("descr:")) {
                 int descriptionIndex = Integer.parseInt(ref.substring("descr:".length()));
                 ProblemDescriptor descriptor = ((DescriptorProviderInspection)getTool()).getDescriptions(
-                    (RefElement)myCurrentEntity)[descriptionIndex];
+                  (RefElement)myCurrentEntity)[descriptionIndex];
                 PsiElement psiElement = descriptor.getPsiElement();
                 if (psiElement == null) return;
                 VirtualFile vFile = psiElement.getContainingFile().getVirtualFile();
@@ -165,11 +172,12 @@ public class Browser extends JPanel {
               }
               else if (ref.startsWith("invoke:")) {
                 int actionNumber = Integer.parseInt(ref.substring("invoke:".length()));
-                getTool().getQuickFixes(new RefElement[] {(RefElement)myCurrentEntity})[actionNumber].doApplyFix(new RefElement[]{(RefElement)myCurrentEntity});
+                getTool().getQuickFixes(new RefElement[]{(RefElement)myCurrentEntity})[actionNumber]
+                  .doApplyFix(new RefElement[]{(RefElement)myCurrentEntity});
               }
               else if (ref.startsWith("invokelocal:")) {
                 int actionNumber = Integer.parseInt(ref.substring("invokelocal:".length()));
-                if (actionNumber > -1){
+                if (actionNumber > -1) {
                   myView.invokeLocalFix(actionNumber);
                 }
               }
@@ -189,7 +197,8 @@ public class Browser extends JPanel {
           }
         }
       }
-    });
+    };
+    myHTMLViewer.addHyperlinkListener(myHyperLinkListener);
 
     add(new JScrollPane(myHTMLViewer), BorderLayout.CENTER);
   }

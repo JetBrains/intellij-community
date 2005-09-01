@@ -3,8 +3,8 @@ package com.intellij.codeInspection.ui;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.SwitchOffToolAction;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInspection.InspectionManager;
@@ -90,6 +90,8 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
   public static final String HELP_ID = "codeInspection";
   public final Map<HighlightDisplayLevel, InspectionSeverityGroupNode> mySeverityGroupNodes = new HashMap<HighlightDisplayLevel, InspectionSeverityGroupNode>();
 
+  private Splitter mySplitter;
+
   public InspectionResultsView(final Project project, InspectionProfile inspectionProfile, AnalysisScope scope) {
     setLayout(new BorderLayout());
 
@@ -135,13 +137,12 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     myBrowser = new Browser(this);
 
     final InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(project);
-    final Splitter splitter;
-    splitter = new Splitter(false, manager.getUIOptions().SPLITTER_PROPORTION);
+    mySplitter = new Splitter(false, manager.getUIOptions().SPLITTER_PROPORTION);
 
-    splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree));
-    splitter.setSecondComponent(myBrowser);
+    mySplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree));
+    mySplitter.setSecondComponent(myBrowser);
 
-    splitter.addPropertyChangeListener(new PropertyChangeListener() {
+    mySplitter.addPropertyChangeListener(new PropertyChangeListener() {
       public void propertyChange(PropertyChangeEvent evt) {
         if (Splitter.PROP_PROPORTION.equals(evt.getPropertyName())) {
           final InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(project);
@@ -198,7 +199,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       }
     });
 
-    add(splitter, BorderLayout.CENTER);
+    add(mySplitter, BorderLayout.CENTER);
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new CloseAction());
     group.add(new RerunAction(this));
@@ -239,6 +240,13 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       Project project = refElement.getRefManager().getProject();
       FileEditorManager.getInstance(project).openTextEditor(descriptor, false);
     }
+  }
+
+  public void dispose() {
+    mySplitter.dispose();
+    myBrowser.dispose();
+    myTree = null;
+    myOccurenceNavigator = null;
   }
 
 
