@@ -1,7 +1,13 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
+import com.intellij.codeInsight.daemon.QuickFixProvider;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.j2ee.j2eeDom.web.WebModuleProperties;
+import com.intellij.j2ee.module.view.web.WebUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ElementManipulator;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
@@ -12,8 +18,6 @@ import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInsight.daemon.QuickFixProvider;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -210,7 +214,22 @@ public class FileReference implements PsiPolyVariantReference, QuickFixProvider 
   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException{
     if (!(element instanceof PsiFileSystemItem)) throw new IncorrectOperationException("Cannot bind to element");
 
-    final String newName = JspUtil.getDeploymentPath((PsiFileSystemItem)element);
+    final PsiFile file = getElement().getContainingFile();
+    final WebModuleProperties properties = (WebModuleProperties)WebUtil.getWebModuleProperties(file);
+    final String newName;
+    if (properties != null) {
+      newName = JspUtil.getDeploymentPath((PsiFileSystemItem)element);
+    } else {
+      final VirtualFile dst = element.getContainingFile().getVirtualFile();
+      if (dst == null) throw new IncorrectOperationException("Cannot bind to non-physical element:" + element);
+      final VirtualFile currentFile = file.getVirtualFile();
+      LOG.assertTrue(currentFile != null);
+      newName = VfsUtil.getPath(currentFile, dst, '/');
+      if (newName == null) {
+        throw new IncorrectOperationException("Cannot find path between files; src = " +
+                                              currentFile.getPresentableUrl() + "; dst = " + dst.getPresentableUrl());
+      }
+    }
     final TextRange range = new TextRange(myFileReferenceSet.getStartInElement(), getRangeInElement().getEndOffset());
     final ElementManipulator<PsiElement> manipulator = getManipulator(getElement());
     if (manipulator == null) {
@@ -218,6 +237,7 @@ public class FileReference implements PsiPolyVariantReference, QuickFixProvider 
     }
     return manipulator.handleContentChange(getElement(), range, newName);
   }
+
   private static ElementManipulator<PsiElement> getManipulator(PsiElement currentElement){
     return ReferenceProvidersRegistry.getInstance(currentElement.getProject()).getManipulator(currentElement);
   }

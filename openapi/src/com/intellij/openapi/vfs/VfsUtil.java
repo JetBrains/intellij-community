@@ -22,7 +22,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -428,7 +431,7 @@ public class VfsUtil {
     return new File(PathUtil.toPresentableUrl(file.getUrl()));
   }
 
-  
+
 
   public static VirtualFile copyFileRelative(Object requestor, VirtualFile file, VirtualFile toDir, String relativePath) throws IOException {
     StringTokenizer tokenizer = new StringTokenizer(relativePath,"/");
@@ -453,7 +456,7 @@ public class VfsUtil {
     int idx = ideaUrl.indexOf("://");
     if( idx >= 0 ) {
       String s = ideaUrl.substring(0, idx);
-      
+
       if (s.equals(JarFileSystem.PROTOCOL)) {
         //noinspection HardCodedStringLiteral
         s = "jar:file";
@@ -510,5 +513,21 @@ public class VfsUtil {
       if (module == null) return url;
       return new StringBuffer().append("[").append(module.getName()).append("] - ").append(url).toString();
     }
+  }
+
+  @Nullable
+  public static String getPath(VirtualFile src, VirtualFile dst, char separatorChar) throws IncorrectOperationException {
+    final VirtualFile commonAncestor = getCommonAncestor(src, dst);
+    if (commonAncestor != null) {
+      StringBuffer buffer = new StringBuffer();
+      while (src.getParent() != commonAncestor) {
+        buffer.append("../");
+        src = src.getParent();
+      }
+      buffer.append(getRelativePath(dst, commonAncestor, '/'));
+      return buffer.toString();
+    }
+
+    return null;
   }
 }
