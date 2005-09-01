@@ -524,7 +524,7 @@ public class VfsUtil {
         buffer.append("../");
         src = src.getParent();
       }
-      buffer.append(getRelativePath(dst, commonAncestor, '/'));
+      buffer.append(getRelativePath(dst, commonAncestor, separatorChar));
       return buffer.toString();
     }
 
