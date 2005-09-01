@@ -47,7 +47,7 @@ public class GuiFormFileType implements FileType {
   }
 
   public String getDescription() {
-    return "GUI Designer form";
+    return "GUI Designer forms";
   }
 
   public String getDefaultExtension() {
