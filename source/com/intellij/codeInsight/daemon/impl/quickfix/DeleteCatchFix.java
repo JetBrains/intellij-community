@@ -34,10 +34,9 @@ public class DeleteCatchFix implements IntentionAction {
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    PsiElement element = myCatchParameter.getContainingFile();
     return myCatchParameter != null
-        && myCatchParameter.isValid()
-        && element.getManager().isInProject(element);
+           && myCatchParameter.isValid()
+           && PsiManager.getInstance(project).isInProject(myCatchParameter.getContainingFile());
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) {
@@ -49,7 +48,9 @@ public class DeleteCatchFix implements IntentionAction {
         PsiCodeBlock tryBlock = tryStatement.getTryBlock();
         PsiElement reformatRangeStart = tryStatement.getPrevSibling();
         PsiElement reformatRangeEnd = tryStatement.getNextSibling();
-        while((reformatRangeEnd = reformatRangeEnd.getNextSibling()) instanceof PsiWhiteSpace);
+        if (reformatRangeEnd instanceof PsiWhiteSpace) {
+          reformatRangeEnd = reformatRangeEnd.getNextSibling();
+        }
         if(reformatRangeEnd == null) reformatRangeEnd = tryParent;
         PsiElement firstElement = tryBlock.getFirstBodyElement();
         PsiElement lastAddedStatement = null;
