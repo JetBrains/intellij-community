@@ -16,6 +16,7 @@
 package com.siyeh.ipp.psiutils;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NonNls;
 
 public class ConditionalUtils{
     private ConditionalUtils(){
@@ -37,7 +38,7 @@ public class ConditionalUtils{
         }
     }
 
-    public static boolean isReturn(PsiStatement statement, String value){
+    public static boolean isReturn(PsiStatement statement, @NonNls String value){
         if(statement == null){
             return false;
         }
@@ -54,7 +55,7 @@ public class ConditionalUtils{
         return value.equals(returnValueText);
     }
 
-    public static boolean isAssignment(PsiStatement statement, String value){
+    public static boolean isAssignment(PsiStatement statement, @NonNls String value){
         if(statement == null){
             return false;
         }

@@ -22,6 +22,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 import sun.misc.DoubleConsts;
 import sun.misc.FloatConsts;
 import sun.misc.FpUtils;
@@ -61,7 +62,7 @@ public class ConvertIntegerToHexIntention extends Intention{
             } else{
                 val = new BigInteger(textString, 10);
             }
-            String hexString = "0x" + val.toString(16);
+            @NonNls String hexString = "0x" + val.toString(16);
             if(isLong){
                 hexString += 'L';
             }
@@ -103,7 +104,7 @@ public class ConvertIntegerToHexIntention extends Intention{
         return Double.toString(d);
       else {
         // Initialized to maximum size of output.
-        StringBuffer answer = new StringBuffer(24);
+        @NonNls StringBuffer answer = new StringBuffer(24);
 
         if (FpUtils.rawCopySign(1.0, d) == -1.0) // value is negative,
           answer.append("-");		     // so append sign info
@@ -160,7 +161,7 @@ public class ConvertIntegerToHexIntention extends Intention{
         // Adjust exponent to create subnormal double, then
         // replace subnormal double exponent with subnormal float
         // exponent
-        String s = doubleToHexString(FpUtils.scalb((double)f,
+        @NonNls String s = doubleToHexString(FpUtils.scalb((double)f,
                                                     /* -1022+126 */
                                                     DoubleConsts.MIN_EXPONENT-
                                                     FloatConsts.MIN_EXPONENT));

@@ -29,6 +29,7 @@ import com.siyeh.ipp.psiutils.ComparisonUtils;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 public abstract class Intention implements IntentionAction{
     private final PsiElementPredicate predicate;
@@ -93,7 +94,7 @@ public abstract class Intention implements IntentionAction{
             expString = lhs.getText() + negatedComparison + rhs.getText();
         } else{
             if(ParenthesesUtils.getPrecendence(newExpression) >
-                    ParenthesesUtils.PREFIX_PRECEDENCE){
+               ParenthesesUtils.PREFIX_PRECEDENCE){
                 expString = "!(" + newExpressionText + ')';
             } else{
                 expString = '!' + newExpressionText;
@@ -129,8 +130,8 @@ public abstract class Intention implements IntentionAction{
         codeStyleManager.reformat(insertedElement);
     }
 
-    protected static void replaceStatement(@NotNull String newStatement,
-                                           @NotNull PsiStatement statement)
+    protected static void replaceStatement(@NonNls @NotNull String newStatement,
+                                           @NonNls @NotNull PsiStatement statement)
             throws IncorrectOperationException{
         final PsiManager mgr = statement.getManager();
         final PsiElementFactory factory = mgr.getElementFactory();
@@ -142,7 +143,7 @@ public abstract class Intention implements IntentionAction{
     }
 
     @Nullable PsiElement findMatchingElement(PsiFile file,
-                                                       Editor editor){
+                                             Editor editor){
         final CaretModel caretModel = editor.getCaretModel();
         final int position = caretModel.getOffset();
         PsiElement element = file.findElementAt(position);

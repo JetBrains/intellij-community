@@ -21,6 +21,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class RemoveBooleanEqualityIntention extends MutablyNamedIntention{
     protected String getTextForElement(PsiElement element){
@@ -48,10 +49,10 @@ public class RemoveBooleanEqualityIntention extends MutablyNamedIntention{
         final IElementType tokenType = sign.getTokenType();
         final boolean isEquals = JavaTokenType.EQEQ.equals(tokenType);
         final PsiExpression lhs = exp.getLOperand();
-        final String lhsText = lhs.getText();
+        @NonNls final String lhsText = lhs.getText();
         final PsiExpression rhs = exp.getROperand();
         assert rhs != null;
-        final String rhsText = rhs.getText();
+        @NonNls final String rhsText = rhs.getText();
         if("true".equals(lhsText)){
             if(isEquals){
                 replaceExpression(rhsText, exp);

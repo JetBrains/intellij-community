@@ -20,6 +20,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class ReplaceAssertLiteralWithAssertEqualsIntention
         extends MutablyNamedIntention{
@@ -30,7 +31,7 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention
         final PsiExpression[] args = argumentList.getExpressions();
         final PsiReferenceExpression methodExpression =
                 call.getMethodExpression();
-        final String methodName = methodExpression.getReferenceName();
+        @NonNls final String methodName = methodExpression.getReferenceName();
         assert methodName != null;
         final String literal = methodName.substring("assert".length())
                 .toLowerCase();
@@ -42,7 +43,7 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention
             messageText = "..., ";
         }
         return "Replace " + methodName + "() with assertEquals(" + messageText +
-                literal + ", ...)";
+               literal + ", ...)";
     }
 
     public String getFamilyName(){
@@ -62,7 +63,7 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention
                 call.getMethodExpression();
         final PsiExpression qualifierExp =
                 methodExpression.getQualifierExpression();
-        final String methodName = methodExpression.getReferenceName();
+        @NonNls final String methodName = methodExpression.getReferenceName();
         assert methodName != null;
         final String literal = methodName.substring("assert".length())
                 .toLowerCase();
@@ -77,16 +78,16 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention
         assert argumentList != null;
         final PsiExpression[] args = argumentList.getExpressions();
 
-        final String callString;
+        @NonNls final String callString;
         if(args.length == 1){
             callString = qualifier + "assertEquals(" + literal + ", " +
-                    args[0].getText() + ')';
+                         args[0].getText() + ')';
         } else{
             callString =
                     qualifier + "assertEquals(" + args[0].getText() + ", " +
-                            literal +
-                            ", " + args[1].getText() +
-                            ')';
+                    literal +
+                    ", " + args[1].getText() +
+                    ')';
         }
         replaceExpression(callString, call);
     }

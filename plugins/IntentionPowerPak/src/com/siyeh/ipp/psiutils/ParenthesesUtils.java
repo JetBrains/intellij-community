@@ -21,6 +21,8 @@ import com.intellij.psi.tree.IElementType;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.jetbrains.annotations.NonNls;
+
 public class ParenthesesUtils{
     private ParenthesesUtils(){
         super();
@@ -85,11 +87,11 @@ public class ParenthesesUtils{
 
     public static int getPrecendence(PsiExpression exp){
         if(exp instanceof PsiThisExpression ||
-                exp instanceof PsiLiteralExpression ||
-                exp instanceof PsiSuperExpression ||
-                exp instanceof PsiClassObjectAccessExpression ||
-                exp instanceof PsiArrayAccessExpression ||
-                exp instanceof PsiArrayInitializerExpression){
+           exp instanceof PsiLiteralExpression ||
+           exp instanceof PsiSuperExpression ||
+           exp instanceof PsiClassObjectAccessExpression ||
+           exp instanceof PsiArrayAccessExpression ||
+           exp instanceof PsiArrayInitializerExpression){
             return LITERAL_PRECEDENCE;
         }
         if(exp instanceof PsiReferenceExpression){
@@ -103,7 +105,7 @@ public class ParenthesesUtils{
             return METHOD_CALL_PRECEDENCE;
         }
         if(exp instanceof PsiTypeCastExpression ||
-                exp instanceof PsiNewExpression){
+           exp instanceof PsiNewExpression){
             return TYPE_CAST_PRECEDENCE;
         }
         if(exp instanceof PsiPrefixExpression){
@@ -216,7 +218,7 @@ public class ParenthesesUtils{
             return '(' + removeParentheses(body) + ')';
         } else if(parentPrecedence == childPrecedence){
             if(parentExp instanceof PsiBinaryExpression &&
-                    body instanceof PsiBinaryExpression){
+               body instanceof PsiBinaryExpression){
                 final IElementType parentOperator =
                         ((PsiBinaryExpression) parentExp).getOperationSign()
                                 .getTokenType();
@@ -247,11 +249,11 @@ public class ParenthesesUtils{
         final PsiExpression thenBranch = conditionalExp.getThenExpression();
         final PsiExpression elseBranch = conditionalExp.getElseExpression();
         return removeParentheses(condition) + '?' +
-                removeParentheses(thenBranch) + ':' +
-                removeParentheses(elseBranch);
+               removeParentheses(thenBranch) + ':' +
+               removeParentheses(elseBranch);
     }
 
-    private static String removeParensFromInstanceOfExpression(
+    @NonNls private static String removeParensFromInstanceOfExpression(
             PsiInstanceOfExpression instanceofExp){
         final PsiExpression body = instanceofExp.getOperand();
         final PsiTypeElement type = instanceofExp.getCheckType();
@@ -287,7 +289,7 @@ public class ParenthesesUtils{
         final PsiExpression arrayExp = arrayAccessExp.getArrayExpression();
         final PsiExpression indexExp = arrayAccessExp.getIndexExpression();
         return removeParentheses(arrayExp) + '[' + removeParentheses(indexExp) +
-                ']';
+               ']';
     }
 
     private static String removeParensFromTypeCastExpression(
@@ -322,7 +324,7 @@ public class ParenthesesUtils{
         final PsiExpression rhs = assignment.getRExpression();
         final PsiJavaToken sign = assignment.getOperationSign();
         return removeParentheses(lhs) + ' ' +  sign.getText() + ' ' +
-                removeParentheses(rhs);
+               removeParentheses(rhs);
     }
 
     private static String removeParensFromMethodCallExpression(

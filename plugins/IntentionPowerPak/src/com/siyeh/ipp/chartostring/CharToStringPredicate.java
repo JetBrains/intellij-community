@@ -18,6 +18,7 @@ package com.siyeh.ipp.chartostring;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NonNls;
 
 class CharToStringPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
@@ -60,7 +61,7 @@ class CharToStringPredicate implements PsiElementPredicate{
             return "java.lang.String".equals(parentTypeText);
         }
         if(parent instanceof PsiExpressionList &&
-                parent.getParent() instanceof PsiMethodCallExpression){
+           parent.getParent() instanceof PsiMethodCallExpression){
             final PsiMethodCallExpression methodCall =
                     (PsiMethodCallExpression) parent.getParent();
             if(methodCall == null)
@@ -75,10 +76,10 @@ class CharToStringPredicate implements PsiElementPredicate{
             }
             final String className = type.getCanonicalText();
             if(!"java.lang.StringBuffer".equals(className) &&
-                    !"java.lang.StringBuilder".equals(className)){
+               !"java.lang.StringBuilder".equals(className)){
                 return false;
             }
-            final String methodName = methodExpression.getReferenceName();
+            @NonNls final String methodName = methodExpression.getReferenceName();
             return "append".equals(methodName);
         } else{
             return false;

@@ -18,13 +18,14 @@ package com.siyeh.ipp.trivialif;
 import com.intellij.psi.*;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
+import org.jetbrains.annotations.NonNls;
 
 class MergeElseIfPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiJavaToken)){
             return false;
         }
-        final String text = element.getText();
+        @NonNls final String text = element.getText();
         if(!"else".equals(text)){
             return false;
         }

@@ -21,6 +21,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class MergeParallelIfsIntention extends Intention{
     public String getText(){
@@ -60,27 +61,27 @@ public class MergeParallelIfsIntention extends Intention{
 
         final PsiStatement firstThenBranch = firstStatement.getThenBranch();
         final PsiStatement secondThenBranch = secondStatement.getThenBranch();
-        String statement =
+        @NonNls String statement =
                 "if(" + conditionText + ')' +
-                        printStatementsInSequence(firstThenBranch,
-                                                  secondThenBranch);
+                printStatementsInSequence(firstThenBranch,
+                                          secondThenBranch);
 
         final PsiStatement firstElseBranch = firstStatement.getElseBranch();
         final PsiStatement secondElseBranch = secondStatement.getElseBranch();
         if(firstElseBranch != null || secondElseBranch != null){
             if(firstElseBranch instanceof PsiIfStatement
-                    && secondElseBranch instanceof PsiIfStatement
-                    &&
-                    MergeParallelIfsPredicate
-                            .ifStatementsCanBeMerged((PsiIfStatement) firstElseBranch,
-                                                     (PsiIfStatement) secondElseBranch)){
+               && secondElseBranch instanceof PsiIfStatement
+               &&
+               MergeParallelIfsPredicate
+                       .ifStatementsCanBeMerged((PsiIfStatement) firstElseBranch,
+                                                (PsiIfStatement) secondElseBranch)){
                 statement += "else " +
-                        mergeIfStatements((PsiIfStatement) firstElseBranch,
-                                          (PsiIfStatement) secondElseBranch);
+                             mergeIfStatements((PsiIfStatement) firstElseBranch,
+                                               (PsiIfStatement) secondElseBranch);
             } else{
                 statement += "else" +
-                        printStatementsInSequence(firstElseBranch,
-                                                  secondElseBranch);
+                             printStatementsInSequence(firstElseBranch,
+                                                       secondElseBranch);
             }
         }
         return statement;

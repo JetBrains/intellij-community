@@ -22,6 +22,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class ReplaceForEachLoopWithForLoopIntention extends Intention{
     public String getText(){
@@ -42,7 +43,7 @@ public class ReplaceForEachLoopWithForLoopIntention extends Intention{
         final PsiForeachStatement statement = (PsiForeachStatement) element.getParent();
 
         assert statement != null;
-        final StringBuffer newStatement=new StringBuffer();
+        @NonNls final StringBuffer newStatement=new StringBuffer();
         final PsiManager psiManager = statement.getManager();
         final Project project = psiManager.getProject();
         final CodeStyleManager codeStyleManager =

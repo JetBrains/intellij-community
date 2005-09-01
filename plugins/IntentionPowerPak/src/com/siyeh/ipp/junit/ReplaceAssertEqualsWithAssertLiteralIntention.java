@@ -20,6 +20,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class ReplaceAssertEqualsWithAssertLiteralIntention
         extends MutablyNamedIntention{
@@ -68,34 +69,34 @@ public class ReplaceAssertEqualsWithAssertLiteralIntention
         final PsiExpression[] args = argumentList.getExpressions();
         final String callString;
         if(args.length == 2){
-            final String argText = args[0].getText();
+            @NonNls final String argText = args[0].getText();
             final PsiExpression otherArg;
             if("true".equals(argText) ||
-                    "false".equals(argText) ||
-                    "null".equals(argText)){
+               "false".equals(argText) ||
+               "null".equals(argText)){
                 otherArg = args[1];
             } else{
                 otherArg = args[0];
             }
             callString = qualifier + getAssertString(argText) + '(' +
-                    otherArg.getText() + ')';
+                         otherArg.getText() + ')';
         } else{
-            final String argText = args[1].getText();
+            @NonNls final String argText = args[1].getText();
             final PsiExpression otherArg;
             if("true".equals(argText) ||
-                    "false".equals(argText) ||
-                    "null".equals(argText)){
+               "false".equals(argText) ||
+               "null".equals(argText)){
                 otherArg = args[2];
             } else{
                 otherArg = args[1];
             }
             callString = qualifier + getAssertString(argText) + '(' +
-                    args[0].getText() + ", " + otherArg.getText() + ')';
+                         args[0].getText() + ", " + otherArg.getText() + ')';
         }
         replaceExpression(callString, call);
     }
 
-    private static String getAssertString(String argText){
+    @NonNls private static String getAssertString(@NonNls String argText){
         if("true".equals(argText)){
             return "assertTrue";
         }

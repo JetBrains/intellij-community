@@ -21,13 +21,14 @@ import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class FlipCommutativeMethodCallIntention extends MutablyNamedIntention{
     protected String getTextForElement(PsiElement element){
         final PsiMethodCallExpression call = (PsiMethodCallExpression) element;
         final PsiReferenceExpression methodExpression =
                 call.getMethodExpression();
-        final String methodName = methodExpression.getReferenceName();
+        @NonNls final String methodName = methodExpression.getReferenceName();
         assert methodName != null;
         if("equals".equals(methodName) || "equalsIgnoreCase".equals(methodName))
         {
@@ -64,12 +65,12 @@ public class FlipCommutativeMethodCallIntention extends MutablyNamedIntention{
                 ParenthesesUtils.stripParentheses(arg);
         final String callString;
         if(ParenthesesUtils.getPrecendence(strippedArg) >
-                ParenthesesUtils.METHOD_CALL_PRECEDENCE){
+           ParenthesesUtils.METHOD_CALL_PRECEDENCE){
             callString = '(' + strippedArg.getText() + ")." + methodName + '(' +
-                    strippedTarget.getText() + ')';
+                         strippedTarget.getText() + ')';
         } else{
             callString = strippedArg.getText() + '.' + methodName + '(' +
-                    strippedTarget.getText() + ')';
+                         strippedTarget.getText() + ')';
         }
         replaceExpression(callString, call);
     }

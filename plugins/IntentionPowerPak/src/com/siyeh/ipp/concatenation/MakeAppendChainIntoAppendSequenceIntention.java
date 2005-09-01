@@ -21,6 +21,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,7 +62,7 @@ public class MakeAppendChainIntoAppendSequenceIntention extends Intention{
         final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
         final String targetText;
         final PsiStatement statement;
-        final String firstStatement;
+        @NonNls final String firstStatement;
         if(call.getParent() instanceof PsiExpressionStatement){
             targetText = currentCall.getText();
             statement = (PsiStatement) call.getParent();
@@ -100,7 +101,7 @@ public class MakeAppendChainIntoAppendSequenceIntention extends Intention{
         }
 
         for(String arg : argsList){
-            final String append = targetText + ".append" + arg + ';';
+            @NonNls final String append = targetText + ".append" + arg + ';';
             final PsiStatement newCall =
                     factory.createStatementFromText(append, null);
             final PsiElement insertedElement = statement.getParent()

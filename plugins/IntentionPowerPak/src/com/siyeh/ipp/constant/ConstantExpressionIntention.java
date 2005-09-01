@@ -24,6 +24,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class ConstantExpressionIntention extends Intention{
     @NotNull
@@ -47,11 +48,11 @@ public class ConstantExpressionIntention extends Intention{
         final PsiConstantEvaluationHelper helper =
                 psiManager.getConstantEvaluationHelper();
         final Object value = helper.computeConstantExpression(expression);
-        final String newExpression;
+        @NonNls final String newExpression;
         if(value instanceof String){
             newExpression = '\"' + StringUtil
                     .escapeStringCharacters((String) value) +
-                    '\"';
+                                                            '\"';
         } else if(value == null){
             newExpression = "null";
         } else{

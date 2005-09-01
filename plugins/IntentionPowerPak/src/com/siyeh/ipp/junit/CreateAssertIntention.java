@@ -22,6 +22,7 @@ import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.BoolUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class CreateAssertIntention extends Intention{
     public String getText(){
@@ -44,8 +45,7 @@ public class CreateAssertIntention extends Intention{
         assert statement != null;
         final PsiExpression expression = statement.getExpression();
         if(BoolUtils.isNegation(expression)){
-            final String newExpression = "assertFalse(" +
-                    BoolUtils.getNegatedExpressionText(expression) + ");";
+            @NonNls final String newExpression = "assertFalse(" + BoolUtils.getNegatedExpressionText(expression) + ");";
             replaceStatement(newExpression,
                              statement);
         } else if(isNullComparison(expression)){
@@ -60,8 +60,8 @@ public class CreateAssertIntention extends Intention{
                 comparedExpression = lhs;
             }
             assert comparedExpression != null;
-            final String newExpression = "assertNull(" +
-                    comparedExpression.getText() + ");";
+            @NonNls final String newExpression = "assertNull(" +
+                                         comparedExpression.getText() + ");";
             replaceStatement(newExpression,
                              statement);
         } else if(isEqualityComparison(expression)){
@@ -80,19 +80,19 @@ public class CreateAssertIntention extends Intention{
             }
             assert comparingExpression != null;
             final PsiType type = lhs.getType();
-            final String newExpression;
+            @NonNls final String newExpression;
             if(PsiType.DOUBLE.equals(type) || PsiType.FLOAT.equals(type)){
                 newExpression = "assertEquals(" +
-                        comparedExpression.getText() + ", " +
-                        comparingExpression.getText() + ", 0.0);";
+                                comparedExpression.getText() + ", " +
+                                comparingExpression.getText() + ", 0.0);";
             } else if(type instanceof PsiPrimitiveType){
                 newExpression = "assertEquals(" +
-                        comparedExpression.getText() + ", " +
-                        comparingExpression.getText() + ");";
+                                comparedExpression.getText() + ", " +
+                                comparingExpression.getText() + ");";
             } else{
                 newExpression = "assertSame(" +
-                        comparedExpression.getText() + ", " +
-                        comparingExpression.getText() + ");";
+                                comparedExpression.getText() + ", " +
+                                comparingExpression.getText() + ");";
             }
             replaceStatement(newExpression,
                              statement);
@@ -105,20 +105,20 @@ public class CreateAssertIntention extends Intention{
             final PsiExpressionList argList = call.getArgumentList();
             assert argList != null;
             final PsiExpression comparingExpression = argList.getExpressions()[0];
-            final String newExpression;
+            @NonNls final String newExpression;
             if(comparingExpression instanceof PsiLiteralExpression){
                 newExpression = "assertEquals(" +
-                        comparingExpression.getText() + ", " +
-                        comparedExpression.getText() + ");";
+                                comparingExpression.getText() + ", " +
+                                comparedExpression.getText() + ");";
             } else{
                 newExpression = "assertEquals(" +
-                        comparedExpression.getText() + ", " +
-                        comparingExpression.getText() + ");";
+                                comparedExpression.getText() + ", " +
+                                comparingExpression.getText() + ");";
             }
             replaceStatement(newExpression,
                              statement);
         } else{
-            final String newExpression =
+            @NonNls final String newExpression =
                     "assertTrue(" + expression.getText() + ");";
             replaceStatement(newExpression,
                              statement);
@@ -136,7 +136,7 @@ public class CreateAssertIntention extends Intention{
         if(methodExpression == null){
             return false;
         }
-        final String methodName = methodExpression.getReferenceName();
+        @NonNls final String methodName = methodExpression.getReferenceName();
         if(!"equals".equals(methodName)){
             return false;
         }
@@ -150,8 +150,8 @@ public class CreateAssertIntention extends Intention{
             return false;
         }
         final PsiExpression[] expressions = argList.getExpressions();
-        return expressions != null && expressions.length == 1 &&
-                expressions[0] != null;
+        return expressions.length == 1 &&
+               expressions[0] != null;
     }
 
     private static boolean isEqualityComparison(PsiExpression expression){
@@ -188,7 +188,7 @@ public class CreateAssertIntention extends Intention{
         if(!(expression instanceof PsiLiteralExpression)){
             return false;
         }
-        final String text = expression.getText();
+        @NonNls final String text = expression.getText();
         return "null".equals(text);
     }
 }

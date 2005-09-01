@@ -23,6 +23,7 @@ import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.BoolUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class AssertToIfIntention extends Intention{
     @NotNull
@@ -48,14 +49,14 @@ public class AssertToIfIntention extends Intention{
 
         final String negatedConditionString =
                 BoolUtils.getNegatedExpressionText(condition);
-        final String newStatement;
+        @NonNls final String newStatement;
         if(description == null){
             newStatement = "if(" + negatedConditionString +
-                    "){ throw new IllegalArgumentException();}";
+                           "){ throw new IllegalArgumentException();}";
         } else{
             newStatement = "if(" + negatedConditionString +
-                    "){ throw new IllegalArgumentException(" +
-                    description.getText() + ");}";
+                           "){ throw new IllegalArgumentException(" +
+                           description.getText() + ");}";
         }
         replaceStatement(newStatement, assertStatement);
     }

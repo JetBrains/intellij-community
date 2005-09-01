@@ -21,6 +21,7 @@ import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.BoolUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class FlipAssertLiteralIntention extends MutablyNamedIntention{
     protected String getTextForElement(PsiElement element){
@@ -28,7 +29,7 @@ public class FlipAssertLiteralIntention extends MutablyNamedIntention{
         final PsiReferenceExpression methodExpression =
                 call.getMethodExpression();
         final String fromMethodName = methodExpression.getReferenceName();
-        final String toMethodName;
+        @NonNls final String toMethodName;
         if("assertTrue".equals(fromMethodName)){
             toMethodName = "assertFalse";
         } else{
@@ -51,8 +52,8 @@ public class FlipAssertLiteralIntention extends MutablyNamedIntention{
         final PsiMethodCallExpression call = (PsiMethodCallExpression) element;
         final PsiReferenceExpression methodExpression =
                 call.getMethodExpression();
-        final String fromMethodName = methodExpression.getReferenceName();
-        final String toMethodName;
+        @NonNls final String fromMethodName = methodExpression.getReferenceName();
+        @NonNls final String toMethodName;
         if("assertTrue".equals(fromMethodName)){
             toMethodName = "assertFalse";
         } else{
@@ -74,13 +75,13 @@ public class FlipAssertLiteralIntention extends MutablyNamedIntention{
         if(args.length == 1){
             final PsiExpression arg = args[0];
             callString = qualifier + toMethodName + '(' +
-                    BoolUtils.getNegatedExpressionText(arg) + ')';
+                         BoolUtils.getNegatedExpressionText(arg) + ')';
         } else{
             final PsiExpression arg = args[1];
             callString =
                     qualifier + toMethodName + '(' + args[0].getText() + ',' +
-                            BoolUtils.getNegatedExpressionText(arg) +
-                            ')';
+                    BoolUtils.getNegatedExpressionText(arg) +
+                    ')';
         }
         replaceExpression(callString, call);
     }

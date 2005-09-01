@@ -23,6 +23,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ControlFlowUtils;
 import com.siyeh.ipp.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -207,7 +208,7 @@ public class ReplaceSwitchWithIfIntention extends Intention{
         }
     }
 
-    private static void dumpBranch(StringBuffer ifStatementString,
+    private static void dumpBranch(@NonNls StringBuffer ifStatementString,
                                    String expressionText, List<String> labels,
                                    List<PsiElement> bodyStatements,
                                    boolean firstBranch,
@@ -222,7 +223,7 @@ public class ReplaceSwitchWithIfIntention extends Intention{
                  variableDecls);
     }
 
-    private static void dumpDefaultBranch(StringBuffer ifStatementString,
+    private static void dumpDefaultBranch(@NonNls StringBuffer ifStatementString,
                                           List<PsiElement> bodyStatements,
                                           boolean firstBranch,
                                           boolean renameBreaks,
@@ -235,7 +236,7 @@ public class ReplaceSwitchWithIfIntention extends Intention{
                  variableDecls);
     }
 
-    private static void dumpLabels(StringBuffer ifStatementString,
+    private static void dumpLabels(@NonNls StringBuffer ifStatementString,
                                    String expressionText, List<String> labels){
         ifStatementString.append("if(");
         boolean firstLabel = true;
@@ -252,7 +253,7 @@ public class ReplaceSwitchWithIfIntention extends Intention{
         ifStatementString.append(')');
     }
 
-    private static void dumpBody(StringBuffer ifStatementString,
+    private static void dumpBody(@NonNls StringBuffer ifStatementString,
                                  List<PsiElement> bodyStatements,
                                  boolean renameBreaks,
                                  String breakLabel,
@@ -279,7 +280,7 @@ public class ReplaceSwitchWithIfIntention extends Intention{
         ifStatementString.append('}');
     }
 
-    private static void appendElement(StringBuffer ifStatementString,
+    private static void appendElement(@NonNls StringBuffer ifStatementString,
                                       PsiElement element,
                                       boolean renameBreakElements,
                                       String breakLabelString){

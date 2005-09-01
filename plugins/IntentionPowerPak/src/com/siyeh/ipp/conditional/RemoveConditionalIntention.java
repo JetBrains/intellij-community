@@ -23,6 +23,7 @@ import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.BoolUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class RemoveConditionalIntention extends Intention{
     public String getText(){
@@ -44,7 +45,7 @@ public class RemoveConditionalIntention extends Intention{
         final PsiExpression condition = exp.getCondition();
         final PsiExpression thenExpression = exp.getThenExpression();
         assert thenExpression != null;
-        final String thenExpressionText = thenExpression.getText();
+        @NonNls final String thenExpressionText = thenExpression.getText();
         if("true".equals(thenExpressionText)){
             final String newExpression = condition.getText();
             replaceExpression(newExpression, exp);

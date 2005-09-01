@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
+import org.jetbrains.annotations.NonNls;
 
 class AssertTrueEqualsPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
@@ -44,7 +45,7 @@ class AssertTrueEqualsPredicate implements PsiElementPredicate{
         if(methodExpression == null){
             return false;
         }
-        final String methodName = methodExpression.getReferenceName();
+        @NonNls final String methodName = methodExpression.getReferenceName();
         if(!"assertTrue".equals(methodName)){
             return false;
         }
@@ -76,7 +77,7 @@ class AssertTrueEqualsPredicate implements PsiElementPredicate{
             if(methodExpression == null){
                 return false;
             }
-            final String methodName = methodExpression.getReferenceName();
+            @NonNls final String methodName = methodExpression.getReferenceName();
             return "equals".equals(methodName);
         }
         return false;

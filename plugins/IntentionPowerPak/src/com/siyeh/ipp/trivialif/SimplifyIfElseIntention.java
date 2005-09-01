@@ -23,6 +23,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.BoolUtils;
 import com.siyeh.ipp.psiutils.ConditionalUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class SimplifyIfElseIntention extends Intention{
     public String getText(){
@@ -76,7 +77,7 @@ public class SimplifyIfElseIntention extends Intention{
                 PsiTreeUtil.skipSiblingsForward(statement,
                                                 new Class[]{
                                                     PsiWhiteSpace.class});
-        final String newStatement = "return " + conditionText + ';';
+        @NonNls final String newStatement = "return " + conditionText + ';';
         replaceStatement(newStatement, statement);
         assert nextStatement != null;
         nextStatement.delete();
@@ -86,7 +87,7 @@ public class SimplifyIfElseIntention extends Intention{
             throws IncorrectOperationException{
         final PsiExpression condition = statement.getCondition();
         final String conditionText = condition.getText();
-        final String newStatement = "return " + conditionText + ';';
+        @NonNls final String newStatement = "return " + conditionText + ';';
         replaceStatement(newStatement, statement);
     }
 
@@ -166,7 +167,7 @@ public class SimplifyIfElseIntention extends Intention{
                 PsiTreeUtil.skipSiblingsForward(statement,
                                                 new Class[]{
                                                     PsiWhiteSpace.class});
-        final String newStatement = "return " + conditionText + ';';
+        @NonNls final String newStatement = "return " + conditionText + ';';
         replaceStatement(newStatement, statement);
         assert nextStatement != null;
         nextStatement.delete();
@@ -177,7 +178,7 @@ public class SimplifyIfElseIntention extends Intention{
         final PsiExpression condition = statement.getCondition();
         final String conditionText =
                 BoolUtils.getNegatedExpressionText(condition);
-        final String newStatement = "return " + conditionText + ';';
+        @NonNls final String newStatement = "return " + conditionText + ';';
         replaceStatement(newStatement, statement);
     }
 

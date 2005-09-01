@@ -18,6 +18,7 @@ package com.siyeh.ipp.equality;
 import com.intellij.psi.*;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
+import org.jetbrains.annotations.NonNls;
 
 class EqualsPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
@@ -46,7 +47,7 @@ class EqualsPredicate implements PsiElementPredicate{
         if(qualifier == null){
             return false;
         }
-        final String methodName = methodExpression.getReferenceName();
+        @NonNls final String methodName = methodExpression.getReferenceName();
         return "equals".equals(methodName);
     }
 }

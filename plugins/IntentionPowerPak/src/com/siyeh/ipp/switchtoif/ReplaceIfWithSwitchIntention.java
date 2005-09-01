@@ -24,6 +24,7 @@ import com.siyeh.ipp.psiutils.ControlFlowUtils;
 import com.siyeh.ipp.psiutils.DeclarationUtils;
 import com.siyeh.ipp.psiutils.EquivalenceChecker;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -75,7 +76,7 @@ public class ReplaceIfWithSwitchIntention extends Intention{
         final PsiExpression caseExpression =
                 CaseUtil.getCaseExpression(ifStatement);
         assert caseExpression != null;
-        final StringBuffer switchStatementBuffer=new StringBuffer(1024);
+        @NonNls final StringBuffer switchStatementBuffer=new StringBuffer(1024);
         switchStatementBuffer.append("switch(" + caseExpression.getText() +
                 ')');
         switchStatementBuffer.append('{');
@@ -237,7 +238,7 @@ public class ReplaceIfWithSwitchIntention extends Intention{
                  breakLabelName);
     }
 
-    private static void dumpDefaultBranch(StringBuffer switchStatementString,
+    private static void dumpDefaultBranch(@NonNls StringBuffer switchStatementString,
                                           PsiStatement body, boolean wrap,
                                           boolean renameBreaks,
                                           String breakLabelName){
@@ -246,7 +247,7 @@ public class ReplaceIfWithSwitchIntention extends Intention{
                  breakLabelName);
     }
 
-    private static void dumpLabels(StringBuffer switchStatementString,
+    private static void dumpLabels(@NonNls StringBuffer switchStatementString,
                                    List<String> labels){
         for(String label : labels){
             switchStatementString.append("case ");
@@ -255,7 +256,7 @@ public class ReplaceIfWithSwitchIntention extends Intention{
         }
     }
 
-    private static void dumpBody(StringBuffer switchStatementString,
+    private static void dumpBody(@NonNls StringBuffer switchStatementString,
                                  PsiStatement bodyStatement, boolean wrap,
                                  boolean renameBreaks, String breakLabelName){
         if(bodyStatement instanceof PsiBlockStatement){
@@ -289,7 +290,7 @@ public class ReplaceIfWithSwitchIntention extends Intention{
         }
     }
 
-    private static void appendElement(StringBuffer switchStatementString,
+    private static void appendElement(@NonNls StringBuffer switchStatementString,
                                       PsiElement element,
                                       boolean renameBreakElements,
                                       String breakLabelString){

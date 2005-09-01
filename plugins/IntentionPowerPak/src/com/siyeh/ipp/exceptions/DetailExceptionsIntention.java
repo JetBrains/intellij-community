@@ -20,6 +20,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -46,7 +47,7 @@ public class DetailExceptionsIntention extends Intention{
         assert tryStatement != null;
         final String text = tryStatement.getText();
         final int length = text.length();
-        final StringBuffer newTryStatement = new StringBuffer(length);
+        @NonNls final StringBuffer newTryStatement = new StringBuffer(length);
         newTryStatement.append("try");
         final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
         final String tryBlockText = tryBlock.getText();

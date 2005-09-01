@@ -17,6 +17,7 @@ package com.siyeh.ipp.psiutils;
 
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 public class BoolUtils{
     private BoolUtils(){
@@ -74,7 +75,7 @@ public class BoolUtils{
     public static boolean isBooleanLiteral(PsiExpression exp){
         if(exp instanceof PsiLiteralExpression){
             final PsiLiteralExpression expression = (PsiLiteralExpression) exp;
-            final String text = expression.getText();
+            @NonNls final String text = expression.getText();
             return "true".equals(text) || "false".equals(text);
         }
         return false;
@@ -96,7 +97,7 @@ public class BoolUtils{
             assert rhs != null;
             return lhs.getText() + negatedComparison + rhs.getText();
         } else if(ParenthesesUtils.getPrecendence(condition) >
-                ParenthesesUtils.PREFIX_PRECEDENCE){
+                  ParenthesesUtils.PREFIX_PRECEDENCE){
             return "!(" + condition.getText() + ')';
         } else{
             return '!' + condition.getText();

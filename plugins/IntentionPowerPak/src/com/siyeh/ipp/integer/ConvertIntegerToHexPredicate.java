@@ -22,6 +22,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ClassUtil;
+import org.jetbrains.annotations.NonNls;
 
 class ConvertIntegerToHexPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
@@ -31,8 +32,8 @@ class ConvertIntegerToHexPredicate implements PsiElementPredicate{
         final PsiLiteralExpression expression = (PsiLiteralExpression) element;
         final PsiType type = expression.getType();
         if(type.equals(PsiType.INT) ||
-                type.equals(PsiType.LONG)){
-            final String text = expression.getText();
+           type.equals(PsiType.LONG)){
+            @NonNls final String text = expression.getText();
 
             return !(text.startsWith("0x") || text.startsWith("0X"));
         }
@@ -44,10 +45,10 @@ class ConvertIntegerToHexPredicate implements PsiElementPredicate{
             final LanguageLevel languageLevel =
                     manager.getEffectiveLanguageLevel();
             if(languageLevel.equals(LanguageLevel.JDK_1_3) ||
-                    languageLevel.equals(LanguageLevel.JDK_1_4)){
+               languageLevel.equals(LanguageLevel.JDK_1_4)){
                 return false;
             }
-            final String text = expression.getText();
+            @NonNls final String text = expression.getText();
             if(text == null){
                 return false;
             }

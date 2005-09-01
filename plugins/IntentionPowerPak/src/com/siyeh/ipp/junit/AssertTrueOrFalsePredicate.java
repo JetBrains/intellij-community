@@ -21,6 +21,7 @@ import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiReferenceExpression;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
+import org.jetbrains.annotations.NonNls;
 
 class AssertTrueOrFalsePredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
@@ -45,8 +46,8 @@ class AssertTrueOrFalsePredicate implements PsiElementPredicate{
         if(methodExpression == null){
             return false;
         }
-        final String methodName = methodExpression.getReferenceName();
+        @NonNls final String methodName = methodExpression.getReferenceName();
         return "assertTrue".equals(methodName) ||
-                "assertFalse".equals(methodName);
+               "assertFalse".equals(methodName);
     }
 }

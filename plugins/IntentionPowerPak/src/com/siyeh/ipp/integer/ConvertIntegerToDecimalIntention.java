@@ -22,6 +22,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.math.BigInteger;
 
@@ -44,7 +45,7 @@ public class ConvertIntegerToDecimalIntention extends Intention{
         final PsiLiteralExpression exp = (PsiLiteralExpression) element;
         final PsiType type = exp.getType();
         if(type.equals(PsiType.INT) || type.equals(PsiType.LONG)){
-            String textString = exp.getText();
+            @NonNls String textString = exp.getText();
 
             final int textLength = textString.length();
             final char lastChar = textString.charAt(textLength - 1);

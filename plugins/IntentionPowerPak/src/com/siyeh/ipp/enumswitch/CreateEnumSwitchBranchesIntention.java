@@ -20,6 +20,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -68,7 +69,7 @@ public class CreateEnumSwitchBranchesIntention extends Intention{
                 }
             }
         }
-        final StringBuffer buffer = new StringBuffer(512);
+        @NonNls final StringBuffer buffer = new StringBuffer(512);
 
         buffer.append("switch(");
         buffer.append(switchExpression.getText());

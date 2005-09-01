@@ -21,6 +21,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class ExpandBooleanIntention extends Intention{
     public String getText(){
@@ -52,17 +53,17 @@ public class ExpandBooleanIntention extends Intention{
             final String rhsText = rhs.getText();
             final PsiExpression lhs = assignmentExpression.getLExpression();
             final String lhsText = lhs.getText();
-            final String statement =
+            @NonNls final String statement =
                     "if(" + rhsText + "){" + lhsText + " = true;}else{" +
-                            lhsText +
-                            " = false;}";
+                    lhsText +
+                    " = false;}";
             replaceStatement(statement, containingStatement);
         } else if(ExpandBooleanPredicate.isBooleanReturn(containingStatement)){
             final PsiReturnStatement returnStatement =
                     (PsiReturnStatement) containingStatement;
             final PsiExpression returnValue = returnStatement.getReturnValue();
             final String valueText = returnValue.getText();
-            final String statement =
+            @NonNls final String statement =
                     "if(" + valueText + "){return true;}else{return false;}";
             replaceStatement(statement, containingStatement);
         }

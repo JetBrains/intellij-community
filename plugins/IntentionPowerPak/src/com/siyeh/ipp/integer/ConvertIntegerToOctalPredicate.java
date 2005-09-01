@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NonNls;
 
 class ConvertIntegerToOctalPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
@@ -28,10 +29,10 @@ class ConvertIntegerToOctalPredicate implements PsiElementPredicate{
         final PsiLiteralExpression expression = (PsiLiteralExpression) element;
         final PsiType type = expression.getType();
         if(!(type.equals(PsiType.INT) ||
-                type.equals(PsiType.LONG))){
+             type.equals(PsiType.LONG))){
             return false;
         }
-        final String text = expression.getText();
+        @NonNls final String text = expression.getText();
         if(text == null || text.length() == 0){
             return false;
         }

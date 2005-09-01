@@ -19,6 +19,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiReferenceExpression;
+import org.jetbrains.annotations.NonNls;
 
 class AppendUtil{
     private AppendUtil(){
@@ -31,7 +32,7 @@ class AppendUtil{
         if(methodExpression == null){
             return false;
         }
-        final String callName = methodExpression.getReferenceName();
+        @NonNls final String callName = methodExpression.getReferenceName();
         if(!"append".equals(callName)){
             return false;
         }
@@ -45,6 +46,6 @@ class AppendUtil{
         }
         final String name = containingClass.getQualifiedName();
         return "java.lang.StringBuffer".equals(name) ||
-                "java.lang.StringBuilder".equals(name);
+               "java.lang.StringBuilder".equals(name);
     }
 }

@@ -22,6 +22,7 @@ import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class ReplaceConcatenationWithStringBufferIntention extends Intention{
     public String getText(){
@@ -48,7 +49,7 @@ public class ReplaceConcatenationWithStringBufferIntention extends Intention{
             parent = exp.getParent();
         }
         final String text = exp.getText();
-        final StringBuffer expString = new StringBuffer(text.length() * 3);
+        @NonNls final StringBuffer expString = new StringBuffer(text.length() * 3);
         if(isPartOfStringBufferAppend(exp)){
             assert parent != null;
             final PsiMethodCallExpression methodCallExpression =
@@ -68,7 +69,7 @@ public class ReplaceConcatenationWithStringBufferIntention extends Intention{
             final LanguageLevel languageLevel =
                     manager.getEffectiveLanguageLevel();
             if(languageLevel.equals(LanguageLevel.JDK_1_3) ||
-                    languageLevel.equals(LanguageLevel.JDK_1_4)){
+               languageLevel.equals(LanguageLevel.JDK_1_4)){
                 expString.append("new StringBuffer()");
             } else{
                 expString.append("new StringBuilder()");
@@ -99,15 +100,15 @@ public class ReplaceConcatenationWithStringBufferIntention extends Intention{
         }
         final String className = type.getCanonicalText();
         if(!"java.lang.StringBuffer".equals(className) &&
-                !"java.lang.StringBuilder".equals(className)){
+           !"java.lang.StringBuilder".equals(className)){
             return false;
         }
-        final String methodName = methodExpression.getReferenceName();
+        @NonNls final String methodName = methodExpression.getReferenceName();
         return "append".equals(methodName);
     }
 
     private static void turnExpressionIntoChainedAppends(PsiExpression exp,
-                                                         StringBuffer expString){
+                                                         @NonNls StringBuffer expString){
         if(ConcatenationUtils.isConcatenation(exp)){
             final PsiBinaryExpression concat = (PsiBinaryExpression) exp;
             final PsiExpression lhs = concat.getLOperand();

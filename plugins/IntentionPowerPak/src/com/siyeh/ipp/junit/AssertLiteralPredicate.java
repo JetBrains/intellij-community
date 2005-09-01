@@ -21,6 +21,7 @@ import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiReferenceExpression;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
+import org.jetbrains.annotations.NonNls;
 
 class AssertLiteralPredicate implements PsiElementPredicate{
     AssertLiteralPredicate(){
@@ -49,10 +50,10 @@ class AssertLiteralPredicate implements PsiElementPredicate{
         if(methodExpression == null){
             return false;
         }
-        final String methodName = methodExpression.getReferenceName();
+        @NonNls final String methodName = methodExpression.getReferenceName();
 
         return "assertTrue".equals(methodName) ||
-                "assertFalse".equals(methodName) ||
-                "assertNull".equals(methodName);
+               "assertFalse".equals(methodName) ||
+               "assertNull".equals(methodName);
     }
 }

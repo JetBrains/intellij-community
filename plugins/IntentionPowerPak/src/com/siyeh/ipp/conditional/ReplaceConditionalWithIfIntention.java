@@ -21,6 +21,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class ReplaceConditionalWithIfIntention extends Intention{
     public String getText(){
@@ -65,14 +66,14 @@ public class ReplaceConditionalWithIfIntention extends Intention{
         final PsiExpression elseExpression = rhs.getElseExpression();
         assert thenExpression != null;
         assert elseExpression != null;
-        final String ifStatementString = "if(" + condition.getText() + ')' +
-                '{' +
-                lhsText + operator + thenExpression.getText() + ';' +
-                '}' +
-                "else" +
-                '{' +
-                lhsText + operator + elseExpression.getText() + ';' +
-                '}';
+        @NonNls final String ifStatementString = "if(" + condition.getText() + ')' +
+                                                                           '{' +
+                                                                           lhsText + operator + thenExpression.getText() + ';' +
+                                                                           '}' +
+                                                                           "else" +
+                                                                           '{' +
+                                                                           lhsText + operator + elseExpression.getText() + ';' +
+                                                                           '}';
         replaceStatement(ifStatementString, statement);
     }
 
@@ -96,14 +97,14 @@ public class ReplaceConditionalWithIfIntention extends Intention{
         final PsiExpression elseExpression = rhs.getElseExpression();
         assert thenExpression != null;
         assert elseExpression != null;
-        final String ifStatementString = "if(" + condition.getText() + ')' +
-                '{' +
-                lhsText + '=' + thenExpression.getText() + ';' +
-                '}' +
-                "else" +
-                '{' +
-                lhsText + '=' + elseExpression.getText() + ';' +
-                '}';
+        @NonNls final String ifStatementString = "if(" + condition.getText() + ')' +
+                                         '{' +
+                                         lhsText + '=' + thenExpression.getText() + ';' +
+                                         '}' +
+                                         "else" +
+                                         '{' +
+                                         lhsText + '=' + elseExpression.getText() + ';' +
+                                         '}';
         final PsiStatement declarationStatement =
                 factory.createStatementFromText(declarationString, null);
         final PsiStatement ifStatement =
@@ -132,14 +133,14 @@ public class ReplaceConditionalWithIfIntention extends Intention{
                 returnValue.getElseExpression();
         assert thenExpression != null;
         assert elseExpression != null;
-        final String ifStatementString = "if(" + condition.getText() + ')' +
-                '{' +
-                "return " + thenExpression.getText() + ';' +
-                '}' +
-                "else" +
-                '{' +
-                "return " + elseExpression.getText() + ';' +
-                '}';
+        @NonNls final String ifStatementString = "if(" + condition.getText() + ')' +
+                                         '{' +
+                                         "return " + thenExpression.getText() + ';' +
+                                         '}' +
+                                         "else" +
+                                         '{' +
+                                         "return " + elseExpression.getText() + ';' +
+                                         '}';
         replaceStatement(ifStatementString, returnStatement);
     }
 }

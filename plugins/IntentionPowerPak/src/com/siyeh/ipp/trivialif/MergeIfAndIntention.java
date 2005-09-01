@@ -22,6 +22,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ConditionalUtils;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class MergeIfAndIntention extends Intention{
     public String getText(){
@@ -51,7 +52,7 @@ public class MergeIfAndIntention extends Intention{
         final PsiExpression childCondition = childStatement.getCondition();
         final String childConditionText;
         if(ParenthesesUtils.getPrecendence(childCondition)
-                > ParenthesesUtils.AND_PRECEDENCE){
+           > ParenthesesUtils.AND_PRECEDENCE){
             childConditionText = '(' + childCondition.getText() + ')';
         } else{
             childConditionText = childCondition.getText();
@@ -60,16 +61,16 @@ public class MergeIfAndIntention extends Intention{
         final PsiExpression parentCondition = parentStatement.getCondition();
         final String parentConditionText;
         if(ParenthesesUtils.getPrecendence(parentCondition)
-                > ParenthesesUtils.AND_PRECEDENCE){
+           > ParenthesesUtils.AND_PRECEDENCE){
             parentConditionText = '(' + parentCondition.getText() + ')';
         } else{
             parentConditionText = parentCondition.getText();
         }
 
         final PsiStatement childThenBranch = childStatement.getThenBranch();
-        final String statement =
+        @NonNls final String statement =
                 "if(" + parentConditionText + "&&" + childConditionText + ')' +
-                        childThenBranch.getText();
+                childThenBranch.getText();
         replaceStatement(statement, parentStatement);
     }
 }

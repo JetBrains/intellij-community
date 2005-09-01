@@ -21,6 +21,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NonNls;
 
 class CreateAssertPredicate implements PsiElementPredicate{
     CreateAssertPredicate(){
@@ -35,9 +36,9 @@ class CreateAssertPredicate implements PsiElementPredicate{
         final PsiExpressionStatement statement =
                 (PsiExpressionStatement) element;
         final PsiExpression expression = statement.getExpression();
-	    if (expression == null) {
-		    return false;
-	    }
+            if (expression == null) {
+                    return false;
+            }
         final PsiElement parent = expression.getParent();
         if(!(parent instanceof PsiExpressionStatement)){
             return false;
@@ -62,7 +63,7 @@ class CreateAssertPredicate implements PsiElementPredicate{
             return false;
         }
         if(method.hasModifierProperty(PsiModifier.ABSTRACT) ||
-                !method.hasModifierProperty(PsiModifier.PUBLIC)){
+           !method.hasModifierProperty(PsiModifier.PUBLIC)){
             return false;
         }
 
@@ -74,9 +75,6 @@ class CreateAssertPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiParameterList parameterList = method.getParameterList();
-        if(parameterList == null){
-            return false;
-        }
         final PsiParameter[] parameters = parameterList.getParameters();
         if(parameters == null){
             return false;
@@ -84,8 +82,8 @@ class CreateAssertPredicate implements PsiElementPredicate{
         if(parameters.length != 0){
             return false;
         }
-        final String methodName = method.getName();
-        return methodName.startsWith("test");
+        @NonNls final String methodName = method.getName();
+        return methodName != null && methodName.startsWith("test");
     }
 
     private static boolean isTest(PsiClass aClass){

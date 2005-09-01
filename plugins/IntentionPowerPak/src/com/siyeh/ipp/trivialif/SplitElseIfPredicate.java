@@ -21,13 +21,14 @@ import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiStatement;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
+import org.jetbrains.annotations.NonNls;
 
 class SplitElseIfPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiJavaToken)){
             return false;
         }
-        final String text = element.getText();
+        @NonNls final String text = element.getText();
         if(!"else".equals(text)){
             return false;
         }

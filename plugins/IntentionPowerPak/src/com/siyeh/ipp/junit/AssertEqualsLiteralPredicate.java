@@ -18,6 +18,7 @@ package com.siyeh.ipp.junit;
 import com.intellij.psi.*;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
+import org.jetbrains.annotations.NonNls;
 
 class AssertEqualsLiteralPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
@@ -43,7 +44,7 @@ class AssertEqualsLiteralPredicate implements PsiElementPredicate{
         if(methodExpression == null){
             return false;
         }
-        final String methodName = methodExpression.getReferenceName();
+        @NonNls final String methodName = methodExpression.getReferenceName();
         if(!"assertEquals".equals(methodName)){
             return false;
         }
@@ -58,8 +59,8 @@ class AssertEqualsLiteralPredicate implements PsiElementPredicate{
         if(exp == null){
             return false;
         }
-        final String text = exp.getText();
+        @NonNls final String text = exp.getText();
         return "true".equals(text) || "false".equals(text) ||
-                "null".equals(text);
+               "null".equals(text);
     }
 }

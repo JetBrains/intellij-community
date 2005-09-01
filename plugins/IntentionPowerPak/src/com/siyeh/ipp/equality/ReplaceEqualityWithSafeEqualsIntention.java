@@ -23,6 +23,7 @@ import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class ReplaceEqualityWithSafeEqualsIntention extends Intention{
     public String getText(){
@@ -50,14 +51,14 @@ public class ReplaceEqualityWithSafeEqualsIntention extends Intention{
                 ParenthesesUtils.stripParentheses(rhs);
         final String lhsText = strippedLhs.getText();
         final String rhsText = strippedRhs.getText();
-        final String expString;
+        @NonNls final String expString;
         if(ParenthesesUtils.getPrecendence(strippedLhs) >
-                ParenthesesUtils.METHOD_CALL_PRECEDENCE){
+           ParenthesesUtils.METHOD_CALL_PRECEDENCE){
             expString = lhsText + "==null?" + rhsText + " == null:(" + lhsText +
-                    ").equals(" + rhsText + ')';
+                        ").equals(" + rhsText + ')';
         } else{
             expString = lhsText + "==null?" + rhsText + " == null:" + lhsText +
-                    ".equals(" + rhsText + ')';
+                        ".equals(" + rhsText + ')';
         }
         replaceExpression(expString, exp);
     }
