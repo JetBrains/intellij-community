@@ -70,4 +70,13 @@ public class SystemProperties {
   public static String getJavaVmVendor() {
     return System.getProperty("java.vm.vendor");
   }
+
+  /**
+   * Returns the value of the java.home system property.
+   *
+   * @return the property value
+   */
+  public static String getJavaHome() {
+    return System.getProperty("java.home");
+  }
 }
