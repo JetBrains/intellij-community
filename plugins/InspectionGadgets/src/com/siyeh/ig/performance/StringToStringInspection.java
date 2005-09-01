@@ -24,6 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class StringToStringInspection extends ExpressionInspection {
@@ -52,7 +53,7 @@ public class StringToStringInspection extends ExpressionInspection {
 
   private static class StringToStringFix extends InspectionGadgetsFix {
     public String getName() {
-      return "Simplify";
+      return InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

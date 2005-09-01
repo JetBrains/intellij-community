@@ -22,6 +22,7 @@ import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -43,7 +44,7 @@ public class SwitchStatementDensityInspection extends StatementInspection {
   }
 
   public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel("Minimum density of branches: %",
+    return new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("switch.statement.density.min.option"),
                                               this, "m_limit");
   }
 
@@ -51,7 +52,7 @@ public class SwitchStatementDensityInspection extends StatementInspection {
     final PsiSwitchStatement statement = (PsiSwitchStatement)location.getParent();
     final double density = calculateDensity(statement);
     final int intDensity = (int)(density * 100.0);
-    return "'#ref' has too low of a branch density (" + intDensity + "%) #loc";
+    return InspectionGadgetsBundle.message("switch.statement.density.problem.descriptor", intDensity);
   }
 
   public BaseInspectionVisitor buildVisitor() {

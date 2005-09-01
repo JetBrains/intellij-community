@@ -24,6 +24,7 @@ import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -45,7 +46,7 @@ public class SwitchStatementWithTooFewBranchesInspection extends StatementInspec
   }
 
   public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel("Minimum number of branches:",
+    return new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("switch.statement.with.too.few.branches.min.option"),
                                               this, "m_limit");
   }
 
@@ -53,7 +54,7 @@ public class SwitchStatementWithTooFewBranchesInspection extends StatementInspec
     final PsiSwitchStatement statement = (PsiSwitchStatement)location.getParent();
     assert statement != null;
     final int numBranches = SwitchUtils.calculateBranchCount(statement);
-    return "'#ref' has too few branches (" + numBranches + "), and should probably be replaced by an 'if' statement #loc";
+    return InspectionGadgetsBundle.message("switch.statement.with.too.few.branches.problem.descriptor", numBranches);
   }
 
   public BaseInspectionVisitor buildVisitor() {

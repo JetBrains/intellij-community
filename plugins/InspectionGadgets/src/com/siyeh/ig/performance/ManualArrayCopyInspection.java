@@ -26,6 +26,7 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
@@ -51,7 +52,7 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
 
   private static class ManualArrayCopyFix extends InspectionGadgetsFix {
     public String getName() {
-      return "Replace with System.arrayCopy()";
+      return InspectionGadgetsBundle.message("manual.array.copy.replace.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

@@ -31,6 +31,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ImportUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -48,7 +49,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection {
 
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(
-      "Ignore fully qualified names in javadoc",
+      InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.ignore.option"),
       this,
       "m_ignoreJavadoc");
   }
@@ -64,7 +65,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection {
   private static class UnnecessaryFullyQualifiedNameFix
     extends InspectionGadgetsFix {
     public String getName() {
-      return "Replace with import";
+      return InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.replace.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

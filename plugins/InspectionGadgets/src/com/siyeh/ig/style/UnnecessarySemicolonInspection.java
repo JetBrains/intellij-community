@@ -24,6 +24,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +50,7 @@ public class UnnecessarySemicolonInspection extends ClassInspection {
 
   private static class UnnecessarySemicolonFix extends InspectionGadgetsFix {
     public String getName() {
-      return "Remove unnecessary semicolon";
+      return InspectionGadgetsBundle.message("unnecessary.semicolon.remove.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

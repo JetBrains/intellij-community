@@ -23,6 +23,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RemoveModifierFix;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryFinalOnLocalVariableInspection extends MethodInspection {
@@ -37,7 +38,7 @@ public class UnnecessaryFinalOnLocalVariableInspection extends MethodInspection 
     final PsiVariable parameter = (PsiVariable)modifierList.getParent();
     assert parameter != null;
     final String parameterName = parameter.getName();
-    return "Unnecessary #ref for variable " + parameterName + " #loc";
+    return InspectionGadgetsBundle.message("unnecessary.final.on.local.variable.problem.descriptor", parameterName);
   }
 
   public BaseInspectionVisitor buildVisitor() {

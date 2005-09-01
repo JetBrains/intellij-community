@@ -24,6 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryLabelOnContinueStatementInspection extends StatementInspection {
@@ -44,7 +45,7 @@ public class UnnecessaryLabelOnContinueStatementInspection extends StatementInsp
 
   private static class UnnecessaryLabelOnContinueStatementFix extends InspectionGadgetsFix {
     public String getName() {
-      return "Remove label";
+      return InspectionGadgetsBundle.message("unnecessary.label.remove.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

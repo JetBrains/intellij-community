@@ -24,6 +24,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.StatementInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 
@@ -39,7 +40,7 @@ public class ControlFlowStatementWithoutBracesInspection extends StatementInspec
 
   private static class ControlFlowStatementFix extends InspectionGadgetsFix {
     public String getName() {
-      return "Add braces";
+      return InspectionGadgetsBundle.message("control.flow.statement.without.braces.add.quickfix");
     }
 
     protected void doFix(Project project, ProblemDescriptor descriptor)

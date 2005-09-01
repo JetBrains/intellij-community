@@ -27,6 +27,7 @@ import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
@@ -53,7 +54,7 @@ public class NegatedIfElseInspection extends StatementInspection {
   }
 
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Ignore '!= null' comparisons",
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("negated.if.else.ignore.option"),
                                           this, "m_ignoreNegatedNullComparison");
   }
 
@@ -65,7 +66,7 @@ public class NegatedIfElseInspection extends StatementInspection {
 
 
     public String getName() {
-      return "Invert If Condition";
+      return InspectionGadgetsBundle.message("negated.if.else.invert.quickfix");
     }
 
     public void doFix(Project project,

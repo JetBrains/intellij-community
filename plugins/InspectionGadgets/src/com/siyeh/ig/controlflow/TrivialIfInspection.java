@@ -28,6 +28,7 @@ import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ErrorUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
@@ -57,7 +58,7 @@ public class TrivialIfInspection extends StatementInspection {
 
   private static class TrivialIfFix extends InspectionGadgetsFix {
     public String getName() {
-      return "Simplify";
+      return InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

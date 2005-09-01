@@ -23,6 +23,7 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ExtractMethodFix;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -45,7 +46,7 @@ public class OverlyComplexBooleanExpressionInspection extends ExpressionInspecti
   }
 
   public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel("Maximum number of terms:",
+    return new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("overly.complex.boolean.expression.overly.option"),
                                               this, "m_limit");
   }
 

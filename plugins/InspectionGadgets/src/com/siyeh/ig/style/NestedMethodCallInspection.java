@@ -26,6 +26,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -43,7 +44,7 @@ public class NestedMethodCallInspection extends ExpressionInspection {
   }
 
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Ignore nested method calls in field initializers",
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("nested.method.call.ignore.option"),
                                           this, "m_ignoreFieldInitializations");
   }
 
@@ -61,7 +62,7 @@ public class NestedMethodCallInspection extends ExpressionInspection {
 
   private static class NestedMethodCallFix extends InspectionGadgetsFix {
     public String getName() {
-      return "Introduce variable";
+      return InspectionGadgetsBundle.message("introduce.variable.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor) {

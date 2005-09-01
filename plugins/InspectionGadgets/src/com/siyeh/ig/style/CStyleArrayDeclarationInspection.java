@@ -23,6 +23,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class CStyleArrayDeclarationInspection extends ClassInspection {
@@ -39,7 +40,7 @@ public class CStyleArrayDeclarationInspection extends ClassInspection {
 
   private static class CStyleArrayDeclarationFix extends InspectionGadgetsFix {
     public String getName() {
-      return "Replace with Java-style array declaration";
+      return InspectionGadgetsBundle.message("c.style.array.declaration.replace.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

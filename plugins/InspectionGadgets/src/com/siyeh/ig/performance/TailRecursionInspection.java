@@ -26,6 +26,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
@@ -67,7 +68,7 @@ public class TailRecursionInspection extends ExpressionInspection {
   private static class RemoveTailRecursionFix
     extends InspectionGadgetsFix {
     public String getName() {
-      return "Replace tail recursion with iteration";
+      return InspectionGadgetsBundle.message("tail.recursion.replace.quickfix");
     }
 
     public void doFix(Project project,

@@ -24,6 +24,7 @@ import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -44,7 +45,7 @@ public class StringConcatenationInLoopsInspection extends ExpressionInspection {
   }
 
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Only warn if concatenated string is assigned",
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("string.concatenation.in.loops.only.option"),
                                           this, "m_ignoreUnlessAssigned");
   }
 

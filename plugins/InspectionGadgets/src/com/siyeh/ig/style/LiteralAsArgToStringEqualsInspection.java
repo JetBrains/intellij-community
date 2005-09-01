@@ -26,6 +26,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
@@ -41,7 +42,7 @@ public class LiteralAsArgToStringEqualsInspection extends ExpressionInspection {
     final PsiMethodCallExpression expression = (PsiMethodCallExpression)location;
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     final String methodName = methodExpression.getReferenceName();
-    return "#ref: String literal is argument of ." + methodName + "(), instead of the target.";
+    return InspectionGadgetsBundle.message("literal.as.arg.to.string.equals.problem.descriptor", methodName);
   }
 
   public BaseInspectionVisitor buildVisitor() {
@@ -54,7 +55,7 @@ public class LiteralAsArgToStringEqualsInspection extends ExpressionInspection {
 
   private static class SwapEqualsFix extends InspectionGadgetsFix {
     public String getName() {
-      return "Flip .equals()";
+      return InspectionGadgetsBundle.message("literal.as.arg.to.string.equals.flip.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

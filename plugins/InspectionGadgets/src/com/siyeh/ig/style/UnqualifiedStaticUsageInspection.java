@@ -24,6 +24,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -48,16 +49,17 @@ public class UnqualifiedStaticUsageInspection extends ExpressionInspection {
 
   public String buildErrorString(PsiElement location) {
     if (location.getParent() instanceof PsiMethodCallExpression) {
-      return "Unqualified static method call '#ref()' #loc";
+      return InspectionGadgetsBundle.message("unqualified.static.usage.problem.descriptor");
     }
     else {
-      return "Unqualified static field access '#ref' #loc";
+      return InspectionGadgetsBundle.message("unqualified.static.usage.problem.descriptor1");
     }
   }
 
   public JComponent createOptionsPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
-    final JCheckBox ignoreFieldAccessesCheckBox = new JCheckBox("Ignore unqualified field accesses",
+    final JCheckBox ignoreFieldAccessesCheckBox = new JCheckBox(
+      InspectionGadgetsBundle.message("unqualified.static.usage.ignore.field.option"),
                                                                 m_ignoreStaticFieldAccesses);
     final ButtonModel ignoreFieldAccessesModel = ignoreFieldAccessesCheckBox.getModel();
     ignoreFieldAccessesModel.addChangeListener(new ChangeListener() {
@@ -65,7 +67,8 @@ public class UnqualifiedStaticUsageInspection extends ExpressionInspection {
         m_ignoreStaticFieldAccesses = ignoreFieldAccessesModel.isSelected();
       }
     });
-    final JCheckBox ignoreMethodCallsCheckBox = new JCheckBox("Ignore unqualified method calls",
+    final JCheckBox ignoreMethodCallsCheckBox = new JCheckBox(
+      InspectionGadgetsBundle.message("unqualified.static.usage.ignore.method.option"),
                                                               m_ignoreStaticMethodCalls);
     final ButtonModel ignoreMethodCallsModel = ignoreMethodCallsCheckBox.getModel();
     ignoreMethodCallsModel.addChangeListener(new ChangeListener() {
@@ -108,10 +111,10 @@ public class UnqualifiedStaticUsageInspection extends ExpressionInspection {
 
     public String getName() {
       if (m_fixField) {
-        return "Qualify static field access";
+        return InspectionGadgetsBundle.message("unqualified.static.usage.qualify.field.quickfix");
       }
       else {
-        return "Qualify static method call";
+        return InspectionGadgetsBundle.message("unqualified.static.usage.qualify.method.quickfix");
       }
     }
 

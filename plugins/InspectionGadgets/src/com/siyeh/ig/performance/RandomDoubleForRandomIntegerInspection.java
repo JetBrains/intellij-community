@@ -24,6 +24,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
@@ -46,7 +47,7 @@ public class RandomDoubleForRandomIntegerInspection extends ExpressionInspection
 
   private static class RandomDoubleForRandomIntegerFix extends InspectionGadgetsFix {
     public String getName() {
-      return "replace with .nextInt()";
+      return InspectionGadgetsBundle.message("random.double.for.random.integer.replace.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

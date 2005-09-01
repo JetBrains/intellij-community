@@ -21,6 +21,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -41,7 +42,7 @@ public class SwitchStatementsWithoutDefaultInspection extends StatementInspectio
   }
 
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Ignore if all cases of an enumerated type are covered",
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("switch.statement.without.default.ignore.option"),
                                           this, "m_ignoreFullyCoveredEnums");
   }
 

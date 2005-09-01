@@ -23,6 +23,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.InspectionGadgetsBundle;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +53,7 @@ public class StringConcatenationInsideStringBufferAppendInspection extends Expre
   private static class ReplaceWithChainedAppendFix
     extends InspectionGadgetsFix {
     public String getName() {
-      return "Replace with chained append() calls";
+      return InspectionGadgetsBundle.message("string.concatenation.inside.string.buffer.append.replace.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

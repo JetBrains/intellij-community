@@ -24,6 +24,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
@@ -45,7 +46,7 @@ public class SubstringZeroInspection extends ExpressionInspection {
 
   private static class SubstringZeroVisitor extends InspectionGadgetsFix {
     public String getName() {
-      return "Simplify";
+      return InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

@@ -24,6 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class StringBufferToStringInConcatenationInspection extends ExpressionInspection {
@@ -44,7 +45,7 @@ public class StringBufferToStringInConcatenationInspection extends ExpressionIns
 
   private static class StringBufferToStringFix extends InspectionGadgetsFix {
     public String getName() {
-      return "Remove .toString()";
+      return InspectionGadgetsBundle.message("string.buffer.to.string.in.concatenation.remove.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

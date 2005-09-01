@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.InspectionGadgetsBundle;
 
 public class UnnecessaryParenthesesInspection extends ExpressionInspection {
 
@@ -44,7 +45,7 @@ public class UnnecessaryParenthesesInspection extends ExpressionInspection {
 
   private static class UnnecessaryParenthesesFix extends InspectionGadgetsFix {
     public String getName() {
-      return "Remove unnecessary parentheses";
+      return InspectionGadgetsBundle.message("unnecessary.parentheses.remove.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

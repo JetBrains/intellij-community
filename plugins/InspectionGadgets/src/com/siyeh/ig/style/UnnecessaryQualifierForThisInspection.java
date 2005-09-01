@@ -24,6 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryQualifierForThisInspection extends ExpressionInspection {
@@ -44,7 +45,7 @@ public class UnnecessaryQualifierForThisInspection extends ExpressionInspection 
 
   private static class UnnecessaryQualifierForThisFix extends InspectionGadgetsFix {
     public String getName() {
-      return "Remove unnecessary qualifier ";
+      return InspectionGadgetsBundle.message("unnecessary.qualifier.for.this.remove.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

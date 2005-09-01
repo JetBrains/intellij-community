@@ -26,6 +26,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.FieldInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
@@ -64,7 +65,7 @@ public class RedundantFieldInitializationInspection extends FieldInspection {
 
   private static class RedundantFieldInitializationFix extends InspectionGadgetsFix {
     public String getName() {
-      return "Remove initializer";
+      return InspectionGadgetsBundle.message("redundant.field.initialization.remove.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

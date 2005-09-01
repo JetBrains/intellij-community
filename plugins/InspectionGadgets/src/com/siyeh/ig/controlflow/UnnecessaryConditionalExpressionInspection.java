@@ -27,6 +27,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.InspectionGadgetsBundle;
 
 public class UnnecessaryConditionalExpressionInspection extends ExpressionInspection {
 
@@ -50,9 +51,8 @@ public class UnnecessaryConditionalExpressionInspection extends ExpressionInspec
 
   public String buildErrorString(PsiElement location) {
     final PsiConditionalExpression exp = (PsiConditionalExpression)location;
-    return '\'' + exp.getText() + "' can be simplified to '" +
-           calculateReplacementExpression(exp) +
-           "' #loc";
+    return InspectionGadgetsBundle
+      .message("simplifiable.conditional.expression.problem.descriptor", '\'' + exp.getText(), calculateReplacementExpression(exp));
   }
 
   private static String calculateReplacementExpression(PsiConditionalExpression exp) {
@@ -75,7 +75,7 @@ public class UnnecessaryConditionalExpressionInspection extends ExpressionInspec
   private static class
     TrivialConditionalFix extends InspectionGadgetsFix {
     public String getName() {
-      return "Simplify";
+      return InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

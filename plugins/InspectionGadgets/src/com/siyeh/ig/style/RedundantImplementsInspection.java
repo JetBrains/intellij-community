@@ -26,6 +26,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class RedundantImplementsInspection extends ClassInspection {
@@ -46,7 +47,7 @@ public class RedundantImplementsInspection extends ClassInspection {
 
   private static class RedundantImplementsFix extends InspectionGadgetsFix {
     public String getName() {
-      return "Remove redundant interface declaration";
+      return InspectionGadgetsBundle.message("redundant.implements.remove.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

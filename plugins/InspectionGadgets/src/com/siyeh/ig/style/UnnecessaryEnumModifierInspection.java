@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryEnumModifierInspection extends BaseInspection {
@@ -69,10 +70,10 @@ public class UnnecessaryEnumModifierInspection extends BaseInspection {
     assert modifierList != null;
     final PsiElement parent = modifierList.getParent();
     if (parent instanceof PsiMethod) {
-      return "Modifier '#ref' is redundant for enum constructors #loc";
+      return InspectionGadgetsBundle.message("unnecessary.enum.modifier.problem.descriptor");
     }
     else {
-      return "Modifier '#ref' is redundant for inner enums #loc";
+      return InspectionGadgetsBundle.message("unnecessary.enum.modifier.problem.descriptor1");
     }
   }
 
@@ -90,7 +91,7 @@ public class UnnecessaryEnumModifierInspection extends BaseInspection {
 
     private UnnecessaryEnumModifierFix(PsiElement fieldModifiers) {
       super();
-      m_name = "Remove '" + fieldModifiers.getText() + '\'';
+      m_name = InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", fieldModifiers.getText());
     }
 
     public String getName() {

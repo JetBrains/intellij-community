@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -44,13 +45,13 @@ public class ImplicitCallToSuperInspection extends MethodInspection {
   }
 
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Ignore for direct subclasses of java.lang.Object",
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("implicit.call.to.super.ignore.option"),
                                           this, "m_ignoreForObjectSubclasses");
   }
 
   private static class AddExplicitSuperCall extends InspectionGadgetsFix {
     public String getName() {
-      return "Make construction of super() explicit";
+      return InspectionGadgetsBundle.message("implicit.call.to.super.make.explicit.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

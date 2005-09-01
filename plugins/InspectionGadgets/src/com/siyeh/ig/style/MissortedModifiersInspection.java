@@ -26,6 +26,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
 
 import javax.swing.*;
 import java.util.*;
@@ -111,13 +112,13 @@ public class MissortedModifiersInspection extends BaseInspection {
   }
 
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Require annotations to be sorted before keywords",
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("missorted.modifiers.require.option"),
                                           this, "m_requireAnnotationsFirst");
   }
 
   private static class SortModifiersFix extends InspectionGadgetsFix {
     public String getName() {
-      return "Sort modifers";
+      return InspectionGadgetsBundle.message("missorted.modifiers.sort.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

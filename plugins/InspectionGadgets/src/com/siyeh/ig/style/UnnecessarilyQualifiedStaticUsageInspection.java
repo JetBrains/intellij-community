@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -51,16 +52,17 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends ExpressionInspe
   public String buildErrorString(PsiElement location) {
     final PsiElement parent = location.getParent();
     if (parent instanceof PsiMethodCallExpression) {
-      return "Unnecessarily qualified static method call '#ref()' #loc";
+      return InspectionGadgetsBundle.message("unnecessarily.qualified.static.usage.problem.descriptor");
     }
     else {
-      return "Unnecessarily qualified static field access '#ref' #loc";
+      return InspectionGadgetsBundle.message("unnecessarily.qualified.static.usage.problem.descriptor1");
     }
   }
 
   public JComponent createOptionsPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
-    final JCheckBox ignoreFieldAccessesCheckBox = new JCheckBox("Ignore unnecessarily qualified field accesses",
+    final JCheckBox ignoreFieldAccessesCheckBox = new JCheckBox(
+      InspectionGadgetsBundle.message("unnecessarily.qualified.static.usage.ignore.field.option"),
                                                                 m_ignoreStaticFieldAccesses);
     final ButtonModel ignoreFieldAccessesModel = ignoreFieldAccessesCheckBox.getModel();
     ignoreFieldAccessesModel.addChangeListener(new ChangeListener() {
@@ -68,7 +70,8 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends ExpressionInspe
         m_ignoreStaticFieldAccesses = ignoreFieldAccessesModel.isSelected();
       }
     });
-    final JCheckBox ignoreMethodCallsCheckBox = new JCheckBox("Ignore unnecessarily qualified method calls",
+    final JCheckBox ignoreMethodCallsCheckBox = new JCheckBox(
+      InspectionGadgetsBundle.message("unnecessarily.qualified.static.usage.ignore.method.option"),
                                                               m_ignoreStaticMethodCalls);
     final ButtonModel ignoreMethodCallsModel = ignoreMethodCallsCheckBox.getModel();
     ignoreMethodCallsModel.addChangeListener(new ChangeListener() {
@@ -98,7 +101,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends ExpressionInspe
 
   private static class UnnecessarilyQualifiedStaticCallFix extends InspectionGadgetsFix {
     public String getName() {
-      return "Remove unnecessary qualifier";
+      return InspectionGadgetsBundle.message("unnecessarily.qualified.static.usage.remove.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

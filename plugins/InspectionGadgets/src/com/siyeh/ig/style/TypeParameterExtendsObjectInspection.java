@@ -23,6 +23,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NonNls;
 
 public class TypeParameterExtendsObjectInspection extends ClassInspection {
@@ -47,7 +48,7 @@ public class TypeParameterExtendsObjectInspection extends ClassInspection {
 
   private static class ExtendsObjectFix extends InspectionGadgetsFix {
     public String getName() {
-      return "Remove redundant 'extends Object'";
+      return InspectionGadgetsBundle.message("extends.object.remove.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

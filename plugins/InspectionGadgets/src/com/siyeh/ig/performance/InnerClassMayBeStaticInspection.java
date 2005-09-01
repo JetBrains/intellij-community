@@ -25,6 +25,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class InnerClassMayBeStaticInspection extends ClassInspection {
@@ -41,7 +42,7 @@ public class InnerClassMayBeStaticInspection extends ClassInspection {
 
   private static class InnerClassMayBeStaticFix extends InspectionGadgetsFix {
     public String getName() {
-      return "Make static";
+      return InspectionGadgetsBundle.message("make.static.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

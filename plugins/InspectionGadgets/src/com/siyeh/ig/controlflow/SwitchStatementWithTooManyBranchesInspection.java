@@ -24,6 +24,7 @@ import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -45,7 +46,7 @@ public class SwitchStatementWithTooManyBranchesInspection extends StatementInspe
   }
 
   public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel("Maximum number of branches:",
+    return new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("if.statement.with.too.many.branches.max.option"),
                                               this, "m_limit");
   }
 
@@ -53,7 +54,7 @@ public class SwitchStatementWithTooManyBranchesInspection extends StatementInspe
     final PsiSwitchStatement statement = (PsiSwitchStatement)location.getParent();
     assert statement != null;
     final int numBranches = SwitchUtils.calculateBranchCount(statement);
-    return "'#ref' has too many branches (" + numBranches + ") #loc";
+    return InspectionGadgetsBundle.message("if.statement.with.too.many.branches.problem.descriptor", numBranches);
   }
 
   public BaseInspectionVisitor buildVisitor() {

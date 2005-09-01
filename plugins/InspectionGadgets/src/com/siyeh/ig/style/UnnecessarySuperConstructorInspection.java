@@ -23,6 +23,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class UnnecessarySuperConstructorInspection extends ExpressionInspection {
@@ -47,7 +48,7 @@ public class UnnecessarySuperConstructorInspection extends ExpressionInspection 
 
   private static class UnnecessarySuperConstructorFix extends InspectionGadgetsFix {
     public String getName() {
-      return "Remove unnecessary super()";
+      return InspectionGadgetsBundle.message("unnecessary.super.constructor.remove.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

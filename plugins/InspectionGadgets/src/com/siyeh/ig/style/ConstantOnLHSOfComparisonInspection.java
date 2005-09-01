@@ -28,6 +28,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ConstantOnLHSOfComparisonInspection extends ExpressionInspection {
@@ -52,7 +53,7 @@ public class ConstantOnLHSOfComparisonInspection extends ExpressionInspection {
 
   private static class SwapComparisonFix extends InspectionGadgetsFix {
     public String getName() {
-      return "Flip comparison";
+      return InspectionGadgetsBundle.message("flip.comparision.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

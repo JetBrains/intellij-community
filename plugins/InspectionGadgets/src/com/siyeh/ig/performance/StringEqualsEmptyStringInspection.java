@@ -26,6 +26,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class StringEqualsEmptyStringInspection extends ExpressionInspection {
@@ -42,7 +43,7 @@ public class StringEqualsEmptyStringInspection extends ExpressionInspection {
 
   private static class StringEqualsEmptyStringFix extends InspectionGadgetsFix {
     public String getName() {
-      return "Replace with .length()==0";
+      return InspectionGadgetsBundle.message("string.equals.empty.string.replace.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

@@ -28,6 +28,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +42,7 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection {
 
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(
-      "Ignore named constant in determinining pointless expressions",
+      InspectionGadgetsBundle.message("pointless.boolean.expression.ignore.option"),
       this, "m_ignoreExpressionsContainingConstants");
   }
 
@@ -62,14 +63,12 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection {
 
   public String buildErrorString(PsiElement location) {
     if (location instanceof PsiBinaryExpression) {
-      return "#ref can be simplified to " +
-             calculateSimplifiedBinaryExpression((PsiBinaryExpression)location) +
-             " #loc";
+      return InspectionGadgetsBundle
+        .message("string.can.be.simplified.problem.descriptor", calculateSimplifiedBinaryExpression((PsiBinaryExpression)location));
     }
     else {
-      return "#ref can be simplified to " +
-             calculateSimplifiedPrefixExpression((PsiPrefixExpression)location) +
-             " #loc";
+      return InspectionGadgetsBundle
+        .message("string.can.be.simplified.problem.descriptor", calculateSimplifiedPrefixExpression((PsiPrefixExpression)location));
     }
   }
 
@@ -178,7 +177,7 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection {
   private class BooleanLiteralComparisonFix
     extends InspectionGadgetsFix {
     public String getName() {
-      return "Simplify";
+      return InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

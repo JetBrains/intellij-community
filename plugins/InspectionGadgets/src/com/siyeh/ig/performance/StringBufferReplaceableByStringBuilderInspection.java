@@ -27,6 +27,7 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
@@ -49,7 +50,7 @@ public class StringBufferReplaceableByStringBuilderInspection extends Expression
   private static class StringBufferMayBeStringBuilderFix
     extends InspectionGadgetsFix {
     public String getName() {
-      return "Replace with StringBuilder";
+      return InspectionGadgetsBundle.message("string.buffer.replaceable.by.string.builder.replace.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

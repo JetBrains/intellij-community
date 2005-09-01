@@ -23,6 +23,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryConstructorInspection extends ClassInspection {
@@ -47,7 +48,7 @@ public class UnnecessaryConstructorInspection extends ClassInspection {
 
   private static class UnnecessaryConstructorFix extends InspectionGadgetsFix {
     public String getName() {
-      return "Remove redundant constructor";
+      return InspectionGadgetsBundle.message("unnecessary.constructor.remove.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -94,22 +95,22 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
     assert modifierList != null;
     final PsiElement parent = modifierList.getParent();
     if (parent instanceof PsiClass) {
-      return "Modifier '#ref' is redundant for interfaces #loc";
+      return InspectionGadgetsBundle.message("unnecessary.interface.modifier.problem.descriptor");
     }
     else if (parent instanceof PsiMethod) {
       if (modifierList.getChildren().length > 1) {
-        return "Modifiers '#ref' are redundant for interface methods #loc";
+        return InspectionGadgetsBundle.message("unnecessary.interface.modifier.problem.descriptor1");
       }
       else {
-        return "Modifier '#ref' is redundant for interface methods #loc";
+        return InspectionGadgetsBundle.message("unnecessary.interface.modifier.problem.descriptor2");
       }
     }
     else {
       if (modifierList.getChildren().length > 1) {
-        return "Modifiers '#ref' are redundant for interface fields #loc";
+        return InspectionGadgetsBundle.message("unnecessary.interface.modifier.problem.descriptor3");
       }
       else {
-        return "Modifier '#ref' is redundant for interface fields #loc";
+        return InspectionGadgetsBundle.message("unnecessary.interface.modifier.problem.descriptor4");
       }
     }
   }
@@ -128,7 +129,7 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
 
     private UnnecessaryInterfaceModifersFix(PsiElement fieldModifiers) {
       super();
-      m_name = "Remove '" + fieldModifiers.getText() + '\'';
+      m_name = InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", fieldModifiers.getText());
     }
 
     public String getName() {

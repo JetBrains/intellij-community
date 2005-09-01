@@ -24,6 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.VariableSearchUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryThisInspection extends ExpressionInspection {
@@ -44,7 +45,7 @@ public class UnnecessaryThisInspection extends ExpressionInspection {
 
   private static class UnnecessaryThisFix extends InspectionGadgetsFix {
     public String getName() {
-      return "Remove unnecessary 'this.'";
+      return InspectionGadgetsBundle.message("unnecessary.this.remove.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

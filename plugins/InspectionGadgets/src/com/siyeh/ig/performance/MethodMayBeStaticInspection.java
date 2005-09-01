@@ -27,6 +27,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
@@ -57,7 +58,7 @@ public class MethodMayBeStaticInspection extends MethodInspection {
 
   private static class MethodMayBeStaticFix extends InspectionGadgetsFix {
     public String getName() {
-      return "Make static";
+      return InspectionGadgetsBundle.message("make.static.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)
@@ -74,7 +75,7 @@ public class MethodMayBeStaticInspection extends MethodInspection {
   public JComponent createOptionsPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
     final JCheckBox ignoreFieldAccessesCheckBox = new JCheckBox(
-      "Only check private or final methods",
+      InspectionGadgetsBundle.message("method.may.be.static.only.option"),
       m_onlyPrivateOrFinal);
     final ButtonModel ignoreFieldAccessesModel = ignoreFieldAccessesCheckBox
       .getModel();
@@ -84,7 +85,7 @@ public class MethodMayBeStaticInspection extends MethodInspection {
       }
     });
     final JCheckBox ignoreEmptyMethodsCheckBox = new JCheckBox(
-      "Ignore empty methods",
+      InspectionGadgetsBundle.message("method.may.be.static.empty.option"),
       m_ignoreEmptyMethods);
     final ButtonModel ignoreEmptyMethodsModel = ignoreEmptyMethodsCheckBox
       .getModel();

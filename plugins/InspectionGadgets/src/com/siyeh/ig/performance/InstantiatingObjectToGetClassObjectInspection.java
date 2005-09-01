@@ -23,6 +23,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
@@ -46,7 +47,7 @@ public class InstantiatingObjectToGetClassObjectInspection extends ExpressionIns
     extends InspectionGadgetsFix {
 
     public String getName() {
-      return "Replace with direct class object access";
+      return InspectionGadgetsBundle.message("instantiating.object.to.get.class.object.replace.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

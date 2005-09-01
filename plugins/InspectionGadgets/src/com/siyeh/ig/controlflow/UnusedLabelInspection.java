@@ -24,6 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class UnusedLabelInspection extends StatementInspection {
@@ -48,7 +49,7 @@ public class UnusedLabelInspection extends StatementInspection {
 
   private static class UnusedLabelFix extends InspectionGadgetsFix {
     public String getName() {
-      return "Remove unused label";
+      return InspectionGadgetsBundle.message("unused.label.remove.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

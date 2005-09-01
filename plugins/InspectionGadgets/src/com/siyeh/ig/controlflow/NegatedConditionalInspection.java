@@ -26,6 +26,7 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
 
 import javax.swing.*;
 
@@ -50,7 +51,7 @@ public class NegatedConditionalInspection extends ExpressionInspection {
   }
 
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Ignore '!= null' comparisons",
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("negated.conditional.ignore.option"),
                                           this,
                                           "m_ignoreNegatedNullComparison");
   }
@@ -61,7 +62,7 @@ public class NegatedConditionalInspection extends ExpressionInspection {
 
   private static class NegatedConditionalFix extends InspectionGadgetsFix {
     public String getName() {
-      return "Invert condition";
+      return InspectionGadgetsBundle.message("negated.conditional.invert.quickfix");
     }
 
     public void doFix(Project project,

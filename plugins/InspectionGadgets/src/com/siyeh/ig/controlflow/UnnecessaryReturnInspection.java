@@ -27,6 +27,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryReturnInspection extends StatementInspection {
@@ -50,10 +51,10 @@ public class UnnecessaryReturnInspection extends StatementInspection {
       PsiTreeUtil.getParentOfType(location, PsiMethod.class);
     assert method != null;
     if (method.isConstructor()) {
-      return "#ref is unnecessary as the last statement in a constructor #loc";
+      return InspectionGadgetsBundle.message("unnecessary.return.problem.descriptor");
     }
     else {
-      return "#ref is unnecessary as the last statement in a method returning 'void' #loc";
+      return InspectionGadgetsBundle.message("unnecessary.return.problem.descriptor1");
     }
   }
 
@@ -67,7 +68,7 @@ public class UnnecessaryReturnInspection extends StatementInspection {
 
   private static class UnnecessaryReturnFix extends InspectionGadgetsFix {
     public String getName() {
-      return "Remove unnecessary return";
+      return InspectionGadgetsBundle.message("unnecessary.return.remove.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)
