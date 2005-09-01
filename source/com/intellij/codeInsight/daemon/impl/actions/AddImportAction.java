@@ -97,7 +97,7 @@ public class AddImportAction implements QuestionAction {
   private void _addImport(PsiJavaCodeReferenceElement ref, PsiClass targetClass) {
     if (ref.isValid() && targetClass.isValid()){
       int caretOffset = myEditor.getCaretModel().getOffset();
-      RangeMarker caretMarker = (myEditor.getDocument()).createRangeMarker(caretOffset, caretOffset);
+      RangeMarker caretMarker = myEditor.getDocument().createRangeMarker(caretOffset, caretOffset);
       int colByOffset = myEditor.offsetToLogicalPosition(caretOffset).column;
       int col = myEditor.getCaretModel().getLogicalPosition().column;
       int virtualSpace = col != colByOffset ? col - colByOffset : 0;

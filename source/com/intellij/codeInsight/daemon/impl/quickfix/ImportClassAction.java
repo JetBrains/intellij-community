@@ -57,7 +57,7 @@ public class ImportClassAction implements IntentionAction {
     ArrayList<PsiClass> classList = new ArrayList<PsiClass>();
     boolean isAnnotationReference = myRef.getParent() instanceof PsiAnnotation;
     for (PsiClass aClass : classes) {
-      if (isAnnotationReference && !(aClass.isAnnotationType())) continue;
+      if (isAnnotationReference && !aClass.isAnnotationType()) continue;
       PsiFile file = aClass.getContainingFile();
       if (file instanceof PsiJavaFile) {
         if (((PsiJavaFile)file).getPackageName().length() != 0) { //do not show classes from default package

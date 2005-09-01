@@ -35,8 +35,7 @@ public class ControlFlowUtil {
     }
 
     public int hashCode() {
-      int result;
-      result = Math.min(2, myWriteCount);
+      int result = Math.min(2, myWriteCount);
       result = 29 * result + myInstructionIdx;
       return result;
     }
@@ -63,10 +62,10 @@ public class ControlFlowUtil {
 
     variables:
     for (PsiVariable psiVariable : writtenVariables) {
-      Set<SSAInstructionState> processedStates = new THashSet<SSAInstructionState>();
 
       final List<SSAInstructionState> queue = new ArrayList<SSAInstructionState>();
       queue.add(new SSAInstructionState(0, from));
+      Set<SSAInstructionState> processedStates = new THashSet<SSAInstructionState>();
 
       while (queue.size() > 0) {
         final SSAInstructionState state = queue.remove(0);
@@ -626,10 +625,6 @@ public class ControlFlowUtil {
       // false if control flow at this offset terminates abruptly
       boolean[] canCompleteNormally = new boolean[flow.getSize() + 1];
 
-      public MyVisitor() {
-        //canCompleteNormally[endOffset] = true;
-      }
-
       public void visitConditionalGoToInstruction(ConditionalGoToInstruction instruction, int offset, int nextOffset) {
         checkInstruction(offset, nextOffset, instruction.isReturn);
       }
@@ -929,8 +924,7 @@ public class ControlFlowUtil {
   }
 
   private static void depthFirstSearch(ControlFlow flow, InstructionClientVisitor visitor) {
-    visitor.processedInstructions = new boolean[flow.getSize()];
-    internalDepthFirstSearch(flow.getInstructions(), visitor, 0, visitor.processedInstructions.length);
+    depthFirstSearch(flow, visitor, 0, flow.getSize());
   }
 
   private static void depthFirstSearch(ControlFlow flow, InstructionClientVisitor visitor, int startOffset, int endOffset) {
@@ -941,107 +935,109 @@ public class ControlFlowUtil {
   private static void internalDepthFirstSearch(final Instruction[] instructions, final InstructionClientVisitor clientVisitor, int offset, int endOffset) {
     final IntArrayList oldOffsets = new IntArrayList(instructions.length / 2);
     final IntArrayList newOffsets = new IntArrayList(instructions.length / 2);
-    final IntArrayList currentProcedureReturnOffsets = new IntArrayList();
 
-    ControlFlowInstructionVisitor getNextOffsetVisitor = new ControlFlowInstructionVisitor() {
-      public void visitCallInstruction(CallInstruction instruction, int offset, int nextOffset) {
-        instruction.execute(offset + 1);
-        int newOffset = instruction.offset;
-        // 'procedure' pointed by call instruction should be processed regardless of whether it was already visited or not
-        // clear procedure text and return instructions aftewards
-        for (int i = instruction.procBegin; i < instruction.procEnd || instructions[i] instanceof ReturnInstruction; i++) {
-          clientVisitor.processedInstructions[i] = false;
+    oldOffsets.add(offset);
+    newOffsets.add(-1);
+
+    // we can change instruction internal state here (e.g. CallInstruction.stack)
+    synchronized (instructions) {
+      final IntArrayList currentProcedureReturnOffsets = new IntArrayList();
+      ControlFlowInstructionVisitor getNextOffsetVisitor = new ControlFlowInstructionVisitor() {
+        public void visitCallInstruction(CallInstruction instruction, int offset, int nextOffset) {
+          instruction.execute(offset + 1);
+          int newOffset = instruction.offset;
+          // 'procedure' pointed by call instruction should be processed regardless of whether it was already visited or not
+          // clear procedure text and return instructions aftewards
+          for (int i = instruction.procBegin; i < instruction.procEnd || instructions[i] instanceof ReturnInstruction; i++) {
+            clientVisitor.processedInstructions[i] = false;
+          }
+          oldOffsets.add(offset);
+          newOffsets.add(newOffset);
+
+          oldOffsets.add(newOffset);
+          newOffsets.add(-1);
+
+          currentProcedureReturnOffsets.add(offset + 1);
         }
-        oldOffsets.add(offset);
-        newOffsets.add(newOffset);
 
-        oldOffsets.add(newOffset);
-        newOffsets.add(-1);
+        public void visitReturnInstruction(ReturnInstruction instruction, int offset, int nextOffset) {
+          int newOffset = instruction.execute(false);
+          if (newOffset != -1) {
+            oldOffsets.add(offset);
+            newOffsets.add(newOffset);
 
-        currentProcedureReturnOffsets.add(offset + 1);
-      }
+            oldOffsets.add(newOffset);
+            newOffsets.add(-1);
+          }
+        }
 
-      public void visitReturnInstruction(ReturnInstruction instruction, int offset, int nextOffset) {
-        int newOffset = instruction.execute(false);
-        if (newOffset != -1) {
+        public void visitBranchingInstruction(BranchingInstruction instruction, int offset, int nextOffset) {
+          int newOffset = instruction.offset;
           oldOffsets.add(offset);
           newOffsets.add(newOffset);
 
           oldOffsets.add(newOffset);
           newOffsets.add(-1);
         }
-      }
 
-      public void visitBranchingInstruction(BranchingInstruction instruction, int offset, int nextOffset) {
-        int newOffset = instruction.offset;
-        oldOffsets.add(offset);
-        newOffsets.add(newOffset);
+        public void visitConditionalBranchingInstruction(ConditionalBranchingInstruction instruction, int offset, int nextOffset) {
+          int newOffset = instruction.offset;
 
-        oldOffsets.add(newOffset);
-        newOffsets.add(-1);
-      }
+          oldOffsets.add(offset);
+          newOffsets.add(newOffset);
 
-      public void visitConditionalBranchingInstruction(ConditionalBranchingInstruction instruction, int offset, int nextOffset) {
-        int newOffset = instruction.offset;
+          oldOffsets.add(offset);
+          newOffsets.add(offset + 1);
 
-        oldOffsets.add(offset);
-        newOffsets.add(newOffset);
+          oldOffsets.add(newOffset);
+          newOffsets.add(-1);
 
-        oldOffsets.add(offset);
-        newOffsets.add(offset + 1);
-
-        oldOffsets.add(newOffset);
-        newOffsets.add(-1);
-
-        oldOffsets.add(offset + 1);
-        newOffsets.add(-1);
-      }
-
-      public void visitInstruction(Instruction instruction, int offset, int nextOffset) {
-        int newOffset = offset + 1;
-        oldOffsets.add(offset);
-        newOffsets.add(newOffset);
-
-        oldOffsets.add(newOffset);
-        newOffsets.add(-1);
-      }
-    };
-
-    oldOffsets.add(offset);
-    newOffsets.add(-1);
-
-    while (oldOffsets.size() != 0) {
-      offset = oldOffsets.remove(oldOffsets.size() - 1);
-      int newOffset = newOffsets.remove(newOffsets.size() - 1);
-
-      if (offset >= endOffset) {
-        continue;
-      }
-      Instruction instruction = instructions[offset];
-
-      if (clientVisitor.processedInstructions[offset]) {
-        if (newOffset != -1) {
-          instruction.accept(clientVisitor, offset, newOffset);
+          oldOffsets.add(offset + 1);
+          newOffsets.add(-1);
         }
-        // when traversing call instruction, we have traversed all procedure control flows, so pop return address
-        if (currentProcedureReturnOffsets.size() != 0 && currentProcedureReturnOffsets.get(currentProcedureReturnOffsets.size() - 1) - 1 == offset) {
-          currentProcedureReturnOffsets.remove(currentProcedureReturnOffsets.size() - 1);
-        }
-        continue;
-      }
-      if (currentProcedureReturnOffsets.size() != 0) {
-        int returnOffset = currentProcedureReturnOffsets.get(currentProcedureReturnOffsets.size() - 1);
-        CallInstruction callInstruction = (CallInstruction) instructions[returnOffset - 1];
-        // check if we inside procedure but 'return offset' stack is empty, so
-        // we should push back to 'return offset' stack
-        if (callInstruction.procBegin <= offset && offset < callInstruction.procEnd + 2
-            && (callInstruction.stack.size() == 0 || callInstruction.stack.peekReturnOffset() != returnOffset)) {
-          callInstruction.stack.push(returnOffset, callInstruction);
-        }
-      }
 
-      clientVisitor.processedInstructions[offset] = true;
-      instruction.accept(getNextOffsetVisitor, offset, newOffset);
+        public void visitInstruction(Instruction instruction, int offset, int nextOffset) {
+          int newOffset = offset + 1;
+          oldOffsets.add(offset);
+          newOffsets.add(newOffset);
+
+          oldOffsets.add(newOffset);
+          newOffsets.add(-1);
+        }
+      };
+      while (oldOffsets.size() != 0) {
+        offset = oldOffsets.remove(oldOffsets.size() - 1);
+        int newOffset = newOffsets.remove(newOffsets.size() - 1);
+
+        if (offset >= endOffset) {
+          continue;
+        }
+        Instruction instruction = instructions[offset];
+
+        if (clientVisitor.processedInstructions[offset]) {
+          if (newOffset != -1) {
+            instruction.accept(clientVisitor, offset, newOffset);
+          }
+          // when traversing call instruction, we have traversed all procedure control flows, so pop return address
+          if (currentProcedureReturnOffsets.size() != 0 && currentProcedureReturnOffsets.get(currentProcedureReturnOffsets.size() - 1) - 1 == offset) {
+            currentProcedureReturnOffsets.remove(currentProcedureReturnOffsets.size() - 1);
+          }
+          continue;
+        }
+        if (currentProcedureReturnOffsets.size() != 0) {
+          int returnOffset = currentProcedureReturnOffsets.get(currentProcedureReturnOffsets.size() - 1);
+          CallInstruction callInstruction = (CallInstruction) instructions[returnOffset - 1];
+          // check if we inside procedure but 'return offset' stack is empty, so
+          // we should push back to 'return offset' stack
+          if (callInstruction.procBegin <= offset && offset < callInstruction.procEnd + 2
+              && (callInstruction.stack.size() == 0 || callInstruction.stack.peekReturnOffset() != returnOffset)) {
+            callInstruction.stack.push(returnOffset, callInstruction);
+          }
+        }
+
+        clientVisitor.processedInstructions[offset] = true;
+        instruction.accept(getNextOffsetVisitor, offset, newOffset);
+      }
     }
   }
 
@@ -1218,8 +1214,8 @@ public class ControlFlowUtil {
       boolean[] returnCalled = new boolean[endOffset];
 
       public void visitInstruction(Instruction instruction, int offset, int nextOffset) {
-        boolean ret = nextOffset < endOffset ? returnCalled[nextOffset] : false;
-        boolean normal = nextOffset < endOffset ? normalCompletion[nextOffset] : false;
+        boolean ret = nextOffset < endOffset && returnCalled[nextOffset];
+        boolean normal = nextOffset < endOffset && normalCompletion[nextOffset];
         final PsiElement element = flow.getElement(offset);
         boolean goToReturn = instruction instanceof GoToInstruction && ((GoToInstruction)instruction).isReturn;
         boolean condGoToReturn = instruction instanceof ConditionalGoToInstruction && ((ConditionalGoToInstruction)instruction).isReturn;
