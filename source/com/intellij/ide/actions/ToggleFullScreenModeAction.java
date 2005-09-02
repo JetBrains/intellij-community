@@ -9,6 +9,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrame;
+import com.intellij.openapi.util.SystemInfo;
 
 import javax.swing.*;
 import java.awt.*;
@@ -90,9 +91,10 @@ public final class ToggleFullScreenModeAction extends ToggleAction{
   public void update(AnActionEvent e){
     super.update(e);
     IdeFrame frame=getFrame(e);
-    e.getPresentation().setVisible(
-      frame!=null &&
-      frame.getGraphicsConfiguration().getDevice().isFullScreenSupported()
-    );
+    final boolean operational = !SystemInfo.isMac && // Disabled full screen mode for Mac since it doesn't work anyway
+                                frame != null &&
+                                frame.getGraphicsConfiguration().getDevice().isFullScreenSupported();
+    e.getPresentation().setVisible(operational);
+    e.getPresentation().setEnabled(operational);
   }
 }
