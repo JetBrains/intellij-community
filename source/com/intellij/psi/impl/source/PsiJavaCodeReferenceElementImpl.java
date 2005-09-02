@@ -310,10 +310,13 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         final JavaResolveResult[] newResult = new JavaResolveResult[result.length];
         for (int i = 0; i < result.length; i++) {
           final CandidateInfo resolveResult = (CandidateInfo)result[i];
-          newResult[i] = new CandidateInfo(
-            resolveResult,
-              ((PsiSubstitutorEx)resolveResult.getSubstitutor()).inplacePutAll((PsiClass)resolveResult.getElement(), parameters)
-          );
+          final PsiClass aClass = (PsiClass)resolveResult.getElement();
+          newResult[i] = aClass.getTypeParameters().length == 0 ?
+                         resolveResult :
+                         new CandidateInfo(
+                           resolveResult,
+                           ((PsiSubstitutorEx)resolveResult.getSubstitutor()).putAll(aClass, parameters)
+                         );
         }
         return newResult;
       }

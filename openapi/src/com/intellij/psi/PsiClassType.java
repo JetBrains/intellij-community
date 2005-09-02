@@ -46,10 +46,8 @@ public abstract class PsiClassType extends PsiType {
 
     final ClassResolveResult result = resolveGenerics();
     final ClassResolveResult otherResult = otherClassType.resolveGenerics();
-    if (result == otherResult) {
-      return true;
-    }
-    if (result == null || otherResult == null) return false;
+    if (result == otherResult) return true;
+
     final PsiClass aClass = result.getElement();
     final PsiClass otherClass = otherResult.getElement();
     if (!areClassesEqual(aClass, otherClass)) return false;
