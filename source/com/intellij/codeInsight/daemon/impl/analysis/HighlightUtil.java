@@ -1029,7 +1029,7 @@ public class HighlightUtil {
                                                expr.getTextRange().getEndOffset() + 1,
                                                "'.' expected");
     }
-    PsiClass aClass = qualifier == null ? null : (PsiClass)qualifier.resolve();
+    PsiClass aClass = qualifier == null ? PsiTreeUtil.getParentOfType(expr, PsiClass.class) : (PsiClass)qualifier.resolve();
     if (aClass == null) return null;
     if (aClass.isInterface()) {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, qualifier, HighlightClassUtil.CLASS_EXPECTED);
