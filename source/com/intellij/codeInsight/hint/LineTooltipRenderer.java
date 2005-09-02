@@ -33,7 +33,6 @@ public class LineTooltipRenderer implements TooltipRenderer {
   public LightweightHint show(final Editor editor, Point p, boolean alignToRight, TooltipGroup group) {
 
     final HintManager hintManager = HintManager.getInstance();
-    LightweightHint hint;
 
     final JComponent editorComponent = editor.getComponent();
     JLabel label = new JLabel();
@@ -95,14 +94,14 @@ public class LineTooltipRenderer implements TooltipRenderer {
     if (p.y + height > heightLimit) {
       p.y = heightLimit - height;
     }
-    hint = new LightweightHint(label);
+    LightweightHint hint = new LightweightHint(label);
     hintManager.showEditorHint(hint, editor, p,
                                HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_OTHER_HINT |
                                HintManager.HIDE_BY_SCROLLING, 0, false);
     return hint;
   }
 
-  private boolean richHtml(final String text) {
+  private static boolean richHtml(final String text) {
     if (!text.startsWith("<html>") || !text.endsWith("</html>")) return false;
     int idx = "<html>".length();
     idx = text.indexOf("<body>", idx);

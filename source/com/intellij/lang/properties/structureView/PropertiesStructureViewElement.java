@@ -1,7 +1,6 @@
 package com.intellij.lang.properties.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
-import com.intellij.lang.properties.PropertiesHighlighter;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
@@ -57,7 +56,7 @@ public class PropertiesStructureViewElement implements StructureViewTreeElement<
       }
 
       public TextAttributesKey getTextAttributesKey() {
-        return PropertiesHighlighter.PROPERTY_KEY;
+        return null;
       }
 
       public String getLocationString() {

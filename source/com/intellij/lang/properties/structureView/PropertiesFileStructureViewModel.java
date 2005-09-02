@@ -9,6 +9,7 @@ import com.intellij.lang.properties.editor.PropertiesGroupingStructureViewModel;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -37,18 +38,22 @@ public class PropertiesFileStructureViewModel extends TextEditorBasedStructureVi
     return myGroupByWordPrefixes.getSeparator();
   }
 
+  @NotNull
   public StructureViewTreeElement getRoot() {
     return new PropertiesFileStructureViewElement(myPropertiesFile);
   }
 
+  @NotNull
   public Grouper[] getGroupers() {
     return new Grouper[]{myGroupByWordPrefixes};
   }
 
+  @NotNull
   public Sorter[] getSorters() {
     return new Sorter[] {Sorter.ALPHA_SORTER};
   }
 
+  @NotNull
   public Filter[] getFilters() {
     return Filter.EMPTY_ARRAY;
   }
@@ -57,6 +62,7 @@ public class PropertiesFileStructureViewModel extends TextEditorBasedStructureVi
     return myPropertiesFile;
   }
 
+  @NotNull
   protected Class[] getSuitableClasses() {
     return new Class[] {Property.class};
   }

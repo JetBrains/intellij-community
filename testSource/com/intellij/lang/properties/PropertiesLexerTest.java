@@ -132,6 +132,16 @@ public class PropertiesLexerTest extends LightIdeaTestCase {
       "Properties:VALUE_CHARACTERS", "URL\\n\\\n" + "\t\\t\\teller meta_id:"
     });
   }
+  public void testIndentedComments() throws Exception {
+    doTest("   #comm1\n#comm2=n\n\t#comm3", new String[]{
+      "WHITE_SPACE", "   ",
+      "Properties:END_OF_LINE_COMMENT", "#comm1",
+      "WHITE_SPACE", "\n",
+      "Properties:END_OF_LINE_COMMENT", "#comm2=n",
+      "WHITE_SPACE", "\n\t",
+      "Properties:END_OF_LINE_COMMENT", "#comm3",
+    });
+  }
 
   public void testHighlighting() throws Exception {
     doTestHL("x y", new String[]{

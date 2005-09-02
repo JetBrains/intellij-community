@@ -108,12 +108,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     public boolean showToolTipByMouseMove(final MouseEvent e, final double width) {
       recalcMarkSpots();
-      LineTooltipRenderer bigRenderer = null;
       final List<MarkSpot> nearestMarkSpots = getNearestMarkSpots(e, width);
       Set<RangeHighlighter> highlighters = new THashSet<RangeHighlighter>();
       for (MarkSpot markSpot : nearestMarkSpots) {
         highlighters.addAll(markSpot.highlighters);
       }
+      LineTooltipRenderer bigRenderer = null;
       List<HighlightInfo> infos = new SmartList<HighlightInfo>();
       for (RangeHighlighter marker : highlighters) {
         final Object tooltipObject = marker.getErrorStripeTooltip();
@@ -491,13 +491,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       PopupHandler popupHandler = new PopupHandler() {
         public void invokePopup(final Component comp, final int x, final int y) {
           if (ApplicationManager.getApplication() == null) return;
-          final JPopupMenu popupMenu = new JPopupMenu();
           final JRadioButtonMenuItem errorsFirst = new JRadioButtonMenuItem("Go to errors first");
           errorsFirst.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
               DaemonCodeAnalyzerSettings.getInstance().NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = errorsFirst.isSelected();
             }
           });
+          final JPopupMenu popupMenu = new JPopupMenu();
           popupMenu.add(errorsFirst);
 
           final JRadioButtonMenuItem next = new JRadioButtonMenuItem("Go to next error/warning");

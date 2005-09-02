@@ -30,8 +30,7 @@ public class PropertiesFileStructureViewElement extends PsiTreeElementBase<Prope
     List<Property> properties = getElement().getProperties();
 
     Collection<StructureViewTreeElement> elements = new ArrayList<StructureViewTreeElement>(properties.size());
-    for (int i = 0; i < properties.size(); i++) {
-      Property property = properties.get(i);
+    for (Property property : properties) {
       elements.add(new PropertiesStructureViewElement(property));
     }
     return elements;

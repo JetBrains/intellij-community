@@ -2,7 +2,6 @@ package com.intellij.lang.properties.structureView;
 
 import com.intellij.ide.util.treeView.smartTree.Group;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
-import com.intellij.lang.properties.PropertiesHighlighter;
 import com.intellij.lang.properties.editor.ResourceBundlePropertyStructureViewElement;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.navigation.ItemPresentation;
@@ -43,12 +42,11 @@ public class PropertiesPrefixGroup implements Group {
         return null;
       }
 
+      public TextAttributesKey getTextAttributesKey() {
+        return null;
+      }
       public Icon getIcon(boolean open) {
         return IconLoader.getIcon("/nodes/advice.png");
-      }
-
-      public TextAttributesKey getTextAttributesKey() {
-        return PropertiesHighlighter.PROPERTY_KEY;
       }
     };
   }

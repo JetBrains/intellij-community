@@ -13,9 +13,9 @@ import com.intellij.psi.tree.IElementType;
 %eof{  return;
 %eof}
 
+CRLF= \n | \r | \r\n
 WHITE_SPACE_CHAR=[\ \n\r\t\f]
 VALUE_CHARACTER=[^\n\r\f\\] | "\\"{CRLF} | "\\".
-CRLF= \n | \r | \r\n
 END_OF_LINE_COMMENT=("#"|"!")[^\r\n]*
 KEY_SEPARATOR=[\ \t]*[:=][\ \t]* | [\ \t]+
 KEY_CHARACTER=[^:=\ \n\r\t\f\\] | "\\"{CRLF} | "\\".
@@ -25,7 +25,7 @@ KEY_CHARACTER=[^:=\ \n\r\t\f\\] | "\\"{CRLF} | "\\".
 
 %%
 
-^{END_OF_LINE_COMMENT}                   { return PropertiesTokenTypes.END_OF_LINE_COMMENT; }
+<YYINITIAL> {END_OF_LINE_COMMENT}        { yybegin(YYINITIAL); return PropertiesTokenTypes.END_OF_LINE_COMMENT; }
 
 <YYINITIAL> {KEY_CHARACTER}+             { yybegin(IN_KEY_VALUE_SEPARATOR); return PropertiesTokenTypes.KEY_CHARACTERS; }
 <IN_KEY_VALUE_SEPARATOR> {KEY_SEPARATOR} { yybegin(IN_VALUE); return PropertiesTokenTypes.KEY_VALUE_SEPARATOR; }
