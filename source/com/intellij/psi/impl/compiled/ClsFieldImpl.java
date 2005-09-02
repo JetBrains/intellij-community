@@ -611,4 +611,7 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
   public ItemPresentation getPresentation() {
     return SymbolPresentationUtil.getFieldPresentation(this);
   }
+  public void setInitializer(PsiExpression initializer) throws IncorrectOperationException {
+    throw new IncorrectOperationException();
+  }
 }

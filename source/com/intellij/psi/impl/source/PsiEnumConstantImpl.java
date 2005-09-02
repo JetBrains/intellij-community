@@ -286,4 +286,7 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
   public ItemPresentation getPresentation() {
     return SymbolPresentationUtil.getFieldPresentation(this);
   }
+  public void setInitializer(PsiExpression initializer) throws IncorrectOperationException {
+    throw new IncorrectOperationException();
+  }
 }

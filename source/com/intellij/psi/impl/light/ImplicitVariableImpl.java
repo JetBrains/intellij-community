@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
 
 /**
  *  @author dsl
@@ -17,5 +18,9 @@ public abstract class ImplicitVariableImpl extends LightVariableBase implements 
 
   public String toString() {
     return "Implicit variable:" + getName();
+  }
+
+  public void setInitializer(PsiExpression initializer) throws IncorrectOperationException {
+    throw new IncorrectOperationException();
   }
 }

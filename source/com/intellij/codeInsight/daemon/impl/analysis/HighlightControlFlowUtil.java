@@ -241,6 +241,7 @@ public class HighlightControlFlowUtil {
       if (containingClass != null && !containingClass.isInterface()) {
         QuickFixAction.registerQuickFixAction(highlightInfo, new ModifierFix(field, PsiModifier.FINAL, false), null);
       }
+      QuickFixAction.registerQuickFixAction(highlightInfo, new AddVariableInitializerFix(field),null);
       return highlightInfo;
     }
     return null;
@@ -370,10 +371,12 @@ public class HighlightControlFlowUtil {
     if (codeBlockProblems.contains(expression)) {
       final String name = expression.getElement().getText();
       String description = MessageFormat.format(VARIABLE_NOT_INITIALIZED, new Object[]{name});
-      return HighlightInfo.createHighlightInfo(
-          HighlightInfoType.ERROR,
-          expression,
-          description);
+      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
+        HighlightInfoType.ERROR,
+        expression,
+        description);
+      QuickFixAction.registerQuickFixAction(highlightInfo, new AddVariableInitializerFix(variable),null);
+      return highlightInfo;
     }
 
     return null;

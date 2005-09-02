@@ -382,5 +382,9 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
     return SymbolPresentationUtil.getFieldPresentation(this);
   }
 
+  public void setInitializer(PsiExpression initializer) throws IncorrectOperationException {
+    SharedImplUtil.setInitializer(this, initializer);
+  }
+
 }
 

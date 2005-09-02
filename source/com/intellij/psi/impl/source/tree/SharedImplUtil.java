@@ -205,4 +205,23 @@ public class SharedImplUtil {
     if(node instanceof FileElement) return node.getPsi().getManager();
     return node.getTreeParent().getPsi().getManager();
   }
+
+  public static void setInitializer(PsiVariable variable, final PsiExpression initializer) throws IncorrectOperationException {
+    PsiExpression oldInitializer = variable.getInitializer();
+    if (initializer == null) {
+      if (oldInitializer != null) {
+        oldInitializer.delete();
+      }
+      return;
+    }
+    CompositeElement variableElement = (CompositeElement)variable.getNode();
+    ASTNode eq = variableElement.findChildByRole(ChildRole.INITIALIZER_EQ);
+    if (eq == null) {
+      final CharTable charTable = findCharTableByTree(variableElement);
+      eq = Factory.createSingleLeafElement(JavaTokenType.EQ, "=".toCharArray(), 0, 1, charTable, variable.getManager());
+      variableElement.addInternal((TreeElement)eq, eq, variable.getNameIdentifier().getNode(), Boolean.FALSE);
+      eq = variableElement.findChildByRole(ChildRole.INITIALIZER_EQ);
+    }
+    variable.addAfter(initializer, eq.getPsi());
+  }
 }

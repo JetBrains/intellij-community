@@ -29,10 +29,9 @@ public interface IntentionAction {
   String getText();
 
   /**
-   * Returns this intention's "id". This id is used to externalize "auto-show"
+   * @return this intention's "id". This id is used to externalize "auto-show"
    * state of intentions. When user clicks on a lightbulb in intention list),
    * all intentions with the same family name gets enabled/disabled.
-   * @return
    */
   String getFamilyName();
 

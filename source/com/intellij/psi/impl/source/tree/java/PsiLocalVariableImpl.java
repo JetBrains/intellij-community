@@ -51,6 +51,10 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     return myCachedName;
   }
 
+  public void setInitializer(PsiExpression initializer) throws IncorrectOperationException {
+    SharedImplUtil.setInitializer(this, initializer);
+  }
+
   public PsiElement setName(String name) throws IncorrectOperationException {
     SharedPsiElementImplUtil.setName(getNameIdentifier(), name);
     return this;
@@ -208,7 +212,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
       return getChildRole(child, ChildRole.CLOSING_SEMICOLON);
     }
     else {
-      if (ElementType.EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
+      if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return ChildRole.INITIALIZER;
       }
       return ChildRole.NONE;
@@ -224,8 +228,9 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     if (lastParent.getParent() != this) return true;
     final ASTNode lastParentTree = SourceTreeToPsiMap.psiElementToTree(lastParent);
 
-    if (getChildRole(lastParentTree) == ChildRole.INITIALIZER)
+    if (getChildRole(lastParentTree) == ChildRole.INITIALIZER) {
       return processor.execute(this, substitutor);
+    }
     return true;
   }
 

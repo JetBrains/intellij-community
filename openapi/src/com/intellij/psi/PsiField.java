@@ -16,8 +16,14 @@
 package com.intellij.psi;
 
 import com.intellij.pom.java.PomField;
+import com.intellij.util.IncorrectOperationException;
 
 public interface PsiField extends PsiMember, PsiVariable, PsiDocCommentOwner {
   PsiField[] EMPTY_ARRAY = new PsiField[0];
   PomField getPom();
+  /**
+   * Adds initializer to the field declaration.
+   * Or, if initializer parameter is null, removes initializer from variable.
+   */
+  void setInitializer(PsiExpression initializer) throws IncorrectOperationException;
 }

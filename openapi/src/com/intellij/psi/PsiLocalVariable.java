@@ -15,5 +15,12 @@
  */
 package com.intellij.psi;
 
+import com.intellij.util.IncorrectOperationException;
+
 public interface PsiLocalVariable extends PsiVariable {
+  /**
+   * Adds initializer to the variable declaration statement.
+   * Or, if initializer parameter is null, removes initializer from variable.
+   */
+  void setInitializer(PsiExpression initializer) throws IncorrectOperationException;
 }
