@@ -20,9 +20,10 @@ public class LogMessage extends AbstractMessage {
 
     myThrowable = aEvent.getThrowableInformation() == null ? null : aEvent.getThrowableInformation().getThrowable();
 
-    if (aEvent.getMessage().toString().length() == 0) {
+    if (aEvent.getMessage() == null || aEvent.getMessage().toString().length() == 0) {
       myHeader = getThrowable().toString();
-    } else {
+    }
+    else {
       myHeader = aEvent.getMessage().toString();
     }
   }

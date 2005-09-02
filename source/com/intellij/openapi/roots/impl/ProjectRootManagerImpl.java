@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
@@ -29,7 +30,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.HashMap;
@@ -437,7 +437,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       if (compilerOutputPathForTests != null) {
         contentRoots.add(compilerOutputPathForTests);
       }
-      
+
       final VirtualFile moduleFile = module.getModuleFile();
       if (moduleFile != null) {
         contentRoots.add(moduleFile);
@@ -468,6 +468,16 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     }
 
     myRootsToWatch.addAll(LocalFileSystem.getInstance().addRootsToWatch(libraryRoots, false));
+
+    Set<VirtualFile> explodedDirs = new HashSet<VirtualFile>();
+    for (Module module : modules) {
+      final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+      final VirtualFile explodedDirectory = moduleRootManager.getExplodedDirectory();
+      if (explodedDirectory != null) {
+        explodedDirs.add(explodedDirectory);
+      }
+    }
+    myRootsToWatch.addAll(LocalFileSystem.getInstance().addRootsToWatch(explodedDirs, true));
   }
 
   private Collection<VirtualFile> getRootsToTrack(final Library library, final OrderRootType rootType) {

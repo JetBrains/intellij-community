@@ -18,6 +18,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.Collection;
+import java.util.Map;
 
 public class CompilerUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompilerUtil");
@@ -45,13 +46,12 @@ public class CompilerUtil {
       return false;
     }
   };
-  public static void collectFiles(Collection container, File rootDir, FileFilter fileFilter) {
+  public static void collectFiles(Collection<File> container, File rootDir, FileFilter fileFilter) {
     final File[] files = rootDir.listFiles(fileFilter);
     if (files == null) {
       return;
     }
-    for (int idx = 0; idx < files.length; idx++) {
-      File file = files[idx];
+    for (File file : files) {
       if (file.isDirectory()) {
         collectFiles(container, file, fileFilter);
       }
@@ -67,8 +67,8 @@ public class CompilerUtil {
     }
     doRefresh(new Runnable() {
       public void run() {
-        for (int idx = 0; idx < paths.length; idx++) {
-          final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(paths[idx].replace(File.separatorChar, '/'));
+        for (String path : paths) {
+          final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.replace(File.separatorChar, '/'));
           if (file != null) {
             file.refresh(false, false);
           }
@@ -88,8 +88,8 @@ public class CompilerUtil {
     }
     doRefresh(new Runnable() {
       public void run() {
-        for (int idx = 0; idx < files.length; idx++) {
-          final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(files[idx]);
+        for (File file1 : files) {
+          final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file1);
           if (file != null) {
             file.refresh(false, false);
           }
@@ -112,8 +112,19 @@ public class CompilerUtil {
   public static void refreshVirtualFiles(final VirtualFile[] files) {
     doRefresh(new Runnable() {
       public void run() {
-        for (int idx = 0; idx < files.length; idx++) {
-          files[idx].refresh(false, false);
+        for (VirtualFile file : files) {
+          file.refresh(false, false);
+        }
+      }
+    });
+  }
+  // file -> true/false for refresh recursively/non recursively coorespondingly
+  public static void refreshVirtualFiles(final Map<VirtualFile, Boolean> filesToRefresh) {
+    doRefresh(new Runnable() {
+      public void run() {
+        for (VirtualFile virtualFile : filesToRefresh.keySet()) {
+          boolean recursively = filesToRefresh.get(virtualFile).booleanValue();
+          virtualFile.refresh(false, recursively);
         }
       }
     });
