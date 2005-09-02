@@ -37,4 +37,14 @@ public class SystemInfo {
   public static final boolean isMacSystemMenu = isMac && "true".equals(System.getProperty("apple.laf.useScreenMenuBar"));
 
   public static final boolean isFileSystemCaseSensitive = !isWindows && !isOS2;
+  
+  public static final boolean isMacOSTiger = isTiger();
+
+  private static boolean isTiger() {
+    return isMac &&
+           !OS_VERSION.startsWith("10.0") &&
+           !OS_VERSION.startsWith("10.1") &&
+           !OS_VERSION.startsWith("10.2") &&
+           !OS_VERSION.startsWith("10.3");
+  }
 }

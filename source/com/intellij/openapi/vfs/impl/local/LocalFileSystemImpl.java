@@ -132,7 +132,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
 
   private void updateFileWatcher() {
     if (FileWatcher.isAvailable()) {
-      FileWatcher.interrupt();
+      FileWatcher.interruptWatcher();
     }
   }
 
