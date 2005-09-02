@@ -20,69 +20,71 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.BoolUtils;
+import com.siyeh.IntentionPowerPackBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
-public class FlipAssertLiteralIntention extends MutablyNamedIntention{
-    protected String getTextForElement(PsiElement element){
-        final PsiMethodCallExpression call = (PsiMethodCallExpression) element;
-        final PsiReferenceExpression methodExpression =
-                call.getMethodExpression();
-        final String fromMethodName = methodExpression.getReferenceName();
-        @NonNls final String toMethodName;
-        if("assertTrue".equals(fromMethodName)){
-            toMethodName = "assertFalse";
-        } else{
-            toMethodName = "assertTrue";
-        }
-        return "Replace " + fromMethodName + "() with " + toMethodName + "()";
-    }
+public class FlipAssertLiteralIntention extends MutablyNamedIntention {
 
-    public String getFamilyName(){
-        return "Flip Assert Literal";
+  protected String getTextForElement(PsiElement element) {
+    final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
+    final PsiReferenceExpression methodExpression =
+      call.getMethodExpression();
+    @NonNls final String fromMethodName = methodExpression.getReferenceName();
+    @NonNls final String toMethodName;
+    if ("assertTrue".equals(fromMethodName)) {
+      toMethodName = "assertFalse";
     }
-
-    @NotNull
-    public PsiElementPredicate getElementPredicate(){
-        return new AssertTrueOrFalsePredicate();
+    else {
+      toMethodName = "assertTrue";
     }
+    return IntentionPowerPackBundle.message("flip.assert.literal.intention.name", fromMethodName, toMethodName);
+  }
 
-    public void processIntention(PsiElement element)
-            throws IncorrectOperationException{
-        final PsiMethodCallExpression call = (PsiMethodCallExpression) element;
-        final PsiReferenceExpression methodExpression =
-                call.getMethodExpression();
-        @NonNls final String fromMethodName = methodExpression.getReferenceName();
-        @NonNls final String toMethodName;
-        if("assertTrue".equals(fromMethodName)){
-            toMethodName = "assertFalse";
-        } else{
-            toMethodName = "assertTrue";
-        }
-        final PsiExpression qualifierExp =
-                methodExpression.getQualifierExpression();
+  @NotNull
+  public PsiElementPredicate getElementPredicate() {
+    return new AssertTrueOrFalsePredicate();
+  }
 
-        final String qualifier;
-        if(qualifierExp == null){
-            qualifier = "";
-        } else{
-            qualifier = qualifierExp.getText() + '.';
-        }
-        final PsiExpressionList argumentList = call.getArgumentList();
-        assert argumentList != null;
-        final PsiExpression[] args = argumentList.getExpressions();
-        final String callString;
-        if(args.length == 1){
-            final PsiExpression arg = args[0];
-            callString = qualifier + toMethodName + '(' +
-                         BoolUtils.getNegatedExpressionText(arg) + ')';
-        } else{
-            final PsiExpression arg = args[1];
-            callString =
-                    qualifier + toMethodName + '(' + args[0].getText() + ',' +
-                    BoolUtils.getNegatedExpressionText(arg) +
-                    ')';
-        }
-        replaceExpression(callString, call);
+  public void processIntention(PsiElement element)
+    throws IncorrectOperationException {
+    final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
+    final PsiReferenceExpression methodExpression =
+      call.getMethodExpression();
+    @NonNls final String fromMethodName = methodExpression.getReferenceName();
+    @NonNls final String toMethodName;
+    if ("assertTrue".equals(fromMethodName)) {
+      toMethodName = "assertFalse";
     }
+    else {
+      toMethodName = "assertTrue";
+    }
+    final PsiExpression qualifierExp =
+      methodExpression.getQualifierExpression();
+
+    final String qualifier;
+    if (qualifierExp == null) {
+      qualifier = "";
+    }
+    else {
+      qualifier = qualifierExp.getText() + '.';
+    }
+    final PsiExpressionList argumentList = call.getArgumentList();
+    assert argumentList != null;
+    final PsiExpression[] args = argumentList.getExpressions();
+    final String callString;
+    if (args.length == 1) {
+      final PsiExpression arg = args[0];
+      callString = qualifier + toMethodName + '(' +
+                   BoolUtils.getNegatedExpressionText(arg) + ')';
+    }
+    else {
+      final PsiExpression arg = args[1];
+      callString =
+        qualifier + toMethodName + '(' + args[0].getText() + ',' +
+        BoolUtils.getNegatedExpressionText(arg) +
+        ')';
+    }
+    replaceExpression(callString, call);
+  }
 }

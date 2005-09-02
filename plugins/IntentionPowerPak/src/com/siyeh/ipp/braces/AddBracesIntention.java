@@ -22,59 +22,47 @@ import com.intellij.psi.PsiStatement;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.IntentionPowerPackBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
-public class AddBracesIntention extends MutablyNamedIntention
-{
-        @NotNull
-        protected PsiElementPredicate getElementPredicate()
-        {
-                return new AddBracesPredicate();
-        }
+public class AddBracesIntention extends MutablyNamedIntention {
 
-        protected String getTextForElement(PsiElement element){
-                final PsiElement parent = element.getParent();
-                assert parent != null;
-                @NonNls final String keyword;
-                if (parent instanceof PsiIfStatement)
-                {
-                        final PsiIfStatement ifStatement = (PsiIfStatement)parent;
-                        final PsiStatement elseBranch = ifStatement.getElseBranch();
-                        if (element.equals(elseBranch))
-                        {
-                                keyword = "else";
-                        }
-                        else
-                        {
-                                keyword = "if";
-                        }
-                }
-                else
-                {
-                        final PsiElement firstChild = parent.getFirstChild();
-                        assert firstChild != null;
-                        keyword = firstChild.getText();
-                }
-                return "Add Braces to '" + keyword + "' statement";
-        }
+  @NotNull
+  protected PsiElementPredicate getElementPredicate() {
+    return new AddBracesPredicate();
+  }
 
-        public String getFamilyName()
-        {
-                return "Add Braces";
-        }
+  protected String getTextForElement(PsiElement element) {
+    final PsiElement parent = element.getParent();
+    assert parent != null;
+    @NonNls final String keyword;
+    if (parent instanceof PsiIfStatement) {
+      final PsiIfStatement ifStatement = (PsiIfStatement)parent;
+      final PsiStatement elseBranch = ifStatement.getElseBranch();
+      if (element.equals(elseBranch)) {
+        keyword = "else";
+      }
+      else {
+        keyword = "if";
+      }
+    }
+    else {
+      final PsiElement firstChild = parent.getFirstChild();
+      assert firstChild != null;
+      keyword = firstChild.getText();
+    }
+    return IntentionPowerPackBundle.message("add.braces.intention.name", keyword);
+  }
 
-        protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException
-        {
-                final PsiStatement statement = (PsiStatement)element;
-                final String text = element.getText();
-                if (element.getLastChild() instanceof PsiComment)
-                {
-                        replaceStatement('{' + text + "\n}", statement);
-                }
-                else
-                {
-                        replaceStatement('{' + text + '}', statement);
-                }
-        }
+  protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+    final PsiStatement statement = (PsiStatement)element;
+    final String text = element.getText();
+    if (element.getLastChild() instanceof PsiComment) {
+      replaceStatement('{' + text + "\n}", statement);
+    }
+    else {
+      replaceStatement('{' + text + '}', statement);
+    }
+  }
 }

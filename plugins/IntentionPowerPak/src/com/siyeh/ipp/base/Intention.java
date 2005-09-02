@@ -27,6 +27,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.psiutils.BoolUtils;
 import com.siyeh.ipp.psiutils.ComparisonUtils;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
+import com.siyeh.IntentionPowerPackBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
@@ -170,5 +171,28 @@ public abstract class Intention implements IntentionAction{
         return ReadonlyStatusHandler.getInstance(project)
                 .ensureFilesWritable(new VirtualFile[]{virtualFile})
                 .hasReadonlyFiles();
+    }
+
+    private String getPrefix() {
+      final String name = this.getClass().getSimpleName();
+      StringBuffer buf = new StringBuffer(name.length() + 10);
+      buf.append(Character.toLowerCase(name.charAt(0)));
+      for (int i = 1; i < name.length(); i++){
+        final char c = name.charAt(i);
+        if (Character.isUpperCase(c)){
+          buf.append('.').append(Character.toLowerCase(c));
+        } else {
+          buf.append(c);
+        }
+      }
+      return buf.toString();
+    }
+
+    public String getText() {
+      return IntentionPowerPackBundle.message(getPrefix() + ".name");
+    }
+
+    public String getFamilyName() {
+      return IntentionPowerPackBundle.message(getPrefix() + ".family.name");
     }
 }

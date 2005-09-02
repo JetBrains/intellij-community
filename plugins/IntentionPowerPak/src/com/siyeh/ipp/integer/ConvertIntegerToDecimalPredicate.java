@@ -54,7 +54,7 @@ class ConvertIntegerToDecimalPredicate implements PsiElementPredicate{
                languageLevel.equals(LanguageLevel.JDK_1_4)){
                 return false;
             }
-            final String text = expression.getText();
+            @NonNls final String text = expression.getText();
             if(text == null || text.length() < 2){
                 return false;
             }

@@ -20,13 +20,14 @@ import com.intellij.psi.PsiIfStatement;
 import com.intellij.psi.PsiJavaToken;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
+import org.jetbrains.annotations.NonNls;
 
 class IfToSwitchPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiJavaToken)){
             return false;
         }
-        final String text = element.getText();
+        @NonNls final String text = element.getText();
         if(!"if".equals(text)){
             return false;
         }

@@ -24,28 +24,22 @@ import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class SplitElseIfIntention extends Intention{
-    public String getText(){
-        return "Split else-if";
-    }
+public class SplitElseIfIntention extends Intention {
 
-    public String getFamilyName(){
-        return "Split Else If";
-    }
 
-    @NotNull
-    public PsiElementPredicate getElementPredicate(){
-        return new SplitElseIfPredicate();
-    }
+  @NotNull
+  public PsiElementPredicate getElementPredicate() {
+    return new SplitElseIfPredicate();
+  }
 
-    public void processIntention(PsiElement element)
-            throws IncorrectOperationException{
-        final PsiJavaToken token = (PsiJavaToken) element;
-        final PsiIfStatement parentStatement =
-                (PsiIfStatement) token.getParent();
-        assert parentStatement != null;
-        final PsiStatement elseBranch = parentStatement.getElseBranch();
-        final String newStatement = '{' + elseBranch.getText() + '}';
-        replaceStatement(newStatement, elseBranch);
-    }
+  public void processIntention(PsiElement element)
+    throws IncorrectOperationException {
+    final PsiJavaToken token = (PsiJavaToken)element;
+    final PsiIfStatement parentStatement =
+      (PsiIfStatement)token.getParent();
+    assert parentStatement != null;
+    final PsiStatement elseBranch = parentStatement.getElseBranch();
+    final String newStatement = '{' + elseBranch.getText() + '}';
+    replaceStatement(newStatement, elseBranch);
+  }
 }

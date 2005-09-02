@@ -26,38 +26,34 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
-public class ConstantExpressionIntention extends Intention{
-    @NotNull
-    protected PsiElementPredicate getElementPredicate(){
-        return new ConstantExpressionPredicate();
-    }
+public class ConstantExpressionIntention extends Intention {
 
-    public String getText(){
-        return "Compute constant value";
-    }
 
-    public String getFamilyName(){
-        return "Compute Constant Value";
-    }
+  @NotNull
+  protected PsiElementPredicate getElementPredicate() {
+    return new ConstantExpressionPredicate();
+  }
 
-    public void processIntention(PsiElement element)
-            throws IncorrectOperationException{
-        final PsiExpression expression =
-                (PsiExpression) element;
-        final PsiManager psiManager = expression.getManager();
-        final PsiConstantEvaluationHelper helper =
-                psiManager.getConstantEvaluationHelper();
-        final Object value = helper.computeConstantExpression(expression);
-        @NonNls final String newExpression;
-        if(value instanceof String){
-            newExpression = '\"' + StringUtil
-                    .escapeStringCharacters((String) value) +
-                                                            '\"';
-        } else if(value == null){
-            newExpression = "null";
-        } else{
-            newExpression = String.valueOf(value);
-        }
-        replaceExpression(newExpression, expression);
+  public void processIntention(PsiElement element)
+    throws IncorrectOperationException {
+    final PsiExpression expression =
+      (PsiExpression)element;
+    final PsiManager psiManager = expression.getManager();
+    final PsiConstantEvaluationHelper helper =
+      psiManager.getConstantEvaluationHelper();
+    final Object value = helper.computeConstantExpression(expression);
+    @NonNls final String newExpression;
+    if (value instanceof String) {
+      newExpression = '\"' + StringUtil
+        .escapeStringCharacters((String)value) +
+                                               '\"';
     }
+    else if (value == null) {
+      newExpression = "null";
+    }
+    else {
+      newExpression = String.valueOf(value);
+    }
+    replaceExpression(newExpression, expression);
+  }
 }

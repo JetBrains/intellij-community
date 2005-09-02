@@ -20,58 +20,57 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
+import com.siyeh.IntentionPowerPackBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
-public class FlipCommutativeMethodCallIntention extends MutablyNamedIntention{
-    protected String getTextForElement(PsiElement element){
-        final PsiMethodCallExpression call = (PsiMethodCallExpression) element;
-        final PsiReferenceExpression methodExpression =
-                call.getMethodExpression();
-        @NonNls final String methodName = methodExpression.getReferenceName();
-        assert methodName != null;
-        if("equals".equals(methodName) || "equalsIgnoreCase".equals(methodName))
-        {
-            return "Flip \'." + methodName + "()\'";
-        } else{
-            return "Flip \'." + methodName + "()\' (may change semantics)";
-        }
-    }
+public class FlipCommutativeMethodCallIntention extends MutablyNamedIntention {
 
-    public String getFamilyName(){
-        return "Flip Commutative Method Call";
+  protected String getTextForElement(PsiElement element) {
+    final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
+    final PsiReferenceExpression methodExpression =
+      call.getMethodExpression();
+    @NonNls final String methodName = methodExpression.getReferenceName();
+    assert methodName != null;
+    if ("equals".equals(methodName) || "equalsIgnoreCase".equals(methodName)) {
+      return IntentionPowerPackBundle.message("flip.commutative.method.call.intention.name", methodName);
     }
+    else {
+      return IntentionPowerPackBundle.message("flip.commutative.method.call.intention.name1", methodName);
+    }
+  }
 
-    @NotNull
-    public PsiElementPredicate getElementPredicate(){
-        return new FlipCommutativeMethodCallPredicate();
-    }
+  @NotNull
+  public PsiElementPredicate getElementPredicate() {
+    return new FlipCommutativeMethodCallPredicate();
+  }
 
-    public void processIntention(PsiElement element)
-            throws IncorrectOperationException{
-        final PsiMethodCallExpression call =
-                (PsiMethodCallExpression) element;
-        assert call != null;
-        final PsiReferenceExpression methodExpression =
-                call.getMethodExpression();
-        final String methodName = methodExpression.getReferenceName();
-        final PsiExpression target = methodExpression.getQualifierExpression();
-        final PsiExpressionList argumentList = call.getArgumentList();
-        assert argumentList != null;
-        final PsiExpression arg = argumentList.getExpressions()[0];
-        final PsiExpression strippedTarget =
-                ParenthesesUtils.stripParentheses(target);
-        final PsiExpression strippedArg =
-                ParenthesesUtils.stripParentheses(arg);
-        final String callString;
-        if(ParenthesesUtils.getPrecendence(strippedArg) >
-           ParenthesesUtils.METHOD_CALL_PRECEDENCE){
-            callString = '(' + strippedArg.getText() + ")." + methodName + '(' +
-                         strippedTarget.getText() + ')';
-        } else{
-            callString = strippedArg.getText() + '.' + methodName + '(' +
-                         strippedTarget.getText() + ')';
-        }
-        replaceExpression(callString, call);
+  public void processIntention(PsiElement element)
+    throws IncorrectOperationException {
+    final PsiMethodCallExpression call =
+      (PsiMethodCallExpression)element;
+    assert call != null;
+    final PsiReferenceExpression methodExpression =
+      call.getMethodExpression();
+    final String methodName = methodExpression.getReferenceName();
+    final PsiExpression target = methodExpression.getQualifierExpression();
+    final PsiExpressionList argumentList = call.getArgumentList();
+    assert argumentList != null;
+    final PsiExpression arg = argumentList.getExpressions()[0];
+    final PsiExpression strippedTarget =
+      ParenthesesUtils.stripParentheses(target);
+    final PsiExpression strippedArg =
+      ParenthesesUtils.stripParentheses(arg);
+    final String callString;
+    if (ParenthesesUtils.getPrecendence(strippedArg) >
+        ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
+      callString = '(' + strippedArg.getText() + ")." + methodName + '(' +
+                   strippedTarget.getText() + ')';
     }
+    else {
+      callString = strippedArg.getText() + '.' + methodName + '(' +
+                   strippedTarget.getText() + ')';
+    }
+    replaceExpression(callString, call);
+  }
 }

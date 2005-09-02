@@ -21,6 +21,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ipp.psiutils.EquivalenceChecker;
 import com.siyeh.ipp.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -108,7 +109,7 @@ class CaseUtil{
     }
 
     public static String findUniqueLabel(PsiStatement statement,
-                                         String baseName){
+                                         @NonNls String baseName){
         PsiElement ancestor = statement;
         while(ancestor.getParent() != null){
             if(ancestor instanceof PsiMethod

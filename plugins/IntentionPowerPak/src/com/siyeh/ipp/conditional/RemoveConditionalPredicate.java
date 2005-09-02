@@ -21,6 +21,7 @@ import com.intellij.psi.PsiExpression;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
+import org.jetbrains.annotations.NonNls;
 
 class RemoveConditionalPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
@@ -35,20 +36,19 @@ class RemoveConditionalPredicate implements PsiElementPredicate{
 
         PsiExpression thenExpression = condition.getThenExpression();
         PsiExpression elseExpression = condition.getElseExpression();
-        if(condition.getCondition() == null ||
-                thenExpression == null ||
-                elseExpression == null){
+        if(thenExpression == null ||
+           elseExpression == null){
             return false;
         }
 
         thenExpression = ParenthesesUtils.stripParentheses(thenExpression);
         elseExpression = ParenthesesUtils.stripParentheses(elseExpression);
         if(thenExpression == null ||
-                elseExpression == null){
+           elseExpression == null){
             return false;
         }
-        final String thenText = thenExpression.getText();
-        final String elseText = elseExpression.getText();
+        @NonNls final String thenText = thenExpression.getText();
+        @NonNls final String elseText = elseExpression.getText();
         if("true".equals(elseText) && "false".equals(thenText)){
             return true;
         } else if("true".equals(thenText) && "false".equals(elseText)){
