@@ -409,6 +409,8 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
             refresh(rootFile, recursively, false, worker, modalityState, asynchronous, true);
           }
         }
+
+        FileWatcher.resyncedManually();
       }
     };
 
