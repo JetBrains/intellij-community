@@ -28,7 +28,7 @@ public class IconsBundle {
 
   private IconsBundle() {}
 
-  public static String message(@PropertyKey String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "org.intellij.images.IconsBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }
