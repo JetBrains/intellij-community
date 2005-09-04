@@ -28,23 +28,25 @@ public class DialogUtil {
   public static void registerMnemonic(AbstractButton button) {
     String text = button.getText();
 
-    StringBuffer realText = new StringBuffer();
-    char mnemonic = '\0';
-    int index = -1;
-    for (int i = 0; i < text.length(); i++) {
-      char ch = text.charAt(i);
-      if (ch != UIUtil.MNEMONIC) {
-        realText.append(ch);
+    if (text != null) {
+      StringBuffer realText = new StringBuffer();
+      char mnemonic = '\0';
+      int index = -1;
+      for (int i = 0; i < text.length(); i++) {
+        char ch = text.charAt(i);
+        if (ch != UIUtil.MNEMONIC) {
+          realText.append(ch);
+        }
+        else if (i + 1 < text.length()) {
+          mnemonic = text.charAt(i + 1);
+          index = realText.length();
+        }
       }
-      else if (i + 1 < text.length()) {
-        mnemonic = text.charAt(i + 1);
-        index = realText.length();
+      if (mnemonic != '\0') {
+        button.setText(realText.toString());
+        button.setMnemonic(mnemonic);
+        button.setDisplayedMnemonicIndex(index);
       }
-    }
-    if (mnemonic != '\0') {
-      button.setText(realText.toString());
-      button.setMnemonic(mnemonic);
-      button.setDisplayedMnemonicIndex(index);
     }
   }
 
