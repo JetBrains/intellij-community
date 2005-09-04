@@ -14,7 +14,7 @@ import java.util.ResourceBundle;
 public class AnalysisScopeBundle {
   private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.intellij.analysis.AnalysisScopeBundle");
 
-  public static String message(@PropertyKey String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "com.intellij.analysis.AnalysisScopeBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

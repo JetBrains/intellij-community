@@ -17,7 +17,7 @@ public class FindBundle {
 
   private FindBundle() {}
 
-  public static String message(@PropertyKey String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "com.intellij.find.FindBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

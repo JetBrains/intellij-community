@@ -16,7 +16,7 @@ public class QuickFixBundle {
 
   private QuickFixBundle() {}
 
-  public static String message(@PropertyKey String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "com.intellij.codeInsight.daemon.QuickFixBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

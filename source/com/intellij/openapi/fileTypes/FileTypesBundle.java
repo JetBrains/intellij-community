@@ -18,7 +18,7 @@ public class FileTypesBundle {
 
   private FileTypesBundle() {}
 
-  public static String message(@PropertyKey String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "com.intellij.openapi.fileTypes.FileTypesBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

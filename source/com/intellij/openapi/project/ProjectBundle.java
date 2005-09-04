@@ -18,7 +18,7 @@ public class ProjectBundle {
 
   private ProjectBundle() {}
 
-  public static String message(@PropertyKey String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "com.intellij.openapi.project.ProjectBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

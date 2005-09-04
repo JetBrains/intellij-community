@@ -20,7 +20,7 @@ public class UIBundle {
   @NonNls protected static final String PATH_TO_BUNDLE = "com.intellij.ui.UIBundle";
   private final static ResourceBundle ourResourceBundle = ResourceBundle.getBundle(PATH_TO_BUNDLE);
 
-  public static String message(@PropertyKey String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "com.intellij.ui.UIBundle") String key, Object... params) {
     return CommonBundle.message(ourResourceBundle, key, params);
   }
 

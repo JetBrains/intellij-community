@@ -38,7 +38,7 @@ public class ActionsBundle {
     return message("action." + actionId + ".description");
   }
 
-  public static String message(@PropertyKey String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "idea.ActionsBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

@@ -4,6 +4,7 @@
 package com.intellij.ant;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
 
@@ -14,7 +15,7 @@ public class AntBundle {
   protected static final String PATH_TO_BUNDLE = "com.intellij.ant.AntBundle";
   private final static ResourceBundle ourResourceBundle = ResourceBundle.getBundle(PATH_TO_BUNDLE);
 
-  public static String message(@NonNls String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "com.intellij.ant.AntBundle") String key, Object... params) {
     return CommonBundle.message(ourResourceBundle, key, params);
   }
 

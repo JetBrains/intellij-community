@@ -28,7 +28,7 @@ public class InspectionsBundle {
 
   private InspectionsBundle() {}
 
-  public static String message(@PropertyKey String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "com.intellij.codeInspection.InspectionsBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

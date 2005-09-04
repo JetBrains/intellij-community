@@ -17,7 +17,7 @@ public class UIDesignerBundle {
 
   private UIDesignerBundle() {}
 
-  public static String message(@PropertyKey String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "com.intellij.uiDesigner.UIDesignerBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

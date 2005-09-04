@@ -21,7 +21,7 @@ public class ExecutionBundle {
   protected static final String PATH_TO_BUNDLE = "com.intellij.execution.ExecutionBundle";
   private final static ResourceBundle ourResourceBundle = ResourceBundle.getBundle(PATH_TO_BUNDLE);
 
-  public static String message(@PropertyKey String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "com.intellij.execution.ExecutionBundle") String key, Object... params) {
     return CommonBundle.message(ourResourceBundle, key, params);
   }
 

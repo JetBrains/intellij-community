@@ -27,7 +27,7 @@ public class DebuggerBundle {
   private DebuggerBundle() {
   }
 
-  public static String message(@PropertyKey String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "com.intellij.debugger.DebuggerBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 

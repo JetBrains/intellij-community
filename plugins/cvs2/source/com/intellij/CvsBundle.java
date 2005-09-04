@@ -23,7 +23,7 @@ public class CvsBundle {
 
   private CvsBundle() {}
 
-  public static String message(@PropertyKey String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "com.intellij.cvsSupport2.CvsBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 

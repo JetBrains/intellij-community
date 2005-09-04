@@ -29,7 +29,7 @@ public class ApplicationBundle {
 
   private ApplicationBundle() {}
 
-  public static String message(@NonNls @PropertyKey String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "com.intellij.openapi.application.ApplicationBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

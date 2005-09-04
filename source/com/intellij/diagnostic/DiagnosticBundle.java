@@ -18,7 +18,7 @@ public class DiagnosticBundle {
 
   private DiagnosticBundle() {}
 
-  public static String message(@PropertyKey String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "com.intellij.diagnostic.DiagnosticBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

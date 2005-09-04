@@ -17,7 +17,7 @@ public class UsageViewBundle {
 
   private UsageViewBundle() {}
 
-  public static String message(@PropertyKey  String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "com.intellij.usages.UsageView")  String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 

@@ -26,7 +26,7 @@ import java.util.ResourceBundle;
 public class FeatureStatisticsBundle {
   private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.intellij.featureStatistics.FeatureStatisticsBundle");
 
-  public static String message(@PropertyKey String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "com.intellij.featureStatistics.FeatureStatisticsBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

@@ -13,7 +13,7 @@ public class RefactoringBundle {
 
   private RefactoringBundle() {}
 
-  public static String message(@PropertyKey String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "com.intellij.refactoring.RefactoringBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 

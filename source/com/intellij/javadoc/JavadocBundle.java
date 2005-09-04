@@ -18,7 +18,7 @@ public class JavadocBundle {
 
   private JavadocBundle() {}
 
-  public static String message(@PropertyKey String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "com.intellij.javadoc.JavadocBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

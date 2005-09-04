@@ -17,7 +17,7 @@ public class CodeEditorBundle {
 
   private CodeEditorBundle() {}
 
-  public static String message(@PropertyKey String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "com.intellij.codeEditor.printing.CodeEditorBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

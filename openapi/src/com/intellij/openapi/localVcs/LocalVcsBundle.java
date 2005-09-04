@@ -20,7 +20,7 @@ public class LocalVcsBundle {
   @NonNls protected static final String PATH_TO_BUNDLE = "com.intellij.openapi.localVcs.LocalVcsBundle";
   private final static ResourceBundle ourResourceBundle = ResourceBundle.getBundle(PATH_TO_BUNDLE);
 
-  public static String message(@PropertyKey String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "com.intellij.openapi.localVcs.LocalVcsBundle") String key, Object... params) {
     return CommonBundle.message(ourResourceBundle, key, params);
   }
 

@@ -20,7 +20,7 @@ public class OptionsBundle {
   @NonNls protected static final String PATH_TO_BUNDLE = "com.intellij.openapi.options.OptionsBundle";
   private final static ResourceBundle ourResourceBundle = ResourceBundle.getBundle(PATH_TO_BUNDLE);
 
-  public static String message(@PropertyKey String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "com.intellij.openapi.options.OptionsBundle") String key, Object... params) {
     return CommonBundle.message(ourResourceBundle, key, params);
   }
 

@@ -20,7 +20,7 @@ public class EditorBundle {
     @NonNls protected static final String PATH_TO_BUNDLE = "com.intellij.openapi.editor.EditorBundle";
       private final static ResourceBundle ourResourceBundle = ResourceBundle.getBundle(PATH_TO_BUNDLE);
 
-      public static String message(@PropertyKey String key, Object... params) {
+      public static String message(@PropertyKey(resourceBundle = "com.intellij.openapi.editor.EditorBundle") String key, Object... params) {
         return CommonBundle.message(ourResourceBundle, key, params);
       }
 

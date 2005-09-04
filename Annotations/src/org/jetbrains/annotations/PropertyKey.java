@@ -24,4 +24,5 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.CLASS)
 @Target({ElementType.PARAMETER})
 public @interface PropertyKey {
+  String resourceBundle();
 }
