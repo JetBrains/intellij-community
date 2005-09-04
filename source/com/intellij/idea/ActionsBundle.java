@@ -26,7 +26,8 @@ import java.util.ResourceBundle;
  *         Date: Aug 29, 2005
  */
 public class ActionsBundle {
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("idea.ActionsBundle");
+  @NonNls private static final String IDEA_ACTIONS_BUNDLE = "idea.ActionsBundle";
+  private static final ResourceBundle ourBundle = ResourceBundle.getBundle(IDEA_ACTIONS_BUNDLE);
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static String actionText(@NonNls String actionId) {
@@ -38,7 +39,7 @@ public class ActionsBundle {
     return message("action." + actionId + ".description");
   }
 
-  public static String message(@PropertyKey(resourceBundle = "idea.ActionsBundle") String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE) String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }
