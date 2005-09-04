@@ -11,7 +11,7 @@ public class SSRBundle {
 
   private SSRBundle() {}
 
-  public static String message(@PropertyKey String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "com.intellij.structuralsearch.SSRBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }
