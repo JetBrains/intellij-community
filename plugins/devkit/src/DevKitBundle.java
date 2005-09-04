@@ -14,7 +14,7 @@ public class DevKitBundle {
 
   private  DevKitBundle(){}
 
-  public static String message(@PropertyKey String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "org.jetbrains.idea.devkit.DevKitBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }
