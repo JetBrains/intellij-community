@@ -9,6 +9,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentEvent;
 import java.awt.event.InputMethodEvent;
 import java.awt.im.InputMethodRequests;
 
@@ -54,6 +55,10 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
 
   public Dimension getPreferredSize() {
     return myEditor.getPreferredSize();
+  }
+
+  protected void fireResized() {
+    processComponentEvent(new ComponentEvent(this, ComponentEvent.COMPONENT_RESIZED));
   }
 
   protected void processInputMethodEvent(InputMethodEvent e) {

@@ -42,6 +42,7 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -78,6 +79,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   public EditorGutterComponentImpl(EditorImpl editor) {
     myEditor = editor;
     myDragSource.createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY_OR_MOVE, new MyDragGestureListener());
+  }
+
+  protected void fireResized() {
+    processComponentEvent(new ComponentEvent(this, ComponentEvent.COMPONENT_RESIZED));
   }
 
   public Dimension getPreferredSize() {
@@ -351,11 +356,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     calcIconAreaWidth();
     calcAnnotationsSize();
     if (oldIconsWidth != myLineMarkerAreaWidth || oldAnnotationsWidth != myTextAnnotationGuttersSize) {
-      revalidate();
+      fireResized();
     }
-    else {
-      repaint();
-    }
+    repaint();
   }
 
   private void calcAnnotationsSize() {
@@ -829,7 +832,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   public void setLineNumberAreaWidth(int lineNumberAriaWidth) {
-    myLineNumberAreaWidth = lineNumberAriaWidth;
+    if (myLineNumberAreaWidth != lineNumberAriaWidth) {
+      myLineNumberAreaWidth = lineNumberAriaWidth;
+      fireResized();
+    }
   }
 
   public int getLineNumberAreaOffset() {

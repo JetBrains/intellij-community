@@ -232,10 +232,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     myScrollingModel = new ScrollingModelImpl(this);
 
     myGutterComponent.updateSize();
-    myEditorComponent.setSize(getContentSize());
-
     Dimension preferredSize = getPreferredSize();
-    myScrollPane.getViewport().setViewSize(preferredSize);
+    myEditorComponent.setSize(preferredSize);
 
     if (Patches.APPLE_BUG_ID_3716835) {
       myScrollingModel.addVisibleAreaListener(new VisibleAreaListener() {
@@ -872,6 +870,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     mySelectionModel.removeBlockSelection();
 
     mySizeContainer.changedUpdate(e);
+    validateSize();
+
     int startVisualLine = offsetToVisualPosition(e.getOffset()).line;
     int endVisualLine = offsetToVisualPosition(e.getOffset() + e.getNewLength()).line;
 
@@ -880,6 +880,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
       int endDocLine = myDocument.getLineNumber(e.getOffset() + e.getNewLength());
       if (e.getOldLength() > e.getNewLength() || startDocLine != endDocLine) {
         updateGutterSize();
+        endVisualLine = getVisibleLineCount(); // Lines inserted or removed. Need to repaint till the end of file.
       }
     }
 
@@ -899,32 +900,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
         myGutterSizeUpdater = null;
       }
     };
+
+    SwingUtilities.invokeLater(myGutterSizeUpdater);
   }
 
   void validateSize() {
-    if (myGutterSizeUpdater != null) {
-      SwingUtilities.invokeLater(myGutterSizeUpdater);
-    }
-
     Dimension dim = getPreferredSize();
 
     if (!dim.equals(myPreferredSize)) {
       myPreferredSize = dim;
 
       stopOptimizedScrolling();
-      myScrollPane.getViewport().setViewSize(myPreferredSize);
       int lineNum = Math.max(1, getDocument().getLineCount());
-
       myGutterComponent.setLineNumberAreaWidth(getFontMetrics(Font.PLAIN).stringWidth(Integer.toString(lineNum + 2)) + 6);
-      final JViewport rowHeader = myScrollPane.getRowHeader();
-      if (rowHeader != null) {
-        rowHeader.setViewSize(myGutterComponent.getPreferredSize());
-      }
 
-      getScrollPane().revalidate();
+      myEditorComponent.fireResized();
 
-      myEditorComponent.repaint();
-      myScrollPane.repaint();
       myMarkupModel.repaint();
     }
   }
@@ -933,19 +924,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     mySizeContainer.reset();
 
     validateSize();
-
-    Dimension size = getPreferredSize();
-
-    myScrollPane.getVerticalScrollBar().setMaximum(size.height);
-    myScrollPane.getHorizontalScrollBar().setMaximum(size.width);
-
-    getScrollPane().revalidate();
-    myMarkupModel.repaint();
-
-    stopOptimizedScrolling();
-    myEditorComponent.repaintEditorComponent();
-
-    myGutterComponent.repaint();
   }
 
   @NotNull
@@ -981,7 +959,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
   }
 
   public void paint(Graphics g) {
-    validateSize();
     startOptimizedScrolling();
 
     if (myCursorUpdater != null) {
@@ -2657,10 +2634,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     }
 
     private void repaint() {
-      myEditorComponent.repaintEditorComponent(myLocation.x,
-                                                               myLocation.y,
-                                                               myWidth,
-                                                               getLineHeight());
+      myEditorComponent.repaintEditorComponent(myLocation.x, myLocation.y, myWidth, getLineHeight());
     }
 
     public void paint(Graphics g) {

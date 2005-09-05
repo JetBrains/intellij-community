@@ -84,6 +84,7 @@ public class ScrollingModelImpl implements ScrollingModel {
   public void scrollToCaret(ScrollType scrollType) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     LogicalPosition caretPosition = myEditor.getCaretModel().getLogicalPosition();
+    myEditor.validateSize();
     scrollTo(caretPosition, scrollType);
   }
 
