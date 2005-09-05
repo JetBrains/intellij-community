@@ -42,8 +42,8 @@ public class ToggleColumnModeAction extends ToggleAction {
     }
     else {
       boolean hasSelection = selectionModel.hasBlockSelection();
-      int selStart = editor.logicalPositionToOffset(selectionModel.getBlockStart());
-      int selEnd = editor.logicalPositionToOffset(selectionModel.getBlockEnd());
+      int selStart = hasSelection ? editor.logicalPositionToOffset(selectionModel.getBlockStart()) : 0;
+      int selEnd = hasSelection ? editor.logicalPositionToOffset(selectionModel.getBlockEnd()) : 0;
       editor.setColumnMode(false);
       if (hasSelection) {
         selectionModel.setSelection(selStart, selEnd);
