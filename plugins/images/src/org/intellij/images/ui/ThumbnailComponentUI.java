@@ -18,6 +18,7 @@ package org.intellij.images.ui;
 
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.ui.UIUtil;
 import org.intellij.images.IconsBundle;
 import org.intellij.images.editor.ImageDocument;
 
@@ -180,7 +181,7 @@ public class ThumbnailComponentUI extends ComponentUI {
     }
 
     private void paintFileName(Graphics g, ThumbnailComponent tc) {
-        Font font = getLabelFont();
+        Font font = UIUtil.getLabelFont();
         FontMetrics fontMetrics = g.getFontMetrics(font);
 
         g.setFont(font);
@@ -228,24 +229,24 @@ public class ThumbnailComponentUI extends ComponentUI {
         );
 
         // Error
-        String error = UIManager.getString("ThumbnailComponent.errorString");
+        String error = getSubmnailComponentErrorString();
         g.setColor(Color.RED);
         g.setFont(font);
         g.drawString(error, 8, 8 + fontMetrics.getAscent());
     }
 
-    @SuppressWarnings({"HardCodedStringLiteral"})
-    private static Font getLabelFont() {
-        return UIManager.getFont("Label.font");
-    }
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private String getSubmnailComponentErrorString() {
+    return UIManager.getString("ThumbnailComponent.errorString");
+  }
 
     private static Font getSmallFont() {
-        Font labelFont = getLabelFont();
+        Font labelFont = UIUtil.getLabelFont();
         return labelFont.deriveFont(labelFont.getSize2D() - 2.0f);
     }
 
     public Dimension getPreferredSize(JComponent c) {
-        Font labelFont = getLabelFont();
+        Font labelFont = UIUtil.getLabelFont();
         FontMetrics fontMetrics = c.getFontMetrics(labelFont);
         return new Dimension(
             BLANK_ICON.getIconWidth() + 10,
