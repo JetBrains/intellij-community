@@ -62,6 +62,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
   private Project myProject;
 
   @NonNls private static final String HELP_ID = "vcs.subversion.authentication";
+  @NonNls private static final String USER_HOME_PROPERTY = "user.home";
 
   protected SSHCredentialsDialog(Project project) {
     super(project, true);
@@ -323,7 +324,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
         file = VirtualFileManager.getInstance().findFileByUrl(path);
       }
       else {
-        path = "file://" + System.getProperty("user.home") + "/.ssh/identity";
+        path = "file://" + System.getProperty(USER_HOME_PROPERTY) + "/.ssh/identity";
         path = path.replace(File.separatorChar, '/');
         file = VirtualFileManager.getInstance().findFileByUrl(path);
       }

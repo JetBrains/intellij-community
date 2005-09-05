@@ -63,7 +63,7 @@ public class ServerSSLDialog extends DialogWrapper {
 
   private Action getTempAction() {
     if (myTempAction == null) {
-      myTempAction = new AbstractAction("Accept _Temporary") {
+      myTempAction = new AbstractAction(SvnBundle.message("server.ssl.accept.temporary.action.name")) {
         public void actionPerformed(ActionEvent e) {
           myResult = ISVNAuthenticationProvider.ACCEPTED_TEMPORARY;
           close(0);

@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import org.tmatesoft.svn.core.auth.*;
 import org.tmatesoft.svn.core.SVNURL;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.File;
@@ -34,6 +35,7 @@ import java.security.cert.X509Certificate;
  */
 public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
   private Project myProject;
+  @NonNls private static final String USER_NAME_PROPERTY = "user.name";
 
   public SvnAuthenticationProvider(Project project) {
     myProject = project;
@@ -48,7 +50,7 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
     final SVNAuthentication[] result = new SVNAuthentication[1];
     Runnable command = null;
     final String userName = previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : System
-      .getProperty("user.name");
+      .getProperty(USER_NAME_PROPERTY);
     if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
       command = new Runnable() {
         public void run() {

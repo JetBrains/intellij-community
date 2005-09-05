@@ -64,6 +64,7 @@ public class CheckoutDialog extends DialogWrapper implements ActionListener {
   private boolean myIsDstChanged;
 
   @NonNls private static final String HELP_ID = "vcs.subversion.checkoutSVN";
+  @NonNls private static final String USER_HOME_PROPERTY = "user.home";
 
   public CheckoutDialog(Project project) {
     super(project, true);
@@ -124,7 +125,7 @@ public class CheckoutDialog extends DialogWrapper implements ActionListener {
         myDestinationText.setText(defaultPath);
       }
     } else {
-      String path = System.getProperty("user.home", "");
+      String path = System.getProperty(USER_HOME_PROPERTY, "");
       path = path.replace('/', File.separatorChar);
       myDestinationText.setText(path);
     }
