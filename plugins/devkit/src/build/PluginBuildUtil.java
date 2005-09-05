@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
 
@@ -40,7 +41,7 @@ import java.util.Set;
  * Date: Nov 24, 2004
  */
 public class PluginBuildUtil {
-  @Nullable public static String getPluginExPath(Module module) {
+  @NonNls @Nullable public static String getPluginExPath(Module module) {
     final ProjectJdk jdk = ModuleRootManager.getInstance(module).getJdk();
     if (jdk == null || !(jdk.getSdkType() instanceof IdeaJdk)) {
       return null;

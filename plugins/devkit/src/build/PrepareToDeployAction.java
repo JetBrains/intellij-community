@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.ZipUtil;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
 import java.util.HashSet;
@@ -85,7 +86,7 @@ public class PrepareToDeployAction extends AnAction {
         }
       }
 
-    final Set<String> errorSet = new HashSet<String>();
+    @NonNls final Set<String> errorSet = new HashSet<String>();
     final boolean isOk = ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();

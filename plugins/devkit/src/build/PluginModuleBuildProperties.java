@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.devkit.module.PluginDescriptorMetaData;
 
 import java.io.File;
@@ -42,6 +43,8 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
   private VirtualFilePointer myPluginXMLPointer;
   private VirtualFilePointer myManifestFilePointer;
   private boolean myUseUserManifest = false;
+  @NonNls private static final String URL_ATTR = "url";
+  @NonNls private static final String MANIFEST_ATTR = "manifest";
 
   public PluginModuleBuildProperties(Module module) {
     myModule = module;
@@ -94,11 +97,11 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
   public void disposeComponent() {}
 
   public void readExternal(Element element) throws InvalidDataException {
-    String url = element.getAttributeValue("url");
+    String url = element.getAttributeValue(URL_ATTR);
     if (url != null) {
       setPluginXMLUrl(VfsUtil.urlToPath(url));
     }
-    url = element.getAttributeValue("manifest");
+    url = element.getAttributeValue(MANIFEST_ATTR);
     if (url != null) {
       setManifestUrl(VfsUtil.urlToPath(url));
     }
@@ -106,9 +109,9 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(Element element) throws WriteExternalException {
-    element.setAttribute("url", getPluginXMLPointer().getUrl());
+    element.setAttribute(URL_ATTR, getPluginXMLPointer().getUrl());
     if (myManifestFilePointer != null){
-      element.setAttribute("manifest", myManifestFilePointer.getUrl());
+      element.setAttribute(MANIFEST_ATTR, myManifestFilePointer.getUrl());
     }
   }
 

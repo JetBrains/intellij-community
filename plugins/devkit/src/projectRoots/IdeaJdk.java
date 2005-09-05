@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
 import javax.swing.*;
@@ -47,6 +48,9 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   public static final Icon SDK_CLOSED = IconLoader.getIcon("/sdk_closed.png");
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.projectRoots.IdeaJdk");
+  @NonNls private static final String JAVA_HOME_PROPERTY = "java.home";
+  @NonNls private static final String LIB_DIR_NAME = "lib";
+  @NonNls private static final String SRC_DIR_NAME = "src";
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public IdeaJdk() {
@@ -78,7 +82,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     if (!home.exists()) {
       return false;
     }
-    if (getBuildNumber(path) == null || !new File(new File(home, "lib"), "openapi.jar").exists()) {
+    if (getBuildNumber(path) == null || !new File(new File(home, LIB_DIR_NAME), "openapi.jar").exists()) {
       return false;
     }
     return true;
@@ -109,18 +113,18 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   @SuppressWarnings({"HardCodedStringLiteral"})
   private String getInternalToolsPath(final String sdkHome){
     if (SystemInfo.isLinux || SystemInfo.isWindows) {
-      final File tools = new File(new File(new File(sdkHome, "jre"), "lib"), "tools.jar");
+      final File tools = new File(new File(new File(sdkHome, "jre"), LIB_DIR_NAME), "tools.jar");
       if (tools.exists()){
         return tools.getPath();
       }
    }
 
-    final String javaHome = System.getProperty("java.home");
-    File tools = new File(new File(javaHome, "lib"), "tools.jar");
+    final String javaHome = System.getProperty(JAVA_HOME_PROPERTY);
+    File tools = new File(new File(javaHome, LIB_DIR_NAME), "tools.jar");
     if (tools.exists()){ // java home points to jdk
       return tools.getPath();
     } else {
-      tools = new File(new File (new File(javaHome).getParentFile(), "lib"), "tools.jar");
+      tools = new File(new File (new File(javaHome).getParentFile(), LIB_DIR_NAME), "tools.jar");
       if (tools.exists()){
         return tools.getPath();
       }
@@ -137,17 +141,17 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   private String getInternalRtPath(final String homePath) {
     String rtPath;
     if (SystemInfo.isLinux || SystemInfo.isWindows) {
-      rtPath = homePath + File.separator + "jre" + File.separator + "lib" + File.separator + "rt.jar";
+      rtPath = homePath + File.separator + "jre" + File.separator + LIB_DIR_NAME + File.separator + "rt.jar";
       if (new File(rtPath).exists()) {
         return rtPath;
       }
     }
-    final String javaHome = System.getProperty("java.home");
-    File rt = new File(new File(javaHome, "lib"), "rt.jar");
+    final String javaHome = System.getProperty(JAVA_HOME_PROPERTY);
+    File rt = new File(new File(javaHome, LIB_DIR_NAME), "rt.jar");
     if (rt.exists()){ // java home points to jre
       return rt.getPath();
     } else {
-      rt = new File(new File (new File(javaHome, "jre"), "lib"), "rt.jar");
+      rt = new File(new File (new File(javaHome, "jre"), LIB_DIR_NAME), "rt.jar");
       if (rt.exists()){
         return rt.getPath();
       }
@@ -176,14 +180,14 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   }
 
   private String getJreHome(final String sdkHome) {
-    String jreHome;
+    @NonNls String jreHome;
     if (SystemInfo.isLinux || SystemInfo.isWindows) {
       jreHome = sdkHome + File.separator + "jre";
       if (new File(jreHome).exists()){
         return jreHome;
       }
     }
-    return System.getProperty("java.home");
+    return System.getProperty(JAVA_HOME_PROPERTY);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -247,7 +251,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   }
 
   public static void addSources(File file, SdkModificator sdkModificator) {
-    final File src = new File(new File(file, "lib"), "src");
+    final File src = new File(new File(file, LIB_DIR_NAME), SRC_DIR_NAME);
     if (!src.exists()) return;
     File[] srcs = src.listFiles(new FileFilter() {
       @SuppressWarnings({"HardCodedStringLiteral"})
