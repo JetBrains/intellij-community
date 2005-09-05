@@ -15,11 +15,13 @@ package com.intellij;/*
  */
 
 import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ResourceBundle;
 
 public class CvsBundle {
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.intellij.cvsSupport2.CvsBundle");
+  @NonNls private static final String BUNDLE_NAME = "com.intellij.cvsSupport2.CvsBundle";
+  private static final ResourceBundle ourBundle = ResourceBundle.getBundle(BUNDLE_NAME);
 
   private CvsBundle() {}
 
