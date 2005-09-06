@@ -20,6 +20,7 @@ import com.intellij.aspects.psi.PsiPointcut;
 import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.psi.*;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 public interface PsiSearchHelper {
   PsiReference[] findReferences(PsiElement element, SearchScope searchScope, boolean ignoreAccessScope);
@@ -43,7 +44,7 @@ public interface PsiSearchHelper {
 
   PsiElement[] findCommentsContainingIdentifier(String identifier, SearchScope searchScope);
   PsiLiteralExpression[] findStringLiteralsContainingIdentifier(String identifier, SearchScope searchScope);
-                                                                                                
+
   PsiElement[] findJoinPointsByPointcut(PsiPointcut pointcut, SearchScope searchScope);
   boolean processJoinPointsByPointcut(PsiElementProcessor processor, PsiPointcut pointcut, SearchScope searchScope);
 
@@ -60,14 +61,14 @@ public interface PsiSearchHelper {
   void processUsagesInNonJavaFiles(String qName, PsiNonJavaFileReferenceProcessor processor, GlobalSearchScope searchScope);
   void processUsagesInNonJavaFiles(PsiElement originalElement, String qName, PsiNonJavaFileReferenceProcessor processor, GlobalSearchScope searchScope);
 
-  SearchScope getUseScope(PsiElement element);
+  @NotNull SearchScope getUseScope(PsiElement element);
 
   PsiFile[] findFormsBoundToClass(String className);
 
   boolean processReferencesIncludingOverriding(PsiReferenceProcessor processor,
-                                                       PsiMethod method,
-                                                       SearchScope searchScope,
-                                                       boolean isStrictSignatureSearch);
+                                               PsiMethod method,
+                                               SearchScope searchScope,
+                                               boolean isStrictSignatureSearch);
 
 
   boolean isFieldBoundToForm(PsiField field);

@@ -131,7 +131,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
   boolean isPhysical();
 
   GlobalSearchScope getResolveScope();
-  SearchScope getUseScope();
+  @NotNull SearchScope getUseScope();
 
   ASTNode getNode();
 }

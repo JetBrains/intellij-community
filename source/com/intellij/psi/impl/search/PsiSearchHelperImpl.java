@@ -57,6 +57,7 @@ import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -70,6 +71,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   private static final TodoItem[] EMPTY_TODO_ITEMS = new TodoItem[0];
   private static final TokenSet XML_DATA_CHARS = TokenSet.create(XmlTokenType.XML_DATA_CHARACTERS);
 
+  @NotNull
   public SearchScope getUseScope(PsiElement element) {
     final GlobalSearchScope maximalUseScope = myManager.getFileManager().getUseScope(element);
     if (element instanceof PsiPackage) {
@@ -92,7 +94,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       }
       else if (aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
         PsiClass topClass = PsiUtil.getTopLevelClass(aClass);
-        return topClass != null ? new LocalSearchScope(topClass) : new LocalSearchScope(aClass.getContainingFile());
+        return new LocalSearchScope(topClass == null ? aClass.getContainingFile() : topClass);
       }
       else {
         PsiPackage aPackage = null;
@@ -694,7 +696,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     };
 
     searchScope = searchScope.intersectWith(accessScope);
-    if (searchScope == null) return true;
 
     short searchContext = UsageSearchContext.IN_CODE | UsageSearchContext.IN_COMMENTS;
     boolean toContinue = processElementsWithWord(processor1,
@@ -904,7 +905,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       synchronized (PsiLock.LOCK) {
         if (fType instanceof CustomFileType) {
           TokenSet commentTokens = TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);
-          Lexer lexer = ((CustomFileType)fType).getHighlighter(myManager.getProject()).getHighlightingLexer();
+          Lexer lexer = fType.getHighlighter(myManager.getProject()).getHighlightingLexer();
           findComments(lexer, chars, range, commentTokens, commentStarts, commentEnds);
         }
         else {
@@ -984,7 +985,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return list.toArray(new TodoItem[list.size()]);
   }
 
-  private void findComments(final Lexer lexer,
+  private static void findComments(final Lexer lexer,
                             final char[] chars,
                             final TextRange range,
                             final TokenSet commentTokens,

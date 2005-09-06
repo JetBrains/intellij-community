@@ -23,6 +23,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class CompositePsiElement extends CompositeElement implements PsiElement, NavigationItem {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.CompositePsiElement");
@@ -200,6 +201,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     return ((PsiManagerImpl)getManager()).getFileManager().getResolveScope(this);
   }
 
+  @NotNull
   public SearchScope getUseScope() {
     return getManager().getSearchHelper().getUseScope(this);
   }
@@ -249,7 +251,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     ProgressManager.getInstance().checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
     return this;
   }
-  
+
   private PsiElement addInnerBefore(final PsiElement element, final PsiElement anchor) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     TreeElement elementCopy = ChangeUtil.copyToElement(element);

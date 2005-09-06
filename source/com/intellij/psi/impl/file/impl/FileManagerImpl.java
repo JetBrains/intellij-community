@@ -36,6 +36,7 @@ import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.WeakValueHashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -324,6 +325,7 @@ public class FileManagerImpl implements FileManager {
     }
   }
 
+  @NotNull
   public GlobalSearchScope getUseScope(PsiElement element) {
     VirtualFile vFile;
     if (element instanceof PsiDirectory) {
@@ -337,7 +339,7 @@ public class FileManagerImpl implements FileManager {
       vFile = virtualFile.getParent();
     }
 
-    if (vFile == null) return null;
+    if (vFile == null) return GlobalSearchScope.allScope(myManager.getProject());;
     ProjectFileIndex projectFileIndex = myProjectRootManager.getFileIndex();
     Module module = projectFileIndex.getModuleForFile(vFile);
     if (module != null) {

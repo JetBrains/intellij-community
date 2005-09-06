@@ -29,6 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class GlobalSearchScope extends SearchScope {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.GlobalSearchScope");
@@ -43,7 +44,7 @@ public abstract class GlobalSearchScope extends SearchScope {
 
   public abstract boolean isSearchInLibraries();
 
-  public GlobalSearchScope intersectWith(GlobalSearchScope scope) {
+  @NotNull public GlobalSearchScope intersectWith(@NotNull GlobalSearchScope scope) {
     return intersection(this, scope);
   }
 

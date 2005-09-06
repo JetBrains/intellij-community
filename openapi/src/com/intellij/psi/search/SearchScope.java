@@ -16,6 +16,7 @@
 package com.intellij.psi.search;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,13 +27,13 @@ public abstract class SearchScope {
     return "<unknown scope>";
   }
 
-  public SearchScope intersectWith(SearchScope scope){
+  @NotNull public SearchScope intersectWith(@NotNull SearchScope scope){
     return intersection(this, scope);
   }
 
-  private static SearchScope intersection(SearchScope scope1, SearchScope scope2) {
+  @NotNull private static SearchScope intersection(SearchScope scope1, SearchScope scope2) {
     if (scope1 instanceof LocalSearchScope) {
-      if (scope2 instanceof LocalSearchScope) {
+      if (scope2 instanceof LocalSearchScope) {    
         return ((LocalSearchScope)scope1).intersectWith((LocalSearchScope)scope2);
       }
       else {
@@ -43,13 +44,12 @@ public abstract class SearchScope {
       LocalSearchScope _scope2 = (LocalSearchScope)scope2;
       PsiElement[] elements2 = _scope2.getScope();
       List<PsiElement> result = new ArrayList<PsiElement>();
-      for (int i = 0; i < elements2.length; i++) {
-        final PsiElement element2 = elements2[i];
+      for (final PsiElement element2 : elements2) {
         if (PsiSearchScopeUtil.isInScope(scope1, element2)) {
           result.add(element2);
         }
       }
-      return new LocalSearchScope((PsiElement[])result.toArray(new PsiElement[result.size()]));
+      return new LocalSearchScope(result.toArray(new PsiElement[result.size()]));
     }
     else {
       return ((GlobalSearchScope)scope1).intersectWith((GlobalSearchScope)scope2);

@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -48,8 +49,7 @@ public class LocalSearchScope extends SearchScope {
     myDisplayName = displayName;
     Set<PsiElement> localScope = new HashSet<PsiElement>(scope.length);
 
-    for (int i = 0; i < scope.length; i++) {
-      final PsiElement element = scope[i];
+    for (final PsiElement element : scope) {
       LOG.assertTrue(element.getContainingFile() != null);
       if (element instanceof PsiFile) {
         localScope.addAll(Arrays.asList(((PsiFile)element).getPsiRoots()));
@@ -76,11 +76,9 @@ public class LocalSearchScope extends SearchScope {
     final LocalSearchScope localSearchScope = (LocalSearchScope)o;
 
     if (localSearchScope.myScope.length != myScope.length) return false;
-    for (int i = 0; i < myScope.length; i++) {
-      final PsiElement scopeElement = myScope[i];
+    for (final PsiElement scopeElement : myScope) {
       final PsiElement[] thatScope = localSearchScope.myScope;
-      for (int j = 0; j < thatScope.length; j++) {
-        final PsiElement thatScopeElement = thatScope[j];
+      for (final PsiElement thatScopeElement : thatScope) {
         if (!Comparing.equal(scopeElement, thatScopeElement)) return false;
       }
     }
@@ -91,14 +89,13 @@ public class LocalSearchScope extends SearchScope {
 
   public int hashCode() {
     int result = 0;
-    for (int i = 0; i < myScope.length; i++) {
-      final PsiElement element = myScope[i];
+    for (final PsiElement element : myScope) {
       result += element.hashCode();
     }
     return result;
   }
 
-  public LocalSearchScope intersectWith(LocalSearchScope scope){
+  @NotNull public LocalSearchScope intersectWith(@NotNull LocalSearchScope scope){
     return intersection(this, scope);
   }
 
@@ -106,17 +103,15 @@ public class LocalSearchScope extends SearchScope {
     List<PsiElement> result = new ArrayList<PsiElement>();
     final PsiElement[] elements1 = scope1.myScope;
     final PsiElement[] elements2 = scope2.myScope;
-    for (int i = 0; i < elements1.length; i++) {
-      final PsiElement element1 = elements1[i];
-      for (int j = 0; j < elements2.length; j++) {
-        final PsiElement element2 = elements2[j];
+    for (final PsiElement element1 : elements1) {
+      for (final PsiElement element2 : elements2) {
         final PsiElement element = intersectScopeElements(element1, element2);
-        if (element != null){
+        if (element != null) {
           result.add(element);
         }
       }
     }
-    return new LocalSearchScope((PsiElement [])result.toArray(new PsiElement [result.size()]));
+    return new LocalSearchScope(result.toArray(new PsiElement [result.size()]));
   }
 
   private static PsiElement intersectScopeElements(PsiElement element1, PsiElement element2) {
@@ -144,8 +139,7 @@ public class LocalSearchScope extends SearchScope {
     boolean[] united = new boolean[elements2.length];
     List<PsiElement> result = new ArrayList<PsiElement>();
     loop1:
-    for (int i = 0; i < elements1.length; i++) {
-      final PsiElement element1 = elements1[i];
+    for (final PsiElement element1 : elements1) {
       for (int j = 0; j < elements2.length; j++) {
         final PsiElement element2 = elements2[j];
         final PsiElement unionElement = scopeElementsUnion(element1, element2);
@@ -163,10 +157,10 @@ public class LocalSearchScope extends SearchScope {
         result.add(elements2[i]);
       }
     }
-    return new LocalSearchScope((PsiElement[])result.toArray(new PsiElement[result.size()]));
+    return new LocalSearchScope(result.toArray(new PsiElement[result.size()]));
   }
 
-  private PsiElement scopeElementsUnion(PsiElement element1, PsiElement element2) {
+  private static PsiElement scopeElementsUnion(PsiElement element1, PsiElement element2) {
     if (PsiTreeUtil.isAncestor(element1, element2, false)) return element1;
     if (PsiTreeUtil.isAncestor(element2, element1, false)) return element2;
     PsiElement commonParent = PsiTreeUtil.findCommonParent(element1, element2);
