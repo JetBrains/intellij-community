@@ -48,7 +48,9 @@ public class ModulesConfigurable implements Configurable {
   }
 
   public void apply() throws ConfigurationException {
-    myConfigurator.apply();
+    if (myConfigurator != null) {
+      myConfigurator.apply();
+    }
   }
 
   public String getHelpTopic() {
@@ -72,7 +74,7 @@ public class ModulesConfigurable implements Configurable {
   }
 
   public boolean isModified() {
-    return myConfigurator.isModified();
+    return myConfigurator != null && myConfigurator.isModified();
   }
 
   public JComponent createComponent() {
