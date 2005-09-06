@@ -15,6 +15,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileTypes.FileType;
 
 import java.awt.*;
 
@@ -22,6 +23,9 @@ public class FileTextRule implements GetDataRule {
   public Object getData(DataProvider dataProvider) {
     VirtualFile virtualFile = (VirtualFile)dataProvider.getData(DataConstants.VIRTUAL_FILE);
     if (virtualFile == null) return null;
+    final FileType fileType = virtualFile.getFileType();
+    if (fileType.isBinary() || fileType.isReadOnly()) return null;
+
     Project project = (Project)dataProvider.getData(DataConstants.PROJECT);
     if (project == null) return null;
 
