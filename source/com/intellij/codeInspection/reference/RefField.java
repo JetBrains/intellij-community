@@ -13,6 +13,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.Nullable;
 
 public class RefField extends RefElement {
   private static final int USED_FOR_READING_MASK = 0x10000;
@@ -151,19 +152,24 @@ public class RefField extends RefElement {
     return result[0];
   }
 
+  @Nullable
   public static RefField fieldFromExternalName(RefManager manager, String externalName) {
     RefField refField = null;
 
     int lastDotIdx = externalName.lastIndexOf('.');
-    String className = externalName.substring(0, lastDotIdx);
-    String fieldName = externalName.substring(lastDotIdx + 1);
+    if (lastDotIdx > 0 && lastDotIdx < externalName.length() - 2) {
+      String className = externalName.substring(0, lastDotIdx);
+      String fieldName = externalName.substring(lastDotIdx + 1);
 
-    if (RefClass.classFromExternalName(manager, className) != null) {
-      PsiClass psiClass = PsiManager.getInstance(manager.getProject()).findClass(className);
-      PsiField psiField = psiClass.findFieldByName(fieldName, false);
+      if (RefClass.classFromExternalName(manager, className) != null) {
+        PsiClass psiClass = PsiManager.getInstance(manager.getProject()).findClass(className);
+        if (psiClass != null) {
+          PsiField psiField = psiClass.findFieldByName(fieldName, false);
 
-      if (psiField != null) {
-          refField = (RefField) manager.getReference(psiField);
+          if (psiField != null) {
+              refField = (RefField) manager.getReference(psiField);
+          }
+        }
       }
     }
 
