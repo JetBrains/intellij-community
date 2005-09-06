@@ -141,13 +141,14 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     root.removeAllChildren();
     myModulesGraph = buildGraph();
     setSplitterProportion();
-    for (int i = 0; i < myModules.length; i++) {
-      Module module = myModules[i];
-      final DefaultMutableTreeNode moduleNode = new DefaultMutableTreeNode(new MyUserObject(false, module));
-      root.add(moduleNode);
-      final Iterator<Module> out = myModulesGraph.getOut(module);
-      for(;out.hasNext();){
-        moduleNode.add(new DefaultMutableTreeNode(new MyUserObject(false, out.next())));
+    for (Module module : myModules) {
+      if (!module.isDisposed()) {
+        final DefaultMutableTreeNode moduleNode = new DefaultMutableTreeNode(new MyUserObject(false, module));
+        root.add(moduleNode);
+        final Iterator<Module> out = myModulesGraph.getOut(module);
+        for (; out.hasNext();) {
+          moduleNode.add(new DefaultMutableTreeNode(new MyUserObject(false, out.next())));
+        }
       }
     }
     sortSubTree(root);
