@@ -40,7 +40,15 @@ public class PServerCvsSettings extends CvsConnectionSettings {
                                                                    proxy_settings.getLogin(),
                                                                    proxy_settings.getPassword());
 
-    return new PServerConnection(connectionSettings, USER, PASSWORD, REPOSITORY);
+    return new PServerConnection(connectionSettings, USER, PASSWORD, adjustRepository());
+  }
+
+  private String adjustRepository() {
+    if (REPOSITORY != null) {
+      return REPOSITORY.replace('\\', '/');
+    } else {
+      return null;
+    }
   }
 
   public int getDefaultPort() {
