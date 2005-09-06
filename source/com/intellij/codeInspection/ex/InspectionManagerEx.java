@@ -236,7 +236,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
       PsiAnnotation annotation = modifierList.findAnnotation(SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
       if (annotation != null) {
         final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
-        if (attributes == null || attributes.length == 0) {
+        if (attributes.length == 0) {
           return true;
         }
         final PsiAnnotationMemberValue attributeValue = attributes[0].getValue();
@@ -244,16 +244,22 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
           final PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)attributeValue).getInitializers();
           for (PsiAnnotationMemberValue annotationMemberValue : initializers) {
             if (annotationMemberValue instanceof PsiLiteralExpression) {
-              String value = (String)((PsiLiteralExpression) annotationMemberValue).getValue();
-              if (value != null && isInspectionToolIdMentioned(value, inspectionToolID)) {
-                return false;
+              final Object annotationValue = ((PsiLiteralExpression)annotationMemberValue).getValue();
+              if (annotationValue instanceof String) {
+                String value = (String)annotationValue;
+                if (value != null && isInspectionToolIdMentioned(value, inspectionToolID)) {
+                  return false;
+                }
               }
             }
           }
         } else if (attributeValue instanceof PsiLiteralExpression){
-          String value = (String)((PsiLiteralExpression) attributeValue).getValue();
-          if (value != null && isInspectionToolIdMentioned(value, inspectionToolID)) {
-            return false;
+          final Object annotationValue = ((PsiLiteralExpression)attributeValue).getValue();
+          if (annotationValue instanceof String) {
+            String value = (String)annotationValue;
+            if (value != null && isInspectionToolIdMentioned(value, inspectionToolID)) {
+              return false;
+            }
           }
         }
       }
