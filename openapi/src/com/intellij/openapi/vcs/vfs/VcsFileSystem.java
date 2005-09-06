@@ -79,7 +79,7 @@ public class VcsFileSystem extends VirtualFileSystem implements ApplicationCompo
     super.fireBeforeContentsChange(requestor, file);
   }
 
-  public void forceRefreshFile(VirtualFile file) {
+  public void forceRefreshFiles(final boolean asynchronous, VirtualFile... files) {
 
   }
 }

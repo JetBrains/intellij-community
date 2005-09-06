@@ -44,6 +44,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,10 +58,8 @@ import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 
 public class ResourceBundleEditor extends UserDataHolderBase implements FileEditor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.editor.ResourceBundleEditor");
@@ -77,6 +76,9 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   private final Project myProject;
   private boolean myDisposed;
   private DataProviderPanel myDataProviderPanel;
+  // user pressed backslash in the corresponding editor.
+  // we cannot store it back to properties file right now, so just append the backslash to the editor and wait for the subsequent chars
+  private Set<PropertiesFile> myBackSlashPressed = new THashSet<PropertiesFile>();
 
   public ResourceBundleEditor(Project project, ResourceBundle resourceBundle) {
     myProject = project;
@@ -88,8 +90,18 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     myStructureViewPanel.add(myStructureViewComponent, BorderLayout.CENTER);
 
     myStructureViewComponent.getTree().getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      private String selectedPropertyName;
+      private PropertiesFile selectedPropertiesFile;
+
       public void valueChanged(TreeSelectionEvent e) {
-        selectionChanged();
+        // filter out temp unselect/select events
+        if (getSelectedPropertyName() == null) return;
+        if (!Comparing.strEqual(selectedPropertyName, getSelectedPropertyName())
+            || !Comparing.equal(selectedPropertiesFile, getSelectedPropertiesFile())) {
+          selectedPropertyName = getSelectedPropertyName();
+          selectedPropertiesFile = getSelectedPropertiesFile();
+          selectionChanged();
+        }
       }
     });
     installPropertiesChangeListeners();
@@ -193,7 +205,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
           recreateEditorsPanel();
         }
         else {
-          selectionChanged();
+          updateEditorsFromProperties();
         }
       }
     });
@@ -218,13 +230,18 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
         final PsiFile file = event.getFile();
         if (!(file instanceof PropertiesFile)) return;
         if (!((PropertiesFile)file).getResourceBundle().equals(myResourceBundle)) return;
-        selectionChanged();
+        updateEditorsFromProperties();
       }
     });
   }
 
   private final Alarm myUpdateEditorAlarm = new Alarm();
   private void selectionChanged() {
+    myBackSlashPressed.clear();
+    updateEditorsFromProperties();
+  }
+
+  private void updateEditorsFromProperties() {
     myUpdateEditorAlarm.cancelAllRequests();
     myUpdateEditorAlarm.addRequest(new Runnable() {
       public void run() {
@@ -242,7 +259,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
           if (propertyName == null) return;
 
           List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(myProject);
-          for (PropertiesFile propertiesFile : propertiesFiles) {
+          for (final PropertiesFile propertiesFile : propertiesFiles) {
             EditorEx editor = (EditorEx)myEditors.get(propertiesFile);
             if (editor == null) continue;
             reinitSettings(editor);
@@ -253,7 +270,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
               public void run() {
                 ApplicationManager.getApplication().runWriteAction(new Runnable() {
                   public void run() {
-                    updateDocumentFromPropertyValue(value, document);
+                    updateDocumentFromPropertyValue(value, document, propertiesFile);
                   }
                 });
               }
@@ -271,23 +288,40 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     }, 200);
   }
 
-  private static void updateDocumentFromPropertyValue(final String value, final Document document) {
+  private void updateDocumentFromPropertyValue(final String value,
+                                               final Document document,
+                                               final PropertiesFile propertiesFile) {
     String text = value;
-    text = StringUtil.replace(text, "\\\n", "\n");
-    text = StringUtil.replace(text, "\\n", "\n");
-    text = StringUtil.replace(text, "\\t", "\t");
-    text = StringUtil.replace(text, "\\\\", "\\");
-    text = text.replaceAll("\n\\s*(\\S)", "\n$1");
+    if (myBackSlashPressed.contains(propertiesFile)) {
+      text += "\\";
+    }
     document.replaceString(0, document.getTextLength(), text);
   }
-  private static void updatePropertyValueFromDocument(final String propertyName,
-                                                      final Project project,
-                                                      final PropertiesFile propertiesFile,
-                                                      final String text) {
-    String value = text;
-    value = StringUtil.replace(value, "\\", "\\\\");
-    value = StringUtil.replace(value, "\n", "\\\n ");
-    value = StringUtil.replace(value, "\t", "\\t");
+
+  private static boolean isUnescapedBackSlashAtTheEnd (String text) {
+    boolean result = false;
+    for (int i = text.length()-1; i>=0; i--) {
+      if (text.charAt(i) == '\\') {
+        result = !result;
+      }
+      else {
+        break;
+      }
+    }
+    return result;
+  }
+
+  private void updatePropertyValueFromDocument(final String propertyName,
+                                               final Project project,
+                                               final PropertiesFile propertiesFile,
+                                               final String text) {
+    if (isUnescapedBackSlashAtTheEnd(text)) {
+      myBackSlashPressed.add(propertiesFile);
+    }
+    else {
+      myBackSlashPressed.remove(propertiesFile);
+    }
+    String value = getPropertyValueFromText(text);
     Property property = propertiesFile.findPropertyByKey(propertyName);
     try {
       if (property == null) {
@@ -301,6 +335,23 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+  }
+
+  private static String getPropertyValueFromText(final String text) {
+    StringBuffer value = new StringBuffer();
+    for (int i=0; i<text.length();i++) {
+      char c = text.charAt(i);
+      if (c == '\n') {
+        if (!isUnescapedBackSlashAtTheEnd(value.toString())) {
+          value.append("\\");
+        }
+        value.append("\n");
+      }
+      else {
+        value.append(c);
+      }
+    }
+    return value.toString();
   }
 
   private void installDocumentListeners() {

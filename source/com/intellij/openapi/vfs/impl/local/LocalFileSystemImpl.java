@@ -471,12 +471,40 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     return mySynchronizeQueueAlarm;
   }
 
-  public void forceRefreshFile(VirtualFile file) {
-    LOG.assertTrue(!file.isDirectory());
-    final ModalityState modalityState = EventQueue.isDispatchThread() ? ModalityState.current() : ModalityState.NON_MMODAL;
-    getManager().beforeRefreshStart(false, modalityState, EmptyRunnable.getInstance());
-    ((VirtualFileImpl)file).refreshInternal(false, null, modalityState, true);
-    getManager().afterRefreshFinish(false, modalityState);
+  public void forceRefreshFiles(final boolean asynchronous, @NotNull final VirtualFile... files) {
+    if (files.length == 0) return;
+    final WorkerThread worker = asynchronous ? new WorkerThread("refresh virtual files") : null;
+    final Runnable runnable = new Runnable() {
+      public void run() {
+        final ModalityState modalityState = EventQueue.isDispatchThread() ? ModalityState.current() : ModalityState.NON_MMODAL;
+        getManager().beforeRefreshStart(asynchronous, modalityState, EmptyRunnable.getInstance());
+
+        for (VirtualFile file : files) {
+          LOG.assertTrue(!file.isDirectory());
+          ((VirtualFileImpl)file).refreshInternal(false, worker, modalityState, true);
+        }
+
+        getManager().afterRefreshFinish(asynchronous, modalityState);
+      }
+    };
+    if (asynchronous) {
+      Runnable runnable1 = new Runnable() {
+        public void run() {
+          worker.start();
+          ApplicationManager.getApplication().runReadAction(runnable);
+          worker.dispose(false);
+          try {
+            worker.join();
+          }
+          catch (InterruptedException e) {
+          }
+        }
+      };
+      getSynchronizeQueueAlarm().addRequest(runnable1, 0);
+    }
+    else {
+      runnable.run();
+    }
   }
 
   void refresh(VirtualFile file,

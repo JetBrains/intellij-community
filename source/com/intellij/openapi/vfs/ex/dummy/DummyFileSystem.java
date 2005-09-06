@@ -66,7 +66,7 @@ public class DummyFileSystem extends VirtualFileSystem implements ApplicationCom
     return "DummyFileSystem";
   }
 
-  public void forceRefreshFile(VirtualFile file) {
+  public void forceRefreshFiles(final boolean asynchronous, VirtualFile... files) {
 
   }
 }

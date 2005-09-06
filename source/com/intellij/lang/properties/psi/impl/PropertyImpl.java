@@ -25,7 +25,7 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
   }
 
   public String toString() {
-    return "Property";
+    return "Property:"+getKey();
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {

@@ -183,14 +183,16 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     }
   }
 
-  public void forceRefreshFile(VirtualFile file) {
-    String path = file.getPath();
-    JarFileInfo jarFileInfo = myPathToFileInfoMap.get(path);
-    if (jarFileInfo == null) {
-      refreshAndFindFileByPath(path);
-      return;
+  public void forceRefreshFiles(final boolean asynchronous, VirtualFile... files) {
+    for (VirtualFile file : files) {
+      String path = file.getPath();
+      JarFileInfo jarFileInfo = myPathToFileInfoMap.get(path);
+      if (jarFileInfo == null) {
+        refreshAndFindFileByPath(path);
+        continue;
+      }
+      refreshInfo(jarFileInfo, asynchronous, true);
     }
-    refreshInfo(jarFileInfo, false, true);
   }
 
   private void refreshInfo(final JarFileInfo info, boolean asynchronous, final boolean forceRefresh) {

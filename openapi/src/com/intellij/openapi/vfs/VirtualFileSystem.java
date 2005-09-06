@@ -16,6 +16,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -30,7 +31,7 @@ public abstract class VirtualFileSystem {
   protected VirtualFileSystem() {
   }
 
-  private final ArrayList myFileListeners = new ArrayList();
+  private final ArrayList<VirtualFileListener> myFileListeners = new ArrayList<VirtualFileListener>();
   private VirtualFileListener[] myCachedFileListeners = new VirtualFileListener[0];
 
   /**
@@ -128,8 +129,8 @@ public abstract class VirtualFileSystem {
     VirtualFileListener[] listeners = getListeners();
     if (listeners.length > 0){
       VirtualFilePropertyEvent event = new VirtualFilePropertyEvent(requestor, file, propertyName, oldValue, newValue);
-      for(int i = 0; i < listeners.length; i++){
-        listeners[i].propertyChanged(event);
+      for (VirtualFileListener listener : listeners) {
+        listener.propertyChanged(event);
       }
     }
   }
@@ -140,8 +141,8 @@ public abstract class VirtualFileSystem {
     VirtualFileListener[] listeners = getListeners();
     if (listeners.length > 0){
       VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getParent(), oldModificationStamp, file.getModificationStamp());
-      for(int i = 0; i < listeners.length; i++){
-        listeners[i].contentsChanged(event);
+      for (VirtualFileListener listener : listeners) {
+        listener.contentsChanged(event);
       }
     }
   }
@@ -152,8 +153,8 @@ public abstract class VirtualFileSystem {
     VirtualFileListener[] listeners = getListeners();
     if (listeners.length > 0){
       VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getName(), file.isDirectory(), file.getParent());
-      for(int i = 0; i < listeners.length; i++){
-        listeners[i].fileCreated(event);
+      for (VirtualFileListener listener : listeners) {
+        listener.fileCreated(event);
       }
     }
   }
@@ -164,8 +165,8 @@ public abstract class VirtualFileSystem {
     VirtualFileListener[] listeners = getListeners();
     if (listeners.length > 0){
       VirtualFileEvent event = new VirtualFileEvent(requestor, file, fileName, isDirectory, parent);
-      for(int i = 0; i < listeners.length; i++){
-        listeners[i].fileDeleted(event);
+      for (VirtualFileListener listener : listeners) {
+        listener.fileDeleted(event);
       }
     }
   }
@@ -176,8 +177,8 @@ public abstract class VirtualFileSystem {
     VirtualFileListener[] listeners = getListeners();
     if (listeners.length > 0){
       VirtualFileMoveEvent event = new VirtualFileMoveEvent(requestor, file, oldParent, file.getParent());
-      for(int i = 0; i < listeners.length; i++){
-        listeners[i].fileMoved(event);
+      for (VirtualFileListener listener : listeners) {
+        listener.fileMoved(event);
       }
     }
   }
@@ -188,8 +189,8 @@ public abstract class VirtualFileSystem {
     VirtualFileListener[] listeners = getListeners();
     if (listeners.length > 0){
       VirtualFilePropertyEvent event = new VirtualFilePropertyEvent(requestor, file, propertyName, oldValue, newValue);
-      for(int i = 0; i < listeners.length; i++){
-        listeners[i].beforePropertyChange(event);
+      for (VirtualFileListener listener : listeners) {
+        listener.beforePropertyChange(event);
       }
     }
   }
@@ -200,8 +201,8 @@ public abstract class VirtualFileSystem {
     VirtualFileListener[] listeners = getListeners();
     if (listeners.length > 0){
       VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getName(), false, file.getParent());
-      for(int i = 0; i < listeners.length; i++){
-        listeners[i].beforeContentsChange(event);
+      for (VirtualFileListener listener : listeners) {
+        listener.beforeContentsChange(event);
       }
     }
   }
@@ -212,8 +213,8 @@ public abstract class VirtualFileSystem {
     VirtualFileListener[] listeners = getListeners();
     if (listeners.length > 0){
       VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getName(), file.isDirectory(), file.getParent());
-      for(int i = 0; i < listeners.length; i++){
-        listeners[i].beforeFileDeletion(event);
+      for (VirtualFileListener listener : listeners) {
+        listener.beforeFileDeletion(event);
       }
     }
   }
@@ -224,22 +225,23 @@ public abstract class VirtualFileSystem {
     VirtualFileListener[] listeners = getListeners();
     if (listeners.length > 0){
       VirtualFileMoveEvent event = new VirtualFileMoveEvent(requestor, file, file.getParent(), newParent);
-      for(int i = 0; i < listeners.length; i++){
-        listeners[i].beforeFileMovement(event);
+      for (VirtualFileListener listener : listeners) {
+        listener.beforeFileMovement(event);
       }
     }
   }
 
   private VirtualFileListener[] getListeners(){
     if (myCachedFileListeners == null){
-      myCachedFileListeners = (VirtualFileListener[])myFileListeners.toArray(new VirtualFileListener[myFileListeners.size()]);
+      myCachedFileListeners = myFileListeners.toArray(new VirtualFileListener[myFileListeners.size()]);
     }
     return myCachedFileListeners;
   }
 
   /**
-   * Reloads file (synchronously) from disk regardless of its changed timestamp/contents/etc.
-   * @param file must not be directory
+   * Reloads files from disk regardless of its changed timestamp/contents
+   * @param asynchronous
+   * @param files (must not be directories) to refresh
    */
-  public abstract void forceRefreshFile(VirtualFile file);
+  public abstract void forceRefreshFiles(final boolean asynchronous, @NotNull VirtualFile... files);
 }

@@ -18,7 +18,7 @@ package com.intellij.util.concurrency;
 import java.util.LinkedList;
 
 public class WorkerThread extends Thread{
-  private LinkedList myTasks = new LinkedList();
+  private LinkedList<Runnable> myTasks = new LinkedList<Runnable>();
   private boolean myToDispose = false;
   private boolean myDisposed = false;
 
@@ -74,7 +74,7 @@ public class WorkerThread extends Thread{
         Runnable task;
         synchronized(myTasks){
           if (myTasks.isEmpty()) break;
-          task = (Runnable)myTasks.removeFirst();
+          task = myTasks.removeFirst();
         }
         task.run();
       }

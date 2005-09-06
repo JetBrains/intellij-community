@@ -33,7 +33,7 @@ public class MockFileSystem extends VirtualFileSystem {
   public void refresh(boolean asynchronous) {
   }
 
-  public void forceRefreshFile(VirtualFile file) {
+  public void forceRefreshFiles(final boolean asynchronous, VirtualFile... files) {
 
   }
 
