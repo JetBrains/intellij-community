@@ -244,20 +244,18 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
           final PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)attributeValue).getInitializers();
           for (PsiAnnotationMemberValue annotationMemberValue : initializers) {
             if (annotationMemberValue instanceof PsiLiteralExpression) {
-              final Object annotationValue = ((PsiLiteralExpression)annotationMemberValue).getValue();
-              if (annotationValue instanceof String) {
-                String value = (String)annotationValue;
-                if (value != null && isInspectionToolIdMentioned(value, inspectionToolID)) {
+              final Object value = ((PsiLiteralExpression)annotationMemberValue).getValue();
+              if (value instanceof String) {
+                if (isInspectionToolIdMentioned((String)value, inspectionToolID)) {
                   return false;
                 }
               }
             }
           }
         } else if (attributeValue instanceof PsiLiteralExpression){
-          final Object annotationValue = ((PsiLiteralExpression)attributeValue).getValue();
-          if (annotationValue instanceof String) {
-            String value = (String)annotationValue;
-            if (value != null && isInspectionToolIdMentioned(value, inspectionToolID)) {
+          final Object value = ((PsiLiteralExpression)attributeValue).getValue();
+          if (value instanceof String) {
+            if (isInspectionToolIdMentioned((String)value, inspectionToolID)) {
               return false;
             }
           }
