@@ -858,9 +858,11 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
         actions.add(quickFixe);
       }
     }
+    final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
+    if (key == null) return; //e.g. DummyEntryPointsTool
     actions.add(new AnAction("Edit Tool Settings") {
       public void actionPerformed(AnActionEvent e) {
-        new SwitchOffToolAction(HighlightDisplayKey.find(tool.getShortName())).editToolSettings(myProject, myInspectionProfile);
+        new SwitchOffToolAction(key).editToolSettings(myProject, myInspectionProfile);
         InspectionResultsView.this.update();
       }
     });
