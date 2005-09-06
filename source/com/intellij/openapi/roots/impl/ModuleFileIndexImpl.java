@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -79,11 +80,12 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     }
   }
 
+  @NotNull
   public OrderEntry[] getOrderEntriesForFile(VirtualFile fileOrDir) {
     VirtualFile dir = fileOrDir.isDirectory() ? fileOrDir : fileOrDir.getParent();
-    if (dir == null) return null;
+    if (dir == null) return OrderEntry.EMPTY_ARRAY;
     final DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(dir);
-    if (info == null) return null;
+    if (info == null) return OrderEntry.EMPTY_ARRAY;
     final Set<OrderEntry> orderEntries = info.orderEntries;
     List<OrderEntry> result = new ArrayList<OrderEntry>();
     for (OrderEntry orderEntry : orderEntries) {

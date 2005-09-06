@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *  @author dsl
@@ -23,5 +24,5 @@ import com.intellij.openapi.vfs.VirtualFile;
 public interface ModuleFileIndex extends FileIndex {
   OrderEntry getOrderEntryForFile(VirtualFile fileOrDir);
 
-  OrderEntry[] getOrderEntriesForFile(VirtualFile fileOrDir);
+  @NotNull OrderEntry[] getOrderEntriesForFile(VirtualFile fileOrDir);
 }
