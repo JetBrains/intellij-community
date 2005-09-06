@@ -59,8 +59,15 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
     return myInspectionProfile;
   }
 
-  public InspectionProfileImpl getInspectionProfile(PsiElement psiRoot){
-    InspectionProfileImpl inspectionProfile = psiRoot == null ? null : HighlightingSettingsPerFile.getInstance(psiRoot.getProject()).getInspectionProfile(psiRoot);
+  public InspectionProfileImpl getInspectionProfile(PsiElement psiRoot) {
+    InspectionProfileImpl inspectionProfile = null;
+    if (psiRoot != null) {
+      final Pair<String, Boolean> inspectionProfilePair = HighlightingSettingsPerFile.getInstance(psiRoot.getProject())
+        .getInspectionProfile(psiRoot);
+      if (inspectionProfilePair != null && inspectionProfilePair.second) {
+        inspectionProfile = InspectionProfileManager.getInstance().getProfile(inspectionProfilePair.first);
+      }
+    }
     return inspectionProfile != null ? inspectionProfile : getInspectionProfile();
   }
 

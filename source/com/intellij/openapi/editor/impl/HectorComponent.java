@@ -19,9 +19,10 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -176,14 +177,13 @@ public class HectorComponent extends JPanel {
     JPanel profilePanel = new JPanel(new GridBagLayout());
     myUsePerFileProfile.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final boolean selected = myUsePerFileProfile.isSelected();
-        myProfilesCombo.setEnabled(selected);
-        myUseProfile = selected;
+        myProfilesCombo.setEnabled(myUsePerFileProfile.isSelected());
       }
     });
     myUsePerFileProfile.setMnemonic('C');
-    final boolean usePerFileProfile = HighlightingSettingsPerFile.getInstance(myFile.getProject()).getInspectionProfile(myFile) != null;
-    myUsePerFileProfile.setSelected(usePerFileProfile);
+    final Pair<String, Boolean> inspectionProfile = HighlightingSettingsPerFile.getInstance(myFile.getProject()).getInspectionProfile(myFile);
+    myUseProfile = inspectionProfile != null && inspectionProfile.second;
+    myUsePerFileProfile.setSelected(myUseProfile);
     profilePanel.add(myUsePerFileProfile, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE,
                                                                  new Insets(0, 0, 0, 0), 0, 0));
     final InspectionProfileManager inspectionManager = InspectionProfileManager.getInstance();
@@ -194,7 +194,7 @@ public class HectorComponent extends JPanel {
       }
     });
     reloadProfiles(inspectionManager,
-                   DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(myFile).getName());
+                   inspectionProfile == null ? DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(myFile).getName() : inspectionProfile.first);
     myProfilesCombo.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         if (myHint != null && myHint.isVisible()) myHint.hide();
@@ -203,7 +203,7 @@ public class HectorComponent extends JPanel {
         errorsDialog.show();
       }
     });
-    myProfilesCombo.setEnabled(usePerFileProfile);
+    myProfilesCombo.setEnabled(myUseProfile);
     profilePanel.add(myProfilesCombo, new GridBagConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
                                                              new Insets(0, 20, 0, 2), 0, 0));
     return profilePanel;
@@ -281,10 +281,8 @@ public class HectorComponent extends JPanel {
         HighlightUtil.forceRootInspection(root, true);
       }
     }
-    if (myUsePerFileProfile.isSelected()) {
-      HighlightingSettingsPerFile.getInstance(myFile.getProject())
-        .setInspectionProfile((String)myProfilesCombo.getComboBox().getSelectedItem(), myFile);
-    }
+    HighlightingSettingsPerFile.getInstance(myFile.getProject())
+      .setInspectionProfile((String)myProfilesCombo.getComboBox().getSelectedItem(), myUsePerFileProfile.isSelected(), myFile);
     final DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(myFile.getProject());
     analyzer.setImportHintsEnabled(myFile, myImportPopupOn);
     analyzer.restart();
