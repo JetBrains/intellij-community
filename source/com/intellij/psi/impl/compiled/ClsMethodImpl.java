@@ -24,13 +24,12 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.cls.BytePointer;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.cls.ClsUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
 
 public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotationMethod, ClsModifierListOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsMethodImpl");
@@ -248,14 +247,13 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   }
 
   public PsiModifierList getModifierList() {
-  synchronized (PsiLock.LOCK) {
-    if (myModifierList == null) {
-      int flags = getAccessFlags();
-      myModifierList = new ClsModifierListImpl(this, flags & ClsUtil.ACC_METHOD_MASK);
+    synchronized (PsiLock.LOCK) {
+      if (myModifierList == null) {
+        int flags = getAccessFlags();
+        myModifierList = new ClsModifierListImpl(this, flags & ClsUtil.ACC_METHOD_MASK);
+      }
     }
-  ;
-  }
-               return myModifierList;
+    return myModifierList;
   }
 
   public boolean hasModifierProperty(String name) {
@@ -293,14 +291,15 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
            myParent.getClassFileData().findAttribute(myStartOffset + 6, "Bridge") != null;
   }
 
+  @NotNull
   public PsiParameterList getParameterList() {
-  synchronized (PsiLock.LOCK) {
-    if (myParameterList == null && !parseViaGenericSignature()) {
-      myParameterList = createParameters(calcParameterTypes());
+    synchronized (PsiLock.LOCK) {
+      if (myParameterList == null && !parseViaGenericSignature()) {
+        myParameterList = createParameters(calcParameterTypes());
+      }
     }
-  }
 
-               return myParameterList;
+    return myParameterList;
   }
 
   private PsiParameterList createParameters(ArrayList<String> types) {
@@ -457,61 +456,60 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   }
 
   public PsiReferenceList getThrowsList() {
-  synchronized (PsiLock.LOCK) {
-    if (myThrowsList == null) {
-      long repositoryId = getRepositoryId();
-      if (repositoryId < 0) {
-        parseViaGenericSignature();
-        if (myThrowsList == null) {
-          try {
-            ClassFileData classFileData = myParent.getClassFileData();
-            BytePointer ptr = classFileData.findAttribute(myStartOffset + 6, "Exceptions");
-            if (ptr != null) {
-              ptr.offset += 4; // skip length
-              int exceptionCount = ClsUtil.readU2(ptr);
-              ClsJavaCodeReferenceElementImpl[] refs = new ClsJavaCodeReferenceElementImpl[exceptionCount];
-              int jj = 0;
-              for (int j = 0; j < exceptionCount; j++) {
-                int index = ClsUtil.readU2(ptr);
-                if (index != 0) {
-                  refs[jj++] = classFileData.buildReference(index);
+    synchronized (PsiLock.LOCK) {
+      if (myThrowsList == null) {
+        long repositoryId = getRepositoryId();
+        if (repositoryId < 0) {
+          parseViaGenericSignature();
+          if (myThrowsList == null) {
+            try {
+              ClassFileData classFileData = myParent.getClassFileData();
+              BytePointer ptr = classFileData.findAttribute(myStartOffset + 6, "Exceptions");
+              if (ptr != null) {
+                ptr.offset += 4; // skip length
+                int exceptionCount = ClsUtil.readU2(ptr);
+                ClsJavaCodeReferenceElementImpl[] refs = new ClsJavaCodeReferenceElementImpl[exceptionCount];
+                int jj = 0;
+                for (int j = 0; j < exceptionCount; j++) {
+                  int index = ClsUtil.readU2(ptr);
+                  if (index != 0) {
+                    refs[jj++] = classFileData.buildReference(index);
+                  }
+                }
+                if (jj < exceptionCount) {
+                  ClsJavaCodeReferenceElementImpl[] refs1 = new ClsJavaCodeReferenceElementImpl[jj];
+                  System.arraycopy(refs, 0, refs1, 0, jj);
+                  refs = refs1;
+                }
+
+                myThrowsList = new ClsReferenceListImpl(this, refs, PsiKeyword.THROWS);
+                for (ClsJavaCodeReferenceElementImpl ref : refs) {
+                  ref.setParent(myThrowsList);
                 }
               }
-              if (jj < exceptionCount) {
-                ClsJavaCodeReferenceElementImpl[] refs1 = new ClsJavaCodeReferenceElementImpl[jj];
-                System.arraycopy(refs, 0, refs1, 0, jj);
-                refs = refs1;
-              }
-
-              myThrowsList = new ClsReferenceListImpl(this, refs, PsiKeyword.THROWS);
-              for (ClsJavaCodeReferenceElementImpl ref : refs) {
-                ref.setParent(myThrowsList);
-              }
+            }
+            catch (ClsFormatException e) {
+            }
+            if (myThrowsList == null) {
+              myThrowsList = new ClsReferenceListImpl(this, new ClsJavaCodeReferenceElementImpl[0], PsiKeyword.THROWS);
             }
           }
-          catch (ClsFormatException e) {
-          }
-          if (myThrowsList == null) {
-            myThrowsList = new ClsReferenceListImpl(this, new ClsJavaCodeReferenceElementImpl[0], PsiKeyword.THROWS);
-          }
         }
-      }
-      else {
-        MethodView methodView = getRepositoryManager().getMethodView();
-        String[] refTexts = methodView.getThrowsList(repositoryId);
-        ClsJavaCodeReferenceElementImpl[] refs = new ClsJavaCodeReferenceElementImpl[refTexts.length];
-        for (int i = 0; i < refTexts.length; i++) {
-          refs[i] = new ClsJavaCodeReferenceElementImpl(null, refTexts[i]);
-        }
-        myThrowsList = new ClsReferenceListImpl(this, refs, PsiKeyword.THROWS);
-        for (ClsJavaCodeReferenceElementImpl ref : refs) {
-          ref.setParent(myThrowsList);
+        else {
+          MethodView methodView = getRepositoryManager().getMethodView();
+          String[] refTexts = methodView.getThrowsList(repositoryId);
+          ClsJavaCodeReferenceElementImpl[] refs = new ClsJavaCodeReferenceElementImpl[refTexts.length];
+          for (int i = 0; i < refTexts.length; i++) {
+            refs[i] = new ClsJavaCodeReferenceElementImpl(null, refTexts[i]);
+          }
+          myThrowsList = new ClsReferenceListImpl(this, refs, PsiKeyword.THROWS);
+          for (ClsJavaCodeReferenceElementImpl ref : refs) {
+            ref.setParent(myThrowsList);
+          }
         }
       }
     }
-  ;
-  }
-               return myThrowsList;
+    return myThrowsList;
   }
 
   public PsiCodeBlock getBody() {
@@ -519,26 +517,25 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   }
 
   public boolean isDeprecated() {
-  synchronized (PsiLock.LOCK) {
-    if (myIsDeprecated == null) {
-      long repositoryId = getRepositoryId();
-      if (repositoryId < 0) {
-        try {
-          boolean isDeprecated = myParent.getClassFileData().findAttribute(myStartOffset + 6, "Deprecated") != null;
+    synchronized (PsiLock.LOCK) {
+      if (myIsDeprecated == null) {
+        long repositoryId = getRepositoryId();
+        if (repositoryId < 0) {
+          try {
+            boolean isDeprecated = myParent.getClassFileData().findAttribute(myStartOffset + 6, "Deprecated") != null;
+            myIsDeprecated = isDeprecated ? Boolean.TRUE : Boolean.FALSE;
+          }
+          catch (ClsFormatException e) {
+            myIsDeprecated = Boolean.FALSE;
+          }
+        }
+        else {
+          boolean isDeprecated = getRepositoryManager().getMethodView().isDeprecated(repositoryId);
           myIsDeprecated = isDeprecated ? Boolean.TRUE : Boolean.FALSE;
         }
-        catch (ClsFormatException e) {
-          myIsDeprecated = Boolean.FALSE;
-        }
-      }
-      else {
-        boolean isDeprecated = getRepositoryManager().getMethodView().isDeprecated(repositoryId);
-        myIsDeprecated = isDeprecated ? Boolean.TRUE : Boolean.FALSE;
       }
     }
-  ;
-  }
-               return myIsDeprecated.booleanValue();
+    return myIsDeprecated.booleanValue();
   }
 
   ClassFileData getClassFileData() {
@@ -622,15 +619,14 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   }
 
   public PsiDocComment getDocComment() {
-               if (!isDeprecated()) return null;
+    if (!isDeprecated()) return null;
 
-  synchronized (PsiLock.LOCK) {
-    if (myDocComment == null) {
-      myDocComment = new ClsDocCommentImpl(this);
+    synchronized (PsiLock.LOCK) {
+      if (myDocComment == null) {
+        myDocComment = new ClsDocCommentImpl(this);
+      }
     }
-  ;
-  }
-               return myDocComment;
+    return myDocComment;
   }
 
 

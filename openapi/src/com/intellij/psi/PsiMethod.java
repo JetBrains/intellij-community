@@ -30,8 +30,7 @@ public interface PsiMethod extends PsiMember, PsiNamedElement, PsiModifierListOw
    * Returns the return type of the method.
    * @return the method return type, or null if the method is a constructor.
    */
-  @Nullable
-  PsiType getReturnType();
+  @Nullable PsiType getReturnType();
 
   PsiTypeElement getReturnTypeElement();
 
@@ -60,4 +59,6 @@ public interface PsiMethod extends PsiMember, PsiNamedElement, PsiModifierListOw
   PsiMethod findDeepestSuperMethod();
 
   PomMethod getPom();
+
+  @NotNull PsiModifierList getModifierList();
 }
