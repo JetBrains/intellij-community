@@ -36,9 +36,9 @@ public class CheckoutFileOperation extends CvsOperationOnFiles {
     this(parent, RevisionOrDateImpl.createOn(parent, entry, config.CHECKOUT_DATE_OR_REVISION_SETTINGS), fileName, makeNewFilesReadOnly);
   }
 
-  public CheckoutFileOperation(VirtualFile parent,
+  public CheckoutFileOperation(final VirtualFile parent,
                                RevisionOrDate revisionOrDate,
-                               String fileName,
+                               final String fileName,
                                boolean makeNewFilesReadOnly) {
     super(new CheckoutAdminReader());
     myMakeNewFilesReadOnly = makeNewFilesReadOnly;
@@ -48,7 +48,7 @@ public class CheckoutFileOperation extends CvsOperationOnFiles {
           public void run() {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               public void run() {
-                myModuleName = CvsUtil.getModuleName(myFile);
+                myModuleName = CvsUtil.getModuleName(parent) + "/" + fileName;
               }
             });
 

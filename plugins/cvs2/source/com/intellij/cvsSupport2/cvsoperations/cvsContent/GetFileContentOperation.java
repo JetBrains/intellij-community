@@ -95,7 +95,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
   public static GetFileContentOperation createForFile(VirtualFile file, RevisionOrDate revisionOrDate)
     throws CannotFindCvsRootException {
     File ioFile = CvsVfsUtil.getFileFor(file);
-    return new GetFileContentOperation(new File(getPathInRepository(ioFile)),
+    return new GetFileContentOperation(new File(getPathInRepository(file)),
                                        CvsRootProvider.createOn(ioFile),
                                        revisionOrDate
     );
@@ -115,7 +115,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
     myCvsRevisionNumber = myRevisionOrDate.getCvsRevisionNumber();
   }
 
-  private static String getPathInRepository(File file) {
+  private static String getPathInRepository(VirtualFile file) {
     return CvsUtil.getModuleName(file);
   }
 

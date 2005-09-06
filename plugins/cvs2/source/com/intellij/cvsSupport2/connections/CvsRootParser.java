@@ -5,6 +5,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * author: lesya
  */
@@ -29,7 +31,7 @@ public final class CvsRootParser {
   public String PASSWORD;
 
 
-  public static CvsRootParser valueOf(String str, boolean check) {
+  @NotNull public static CvsRootParser valueOf(String str, boolean check) {
 
     CvsRootParser result = new CvsRootParser();
 

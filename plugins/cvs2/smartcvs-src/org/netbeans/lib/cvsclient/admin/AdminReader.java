@@ -112,15 +112,18 @@ public final class AdminReader
 			fileRepository = "";
 		}
 
-		fileRepository += repositoryDirs;
-		// absolute repository path ?
-		if (fileRepository.startsWith("/")) {
-			return fileRepository;
-		}
+                fileRepository += repositoryDirs;
+
+                fileRepository = fileRepository.replace(File.separatorChar, '/');
+
+                if (fileRepository.startsWith(repository)) {
+                  return fileRepository;
+                } else {
+                  return FileUtils.ensureTrailingSlash(repository) + fileRepository;
+                }
 
 		// otherwise the cvs is using relative repository path
 		// must be a forward slash, regardless of the local filing system
-		return FileUtils.ensureTrailingSlash(repository) + fileRepository;
 	}
 
 	public String getStickyTagForDirectory(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) {

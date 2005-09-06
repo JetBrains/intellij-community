@@ -96,6 +96,11 @@ public class CvsInfo {
       loadEntries();
       loadRepository();
       loadStikyTag();
+
+      if (myRepository != null && myConnectionSettings != null && myConnectionSettings.REPOSITORY != null) {
+        myRepository = CvsUtil.getRelativeRepositoryPath(myRepository, myConnectionSettings.REPOSITORY);
+      }
+
       myCvsEntriesManager.watchForCvsAdminFiles(myParent);
     }
     finally {

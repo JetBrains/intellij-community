@@ -36,8 +36,10 @@ public final class AdminWriter
 
          private final String myLineSeparator;
          private final String myCharset;
+         // for tests only!
+         public static boolean WRITE_RELATIVE_PATHS = true;
 
-        // Setup ==================================================================
+  // Setup ==================================================================
 
         public AdminWriter(String lineSeparator, final String charset) {
           myLineSeparator = lineSeparator;
@@ -50,7 +52,7 @@ public final class AdminWriter
                 final File cvsDirectory = ensureCvsDirectory(directoryObject, cvsFileSystem);
                 // now ensure that the Root and Repository files exist
                 ensureExistingRootFile(cvsDirectory, cvsRoot);
-                ensureRepositoryFile(cvsDirectory, cvsFileSystem.getRelativeRepositoryPath(repositoryPath));
+                ensureRepositoryFile(cvsDirectory, WRITE_RELATIVE_PATHS ? cvsFileSystem.getRelativeRepositoryPath(repositoryPath) : repositoryPath);
                 ensureExistingEntriesFile(cvsDirectory);
         }
 

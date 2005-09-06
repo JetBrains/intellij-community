@@ -3,6 +3,7 @@ package com.intellij.cvsSupport2;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.application.CvsInfo;
 import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
+import com.intellij.cvsSupport2.connections.CvsRootParser;
 import com.intellij.cvsSupport2.cvsstatuses.CvsStatusProvider;
 import com.intellij.cvsSupport2.util.CvsFileUtil;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
@@ -57,14 +58,13 @@ public class CvsUtil {
     }
   }
 
-  public static String getModuleName(File file) {
-    boolean isFile = !file.isDirectory();
-    File directory = isFile ? file.getAbsoluteFile().getParentFile() : file;
-    String result = loadRepositoryFrom(directory);
-    if (isFile) result += "/" + file.getName();
-    String repository = CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(directory).getRepository();
-    if (result.startsWith("/" + repository)) result = result.substring(repository.length() + 1);
-    return result;
+  public static String getModuleName(VirtualFile file) {
+    if (file.isDirectory()) {
+      return CvsEntriesManager.getInstance().getRepositoryFor(file);
+    } else {
+      return CvsEntriesManager.getInstance().getRepositoryFor(file.getParent()) + "/" + file.getName();
+    }
+
   }
 
   public static boolean fileIsUnderCvs(VirtualFile vFile) {
@@ -452,16 +452,37 @@ public class CvsUtil {
 
   public static String getRepositoryFor(File file) {
     String result = loadRepositoryFrom(file);
-    if (result == null) return result;
-    CvsConnectionSettings settings = CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(file);
-    String serverRepositoryPath = settings.getRepository();
-    if (serverRepositoryPath == null) return result;
-    if (result.startsWith(serverRepositoryPath)) {
-      return result.substring(serverRepositoryPath.length() + 1);
+
+    if (result == null) return null;
+
+    String root = loadRootFrom(file);
+
+    if (root != null) {
+      final CvsRootParser cvsRootParser = CvsRootParser.valueOf(root, false);
+      String serverRoot = cvsRootParser.REPOSITORY;
+      if (serverRoot != null) {
+        result = getRelativeRepositoryPath(result, serverRoot);
+      }
     }
-    else {
-      return result;
+
+    return result;
+
+  }
+
+  public static String getRelativeRepositoryPath(String repository, String serverRoot) {    
+    repository = repository.replace(File.separatorChar, '/');
+    serverRoot = serverRoot.replace(File.separatorChar, '/');
+
+    if (repository.startsWith(serverRoot)) {
+      repository = repository.substring(serverRoot.length());
+
+      if (repository.startsWith("/")) {
+        repository = repository.substring(1);
+      }
+
     }
+
+    return repository;
   }
 
   public static File getCvsLightweightFileForFile(File file) {

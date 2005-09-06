@@ -35,7 +35,7 @@ public class CvsDiffProvider implements DiffProvider{
   }
 
   public VcsFileContent createFileContent(final VcsRevisionNumber revisionNumber, VirtualFile selectedFile) {
-    final GetFileContentOperation operation = new GetFileContentOperation(new File(CvsUtil.getModuleName(new File(selectedFile.getPath()))),
+    final GetFileContentOperation operation = new GetFileContentOperation(new File(CvsUtil.getModuleName(selectedFile)),
                                                                           CvsEntriesManager.getInstance()
                                                                             .getCvsConnectionSettingsFor(selectedFile.getParent()),
                                                                           new SimpleRevision(revisionNumber.asString())
