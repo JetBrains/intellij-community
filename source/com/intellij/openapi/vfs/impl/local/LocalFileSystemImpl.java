@@ -894,4 +894,8 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
       if (myRootsToWatch.removeAll(rootsToWatch)) setUpFileWatcher();
     }
   }
+
+  public void forceRefreshFile(VirtualFile file) {
+    forceRefreshFiles(false, file);
+  }
 }

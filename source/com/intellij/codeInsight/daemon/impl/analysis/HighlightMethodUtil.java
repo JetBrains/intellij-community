@@ -783,6 +783,9 @@ public class HighlightMethodUtil {
       TextRange textRange = HighlightUtil.getMethodDeclarationTextRange(method);
       HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, message);
       QuickFixAction.registerQuickFixAction(info, new DeleteMethodBodyFix(method), null);
+      if (method.hasModifierProperty(PsiModifier.ABSTRACT) && aClass != null && !aClass.isInterface()) {
+        QuickFixAction.registerQuickFixAction(info, new ModifierFix(method, PsiModifier.ABSTRACT, false), null);
+      }
       return info;
     }
     return null;

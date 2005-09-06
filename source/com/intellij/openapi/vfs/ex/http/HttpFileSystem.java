@@ -43,7 +43,6 @@ public class HttpFileSystem extends VirtualFileSystem implements ApplicationComp
     return "HttpFileSystem";
   }
 
-  public void forceRefreshFiles(final boolean asynchronous, VirtualFile... files) {
-
+  public void forceRefreshFile(VirtualFile file) {
   }
 }
