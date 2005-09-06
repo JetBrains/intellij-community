@@ -784,7 +784,9 @@ public class ControlFlowUtil {
       }
 
       public void visitCallInstruction(CallInstruction instruction, int offset, int nextOffset) {
-        for (int i = instruction.procBegin; i<instruction.procEnd;i++) {
+        visitInstruction(instruction, offset, nextOffset);
+        // clear return statements after procedure as well
+        for (int i = instruction.procBegin; i<instruction.procEnd+3;i++) {
           maybeUnassigned[i] = false;
         }
       }
