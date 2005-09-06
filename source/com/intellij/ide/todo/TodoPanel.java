@@ -390,7 +390,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
         return myTree.getRowCount() != myTree.getRowForPath(path) + 1;
       }
       else {
-        return true;
+        return node.getChildCount() > 0;
       }
     }
 
