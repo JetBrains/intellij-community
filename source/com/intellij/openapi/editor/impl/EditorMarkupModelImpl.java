@@ -485,6 +485,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   private class MyErrorPanel extends JPanel implements MouseMotionListener, MouseListener {
     private MyErrorPanel() {
+      setOpaque(true);
       addMouseListener(this);
       addMouseMotionListener(this);
 

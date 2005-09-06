@@ -1,9 +1,9 @@
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.LocalTimeCounter;
-import com.intellij.openapi.editor.event.DocumentEvent;
 
 /**
  * @author cdr
@@ -133,5 +133,10 @@ abstract class CharArray {
     char[] newArray = new char[newArraySize];
     System.arraycopy(array, 0, newArray, 0, array.length);
     return newArray;
+  }
+
+  public char[] getRawChars() {
+    if (myOriginalSequence != null) return CharArrayUtil.fromSequence(myOriginalSequence);
+    return myArray;
   }
 }

@@ -35,6 +35,7 @@ import com.intellij.ui.JScrollPane2;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import org.jdom.Element;
@@ -163,6 +164,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
   private Runnable myGutterSizeUpdater = null;
   private Alarm myAppleRepaintAlarm;
   private boolean myEmbeddedIntoDialogWrapper;
+  private CachedFontContent myLastCache;
 
   static {
     ourCaretThread = new RepaintCursorThread();
@@ -1290,6 +1292,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
   }
 
   private void paintText(Graphics g, Rectangle clip) {
+    myLastCache = null;
     int lineHeight = getLineHeight();
 
     int visibleLineNumber = clip.y / lineHeight;
@@ -1321,13 +1324,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     myCurrentFontType = null;
     g.setColor(currentColor);
     Point position = new Point(0, visibleLineNumber * lineHeight);
+    final char[] chars = myDocument.getRawChars();
     while (!iterationState.atEnd() && !lIterator.atEnd()) {
       int hEnd = iterationState.getEndOffset();
       int lEnd = lIterator.getEnd();
       if (hEnd >= lEnd) {
         FoldRegion collapsedFolderAt = myFoldingModel.getCollapsedRegionAtOffset(start);
         if (collapsedFolderAt == null) {
-          drawString(g, start, lEnd - lIterator.getSeparatorLength(), position, clip, effectColor, effectType,
+          drawString(g, chars, start, lEnd - lIterator.getSeparatorLength(), position, clip, effectColor, effectType,
                      fontType, currentColor);
           position.x = 0;
           if (position.y > clip.y + clip.height) break;
@@ -1350,11 +1354,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
         }
         else {
           if (hEnd > lEnd - lIterator.getSeparatorLength()) {
-            position.x = drawString(g, start, lEnd - lIterator.getSeparatorLength(), position, clip, effectColor,
+            position.x = drawString(g, chars, start, lEnd - lIterator.getSeparatorLength(), position, clip, effectColor,
                                     effectType, fontType, currentColor);
           }
           else {
-            position.x = drawString(g, start, hEnd, position, clip, effectColor, effectType, fontType, currentColor);
+            position.x = drawString(g, chars, start, hEnd, position, clip, effectColor, effectType, fontType, currentColor);
           }
         }
 
@@ -1390,13 +1394,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
   }
 
   private class CachedFontContent {
-    final CharSequence[] data = new CharSequence[CACHED_CHARS_BUFFER_SIZE];
+    final char[][] data = new char[CACHED_CHARS_BUFFER_SIZE][];
+    final int[] starts = new int[CACHED_CHARS_BUFFER_SIZE];
+    final int[] ends = new int[CACHED_CHARS_BUFFER_SIZE];
     final int[] x = new int[CACHED_CHARS_BUFFER_SIZE];
     final int[] y = new int[CACHED_CHARS_BUFFER_SIZE];
     final Color[] color = new Color[CACHED_CHARS_BUFFER_SIZE];
 
     int myCount = 0;
     final FontInfo myFontType;
+
+    private char[] myLastData;
 
     public CachedFontContent(FontInfo fontInfo) {
       myFontType = fontInfo;
@@ -1410,28 +1418,43 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
         }
         Color currentColor = null;
         for (int i = 0; i < myCount; i++) {
-          if (!color[i].equals(currentColor)) {
+          if (!Comparing.equal(color[i], currentColor)) {
             currentColor = color[i];
-            g.setColor(currentColor);
+            g.setColor(currentColor != null ? currentColor : Color.black);
           }
 
-          drawChars(g, data[i], x[i], y[i]);
+          drawChars(g, data[i], starts[i], ends[i], x[i], y[i]);
           color[i] = null;
           data[i] = null;
         }
 
         myCount = 0;
+        myLastData = null;
       }
     }
 
-    public void addContent(Graphics g, CharSequence data, int x, int y, Color color) {
-      this.data[myCount] = data;
-      this.x[myCount] = x;
-      this.y[myCount] = y;
-      this.color[myCount] = color;
+    public void addContent(Graphics g, char[] data, int start, int end, int x, int y, Color color) {
+      final int count = myCount;
+      if (count > 0) {
+        final int lastCount = count - 1;
+        final Color lastColor = this.color[lastCount];
+        if (data == myLastData && start == ends[lastCount] && (color == null || lastColor == null || color == lastColor)) {
+          ends[lastCount] = end;
+          if (lastColor == null) this.color[lastCount] = color;
+          return;
+        }
+      }
+
+      myLastData = data;
+      this.data[count] = data;
+      this.x[count] = x;
+      this.y[count] = y;
+      this.starts[count] = start;
+      this.ends[count] = end;
+      this.color[count] = color;
 
       myCount++;
-      if (myCount >= CACHED_CHARS_BUFFER_SIZE) {
+      if (count >= CACHED_CHARS_BUFFER_SIZE - 1) {
         flushContent(g);
       }
     }
@@ -1441,6 +1464,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     for (CachedFontContent cache : myFontCache) {
       cache.flushContent(g);
     }
+    myLastCache = null;
   }
 
   private void paintCaretCursor(Graphics g) {
@@ -1487,18 +1511,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     }
   }
 
-  private int drawString(Graphics g, int start, int end, Point position, Rectangle clip, Color effectColor,
+  private int drawString(Graphics g, final char[] text, int start, int end, Point position, Rectangle clip, Color effectColor,
                          EffectType effectType, int fontType, Color fontColor) {
     if (start >= end) return position.x;
 
-    CharSequence text = myDocument.getCharsNoThreadCheck();
     boolean isInClip = (getLineHeight() + position.y >= clip.y) && (position.y <= clip.y + clip.height);
 
     if (!isInClip) return position.x;
 
     int y = getLineHeight() - getDescent() + position.y;
     int x = position.x;
-    return drawTabbedString(g, text.subSequence(start, end), x, y, effectColor, effectType, fontType, fontColor);
+    return drawTabbedString(g, text, start, end, x, y, effectColor, effectType, fontType, fontColor);
   }
 
   private int drawString(Graphics g, String text, Point position, Rectangle clip, Color effectColor,
@@ -1509,19 +1532,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
 
     int y = getLineHeight() - getDescent() + position.y;
     int x = position.x;
-    return drawTabbedString(g, text, x, y, effectColor, effectType, fontType,
+
+    return drawTabbedString(g, text.toCharArray(), 0, text.length(), x, y, effectColor, effectType, fontType,
                             fontColor);
   }
 
-  private int drawTabbedString(Graphics g, CharSequence text, int x, int y, Color effectColor,
+  private int drawTabbedString(Graphics g, char[] text, int start, int end, int x, int y, Color effectColor,
                                EffectType effectType, int fontType, Color fontColor) {
     int xStart = x;
+    CharSequence original = new CharArrayCharSequence(text, start, end); // TODO optimize getTextSegmentWidth parameter type to char[].
 
-    int start = 0;
-
-    final int textLength = text.length();
-    for (int i = 0; i < textLength; i++) {
-      if (text.charAt(i) != '\t') continue;
+    for (int i = start; i < end; i++) {
+      if (text[i] != '\t') continue;
 
       x = drawTablessString(text, start, i, g, x, y, fontType, fontColor);
 
@@ -1531,12 +1553,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
       start = i + 1;
     }
 
-    x = drawTablessString(text, start, textLength, g, x, y, fontType, fontColor);
+    x = drawTablessString(text, start, end, g, x, y, fontType, fontColor);
 
     if (effectColor != null) {
       Color savedColor = g.getColor();
 
-      int w = getTextSegmentWidth(text, xStart, fontType);
+      int w = getTextSegmentWidth(original, xStart, fontType);
 //      myBorderEffect.flushIfCantProlong(g, this, effectType, effectColor);
       if (effectType == EffectType.LINE_UNDERSCORE) {
         g.setColor(effectColor);
@@ -1563,7 +1585,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     return x;
   }
 
-  private int drawTablessString(final CharSequence text,
+  private int drawTablessString(final char[] text,
                                 final int start,
                                 final int end,
                                 final Graphics g,
@@ -1573,9 +1595,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
                                 final Color fontColor) {
     int endX = x;
     if (start < end) {
-      final FontInfo font = fontForChar(text.charAt(start), fontType);
+      final FontInfo font = fontForChar(text[start], fontType);
       for (int j = start; j < end; j++) {
-        final char c = text.charAt(j);
+        final char c = text[j];
         FontInfo newFont = fontForChar(c, fontType);
         if (font != newFont) {
           int x1 = drawTablessString(text, start, j, g, x, y, fontType, fontColor);
@@ -1584,8 +1606,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
         endX += font.charWidth(c, myEditorComponent);
       }
 
-      drawCharsCached(g, text.subSequence(start, end), x, y, fontType, fontColor);
+      drawCharsCached(g, text, start, end, x, y, fontType, fontColor);
     }
+
     return endX;
   }
 
@@ -1615,40 +1638,56 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
   }
 
   private void drawCharsCached(Graphics g,
-                               CharSequence data,
+                               char[] data,
+                               int start,
+                               int end,
                                int x,
                                int y,
                                int fontType,
                                Color color) {
-    FontInfo fnt = fontForChar(data.charAt(0), fontType);
-    CachedFontContent cache = null;
-    for (int i = 0; i < myFontCache.size(); i++) {
-      CachedFontContent cache1 = myFontCache.get(i);
-      if (cache1.myFontType == fnt) {
-        cache = cache1;
-        break;
+    if (myLastCache != null && spacesOnly(data, start, end)) {
+      myLastCache.addContent(g, data, start, end, x, y, null);
+    }
+    else {
+      FontInfo fnt = fontForChar(data[0], fontType);
+      CachedFontContent cache = null;
+      for (int i = 0; i < myFontCache.size(); i++) {
+        CachedFontContent cache1 = myFontCache.get(i);
+        if (cache1.myFontType == fnt) {
+          cache = cache1;
+          break;
+        }
       }
+      if (cache == null) {
+        cache = new CachedFontContent(fnt);
+        myFontCache.add(cache);
+      }
+
+      myLastCache = cache;
+      cache.addContent(g, data, start, end, x, y, color);
     }
-    if (cache == null) {
-      cache = new CachedFontContent(fnt);
-      myFontCache.add(cache);
-    }
-    cache.addContent(g, data, x, y, color);
   }
 
-  private void drawChars(Graphics g, CharSequence data, int x, int y) {
-    g.drawString(data.toString(), x, y);
+  private static boolean spacesOnly(char[] chars, int start, int end) {
+    for (int i = start; i < end; i++) {
+      if (chars[i] != ' ') return false;
+    }
+    return true;
+  }
+
+  private void drawChars(Graphics g, char[] data, int start, int end, int x, int y) {
+    g.drawChars(data, start, end - start, x, y);
 
     if (mySettings.isWhitespacesShown()) {
       Color oldColor = g.getColor();
       g.setColor(myScheme.getColor(EditorColors.WHITESPACES_COLOR));
       final FontMetrics metrics = g.getFontMetrics();
       int halfSpaceWidth = metrics.charWidth(' ') / 2;
-      for (int i = 0; i < data.length(); i++) {
-        if (data.charAt(i) == ' ') {
+      for (int i = start; i < end; i++) {
+        if (data[i] == ' ') {
           g.fillRect(x + halfSpaceWidth, y, 1, 1);
         }
-        x += metrics.charWidth(data.charAt(i));
+        x += metrics.charWidth(data[i]);
       }
       g.setColor(oldColor);
     }

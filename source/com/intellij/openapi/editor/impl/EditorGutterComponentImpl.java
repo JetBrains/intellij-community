@@ -79,6 +79,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   public EditorGutterComponentImpl(EditorImpl editor) {
     myEditor = editor;
     myDragSource.createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY_OR_MOVE, new MyDragGestureListener());
+    setOpaque(true);
   }
 
   protected void fireResized() {
