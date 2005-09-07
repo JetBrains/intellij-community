@@ -286,7 +286,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
             blockStatement = (PsiBlockStatement) CodeStyleManager.getInstance(project).reformat(blockStatement);
             final PsiElement prevSibling = loopBody.getPrevSibling();
             if(prevSibling instanceof PsiWhiteSpace) {
-              prevSibling.delete();
+              final PsiElement pprev = prevSibling.getPrevSibling();
+              if (!(pprev instanceof PsiComment) || !((PsiComment)pprev).getTokenType().equals(JavaTokenType.END_OF_LINE_COMMENT)) {
+                prevSibling.delete();
+              }
             }
             blockStatement = (PsiBlockStatement) loopBody.replace(blockStatement);
             final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
