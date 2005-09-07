@@ -133,9 +133,6 @@ public class EditorWindow {
         // in tabless mode
         myPanel.repaint();
       }
-      if (editors.length == 1) {
-        getManager().closeFile(file);
-      }
     }
     finally {
       getManager().mySplitters.myInsideChange--;
@@ -173,19 +170,6 @@ public class EditorWindow {
     }
     // do nothing
     return -1;
-  }
-
-  public void removeEditor(final EditorWithProviderComposite editor) {
-    getManager().disposeComposite(editor);
-    if (myTabbedPane != null) {
-      int componentIndex = findComponentIndex(editor.getComponent());
-      if (componentIndex >= 0) { // editor could close itself while disposing.
-        myTabbedPane.removeTabAt(componentIndex);
-      }
-    }
-    else {
-      myPanel.removeAll();
-    }
   }
 
   public FileEditorManagerImpl getManager() { return myOwner.getManager(); }

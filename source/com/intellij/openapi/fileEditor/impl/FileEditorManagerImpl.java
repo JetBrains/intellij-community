@@ -329,14 +329,15 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     assertThread();
 
     final LocalFileSystem.WatchRequest request = file.getUserData(WATCH_REQUEST_KEY);
-    if (request != null) LocalFileSystem.getInstance().removeWatchedRoot(request);
+    if (request != null) {
+      LocalFileSystem.getInstance().removeWatchedRoot(request);
+    }
 
-    Runnable runnable = new Runnable() {
+    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         closeFileImpl(file);
       }
-    };
-    CommandProcessor.getInstance().executeCommand(myProject, runnable, "", null);
+    }, "", null);
   }
 
 
@@ -353,7 +354,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     return null;
   }
 
-  public void closeFileImpl(final VirtualFile file) {
+  private void closeFileImpl(final VirtualFile file) {
     if (file == null) {
       throw new IllegalArgumentException("file cannot be null");
     }
@@ -365,20 +366,13 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
         final VirtualFile nextFile = findNextFile(file);
         for (final EditorWindow window : windows) {
           LOG.assertTrue(window.getSelectedEditor() != null);
-          final EditorWithProviderComposite oldComposite = window.findFileComposite(file);
-          if (oldComposite != null) {
-            window.removeEditor(oldComposite);
-          }
-          if (nextFile != null) {
-            if (window.getTabCount() == 0) {
-              EditorWithProviderComposite newComposite = window.findFileComposite(nextFile);
-              if (newComposite == null) {
-                newComposite = newEditorComposite(nextFile, null);
-              }
-              window.setEditor(newComposite); // newComposite can be null
-            }
+          window.closeFile(file, false);
+          if (window.getTabCount() == 0 && nextFile != null) {
+            EditorWithProviderComposite newComposite = newEditorComposite(nextFile, null);
+            window.setEditor(newComposite); // newComposite can be null
           }
         }
+        // cleanup windows with no tabs
         for (final EditorWindow window : windows) {
           if (window.isDisposed()) {
             // call to window.unsplit() which might make its sibling disposed
@@ -578,7 +572,9 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   }
 
   private EditorWithProviderComposite newEditorComposite(final VirtualFile file, final HistoryEntry entry) {
-    if (file == null) return null;
+    if (file == null) {
+      return null;
+    }
 
     final FileEditorProviderManager editorProviderManager = FileEditorProviderManager.getInstance();
     final FileEditorProvider[] providers = editorProviderManager.getProviders(myProject, file);
