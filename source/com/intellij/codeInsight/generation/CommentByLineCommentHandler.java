@@ -182,7 +182,15 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       prefix = commenter.getBlockCommentPrefix();
       String suffix = commenter.getBlockCommentSuffix();
       int lineEnd = myDocument.getLineEndOffset(line);
-      lineEnd = CharArrayUtil.shiftBackward(chars, lineEnd, " \t");
+      final int textLength = myDocument.getTextLength();
+      if (lineEnd == textLength) {
+        final int shifted = CharArrayUtil.shiftBackward(chars, textLength - 1, " \t");
+        if (shifted < textLength - 1) lineEnd = shifted;
+
+      } else {
+        lineEnd = CharArrayUtil.shiftBackward(chars, lineEnd, " \t");
+      }
+
       commented = CharArrayUtil.regionMatches(chars, lineStart, prefix) && CharArrayUtil.regionMatches(chars, lineEnd - suffix.length(), suffix);
       if (commented) {
         myStartOffsets[line - myLine1] = lineStart;
@@ -272,8 +280,18 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       prefix = commenter.getBlockCommentPrefix();
       String suffix = commenter.getBlockCommentSuffix();
       int endOffset = myDocument.getLineEndOffset(line);
-      offset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), offset, " \t");
-      endOffset = CharArrayUtil.shiftBackward(myDocument.getCharsSequence(), endOffset, " \t");
+      final int textLength = myDocument.getTextLength();
+      final CharSequence chars = myDocument.getCharsSequence();
+
+      offset = CharArrayUtil.shiftForward(chars, offset, " \t");
+      if (endOffset == textLength) {
+        final int shifted = CharArrayUtil.shiftBackward(chars, textLength - 1, " \t");
+        if (shifted < textLength - 1) endOffset = shifted;
+      } else {
+        endOffset = CharArrayUtil.shiftBackward(chars, endOffset, " \t");
+      }
+
+
       myDocument.insertString(endOffset, suffix);
       myDocument.insertString(offset, prefix);
     }
