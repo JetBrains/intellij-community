@@ -18,7 +18,6 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
   private final String myClassName;
   private PsiElement myPlace;
   private PsiClass myAccessClass = null;
-  private boolean myAccessibleResultsFlag = false;
   private List<CandidateInfo> myCandidates = null;
   private JavaResolveResult[] myResult = JavaResolveResult.EMPTY_ARRAY;
   private PsiElement myCurrentFileContext;
@@ -46,17 +45,6 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     if (myResult != null) return myResult;
     if (myCandidates == null) return myResult = JavaResolveResult.EMPTY_ARRAY;
 
-    {
-      // normalizing
-      if (myAccessibleResultsFlag && myCandidates.size() > 1) {
-        final ClassCandidateInfo[] infos = myCandidates.toArray(new ClassCandidateInfo[myCandidates.size()]);
-        for (final ClassCandidateInfo info : infos) {
-          if (!info.isAccessible()) {
-            myCandidates.remove(info);
-          }
-        }
-      }
-    }
     myResult = myCandidates.toArray(new JavaResolveResult[myCandidates.size()]);
     return myResult;
   }
@@ -93,23 +81,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
       final PsiClass aClass = (PsiClass)element;
       final String name = aClass.getName();
       if (myClassName.equals(name)) {
-        boolean accessible;
-
-        if (myPlace != null) {
-          accessible = checkAccessibility(aClass);
-        }
-        else {
-          accessible = true;
-        }
-
-        if (accessible) {
-          myAccessibleResultsFlag = true;
-          if (!myGrouped) {
-            myCandidates = null;
-            myResult = new JavaResolveResult[]{new CandidateInfo(aClass, substitutor, null, null, false, myCurrentFileContext)};
-            return false;
-          }
-        }
+        boolean accessible = myPlace == null || checkAccessibility(aClass);
 
         myResult = null;
         if (myCandidates == null) {
@@ -127,6 +99,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
           }
         }
         myCandidates.add(new ClassCandidateInfo(aClass, substitutor, !accessible, myGrouped, myCurrentFileContext));
+        return false;
       }
     }
     return true;
@@ -134,7 +107,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
 
   private boolean checkAccessibility(final PsiClass aClass) {
     //We don't care about accessibility in javadocs
-    
+
     if (ResolveUtil.findParentContextOfClass(myPlace, PsiDocComment.class, false) != null) {
       return true;
     }
