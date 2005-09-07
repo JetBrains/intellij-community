@@ -156,7 +156,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
           return (myRecentSearchMatcher = recentSearchPattern.matcher(text)).find();
         }
         catch (PatternSyntaxException ex) {
-          // OK.
+          myRecentSearchText = null;
         }
 
         return false;
