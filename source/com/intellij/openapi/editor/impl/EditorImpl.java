@@ -846,6 +846,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     }
   }
 
+  private void repaintToScreenBotton(int startLine) {
+    Rectangle visibleRect = getScrollingModel().getVisibleArea();
+    int yStartLine = logicalPositionToXY(new LogicalPosition(startLine, 0)).y;
+    int yEndLine = visibleRect.y + visibleRect.height;
+
+    myEditorComponent.repaintEditorComponent(visibleRect.x,
+                                             yStartLine,
+                                             visibleRect.x + visibleRect.width,
+                                             yEndLine - yStartLine);
+    myGutterComponent.repaint(0, yStartLine, myGutterComponent.getWidth(), yEndLine - yStartLine);
+  }
+
   public void repaintLines(int startLine, int endLine) {
     Rectangle visibleRect = getScrollingModel().getVisibleArea();
     int yStartLine = logicalPositionToXY(new LogicalPosition(startLine, 0)).y;
@@ -874,20 +886,27 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     mySizeContainer.changedUpdate(e);
     validateSize();
 
-    int startVisualLine = offsetToVisualPosition(e.getOffset()).line;
-    int endVisualLine = offsetToVisualPosition(e.getOffset() + e.getNewLength()).line;
+    int startLine = offsetToLogicalPosition(e.getOffset()).line;
+    int endLine = offsetToLogicalPosition(e.getOffset() + e.getNewLength()).line;
 
+    boolean painted = false;
     if (myDocument.getTextLength() > 0) {
       int startDocLine = myDocument.getLineNumber(e.getOffset());
       int endDocLine = myDocument.getLineNumber(e.getOffset() + e.getNewLength());
       if (e.getOldLength() > e.getNewLength() || startDocLine != endDocLine) {
         updateGutterSize();
-        endVisualLine = getVisibleLineCount(); // Lines inserted or removed. Need to repaint till the end of file.
+      }
+      if (e.getOldLength() > e.getNewLength() && startDocLine != endDocLine) {
+        // Lines removed. Need to repaint till the end of the screen
+        repaintToScreenBotton(startLine);
+        painted = true;
       }
     }
 
     updateCaretCursor();
-    repaintLines(startVisualLine, endVisualLine);
+    if (!painted) {
+      repaintLines(startLine, endLine);
+    }
 
     Point caretLocation = visualPositionToXY(getCaretModel().getVisualPosition());
     int scrollOffset = caretLocation.y - myCaretUpdateVShift;
