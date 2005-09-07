@@ -28,8 +28,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
 
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.annotations.NonNls;
 
 public class PluginModuleBuilder extends JavaModuleBuilder{
+  @NonNls private static final String META_INF = "META-INF";
+  @NonNls private static final String PLUGIN_XML = "plugin.xml";
 
 
   public ModuleType getModuleType() {
@@ -38,11 +41,9 @@ public class PluginModuleBuilder extends JavaModuleBuilder{
 
   public void setupRootModel(final ModifiableRootModel rootModel) throws ConfigurationException {
     super.setupRootModel(rootModel);
-    //noinspection HardCodedStringLiteral
-    final String defaultPluginXMLLocation = getModuleFileDirectory() + File.separator + "META-INF" + File.separator + "plugin.xml";
+    final String defaultPluginXMLLocation = getModuleFileDirectory() + File.separator + META_INF + File.separator + PLUGIN_XML;
     VirtualFile file = LocalFileSystem.getInstance().findFileByPath(defaultPluginXMLLocation.replace(File.separatorChar, '/'));
     if (file == null) {
-      //noinspection HardCodedStringLiteral
       CommandProcessor.getInstance().executeCommand(rootModel.getModule().getProject(), new Runnable() {
            public void run() {
              J2EEDeploymentItem pluginXML = DeploymentDescriptorFactory.getInstance().createDeploymentItem(rootModel.getModule(),
@@ -50,7 +51,7 @@ public class PluginModuleBuilder extends JavaModuleBuilder{
              pluginXML.setUrl(defaultPluginXMLLocation);
              pluginXML.createIfNotExists();
            }
-         }, DevKitBundle.message("create.smth", "META-INF"), null);
+         }, DevKitBundle.message("create.smth", META_INF), null);
     }
   }
 }

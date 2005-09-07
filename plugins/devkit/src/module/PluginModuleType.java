@@ -35,7 +35,6 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   private static final Icon ADD_PLUGIN_MODULE_ICON = IconLoader.getIcon("/add_plugin_modulewizard.png");
   private static PluginModuleType ourInstance = new PluginModuleType();
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private PluginModuleType() {
     super("PLUGIN_MODULE");
   }

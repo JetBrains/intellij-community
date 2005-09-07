@@ -35,6 +35,7 @@ import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,6 +48,8 @@ public class PluginRunConfiguration extends RunConfigurationBase {
 
   public String VM_PARAMETERS;
   public String PROGRAM_PARAMETERS;
+  @NonNls private static final String NAME = "name";
+  @NonNls private static final String MODULE = "module";
 
   public PluginRunConfiguration(final Project project, final ConfigurationFactory factory, final String name) {
     super(project, factory, name);
@@ -97,7 +100,6 @@ public class PluginRunConfiguration extends RunConfigurationBase {
     IdeaLicenseHelper.copyIDEALicencse(sandboxHome, jdk);
 
     final JavaCommandLineState state = new JavaCommandLineState(runnerSettings, configurationSettings) {
-      @SuppressWarnings({"HardCodedStringLiteral"})
       protected JavaParameters createJavaParameters() throws ExecutionException {
 
         final JavaParameters params = new JavaParameters();
@@ -184,20 +186,18 @@ public class PluginRunConfiguration extends RunConfigurationBase {
     return modules.toArray(new Module[modules.size()]);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(Element element) throws InvalidDataException {
-    Element module = element.getChild("module");
+    Element module = element.getChild(MODULE);
     if (module != null) {
-      myModuleName = module.getAttributeValue("name");
+      myModuleName = module.getAttributeValue(NAME);
     }
     DefaultJDOMExternalizer.readExternal(this, element);
     super.readExternal(element);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(Element element) throws WriteExternalException {
-    Element moduleElement = new Element("module");
-    moduleElement.setAttribute("name", ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+    Element moduleElement = new Element(MODULE);
+    moduleElement.setAttribute(NAME, ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       public String compute() {
         return getModule() != null ? getModule().getName() : "";
       }

@@ -37,6 +37,7 @@ import java.awt.*;
 import java.io.File;
 
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * User: anna
@@ -44,8 +45,7 @@ import org.jetbrains.idea.devkit.DevKitBundle;
  */
 public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
   private JPanel myWholePanel = new JPanel(new GridBagLayout());
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private JLabel myPluginXMLLabel = new JLabel(DevKitBundle.message("deployment.view.meta-inf.label", " META-INF" + File.separator + "plugin.xml:"));
+  @NonNls private JLabel myPluginXMLLabel = new JLabel(DevKitBundle.message("deployment.view.meta-inf.label", " META-INF" + File.separator + "plugin.xml:"));
   private TextFieldWithBrowseButton myPluginXML = new TextFieldWithBrowseButton();
 
   private TextFieldWithBrowseButton myManifest = new TextFieldWithBrowseButton();
@@ -56,20 +56,21 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
   private PluginModuleBuildProperties myBuildProperties;
 
   private Module myModule;
+  @NonNls private static final String META_INF = "META-INF";
+  @NonNls private static final String PLUGIN_XML = "plugin.xml";
+
   public PluginModuleBuildConfEditor(ModuleConfigurationState state) {
     myModule = state.getRootModel().getModule();
     myBuildProperties = (PluginModuleBuildProperties)ModuleBuildProperties.getInstance(myModule);
   }
 
   public JComponent createComponent() {
-    //noinspection HardCodedStringLiteral
-    myPluginXML.addActionListener(new BrowseFilesListener(myPluginXML.getTextField(), DevKitBundle.message("deployment.directory.location", "META-INF"), DevKitBundle.message("saved.message.common", "META-INF"+ File.separator + "plugin.xml"), BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR));
+    myPluginXML.addActionListener(new BrowseFilesListener(myPluginXML.getTextField(), DevKitBundle.message("deployment.directory.location", META_INF), DevKitBundle.message("saved.message.common", META_INF + File.separator + PLUGIN_XML), BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR));
     myPluginXML.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
         myModified = !myPluginXML.getText().equals(myBuildProperties.getPluginXmlPath());
       }
     });
-    //noinspection HardCodedStringLiteral
     myManifest.addActionListener(new BrowseFilesListener(myManifest.getTextField(), DevKitBundle.message("deployment.view.select", "manifest.mf"), DevKitBundle.message("manifest.selection", "manifest.mf"), BrowseFilesListener.SINGLE_FILE_DESCRIPTOR));
     myManifest.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
@@ -106,8 +107,7 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
 
   public void apply() throws ConfigurationException {
     final File plugin = myBuildProperties.getPluginXmlPath() != null ? new File(myBuildProperties.getPluginXmlPath()) : null;
-    //noinspection HardCodedStringLiteral
-    final String newPluginPath = myPluginXML.getText() + File.separator + "META-INF" + File.separator + "plugin.xml";
+    final String newPluginPath = myPluginXML.getText() + File.separator + META_INF + File.separator + PLUGIN_XML;
     if (plugin != null &&
         plugin.exists() &&
         !plugin.getPath().equals(newPluginPath) &&
@@ -115,14 +115,13 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
                                  DevKitBundle.message("deployment.view.delete", plugin.getPath()),
                                  DevKitBundle.message("deployment.cleanup"), null) == DialogWrapper.OK_EXIT_CODE) {
 
-      //noinspection HardCodedStringLiteral
       CommandProcessor.getInstance().executeCommand(myModule.getProject(),
                                                     new Runnable() {
                                                       public void run() {
                                                         FileUtil.delete(plugin.getParentFile());
                                                       }
                                                     },
-                                                    DevKitBundle.message("deployment.cleanup", "META-INF"),
+                                                    DevKitBundle.message("deployment.cleanup", META_INF),
                                                     null);
     }
     myBuildProperties.setPluginXMLUrl(newPluginPath);
@@ -132,8 +131,7 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
   }
 
   public void reset() {
-    //noinspection HardCodedStringLiteral
-    myPluginXML.setText(myBuildProperties.getPluginXmlPath().substring(0, myBuildProperties.getPluginXmlPath().length() - "/META-INF/plugin.xml".length()));
+    myPluginXML.setText(myBuildProperties.getPluginXmlPath().substring(0, myBuildProperties.getPluginXmlPath().length() - META_INF.length() - PLUGIN_XML.length() - 2));
     myManifest.setText(myBuildProperties.getManifestPath());
     myUseUserManifest.setSelected(myBuildProperties.isUseUserManifest());
     myModified = false;
@@ -151,7 +149,6 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
     return IconLoader.getIcon("/nodes/plugin.png");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public String getHelpTopic() {
     return "plugin.configuring";
   }

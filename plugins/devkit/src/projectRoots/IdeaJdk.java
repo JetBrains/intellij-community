@@ -51,8 +51,8 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   @NonNls private static final String JAVA_HOME_PROPERTY = "java.home";
   @NonNls private static final String LIB_DIR_NAME = "lib";
   @NonNls private static final String SRC_DIR_NAME = "src";
+  @NonNls private static final String JRE_DIR_NAME = "jre";
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public IdeaJdk() {
     super("IDEA JDK");
   }
@@ -73,7 +73,6 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     return PathManager.getHomePath().replace(File.separatorChar, '/');
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public boolean isValidSdkHome(String path) {
     if (isFromIDEAProject(path)) {
       return true;
@@ -82,7 +81,8 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     if (!home.exists()) {
       return false;
     }
-    if (getBuildNumber(path) == null || !new File(new File(home, LIB_DIR_NAME), "openapi.jar").exists()) {
+    @NonNls final String openapiJar = "openapi.jar";
+    if (getBuildNumber(path) == null || !new File(new File(home, LIB_DIR_NAME), openapiJar).exists()) {
       return false;
     }
     return true;
@@ -91,9 +91,9 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   public static boolean isFromIDEAProject(String path) {
     File home = new File(path);
     File[] openapiDir = home.listFiles(new FileFilter() {
-      @SuppressWarnings({"HardCodedStringLiteral"})
       public boolean accept(File pathname) {
-        if (pathname.getName().equals("openapi") && pathname.isDirectory()) return true; //todo
+        @NonNls final String name = pathname.getName();
+        if (name.equals("openapi") && pathname.isDirectory()) return true; //todo
         return false;
       }
     });
@@ -110,21 +110,21 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   }
 
   @Nullable
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private String getInternalToolsPath(final String sdkHome){
+    @NonNls final String toolsJar = "tools.jar";
     if (SystemInfo.isLinux || SystemInfo.isWindows) {
-      final File tools = new File(new File(new File(sdkHome, "jre"), LIB_DIR_NAME), "tools.jar");
+      final File tools = new File(new File(new File(sdkHome, JRE_DIR_NAME), LIB_DIR_NAME), toolsJar);
       if (tools.exists()){
         return tools.getPath();
       }
    }
 
     final String javaHome = System.getProperty(JAVA_HOME_PROPERTY);
-    File tools = new File(new File(javaHome, LIB_DIR_NAME), "tools.jar");
+    File tools = new File(new File(javaHome, LIB_DIR_NAME), toolsJar);
     if (tools.exists()){ // java home points to jdk
       return tools.getPath();
     } else {
-      tools = new File(new File (new File(javaHome).getParentFile(), LIB_DIR_NAME), "tools.jar");
+      tools = new File(new File (new File(javaHome).getParentFile(), LIB_DIR_NAME), toolsJar);
       if (tools.exists()){
         return tools.getPath();
       }
@@ -137,21 +137,21 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   }
 
   @Nullable
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private String getInternalRtPath(final String homePath) {
-    String rtPath;
+    @NonNls String rtPath;
+    @NonNls final String rtJar = "rt.jar";
     if (SystemInfo.isLinux || SystemInfo.isWindows) {
-      rtPath = homePath + File.separator + "jre" + File.separator + LIB_DIR_NAME + File.separator + "rt.jar";
+      rtPath = homePath + File.separator + JRE_DIR_NAME + File.separator + LIB_DIR_NAME + File.separator + rtJar;
       if (new File(rtPath).exists()) {
         return rtPath;
       }
     }
     final String javaHome = System.getProperty(JAVA_HOME_PROPERTY);
-    File rt = new File(new File(javaHome, LIB_DIR_NAME), "rt.jar");
+    File rt = new File(new File(javaHome, LIB_DIR_NAME), rtJar);
     if (rt.exists()){ // java home points to jre
       return rt.getPath();
     } else {
-      rt = new File(new File (new File(javaHome, "jre"), LIB_DIR_NAME), "rt.jar");
+      rt = new File(new File (new File(javaHome, JRE_DIR_NAME), LIB_DIR_NAME), rtJar);
       if (rt.exists()){
         return rt.getPath();
       }
@@ -182,7 +182,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   private String getJreHome(final String sdkHome) {
     @NonNls String jreHome;
     if (SystemInfo.isLinux || SystemInfo.isWindows) {
-      jreHome = sdkHome + File.separator + "jre";
+      jreHome = sdkHome + File.separator + JRE_DIR_NAME;
       if (new File(jreHome).exists()){
         return jreHome;
       }
@@ -190,15 +190,15 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     return System.getProperty(JAVA_HOME_PROPERTY);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public String suggestSdkName(String currentSdkName, String sdkHome) {
-    return "IDEA " + (getBuildNumber(sdkHome) != null ? getBuildNumber(sdkHome) : "");
+    @NonNls final String idea = "IDEA ";
+    return idea + (getBuildNumber(sdkHome) != null ? getBuildNumber(sdkHome) : "");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private String getBuildNumber(String ideaHome) {
     try {
-      BufferedReader reader = new BufferedReader(new FileReader(ideaHome + "/build.txt"));
+      @NonNls final String buildTxt = "/build.txt";
+      BufferedReader reader = new BufferedReader(new FileReader(ideaHome + buildTxt));
       return reader.readLine().trim();
     }
     catch (IOException e) {
@@ -207,16 +207,15 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
 
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private VirtualFile[] getIdeaLibrary(String home) {
     ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
     JarFileSystem jfs = JarFileSystem.getInstance();
-    File lib = new File(home + "/lib");
+    File lib = new File(home + File.separator + LIB_DIR_NAME);
     File[] jars = lib.listFiles();
     if (jars != null) {
       for (int i = 0; i < jars.length; i++) {
         File jar = jars[i];
-        String name = jar.getName();
+        @NonNls String name = jar.getName();
         if (jar.isFile() && !name.equals("idea.jar") && (name.endsWith(".jar") || name.endsWith(".zip"))) {
           result.add(jfs.findFileByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR));
         }
@@ -254,10 +253,10 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     final File src = new File(new File(file, LIB_DIR_NAME), SRC_DIR_NAME);
     if (!src.exists()) return;
     File[] srcs = src.listFiles(new FileFilter() {
-      @SuppressWarnings({"HardCodedStringLiteral"})
       public boolean accept(File pathname) {
-        if (pathname.getPath().indexOf("generics") > -1) return false;
-        if (pathname.getPath().endsWith(".jar") || pathname.getPath().endsWith(".zip")) return true;
+        @NonNls final String path = pathname.getPath();
+        if (path.indexOf("generics") > -1) return false;
+        if (path.endsWith(".jar") || path.endsWith(".zip")) return true;
         return false;
       }
     });
@@ -273,17 +272,19 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void addDocs(File file, SdkModificator sdkModificator) {
-    File docFile = new File(new File(file, "help"), "openapi");
+    @NonNls final String help = "help";
+    @NonNls final String openapi = "openapi";
+    File docFile = new File(new File(file, help), openapi);
     if (docFile.exists() && docFile.isDirectory()) {
       sdkModificator.addRoot(LocalFileSystem.getInstance().findFileByIoFile(docFile), ProjectRootType.JAVADOC);
       return;
     }
-    File jarfile = new File(new File(file, "help"), "openapihelp.jar");
+    @NonNls final String openapiHelpJar = "openapihelp.jar";
+    File jarfile = new File(new File(file, help), openapiHelpJar);
     if (jarfile.exists()) {
       JarFileSystem jarFileSystem = JarFileSystem.getInstance();
-      String path = jarfile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR + "openapi";
+      String path = jarfile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR + openapi;
       jarFileSystem.setNoCopyJarForPath(path);
       VirtualFile vFile = jarFileSystem.findFileByPath(path);
       sdkModificator.addRoot(vFile, ProjectRootType.JAVADOC);
@@ -307,7 +308,6 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private void addSources(SdkModificator sdkModificator) {
     final Sdk internalJavaSdk = getInternalJavaSdk(sdkModificator.getHomePath());
     if (internalJavaSdk != null) {
@@ -323,7 +323,8 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
         }
         else {
           final File jdkHome = new File(internalJavaSdk.getHomePath()).getParentFile();
-          final File jarFile = new File(jdkHome, "src.zip");
+          @NonNls final String srcZip = "src.zip";
+          final File jarFile = new File(jdkHome, srcZip);
           if (jarFile.exists()){
             JarFileSystem jarFileSystem = JarFileSystem.getInstance();
             String path = jarFile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;

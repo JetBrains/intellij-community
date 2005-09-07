@@ -45,6 +45,8 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
   private boolean myUseUserManifest = false;
   @NonNls private static final String URL_ATTR = "url";
   @NonNls private static final String MANIFEST_ATTR = "manifest";
+  @NonNls private static final String META_INF = "META-INF";
+  @NonNls private static final String PLUGIN_XML = "plugin.xml";
 
   public PluginModuleBuildProperties(Module module) {
     myModule = module;
@@ -107,7 +109,6 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(Element element) throws WriteExternalException {
     element.setAttribute(URL_ATTR, getPluginXMLPointer().getUrl());
     if (myManifestFilePointer != null){
@@ -126,8 +127,7 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
 
   public VirtualFilePointer getPluginXMLPointer() {
     if (myPluginXMLPointer == null) {
-      //noinspection HardCodedStringLiteral
-      final String defaultPluginXMLLocation = new File(myModule.getModuleFilePath()).getParent() + File.separator + "META-INF" + File.separator + "plugin.xml";
+      final String defaultPluginXMLLocation = new File(myModule.getModuleFilePath()).getParent() + File.separator + META_INF + File.separator + PLUGIN_XML;
       setPluginXMLUrl(defaultPluginXMLLocation);
     }
     return myPluginXMLPointer;

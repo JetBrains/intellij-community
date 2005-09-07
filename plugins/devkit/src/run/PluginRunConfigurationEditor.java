@@ -64,7 +64,6 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
       }
     });
     myModules.addActionListener(new ActionListener() {
-      @SuppressWarnings({"HardCodedStringLiteral"})
       public void actionPerformed(ActionEvent e) {
         if (myModules.getSelectedItem() != null){
           prc.removeAllLogFiles();
@@ -75,10 +74,10 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
               return;
             }
             try {
-              final String file = new File(sandboxHome).getCanonicalPath() + File.separator + "system" + File.separator + "log" + File.separator +
+              @NonNls final String file = new File(sandboxHome).getCanonicalPath() + File.separator + "system" + File.separator + "log" + File.separator +
                                   "idea.log";
               if (new File(file).exists()){
-                prc.addLogFile(file, "IDEA LOG", myShowLogs.isSelected());
+                prc.addLogFile(file, DevKitBundle.message("idea.log.tab.title"), myShowLogs.isSelected());
               }
             }
             catch (IOException e1) {

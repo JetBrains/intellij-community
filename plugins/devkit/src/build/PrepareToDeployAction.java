@@ -52,6 +52,11 @@ import java.util.zip.ZipOutputStream;
  * Date: May 5, 2005
  */
 public class PrepareToDeployAction extends AnAction {
+  @NonNls private static final String ZIP_EXTENSION = ".zip";
+  @NonNls private static final String JAR_EXTENSION = ".jar";
+  @NonNls private static final String TEMP_PREFIX = "temp";
+  @NonNls private static final String MIDDLE_LIB_DIR = "/lib/";
+
   public void actionPerformed(final AnActionEvent e) {
     final Module module = (Module)e.getDataContext().getData(DataConstants.MODULE);
     if (module == null) return;
@@ -65,8 +70,7 @@ public class PrepareToDeployAction extends AnAction {
       PluginBuildUtil.getLibraries(module1, libs);
     }
     boolean isZip = true;
-    //noinspection HardCodedStringLiteral
-    final String zipPath = defaultPath + ".zip";
+    final String zipPath = defaultPath + ZIP_EXTENSION;
     final File zipFile = new File(zipPath);
     if (libs.size() == 0) {
       if (zipFile.exists()) {
@@ -76,13 +80,11 @@ public class PrepareToDeployAction extends AnAction {
         }
       }
       isZip = false;
-    } else //noinspection HardCodedStringLiteral
-      if (new File(defaultPath + ".jar").exists()) {
-        //noinspection HardCodedStringLiteral
-        if (Messages.showYesNoDialog(module.getProject(), DevKitBundle.message("suggest.to.delete", defaultPath + ".jar"), DevKitBundle.message("info.message"),
+    } else
+      if (new File(defaultPath + JAR_EXTENSION).exists()) {
+        if (Messages.showYesNoDialog(module.getProject(), DevKitBundle.message("suggest.to.delete", defaultPath + JAR_EXTENSION), DevKitBundle.message("info.message"),
                                      Messages.getInformationIcon()) == DialogWrapper.OK_EXIT_CODE) {
-          //noinspection HardCodedStringLiteral
-          FileUtil.delete(new File(defaultPath + ".jar"));
+          FileUtil.delete(new File(defaultPath + JAR_EXTENSION));
         }
       }
 
@@ -97,15 +99,13 @@ public class PrepareToDeployAction extends AnAction {
         try {
           File jarFile = preparePluginsJar(module, modules);
           if (libs.size() == 0) {
-            //noinspection HardCodedStringLiteral
-            FileUtil.copy(jarFile, new File(defaultPath + ".jar"));
+            FileUtil.copy(jarFile, new File(defaultPath + JAR_EXTENSION));
             return;
           }
 
           if (zipFile.exists() || zipFile.createNewFile()) {
             final ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
-            //noinspection HardCodedStringLiteral
-            ZipUtil.addFileToZip(zos, jarFile, "/" + name + "/lib/" + name + ".jar", new HashSet<String>(), new FileFilter() {
+            ZipUtil.addFileToZip(zos, jarFile, "/" + name + MIDDLE_LIB_DIR + name + JAR_EXTENSION, new HashSet<String>(), new FileFilter() {
               public boolean accept(File pathname) {
                 if (progressIndicator != null){
                   progressIndicator.setText2("");
@@ -118,8 +118,7 @@ public class PrepareToDeployAction extends AnAction {
               String libraryName = null;
               final VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
               final HashSet<String> libraryWrittenItems = new HashSet<String>();
-              //noinspection HardCodedStringLiteral
-              File libraryJar = FileUtil.createTempFile("temp", ".jar");
+              File libraryJar = FileUtil.createTempFile(TEMP_PREFIX, JAR_EXTENSION);
               libraryJar.deleteOnExit();
               ZipOutputStream jar = null;
               for (VirtualFile virtualFile : files) {
@@ -152,8 +151,7 @@ public class PrepareToDeployAction extends AnAction {
                   }
                 }
                 else {
-                  //noinspection HardCodedStringLiteral
-                  ZipUtil.addFileOrDirRecursively(zos, jarFile, ioFile, "/" + name + "/lib/" + ioFile.getName(), new FileFilter() {
+                  ZipUtil.addFileOrDirRecursively(zos, jarFile, ioFile, "/" + name + MIDDLE_LIB_DIR + ioFile.getName(), new FileFilter() {
                     public boolean accept(File pathname) {
                       if (progressIndicator != null){
                         progressIndicator.setText2("");
@@ -165,8 +163,7 @@ public class PrepareToDeployAction extends AnAction {
               }
               if (libraryName != null) {
                 jar.close();
-                //noinspection HardCodedStringLiteral
-                ZipUtil.addFileOrDirRecursively(zos, jarFile, libraryJar, "/" + name + "/lib/" + libraryName + ".jar", new FileFilter() {
+                ZipUtil.addFileOrDirRecursively(zos, jarFile, libraryJar, "/" + name + MIDDLE_LIB_DIR + libraryName + JAR_EXTENSION, new FileFilter() {
                   public boolean accept(File pathname) {
                     if (progressIndicator != null){
                       progressIndicator.setText2("");
@@ -191,16 +188,14 @@ public class PrepareToDeployAction extends AnAction {
     }, DevKitBundle.message("prepare.for.deployment", module.getName()), true, module.getProject());
 
     if (isOk && errorSet.isEmpty()) {
-      //noinspection HardCodedStringLiteral
-      Messages.showInfoMessage( DevKitBundle.message("saved.message", (isZip ? "Zip" : "Jar"), module.getName(), defaultPath + (isZip ? ".zip" : ".jar")) , DevKitBundle.message("success.deployment", module.getName()));
+      Messages.showInfoMessage( DevKitBundle.message("saved.message", isZip ? 1 : 2, module.getName(), defaultPath + (isZip ? ZIP_EXTENSION : JAR_EXTENSION)) , DevKitBundle.message("success.deployment.message", module.getName()));
     }
   }
 
   private File preparePluginsJar(Module module, final HashSet<Module> modules) throws IOException {
     final PluginModuleBuildProperties pluginModuleBuildProperties = ((PluginModuleBuildProperties)ModuleBuildProperties
       .getInstance(module));
-    //noinspection HardCodedStringLiteral
-    File jarFile = FileUtil.createTempFile("temp", "jar");
+    File jarFile = FileUtil.createTempFile(TEMP_PREFIX, JAR_EXTENSION);
     jarFile.deleteOnExit();
     final Manifest manifest = new Manifest();
 
@@ -230,10 +225,10 @@ public class PrepareToDeployAction extends AnAction {
       }, writtenItemRelativePaths);
     }
     final String pluginXmlPath = pluginModuleBuildProperties.getPluginXmlPath();
-    //noinspection HardCodedStringLiteral
+    @NonNls final String metaInfDir = "/META-INF/plugin.xml";
     ZipUtil.addFileToZip(jarPlugin,
                          new File(pluginXmlPath),
-                         "/META-INF/plugin.xml",
+                         metaInfDir,
                          writtenItemRelativePaths,
                          new FileFilter() {
                            public boolean accept(File pathname) {

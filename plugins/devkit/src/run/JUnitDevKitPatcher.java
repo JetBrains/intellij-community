@@ -19,6 +19,7 @@ import com.intellij.execution.JUnitPatcher;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 
@@ -28,13 +29,12 @@ import java.io.File;
  */
 public class JUnitDevKitPatcher extends JUnitPatcher{
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void patchJavaParameters(JavaParameters javaParameters) {
     final ProjectJdk jdk = javaParameters.getJdk();
     if (jdk == null || !(jdk.getSdkType() instanceof IdeaJdk)) {
       return;
     }
-    String libPath = jdk.getHomePath() + File.separator + "lib";
+    @NonNls String libPath = jdk.getHomePath() + File.separator + "lib";
     javaParameters.getVMParametersList().add("-Xbootclasspath/p:" + libPath + File.separator + "boot.jar");
     javaParameters.getClassPath().addFirst(libPath + File.separator + "idea.jar");
     javaParameters.getClassPath().addFirst(libPath + File.separator + "resources.jar");
