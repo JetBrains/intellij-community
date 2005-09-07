@@ -163,14 +163,16 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
         }
       }
 
-      PsiPackage langPackage = getManager().findPackage("java.lang");
-      if (langPackage != null) {
-        if (!langPackage.processDeclarations(processor, substitutor, null, place)) return false;
-      }
+      if (myContext == null) {
+        PsiPackage langPackage = getManager().findPackage("java.lang");
+        if (langPackage != null) {
+          if (!langPackage.processDeclarations(processor, substitutor, null, place)) return false;
+        }
 
-      PsiPackage defaultPackage = getManager().findPackage("");
-      if (defaultPackage != null) {
-        if (!defaultPackage.processDeclarations(processor, substitutor, null, place)) return false;
+        PsiPackage defaultPackage = getManager().findPackage("");
+        if (defaultPackage != null) {
+          if (!defaultPackage.processDeclarations(processor, substitutor, null, place)) return false;
+        }
       }
     }
 
