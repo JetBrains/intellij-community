@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class FileTypeManager implements SettingsSavingComponent {
   /**
    * Returns the singleton instance of the FileTypeManager component.
+   *
    * @return the instace of FileTypeManager
    */
   public static FileTypeManager getInstance() {
@@ -36,35 +37,46 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
 
   /**
    * Registers a file type.
-   * @param type The file type to register.
+   *
+   * @param type                        The file type to register.
    * @param defaultAssociatedExtensions The list of extensions which cause the file to be
-   * treated as the specified file type. The extensions should not start with '.'.
+   *                                    treated as the specified file type. The extensions should not start with '.'.
    */
   public abstract void registerFileType(@NotNull FileType type, @Nullable String[] defaultAssociatedExtensions);
 
   /**
    * Returns the file type for the specified file name.
+   *
    * @param fileName The file name for which the type is requested.
    * @return The file type instance.
    */
-  public abstract @NotNull FileType getFileTypeByFileName(@NotNull String fileName);
+  public abstract
+  @NotNull
+  FileType getFileTypeByFileName(@NotNull String fileName);
 
   /**
    * Returns the file type for the specified file.
+   *
    * @param file The file for which the type is requested.
    * @return The file type instance.
    */
-  public abstract @NotNull FileType getFileTypeByFile(@NotNull VirtualFile file);
+  public abstract
+  @NotNull
+  FileType getFileTypeByFile(@NotNull VirtualFile file);
 
   /**
    * Returns the file type for the specified extension.
+   *
    * @param extension The extension for which the file type is requested, not including the leading '.'.
    * @return The file type instance.
    */
-  public abstract @NotNull FileType getFileTypeByExtension(@NotNull String extension);
+  public abstract
+  @NotNull
+  FileType getFileTypeByExtension(@NotNull String extension);
 
   /**
    * Returns the list of all registered file types.
+   *
    * @return The list of file types.
    */
   public abstract FileType[] getRegisteredFileTypes();
@@ -72,6 +84,7 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
   /**
    * Checks if the specified file is ignored by IDEA. Ignored files are not visible in
    * different project views and cannot be opened in the editor. They will neither be parsed nor compiled.
+   *
    * @param name The name of the file to check.
    * @return true if the file is ignored, false otherwise.
    */
@@ -80,6 +93,7 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
 
   /**
    * Returns the list of extensions associated with the specified file type.
+   *
    * @param type The file type for which the extensions are requested.
    * @return The array of extensions associated with the file type.
    */
@@ -88,6 +102,7 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
   /**
    * Adds a listener for receiving notifications about changes in the list of
    * registered file types.
+   *
    * @param listener The listener instance.
    */
 
@@ -96,6 +111,7 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
   /**
    * Removes a listener for receiving notifications about changes in the list of
    * registered file types.
+   *
    * @param listener The listener instance.
    */
 
@@ -104,7 +120,26 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
   /**
    * If fileName is already associated with any known file type returns it.
    * Otherwise asks user to select file type and associates it with fileName extension if any selected.
-   * @return Known file type or null. Never returns {@link com.intellij.openapi.fileTypes.StdFileTypes#UNKNOWN}.
+   *
+   * @return Known file type or null. Never returns {@link StdFileTypes#UNKNOWN}.
    */
   public abstract @NotNull FileType getKnownFileTypeOrAssociate(VirtualFile file);
+
+  /**
+   * Adds an extension to the list of extensions associated with a file type.
+   *
+   * @param type      the file type to associate the extension with.
+   * @param extension the extension to associate.
+   * @since 5.0.2
+   */
+  public abstract void associateExtension(FileType type, String extension);
+
+  /**
+   * Removes an extension from the list of extensions associated with a file type.
+   *
+   * @param type      the file type to remove the extension from.
+   * @param extension the extension to remove.
+   * @since 5.0.2
+   */
+  public abstract void removeAssociatedExtension(FileType type, String extension);
 }

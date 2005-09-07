@@ -895,6 +895,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
   }
 
+  public void removeAssociatedExtension(FileType type, String extension) {
+    removeAssociation(type, extension, true);
+  }
+
   public void removeAssociation(FileType fileType, String extension, boolean fireChange){
     if (myExtToFileTypeMap.get(extension) == fileType){
       if (fireChange) {
