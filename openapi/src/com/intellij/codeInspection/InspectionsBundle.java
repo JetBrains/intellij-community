@@ -17,6 +17,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ResourceBundle;
 
@@ -28,7 +29,7 @@ public class InspectionsBundle {
 
   private InspectionsBundle() {}
 
-  public static String message(@PropertyKey(resourceBundle = "com.intellij.codeInspection.InspectionsBundle") String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "com.intellij.codeInspection.InspectionsBundle") String key, @NonNls Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }
