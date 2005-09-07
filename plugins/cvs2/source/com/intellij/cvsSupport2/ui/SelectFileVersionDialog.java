@@ -1,9 +1,8 @@
 package com.intellij.cvsSupport2.ui;
 
 import com.intellij.cvsSupport2.config.CvsConfiguration;
+import com.intellij.cvsSupport2.config.DateOrRevisionSettings;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsProviderOnVirtualFiles;
-import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDate;
-import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDateImpl;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.ui.DateOrRevisionOrTagSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -44,7 +43,7 @@ public class SelectFileVersionDialog extends DialogWrapper {
     return myDateOrRevisionOrTagSettings.getPanel();
   }
 
-  public RevisionOrDate getRevisionOrDate() {
-    return RevisionOrDateImpl.createOn(CvsConfiguration.getInstance(myProject).SHOW_CHANGES_REVISION_SETTINGS);
+  public DateOrRevisionSettings getRevisionOrDate() {
+    return CvsConfiguration.getInstance(myProject).SHOW_CHANGES_REVISION_SETTINGS;
   }
 }

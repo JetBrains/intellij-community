@@ -31,12 +31,15 @@ import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
+import com.intellij.openapi.vcs.diff.RevisionSelector;
 import com.intellij.openapi.vcs.fileView.FileViewEnvironment;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
+
+import org.jetbrains.annotations.Nullable;
 
 /**
  * This class intended to be an adapter of  AbstractVcs and ProjectComponent interfaces for CVS
@@ -51,7 +54,7 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
 
   private Cvs2Configurable myConfigurable;
 
-  
+
   private CvsStorageComponent myStorageComponent = CvsStorageComponent.ABSENT_STORAGE;
   private MyFileStatusProvider myFileStatusProvider = new MyFileStatusProvider();
   private final CvsHistoryProvider myCvsHistoryProvider;
@@ -252,7 +255,7 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
     CvsEntriesManager.getInstance().removeCvsEntriesListener(this);
     if (myProjectIsOpened) {
       FileStatusManager.getInstance(getProject()).fileStatusesChanged();
-    }    
+    }
   }
 
   public void start() throws VcsException {
@@ -316,14 +319,14 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
   }
 
   public FileAnnotation createAnnotation(File cvsLightweightFile, VirtualFile cvsVirtualFile,
-                   String revision, CvsEnvironment environment) throws VcsException {
+                                         String revision, CvsEnvironment environment) throws VcsException {
     final AnnotateOperation annotateOperation = new AnnotateOperation(cvsLightweightFile, revision, environment);
     CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
     executor.performActionSync(new CommandCvsHandler("Annotate", annotateOperation),
                                CvsOperationExecutorCallback.EMPTY);
 
     if (executor.getResult().hasNoErrors()) {
-      return new CvsFileAnnotation(annotateOperation.getContent(), annotateOperation.getLineAnnotations(), cvsVirtualFile);      
+      return new CvsFileAnnotation(annotateOperation.getContent(), annotateOperation.getLineAnnotations(), cvsVirtualFile);
     } else {
       throw executor.getResult().composeError();
     }
@@ -344,6 +347,11 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
 
   public VcsShowConfirmationOption getRemoveConfirmation() {
     return myRemoveConfirmation;
+  }
+
+  @Nullable
+  public RevisionSelector getRevisionSelector() {
+    return new CvsRevisionSelector(myProject);
   }
 
 }

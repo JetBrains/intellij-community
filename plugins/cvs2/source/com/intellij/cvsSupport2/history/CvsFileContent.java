@@ -38,7 +38,7 @@ public abstract class CvsFileContent implements VcsFileContent{
     }
 
     if (isDeleted()) {
-      throw new VcsException("Rrevision " + getRevisionNumber() + " was deleted from repository");
+      throw new VcsException("Rrevision " + getRevisionNumber() + " does not exist in repository");
     }
   }
 

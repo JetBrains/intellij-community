@@ -172,8 +172,7 @@ public class TagsHelper {
     });
     ArrayList<String> result = new ArrayList<String>();
     for (Iterator iterator = list.iterator(); iterator.hasNext();) {
-      CvsRevisionNumber cvsRevisionNumber = (CvsRevisionNumber)iterator.next();
-      result.add(cvsRevisionNumber.toString());
+      result.add((iterator.next()).toString());
     }
     return result;
   }

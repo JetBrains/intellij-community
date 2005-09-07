@@ -50,15 +50,12 @@ public class RevisionOrDateImpl implements RevisionOrDate {
     else {
       if (entry.getStickyRevision() != null) {
         myStickyTag = entry.getStickyRevision();
-        return;
       }
       else if (entry.getStickyTag() != null) {
         myStickyTag = entry.getStickyTag();
-        return;
       }
       else if (entry.getStickyDateString() != null) {
         myStickyDate = entry.getStickyDateString();
-        return;
       }
       else {
         lookupDirectory(parent);
@@ -71,12 +68,10 @@ public class RevisionOrDateImpl implements RevisionOrDate {
     if (stickyTag != null) {
       myStickyDate = null;
       myStickyTag = stickyTag;
-      return;
     }
     else {
       myStickyTag = null;
       myStickyDate = stickyDate;
-      return;
     }
   }
 
@@ -106,6 +101,14 @@ public class RevisionOrDateImpl implements RevisionOrDate {
     }
     catch (NumberFormatException ex) {
       return null;
+    }
+  }
+
+  public String toString() {
+    if (myStickyDate != null) {
+      return myStickyDate;
+    } else {
+      return myStickyTag;
     }
   }
 }

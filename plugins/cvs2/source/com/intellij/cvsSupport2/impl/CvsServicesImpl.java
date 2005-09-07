@@ -138,7 +138,7 @@ public class CvsServicesImpl extends CvsServices implements ApplicationComponent
                                CvsOperationExecutorCallback.EMPTY);
 
     if (!executor.hasNoErrors()) throw new RuntimeException(executor.getFirstError());
-    if (operation.isDeleted()) throw new IOException("Revision has been deleted");
+    if (operation.isDeleted()) throw new IOException("Revision does not exist");
     return operation.getFileBytes();
   }
 

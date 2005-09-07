@@ -22,9 +22,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
+import com.intellij.openapi.vcs.diff.RevisionSelector;
 import com.intellij.openapi.vcs.fileView.FileViewEnvironment;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractVcs {
 
@@ -212,4 +214,7 @@ public abstract class AbstractVcs {
     return null;
   }
 
+  @Nullable public RevisionSelector getRevisionSelector() {
+    return null;
+  }
 }

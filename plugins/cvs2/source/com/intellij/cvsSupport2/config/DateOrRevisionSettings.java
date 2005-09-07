@@ -7,6 +7,9 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+
 /**
  * author: lesya
  */
@@ -81,5 +84,17 @@ public class DateOrRevisionSettings implements JDOMExternalizable, DateOrRevisio
 
   public Object clone() throws CloneNotSupportedException {
     return super.clone();
+  }
+
+  public int compareTo(final DateOrRevisionSettings dateOrRevision) {
+    if (USE_DATE && dateOrRevision.USE_DATE && DATE != null && dateOrRevision.DATE != null) {
+      return DATE.compareTo(dateOrRevision.DATE);
+    }
+
+    return 0;
+  }
+
+  public String asString() {
+    return USE_DATE ? DATE : BRANCH;
   }
 }

@@ -2,7 +2,7 @@ package com.intellij.cvsSupport2;
 
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetFileContentOperation;
-import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.SimpleRevision;
+import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDate;
 import com.intellij.cvsSupport2.history.ComparableVcsRevisionOnOperation;
 import com.intellij.cvsSupport2.history.CvsFileContent;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
@@ -30,20 +30,29 @@ public class CvsDiffProvider implements DiffProvider{
     if (stickyData != null) {
       return new CvsRevisionNumber(stickyData);
     } else {
-      return new CvsRevisionNumber("HEAD");      
+      return new CvsRevisionNumber("HEAD");
     }
   }
 
   public VcsFileContent createFileContent(final VcsRevisionNumber revisionNumber, VirtualFile selectedFile) {
-    final GetFileContentOperation operation = new GetFileContentOperation(new File(CvsUtil.getModuleName(selectedFile)),
-                                                                          CvsEntriesManager.getInstance()
-                                                                            .getCvsConnectionSettingsFor(selectedFile.getParent()),
-                                                                          new SimpleRevision(revisionNumber.asString())
-    );
-    return new CvsFileContent(new ComparableVcsRevisionOnOperation(operation, myProject)) {
-      public VcsRevisionNumber getRevisionNumber() {
-        return revisionNumber;
+    if ((revisionNumber instanceof CvsRevisionNumber)) {
+      final RevisionOrDate versionInfo = ((CvsRevisionNumber)revisionNumber).createVirsionInfo();
+      if (versionInfo != null) {
+        final GetFileContentOperation operation = new GetFileContentOperation(new File(CvsUtil.getModuleName(selectedFile)),
+                                                                              CvsEntriesManager.getInstance()
+                                                                                .getCvsConnectionSettingsFor(selectedFile.getParent()),
+                                                                              versionInfo
+        );
+        return new CvsFileContent(new ComparableVcsRevisionOnOperation(operation, myProject)) {
+          public VcsRevisionNumber getRevisionNumber() {
+            return revisionNumber;
+          }
+        };
+      } else {
+        return null;
       }
-    };
+    } else {
+      return null;
+    }
   }
 }

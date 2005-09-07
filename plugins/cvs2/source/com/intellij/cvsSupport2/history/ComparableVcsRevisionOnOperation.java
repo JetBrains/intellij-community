@@ -35,10 +35,7 @@ public class ComparableVcsRevisionOnOperation implements VcsFileRevision {
   }
 
   public void loadContent() throws VcsException {
-    if (myOperation.isLoaded()) {
-      return;
-    }
-    else {
+    if (!myOperation.isLoaded()) {
       CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
       executor.performActionSync(new CommandCvsHandler("Load File",
                                                        myOperation),
@@ -51,10 +48,9 @@ public class ComparableVcsRevisionOnOperation implements VcsFileRevision {
         throw result.composeError();
       }
       if (isDeleted()){
-        throw new VcsException("Revision " + myOperation.getRevisionNumber() + " was deleted from repository");
+        throw new VcsException("Revision " + myOperation.getRevisionString() + " does not exist in repository");
       }
     }
-
   }
 
   public boolean fileNotFound() {

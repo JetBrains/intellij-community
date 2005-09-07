@@ -22,6 +22,15 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class GetFileContentOperation extends LocalPathIndifferentOperation {
+  public String getRevisionString() {
+    if (myCvsRevisionNumber != null) {
+      return myCvsRevisionNumber.asString();
+    } else if (myRevisionOrDate != null){
+      return myRevisionOrDate.toString();
+    } else {
+      return "<unknown>";
+    }
+  }
 
   public static class FileContentReader {
     private ByteArrayOutputStream myContent = null;

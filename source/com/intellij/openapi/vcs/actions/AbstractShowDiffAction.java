@@ -91,33 +91,35 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
                         final Project project) {
     try {
       final VcsFileContent fileRevision = diffProvider.createFileContent(revisionNumber, selectedFile);
-      fileRevision.loadContent();
+      if (fileRevision != null) {
+        fileRevision.loadContent();
 
-      if (selectedFile.getFileType().isBinary()) {
-        if (Arrays.equals(selectedFile.contentsToByteArray(), fileRevision.getContent())) {
-          Messages.showInfoMessage("Binary versions are identical", "Diff");
-        } else {
-          Messages.showInfoMessage("Binary versions are different", "Diff");
+        if (selectedFile.getFileType().isBinary()) {
+          if (Arrays.equals(selectedFile.contentsToByteArray(), fileRevision.getContent())) {
+            Messages.showInfoMessage("Binary versions are identical", "Diff");
+          } else {
+            Messages.showInfoMessage("Binary versions are different", "Diff");
+          }
+          return;
         }
-        return;
+
+        final SimpleDiffRequest request =
+        new SimpleDiffRequest(project, selectedFile.getPresentableUrl());
+        final SimpleContent content1 = new SimpleContent(new String(fileRevision.getContent(), selectedFile.getCharset().name()), selectedFile.getFileType());
+        final DocumentContent content2 = new DocumentContent(project, FileDocumentManager.getInstance().getDocument(selectedFile));
+
+        final VcsRevisionNumber currentRevision = diffProvider.getCurrentRevision(selectedFile);
+
+        if (revisionNumber.compareTo(currentRevision) > 0) {
+          request.setContents(content2, content1);
+          request.setContentTitles("Local", revisionNumber.asString());
+        } else {
+          request.setContents(content1, content2);
+          request.setContentTitles(revisionNumber.asString(), "Local");
+        }
+
+        DiffManager.getInstance().getDiffTool().show(request);
       }
-
-      final SimpleDiffRequest request =
-      new SimpleDiffRequest(project, selectedFile.getPresentableUrl());
-      final SimpleContent content1 = new SimpleContent(new String(fileRevision.getContent(), selectedFile.getCharset().name()), selectedFile.getFileType());
-      final DocumentContent content2 = new DocumentContent(project, FileDocumentManager.getInstance().getDocument(selectedFile));
-
-      final VcsRevisionNumber currentRevision = diffProvider.getCurrentRevision(selectedFile);
-
-      if (revisionNumber.compareTo(currentRevision) > 0) {
-        request.setContents(content2, content1);
-        request.setContentTitles("Local", revisionNumber.asString());
-      } else {
-        request.setContents(content1, content2);
-        request.setContentTitles(revisionNumber.asString(), "Local");
-      }
-
-      DiffManager.getInstance().getDiffTool().show(request);
     }
     catch (ProcessCanceledException e) {
       //ignore

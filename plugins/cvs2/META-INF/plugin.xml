@@ -112,6 +112,7 @@
       <reference id="Compare.SameVersion"/>
       <reference id="Compare.LastVersion"/>
       <reference id="Compare.Selected"/>
+      <reference id="Compare.Specified"/>
 
       <reference id="Vcs.ShowTabbedFileHistory"/>
       <reference id="Vcs.ShowHistoryForBlock"/>

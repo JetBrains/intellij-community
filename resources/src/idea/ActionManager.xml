@@ -157,9 +157,10 @@
     <action id="Compare.SameVersion" class="com.intellij.openapi.vcs.actions.CompareWithTheSameVersionAction" text="Compare with The Same Repository Version"/>
     <action id="Compare.LastVersion" class="com.intellij.openapi.vcs.actions.CompareWithLastVersion" text="Compare with The Last Repository Version"/>
     <action id="Compare.Selected" class="com.intellij.openapi.vcs.actions.CompareWithSelectedRevisionAction" text="Compare with..." popup="true"/>
+    <action id="Compare.Specified" class="com.intellij.openapi.vcs.actions.SelectAndCompareWithSelectedRevisionAction" text="Compare with Specified Revision..." popup="true"/>
 
     <group id="NewGroup" text="New" popup="true">
-      <action id="NewClass" text="Class" class="com.intellij.ide.actions.CreateClassAction"/>
+    <action id="NewClass" text="Class" class="com.intellij.ide.actions.CreateClassAction"/>
       <action id="NewInterface" text="Interface" class="com.intellij.ide.actions.CreateInterfaceAction"/>
       <action id="NewEnum" text="Enum" class="com.intellij.ide.actions.CreateEnumAction"/>
       <action id="NewAnnotationType" text="@Interface" class="com.intellij.ide.actions.CreateAnnotationTypeAction"/>
@@ -612,7 +613,7 @@
                 text="Default _Keymap Reference"
                 description="Open PDF file with the default keymap reference card."
                 icon="/general/defaultKeymap.png"
-          /> 
+          />
         <separator/>
         <action id="Register" class="com.intellij.ide.actions.RegisterAction" text="_Register..." description="Enter registration data"/>
         <action id="CheckForUpdate" class="com.intellij.ide.actions.CheckForUpdateAction" text="_Check for Update..." description="Check for available update" />
@@ -955,7 +956,7 @@
       <action id="TypeHierarchy.BaseOnThisType" text="Base On This Type" class="com.intellij.ide.hierarchy.type.TypeHierarchyBrowser$BaseOnThisTypeAction"/>
       <action id="TypeHierarchy.Class" text="Class Hierarchy" class="com.intellij.ide.hierarchy.type.ViewClassHierarchyAction" />
       <action id="TypeHierarchy.Subtypes" text="Subtypes Hierarchy" class="com.intellij.ide.hierarchy.type.ViewSubtypesHierarchyAction" />
-      <action id="TypeHierarchy.Supertypes" text="Supertypes Hierarchy" class="com.intellij.ide.hierarchy.type.ViewSupertypesHierarchyAction" />        
+      <action id="TypeHierarchy.Supertypes" text="Supertypes Hierarchy" class="com.intellij.ide.hierarchy.type.ViewSupertypesHierarchyAction" />
       <separator/>
       <reference ref="EditSource"/>
       <separator/>
