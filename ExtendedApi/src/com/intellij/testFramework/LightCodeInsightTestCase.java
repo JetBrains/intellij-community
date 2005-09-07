@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -272,6 +273,10 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     String text = myFile.getText();
     text = StringUtil.convertLineSeparators(text, "\n");
 
+    if (!Comparing.strEqual(newFileText1, text)) {
+      System.err.println(getMessage("Text mismatch", message)+": expected:\n'"+newFileText1+"'\nbut was:\n'"+text+"'");
+      System.out.println(getMessage("Text mismatch", message)+": expected:\n'"+newFileText1+"'\nbut was:\n'"+text+"'");
+    }
     assertEquals(getMessage("Text mismatch", message), newFileText1, text);
 
     checkCaretPosition(caretMarker, newFileText, message);
