@@ -216,7 +216,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
   }
 
   public ValidityState createValidityState(final DataInputStream is) throws IOException {
-    return new TimestampValidityState(is.readLong());
+    return TimestampValidityState.load(is);
   }
 
   private static final class MyInstrumentationItem implements ProcessingItem {

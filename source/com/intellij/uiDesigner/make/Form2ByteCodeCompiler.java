@@ -352,7 +352,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
   }
 
   public ValidityState createValidityState(final DataInputStream is) throws IOException {
-    return new TimestampValidityState(is.readLong());
+    return TimestampValidityState.load(is);
   }
 
   private static final class MyInstrumentationItem implements FileProcessingCompiler.ProcessingItem {
