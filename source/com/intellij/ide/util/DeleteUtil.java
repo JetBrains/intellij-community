@@ -76,6 +76,7 @@ public class DeleteUtil {
     int directories = 0;
     int packages = 0;
     int packageDirectories = 0;
+    int customElements = 0;
     String[] objName = new String[] { "", "", "" };
 
     for (final PsiElement elementToDelete : elements) {
@@ -123,6 +124,11 @@ public class DeleteUtil {
         packages += 1;
         packageDirectories += count;
       }
+      else if (elementToDelete instanceof PsiNamedElement) {
+        objName[0] = ((PsiNamedElement) elementToDelete).getName();
+        objName[1] = elementToDelete.getLanguage().getFindUsagesProvider().getType(elementToDelete);
+        customElements++;
+      }
     }
 
     String warningMessage = actionName + " ";
@@ -142,6 +148,7 @@ public class DeleteUtil {
         buffer.append(' ');
         buffer.append(buildDirectoryMessage(packageDirectories));
       }
+      appendMessage(customElements, "element", "elements", buffer);
       buffer.append('?');
       warningMessage += buffer.toString();
     }
