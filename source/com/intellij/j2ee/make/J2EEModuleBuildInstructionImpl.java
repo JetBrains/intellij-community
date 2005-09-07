@@ -15,6 +15,7 @@ import java.io.*;
 import java.util.Set;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+import java.util.jar.JarFile;
 
 public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase implements J2EEModuleBuildInstruction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.j2ee.make.J2EEModuleBuildInstructionImpl");
@@ -33,6 +34,7 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
                                  final FileFilter fileFilter) throws IOException {
     //todo optmization: cache created directory and issue single FileCopy on it
     final File target = MakeUtil.canonicalRelativePath(outputDir, getOutputRelativePath());
+    final Ref<Boolean> externalDependencyFound = new Ref<Boolean>(Boolean.FALSE);
     final BuildRecipe buildRecipe = getChildInstructions(context);
     try {
       if (myBuildProperties.isExplodedEnabled()) {
@@ -43,6 +45,7 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
           public boolean visitInstruction(BuildInstruction instruction) throws Exception {
             if (instruction.isExternalDependencyInstruction()) {
               instruction.addFilesToExploded(context, target, writtenPaths, fileFilter);
+              externalDependencyFound.set(Boolean.TRUE);
             }
             return true;
           }
@@ -52,16 +55,26 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
         buildRecipe.visitInstructionsWithExceptions(new BuildInstructionVisitor() {
           public boolean visitInstruction(BuildInstruction instruction) throws Exception {
             instruction.addFilesToExploded(context, target, writtenPaths, fileFilter);
+            if (instruction.isExternalDependencyInstruction()) {
+              externalDependencyFound.set(Boolean.TRUE);
+            }
             return true;
           }
         }, false);
+      }
+      if (externalDependencyFound.get().booleanValue()) {
+        Manifest manifest = MakeUtil.getInstance().createManifest(buildRecipe);
+        File manifestFile = new File(target, JarFile.MANIFEST_NAME);
+        FileUtil.createParentDirs(manifestFile);
+        FileOutputStream out = new FileOutputStream(manifestFile);
+        manifest.write(out);
+        out.close();
       }
     }
     catch (Exception e) {
       if (e instanceof IOException) throw (IOException)e;
       if (e instanceof RuntimeException) throw (RuntimeException)e;
       Degenerator.unableToDegenerateMarker();
-      return;
     }
   }
 
@@ -126,7 +139,6 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
       if (e instanceof IOException) throw (IOException)e;
       if (e instanceof RuntimeException) throw (RuntimeException)e;
       Degenerator.unableToDegenerateMarker();
-      return;
     }
   }
 
@@ -158,7 +170,6 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
       if (e instanceof IOException) throw (IOException)e;
       if (e instanceof RuntimeException) throw (RuntimeException)e;
       Degenerator.unableToDegenerateMarker();
-      return;
     }
     finally {
       jarOutputStream.close();
