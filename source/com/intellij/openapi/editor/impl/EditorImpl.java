@@ -3514,15 +3514,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     private HashMap<EditorFontType, Font> myFontsMap = null;
     private Integer myFontSize = null;
     private String myFaceName = null;
-
+    private final EditorColorsManager myColorsManager = EditorColorsManager.getInstance();
 
     private EditorColorsScheme getGlobal() {
-      return EditorColorsManager.getInstance().getGlobalScheme();
+      return myColorsManager.getGlobalScheme();
     }
 
     public String getName() {
       return getGlobal().getName();
     }
+
 
     protected void initFonts() {
       String editorFontName = getEditorFontName();
