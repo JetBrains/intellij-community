@@ -73,7 +73,6 @@ public class PointlessIndexOfComparisonInspection extends ExpressionInspection {
             extends BaseInspectionVisitor {
 
         public void visitBinaryExpression(PsiBinaryExpression expression) {
-            System.out.println(expression);
             super.visitBinaryExpression(expression);
             final PsiExpression rhs = expression.getROperand();
             if (rhs == null) {

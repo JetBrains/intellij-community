@@ -129,6 +129,7 @@ public class IndexOfReplaceableByContainsInspection
 
     private static class IndexOfReplaceableByContainsVisitor
             extends BaseInspectionVisitor {
+
         public void visitBinaryExpression(PsiBinaryExpression expression) {
             final PsiManager manager = expression.getManager();
             final LanguageLevel languageLevel =
