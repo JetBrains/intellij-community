@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.confusing;
+package com.siyeh.ig.assignment;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiAssignmentExpression;
@@ -35,7 +35,7 @@ public class NestedAssignmentInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Nested assignment #ref #loc";
+        return "Nested assignment '#ref' #loc";
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -44,20 +44,19 @@ public class NestedAssignmentInspection extends ExpressionInspection {
 
     private static class NestedAssignmentVisitor extends BaseInspectionVisitor {
 
-        public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
+        public void visitAssignmentExpression(
+                @NotNull PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
             final PsiElement parent = expression.getParent();
-            if(parent == null)
-            {
+            if(parent == null) {
                 return;
             }
             final PsiElement grandparent = parent.getParent();
             if (parent instanceof PsiExpressionStatement ||
-                            grandparent instanceof PsiExpressionListStatement) {
+                    grandparent instanceof PsiExpressionListStatement) {
                 return;
             }
             registerError(expression);
         }
     }
-
 }

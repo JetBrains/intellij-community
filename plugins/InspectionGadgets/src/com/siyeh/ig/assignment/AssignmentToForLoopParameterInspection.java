@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.confusing;
+package com.siyeh.ig.assignment;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
@@ -24,7 +24,8 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class AssignmentToForLoopParameterInspection extends ExpressionInspection {
+public class AssignmentToForLoopParameterInspection
+        extends ExpressionInspection {
 
     public String getDisplayName() {
         return "Assignment to 'for' loop parameter";
@@ -35,16 +36,18 @@ public class AssignmentToForLoopParameterInspection extends ExpressionInspection
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Assignment to for-loop parameter #ref #loc";
+        return "Assignment to for-loop parameter '#ref' #loc";
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new AssignmentToForLoopParameterVisitor();
     }
 
-    private static class AssignmentToForLoopParameterVisitor extends BaseInspectionVisitor {
+    private static class AssignmentToForLoopParameterVisitor
+            extends BaseInspectionVisitor {
 
-        public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
+        public void visitAssignmentExpression(
+                @NotNull PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
             if(!WellFormednessUtils.isWellFormed(expression)){
                 return;
@@ -54,7 +57,8 @@ public class AssignmentToForLoopParameterInspection extends ExpressionInspection
             checkForForeachLoopParam(lhs);
         }
 
-        public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
+        public void visitPrefixExpression(
+                @NotNull PsiPrefixExpression expression) {
             super.visitPrefixExpression(expression);
             final PsiJavaToken sign = expression.getOperationSign();
             if (sign == null) {
@@ -72,7 +76,8 @@ public class AssignmentToForLoopParameterInspection extends ExpressionInspection
             checkForForLoopParam(operand);
         }
 
-        public void visitPostfixExpression(@NotNull PsiPostfixExpression expression) {
+        public void visitPostfixExpression(
+                @NotNull PsiPostfixExpression expression) {
             super.visitPostfixExpression(expression);
             final PsiJavaToken sign = expression.getOperationSign();
             if (sign == null) {
@@ -94,21 +99,23 @@ public class AssignmentToForLoopParameterInspection extends ExpressionInspection
             if (!(expression instanceof PsiReferenceExpression)) {
                 return;
             }
-            final PsiReferenceExpression ref = (PsiReferenceExpression) expression;
+            final PsiReferenceExpression ref =
+                    (PsiReferenceExpression) expression;
             final PsiElement element = ref.resolve();
             if (!(element instanceof PsiLocalVariable)) {
                 return;
             }
             final PsiLocalVariable variable = (PsiLocalVariable) element;
-            final PsiDeclarationStatement decl = (PsiDeclarationStatement) variable.getParent();
-            if(decl == null)
-            {
+            final PsiDeclarationStatement decl =
+                    (PsiDeclarationStatement) variable.getParent();
+            if(decl == null) {
                 return;
             }
             if (!(decl.getParent() instanceof PsiForStatement)) {
                 return;
             }
-            final PsiForStatement forStatement = (PsiForStatement) decl.getParent();
+            final PsiForStatement forStatement =
+                    (PsiForStatement) decl.getParent();
             assert forStatement != null;
             final PsiStatement initialization = forStatement.getInitialization();
             if (initialization == null) {
@@ -127,7 +134,8 @@ public class AssignmentToForLoopParameterInspection extends ExpressionInspection
             if (!(expression instanceof PsiReferenceExpression)) {
                 return;
             }
-            final PsiReferenceExpression ref = (PsiReferenceExpression) expression;
+            final PsiReferenceExpression ref =
+                    (PsiReferenceExpression) expression;
             final PsiElement element = ref.resolve();
             if (!(element instanceof PsiParameter)) {
                 return;
@@ -139,10 +147,10 @@ public class AssignmentToForLoopParameterInspection extends ExpressionInspection
             registerError(expression);
         }
 
-        private static boolean isInForStatementBody(PsiExpression expression, PsiForStatement statement) {
+        private static boolean isInForStatementBody(PsiExpression expression,
+                                                    PsiForStatement statement) {
             final PsiStatement body = statement.getBody();
             return PsiTreeUtil.isAncestor(body, expression, true);
         }
     }
-
 }

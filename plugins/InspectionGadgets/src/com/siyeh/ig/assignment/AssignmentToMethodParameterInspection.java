@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.confusing;
+package com.siyeh.ig.assignment;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -30,13 +31,13 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class AssignmentToCatchBlockParameterInspection
-        extends ExpressionInspection{
-    private final AssignmentToCatchBlockParameterFix fix =
-            new AssignmentToCatchBlockParameterFix();
+public class AssignmentToMethodParameterInspection extends ExpressionInspection{
+
+    private final AssignmentToMethodParameterFix fix =
+            new AssignmentToMethodParameterFix();
 
     public String getDisplayName(){
-        return "Assignment to catch block parameter";
+        return "Assignment to method parameter";
     }
 
     public String getGroupDisplayName(){
@@ -44,15 +45,16 @@ public class AssignmentToCatchBlockParameterInspection
     }
 
     public String buildErrorString(PsiElement location){
-        return "Assignment to catch block parameter #ref #loc ";
+        return "Assignment to method parameter '#ref' #loc ";
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
         return fix;
     }
 
-    private static class AssignmentToCatchBlockParameterFix
+    private static class AssignmentToMethodParameterFix
             extends InspectionGadgetsFix{
+
         public String getName(){
             return "Extract parameter as local variable";
         }
@@ -61,12 +63,11 @@ public class AssignmentToCatchBlockParameterInspection
                 throws IncorrectOperationException{
             final PsiExpression variable =
                     (PsiExpression) descriptor.getPsiElement();
-            final PsiCatchSection catchSection =
-                    PsiTreeUtil.getParentOfType(variable,
-                                                PsiCatchSection.class);
+            final PsiMethod method =
+                    PsiTreeUtil.getParentOfType(variable, PsiMethod.class);
 
-            assert catchSection != null;
-            final PsiCodeBlock body = catchSection.getCatchBlock();
+            assert method != null;
+            final PsiCodeBlock body = method.getBody();
             final PsiType type = variable.getType();
 
             final PsiManager psiManager = PsiManager.getInstance(project);
@@ -77,8 +78,7 @@ public class AssignmentToCatchBlockParameterInspection
             final SuggestedNameInfo suggestions =
                     codeStyleManager
                             .suggestVariableName(VariableKind.LOCAL_VARIABLE,
-                                                 originalVariableName +
-                                                         '1',
+                                                 originalVariableName + '1',
                                                  variable, type);
             final String[] names = suggestions.names;
             final String baseName;
@@ -89,17 +89,17 @@ public class AssignmentToCatchBlockParameterInspection
             }
             final String variableName =
                     codeStyleManager.suggestUniqueVariableName(baseName,
-                                                               catchSection,
+                                                               method,
                                                                false);
             final String className = type.getPresentableText();
-            assert body != null;
             final PsiElement[] children = body.getChildren();
             final StringBuffer buffer = new StringBuffer();
             for(int i = 1; i < children.length; i++){
                 replaceVariableName(children[i], variableName,
                                     originalVariableName, buffer);
             }
-            final String text = '{' + className + ' ' + variableName + " = " +
+            final String replacementText = '{' + className + ' ' + variableName
+                    + " = " +
                     originalVariableName +
                     ';' +
                     buffer;
@@ -107,17 +107,16 @@ public class AssignmentToCatchBlockParameterInspection
             final PsiElementFactory elementFactory =
                     psiManager.getElementFactory();
             final PsiCodeBlock block =
-                    elementFactory.createCodeBlockFromText(text,
+                    elementFactory.createCodeBlockFromText(replacementText,
                                                            null);
             body.replace(block);
-            codeStyleManager.reformat(catchSection);
+            codeStyleManager.reformat(method);
         }
 
-        private void replaceVariableName(PsiElement element,
+        private static void replaceVariableName(PsiElement element,
                                          String newName,
                                          String originalName,
                                          StringBuffer out){
-
             final String text = element.getText();
             if(element instanceof PsiReferenceExpression){
                 if(text.equals(originalName)){
@@ -138,11 +137,12 @@ public class AssignmentToCatchBlockParameterInspection
     }
 
     public BaseInspectionVisitor buildVisitor(){
-        return new AssignmentToCatchBlockParameterVisitor();
+        return new AssignmentToMethodParameterVisitor();
     }
 
-    private static class AssignmentToCatchBlockParameterVisitor
+    private static class AssignmentToMethodParameterVisitor
             extends BaseInspectionVisitor{
+
         public void visitAssignmentExpression(
                 @NotNull PsiAssignmentExpression expression){
             super.visitAssignmentExpression(expression);
@@ -150,19 +150,62 @@ public class AssignmentToCatchBlockParameterInspection
                 return;
             }
             final PsiExpression lhs = expression.getLExpression();
-            if(!(lhs instanceof PsiReferenceExpression)){
+            checkForMethodParam(lhs);
+        }
+
+        public void visitPrefixExpression(
+                @NotNull PsiPrefixExpression expression){
+            super.visitPrefixExpression(expression);
+            final PsiJavaToken sign = expression.getOperationSign();
+            if(sign == null){
                 return;
             }
-            final PsiReferenceExpression ref = (PsiReferenceExpression) lhs;
+            final IElementType tokenType = sign.getTokenType();
+            if(!tokenType.equals(JavaTokenType.PLUSPLUS) &&
+                    !tokenType.equals(JavaTokenType.MINUSMINUS)){
+                return;
+            }
+            final PsiExpression operand = expression.getOperand();
+            if(operand == null){
+                return;
+            }
+            checkForMethodParam(operand);
+        }
+
+        public void visitPostfixExpression(
+                @NotNull PsiPostfixExpression expression){
+            super.visitPostfixExpression(expression);
+            final PsiJavaToken sign = expression.getOperationSign();
+            if(sign == null){
+                return;
+            }
+            final IElementType tokenType = sign.getTokenType();
+            if(!tokenType.equals(JavaTokenType.PLUSPLUS) &&
+                    !tokenType.equals(JavaTokenType.MINUSMINUS)){
+                return;
+            }
+            final PsiExpression operand = expression.getOperand();
+            if(operand == null){
+                return;
+            }
+            checkForMethodParam(operand);
+        }
+
+        private void checkForMethodParam(PsiExpression expression){
+            if(!(expression instanceof PsiReferenceExpression)){
+                return;
+            }
+            final PsiReferenceExpression ref =
+                    (PsiReferenceExpression) expression;
             final PsiElement variable = ref.resolve();
             if(!(variable instanceof PsiParameter)){
                 return;
             }
-            if(!(((PsiParameter) variable)
-                    .getDeclarationScope() instanceof PsiCatchSection)){
+            if(((PsiParameter) variable)
+                    .getDeclarationScope() instanceof PsiCatchSection){
                 return;
             }
-            registerError(lhs);
+            registerError(expression);
         }
     }
 }

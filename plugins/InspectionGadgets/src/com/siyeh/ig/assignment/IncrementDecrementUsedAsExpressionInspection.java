@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.confusing;
+package com.siyeh.ig.assignment;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
@@ -22,8 +22,10 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import org.jetbrains.annotations.NotNull;
 
-public class IncrementDecrementUsedAsExpressionInspection extends ExpressionInspection {
-    public String getID(){
+public class IncrementDecrementUsedAsExpressionInspection
+        extends ExpressionInspection {
+
+    public String getID() {
         return "ValueOfIncrementOrDecrementUsed";
     }
     public String getDisplayName() {
@@ -37,35 +39,43 @@ public class IncrementDecrementUsedAsExpressionInspection extends ExpressionInsp
     public String buildErrorString(PsiElement location) {
         final String expressionType;
         if (location instanceof PsiPostfixExpression) {
-            final PsiJavaToken sign = ((PsiPostfixExpression) location).getOperationSign();
-            if (sign.getTokenType().equals(JavaTokenType.PLUSPLUS)) {
+            final PsiPostfixExpression postfixExpression =
+                    (PsiPostfixExpression)location;
+            final PsiJavaToken sign = postfixExpression.getOperationSign();
+            final IElementType tokenType = sign.getTokenType();
+            if (tokenType.equals(JavaTokenType.PLUSPLUS)) {
                 expressionType = "post-increment";
             } else {
                 expressionType = "post-decrement";
             }
         } else {
-            final PsiJavaToken sign = ((PsiPrefixExpression) location).getOperationSign();
-            if (sign.getTokenType().equals(JavaTokenType.PLUSPLUS)) {
+            final PsiPrefixExpression prefixExpression =
+                    (PsiPrefixExpression)location;
+            final PsiJavaToken sign = prefixExpression.getOperationSign();
+            final IElementType tokenType = sign.getTokenType();
+            if (tokenType.equals(JavaTokenType.PLUSPLUS)) {
                 expressionType = "pre-increment";
             } else {
                 expressionType = "pre-decrement";
             }
         }
-        return "Value of " + expressionType + " expression #ref is used #loc";
+        return "Value of " + expressionType + " expression '#ref' is used #loc";
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new IncrementDecrementUsedAsExpressionVisitor();
     }
 
-    private static class IncrementDecrementUsedAsExpressionVisitor extends BaseInspectionVisitor {
+    private static class IncrementDecrementUsedAsExpressionVisitor
+            extends BaseInspectionVisitor {
 
-
-        public void visitPostfixExpression(@NotNull PsiPostfixExpression expression) {
+        public void visitPostfixExpression(
+                @NotNull PsiPostfixExpression expression) {
             super.visitPostfixExpression(expression);
             if(expression.getParent() instanceof PsiExpressionStatement ||
-                                    (expression.getParent() instanceof PsiExpressionList &&
-                                        expression.getParent().getParent() instanceof PsiExpressionListStatement)) {
+                    (expression.getParent() instanceof PsiExpressionList &&
+                            expression.getParent().getParent() instanceof
+                                    PsiExpressionListStatement)) {
                 return;
             }
             final PsiJavaToken sign = expression.getOperationSign();
@@ -80,13 +90,14 @@ public class IncrementDecrementUsedAsExpressionInspection extends ExpressionInsp
             registerError(expression);
         }
 
-        public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
+        public void visitPrefixExpression(
+                @NotNull PsiPrefixExpression expression) {
             super.visitPrefixExpression(expression);
 
             if (expression.getParent() instanceof PsiExpressionStatement ||
-                            (expression.getParent() instanceof PsiExpressionList &&
-                                    expression.getParent()
-                                    .getParent() instanceof PsiExpressionListStatement)) {
+                    (expression.getParent() instanceof PsiExpressionList &&
+                            expression.getParent().getParent() instanceof
+                                    PsiExpressionListStatement)) {
                 return;
             }
             final PsiJavaToken sign = expression.getOperationSign();
@@ -101,5 +112,4 @@ public class IncrementDecrementUsedAsExpressionInspection extends ExpressionInsp
             registerError(expression);
         }
     }
-
 }

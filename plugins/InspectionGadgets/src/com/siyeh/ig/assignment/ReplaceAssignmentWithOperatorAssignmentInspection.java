@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.verbose;
+package com.siyeh.ig.assignment;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ReplaceAssignmentWithOperatorAssignmentInspection
         extends ExpressionInspection{
+
     public String getID(){
         return "AssignmentReplaceableWithOperatorAssignment";
     }
@@ -44,10 +45,10 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
     }
 
     public String buildErrorString(PsiElement location){
-        return "#ref could be simplified to " +
-                       calculateReplacementExpression(
-                               (PsiAssignmentExpression) location) +
-                       " #loc";
+        final PsiAssignmentExpression assignmentExpression =
+                (PsiAssignmentExpression)location;
+        return "'#ref' could be simplified to '" +
+                calculateReplacementExpression(assignmentExpression) + "' #loc";
     }
 
     private static String calculateReplacementExpression(
@@ -79,6 +80,7 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
 
     private static class ReplaceAssignmentWithOperatorAssignmentFix
             extends InspectionGadgetsFix{
+
         private final String m_name;
 
         private ReplaceAssignmentWithOperatorAssignmentFix(
@@ -102,7 +104,7 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
+                throws IncorrectOperationException{
             final PsiAssignmentExpression expression =
                     (PsiAssignmentExpression) descriptor.getPsiElement();
             final String newExpression =
@@ -140,7 +142,7 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
                 return;
             }
             if(!EquivalenceChecker.expressionsAreEquivalent(lhs,
-                                                                      lOperand)){
+                                                            lOperand)){
                 return;
             }
             registerError(assignment);
