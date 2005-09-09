@@ -51,12 +51,9 @@ public class UnusedMessageFormatParameterInspection extends BaseLocalInspectionT
           value = value.substring(index + 1);
           final int comma = value.indexOf(',');
           final int brace = value.indexOf('}');
-          if (comma == -1 && brace == -1) break; //misformatted string
+          if (brace == -1) break; //misformatted string
           if (comma == -1) {
             index = brace;
-          }
-          else if (brace == -1) {
-            index = comma;
           }
           else {
             index = Math.min(comma, brace);
