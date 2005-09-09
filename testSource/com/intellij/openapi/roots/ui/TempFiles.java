@@ -8,15 +8,14 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 
 public class TempFiles {
-  private List<File> myFilesToDelete;
+  private Collection<File> myFilesToDelete;
 
-  public TempFiles(List<File> filesToDelete) {
+  public TempFiles(Collection<File> filesToDelete) {
     myFilesToDelete = filesToDelete;
   }
 

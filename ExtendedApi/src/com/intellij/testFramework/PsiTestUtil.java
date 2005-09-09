@@ -18,17 +18,17 @@ import com.intellij.util.IncorrectOperationException;
 import junit.framework.Assert;
 
 import java.io.File;
-import java.util.List;
+import java.util.Collection;
 
 public class PsiTestUtil {
   public static VirtualFile createTestProjectStructure(Project project,
                                                        Module module,
                                                        String rootPath,
-                                                       List<File> filesToDelete) throws Exception {
+                                                       Collection<File> filesToDelete) throws Exception {
     return createTestProjectStructure(project, module, rootPath, filesToDelete, true);
   }
 
-  public static VirtualFile createTestProjectStructure(Project project, Module module, List<File> filesToDelete)
+  public static VirtualFile createTestProjectStructure(Project project, Module module, Collection<File> filesToDelete)
     throws Exception {
     return createTestProjectStructure(project, module, null, filesToDelete, true);
   }
@@ -36,7 +36,7 @@ public class PsiTestUtil {
   public static VirtualFile createTestProjectStructure(Project project,
                                                        Module module,
                                                        String rootPath,
-                                                       List<File> filesToDelete,
+                                                       Collection<File> filesToDelete,
                                                        boolean addProjectRoots) throws Exception {
     VirtualFile vDir = createTestProjectStructure(module, rootPath, filesToDelete, addProjectRoots);
 
@@ -47,7 +47,7 @@ public class PsiTestUtil {
 
   public static VirtualFile createTestProjectStructure(final Module module,
                                                        final String rootPath,
-                                                       final List<File> filesToDelete, final boolean addProjectRoots
+                                                       final Collection<File> filesToDelete, final boolean addProjectRoots
   ) throws Exception {
     File dir = FileUtil.createTempDirectory("unitTest", null);
     filesToDelete.add(dir);

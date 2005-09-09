@@ -8,7 +8,6 @@ import com.intellij.util.io.ZipUtil;
 import gnu.trove.THashSet;
 
 import java.io.*;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
@@ -49,7 +48,7 @@ public class JarAndCopyBuildInstructionImpl extends FileCopyInstructionImpl impl
     // create temp jars, and add these into upper level jar
     // todo optimization: cache created jars
     final String moduleName = getModule() == null ? "jar" : ModuleUtil.getModuleNameInReadAction(getModule());
-    final File tempFile = File.createTempFile(moduleName+"___",".tmp");
+    final File tempFile = createTempFile(moduleName, ".tmp");
     makeJar(context, tempFile, fileFilter);
 
     final String outputRelativePath = getOutputRelativePath();
@@ -58,7 +57,7 @@ public class JarAndCopyBuildInstructionImpl extends FileCopyInstructionImpl impl
     if (isExternalDependencyInstruction()) {
       // copy dependent file along with jar file
       final File toFile = MakeUtil.canonicalRelativePath(jarFile, outputRelativePath);
-      MakeUtil.getInstance().copyFile(file, toFile, context, new HashSet<String>(), fileFilter);
+      MakeUtil.getInstance().copyFile(file, toFile, context, null, fileFilter);
       dependencies.addInstruction(this);
     }
     else {

@@ -40,11 +40,11 @@ import java.awt.*;
 import java.awt.event.InvocationEvent;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.HashSet;
 
 /**
  * @author mike
@@ -62,7 +62,7 @@ public abstract class IdeaTestCase extends TestCase implements DataProvider {
   protected ProjectManagerEx myProjectManager;
   protected Project myProject;
   protected Module myModule;
-  protected static List<File> myFilesToDelete;
+  protected static Collection<File> myFilesToDelete;
   protected boolean myAssertionsInTestDetected;
   protected static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.IdeaTestCase");
   public static Thread ourTestThread;
@@ -106,7 +106,7 @@ public abstract class IdeaTestCase extends TestCase implements DataProvider {
 
     cleanupVfs();
 
-    myFilesToDelete = new ArrayList<File>();
+    myFilesToDelete = new HashSet<File>();
 
     setUpProject();
 

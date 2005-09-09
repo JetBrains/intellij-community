@@ -90,7 +90,7 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
     if (isExternalDependencyInstruction()) {
       // copy dependent file along with jar file
       final File toFile = MakeUtil.canonicalRelativePath(jarFile, outputRelativePath);
-      MakeUtil.getInstance().copyFile(file, toFile, context, new HashSet<String>(), fileFilter);
+      MakeUtil.getInstance().copyFile(file, toFile, context, null, fileFilter);
       dependencies.addInstruction(this);
     }
     else {

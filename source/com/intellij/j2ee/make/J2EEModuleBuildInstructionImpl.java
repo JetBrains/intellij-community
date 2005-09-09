@@ -13,9 +13,10 @@ import gnu.trove.THashSet;
 
 import java.io.*;
 import java.util.Set;
+import java.util.Collection;
+import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
-import java.util.jar.JarFile;
 
 public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase implements J2EEModuleBuildInstruction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.j2ee.make.J2EEModuleBuildInstructionImpl");
@@ -106,9 +107,15 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
     }
     else {
       String moduleName = ModuleUtil.getModuleNameInReadAction(getModule());
-      tempFile = File.createTempFile(moduleName+"___",".tmp");
-      tempFile.deleteOnExit();
+      tempFile = createTempFile(moduleName,".tmp");
       makeJar(context, tempFile, childDependencies, fileFilter);
+      childDependencies.visitInstructions(new BuildInstructionVisitor() {
+        public boolean visitFileCopyInstruction(FileCopyInstruction instruction) throws Exception {
+          File file = new File(PathUtil.getCanonicalPath(MakeUtil.appendToPath(tempFile.getPath(), instruction.getOutputRelativePath())));
+          addFileToDelete(file);
+          return true;
+        }
+      }, false);
     }
     ZipUtil.addFileToZip(outputStream, tempFile, getOutputRelativePath(), writtenRelativePaths, fileFilter);
     try {
@@ -124,7 +131,7 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
         public boolean visitJarAndCopyBuildInstruction(JarAndCopyBuildInstruction instruction) throws Exception {
           if (instruction.getJarFile() == null) {
             File tempJar = File.createTempFile("___",".tmp");
-            tempJar.deleteOnExit();
+            addFileToDelete(tempJar);
             instruction.makeJar(context, tempJar, fileFilter);
           }
           File jarFile = instruction.getJarFile();
@@ -207,5 +214,16 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
       }
     }, false);
     return file.get();
+  }
+
+  public void collectFilesToDelete(final Collection<File> filesToDelete) {
+    super.collectFilesToDelete(filesToDelete);
+    BuildRecipe childInstructions = getChildInstructions(null);
+    childInstructions.visitInstructions(new BuildInstructionVisitor() {
+      public boolean visitInstruction(BuildInstruction instruction) throws Exception {
+        ((BuildInstructionBase)instruction).collectFilesToDelete(filesToDelete);
+        return true;
+      }
+    }, false);
   }
 }

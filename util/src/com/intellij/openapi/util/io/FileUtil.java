@@ -163,10 +163,7 @@ public class FileUtil {
         return File.createTempFile(prefix, suffix).getCanonicalFile();
       }
       catch(IOException e){ // Win32 createFileExclusively access denied
-        if (++exceptionsCount < 100){
-          continue;
-        }
-        else{
+        if (++exceptionsCount >= 100) {
           throw e;
         }
       }
@@ -206,8 +203,7 @@ public class FileUtil {
       public void run() {
         ShutDownTracker.getInstance().registerStopperThread(this);
         try {
-          for (int i = 0; i < tempFiles.length; i++) {
-            File tempFile = tempFiles[i];
+          for (File tempFile : tempFiles) {
             delete(tempFile);
           }
         }

@@ -118,4 +118,7 @@ public final class CompilerMessageImpl implements CompilerMessage {
     return result;
   }
 
+  public String toString() {
+    return myMessage;
+  }
 }

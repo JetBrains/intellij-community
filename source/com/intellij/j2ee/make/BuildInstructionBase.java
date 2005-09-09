@@ -4,10 +4,16 @@
 package com.intellij.j2ee.make;
 
 import com.intellij.openapi.module.Module;
+import gnu.trove.THashSet;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Collection;
 
 public abstract class BuildInstructionBase implements BuildInstruction, Cloneable {
   private final String myOutputRelativePath;
   private final Module myModule;
+  private Collection<File> myFilesToDelete;
 
   protected BuildInstructionBase(String outputRelativePath, Module module) {
     myOutputRelativePath = outputRelativePath;
@@ -33,5 +39,25 @@ public abstract class BuildInstructionBase implements BuildInstruction, Cloneabl
 
   public boolean isExternalDependencyInstruction() {
     return getOutputRelativePath().startsWith("..");
+  }
+
+  public void addFileToDelete(File file) {
+    if (myFilesToDelete == null) {
+      myFilesToDelete = new THashSet<File>();
+    }
+    myFilesToDelete.add(file);
+  }
+
+  public void collectFilesToDelete(Collection<File> filesToDelete) {
+    if (myFilesToDelete != null) {
+      filesToDelete.addAll(myFilesToDelete);
+    }
+    myFilesToDelete = null;
+  }
+
+  protected File createTempFile(final String prefix, final String suffix) throws IOException {
+    final File tempFile = File.createTempFile(prefix +"___",suffix);
+    addFileToDelete(tempFile);
+    return tempFile;
   }
 }
