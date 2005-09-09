@@ -142,6 +142,11 @@ public abstract class AbstractSyntheticBlock implements Block{
     return isXmlTag(myStartTreeNode);
   }
 
+  public XmlTag getStartTag() {
+    return (XmlTag)myStartTreeNode.getPsi();    
+  }
+
+
   public boolean endsWithTag() {
     return isXmlTag(myEndTreeNode);
   }
@@ -185,4 +190,5 @@ public abstract class AbstractSyntheticBlock implements Block{
   protected boolean insertLineFeedAfter(final XmlTag tag) {
     return myXmlFormattingPolicy.getWrappingTypeForTagBegin(tag) == WrapType.ALWAYS;
   }
+
 }

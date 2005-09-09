@@ -5,6 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.formatting.*;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -186,6 +187,12 @@ public class XmlTagBlock extends AbstractXmlBlock{
     if (myXmlFormattingPolicy.keepWhiteSpacesInsideTag(getTag())) return Spacing.getReadOnlySpacing();
 
     if (myXmlFormattingPolicy.getShouldKeepWhiteSpaces()) {
+      return Spacing.getReadOnlySpacing();
+    }
+
+    if (syntheticBlock2.startsWithTag() ) {
+      final XmlTag startTag = syntheticBlock2.getStartTag();
+      if (myXmlFormattingPolicy.keepWhiteSpacesInsideTag(startTag) && startTag.textContains('\n'))
       return Spacing.getReadOnlySpacing();
     }
 
