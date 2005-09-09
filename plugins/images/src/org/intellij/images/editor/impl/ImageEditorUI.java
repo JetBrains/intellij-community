@@ -26,6 +26,7 @@ import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.editor.actionSystem.ImageEditorActions;
 import org.intellij.images.options.*;
 import org.intellij.images.ui.ImageComponent;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -43,10 +44,8 @@ import java.awt.image.BufferedImage;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 final class ImageEditorUI extends JPanel {
-    @SuppressWarnings({"HardCodedStringLiteral"})
-    private static final String IMAGE_PANEL = "image";
-    @SuppressWarnings({"HardCodedStringLiteral"})
-    private static final String ERROR_PANEL = "error";
+    @NonNls private static final String IMAGE_PANEL = "image";
+    @NonNls private static final String ERROR_PANEL = "error";
 
     private final ImageZoomModel zoomModel = new ImageZoomModelImpl();
     private final ImageWheelAdapter wheelAdapter = new ImageWheelAdapter();

@@ -23,6 +23,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.intellij.images.options.Options;
 import org.intellij.images.options.OptionsManager;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Options configurable manager.
@@ -30,10 +31,8 @@ import org.jdom.Element;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 final class OptionsManagerImpl extends OptionsManager implements NamedJDOMExternalizable, ApplicationComponent {
-    @SuppressWarnings({"HardCodedStringLiteral"})
-    private static final String CONFIGURATION_NAME = "images.support";
-    @SuppressWarnings({"HardCodedStringLiteral"})
-    private static final String NAME = "Images.OptionsManager";
+    @NonNls private static final String CONFIGURATION_NAME = "images.support";
+    @NonNls private static final String NAME = "Images.OptionsManager";
     private Options options = new OptionsImpl();
 
     public String getComponentName() {

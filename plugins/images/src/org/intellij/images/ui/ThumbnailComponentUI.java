@@ -21,6 +21,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.images.IconsBundle;
 import org.intellij.images.editor.ImageDocument;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -36,16 +37,17 @@ public class ThumbnailComponentUI extends ComponentUI {
     private static final Icon BLANK_ICON = IconLoader.getIcon("/org/intellij/images/icons/ThumbnailBlank.png");
     private static final Icon DIRECTORY_ICON = IconLoader.getIcon("/org/intellij/images/icons/ThumbnailDirectory.png");
     private static final Icon ERROR_ICON = Messages.getErrorIcon();
-    @SuppressWarnings({"HardCodedStringLiteral"})
-    private static final String DOTS = "...";
+    @NonNls private static final String DOTS = "...";
 
     private static final ThumbnailComponentUI ui = new ThumbnailComponentUI();
 
-    static {
-      //noinspection HardCodedStringLiteral
-      UIManager.getDefaults().put("ThumbnailComponent.errorString",
-                                  IconsBundle.message("thumbnails.component.error.text"));
-    }
+  @NonNls private static final String THUMBNAIL_COMPONENT_ERROR_STRING = "ThumbnailComponent.errorString";
+
+  static {
+    //noinspection HardCodedStringLiteral
+    UIManager.getDefaults().put(THUMBNAIL_COMPONENT_ERROR_STRING,
+                                IconsBundle.message("thumbnails.component.error.text"));
+  }
 
 
     public void paint(Graphics g, JComponent c) {
@@ -235,9 +237,8 @@ public class ThumbnailComponentUI extends ComponentUI {
         g.drawString(error, 8, 8 + fontMetrics.getAscent());
     }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private String getSubmnailComponentErrorString() {
-    return UIManager.getString("ThumbnailComponent.errorString");
+    return UIManager.getString(THUMBNAIL_COMPONENT_ERROR_STRING);
   }
 
     private static Font getSmallFont() {

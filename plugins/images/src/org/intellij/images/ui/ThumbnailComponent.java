@@ -20,16 +20,17 @@ import com.intellij.openapi.util.text.StringUtil;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
 public class ThumbnailComponent extends JComponent {
     /**
      * @see #getUIClassID
      * @see #readObject
      */
-    private static final String uiClassID = "ThumbnailComponentUI";
+    @NonNls private static final String uiClassID = "ThumbnailComponentUI";
 
     static {
         UIManager.getDefaults().put(uiClassID, ThumbnailComponentUI.class.getName());
@@ -45,10 +46,15 @@ public class ThumbnailComponent extends JComponent {
     private String fileName;
     private boolean directory;
     private int imagesCount;
+  @NonNls private static final String FORMAT_PROP = "format";
+  @NonNls private static final String FILE_SIZE_PROP = "fileSize";
+  @NonNls private static final String FILE_NAME_PROP = "fileName";
+  @NonNls private static final String DIRECTORY_PROP = "directory";
+  @NonNls private static final String IMAGES_COUNT_PROP = "imagesCount";
 
-    public ThumbnailComponent() {
-        updateUI();
-    }
+  public ThumbnailComponent() {
+      updateUI();
+  }
 
     public ImageComponent getImageComponent() {
         return imageComponent;
@@ -62,7 +68,7 @@ public class ThumbnailComponent extends JComponent {
         String oldValue = this.format;
         if (oldValue != null && !oldValue.equals(format) || oldValue == null && format != null) {
             this.format = format;
-            firePropertyChange("format", oldValue, this.format);
+            firePropertyChange(FORMAT_PROP, oldValue, this.format);
         }
     }
 
@@ -74,7 +80,7 @@ public class ThumbnailComponent extends JComponent {
         long oldValue = this.fileSize;
         if (oldValue != fileSize) {
             this.fileSize = fileSize;
-            firePropertyChange("fileSize", new Long(oldValue), new Long(this.fileSize));
+            firePropertyChange(FILE_SIZE_PROP, new Long(oldValue), new Long(this.fileSize));
         }
     }
 
@@ -86,7 +92,7 @@ public class ThumbnailComponent extends JComponent {
         String oldValue = this.fileName;
         if (oldValue != null && !oldValue.equals(fileName) || oldValue == null && fileName != null) {
             this.fileName = fileName;
-            firePropertyChange("fileName", oldValue, this.fileName);
+            firePropertyChange(FILE_NAME_PROP, oldValue, this.fileName);
         }
     }
 
@@ -98,7 +104,7 @@ public class ThumbnailComponent extends JComponent {
         boolean oldValue = this.directory;
         if (oldValue != directory) {
             this.directory = directory;
-            firePropertyChange("directory", oldValue, this.directory);
+            firePropertyChange(DIRECTORY_PROP, oldValue, this.directory);
         }
     }
 
@@ -110,7 +116,7 @@ public class ThumbnailComponent extends JComponent {
         int oldValue = this.imagesCount;
         if (oldValue != imagesCount) {
             this.imagesCount = imagesCount;
-            firePropertyChange("imagesCount", oldValue, this.imagesCount);
+            firePropertyChange(IMAGES_COUNT_PROP, oldValue, this.imagesCount);
         }
     }
 

@@ -31,6 +31,7 @@ import org.intellij.images.editor.ImageEditorManager;
 import org.intellij.images.editor.ImageFileEditor;
 import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.options.*;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
@@ -42,8 +43,7 @@ import java.io.Serializable;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileEditor {
-    @SuppressWarnings({"HardCodedStringLiteral"})
-    private static final String NAME = "ImageFileEditor";
+    @NonNls private static final String NAME = "ImageFileEditor";
     private final ImageEditor imageEditor;
 
     ImageFileEditorImpl(Project project, VirtualFile file) {

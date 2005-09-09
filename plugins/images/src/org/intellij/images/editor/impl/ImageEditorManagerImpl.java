@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.ImageEditorManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Image viewer manager implementation.
@@ -28,8 +29,7 @@ import org.jetbrains.annotations.NotNull;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 final class ImageEditorManagerImpl implements ImageEditorManager, ApplicationComponent {
-    @SuppressWarnings({"HardCodedStringLiteral"})
-    private static final String NAME = "ImageEditorManager";
+    @NonNls private static final String NAME = "ImageEditorManager";
 
     public String getComponentName() {
         return NAME;

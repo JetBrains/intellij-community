@@ -36,7 +36,6 @@ import java.util.Iterator;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
 public final class IfsUtil {
     private static final Key<Long> TIMESTAMP_KEY = Key.create("Image.timeStamp");
     private static final Key<String> FORMAT_KEY = Key.create("Image.format");

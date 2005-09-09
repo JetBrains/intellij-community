@@ -19,6 +19,7 @@ package org.intellij.images.ui;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.options.GridOptions;
 import org.intellij.images.options.TransparencyChessboardOptions;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -33,13 +34,12 @@ import java.util.Set;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
 public class ImageComponent extends JComponent {
     /**
      * @see #getUIClassID
      * @see #readObject
      */
-    private static final String uiClassID = "ImageComponentUI";
+    @NonNls private static final String uiClassID = "ImageComponentUI";
 
     static {
         UIManager.getDefaults().put(uiClassID, ImageComponentUI.class.getName());
@@ -48,10 +48,18 @@ public class ImageComponent extends JComponent {
     private final ImageDocument document = new ImageDocumentImpl();
     private final Grid grid = new Grid();
     private final Chessboard chessboard = new Chessboard();
+  @NonNls private static final String TRANSPARENCY_CHESSBOARD_CELL_SIZE_PROP = "TransparencyChessboard.cellSize";
+  @NonNls private static final String TRANSPARENCY_CHESSBOARD_WHITE_COLOR_PROP = "TransparencyChessboard.whiteColor";
+  @NonNls private static final String TRANSPARENCY_CHESSBOARD_BLACK_COLOR_PROP = "TransparencyChessboard.blackColor";
+  @NonNls private static final String TRANSPARENCY_CHESSBOARD_VISIBLE_PROP = "TransparencyChessboard.visible";
+  @NonNls private static final String GRID_LINE_ZOOM_FACTOR_PROP = "Grid.lineZoomFactor";
+  @NonNls private static final String GRID_LINE_SPAN_PROP = "Grid.lineSpan";
+  @NonNls private static final String GRID_LINE_COLOR_PROP = "Grid.lineColor";
+  @NonNls private static final String GRID_VISIBLE_PROP = "Grid.visible";
 
-    public ImageComponent() {
-        updateUI();
-    }
+  public ImageComponent() {
+      updateUI();
+  }
 
     public ImageDocument getDocument() {
         return document;
@@ -61,7 +69,7 @@ public class ImageComponent extends JComponent {
         int oldValue = chessboard.getCellSize();
         if (oldValue != cellSize) {
             chessboard.setCellSize(cellSize);
-            firePropertyChange("TransparencyChessboard.cellSize", oldValue, cellSize);
+            firePropertyChange(TRANSPARENCY_CHESSBOARD_CELL_SIZE_PROP, oldValue, cellSize);
         }
     }
 
@@ -69,7 +77,7 @@ public class ImageComponent extends JComponent {
         Color oldValue = chessboard.getWhiteColor();
         if (oldValue != null && !oldValue.equals(color) || oldValue == null && color != null) {
             chessboard.setWhiteColor(color);
-            firePropertyChange("TransparencyChessboard.whiteColor", oldValue, color);
+            firePropertyChange(TRANSPARENCY_CHESSBOARD_WHITE_COLOR_PROP, oldValue, color);
         }
     }
 
@@ -77,7 +85,7 @@ public class ImageComponent extends JComponent {
         Color oldValue = chessboard.getBlackColor();
         if (oldValue != null && !oldValue.equals(color) || oldValue == null && color != null) {
             chessboard.setBlackColor(color);
-            firePropertyChange("TransparencyChessboard.blackColor", oldValue, color);
+            firePropertyChange(TRANSPARENCY_CHESSBOARD_BLACK_COLOR_PROP, oldValue, color);
         }
     }
 
@@ -85,7 +93,7 @@ public class ImageComponent extends JComponent {
         boolean oldValue = chessboard.isVisible();
         if (oldValue != visible) {
             chessboard.setVisible(visible);
-            firePropertyChange("TransparencyChessboard.visible", oldValue, visible);
+            firePropertyChange(TRANSPARENCY_CHESSBOARD_VISIBLE_PROP, oldValue, visible);
         }
     }
 
@@ -109,7 +117,7 @@ public class ImageComponent extends JComponent {
         int oldValue = grid.getLineZoomFactor();
         if (oldValue != lineZoomFactor) {
             grid.setLineZoomFactor(lineZoomFactor);
-            firePropertyChange("Grid.lineZoomFactor", oldValue, lineZoomFactor);
+            firePropertyChange(GRID_LINE_ZOOM_FACTOR_PROP, oldValue, lineZoomFactor);
         }
     }
 
@@ -117,7 +125,7 @@ public class ImageComponent extends JComponent {
         int oldValue = grid.getLineSpan();
         if (oldValue != lineSpan) {
             grid.setLineSpan(lineSpan);
-            firePropertyChange("Grid.lineSpan", oldValue, lineSpan);
+            firePropertyChange(GRID_LINE_SPAN_PROP, oldValue, lineSpan);
         }
     }
 
@@ -125,7 +133,7 @@ public class ImageComponent extends JComponent {
         Color oldValue = grid.getLineColor();
         if (oldValue != null && !oldValue.equals(color) || oldValue == null && color != null) {
             grid.setLineColor(color);
-            firePropertyChange("Grid.lineColor", oldValue, color);
+            firePropertyChange(GRID_LINE_COLOR_PROP, oldValue, color);
         }
     }
 
@@ -133,7 +141,7 @@ public class ImageComponent extends JComponent {
         boolean oldValue = grid.isVisible();
         if (oldValue != visible) {
             grid.setVisible(visible);
-            firePropertyChange("Grid.visible", oldValue, visible);
+            firePropertyChange(GRID_VISIBLE_PROP, oldValue, visible);
         }
     }
 

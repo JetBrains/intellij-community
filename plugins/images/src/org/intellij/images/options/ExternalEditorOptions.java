@@ -16,15 +16,16 @@
  */
 package org.intellij.images.options;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * External editor options.
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
 public interface ExternalEditorOptions extends Cloneable {
-    String ATTR_PREFIX = "ExternalEditor.";
-    String ATTR_EXECUTABLE_PATH = ATTR_PREFIX + "executablePath";
+    @NonNls String ATTR_PREFIX = "ExternalEditor.";
+    @NonNls String ATTR_EXECUTABLE_PATH = ATTR_PREFIX + "executablePath";
 
     String getExecutablePath();
 

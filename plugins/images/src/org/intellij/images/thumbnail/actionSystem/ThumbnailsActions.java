@@ -15,14 +15,15 @@
  */
 package org.intellij.images.thumbnail.actionSystem;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Editor actions.
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
 public interface ThumbnailsActions {
-    String GROUP_POPUP = "Images.ThumbnailsPopupMenu";
-    String GROUP_TOOLBAR = "Images.ThumbnailsToolbar";
-    String ACTION_PLACE = "Images.Thumbnails";
+    @NonNls String GROUP_POPUP = "Images.ThumbnailsPopupMenu";
+    @NonNls String GROUP_TOOLBAR = "Images.ThumbnailsToolbar";
+    @NonNls String ACTION_PLACE = "Images.Thumbnails";
 }

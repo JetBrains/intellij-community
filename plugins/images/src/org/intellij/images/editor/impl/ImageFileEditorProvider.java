@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Image editor provider.
@@ -28,10 +29,8 @@ import org.jdom.Element;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 final class ImageFileEditorProvider implements ApplicationComponent, FileEditorProvider {
-    @SuppressWarnings({"HardCodedStringLiteral"})
-    private static final String NAME = "ImageEditorProvider";
-    @SuppressWarnings({"HardCodedStringLiteral"})
-    private static final String EDITOR_TYPE_ID = "images";
+    @NonNls private static final String NAME = "ImageEditorProvider";
+    @NonNls private static final String EDITOR_TYPE_ID = "images";
 
     private final ImageFileTypeManager typeManager;
 

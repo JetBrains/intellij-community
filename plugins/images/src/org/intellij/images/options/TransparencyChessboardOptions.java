@@ -15,6 +15,8 @@
  */
 package org.intellij.images.options;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.awt.*;
 
 /**
@@ -22,16 +24,15 @@ import java.awt.*;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
 public interface TransparencyChessboardOptions extends Cloneable {
     int DEFAULT_CELL_SIZE = 5;
     Color DEFAULT_WHITE_COLOR = Color.WHITE;
     Color DEFAULT_BLACK_COLOR = Color.LIGHT_GRAY;
-    String ATTR_PREFIX = "Editor.TransparencyChessboard.";
-    String ATTR_SHOW_DEFAULT = ATTR_PREFIX + "showDefault";
-    String ATTR_CELL_SIZE = ATTR_PREFIX + "cellSize";
-    String ATTR_WHITE_COLOR = ATTR_PREFIX + "whiteColor";
-    String ATTR_BLACK_COLOR = ATTR_PREFIX + "blackColor";
+    @NonNls String ATTR_PREFIX = "Editor.TransparencyChessboard.";
+    @NonNls String ATTR_SHOW_DEFAULT = ATTR_PREFIX + "showDefault";
+    @NonNls String ATTR_CELL_SIZE = ATTR_PREFIX + "cellSize";
+    @NonNls String ATTR_WHITE_COLOR = ATTR_PREFIX + "whiteColor";
+    @NonNls String ATTR_BLACK_COLOR = ATTR_PREFIX + "blackColor";
 
     boolean isShowDefault();
 
