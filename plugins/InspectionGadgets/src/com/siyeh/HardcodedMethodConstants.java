@@ -1,13 +1,13 @@
 package com.siyeh;
 
 import com.intellij.psi.PsiKeyword;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * User: anna
  * Date: 30-Aug-2005
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
-public class HardcodedMethodConstants {
+@NonNls public class HardcodedMethodConstants {
   public static final String EQUALS = "equals";
   public static final String TO_STRING = "toString";
   public static final String GET_CLASS = "getClass";

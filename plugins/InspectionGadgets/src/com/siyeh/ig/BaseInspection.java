@@ -34,17 +34,17 @@ public abstract class BaseInspection extends LocalInspectionTool{
     private final String m_shortName = null;
     private InspectionRunListener listener = null;
     private boolean telemetryEnabled = true;
+    @NonNls private static final String INSPECTION = "Inspection";
 
-    @SuppressWarnings({"HardCodedStringLiteral"})
-    public String getShortName(){
-        if(m_shortName == null){
-            final Class<? extends BaseInspection> aClass = getClass();
-            final String name = aClass.getName();
-            return name.substring(name.lastIndexOf((int) '.') + 1,
-                                  name.length() - "Inspection".length());
-        }
-        return m_shortName;
-    }
+  public String getShortName(){
+      if(m_shortName == null){
+          final Class<? extends BaseInspection> aClass = getClass();
+          final String name = aClass.getName();
+          return name.substring(name.lastIndexOf((int) '.') + 1,
+                                name.length() - INSPECTION.length());
+      }
+      return m_shortName;
+  }
 
     protected BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
                                                   boolean onTheFly){
