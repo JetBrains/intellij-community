@@ -2,6 +2,7 @@ package com.intellij.ide;
 
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ResourceBundle;
 
@@ -17,7 +18,7 @@ public class IdeBundle {
 
   private IdeBundle() {}
 
-  public static String message(@PropertyKey(resourceBundle = "com.intellij.ide.IdeBundle") String key, Object... params) {
+  public static String message(@NonNls @PropertyKey(resourceBundle = "com.intellij.ide.IdeBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }
