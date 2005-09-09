@@ -896,7 +896,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
       if (e.getOldLength() > e.getNewLength() || startDocLine != endDocLine) {
         updateGutterSize();
       }
-      if (e.getOldLength() > e.getNewLength() && startDocLine != endDocLine) {
+
+      if (countLineFeeds(e.getOldFragment()) != countLineFeeds(e.getNewFragment())) {
         // Lines removed. Need to repaint till the end of the screen
         repaintToScreenBotton(startLine);
         painted = true;
@@ -911,6 +912,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     Point caretLocation = visualPositionToXY(getCaretModel().getVisualPosition());
     int scrollOffset = caretLocation.y - myCaretUpdateVShift;
     getScrollingModel().scrollVertically(scrollOffset);
+  }
+
+  private static int countLineFeeds(CharSequence c) {
+    int count = 0;
+    for (int i = 0; i < c.length(); i++) {
+      if (c.charAt(i) == '\n') count++;
+    }
+    return count;
   }
 
   private void updateGutterSize() {
