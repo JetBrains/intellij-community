@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.confusing;
+package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
@@ -40,7 +40,7 @@ public class RefusedBequestInspection extends MethodInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "Method #ref ignores defined method in superclass #loc";
+        return "Method '#ref()' ignores defined method in superclass #loc";
     }
 
     public JComponent createOptionsPanel() {
@@ -105,6 +105,7 @@ public class RefusedBequestInspection extends MethodInspection{
     }
 
     private static class SuperCallVisitor extends PsiRecursiveElementVisitor{
+
         private PsiMethod methodToSearchFor;
         private boolean hasSuperCall = false;
 
@@ -119,7 +120,8 @@ public class RefusedBequestInspection extends MethodInspection{
             }
         }
 
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression){
             if(hasSuperCall){
                 return;
             }

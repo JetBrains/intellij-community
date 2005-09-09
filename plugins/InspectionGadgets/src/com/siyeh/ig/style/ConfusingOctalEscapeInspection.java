@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.confusing;
+package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiElement;
@@ -24,9 +24,11 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ConfusingOctalEscapeInspection extends ExpressionInspection {
-    public String getID(){
+
+    public String getID() {
         return "ConfusingOctalEscapeSequence";
     }
+
     public String getDisplayName() {
         return "Confusing octal escape sequence";
     }
@@ -36,14 +38,16 @@ public class ConfusingOctalEscapeInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "String #ref contains potentially confusing octal escape sequence #loc";
+        return "String '#ref' contains potentially confusing octal escape "
+                + "sequence #loc";
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new ConfusingOctalEscapeVisitor();
     }
 
-    private static class ConfusingOctalEscapeVisitor extends BaseInspectionVisitor {
+    private static class ConfusingOctalEscapeVisitor
+            extends BaseInspectionVisitor {
 
         public void visitLiteralExpression(@NotNull PsiLiteralExpression exp) {
             super.visitLiteralExpression(exp);
@@ -57,32 +61,30 @@ public class ConfusingOctalEscapeInspection extends ExpressionInspection {
             registerError(exp);
         }
 
-    }
-
-    private static boolean containsConfusingOctalEscape(String text) {
-        int escapeStart = -1;
-        while (true) {
-            escapeStart = text.indexOf((int) '\\', escapeStart + 1);
-            if (escapeStart < 0) {
-                return false;
-            }
-            int digitPosition = escapeStart + 1;
-            while (digitPosition < text.length() &&
-                    Character.isDigit(text.charAt(digitPosition))) {
-                digitPosition++;
-            }
-            if (digitPosition > escapeStart + 1) {
-                final String escapeString = text.substring(escapeStart + 1, digitPosition);
-                if (escapeString.length() > 3) {
-                    return true;
+        private static boolean containsConfusingOctalEscape(String text) {
+            int escapeStart = -1;
+            while (true) {
+                escapeStart = text.indexOf((int) '\\', escapeStart + 1);
+                if (escapeStart < 0) {
+                    return false;
                 }
-                if (escapeString.indexOf((int) '8') > 0 ||
-                        escapeString.indexOf((int) '9') > 0) {
-                    return true;
+                int digitPosition = escapeStart + 1;
+                while (digitPosition < text.length() &&
+                        Character.isDigit(text.charAt(digitPosition))) {
+                    digitPosition++;
+                }
+                if (digitPosition > escapeStart + 1) {
+                    final String escapeString = text.substring(escapeStart + 1,
+                                                               digitPosition);
+                    if (escapeString.length() > 3) {
+                        return true;
+                    }
+                    if (escapeString.indexOf((int) '8') > 0 ||
+                            escapeString.indexOf((int) '9') > 0) {
+                        return true;
+                    }
                 }
             }
         }
     }
-
-
 }

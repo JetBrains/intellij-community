@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.verbose;
+package com.siyeh.ig.dataflow;
 
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
- class VariableUsedInInnerClassVisitor extends PsiRecursiveElementVisitor
+class VariableUsedInInnerClassVisitor extends PsiRecursiveElementVisitor
 {
     private final PsiVariable variable;
     private boolean usedInInnerClass = false;
@@ -30,15 +30,19 @@ import org.jetbrains.annotations.NotNull;
         this.variable = variable;
     }
 
-    public void visitElement(@NotNull PsiElement element){
-        if(!usedInInnerClass){
+    public void visitElement(@NotNull PsiElement element)
+    {
+        if(!usedInInnerClass)
+        {
             super.visitElement(element);
         }
     }
 
-    public void visitAnonymousClass(@NotNull PsiAnonymousClass psiAnonymousClass)
+    public void visitAnonymousClass(
+            @NotNull PsiAnonymousClass psiAnonymousClass)
     {
-        if(usedInInnerClass){
+        if(usedInInnerClass)
+        {
             return;
         }
         final boolean wasInInnerClass = inInnerClass;
@@ -47,15 +51,19 @@ import org.jetbrains.annotations.NotNull;
         inInnerClass = wasInInnerClass;
     }
 
-    public void visitReferenceExpression(@NotNull PsiReferenceExpression reference)
+    public void visitReferenceExpression(
+            @NotNull PsiReferenceExpression reference)
     {
-        if(usedInInnerClass){
+        if(usedInInnerClass)
+        {
             return;
         }
         super.visitReferenceExpression(reference);
-        if(inInnerClass){
+        if(inInnerClass)
+        {
             final PsiElement element = reference.resolve();
-            if(variable.equals(element)){
+            if(variable.equals(element))
+            {
                 usedInInnerClass = true;
             }
         }

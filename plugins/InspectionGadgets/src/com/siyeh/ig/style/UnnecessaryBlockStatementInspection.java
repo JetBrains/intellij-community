@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.verbose;
+package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class UnnecessaryBlockStatementInspection extends StatementInspection{
+
     private final UnnecessaryBlockFix fix = new UnnecessaryBlockFix();
 
     public String getID(){
@@ -58,6 +59,7 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
     }
 
     private static class UnnecessaryBlockFix extends InspectionGadgetsFix{
+
         public String getName(){
             return "Unwrap block";
         }
@@ -75,11 +77,10 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
             if(children.length > 2){
                 assert containingElement != null;
                 final PsiElement added =
-                        containingElement.addRangeBefore(children[1],
-                                                         children[children
-                                                                 .length -
-                                                                 2],
-                                                         blockStatement);
+                        containingElement.addRangeBefore(
+                                children[1],
+                                children[children.length - 2],
+                                blockStatement);
                 final CodeStyleManager codeStyleManager =
                         CodeStyleManager.getInstance(project);
                 codeStyleManager.reformat(added);
@@ -144,10 +145,10 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
             return false;
         }
 
-        private static boolean conflictingDeclarationExists(String name,
-                                                            PsiCodeBlock parentBlock,
-                                                            PsiCodeBlock exceptBlock)
-        {
+        private static boolean conflictingDeclarationExists(
+                String name,
+                PsiCodeBlock parentBlock,
+                PsiCodeBlock exceptBlock){
             final ConflictingDeclarationVisitor visitor =
                     new ConflictingDeclarationVisitor(name, exceptBlock);
             parentBlock.accept(visitor);
@@ -189,7 +190,8 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
                 return;
             }
             super.visitVariable(variable);
-            if(variable.getName().equals(variableName)){
+            final String name = variable.getName();
+            if(name.equals(variableName)){
                 hasConflictingDeclaration = true;
             }
         }

@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.confusing;
+package com.siyeh.ig.dataflow;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ReuseOfLocalVariableInspection
         extends ExpressionInspection{
+
     private final AssignmentToCatchBlockParameterFix fix =
             new AssignmentToCatchBlockParameterFix();
 
@@ -57,6 +59,7 @@ public class ReuseOfLocalVariableInspection
 
     private static class AssignmentToCatchBlockParameterFix
             extends InspectionGadgetsFix{
+
         public String getName(){
             return "Split local variable";
         }
@@ -66,23 +69,26 @@ public class ReuseOfLocalVariableInspection
             final PsiReferenceExpression ref =
                     (PsiReferenceExpression) descriptor.getPsiElement();
             final PsiLocalVariable variable = (PsiLocalVariable) ref.resolve();
-            final PsiAssignmentExpression assignment = (PsiAssignmentExpression) ref
-                    .getParent();
+            final PsiAssignmentExpression assignment =
+                    (PsiAssignmentExpression) ref.getParent();
             assert assignment != null;
             final PsiExpressionStatement assignmentStatement =
                     (PsiExpressionStatement) assignment.getParent();
-            final String originalVariableName = assignment.getLExpression().getText();
+            final PsiExpression lExpression = assignment.getLExpression();
+            final String originalVariableName = lExpression.getText();
             assert variable != null;
             final PsiManager manager = variable.getManager();
             final PsiType type = variable.getType();
-            final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
+            final CodeStyleManager codeStyleManager =
+                    manager.getCodeStyleManager();
             final PsiCodeBlock variableBlock =
                     PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
             final SuggestedNameInfo suggestions =
-                    codeStyleManager
-                            .suggestVariableName(VariableKind.LOCAL_VARIABLE,
-                                                 originalVariableName,
-                                                 assignment.getLExpression(), type);
+                    codeStyleManager.suggestVariableName(
+                            VariableKind.LOCAL_VARIABLE,
+                            originalVariableName,
+                            lExpression,
+                            type);
             final String[] names = suggestions.names;
             final String baseName;
             if(names != null && names.length > 0){
@@ -94,8 +100,6 @@ public class ReuseOfLocalVariableInspection
                     codeStyleManager.suggestUniqueVariableName(baseName,
                                                                variableBlock,
                                                                false);
-
-
             final PsiSearchHelper searchHelper = manager.getSearchHelper();
             final PsiReference[] references =
                     searchHelper
@@ -103,11 +107,14 @@ public class ReuseOfLocalVariableInspection
                                             false);
             for(PsiReference reference : references){
                 final PsiElement referenceElement = reference.getElement();
-                if(referenceElement != null
-                        && referenceElement.getTextOffset() >
-                        assignmentStatement.getTextRange().getEndOffset()){
-                    replaceExpression((PsiExpression) referenceElement,
-                                      newVariableName);
+                if(referenceElement != null){
+                    final TextRange textRange =
+                            assignmentStatement.getTextRange();
+                    if(referenceElement.getTextOffset() >
+                                            textRange.getEndOffset()){
+                        replaceExpression((PsiExpression) referenceElement,
+                                          newVariableName);
+                    }
                 }
             }
             final PsiExpression rhs = assignment.getRExpression();
@@ -127,13 +134,15 @@ public class ReuseOfLocalVariableInspection
 
     private static class ReuseOfLocalVariableVisitor
             extends BaseInspectionVisitor{
+
         public void visitAssignmentExpression(
                 @NotNull PsiAssignmentExpression assignment){
             super.visitAssignmentExpression(assignment);
             if(!WellFormednessUtils.isWellFormed(assignment)){
                 return;
             }
-            if(!(assignment.getParent() instanceof PsiExpressionStatement)){
+            final PsiElement assignmentParent = assignment.getParent();
+            if(!(assignmentParent instanceof PsiExpressionStatement)){
                 return;
             }
             final PsiExpression lhs = assignment.getLExpression();
@@ -146,8 +155,9 @@ public class ReuseOfLocalVariableInspection
                 return;
             }
             final PsiVariable variable = (PsiVariable) referent;
-            if(variable.getInitializer()==null)    //TODO: this is safe, but can be weakened
-            {
+
+            //TODO: this is safe, but can be weakened
+            if(variable.getInitializer()==null){
                 return;
             }
             final PsiJavaToken sign = assignment.getOperationSign();
@@ -175,7 +185,7 @@ public class ReuseOfLocalVariableInspection
                 return;
             }
             final PsiElement assignmentBlock =
-                    assignment.getParent().getParent();
+                    assignmentParent.getParent();
             if(assignmentBlock == null){
                 return;
             }
@@ -183,8 +193,8 @@ public class ReuseOfLocalVariableInspection
                 registerError(lhs);
             }
             final PsiStatement[] statements = variableBlock.getStatements();
-            final PsiElement containingStatement = getChildWhichContainsElement(
-                    variableBlock, assignment);
+            final PsiElement containingStatement =
+                    getChildWhichContainsElement(variableBlock, assignment);
             int statementPosition = -1;
             for(int i = 0; i < statements.length; i++){
                 if(statements[i].equals(containingStatement)){
@@ -203,8 +213,8 @@ public class ReuseOfLocalVariableInspection
             registerError(lhs);
         }
 
-        private boolean loopExistsBetween(PsiAssignmentExpression assignment,
-                                          PsiCodeBlock block){
+        private static boolean loopExistsBetween(
+                PsiAssignmentExpression assignment, PsiCodeBlock block){
             PsiElement elementToTest = assignment;
             while(elementToTest != null){
                 if(elementToTest.equals(block)){
@@ -213,8 +223,7 @@ public class ReuseOfLocalVariableInspection
                 if(elementToTest instanceof PsiWhileStatement ||
                         elementToTest instanceof PsiForeachStatement ||
                         elementToTest instanceof PsiForStatement ||
-                        elementToTest instanceof PsiDoWhileStatement
-                        ){
+                        elementToTest instanceof PsiDoWhileStatement) {
                     return true;
                 }
                 elementToTest = elementToTest.getParent();
@@ -222,8 +231,8 @@ public class ReuseOfLocalVariableInspection
             return false;
         }
 
-        private boolean tryExistsBetween(PsiAssignmentExpression assignment,
-                                          PsiCodeBlock block){
+        private static boolean tryExistsBetween(
+                PsiAssignmentExpression assignment, PsiCodeBlock block) {
             PsiElement elementToTest = assignment;
             while(elementToTest != null){
                 if(elementToTest.equals(block)){

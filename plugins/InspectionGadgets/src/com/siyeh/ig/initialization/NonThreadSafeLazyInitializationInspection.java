@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.threading;
+package com.siyeh.ig.initialization;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
@@ -24,7 +24,8 @@ import com.siyeh.ig.ExpressionInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class NonThreadSafeLazyInitializationInspection
-                                                       extends ExpressionInspection{
+        extends ExpressionInspection{
+
      public String getDisplayName(){
         return "Unsafe lazy initialization of static field";
     }
@@ -34,7 +35,8 @@ public class NonThreadSafeLazyInitializationInspection
     }
 
     public String buildErrorString(PsiElement location){
-        return "Lazy initialization of static field '#ref' is not thread-safe #loc";
+        return "Lazy initialization of static field '#ref' is not thread-safe"
+                + " #loc";
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -42,8 +44,10 @@ public class NonThreadSafeLazyInitializationInspection
     }
 
     private static class UnsafeSafeLazyInitializationVisitor
-                                                         extends BaseInspectionVisitor{
-        public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression){
+            extends BaseInspectionVisitor{
+
+        public void visitAssignmentExpression(
+                @NotNull PsiAssignmentExpression expression){
             super.visitAssignmentExpression(expression);
             final PsiExpression lhs = expression.getLExpression();
             if(!(lhs instanceof PsiReferenceExpression)){
@@ -69,45 +73,41 @@ public class NonThreadSafeLazyInitializationInspection
             registerError(lhs);
         }
 
-        private boolean isLazy(PsiAssignmentExpression expression,
-                            PsiReferenceExpression lhs){
+        private static boolean isLazy(PsiAssignmentExpression expression,
+                                      PsiReferenceExpression lhs){
             final PsiIfStatement ifStatement =
                     PsiTreeUtil.getParentOfType(expression,
                                                 PsiIfStatement.class);
-            if(ifStatement == null)
-            {
+            if(ifStatement == null){
                 return false;
             }
             final PsiExpression condition = ifStatement.getCondition();
-            if(condition == null)
-            {
+            if(condition == null){
                 return false;
             }
             return isNullComparison(condition, lhs);
         }
 
-        private boolean isNullComparison(PsiExpression condition,
-                                         PsiReferenceExpression reference){
+        private static boolean isNullComparison(
+                PsiExpression condition, PsiReferenceExpression reference){
             if(!(condition instanceof PsiBinaryExpression)){
                 return false;
             }
-            final PsiBinaryExpression comparison = (PsiBinaryExpression) condition;
+            final PsiBinaryExpression comparison =
+                    (PsiBinaryExpression) condition;
             final PsiJavaToken sign = comparison.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
-            if(!tokenType.equals(JavaTokenType.EQEQ))
-            {
+            if(!tokenType.equals(JavaTokenType.EQEQ)){
                 return false;
             }
             final PsiExpression lhs = comparison.getLOperand();
             final PsiExpression rhs = comparison.getROperand();
-            if( rhs == null)
-            {
+            if( rhs == null){
                 return false;
             }
             final String lhsText = lhs.getText();
             final String rhsText = rhs.getText();
-            if(!"null".equals(lhsText)&& !"null".equals(rhsText))
-            {
+            if(!"null".equals(lhsText)&& !"null".equals(rhsText)){
                 return false;
             }
             final String referenceText = reference.getText();

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.naming;
+package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.InspectionManager;
@@ -21,11 +21,14 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.naming.ConventionInspection;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class JUnitTestClassNamingConventionInspection extends ConventionInspection {
+public class JUnitTestClassNamingConventionInspection
+        extends ConventionInspection {
+
     private static final int DEFAULT_MIN_LENGTH = 8;
     private static final int DEFAULT_MAX_LENGTH = 64;
     private final RenameFix fix = new RenameFix();
@@ -55,7 +58,8 @@ public class JUnitTestClassNamingConventionInspection extends ConventionInspecti
         } else if (className.length() > getMaxLength()) {
             return "JUnit test class name '#ref' is too long #loc";
         }
-        return "JUnit test class name '#ref' doesn't match regex '" + getRegex() + "' #loc";
+        return "JUnit test class name '#ref' doesn't match regex '" +
+                getRegex() + "' #loc";
     }
 
     protected String getDefaultRegex() {
@@ -74,7 +78,9 @@ public class JUnitTestClassNamingConventionInspection extends ConventionInspecti
         return new NamingConventionsVisitor();
     }
 
-    public ProblemDescriptor[] doCheckClass(PsiClass aClass, InspectionManager mgr, boolean isOnTheFly) {
+    public ProblemDescriptor[] doCheckClass(PsiClass aClass,
+                                            InspectionManager mgr,
+                                            boolean isOnTheFly) {
         if (!aClass.isPhysical()) {
             return super.doCheckClass(aClass, mgr, isOnTheFly);
         }
@@ -85,17 +91,16 @@ public class JUnitTestClassNamingConventionInspection extends ConventionInspecti
 
     private class NamingConventionsVisitor extends BaseInspectionVisitor {
 
-
         public void visitClass(@NotNull PsiClass aClass) {
-            if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
+            if (aClass.isInterface() || aClass.isEnum() ||
+                    aClass.isAnnotationType()) {
                 return;
             }
             if(aClass instanceof PsiTypeParameter ||
-                    aClass instanceof PsiAnonymousClass){
+                    aClass instanceof PsiAnonymousClass) {
                 return;
             }
-            if(aClass.hasModifierProperty(PsiModifier.ABSTRACT))
-            {
+            if(aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
                 return;
             }
             if(!ClassUtils.isSubclass(aClass, "junit.framework.TestCase")) {
@@ -110,6 +115,5 @@ public class JUnitTestClassNamingConventionInspection extends ConventionInspecti
             }
             registerClassError(aClass);
         }
-
     }
 }

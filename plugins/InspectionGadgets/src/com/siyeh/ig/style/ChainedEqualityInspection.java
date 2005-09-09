@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.confusing;
+package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
@@ -23,9 +23,11 @@ import com.siyeh.ig.ExpressionInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class ChainedEqualityInspection extends ExpressionInspection {
-    public String getID(){
+
+    public String getID() {
         return "ChainedEqualityComparisons";
     }
+    
     public String getDisplayName() {
         return "Chained equality comparisons";
     }
@@ -35,7 +37,7 @@ public class ChainedEqualityInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Chained equality comparison #ref #loc";
+        return "Chained equality comparison '#ref' #loc";
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -44,10 +46,10 @@ public class ChainedEqualityInspection extends ExpressionInspection {
 
     private static class ChainedEqualityVisitor extends BaseInspectionVisitor {
 
-
-        public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
+        public void visitBinaryExpression(
+                @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            if(!(expression.getROperand() != null)){
+            if(!(expression.getROperand() != null)) {
                 return;
             }
             if (!isEqualityComparison(expression)) {
@@ -63,13 +65,12 @@ public class ChainedEqualityInspection extends ExpressionInspection {
             registerError(expression);
         }
 
-        private static boolean isEqualityComparison(PsiBinaryExpression expression) {
+        private static boolean isEqualityComparison(
+                @NotNull PsiBinaryExpression expression) {
             final PsiJavaToken sign = expression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
             return tokenType.equals(JavaTokenType.EQEQ) ||
                     tokenType.equals(JavaTokenType.NE);
         }
-
     }
-
 }

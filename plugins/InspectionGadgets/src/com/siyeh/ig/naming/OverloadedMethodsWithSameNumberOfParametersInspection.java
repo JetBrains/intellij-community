@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.confusing;
+package com.siyeh.ig.naming;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
@@ -21,7 +21,8 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import org.jetbrains.annotations.NotNull;
 
-public class OverloadedMethodsWithSameNumberOfParametersInspection extends MethodInspection {
+public class OverloadedMethodsWithSameNumberOfParametersInspection
+        extends MethodInspection {
 
     public String getDisplayName() {
         return "Overloaded methods with same number of parameters";
@@ -39,7 +40,8 @@ public class OverloadedMethodsWithSameNumberOfParametersInspection extends Metho
         return new OverloadedMethodsWithSameNumberOfParametersVisitor();
     }
 
-    private static class OverloadedMethodsWithSameNumberOfParametersVisitor extends BaseInspectionVisitor {
+    private static class OverloadedMethodsWithSameNumberOfParametersVisitor
+            extends BaseInspectionVisitor {
 
         public void visitMethod(@NotNull PsiMethod method) {
             if (method.isConstructor()) {
@@ -57,14 +59,13 @@ public class OverloadedMethodsWithSameNumberOfParametersInspection extends Metho
                 return;
             }
             final PsiMethod[] methods = aClass.getMethods();
-            for(PsiMethod method1 : methods){
-                if(!method1.equals(method)){
+            for (PsiMethod method1 : methods) {
+                if(!method1.equals(method)) {
                     final String testMethName = method1.getName();
 
                     final int testParameterCount = calculateParamCount(method1);
-                    if(testMethName != null && methodName
-                            .equals(testMethName) &&
-                            parameterCount == testParameterCount){
+                    if(testMethName != null && methodName.equals(testMethName)
+                            && parameterCount == testParameterCount) {
                         registerMethodError(method);
                     }
                 }
@@ -77,5 +78,4 @@ public class OverloadedMethodsWithSameNumberOfParametersInspection extends Metho
             return parameters.length;
         }
     }
-
 }
