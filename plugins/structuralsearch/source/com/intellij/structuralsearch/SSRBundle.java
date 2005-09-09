@@ -5,7 +5,6 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
 public class SSRBundle {
   private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.intellij.structuralsearch.SSRBundle");
 
