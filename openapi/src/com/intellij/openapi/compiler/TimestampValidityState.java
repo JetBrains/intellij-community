@@ -21,7 +21,7 @@ import java.io.DataInputStream;
 
 /**
  * A simple implementation of ValidityState that is enough for most cases.
- * The file is considered modified if its timeastamp is changed.
+ * The file is considered modified if its timestamp is changed.
  */
 public final class TimestampValidityState implements ValidityState {
   private final long myTimestamp;
@@ -37,10 +37,23 @@ public final class TimestampValidityState implements ValidityState {
     return myTimestamp == ((TimestampValidityState)otherState).myTimestamp;
   }
 
+  /**
+   * Saves the validity state to the specified stream.
+   *
+   * @param os the stream to save the validity state to.
+   * @throws IOException if the stream write fails.
+   */
   public void save(DataOutputStream os) throws IOException {
     os.writeLong(myTimestamp);
   }
 
+  /**
+   * Loads the validity state from the specified stream.
+   *
+   * @param is the stream to load the validity state from.
+   * @throws IOException if the stream read fails.
+   * @since 5.0.2
+   */
   public static TimestampValidityState load(DataInputStream is) throws IOException {
     return new TimestampValidityState(is.readLong());
   }

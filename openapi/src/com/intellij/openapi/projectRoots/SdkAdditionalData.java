@@ -17,7 +17,19 @@ package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.options.ConfigurationException;
 
+/**
+ * Container for the SDK properties specific to a particular SDK type.
+ */
 public interface SdkAdditionalData {
   Object clone() throws CloneNotSupportedException;
+
+  /**
+   * Checks if the SDK properties are configured correctly, and throws an exception
+   * if they are not.
+   *
+   * @param sdkModel the model containing all configured SDKs.
+   * @throws ConfigurationException if the SDK is not configured correctly.
+   * @since 5.0.1
+   */
   void checkValid(SdkModel sdkModel) throws ConfigurationException;
 }

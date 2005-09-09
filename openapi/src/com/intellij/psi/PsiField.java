@@ -17,13 +17,17 @@ package com.intellij.psi;
 
 import com.intellij.pom.java.PomField;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 public interface PsiField extends PsiMember, PsiVariable, PsiDocCommentOwner {
   PsiField[] EMPTY_ARRAY = new PsiField[0];
   PomField getPom();
+
   /**
-   * Adds initializer to the field declaration.
-   * Or, if initializer parameter is null, removes initializer from variable.
+   * Adds initializer to the field declaration or, if <code>initializer</code> parameter is null,
+   * removes the initializer from the field declaration.
+   *
+   * @since 5.0.2
    */
-  void setInitializer(PsiExpression initializer) throws IncorrectOperationException;
+  void setInitializer(@Nullable PsiExpression initializer) throws IncorrectOperationException;
 }

@@ -26,8 +26,20 @@ import java.util.Set;
  * @author max
  */
 public class AnnotationUtil {
+  /**
+   * The full qualified name of the standard Nullable annotation.
+   */
   public static final String NULLABLE = "org.jetbrains.annotations.Nullable";
+
+  /**
+   * The full qualified name of the standard NotNull annotation.
+   */
   public static final String NOT_NULL = "org.jetbrains.annotations.NotNull";
+
+  /**
+   * The full qualified name of the standard NonNls annotation.
+   * @since 5.0.1
+   */
   public static final String NON_NLS = "org.jetbrains.annotations.NonNls";
 
   private final static Set<String> ALL_ANNOTATIONS;

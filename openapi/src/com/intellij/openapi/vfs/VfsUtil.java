@@ -25,7 +25,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -514,6 +513,16 @@ public class VfsUtil {
       return new StringBuffer().append("[").append(module.getName()).append("] - ").append(url).toString();
     }
   }
+
+  /**
+   * Returns the relative path from one virtual file to another.
+   *
+   * @param src           the file from which the relative path is built.
+   * @param dst           the file to which the path is built.
+   * @param separatorChar the separator for the path components.
+   * @return the relative path, or null if the files have no common ancestor.
+   * @since 5.0.2
+   */
 
   @Nullable
   public static String getPath(VirtualFile src, VirtualFile dst, char separatorChar) throws IncorrectOperationException {

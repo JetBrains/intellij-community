@@ -16,11 +16,14 @@
 package com.intellij.psi;
 
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 public interface PsiLocalVariable extends PsiVariable {
   /**
-   * Adds initializer to the variable declaration statement.
-   * Or, if initializer parameter is null, removes initializer from variable.
+   * Adds initializer to the variable declaration statement or, if <code>initializer</code>
+   * parameter is null, removes initializer from variable.
+   *
+   * @since 5.0.2
    */
-  void setInitializer(PsiExpression initializer) throws IncorrectOperationException;
+  void setInitializer(@Nullable PsiExpression initializer) throws IncorrectOperationException;
 }

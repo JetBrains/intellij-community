@@ -20,8 +20,23 @@ import com.intellij.openapi.project.Project;
 /**
  * Instances of NamesValidator are obtained from {@link com.intellij.lang.Language} instance.
  * An instance encapsulates knowledge of identifier rules and keyword set of the language.
+ *
+ * @since 5.0.1
  */
 public interface NamesValidator {
+  /**
+   * Checks if the specified string is a keyword in the custom language.
+   * @param name    the string to check.
+   * @param project the project in the context of which the check is done.
+   * @return true if the string is a keyword, false otherwise.
+   */
   boolean isKeyword(String name, Project project);
+
+  /**
+   * Checks if the specified string is a valid identifier in the custom language.
+   * @param name    the string to check.
+   * @param project the project in the context of which the check is done.
+   * @return true if the string is a valid identifier, false otherwise.
+   */
   boolean isIdentifier(String name, Project project);
 }

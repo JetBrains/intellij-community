@@ -37,7 +37,12 @@ public class SystemInfo {
   public static final boolean isMacSystemMenu = isMac && "true".equals(System.getProperty("apple.laf.useScreenMenuBar"));
 
   public static final boolean isFileSystemCaseSensitive = !isWindows && !isOS2;
-  
+
+  /**
+   * Whether IDEA is running under MacOS X version 10.4 or later.
+   *
+   * @since 5.0.2
+   */
   public static final boolean isMacOSTiger = isTiger();
 
   private static boolean isTiger() {

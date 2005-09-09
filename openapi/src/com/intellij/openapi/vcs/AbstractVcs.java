@@ -214,7 +214,16 @@ public abstract class AbstractVcs {
     return null;
   }
 
+  /**
+   * Returns the interface for selecting file version numbers, or null if no implementation
+   * is provided.
+   *
+   * @return the revision selector implementation, or null if none is provided.
+   * @since 5.0.2
+   */
+
   @Nullable public RevisionSelector getRevisionSelector() {
     return null;
   }
 }
+

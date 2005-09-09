@@ -627,6 +627,14 @@ public class StringUtil {
     return text;
   }
 
+  /**
+   * Formats the specified file size as a string.
+   *
+   * @param fileSize the size to format.
+   * @return the size formatted as a string.
+   * @since 5.0.1
+   */
+
   public static String formatFileSize(final long fileSize) {
     if (fileSize < 0x400) {
         return fileSize + "b";

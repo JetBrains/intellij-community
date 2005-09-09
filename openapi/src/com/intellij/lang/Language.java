@@ -56,7 +56,8 @@ public abstract class Language {
   private static Map<Class<? extends Language>, Language> ourRegisteredLanguages = new HashMap<Class<? extends Language>, Language>();
   private String myID;
   private String[] myMimeTypes;
-  public static final Language ANY = new Language("", "") {};
+  public static final Language ANY = new Language("", "") {
+  };
   private static final EmptyFindUsagesProvider EMPTY_FIND_USAGES_PROVIDER = new EmptyFindUsagesProvider();
 
   protected Language(String id) {
@@ -108,8 +109,9 @@ public abstract class Language {
    * Override this method to provide syntax highlighting (coloring) capabilities for your language implementation.
    * By syntax highlighting we mean highlighting of keywords, comments, braces etc. where lexing the file content is enough
    * to identify proper highlighting attributes.
-   *
+   * <p/>
    * Default implementation doesn't highlight anything.
+   *
    * @param project might be necessary to gather various project settings from.
    * @return <code>SyntaxHighlighter</code> interface implementation for this particular language.
    */
@@ -123,10 +125,10 @@ public abstract class Language {
    * Note that formatter implementation is necessary to make smart enter and smart end functions to work properly.
    *
    * @return <code>FormattingModelBuilder</code> interface implementation for this particular language or <code>null</code>
-   * if no formatting capabilities provided.
+   *         if no formatting capabilities provided.
    */
   @Nullable
-  public FormattingModelBuilder getFormattingModelBuilder(){
+  public FormattingModelBuilder getFormattingModelBuilder() {
     return null;
   }
 
@@ -137,7 +139,7 @@ public abstract class Language {
    * finding usages, refactoring, file structure view etc.
    *
    * @return <code>ParserDefinition</code> interface implementation for this particular language or <code>null</code>
-   * if no parsing capabilities provided.
+   *         if no parsing capabilities provided.
    */
   @Nullable
   public ParserDefinition getParserDefinition() {
@@ -149,7 +151,7 @@ public abstract class Language {
    * Please note {@link #getParserDefinition()} should return parser implementation for folding building to work properly.
    *
    * @return <code>FoldingBuilder</code> interface implementation for this particular language or <code>null</code>
-   * if no folding capabilities provided.
+   *         if no folding capabilities provided.
    */
   @Nullable
   public FoldingBuilder getFoldingBuilder() {
@@ -161,7 +163,7 @@ public abstract class Language {
    * For this functionality to work properly own {@link SyntaxHighlighter} implementation is necessary.
    *
    * @return <code>PairedBraceMatcher</code> interface implementation for this particular language or <code>null</code>
-   * if no brace matching capabilities provided.
+   *         if no brace matching capabilities provided.
    */
   @Nullable
   public PairedBraceMatcher getPairedBraceMatcher() {
@@ -173,7 +175,7 @@ public abstract class Language {
    * For this functionality to work properly {@link ParserDefinition} implementation is necessary.
    *
    * @return <code>Commenter</code> interface implementation for this particular language or <code>null</code>
-   * if no auto-commenting capabilities provided.
+   *         if no auto-commenting capabilities provided.
    */
   @Nullable
   public Commenter getCommenter() {
@@ -184,12 +186,13 @@ public abstract class Language {
    * Word completion feature related method. It supposed to return token types of the places where word completion should be enabled.
    * Default implementation delegates to parser definition and returns comment tokens so words completion is enabled in comments
    * if parser definition is implemented.
+   *
    * @return set of token types where word completion should be enabled.
    */
   @NotNull
-  public TokenSet getReadableTextContainerElements(){
+  public TokenSet getReadableTextContainerElements() {
     final ParserDefinition parserDefinition = getParserDefinition();
-    if(parserDefinition != null) return parserDefinition.getCommentTokens();
+    if (parserDefinition != null) return parserDefinition.getCommentTokens();
     return TokenSet.EMPTY;
   }
 
@@ -201,7 +204,7 @@ public abstract class Language {
    * Annotator is run against changed parts of the parse tree incrementally.
    *
    * @return <code>Annotator</code> interface implementation for this particular language or <code>null</code>
-   * if no error and syntax highlighting capabilities provided.
+   *         if no error and syntax highlighting capabilities provided.
    */
   @Nullable
   public Annotator getAnnotator() {
@@ -211,8 +214,9 @@ public abstract class Language {
   /**
    * Same as {@link #getAnnotator()} but is being run once against whole file. It's most proper to use when integrating external
    * validation tools like xerces schema validator for XML.
+   *
    * @return external annotator for a whole file.
-   * Since this annotating is expensive due to nonincrementality, it is run last
+   *         Since this annotating is expensive due to nonincrementality, it is run last
    */
   @Nullable
   public ExternalAnnotator getExternalAnnotator() {
@@ -222,8 +226,9 @@ public abstract class Language {
   /**
    * Override this method to provide find usages capability for the elements of your language
    * For this functionality to work properly {@link ParserDefinition} implementation is necessary.
-   *
+   * <p/>
    * Default implementation returns mock find usages provider uncapable to search anything.
+   *
    * @return <code>FindUsagesProvider</code> interface implementation for this particular language.
    */
   @NotNull
@@ -236,7 +241,7 @@ public abstract class Language {
    *
    * @param psiFile
    * @return <code>StructureViewBuilder</code> interface implementation for this particular language or <code>null</code>
-   * if no file structure implementation.
+   *         if no file structure implementation.
    */
   @Nullable
   public StructureViewBuilder getStructureViewBuilder(PsiFile psiFile) {
@@ -249,7 +254,7 @@ public abstract class Language {
    * Note that rename refactoring will be automatically enabled with <code>FindUsagesProvider</code> and <code>ParserDefinition</code>.
    *
    * @return <code>RefactoringSupportProvider</code> interface implementation for this particular language or <code>null</code>
-   * if no safe delete refactoring implementation is necessary.
+   *         if no safe delete refactoring implementation is necessary.
    */
   @Nullable
   public RefactoringSupportProvider getRefactoringSupportProvider() {
@@ -260,8 +265,10 @@ public abstract class Language {
    * Override this method to customize algorithm of identifier validation and language keyword set.
    * Default implementation provides java language identifier validation and java language keyword set.
    * For the time being the information provided is used in rename refactoring only.
+   *
    * @return <code>NamesValidator</code> interface implementation for this particular language. <code>null</code> value must
-   * not be returned.
+   *         not be returned.
+   * @since 5.0.1
    */
   @NotNull
   public NamesValidator getNamesValidator() {
@@ -270,8 +277,9 @@ public abstract class Language {
 
   /**
    * Override this method to provide 'surround with...' feature implementation for editors of the files in your language.
-   *
+   * <p/>
    * Default implementation returns empty array of SurroundDescriptor implementations thus disabling the feature.
+   *
    * @return <code>SurroundDescriptor</code> interface implementations for this particular language.
    */
   @NotNull
@@ -287,15 +295,17 @@ public abstract class Language {
   /**
    * Returns the list of MIME types corresponding to the language. The language MIME type is used for specifying the base language
    * of a JSP page.
+   *
    * @return The list of MIME types.
    */
 
-  public String[] getMimeTypes(){
+  public String[] getMimeTypes() {
     return myMimeTypes;
   }
 
   /**
    * Returns a user-readable name of the language.
+   *
    * @return the name of the language.
    */
 
