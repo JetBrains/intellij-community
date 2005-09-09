@@ -13,33 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.idea;
+package com.intellij.openapi.compiler;
 
 import com.intellij.CommonBundle;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 29, 2005
+ *         Date: Sep 9, 2005
  */
-public class ActionsBundle {
-  @NonNls private static final String IDEA_ACTIONS_BUNDLE = "idea.ActionsBundle";
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle(IDEA_ACTIONS_BUNDLE);
+public class CompilerBundle {
+  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.intellij.openapi.compiler.CompilerBundle");
 
-  @SuppressWarnings({"HardCodedStringLiteral", "UnresolvedPropertyKey"})
-  public static String actionText(@NonNls String actionId) {
-    return message("action." + actionId + ".text");
+  private CompilerBundle() {
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral", "UnresolvedPropertyKey"})
-  public static String actionDescription(@NonNls String actionId) {
-    return message("action." + actionId + ".description");
-  }
-
-  public static String message(@PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE) String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "com.intellij.openapi.compiler.CompilerBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }
