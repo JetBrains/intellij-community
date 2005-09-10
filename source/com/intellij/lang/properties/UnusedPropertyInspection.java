@@ -44,7 +44,7 @@ public class UnusedPropertyInspection extends LocalInspectionTool {
     List<Property> properties = ((PropertiesFile)file).getProperties();
     Module module = ModuleUtil.findModuleForPsiElement(file);
     if (module == null) return null;
-    GlobalSearchScope searchScope = GlobalSearchScope.moduleWithDependenciesScope(module);
+    final GlobalSearchScope searchScope = GlobalSearchScope.moduleWithDependentsScope(module);
     for (Property property : properties) {
       PsiReferenceProcessor.FindElement processor = new PsiReferenceProcessor.FindElement();
       searchHelper.processReferences(processor, property, searchScope, false);
