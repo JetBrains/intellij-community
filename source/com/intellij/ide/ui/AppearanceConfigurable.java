@@ -37,16 +37,22 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
     DefaultComboBoxModel aModel = new DefaultComboBoxModel();
     for (int i = 0; i < fonts.length; i++) {
       // Adds fonts that can display symbols at [A, Z] + [a, z] + [0, 9]
-      final Font font = fonts[i];
-      if (
-        font.canDisplay('a') &&
-        font.canDisplay('z') &&
-        font.canDisplay('A') &&
-        font.canDisplay('Z') &&
-        font.canDisplay('0') &&
-        font.canDisplay('1')
-      ) {
-        aModel.addElement(font.getName());
+      try {
+        final Font font = fonts[i];
+        if (
+          font.canDisplay('a') &&
+          font.canDisplay('z') &&
+          font.canDisplay('A') &&
+          font.canDisplay('Z') &&
+          font.canDisplay('0') &&
+          font.canDisplay('1')
+        ) {
+          aModel.addElement(font.getName());
+        }
+      }
+      catch (Exception e) {
+        // JRE has problems working with the font. Just skip.
+        continue;
       }
     }
     myComponent.myFontCombo.setModel(aModel);

@@ -145,13 +145,19 @@ public class UISettings implements NamedJDOMExternalizable, ApplicationComponent
   }
 
   private static boolean isValidFont(final Font font){
-    return
-      font.canDisplay('a') &&
-      font.canDisplay('z') &&
-      font.canDisplay('A') &&
-      font.canDisplay('Z') &&
-      font.canDisplay('0') &&
-      font.canDisplay('1');
+    try {
+      return
+        font.canDisplay('a') &&
+        font.canDisplay('z') &&
+        font.canDisplay('A') &&
+        font.canDisplay('Z') &&
+        font.canDisplay('0') &&
+        font.canDisplay('1');
+    }
+    catch (Exception e) {
+      // JRE has problems working with the font. Just skip.
+      return false;
+    }
   }
 
   /**

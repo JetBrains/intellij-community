@@ -25,13 +25,19 @@ public class FontInfo {
   }
 
   public boolean canDisplay(char c) {
-    if (c < 128) return true;
-    if (mySafeCharacters.contains(c)) return true;
-    if (myFont.canDisplay(c)) {
-      mySafeCharacters.add(c);
-      return true;
+    try {
+      if (c < 128) return true;
+      if (mySafeCharacters.contains(c)) return true;
+      if (myFont.canDisplay(c)) {
+        mySafeCharacters.add(c);
+        return true;
+      }
+      return false;
     }
-    return false;
+    catch (Exception e) {
+      // JRE has problems working with the font. Just skip.
+      return false;
+    }
   }
 
   public Font getFont() {
