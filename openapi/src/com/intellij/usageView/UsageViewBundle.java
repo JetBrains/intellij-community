@@ -1,4 +1,4 @@
-package com.intellij.usages;
+package com.intellij.usageView;
 
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.PropertyKey;
@@ -13,11 +13,11 @@ import java.util.ResourceBundle;
  * To change this template use File | Settings | File Templates.
  */
 public class UsageViewBundle {
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.intellij.usages.UsageView");
+  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.intellij.usageView.UsageView");
 
   private UsageViewBundle() {}
 
-  public static String message(@PropertyKey(resourceBundle = "com.intellij.usages.UsageView")  String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "com.intellij.usageView.UsageView")  String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 
