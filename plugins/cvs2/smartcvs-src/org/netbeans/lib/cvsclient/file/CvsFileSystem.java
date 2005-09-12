@@ -83,7 +83,7 @@ public final class CvsFileSystem
             }
             return relativeRepositoryPath;
           } else {
-            return repository;
+            return repositoryPath;
           }
         }
 
