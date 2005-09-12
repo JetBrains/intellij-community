@@ -736,6 +736,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       if (role == ChildRole.FOR_INITIALIZATION || role == ChildRole.CONDITION || role == ChildRole.FOR_UPDATE) {
         return defaultWrap;
       }
+      if (role == ChildRole.LOOP_BODY) {
+        return Wrap.createWrap(WrapType.NORMAL, true);
+      }
       else {
         return null;
       }
@@ -783,9 +786,33 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         return null;
       }
     }
-    else {
-      return defaultWrap;
+
+    else if (myNode.getElementType() == ElementType.IF_STATEMENT) {
+      if (role == ChildRole.THEN_BRANCH) {
+        return Wrap.createWrap(WrapType.NORMAL, true);
+      }
+      else if (role == ChildRole.ELSE_BRANCH) {
+        return Wrap.createWrap(WrapType.NORMAL, true);
+      } else {
+        return null;
+      }
     }
+
+    else if (myNode.getElementType() == ElementType.FOREACH_STATEMENT || myNode.getElementType() == ElementType.WHILE_STATEMENT) {
+      if (role == ChildRole.LOOP_BODY) {
+        return Wrap.createWrap(WrapType.NORMAL, true);
+      }
+    }
+
+    else if (myNode.getElementType() == ElementType.DO_WHILE_STATEMENT) {
+      if (role == ChildRole.LOOP_BODY) {
+        return Wrap.createWrap(WrapType.NORMAL, true);
+      } else if (role == ChildRole.WHILE_KEYWORD) {
+        return Wrap.createWrap(WrapType.NORMAL, true);
+      }
+    }
+
+    return defaultWrap;
   }
 
   private static ASTNode getPrevElement(final ASTNode child) {

@@ -61,7 +61,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
       if (child.getElementType() == ElementType.ELSE_KEYWORD) {
         return AFTER_ELSE;
       }
-      if (ElementType.COMMENT_BIT_SET.isInSet(child.getElementType())) {
+      if (ElementType.COMMENT_BIT_SET.contains(child.getElementType())) {
         return BEFORE_FIRST;
       }
       if (child.getElementType() == ElementType.CATCH_SECTION) {
@@ -95,8 +95,12 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
     }
     if (child.getElementType() == ElementType.ELSE_KEYWORD)
       return Indent.getNoneIndent();
-    if (state == BEFORE_FIRST)
+    if (state == BEFORE_FIRST) {
       return Indent.getNoneIndent();
+    }
+    else if (child.getElementType() == ElementType.WHILE_KEYWORD) {
+      return Indent.getNoneIndent();
+    }
     else {
       if (isPartOfCodeBlock(child)) {
         return getCodeBlockExternalIndent();
@@ -135,7 +139,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
 
   private boolean isSimpleStatement(final ASTNode child) {
     if (child.getElementType() == ElementType.BLOCK_STATEMENT) return false;
-    if (!ElementType.STATEMENT_BIT_SET.isInSet(child.getElementType())) return false;
+    if (!ElementType.STATEMENT_BIT_SET.contains(child.getElementType())) return false;
     return isStatement(child, child.getTreeParent());
   }
 
