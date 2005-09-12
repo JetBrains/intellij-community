@@ -95,7 +95,8 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
       final VirtualFile fileByUrl = VirtualFileManager.getInstance().findFileByUrl(child.getAttributeValue("file"));
       if (fileByUrl != null) {
         final String isActive = child.getAttributeValue("is_active");
-        myProfileSettings.put(fileByUrl, Pair.create(child.getAttributeValue("profile_name"), isActive != null ? Boolean.parseBoolean(isActive) : Boolean.TRUE));
+        final Boolean second = isActive != null ? Boolean.valueOf(isActive) : Boolean.TRUE;
+        myProfileSettings.put(fileByUrl, Pair.create(child.getAttributeValue("profile_name"), second));
       }
     }
   }
