@@ -66,7 +66,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
         final PsiManager psiManager = expression.getManager();
         final PsiElementFactory factory = psiManager.getElementFactory();
         final PsiExpression newExp = factory.createExpressionFromText(newExpression,
-                                                                      null);
+                                                                      expression);
         final PsiElement replacementExp = expression.replace(newExp);
         final CodeStyleManager styleManager = psiManager.getCodeStyleManager();
         styleManager.reformat(replacementExp);
@@ -77,7 +77,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
         final PsiManager psiManager = expression.getManager();
         final PsiElementFactory factory = psiManager.getElementFactory();
         final PsiExpression newExp = factory.createExpressionFromText(newExpression,
-                                                                      null);
+                                                                      expression);
         final PsiElement replacementExp = expression.replace(newExp);
         final CodeStyleManager styleManager = psiManager.getCodeStyleManager();
         styleManager.shortenClassReferences(replacementExp);
@@ -90,7 +90,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
         final PsiManager psiManager = statement.getManager();
         final PsiElementFactory factory = psiManager.getElementFactory();
         final PsiStatement newExp = factory.createStatementFromText(newStatement,
-                                                                    null);
+                                                                    statement);
         final PsiElement replacementExp = statement.replace(newExp);
         final CodeStyleManager styleManager = psiManager.getCodeStyleManager();
         styleManager.reformat(replacementExp);
@@ -101,7 +101,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
         final PsiManager psiManager = statement.getManager();
         final PsiElementFactory factory = psiManager.getElementFactory();
         final PsiStatement newExp = factory.createStatementFromText(newStatement,
-                                                                    null);
+                                                                    statement);
         final PsiElement replacementStatement = statement.replace(newExp);
         final CodeStyleManager styleManager = psiManager.getCodeStyleManager();
         styleManager.shortenClassReferences(replacementStatement);
