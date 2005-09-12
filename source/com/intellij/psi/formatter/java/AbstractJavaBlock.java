@@ -221,9 +221,17 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     else if (myNode.getElementType() == ElementType.CODE_BLOCK) {
       return Wrap.createWrap(Wrap.NORMAL, true);
     }
+    else if (isAssignment()) {
+      return Wrap.createWrap(getWrapType(mySettings.ASSIGNMENT_WRAP), true);
+    }
     else {
       return null;
     }
+  }
+
+  private boolean isAssignment() {
+    return myNode.getElementType() == ElementType.ASSIGNMENT_EXPRESSION || myNode.getElementType() == ElementType.LOCAL_VARIABLE
+           || myNode.getElementType() == ElementType.FIELD;
   }
 
   @Nullable
@@ -707,6 +715,15 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return defaultWrap;
 
     }
+
+    else if (isAssignment()) {
+      if (role == ChildRole.INITIALIZER_EQ && mySettings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return defaultWrap;
+      if (role == ChildRole.OPERATION_SIGN && mySettings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return defaultWrap;
+      if (role == ChildRole.INITIALIZER && !mySettings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return defaultWrap;
+      if (role == ChildRole.ROPERAND && !mySettings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return defaultWrap;
+      return null;
+    }
+
     else if (myNode.getElementType() == ElementType.REFERENCE_EXPRESSION) {
       if (role == ChildRole.DOT) {
         return getReservedWrap();
