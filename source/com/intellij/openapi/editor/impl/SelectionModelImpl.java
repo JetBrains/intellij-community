@@ -20,9 +20,9 @@ import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
+import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
@@ -34,7 +34,7 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.util.ArrayList;
 
-public class SelectionModelImpl implements SelectionModel, DocumentListener {
+public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.SelectionModelImpl");
   private static final int[] EMPTY_INTS_ARRAY = new int[0];
 
@@ -89,6 +89,10 @@ public class SelectionModelImpl implements SelectionModel, DocumentListener {
     if (mySelectionMarker != null && mySelectionMarker.isValid()) {
       mySelectionMarker.documentChanged(event);
     }
+  }
+
+  public int getPriority() {
+    return 4;
   }
 
   public SelectionModelImpl(EditorImpl editor) {

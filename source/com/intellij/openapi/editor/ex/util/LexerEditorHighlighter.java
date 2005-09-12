@@ -8,11 +8,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
+import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.psi.PsiDocumentManager;
@@ -28,7 +28,7 @@ import java.util.Map;
 /**
  *
  */
-public class LexerEditorHighlighter extends DocumentAdapter implements EditorHighlighter {
+public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.ex.util.LexerEditorHighlighter");
   private Editor myEditor;
   private Lexer myLexer;
@@ -200,6 +200,12 @@ public class LexerEditorHighlighter extends DocumentAdapter implements EditorHig
     }
 
     ((EditorEx) myEditor).repaint(startOffset, repaintEnd);
+  }
+
+  public void beforeDocumentChange(DocumentEvent event) {}
+
+  public int getPriority() {
+    return 2;
   }
 
   private boolean segmentsEqual(SegmentArrayWithData a1, int idx1, SegmentArrayWithData a2, int idx2, final int offsetShift) {

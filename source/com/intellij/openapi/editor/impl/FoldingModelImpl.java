@@ -15,8 +15,8 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 
 import java.awt.*;
@@ -25,7 +25,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedList;
 
-public class FoldingModelImpl implements FoldingModelEx, DocumentListener {
+public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorFoldingModelImpl");
   private boolean myIsFoldingEnabled;
   private EditorImpl myEditor;
@@ -410,7 +410,10 @@ public class FoldingModelImpl implements FoldingModelEx, DocumentListener {
             if (next.getEndOffset() >= range.getEndOffset() && next.isValid()) {
               if (next.getStartOffset() < range.getStartOffset()) {
                 return false;
-              } else break;
+              }
+              else {
+                break;
+              }
             }
           }
 
@@ -433,7 +436,10 @@ public class FoldingModelImpl implements FoldingModelEx, DocumentListener {
           end = i - 1;
         } else if (offset > myCachedEndOffsets[i]) {
           start = i + 1;
-        } else return myCachedTopLevelRegions[i];
+        }
+        else {
+          return myCachedTopLevelRegions[i];
+        }
       }
 
       return null;
@@ -520,7 +526,10 @@ public class FoldingModelImpl implements FoldingModelEx, DocumentListener {
           end = i - 1;
         } else if (offset > myCachedEndOffsets[i]) {
           start = i + 1;
-        } else return i;
+        }
+        else {
+          return i;
+        }
       }
 
       return end;
@@ -547,5 +556,9 @@ public class FoldingModelImpl implements FoldingModelEx, DocumentListener {
 
   public void documentChanged(DocumentEvent event) {
     updateCachedOffsets();
+  }
+
+  public int getPriority() {
+    return 1;
   }
 }

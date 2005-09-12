@@ -15,7 +15,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -23,7 +23,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import java.awt.*;
 import java.util.ArrayList;
 
-public class CaretModelImpl implements CaretModel, DocumentListener {
+public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.CaretModelImpl");
   private EditorImpl myEditor;
   private ArrayList<CaretListener> myCaretListeners = new ArrayList<CaretListener>();
@@ -408,5 +408,9 @@ public class CaretModelImpl implements CaretModel, DocumentListener {
 
   public void beforeDocumentChange(DocumentEvent e) {
     myIsInUpdate = true;
+  }
+
+  public int getPriority() {
+    return 3;
   }
 }

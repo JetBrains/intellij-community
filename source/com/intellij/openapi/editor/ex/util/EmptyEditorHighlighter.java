@@ -4,14 +4,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
+import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.tree.IElementType;
 
-public class EmptyEditorHighlighter extends DocumentAdapter implements EditorHighlighter{
+public class EmptyEditorHighlighter implements EditorHighlighter, PrioritizedDocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter");
 
   private TextAttributes myAttributes;
@@ -41,6 +41,12 @@ public class EmptyEditorHighlighter extends DocumentAdapter implements EditorHig
 
   public void documentChanged(DocumentEvent e) {
     myTextLength += e.getNewLength() - e.getOldLength();
+  }
+
+  public void beforeDocumentChange(DocumentEvent event) {}
+
+  public int getPriority() {
+    return 2;
   }
 
   public HighlighterIterator createIterator(int startOffset) {

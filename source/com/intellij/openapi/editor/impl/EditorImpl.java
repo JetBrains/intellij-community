@@ -3773,13 +3773,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     }
   }
 
-  class EditorDocumentAdapter extends DocumentAdapter {
+  class EditorDocumentAdapter implements PrioritizedDocumentListener {
     public void beforeDocumentChange(DocumentEvent e) {
       beforeChangedUpdate(e);
     }
 
     public void documentChanged(DocumentEvent e) {
       changedUpdate(e);
+    }
+
+    public int getPriority() {
+      return 5;
     }
   }
 
