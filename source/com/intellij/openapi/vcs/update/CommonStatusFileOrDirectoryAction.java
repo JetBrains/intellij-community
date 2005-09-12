@@ -4,4 +4,8 @@ public class CommonStatusFileOrDirectoryAction extends AbstractCommonUpdateActio
   public CommonStatusFileOrDirectoryAction() {
     super(ActionInfo.STATUS, ScopeInfo.FILES);
   }
+
+  protected boolean filterRootsBeforeAction() {
+    return true;
+  }
 }

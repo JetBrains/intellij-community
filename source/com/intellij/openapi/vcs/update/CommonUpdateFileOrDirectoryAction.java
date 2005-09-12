@@ -38,4 +38,8 @@ public class CommonUpdateFileOrDirectoryAction extends AbstractCommonUpdateActio
     super(ActionInfo.UPDATE, ScopeInfo.FILES);
   }
 
+  protected boolean filterRootsBeforeAction() {
+    return true;
+  }
+  
 }

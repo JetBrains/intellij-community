@@ -4,4 +4,9 @@ public class CommonStatusProjectAction extends AbstractCommonUpdateAction {
   public CommonStatusProjectAction() {
     super(ActionInfo.STATUS, ScopeInfo.PROJECT);
   }
+
+  protected boolean filterRootsBeforeAction() {
+    return false;
+  }
+
 }

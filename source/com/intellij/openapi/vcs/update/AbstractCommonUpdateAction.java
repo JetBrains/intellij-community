@@ -39,14 +39,13 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AbstractVcsAction;
 import com.intellij.openapi.vcs.actions.VcsContext;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
@@ -59,7 +58,7 @@ import com.intellij.vcsUtil.VcsUtil;
 
 import java.util.*;
 
-public class AbstractCommonUpdateAction extends AbstractVcsAction {
+public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
   private final ActionInfo myActionInfo;
   private final ScopeInfo myScopeInfo;
@@ -273,11 +272,31 @@ public class AbstractCommonUpdateAction extends AbstractVcsAction {
           if (updateEnvironment != null) {
             result.add(file);
           }
+        } else {
+          final VirtualFile virtualFile = file.getVirtualFile();
+          if (virtualFile != null && virtualFile.isDirectory()) {
+            final VirtualFile[] children = virtualFile.getChildren();
+            if (children != null) {
+              final FilePath[] childrenAsPaths = createFilePathsOn(children);
+              result.addAll(Arrays.asList(filterRoots(childrenAsPaths, vcsContext)));
+            }
+          }
         }
       }
     }
     return result.toArray(new FilePath[result.size()]);
   }
+
+  private FilePath[] createFilePathsOn(final VirtualFile[] children) {
+    final VcsContextFactory vcsContextFactory = PeerFactory.getInstance().getVcsContextFactory();
+    final FilePath[] result = new FilePath[children.length];
+    for (int i = 0; i < result.length; i++) {
+      result[i] = vcsContextFactory.createFilePathOn(children[i]);
+    }
+    return result;
+  }
+
+  protected abstract boolean filterRootsBeforeAction();
 
   protected void update(VcsContext vcsContext, Presentation presentation) {
     Project project = vcsContext.getProject();
@@ -295,16 +314,21 @@ public class AbstractCommonUpdateAction extends AbstractVcsAction {
       presentation.setVisible(true);
       presentation.setEnabled(true);
 
-      FilePath[] roots = filterRoots(myScopeInfo.getRoots(vcsContext, myActionInfo), vcsContext);
-      if (roots == null || roots.length == 0) {
-        presentation.setVisible(false);
-        presentation.setEnabled(false);
+      if (filterRootsBeforeAction()) {
+        FilePath[] roots = filterRoots(myScopeInfo.getRoots(vcsContext, myActionInfo), vcsContext);
+        if ( roots == null || roots.length == 0) {
+          presentation.setVisible(false);
+          presentation.setEnabled(false);
+        }
       }
+
     } else {
       presentation.setVisible(false);
-      presentation.setEnabled(false);      
+      presentation.setEnabled(false);
     }
 
   }
+
+
 
 }

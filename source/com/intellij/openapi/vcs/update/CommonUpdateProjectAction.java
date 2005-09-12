@@ -38,4 +38,8 @@ public class CommonUpdateProjectAction extends AbstractCommonUpdateAction {
     super(ActionInfo.UPDATE, ScopeInfo.PROJECT);
   }
 
+  protected boolean filterRootsBeforeAction() {
+    return false;
+  }
+
 }
