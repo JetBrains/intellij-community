@@ -20,8 +20,12 @@ import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierList;
+import com.intellij.openapi.project.Project;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,12 +36,33 @@ public class RedundantMethodOverrideInspection extends MethodInspection {
     }
 
     public String getDisplayName() {
-        return "Method is identical to super method";
+        return "Method is identical to its super method";
     }
 
     @Nullable
     protected String buildErrorString(PsiElement location) {
-        return "Method '#ref()' is identical to super method";
+        return "Method '#ref()' is identical to its super method";
+    }
+
+    @Nullable
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return new RedundantMethodOverrideFix();
+    }
+
+    private static class  RedundantMethodOverrideFix
+            extends InspectionGadgetsFix {
+
+        public String getName() {
+            return "Remove redundant method";
+        }
+
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiElement methodNameIdentifier = descriptor.getPsiElement();
+            final PsiElement method = methodNameIdentifier.getParent();
+            assert method != null;
+            deleteElement(method);
+        }
     }
 
     public BaseInspectionVisitor buildVisitor() {
