@@ -32,7 +32,7 @@
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleGetInfoString</key>
-    <string>5.0 RC1. Build @@@@. Copyright JetBrains s.r.o., (c) 2000-2005</string>
+    <string>5.0.2 Build @@@@. Copyright JetBrains s.r.o., (c) 2000-2005</string>
     <key>CFBundleShortVersionString</key>
     <string>5.0 RC1</string>
     <key>CFBundleVersion</key>
