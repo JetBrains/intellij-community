@@ -659,7 +659,7 @@ public class RenameUtil {
   }
 
   private static void rename(UsageInfo info, String newName) throws IncorrectOperationException {
-    if (info.getElement() == null || !info.getElement().isValid()) return;
+    if (info.getElement() == null) return;
     PsiReference ref = ((MoveRenameUsageInfo)info).reference;
     if (ref == null) return;
     ref.handleElementRename(newName);
@@ -702,16 +702,15 @@ public class RenameUtil {
                                      RefactoringElementListener listener) throws IncorrectOperationException {
     // do actual rename of overriding/implementing methods and of references to all them
     for (UsageInfo usage : usages) {
-      if (!usage.getElement().isValid()) {
-        continue;
-      }
-      if (!(usage.getElement() instanceof PsiMethod)) {
+      final PsiElement element = usage.getElement();
+      if (element == null) continue;
+      if (!(element instanceof PsiMethod)) {
         final PsiReference ref;
         if (usage instanceof MoveRenameUsageInfo) {
           ref = ((MoveRenameUsageInfo)usage).reference;
         }
         else {
-          ref = usage.getElement().getReference();
+          ref = element.getReference();
         }
         if (ref != null) {
           ref.handleElementRename(newName);
@@ -722,8 +721,9 @@ public class RenameUtil {
     // do actual rename of method
     method.setName(newName);
     for (UsageInfo usage : usages) {
-      if (usage.getElement() instanceof PsiMethod) {
-        ((PsiMethod)usage.getElement()).setName(newName);
+      final PsiElement element = usage.getElement();
+      if (element instanceof PsiMethod) {
+        ((PsiMethod)element).setName(newName);
       }
     }
     listener.elementRenamed(method);
@@ -735,14 +735,13 @@ public class RenameUtil {
                                        RefactoringElementListener listener) throws IncorrectOperationException {
     // rename all references
     for (UsageInfo usage : usages) {
-      if (!usage.getElement().isValid()) {
-        continue;
-      }
+      final PsiElement element = usage.getElement();
+      if (element == null) continue;
 
       if (!(usage instanceof LocalHidesFieldUsageInfo)) {
         final PsiReference ref;
         if (!(usage instanceof MoveRenameUsageInfo)) {
-          ref = usage.getElement().getReference();
+          ref = element.getReference();
         }
         else {
           ref = ((MoveRenameUsageInfo)usage).reference;
@@ -755,7 +754,7 @@ public class RenameUtil {
         }
       }
       else {
-        PsiJavaCodeReferenceElement collidingRef = (PsiJavaCodeReferenceElement)usage.getElement();
+        PsiJavaCodeReferenceElement collidingRef = (PsiJavaCodeReferenceElement)element;
         PsiElement resolved = collidingRef.resolve();
 
         if (resolved instanceof PsiField) {
