@@ -20,9 +20,11 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A PSI element which is a reference to another element. For example, the variable name
- * used in an expression. The "Goto Definition" action can be used to go from a reference
- * to the element it references.
+ * A reference to a PSI element. For example, the variable name used in an expression.
+ * The "Go to Declaration" action can be used to go from a reference to the element it references.
+ *
+ * @see PsiElement#getReference()
+ * @see PsiElement#getReferences() 
  */
 
 public interface PsiReference {
