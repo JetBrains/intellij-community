@@ -190,7 +190,7 @@ public class FormatterImpl extends FormatterEx
 
         final String newWS = whiteSpace.generateWhiteSpace(indentOptions, lineStartOffset, indent);
         try {
-          processor.replaceWhiteSpace(model, blockAfterOffset, 0, newWS);
+          model.replaceWhiteSpace(blockAfterOffset.getWhiteSpace().getTextRange(), newWS);          
         }
         finally {
           model.commitChanges();
