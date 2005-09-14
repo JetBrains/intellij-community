@@ -489,8 +489,10 @@ public class FindUsagesUtil {
   private static void addDerivedInterfaces(PsiClass anInterface, final Processor<UsageInfo> results, final FindUsagesOptions options) {
     PsiSearchHelper helper = anInterface.getManager().getSearchHelper();
     helper.processInheritors(new PsiElementProcessor<PsiClass>() {
-      public boolean execute(PsiClass element) {
-        addResult(results, element, options, null);
+      public boolean execute(PsiClass inheritor) {
+        if (inheritor.isInterface()) {
+          addResult(results, inheritor, options, null);
+        }
         return true;
       }
 
@@ -500,8 +502,10 @@ public class FindUsagesUtil {
   private static void addImplementingClasses(PsiClass anInterface, final Processor<UsageInfo> results, final FindUsagesOptions options) {
     PsiSearchHelper helper = anInterface.getManager().getSearchHelper();
     helper.processInheritors(new PsiElementProcessor<PsiClass>() {
-      public boolean execute(PsiClass element) {
-        addResult(results, element, options, null);
+      public boolean execute(PsiClass inheritor) {
+        if (!inheritor.isInterface()) {
+          addResult(results, inheritor, options, null);
+        }
         return true;
       }
 
