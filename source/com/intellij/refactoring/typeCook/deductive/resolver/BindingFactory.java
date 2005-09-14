@@ -663,7 +663,7 @@ public class BindingFactory {
                 }
                 else {
                   /* ? super T1, T2 */
-                  if (xType != null && !xType.getCanonicalText().equals("java.lang.Object")) {
+                  if (xType != null && !"java.lang.Object".equals(xType.getCanonicalText())) {
                     return null;
                   }
                   return create();
@@ -1094,7 +1094,7 @@ public class BindingFactory {
             for (int i = 0; i < ancestors.length; i++) {
               final PsiClass ancestor = ancestors[i];
 
-              if (ancestor.getQualifiedName().equals("java.lang.Object") && ancestors.length > 1) {
+              if ("java.lang.Object".equals(ancestor.getQualifiedName()) && ancestors.length > 1) {
               continue;
               }
 
