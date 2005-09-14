@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.style;
+package com.siyeh.ig.dataflow;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
