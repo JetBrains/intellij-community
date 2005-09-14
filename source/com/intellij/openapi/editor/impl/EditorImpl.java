@@ -526,7 +526,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     highlighter.setEditor(this);
     highlighter.setText(getDocument().getCharsSequence());
     myHighlighter = highlighter;
-    
+
     if (myPanel != null) {
       reinitSettings();
     }
@@ -952,8 +952,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
 
   void recalcSizeAndRepaint() {
     mySizeContainer.reset();
-
     validateSize();
+    myEditorComponent.repaintEditorComponent();
   }
 
   @NotNull
