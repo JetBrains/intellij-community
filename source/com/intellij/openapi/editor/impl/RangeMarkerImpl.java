@@ -35,6 +35,10 @@ public class RangeMarkerImpl extends DocumentAdapter implements RangeMarker {
     myEnd = end;
     myId = counter;
     counter++;
+    registerInDocument();
+  }
+
+  protected void registerInDocument() {
     ((DocumentImpl)myDocument).addRangeMarker(this);
   }
 

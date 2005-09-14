@@ -78,6 +78,9 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
         }
       }
     }
+
+    protected void registerInDocument() {      
+    }
   }
 
   public void beforeDocumentChange(DocumentEvent event) {

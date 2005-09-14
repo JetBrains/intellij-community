@@ -157,11 +157,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return !myIsReadOnly;
   }
 
-  public void addRangeMarker(RangeMarker rangeMarker) {
-    if (rangeMarker instanceof SelectionModelImpl.MyRangeMarker) return; //Selection range marker is updated by selection model directly.
-
+  void addRangeMarker(RangeMarkerImpl rangeMarker) {
     ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
-    myRangeMarkers.add((RangeMarkerImpl)rangeMarker);
+    myRangeMarkers.add(rangeMarker);
   }
 
   public RangeMarker createGuardedBlock(int startOffset, int endOffset) {
