@@ -79,22 +79,24 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   public PsiClass[] getClasses() {
-    if (myCachedClasses == null){
-      if (getTreeElement() != null || getRepositoryId() < 0){
-        LOG.debug("Loading tree for " + getName());
-        myCachedClasses = calcTreeElement().getChildrenAsPsiElements(CLASS_BIT_SET, PSI_CLASS_ARRAY_CONSTRUCTOR);
-      }
-      else{
-        long[] classIds = getRepositoryManager().getFileView().getClasses(getRepositoryId());
-        PsiClass[] classes = classIds.length > 0 ? new PsiClass[classIds.length] : PsiClass.EMPTY_ARRAY;
-        for(int i = 0; i < classIds.length; i++){
-          long id = classIds[i];
-          classes[i] = (PsiClass)getRepositoryElementsManager().findOrCreatePsiElementById(id);
+    synchronized (PsiLock.LOCK) {
+      if (myCachedClasses == null){
+        if (getTreeElement() != null || getRepositoryId() < 0){
+          LOG.debug("Loading tree for " + getName());
+          myCachedClasses = calcTreeElement().getChildrenAsPsiElements(CLASS_BIT_SET, PSI_CLASS_ARRAY_CONSTRUCTOR);
         }
-        myCachedClasses = classes;
+        else{
+          long[] classIds = getRepositoryManager().getFileView().getClasses(getRepositoryId());
+          PsiClass[] classes = classIds.length > 0 ? new PsiClass[classIds.length] : PsiClass.EMPTY_ARRAY;
+          for(int i = 0; i < classIds.length; i++){
+            long id = classIds[i];
+            classes[i] = (PsiClass)getRepositoryElementsManager().findOrCreatePsiElementById(id);
+          }
+          myCachedClasses = classes;
+        }
       }
+      return myCachedClasses;
     }
-    return myCachedClasses;
   }
 
   public PsiPackageStatement getPackageStatement() {
@@ -103,17 +105,19 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   public String getPackageName(){
     if (myCachedPackageName == null){
-      if (getTreeElement() != null || getRepositoryId() < 0){
-        PsiPackageStatement statement = getPackageStatement();
-        if (statement == null){
-          myCachedPackageName = "";
+      synchronized (PsiLock.LOCK) {
+        if (getTreeElement() != null || getRepositoryId() < 0){
+          PsiPackageStatement statement = getPackageStatement();
+          if (statement == null){
+            myCachedPackageName = "";
+          }
+          else{
+            myCachedPackageName = statement.getPackageName();
+          }
         }
         else{
-          myCachedPackageName = statement.getPackageName();
+          myCachedPackageName = getRepositoryManager().getFileView().getPackageName(getRepositoryId());
         }
-      }
-      else{
-        myCachedPackageName = getRepositoryManager().getFileView().getPackageName(getRepositoryId());
       }
     }
     return myCachedPackageName;

@@ -47,15 +47,17 @@ public class PsiParameterImpl extends IndexedRepositoryPsiElement implements Psi
   }
 
   public final String getName() {
-    if (myCachedName == null){
-      if (getTreeElement() != null){
-        myCachedName = getNameIdentifier().getText();
+    synchronized (PsiLock.LOCK) {
+      if (myCachedName == null){
+        if (getTreeElement() != null){
+          myCachedName = getNameIdentifier().getText();
+        }
+        else{
+          myCachedName = getRepositoryManager().getMethodView().getParameterName(getRepositoryId(), getIndex());
+        }
       }
-      else{
-        myCachedName = getRepositoryManager().getMethodView().getParameterName(getRepositoryId(), getIndex());
-      }
+      return myCachedName;
     }
-    return myCachedName;
   }
 
   public PsiElement setName(String name) throws IncorrectOperationException {
@@ -68,26 +70,28 @@ public class PsiParameterImpl extends IndexedRepositoryPsiElement implements Psi
   }
 
   public PsiType getType() {
-    final CompositeElement treeElement = getTreeElement();
-    if (treeElement != null) {
-      myCachedType = null;
-      return SharedImplUtil.getType(this);
-    }
-    else {
-      if (myCachedType != null) {
-        PsiType type = myCachedType.get();
-        if (type != null) return type;
+    synchronized (PsiLock.LOCK) {
+      final CompositeElement treeElement = getTreeElement();
+      if (treeElement != null) {
+        myCachedType = null;
+        return SharedImplUtil.getType(this);
       }
+      else {
+        if (myCachedType != null) {
+          PsiType type = myCachedType.get();
+          if (type != null) return type;
+        }
 
-      String typeText = getRepositoryManager().getMethodView().getParameterTypeText(getRepositoryId(), getIndex());
-      try {
-        final PsiType type = getManager().getElementFactory().createTypeFromText(typeText, this);
-        myCachedType = new PatchedSoftReference<PsiType>(type);
-        return type;
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-        return null;
+        String typeText = getRepositoryManager().getMethodView().getParameterTypeText(getRepositoryId(), getIndex());
+        try {
+          final PsiType type = getManager().getElementFactory().createTypeFromText(typeText, this);
+          myCachedType = new PatchedSoftReference<PsiType>(type);
+          return type;
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+          return null;
+        }
       }
     }
   }
@@ -156,41 +160,45 @@ public class PsiParameterImpl extends IndexedRepositoryPsiElement implements Psi
   }
 
   public boolean isVarArgs() {
-    final CompositeElement treeElement = getTreeElement();
-    if (treeElement != null) {
-      myCachedType = null;
-      return TreeUtil.findChild(SourceTreeToPsiMap.psiElementToTree(getTypeElement()), ELLIPSIS) != null;
-    }
-    else {
-      if (myCachedIsVarArgs == null) {
-        myCachedIsVarArgs = Boolean.valueOf(getRepositoryManager().getMethodView().isParameterTypeEllipsis(getRepositoryId(), getIndex()));
+    synchronized (PsiLock.LOCK) {
+      final CompositeElement treeElement = getTreeElement();
+      if (treeElement != null) {
+        myCachedType = null;
+        return TreeUtil.findChild(SourceTreeToPsiMap.psiElementToTree(getTypeElement()), ELLIPSIS) != null;
       }
-      return myCachedIsVarArgs.booleanValue();
+      else {
+        if (myCachedIsVarArgs == null) {
+          myCachedIsVarArgs = Boolean.valueOf(getRepositoryManager().getMethodView().isParameterTypeEllipsis(getRepositoryId(), getIndex()));
+        }
+        return myCachedIsVarArgs.booleanValue();
+      }
     }
   }
 
   @NotNull
   public PsiAnnotation[] getAnnotations() {
-    final CompositeElement treeElement = getTreeElement();
-    if (treeElement != null) {
-      myCachedAnnotations = null;
-      return getModifierList().getAnnotations();
-    }
-    else {
-      if (myCachedAnnotations == null) {
-        String[] annotationStrings = getRepositoryManager().getMethodView().getParameterAnnotations(getRepositoryId())[getIndex()];
-        myCachedAnnotations = new PsiAnnotation[annotationStrings.length];
-        for (int i = 0; i < annotationStrings.length; i++) {
-          try {
-            myCachedAnnotations[i] = getManager().getElementFactory().createAnnotationFromText(annotationStrings[i], this);
-            LOG.assertTrue(myCachedAnnotations[i] != null);
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error("Bad annotation text in repository: " + annotationStrings[i]);
+    synchronized (PsiLock.LOCK) {
+      final CompositeElement treeElement = getTreeElement();
+      if (treeElement != null) {
+        myCachedAnnotations = null;
+        return getModifierList().getAnnotations();
+      }
+      else {
+        if (myCachedAnnotations == null) {
+          String[] annotationStrings = getRepositoryManager().getMethodView().getParameterAnnotations(getRepositoryId())[getIndex()];
+          myCachedAnnotations = new PsiAnnotation[annotationStrings.length];
+          for (int i = 0; i < annotationStrings.length; i++) {
+            try {
+              myCachedAnnotations[i] = getManager().getElementFactory().createAnnotationFromText(annotationStrings[i], this);
+              LOG.assertTrue(myCachedAnnotations[i] != null);
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error("Bad annotation text in repository: " + annotationStrings[i]);
+            }
           }
         }
+        return myCachedAnnotations;
       }
-      return myCachedAnnotations;
     }
   }
 

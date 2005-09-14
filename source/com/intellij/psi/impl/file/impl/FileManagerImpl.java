@@ -466,19 +466,21 @@ public class FileManagerImpl implements FileManager {
   }
 
   public PsiClass[] findClasses(String qName, GlobalSearchScope scope) {
-    RepositoryManager repositoryManager = myManager.getRepositoryManager();
-    long[] classIds = repositoryManager.getIndex().getClassesByQualifiedName(qName, null);
-    if (classIds.length == 0) return PsiClass.EMPTY_ARRAY;
+    synchronized (PsiLock.LOCK) {
+      RepositoryManager repositoryManager = myManager.getRepositoryManager();
+      long[] classIds = repositoryManager.getIndex().getClassesByQualifiedName(qName, null);
+      if (classIds.length == 0) return PsiClass.EMPTY_ARRAY;
 
-    ArrayList<PsiClass> result = new ArrayList<PsiClass>();
-    for (long classId : classIds) {
-      PsiClass aClass = (PsiClass)myManager.getRepositoryElementsManager().findOrCreatePsiElementById(classId);
-      VirtualFile vFile = aClass.getContainingFile().getVirtualFile();
-      if (scope.contains(vFile)) {
-        result.add(aClass);
+      ArrayList<PsiClass> result = new ArrayList<PsiClass>();
+      for (long classId : classIds) {
+        PsiClass aClass = (PsiClass)myManager.getRepositoryElementsManager().findOrCreatePsiElementById(classId);
+        VirtualFile vFile = aClass.getContainingFile().getVirtualFile();
+        if (scope.contains(vFile)) {
+          result.add(aClass);
+        }
       }
+      return result.toArray(new PsiClass[result.size()]);
     }
-    return result.toArray(new PsiClass[result.size()]);
   }
 
   public PsiClass findClass(String qName, GlobalSearchScope scope) {
@@ -492,8 +494,8 @@ public class FileManagerImpl implements FileManager {
     }
     LOG.assertTrue(!myDisposed);
 
-    if ("java.lang.Object".equals(qName)) { // optimization
-      synchronized (PsiLock.LOCK) {
+    synchronized (PsiLock.LOCK) {
+      if ("java.lang.Object".equals(qName)) { // optimization
         if (myCachedObjectClassMap == null) {
           myCachedObjectClassMap = new HashMap<GlobalSearchScope, PsiClass>();
 
@@ -511,9 +513,9 @@ public class FileManagerImpl implements FileManager {
         final PsiClass cachedClass = myCachedObjectClassMap.get(scope);
         return cachedClass == null ? _findClass(qName, scope) : cachedClass;
       }
-    }
 
-    return _findClass(qName, scope);
+      return _findClass(qName, scope);
+    }
   }
 
   private PsiClass findClassWithoutRepository(String qName) {

@@ -56,8 +56,8 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.TIntArrayList;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -803,21 +803,23 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     final SearchScope searchScope1 = searchScope.intersectWith(aClass.getUseScope());
 
-    RepositoryIndex repositoryIndex = repositoryManager.getIndex();
-    VirtualFileFilter rootFilter;
-    if (!checkDeep && searchScope1 instanceof GlobalSearchScope) {
-      rootFilter = repositoryIndex.rootFilterBySearchScope((GlobalSearchScope)searchScope1);
-    }
-    else {
-      rootFilter = null;
-    }
-    long[] candidateIds = repositoryIndex.getNameOccurrencesInExtendsLists(name, rootFilter);
-    for (long id : candidateIds) {
-      PsiClass candidate = (PsiClass)repositoryElementsManager.findOrCreatePsiElementById(id);
-      LOG.assertTrue(candidate.isValid());
-      if (!processInheritorCandidate(processor, candidate, aClass, searchScope, checkDeep, processed,
-                                     checkInheritance)) {
-        return false;
+    synchronized (PsiLock.LOCK) {
+      RepositoryIndex repositoryIndex = repositoryManager.getIndex();
+      VirtualFileFilter rootFilter;
+      if (!checkDeep && searchScope1 instanceof GlobalSearchScope) {
+        rootFilter = repositoryIndex.rootFilterBySearchScope((GlobalSearchScope)searchScope1);
+      }
+      else {
+        rootFilter = null;
+      }
+      long[] candidateIds = repositoryIndex.getNameOccurrencesInExtendsLists(name, rootFilter);
+      for (long id : candidateIds) {
+        PsiClass candidate = (PsiClass)repositoryElementsManager.findOrCreatePsiElementById(id);
+        LOG.assertTrue(candidate.isValid());
+        if (!processInheritorCandidate(processor, candidate, aClass, searchScope, checkDeep, processed,
+                                       checkInheritance)) {
+          return false;
+        }
       }
     }
 
@@ -1164,16 +1166,18 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         if (!searchScope.contains(file.getVirtualFile())) continue;
         if (!(file instanceof PsiJavaFile)) continue;
 
-        long fileId = myManager.getRepositoryManager().getFileId(file.getVirtualFile());
-        if (fileId >= 0) {
-          long[] allClasses = myManager.getRepositoryManager().getFileView().getAllClasses(fileId);
-          for (long allClass : allClasses) {
-            PsiClass psiClass = (PsiClass)myManager.getRepositoryElementsManager().findOrCreatePsiElementById(allClass);
-            if (!processor.execute(psiClass)) return false;
+        synchronized (PsiLock.LOCK) {
+          long fileId = myManager.getRepositoryManager().getFileId(file.getVirtualFile());
+          if (fileId >= 0) {
+            long[] allClasses = myManager.getRepositoryManager().getFileView().getAllClasses(fileId);
+            for (long allClass : allClasses) {
+              PsiClass psiClass = (PsiClass)myManager.getRepositoryElementsManager().findOrCreatePsiElementById(allClass);
+              if (!processor.execute(psiClass)) return false;
+            }
           }
-        }
-        else {
-          if (!processAllClasses(processor, new LocalSearchScope(file))) return false;
+          else {
+            if (!processAllClasses(processor, new LocalSearchScope(file))) return false;
+          }
         }
       }
     }

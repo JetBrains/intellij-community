@@ -90,9 +90,11 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
   }
 
   public PsiElement getParent() {
-    final long parentId = getParentId();
-    if (parentId < 0) return myParent;
-    return getRepositoryElementsManager().findOrCreatePsiElementById(parentId);
+    synchronized (PsiLock.LOCK) {
+      final long parentId = getParentId();
+      if (parentId < 0) return myParent;
+      return getRepositoryElementsManager().findOrCreatePsiElementById(parentId);
+    }
   }
 
   public PsiClass getContainingClass() {
@@ -404,7 +406,9 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
   private PsiExpression createInitializerFromRepository() {
     String initializerText;
     try {
-      initializerText = getRepositoryManager().getFieldView().getInitializerText(getRepositoryId());
+      synchronized (PsiLock.LOCK) {
+        initializerText = getRepositoryManager().getFieldView().getInitializerText(getRepositoryId());
+      }
     }
     catch (InitializerTooLongException e) {
       return null; //??

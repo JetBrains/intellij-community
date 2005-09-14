@@ -77,40 +77,42 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
   }
 
   public PsiClass[] getClassesByName(String name, final GlobalSearchScope scope) {
-    VirtualFileFilter filter = getRepositoryIndex().rootFilterBySearchScope(scope);
-    long[] classIds = getRepositoryIndex().getClassesByShortName(name, filter);
+    synchronized (PsiLock.LOCK) {
+      VirtualFileFilter filter = getRepositoryIndex().rootFilterBySearchScope(scope);
+      long[] classIds = getRepositoryIndex().getClassesByShortName(name, filter);
 
-    if (classIds.length == 0) return PsiClass.EMPTY_ARRAY;
-    RepositoryElementsManager repositoryElementsManager = myManager.getRepositoryElementsManager();
-    ArrayList<PsiClass> list = new ArrayList<PsiClass>();
-    IdLoop:
-    for (long id : classIds) {
-      PsiClass aClass = (PsiClass)repositoryElementsManager.findOrCreatePsiElementById(id);
-      VirtualFile vFile = aClass.getContainingFile().getVirtualFile();
-      if (!scope.contains(vFile)) continue;
+      if (classIds.length == 0) return PsiClass.EMPTY_ARRAY;
+      RepositoryElementsManager repositoryElementsManager = myManager.getRepositoryElementsManager();
+      ArrayList<PsiClass> list = new ArrayList<PsiClass>();
+      IdLoop:
+      for (long id : classIds) {
+        PsiClass aClass = (PsiClass)repositoryElementsManager.findOrCreatePsiElementById(id);
+        VirtualFile vFile = aClass.getContainingFile().getVirtualFile();
+        if (!scope.contains(vFile)) continue;
 
-      for (int j = 0; j < list.size(); j++) {
-        PsiClass aClass1 = list.get(j);
+        for (int j = 0; j < list.size(); j++) {
+          PsiClass aClass1 = list.get(j);
 
-        String qName = aClass.getQualifiedName();
-        String qName1 = aClass1.getQualifiedName();
-        if (qName != null && qName1 != null && qName.equals(qName1)) {
-          VirtualFile vFile1 = aClass1.getContainingFile().getVirtualFile();
-          int res = scope.compare(vFile1, vFile);
-          if (res > 0) {
-            continue IdLoop; // aClass1 hides aClass
-          }
-          else if (res < 0) {
-            list.remove(j);
-            j--;
-            continue; // aClass hides aClass1
+          String qName = aClass.getQualifiedName();
+          String qName1 = aClass1.getQualifiedName();
+          if (qName != null && qName1 != null && qName.equals(qName1)) {
+            VirtualFile vFile1 = aClass1.getContainingFile().getVirtualFile();
+            int res = scope.compare(vFile1, vFile);
+            if (res > 0) {
+              continue IdLoop; // aClass1 hides aClass
+            }
+            else if (res < 0) {
+              list.remove(j);
+              j--;
+              continue; // aClass hides aClass1
+            }
           }
         }
-      }
 
-      list.add(aClass);
+        list.add(aClass);
+      }
+      return list.toArray(new PsiClass[list.size()]);
     }
-    return list.toArray(new PsiClass[list.size()]);
   }
 
   public String[] getAllClassNames(boolean searchInLibraries) {
@@ -124,13 +126,15 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
   }
 
   public PsiMethod[] getMethodsByName(String name, final GlobalSearchScope scope) {
-    VirtualFileFilter filter = getRepositoryIndex().rootFilterBySearchScope(scope);
-    long[] methodIds = getRepositoryIndex().getMethodsByName(name, filter);
+    synchronized (PsiLock.LOCK) {
+      VirtualFileFilter filter = getRepositoryIndex().rootFilterBySearchScope(scope);
+      long[] methodIds = getRepositoryIndex().getMethodsByName(name, filter);
 
-    if (methodIds.length == 0) return PsiMethod.EMPTY_ARRAY;
-    ArrayList<PsiElement> list = new ArrayList<PsiElement>();
-    addElementsByIds(list, methodIds, scope);
-    return list.toArray(new PsiMethod[list.size()]);
+      if (methodIds.length == 0) return PsiMethod.EMPTY_ARRAY;
+      ArrayList<PsiElement> list = new ArrayList<PsiElement>();
+      addElementsByIds(list, methodIds, scope);
+      return list.toArray(new PsiMethod[list.size()]);
+    }
   }
 
   public String[] getAllMethodNames(boolean searchInLibraries) {
@@ -144,13 +148,15 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
   }
 
   public PsiField[] getFieldsByName(String name, final GlobalSearchScope scope) {
-    VirtualFileFilter filter = getRepositoryIndex().rootFilterBySearchScope(scope);
-    long[] fieldIds = getRepositoryIndex().getFieldsByName(name, filter);
+    synchronized (PsiLock.LOCK) {
+      VirtualFileFilter filter = getRepositoryIndex().rootFilterBySearchScope(scope);
+      long[] fieldIds = getRepositoryIndex().getFieldsByName(name, filter);
 
-    if (fieldIds.length == 0) return PsiField.EMPTY_ARRAY;
-    ArrayList<PsiElement> list = new ArrayList<PsiElement>();
-    addElementsByIds(list, fieldIds, scope);
-    return list.toArray(new PsiField[list.size()]);
+      if (fieldIds.length == 0) return PsiField.EMPTY_ARRAY;
+      ArrayList<PsiElement> list = new ArrayList<PsiElement>();
+      addElementsByIds(list, fieldIds, scope);
+      return list.toArray(new PsiField[list.size()]);
+    }
   }
 
   public String[] getAllFieldNames(boolean searchInLibraries) {

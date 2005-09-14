@@ -100,10 +100,12 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
 
   public PsiElement getParent() {
     if (myParent == null) {
-      long repositoryId = getRepositoryId();
-      if (repositoryId >= 0) {
-        long parentId = getRepositoryManager().getClassView().getParent(repositoryId);
-        myParent = getRepositoryElementsManager().findOrCreatePsiElementById(parentId);
+      synchronized (PsiLock.LOCK) {
+        long repositoryId = getRepositoryId();
+        if (repositoryId >= 0) {
+          long parentId = getRepositoryManager().getClassView().getParent(repositoryId);
+          myParent = getRepositoryElementsManager().findOrCreatePsiElementById(parentId);
+        }
       }
     }
     return myParent;
@@ -848,22 +850,26 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
   }
 
   public boolean isInterface() {
-    long repositoryId = getRepositoryId();
-    if (repositoryId < 0) {
-      return (getAccessFlags() & ClsUtil.ACC_INTERFACE) != 0;
-    }
-    else {
-      return getRepositoryManager().getClassView().isInterface(repositoryId);
+    synchronized (PsiLock.LOCK) {
+      long repositoryId = getRepositoryId();
+      if (repositoryId < 0) {
+        return (getAccessFlags() & ClsUtil.ACC_INTERFACE) != 0;
+      }
+      else {
+        return getRepositoryManager().getClassView().isInterface(repositoryId);
+      }
     }
   }
 
   public boolean isAnnotationType() {
-    long repositoryId = getRepositoryId();
-    if (repositoryId < 0) {
-      return (getAccessFlags() & ClsUtil.ACC_ANNOTATION) != 0;
-    }
-    else {
-      return getRepositoryManager().getClassView().isAnnotationType(repositoryId);
+    synchronized (PsiLock.LOCK) {
+      long repositoryId = getRepositoryId();
+      if (repositoryId < 0) {
+        return (getAccessFlags() & ClsUtil.ACC_ANNOTATION) != 0;
+      }
+      else {
+        return getRepositoryManager().getClassView().isAnnotationType(repositoryId);
+      }
     }
   }
 

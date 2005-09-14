@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiImportStatement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiLock;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.impl.source.tree.*;
@@ -43,7 +44,10 @@ public class PsiImportStatementImpl extends PsiImportStatementBaseImpl implement
         }
         else{
           final FileElement holderElement = new DummyHolder(myManager, this).getTreeElement();
-          final String refText = getRepositoryManager().getFileView().getImportQualifiedName(getRepositoryId(), getIndex());
+          final String refText;
+          synchronized (PsiLock.LOCK) {
+            refText = getRepositoryManager().getFileView().getImportQualifiedName(getRepositoryId(), getIndex());
+          }
           if (refText == null) return null;
           PsiJavaCodeReferenceElementImpl mirrorRef = (PsiJavaCodeReferenceElementImpl) Parsing.parseJavaCodeReferenceText(myManager, refText.toCharArray(), holderElement.getCharTable());
           if(mirrorRef == null) return null;

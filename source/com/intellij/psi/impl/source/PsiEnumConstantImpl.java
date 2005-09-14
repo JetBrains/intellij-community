@@ -49,25 +49,27 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
   }
 
   public PsiEnumConstantInitializer getInitializingClass() {
-    if (myCachedInitializingClass == null) {
-      if (getTreeElement() != null) {
-        myCachedInitializingClass = Ref.create((PsiEnumConstantInitializer)getTreeElement()
-                                                 .findChildByRoleAsPsiElement(ChildRole.ANONYMOUS_CLASS));
-      }
-      else {
-        long initializingClass = getRepositoryManager().getFieldView().getEnumConstantInitializer(getRepositoryId());
-        if (initializingClass < 0) {
-          myCachedInitializingClass = Ref.create(null);
+    synchronized (PsiLock.LOCK) {
+      if (myCachedInitializingClass == null) {
+        if (getTreeElement() != null) {
+          myCachedInitializingClass = Ref.create((PsiEnumConstantInitializer)getTreeElement()
+                                                   .findChildByRoleAsPsiElement(ChildRole.ANONYMOUS_CLASS));
         }
         else {
-          PsiEnumConstantInitializer repoElement = (PsiEnumConstantInitializer)getRepositoryElementsManager()
-            .findOrCreatePsiElementById(initializingClass);
-          myCachedInitializingClass = Ref.create(repoElement);
+          long initializingClass = getRepositoryManager().getFieldView().getEnumConstantInitializer(getRepositoryId());
+          if (initializingClass < 0) {
+            myCachedInitializingClass = Ref.create(null);
+          }
+          else {
+            PsiEnumConstantInitializer repoElement = (PsiEnumConstantInitializer)getRepositoryElementsManager()
+              .findOrCreatePsiElementById(initializingClass);
+            myCachedInitializingClass = Ref.create(repoElement);
+          }
         }
       }
-    }
 
-    return myCachedInitializingClass.get();
+      return myCachedInitializingClass.get();
+    }
   }
 
   public PsiClass getContainingClass() {
@@ -158,11 +160,13 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
 
   public String getName() {
     if (myCachedName == null) {
-      if (getTreeElement() != null) {
-        myCachedName = getNameIdentifier().getText();
-      }
-      else {
-        myCachedName = getRepositoryManager().getFieldView().getName(getRepositoryId());
+      synchronized (PsiLock.LOCK) {
+        if (getTreeElement() != null) {
+          myCachedName = getNameIdentifier().getText();
+        }
+        else {
+          myCachedName = getRepositoryManager().getFieldView().getName(getRepositoryId());
+        }
       }
     }
     return myCachedName;
@@ -190,22 +194,24 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
 
   public boolean isDeprecated() {
     if (myCachedIsDeprecated == null) {
-      boolean deprecated;
-      if (getTreeElement() != null) {
-        PsiDocComment docComment = getDocComment();
-        deprecated = docComment != null && getDocComment().findTagByName("deprecated") != null;
-        if (!deprecated) {
-          deprecated = getModifierList().findAnnotation("java.lang.Deprecated") != null;
+      synchronized (PsiLock.LOCK) {
+        boolean deprecated;
+        if (getTreeElement() != null) {
+          PsiDocComment docComment = getDocComment();
+          deprecated = docComment != null && getDocComment().findTagByName("deprecated") != null;
+          if (!deprecated) {
+            deprecated = getModifierList().findAnnotation("java.lang.Deprecated") != null;
+          }
         }
-      }
-      else {
-        FieldView fieldView = getRepositoryManager().getFieldView();
-        deprecated = fieldView.isDeprecated(getRepositoryId());
-        if (!deprecated && fieldView.mayBeDeprecatedByAnnotation(getRepositoryId())) {
-          deprecated = getModifierList().findAnnotation("java.lang.Deprecated") != null;
+        else {
+          FieldView fieldView = getRepositoryManager().getFieldView();
+          deprecated = fieldView.isDeprecated(getRepositoryId());
+          if (!deprecated && fieldView.mayBeDeprecatedByAnnotation(getRepositoryId())) {
+            deprecated = getModifierList().findAnnotation("java.lang.Deprecated") != null;
+          }
         }
+        myCachedIsDeprecated = deprecated ? Boolean.TRUE : Boolean.FALSE;
       }
-      myCachedIsDeprecated = deprecated ? Boolean.TRUE : Boolean.FALSE;
     }
     return myCachedIsDeprecated.booleanValue();
   }

@@ -149,16 +149,18 @@ public class PsiImportListImpl extends SlaveRepositoryPsiElement implements PsiI
       }
     }
     else {
-      final FileView fileView = getRepositoryManager().getFileView();
-      final long repositoryId = getRepositoryId();
-      int count = fileView.getImportStatementsCount(repositoryId);
-      myRepositoryImports = new PsiImportStatementBaseImpl[count];
-      for (int i = 0; i < myRepositoryImports.length; i++) {
-        if (fileView.isImportStatic(repositoryId, i)) {
-          myRepositoryImports[i] = new PsiImportStaticStatementImpl(myManager, this, i);
-        }
-        else {
-          myRepositoryImports[i] = new PsiImportStatementImpl(myManager, this, i);
+      synchronized (PsiLock.LOCK) {
+        final FileView fileView = getRepositoryManager().getFileView();
+        final long repositoryId = getRepositoryId();
+        int count = fileView.getImportStatementsCount(repositoryId);
+        myRepositoryImports = new PsiImportStatementBaseImpl[count];
+        for (int i = 0; i < myRepositoryImports.length; i++) {
+          if (fileView.isImportStatic(repositoryId, i)) {
+            myRepositoryImports[i] = new PsiImportStaticStatementImpl(myManager, this, i);
+          }
+          else {
+            myRepositoryImports[i] = new PsiImportStatementImpl(myManager, this, i);
+          }
         }
       }
     }

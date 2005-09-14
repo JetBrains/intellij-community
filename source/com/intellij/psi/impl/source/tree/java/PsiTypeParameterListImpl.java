@@ -62,38 +62,40 @@ public class PsiTypeParameterListImpl extends SlaveRepositoryPsiElement implemen
   }
 
   public PsiTypeParameter[] getTypeParameters() {
-    long repositoryId = getRepositoryId();
-    if (repositoryId >= 0) {
-      if (myRepositoryClassParameters == null) {
-        RepositoryManager repositoryManager = getRepositoryManager();
-        CompositeElement treeElement = getTreeElement();
-        int count;
-        if (treeElement == null) {
-          if (myOwner instanceof PsiClass) {
-            count = repositoryManager.getClassView().getParametersListSize(repositoryId);
-          }
-          else if (myOwner instanceof PsiMethod) {
-            count = repositoryManager.getMethodView().getTypeParametersCount(repositoryId);
+    synchronized (PsiLock.LOCK) {
+      long repositoryId = getRepositoryId();
+      if (repositoryId >= 0) {
+        if (myRepositoryClassParameters == null) {
+          RepositoryManager repositoryManager = getRepositoryManager();
+          CompositeElement treeElement = getTreeElement();
+          int count;
+          if (treeElement == null) {
+            if (myOwner instanceof PsiClass) {
+              count = repositoryManager.getClassView().getParametersListSize(repositoryId);
+            }
+            else if (myOwner instanceof PsiMethod) {
+              count = repositoryManager.getMethodView().getTypeParametersCount(repositoryId);
+            }
+            else {
+              count = 0;
+              LOG.error("Wrong owner");
+            }
           }
           else {
-            count = 0;
-            LOG.error("Wrong owner");
+            count = treeElement.countChildren(CLASS_PARAMETER_BIT_SET);
+          }
+
+          myRepositoryClassParameters = new PsiTypeParameter[count];
+          for (int i = 0; i < myRepositoryClassParameters.length; i++) {
+            myRepositoryClassParameters[i] = new PsiTypeParameterImpl(myManager, this, i);
           }
         }
-        else {
-          count = treeElement.countChildren(CLASS_PARAMETER_BIT_SET);
-        }
 
-        myRepositoryClassParameters = new PsiTypeParameter[count];
-        for (int i = 0; i < myRepositoryClassParameters.length; i++) {
-          myRepositoryClassParameters[i] = new PsiTypeParameterImpl(myManager, this, i);
-        }
+        return myRepositoryClassParameters;
       }
-
-      return myRepositoryClassParameters;
-    }
-    else {
-      return calcTreeElement().getChildrenAsPsiElements(CLASS_PARAMETER_BIT_SET, CLASS_PARAMETER_ARRAY_CONSTRUCTOR);
+      else {
+        return calcTreeElement().getChildrenAsPsiElements(CLASS_PARAMETER_BIT_SET, CLASS_PARAMETER_ARRAY_CONSTRUCTOR);
+      }
     }
   }
 

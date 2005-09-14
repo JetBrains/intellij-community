@@ -93,7 +93,9 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
         myCachedName = getNameIdentifier().getText();
       }
       else{
-        myCachedName = getRepositoryManager().getFieldView().getName(getRepositoryId());
+        synchronized (PsiLock.LOCK) {
+          myCachedName = getRepositoryManager().getFieldView().getName(getRepositoryId());
+        }
       }
     }
     return myCachedName;
@@ -115,7 +117,10 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
         if (type != null) return type;
       }
 
-      String typeText = getRepositoryManager().getFieldView().getTypeText(getRepositoryId());
+      String typeText;
+      synchronized (PsiLock.LOCK) {
+        typeText = getRepositoryManager().getFieldView().getTypeText(getRepositoryId());
+      }
       try {
         final PsiType type = myManager.getElementFactory().createTypeFromText(typeText, this);
         myCachedType = new PatchedSoftReference<PsiType>(type);
@@ -161,31 +166,33 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
   private PsiField findFirstFieldInDeclaration(){
     if (myRepositoryModifierList != null) return this; // optmization
 
-    CompositeElement treeElement = getTreeElement();
-    if (treeElement != null){
-      ASTNode modifierList = treeElement.findChildByRole(ChildRole.MODIFIER_LIST);
-      if (modifierList != null) {
-        return this;
-      }
-      else{
-        ASTNode prevField = treeElement.getTreePrev();
-        while(prevField.getElementType() != JavaElementType.FIELD){
-          prevField = prevField.getTreePrev();
+    synchronized (PsiLock.LOCK) {
+      CompositeElement treeElement = getTreeElement();
+      if (treeElement != null){
+        ASTNode modifierList = treeElement.findChildByRole(ChildRole.MODIFIER_LIST);
+        if (modifierList != null) {
+          return this;
         }
-        return ((PsiFieldImpl)SourceTreeToPsiMap.treeElementToPsi(prevField)).findFirstFieldInDeclaration();
-      }
-    }
-    else{
-      long repositoryId = getRepositoryId();
-      if (myCachedFirstFieldInDeclId < 0){
-        myCachedFirstFieldInDeclId = getRepositoryManager().getFieldView().getFirstFieldInDeclaration(repositoryId);
-      }
-      long repositoryId1 = myCachedFirstFieldInDeclId;
-      if (repositoryId1 == repositoryId){
-        return this;
+        else{
+          ASTNode prevField = treeElement.getTreePrev();
+          while(prevField.getElementType() != JavaElementType.FIELD){
+            prevField = prevField.getTreePrev();
+          }
+          return ((PsiFieldImpl)SourceTreeToPsiMap.treeElementToPsi(prevField)).findFirstFieldInDeclaration();
+        }
       }
       else{
-        return (PsiField)getRepositoryElementsManager().findOrCreatePsiElementById(repositoryId1);
+        long repositoryId = getRepositoryId();
+        if (myCachedFirstFieldInDeclId < 0){
+          myCachedFirstFieldInDeclId = getRepositoryManager().getFieldView().getFirstFieldInDeclaration(repositoryId);
+        }
+        long repositoryId1 = myCachedFirstFieldInDeclId;
+        if (repositoryId1 == repositoryId){
+          return this;
+        }
+        else{
+          return (PsiField)getRepositoryElementsManager().findOrCreatePsiElementById(repositoryId1);
+        }
       }
     }
   }
@@ -286,9 +293,11 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
 
   private String getInitializerText() throws InitializerTooLongException {
     if (myCachedInitializerText == null){
-      long repositoryId = getRepositoryId();
-      myCachedInitializerText = getRepositoryManager().getFieldView().getInitializerText(repositoryId);
-      if (myCachedInitializerText == null) myCachedInitializerText = "";
+      synchronized (PsiLock.LOCK) {
+        long repositoryId = getRepositoryId();
+        myCachedInitializerText = getRepositoryManager().getFieldView().getInitializerText(repositoryId);
+        if (myCachedInitializerText == null) myCachedInitializerText = "";
+      }
     }
     return myCachedInitializerText.length() > 0 ? myCachedInitializerText : null;
   }
@@ -304,10 +313,12 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
         }
       }
       else{
-        FieldView fieldView = getRepositoryManager().getFieldView();
-        deprecated = fieldView.isDeprecated(getRepositoryId());
-        if (!deprecated && fieldView.mayBeDeprecatedByAnnotation(getRepositoryId())) {
-          deprecated = getModifierList().findAnnotation("java.lang.Deprecated") != null;
+        synchronized (PsiLock.LOCK) {
+          FieldView fieldView = getRepositoryManager().getFieldView();
+          deprecated = fieldView.isDeprecated(getRepositoryId());
+          if (!deprecated && fieldView.mayBeDeprecatedByAnnotation(getRepositoryId())) {
+            deprecated = getModifierList().findAnnotation("java.lang.Deprecated") != null;
+          }
         }
       }
       myCachedIsDeprecated = deprecated ? Boolean.TRUE : Boolean.FALSE;

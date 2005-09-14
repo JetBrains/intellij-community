@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.compiled;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -13,9 +14,8 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
-import com.intellij.lang.ASTNode;
+import com.intellij.util.IncorrectOperationException;
 
 public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile, PsiFileEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsFileImpl");
@@ -107,18 +107,20 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
   }
 
   public PsiClass[] getClasses() {
-    long id = getRepositoryId();
-    if (myClass == null) {
-      if (id >= 0) {
-        long[] classIds = getRepositoryManager().getFileView().getClasses(id);
-        LOG.assertTrue(classIds.length == 1);
-        myClass = (ClsClassImpl)getRepositoryElementsManager().findOrCreatePsiElementById(classIds[0]);
+    synchronized (PsiLock.LOCK) {
+      long id = getRepositoryId();
+      if (myClass == null) {
+        if (id >= 0) {
+          long[] classIds = getRepositoryManager().getFileView().getClasses(id);
+          LOG.assertTrue(classIds.length == 1);
+          myClass = (ClsClassImpl)getRepositoryElementsManager().findOrCreatePsiElementById(classIds[0]);
+        }
+        else {
+          myClass = new ClsClassImpl(myManager, this, myFile);
+        }
       }
-      else {
-        myClass = new ClsClassImpl(myManager, this, myFile);
-      }
+      return new PsiClass[]{myClass};
     }
-    return new PsiClass[]{myClass};
   }
 
   public PsiPackageStatement getPackageStatement() {

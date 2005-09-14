@@ -193,53 +193,59 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
       }
     }
     else{
-      return getRepositoryElementsManager().findOrCreatePsiElementById(getParentId());
+      synchronized (PsiLock.LOCK) {
+        return getRepositoryElementsManager().findOrCreatePsiElementById(getParentId());
+      }
     }
   }
 
   public String getName() {
-    if (myCachedName == null){
-      if (getTreeElement() != null){
-        PsiIdentifier identifier = getNameIdentifier();
-        myCachedName = identifier != null ? identifier.getText() : null;
+    synchronized (PsiLock.LOCK) {
+      if (myCachedName == null){
+        if (getTreeElement() != null){
+          PsiIdentifier identifier = getNameIdentifier();
+          myCachedName = identifier != null ? identifier.getText() : null;
+        }
+        else{
+          myCachedName = getRepositoryManager().getClassView().getName(getRepositoryId());
+        }
       }
-      else{
-        myCachedName = getRepositoryManager().getClassView().getName(getRepositoryId());
-      }
+      return myCachedName;
     }
-    return myCachedName;
   }
 
   public String getQualifiedName() {
-    if (myCachedQName != null) return myCachedQName;
+    synchronized (PsiLock.LOCK) {
+      if (myCachedQName != null) return myCachedQName;
 
-    String qName = null;
-    if (getTreeElement() != null){
-      PsiElement parent = getParent();
-      if (parent instanceof PsiJavaFile){
-        String packageName = ((PsiJavaFile)parent).getPackageName();
-        if (packageName.length() > 0){
-          qName = packageName + "." + getName();
+      String qName = null;
+      if (getTreeElement() != null){
+        PsiElement parent = getParent();
+        if (parent instanceof PsiJavaFile){
+          String packageName = ((PsiJavaFile)parent).getPackageName();
+          if (packageName.length() > 0){
+            qName = packageName + "." + getName();
+          }
+          else{
+            qName = getName();
+          }
         }
-        else{
-          qName = getName();
+        else if (parent instanceof PsiClass) {
+          String parentQName = ((PsiClass)parent).getQualifiedName();
+          if (parentQName == null) return null;
+          qName = parentQName + "." + getName();
         }
       }
-      else if (parent instanceof PsiClass) {
-        String parentQName = ((PsiClass)parent).getQualifiedName();
-        if (parentQName == null) return null;
-        qName = parentQName + "." + getName();
+      else{
+        qName = getRepositoryManager().getClassView().getQualifiedName(getRepositoryId());
       }
-    }
-    else{
-      qName = getRepositoryManager().getClassView().getQualifiedName(getRepositoryId());
-    }
 
-    if (getRepositoryId() >= 0){
-      myCachedQName = qName;
-    }
+      if (getRepositoryId() >= 0){
+        myCachedQName = qName;
+      }
 
-    return qName;
+      return qName;
+    }
   }
 
   public PsiModifierList getModifierList(){
@@ -319,78 +325,88 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
   }
 
   public PsiField[] getFields() {
-    if (myCachedFields == null){
-      if (getTreeElement() != null){
-        myCachedFields = calcTreeElement().getChildrenAsPsiElements(FIELD_BIT_SET, PSI_FIELD_ARRAY_CONSTRUCTOR);
-      }
-      else{
-        long[] fieldIds = getRepositoryManager().getClassView().getFields(getRepositoryId());
-        PsiField[] fields = fieldIds.length > 0 ? new PsiField[fieldIds.length] : PsiField.EMPTY_ARRAY;
-        for(int i = 0; i < fieldIds.length; i++){
-          long id = fieldIds[i];
-          fields[i] = (PsiField)getRepositoryElementsManager().findOrCreatePsiElementById(id);
+    synchronized (PsiLock.LOCK) {
+      if (myCachedFields == null){
+        if (getTreeElement() != null){
+          myCachedFields = calcTreeElement().getChildrenAsPsiElements(FIELD_BIT_SET, PSI_FIELD_ARRAY_CONSTRUCTOR);
         }
-        myCachedFields = fields;
+        else{
+          long[] fieldIds = getRepositoryManager().getClassView().getFields(getRepositoryId());
+          PsiField[] fields = fieldIds.length > 0 ? new PsiField[fieldIds.length] : PsiField.EMPTY_ARRAY;
+          for(int i = 0; i < fieldIds.length; i++){
+            long id = fieldIds[i];
+            fields[i] = (PsiField)getRepositoryElementsManager().findOrCreatePsiElementById(id);
+          }
+          myCachedFields = fields;
+        }
       }
+      return myCachedFields;
     }
-    return myCachedFields;
   }
 
   public PsiMethod[] getMethods() {
-    if (myCachedMethods == null){
-      if (getTreeElement() != null){
-        myCachedMethods = calcTreeElement().getChildrenAsPsiElements(METHOD_BIT_SET, PSI_METHOD_ARRAY_CONSTRUCTOR);
-      }
-      else{
-        long[] methodIds = getRepositoryManager().getClassView().getMethods(getRepositoryId());
-        PsiMethod[] methods = methodIds.length > 0 ? new PsiMethod[methodIds.length] : PsiMethod.EMPTY_ARRAY;
-        for(int i = 0; i < methodIds.length; i++){
-          long id = methodIds[i];
-          methods[i] = (PsiMethod)getRepositoryElementsManager().findOrCreatePsiElementById(id);
+    synchronized (PsiLock.LOCK) {
+      if (myCachedMethods == null){
+        if (getTreeElement() != null){
+          myCachedMethods = calcTreeElement().getChildrenAsPsiElements(METHOD_BIT_SET, PSI_METHOD_ARRAY_CONSTRUCTOR);
         }
-        myCachedMethods = methods;
+        else{
+          long[] methodIds = getRepositoryManager().getClassView().getMethods(getRepositoryId());
+          PsiMethod[] methods = methodIds.length > 0 ? new PsiMethod[methodIds.length] : PsiMethod.EMPTY_ARRAY;
+          for(int i = 0; i < methodIds.length; i++){
+            long id = methodIds[i];
+            methods[i] = (PsiMethod)getRepositoryElementsManager().findOrCreatePsiElementById(id);
+          }
+          myCachedMethods = methods;
+        }
       }
+      return myCachedMethods;
     }
-    return myCachedMethods;
   }
 
   public PsiMethod[] getConstructors() {
-    if (myCachedConstructors == null){
-      myCachedConstructors = PsiImplUtil.getConstructors(this);
+    synchronized (PsiLock.LOCK) {
+      if (myCachedConstructors == null){
+        myCachedConstructors = PsiImplUtil.getConstructors(this);
+      }
+      return myCachedConstructors;
     }
-    return myCachedConstructors;
   }
 
   public PsiClass[] getInnerClasses() {
-    if (myCachedInners == null){
-      if (getTreeElement() != null){
-        myCachedInners = calcTreeElement().getChildrenAsPsiElements(CLASS_BIT_SET, PSI_CLASS_ARRAY_CONSTRUCTOR);
-      }
-      else{
-        long[] classIds = getRepositoryManager().getClassView().getInnerClasses(getRepositoryId());
-        PsiClass[] classes = classIds.length > 0 ? new PsiClass[classIds.length] : PsiClass.EMPTY_ARRAY;
-        for(int i = 0; i < classIds.length; i++){
-          long id = classIds[i];
-          classes[i] = (PsiClass)getRepositoryElementsManager().findOrCreatePsiElementById(id);
+    synchronized (PsiLock.LOCK) {
+      if (myCachedInners == null){
+        if (getTreeElement() != null){
+          myCachedInners = calcTreeElement().getChildrenAsPsiElements(CLASS_BIT_SET, PSI_CLASS_ARRAY_CONSTRUCTOR);
         }
-        myCachedInners = classes;
+        else{
+          long[] classIds = getRepositoryManager().getClassView().getInnerClasses(getRepositoryId());
+          PsiClass[] classes = classIds.length > 0 ? new PsiClass[classIds.length] : PsiClass.EMPTY_ARRAY;
+          for(int i = 0; i < classIds.length; i++){
+            long id = classIds[i];
+            classes[i] = (PsiClass)getRepositoryElementsManager().findOrCreatePsiElementById(id);
+          }
+          myCachedInners = classes;
+        }
       }
+      return myCachedInners;
     }
-    return myCachedInners;
   }
 
   public PsiClassInitializer[] getInitializers(){
-    if (getTreeElement() != null){
-      return calcTreeElement().getChildrenAsPsiElements(CLASS_INITIALIZER_BIT_SET, PSI_CLASS_INITIALIZER_ARRAY_CONSTRUCTOR);
-    }
-    else{
-      long[] initializerIds = getRepositoryManager().getClassView().getInitializers(getRepositoryId());
-      PsiClassInitializer[] initializers = initializerIds.length > 0 ? new PsiClassInitializer[initializerIds.length] : PsiClassInitializer.EMPTY_ARRAY;
-      for(int i = 0; i < initializerIds.length; i++){
-        long id = initializerIds[i];
-        initializers[i] = (PsiClassInitializer)getRepositoryElementsManager().findOrCreatePsiElementById(id);
+    synchronized (PsiLock.LOCK) {
+      if (getTreeElement() != null){
+        return calcTreeElement().getChildrenAsPsiElements(CLASS_INITIALIZER_BIT_SET, PSI_CLASS_INITIALIZER_ARRAY_CONSTRUCTOR);
       }
-      return initializers;
+      else{
+        long[] initializerIds = getRepositoryManager().getClassView().getInitializers(getRepositoryId());
+        PsiClassInitializer[] initializers = initializerIds.length > 0 ? new PsiClassInitializer[initializerIds.length] : PsiClassInitializer.EMPTY_ARRAY;
+        for(int i = 0; i < initializerIds.length; i++){
+          long id = initializerIds[i];
+          initializers[i] = (PsiClassInitializer)getRepositoryElementsManager().findOrCreatePsiElementById(id);
+        }
+        return initializers;
+      }
     }
   }
 
@@ -505,28 +521,30 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
   }
 
   public boolean isDeprecated() {
-    if (myCachedIsDeprecated == null){
-      boolean deprecated;
-      if (getTreeElement() != null){
-        PsiDocComment docComment = getDocComment();
-        deprecated = docComment != null && docComment.findTagByName("deprecated") != null;
-        if (!deprecated) {
-          PsiModifierList modifierList = getModifierList();
-          if (modifierList != null) {
-            deprecated = modifierList.findAnnotation("java.lang.Deprecated") != null;
+    synchronized (PsiLock.LOCK) {
+      if (myCachedIsDeprecated == null){
+        boolean deprecated;
+        if (getTreeElement() != null){
+          PsiDocComment docComment = getDocComment();
+          deprecated = docComment != null && docComment.findTagByName("deprecated") != null;
+          if (!deprecated) {
+            PsiModifierList modifierList = getModifierList();
+            if (modifierList != null) {
+              deprecated = modifierList.findAnnotation("java.lang.Deprecated") != null;
+            }
           }
         }
-      }
-      else{
-        ClassView classView = getRepositoryManager().getClassView();
-        deprecated = classView.isDeprecated(getRepositoryId());
-        if (!deprecated && classView.mayBeDeprecatedByAnnotation(getRepositoryId())) {
-          deprecated = getModifierList().findAnnotation("java.lang.Deprecated") != null;
+        else{
+          ClassView classView = getRepositoryManager().getClassView();
+          deprecated = classView.isDeprecated(getRepositoryId());
+          if (!deprecated && classView.mayBeDeprecatedByAnnotation(getRepositoryId())) {
+            deprecated = getModifierList().findAnnotation("java.lang.Deprecated") != null;
+          }
         }
+        myCachedIsDeprecated = deprecated ? Boolean.TRUE : Boolean.FALSE;
       }
-      myCachedIsDeprecated = deprecated ? Boolean.TRUE : Boolean.FALSE;
+      return myCachedIsDeprecated.booleanValue();
     }
-    return myCachedIsDeprecated.booleanValue();
   }
 
   public PsiDocComment getDocComment(){
@@ -542,60 +560,66 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
   }
 
   public boolean isInterface(){
-    if (myCachedIsInterface == null){
-      boolean isInterface;
-      if (getTreeElement() != null){
-        ASTNode keyword = calcTreeElement().findChildByRole(ChildRole.CLASS_OR_INTERFACE_KEYWORD);
-        if (keyword.getElementType() == CLASS_KEYWORD) {
-          isInterface = false;
-        }
-        else if (keyword.getElementType() == INTERFACE_KEYWORD) {
-          isInterface = true;
-        }
-        else if (keyword.getElementType() == ENUM_KEYWORD) {
-          isInterface = false;
+    synchronized (PsiLock.LOCK) {
+      if (myCachedIsInterface == null){
+        boolean isInterface;
+        if (getTreeElement() != null){
+          ASTNode keyword = calcTreeElement().findChildByRole(ChildRole.CLASS_OR_INTERFACE_KEYWORD);
+          if (keyword.getElementType() == CLASS_KEYWORD) {
+            isInterface = false;
+          }
+          else if (keyword.getElementType() == INTERFACE_KEYWORD) {
+            isInterface = true;
+          }
+          else if (keyword.getElementType() == ENUM_KEYWORD) {
+            isInterface = false;
+          }
+          else{
+            LOG.assertTrue(false);
+            isInterface = false;
+          }
         }
         else{
-          LOG.assertTrue(false);
-          isInterface = false;
+          isInterface = getRepositoryManager().getClassView().isInterface(getRepositoryId());
         }
+        myCachedIsInterface = isInterface ? Boolean.TRUE : Boolean.FALSE;
       }
-      else{
-        isInterface = getRepositoryManager().getClassView().isInterface(getRepositoryId());
-      }
-      myCachedIsInterface = isInterface ? Boolean.TRUE : Boolean.FALSE;
+      return myCachedIsInterface.booleanValue();
     }
-    return myCachedIsInterface.booleanValue();
   }
 
   public boolean isAnnotationType() {
-    if (myCachedIsAnnotationType == null){
-      boolean isAnnotationType = false;
-      if (isInterface()) {
-        if (getTreeElement() != null){
-          isAnnotationType = calcTreeElement().findChildByRole(ChildRole.AT) != null;
+    synchronized (PsiLock.LOCK) {
+      if (myCachedIsAnnotationType == null){
+        boolean isAnnotationType = false;
+        if (isInterface()) {
+          if (getTreeElement() != null){
+            isAnnotationType = calcTreeElement().findChildByRole(ChildRole.AT) != null;
+          }
+          else{
+            isAnnotationType = getRepositoryManager().getClassView().isAnnotationType(getRepositoryId());
+          }
         }
-        else{
-          isAnnotationType = getRepositoryManager().getClassView().isAnnotationType(getRepositoryId());
-        }
+        myCachedIsAnnotationType = isAnnotationType ? Boolean.TRUE : Boolean.FALSE;
       }
-      myCachedIsAnnotationType = isAnnotationType ? Boolean.TRUE : Boolean.FALSE;
+      return myCachedIsAnnotationType.booleanValue();
     }
-    return myCachedIsAnnotationType.booleanValue();
   }
 
   public boolean isEnum() {
-    if (myCachedIsEnum == null) {
-      final boolean isEnum;
-      if (getTreeElement() != null) {
-        isEnum = ((ClassElement)getTreeElement()).isEnum();
+    synchronized (PsiLock.LOCK) {
+      if (myCachedIsEnum == null) {
+        final boolean isEnum;
+        if (getTreeElement() != null) {
+          isEnum = ((ClassElement)getTreeElement()).isEnum();
+        }
+        else {
+          isEnum = getRepositoryManager().getClassView().isEnum(getRepositoryId());
+        }
+        myCachedIsEnum = Boolean.valueOf(isEnum);
       }
-      else {
-        isEnum = getRepositoryManager().getClassView().isEnum(getRepositoryId());
-      }
-      myCachedIsEnum = Boolean.valueOf(isEnum);
+      return myCachedIsEnum.booleanValue();
     }
-    return myCachedIsEnum.booleanValue();
   }
 
   public void accept(PsiElementVisitor visitor){
@@ -690,62 +714,64 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
 
   @Nullable
   private PsiElement calcBasesResolveContext(PsiClass aClass, String className, boolean isInitialClass) {
-    boolean isAnonOrLocal = false;
-    if (aClass instanceof PsiAnonymousClass){
-      isAnonOrLocal = true;
-    }
-    else {
-      long scopeId = ((PsiClassImpl)aClass).getParentId();
-      RepositoryElementType scopeType = myManager.getRepositoryManager().getElementType(scopeId);
-      boolean isLocalClass = scopeType == RepositoryElementType.METHOD || scopeType == RepositoryElementType.FIELD || scopeType == RepositoryElementType.CLASS_INITIALIZER;
-      if (isLocalClass){
+    synchronized (PsiLock.LOCK) {
+      boolean isAnonOrLocal = false;
+      if (aClass instanceof PsiAnonymousClass){
         isAnonOrLocal = true;
       }
-    }
-
-    if (!isAnonOrLocal) {
-      return isInitialClass ? (PsiElement)aClass.getExtendsList() : aClass; //?!!!
-    }
-
-    if (!isInitialClass){
-      if (aClass.findInnerClassByName(className, true) != null) return aClass;
-    }
-
-    long classId = ((RepositoryPsiElement)aClass).getRepositoryId();
-    RepositoryManager repositoryManager = myManager.getRepositoryManager();
-    long scopeId = repositoryManager.getClassView().getParent(classId);
-    long[] classesInScope = repositoryManager.getItemView(scopeId).getChildren(scopeId, RepositoryElementType.CLASS);
-
-    boolean needPreciseContext = false;
-    if (classesInScope.length > 1){
-      for (long id : classesInScope) {
-        if (id == classId) continue;
-        String className1 = repositoryManager.getClassView().getName(id);
-        if (className.equals(className1)) {
-          needPreciseContext = true;
-          break;
+      else {
+        long scopeId = ((PsiClassImpl)aClass).getParentId();
+        RepositoryElementType scopeType = myManager.getRepositoryManager().getElementType(scopeId);
+        boolean isLocalClass = scopeType == RepositoryElementType.METHOD || scopeType == RepositoryElementType.FIELD || scopeType == RepositoryElementType.CLASS_INITIALIZER;
+        if (isLocalClass){
+          isAnonOrLocal = true;
         }
       }
-    }
-    else{
-      LOG.assertTrue(classesInScope.length == 1);
-      LOG.assertTrue(classesInScope[0] == classId);
-    }
 
-    if (needPreciseContext){
-      return aClass.getParent();
-    }
-    else{
-      PsiElement context = myManager.getRepositoryElementsManager().findOrCreatePsiElementById(scopeId);
-      if (context instanceof PsiClass){
-        return calcBasesResolveContext((PsiClass)context, className, false);
+      if (!isAnonOrLocal) {
+        return isInitialClass ? (PsiElement)aClass.getExtendsList() : aClass; //?!!!
       }
-      else if (context instanceof PsiMember){
-        return calcBasesResolveContext(((PsiMember)context).getContainingClass(), className, false);
+
+      if (!isInitialClass){
+        if (aClass.findInnerClassByName(className, true) != null) return aClass;
+      }
+
+      long classId = ((RepositoryPsiElement)aClass).getRepositoryId();
+      RepositoryManager repositoryManager = myManager.getRepositoryManager();
+      long scopeId = repositoryManager.getClassView().getParent(classId);
+      long[] classesInScope = repositoryManager.getItemView(scopeId).getChildren(scopeId, RepositoryElementType.CLASS);
+
+      boolean needPreciseContext = false;
+      if (classesInScope.length > 1){
+        for (long id : classesInScope) {
+          if (id == classId) continue;
+          String className1 = repositoryManager.getClassView().getName(id);
+          if (className.equals(className1)) {
+            needPreciseContext = true;
+            break;
+          }
+        }
       }
       else{
-        LOG.assertTrue(false);
-        return context;
+        LOG.assertTrue(classesInScope.length == 1);
+        LOG.assertTrue(classesInScope[0] == classId);
+      }
+
+      if (needPreciseContext){
+        return aClass.getParent();
+      }
+      else{
+        PsiElement context = myManager.getRepositoryElementsManager().findOrCreatePsiElementById(scopeId);
+        if (context instanceof PsiClass){
+          return calcBasesResolveContext((PsiClass)context, className, false);
+        }
+        else if (context instanceof PsiMember){
+          return calcBasesResolveContext(((PsiMember)context).getContainingClass(), className, false);
+        }
+        else{
+          LOG.assertTrue(false);
+          return context;
+        }
       }
     }
   }

@@ -50,9 +50,9 @@ public class PsiParameterListImpl extends SlaveRepositoryPsiElement implements P
   }
 
   public PsiParameter[] getParameters(){
-    long repositoryId = getRepositoryId();
-    if (repositoryId >= 0) {
-      synchronized (PsiLock.LOCK) {
+    synchronized (PsiLock.LOCK) {
+      long repositoryId = getRepositoryId();
+      if (repositoryId >= 0) {
         if (myRepositoryParameters == null) {
           int count;
           CompositeElement treeElement = getTreeElement();
@@ -69,9 +69,9 @@ public class PsiParameterListImpl extends SlaveRepositoryPsiElement implements P
         }
         return myRepositoryParameters;
       }
-    }
-    else{
-      return calcTreeElement().getChildrenAsPsiElements(PARAMETER_BIT_SET, PSI_PARAMETER_ARRAY_CONSTRUCTOR);
+      else{
+        return calcTreeElement().getChildrenAsPsiElements(PARAMETER_BIT_SET, PSI_PARAMETER_ARRAY_CONSTRUCTOR);
+      }
     }
   }
 
