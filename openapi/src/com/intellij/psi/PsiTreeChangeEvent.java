@@ -17,6 +17,11 @@ package com.intellij.psi;
 
 import java.util.EventObject;
 
+/**
+ * Provides information about a change in the PSI tree of a project.
+ *
+ * @see PsiTreeChangeListener
+ */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public abstract class PsiTreeChangeEvent extends EventObject {
   public static final String PROP_FILE_NAME = "fileName";

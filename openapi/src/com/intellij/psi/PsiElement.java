@@ -33,6 +33,9 @@ import org.jetbrains.annotations.Nullable;
  * The common base interface for all elements of the PSI tree.
  */
 public interface PsiElement extends UserDataHolder, Iconable {
+  /**
+   * The empty array of PSI elements which can be reused to avoid unnecessary allocations.
+   */
   PsiElement[] EMPTY_ARRAY = new PsiElement[0];
 
   /**
@@ -191,10 +194,29 @@ public interface PsiElement extends UserDataHolder, Iconable {
   PsiElement getOriginalElement();
 
   //Q: get rid of these methods?
+
+  /**
+   * Checks if the text of this PSI element is equal to the specified character sequence.
+   *
+   * @param text the character sequence to compare with.
+   * @return true if the text is equal, false otherwise.
+   */
   boolean textMatches(@NotNull CharSequence text);
 
+  /**
+   * Checks if the text of this PSI element is equal to the text of the specified PSI element.
+   *
+   * @param element the element to compare the text with.
+   * @return true if the text is equal, false otherwise.
+   */
   boolean textMatches(@NotNull PsiElement element);
 
+  /**
+   * Checks if the text of this element contains the specified character.
+   *
+   * @param c the character to search for.
+   * @return true if the character is found, false otherwise.
+   */
   boolean textContains(char c);
 
   /**
@@ -211,28 +233,117 @@ public interface PsiElement extends UserDataHolder, Iconable {
    */
   void acceptChildren(@NotNull PsiElementVisitor visitor);
 
+  /**
+   * Creates a copy of the PSI element.
+   *
+   * @return the copy instance.
+   */
   PsiElement copy();
 
+  /**
+   * Adds a child to this PSI element.
+   *
+   * @param element the child element to add.
+   * @return the element which was actually added (either <code>element</code> or its copy).
+   * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
+   */
   PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException;
 
+  /**
+   * Adds a child to this PSI element, before the specified anchor element.
+   *
+   * @param element the child element to add.
+   * @param anchor  the anchor before which the child element is inserted (must be a child of this PSI element)
+   * @return the element which was actually added (either <code>element</code> or its copy).
+   * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
+   */
   PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException;
 
+  /**
+   * Adds a child to this PSI element, after the specified anchor element.
+   *
+   * @param element the child element to add.
+   * @param anchor  the anchor after which the child element is inserted (must be a child of this PSI element)
+   * @return the element which was actually added (either <code>element</code> or its copy).
+   * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
+   */
   PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException;
 
+  /**
+   * Checks if it is possible to add the specified element as a child to this element,
+   * and throws an exception if the add is not possible. Does not actually modify anything.
+   *
+   * @param element the child element to check the add possibility.
+   * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
+   * @deprecated not all PSI implementations implement this method correctly.
+   */
   void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException;
 
+  /**
+   * Adds a range of elements as children to this PSI element.
+   *
+   * @param first the first child element to add.
+   * @param last  the last child element to add (must have the same parent as <code>first</code>)
+   * @return the first child element which was actually added (either <code>first</code> or its copy).
+   * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
+   */
   PsiElement addRange(PsiElement first, PsiElement last) throws IncorrectOperationException;
 
+  /**
+   * Adds a range of elements as children to this PSI element, before the specified anchor element.
+   *
+   * @param first   the first child element to add.
+   * @param last    the last child element to add (must have the same parent as <code>first</code>)
+   * @param anchor  the anchor before which the child element is inserted (must be a child of this PSI element)
+   * @return the first child element which was actually added (either <code>first</code> or its copy).
+   * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
+   */
   PsiElement addRangeBefore(PsiElement first, PsiElement last, PsiElement anchor) throws IncorrectOperationException;
 
+  /**
+   * Adds a range of elements as children to this PSI element, after the specified anchor element.
+   *
+   * @param first   the first child element to add.
+   * @param last    the last child element to add (must have the same parent as <code>first</code>)
+   * @param anchor  the anchor after which the child element is inserted (must be a child of this PSI element)
+   * @return the first child element which was actually added (either <code>first</code> or its copy).
+   * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
+   */
   PsiElement addRangeAfter(PsiElement first, PsiElement last, PsiElement anchor) throws IncorrectOperationException;
 
+  /**
+   * Deletes this PSI element from the tree.
+   *
+   * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
+   */
   void delete() throws IncorrectOperationException;
 
+  /**
+   * Checks if it is possible to delete the specified element from the tree,
+   * and throws an exception if the add is not possible. Does not actually modify anything.
+   *
+   * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
+   * @deprecated not all PSI implementations implement this method correctly.
+   */
   void checkDelete() throws IncorrectOperationException;
 
+  /**
+   * Deletes a range of children of this PSI element from the tree.
+   *
+   * @param first the first child to delete (must be a child of this PSI element)
+   * @param last  the last child to delete (must be a child of this PSI element)
+   * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
+   */
   void deleteChildRange(PsiElement first, PsiElement last) throws IncorrectOperationException;
 
+  /**
+   * Replaces this PSI element (along with all its children) with another element
+   * (along with the children).
+   *
+   * @param newElement the element to replace this element with.
+   * @return the element which was actually inserted in the tree (either <code>newElement</code> or its copy)
+   * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
+   */
   PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException;
 
   /**
@@ -271,8 +382,22 @@ public interface PsiElement extends UserDataHolder, Iconable {
    */
   @NotNull PsiReference[] getReferences();
 
+  /**
+   * Returns a copyable user data object attached to this element.
+   *
+   * @param key the key for accessing the user data object.
+   * @return the user data object, or null if no such object is found in the current element.
+   * @see #putCopyableUserData(com.intellij.openapi.util.Key, Object)
+   */
   <T> T getCopyableUserData(Key<T> key);
 
+  /**
+   * Attaches a copyable user data object to this element. Copyable user data objects are copied
+   * when the PSI elements are copied.
+   *
+   * @param key the key for accessing the user data object.
+   * @see #getCopyableUserData(com.intellij.openapi.util.Key)
+   */
   <T> void putCopyableUserData(Key<T> key, T value);
 
   /**
@@ -302,9 +427,27 @@ public interface PsiElement extends UserDataHolder, Iconable {
    */
   PsiElement getContext();
 
+  /**
+   * Checks if an actual source or class file corresponds to the element. Non-physical elements include,
+   * for example, PSI elements created for the watch expressions in the debugger.
+   *
+   * @return true if the element is physical, false otherwise.
+   */
   boolean isPhysical();
 
+  /**
+   * Returns the scope in which the declarations for the references in this PSI element are searched.
+   *
+   * @return the resolve scope instance.
+   */
   GlobalSearchScope getResolveScope();
+
+  /**
+   * Returns the scope in which references to this element are searched. The implementation of this
+   * method is usually delegated to {@link com.intellij.psi.search.PsiSearchHelper#getUseScope(PsiElement)}.
+   *
+   * @return the search scope instance.
+   */
   @NotNull SearchScope getUseScope();
 
   /**

@@ -18,7 +18,10 @@ package com.intellij.psi;
 import java.util.EventListener;
 
 /**
+ * Listener for receiving notifications about all changes in the PSI tree of a project.
  *
+ * @see PsiManager#addPsiTreeChangeListener(PsiTreeChangeListener)
+ * @see PsiManager#removePsiTreeChangeListener(PsiTreeChangeListener) 
  */
 public interface PsiTreeChangeListener extends EventListener {
   /**

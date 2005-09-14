@@ -30,11 +30,25 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * The main entry point for accessing the PSI services for a project.
+ */
 public abstract class PsiManager implements UserDataHolder {
+  /**
+   * Returns the PSI manager instance for the specified project.
+   *
+   * @param project the project for which the PSI manager is requested.
+   * @return the PSI manager instance.
+   */
   public static @NotNull PsiManager getInstance(@NotNull Project project) {
     return project.getComponent(PsiManager.class);
   }
 
+  /**
+   * Returns the project with which the PSI manager is associated.
+   *
+   * @return the project instance.
+   */
   public abstract @NotNull Project getProject();
 
   /**
@@ -42,63 +56,232 @@ public abstract class PsiManager implements UserDataHolder {
    */
   public abstract @NotNull PsiDirectory[] getRootDirectories(int rootType);
 
+  /**
+   * Returns the PSI file corresponding to the specified virtual file.
+   *
+   * @param file the file for which the PSI is requested.
+   * @return the PSI file, or null if there is no PSI for the specified file in this project.
+   */
   public abstract @Nullable PsiFile findFile(@NotNull VirtualFile file);
 
+  /**
+   * Returns the PSI directory corresponding to the specified virtual file system directory.
+   *
+   * @param file the directory for which the PSI is requested.
+   * @return the PSI directory, or null if there is no PSI for the specified directory in this project.
+   */
   public abstract @Nullable PsiDirectory findDirectory(@NotNull VirtualFile file);
 
   /**
+   * Searches the project and all its libraries for a class with the specified full-qualified
+   * name and returns one if it is found.
+   *
+   * @param qualifiedName the full-qualified name of the class to find.
+   * @return the PSI class, or null if no class with such name is found.
    * @deprecated use {@link #findClass(String, GlobalSearchScope)}
    */
   public abstract @Nullable PsiClass findClass(@NotNull String qualifiedName);
 
+  /**
+   * Searches the specified scope within the project for a class with the specified full-qualified
+   * name and returns one if it is found.
+   *
+   * @param qualifiedName the full-qualified name of the class to find.
+   * @param scope the scope to search.
+   * @return the PSI class, or null if no class with such name is found.
+   */
   public abstract @Nullable PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
+
+  /**
+   * Searches the specified scope within the project for classes with the specified full-qualified
+   * name and returns all found classes.
+   *
+   * @param qualifiedName the full-qualified name of the class to find.
+   * @param scope the scope to search.
+   * @return the array of found classes, or an empty array if no classes are found.
+   */
   public abstract @NotNull PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
 
+  /**
+   * Searches the project for the package with the specified full-qualified name and retunrs one
+   * if it is found.
+   *
+   * @param qualifiedName the full-qualified name of the package to find.
+   * @return the PSI package, or null if no package with such name is found.
+   */
   public abstract @Nullable PsiPackage findPackage(@NotNull String qualifiedName);
 
+  /**
+   * Checks if the specified two PSI elements (possibly invalid) represent the same source element
+   * (for example, a class with the same full-qualified name). Can be used to match two versions of the
+   * PSI tree with each other after a reparse.
+   *
+   * @param element1 the first element to check for equivalence
+   * @param element2 the second element to check for equivalence
+   * @return true if the elements are equivalent, false if the elements are different or
+   * it was not possible to determine the equivalence
+   */
   public abstract boolean areElementsEquivalent(@Nullable PsiElement element1, @Nullable PsiElement element2);
 
-  //todo move to FileDocumentManager
-  public abstract void reloadFromDisk(@NotNull PsiFile file);
+  /**
+   * Reloads the contents of the specified PSI file and its associated document (if any) from the disk.
+   * @param file the PSI file to reload.
+   */
+  public abstract void reloadFromDisk(@NotNull PsiFile file);   //todo: move to FileDocumentManager
 
+  /**
+   * Adds a listener for receiving notifications about all changes in the PSI tree of the project.
+   *
+   * @param listener the listener instance.
+   */
   public abstract void addPsiTreeChangeListener(@NotNull PsiTreeChangeListener listener);
 
+  /**
+   * Removes a listener for receiving notifications about all changes in the PSI tree of the project.
+   *
+   * @param listener the listener instance.
+   */
   public abstract void removePsiTreeChangeListener(@NotNull PsiTreeChangeListener listener);
 
+  /**
+   * Returns the code style manager for the project. The code style manager can be used
+   * to reformat code fragments, get names for elements according to the user's code style
+   * and work with import statements and full-qualified names.
+   *
+   * @return the code style manager instance.
+   */
   public abstract @NotNull CodeStyleManager getCodeStyleManager();
 
+  /**
+   * Returns the element factory for the project, which can be used to
+   * create instances of Java and XML PSI elements.
+   *
+   * @return the element factory instance.
+   */
   public abstract @NotNull PsiElementFactory getElementFactory();
 
+  /**
+   * Returns the search helper for the project, which provides low-level search and
+   * find usages functionality. It can be used to perform  operations like finding references
+   * to an element, finding overriding / inheriting elements, finding to do items and so on.
+   *
+   * @return the search helper instance.
+   */
   public abstract @NotNull PsiSearchHelper getSearchHelper();
 
+  /**
+   * Returns the resolve helper for the project, which can be used to resolve references
+   * and check accessibility of elements.
+   *
+   * @return the resolve helper instance.
+   */
   public abstract @NotNull PsiResolveHelper getResolveHelper();
 
+  /**
+   * Returns the short name cache for the project, which can be used to locate files, classes,
+   * methods and fields by non-qualified names.
+   *
+   * @return the short name cache instance.
+   */
   public abstract @NotNull PsiShortNamesCache getShortNamesCache();
 
+  /**
+   * Registers a custom short name cache implementation for the project. Should not
+   * be used by most plugins.
+   *
+   * @param cache the short name cache instance.
+   */
   public abstract void registerShortNamesCache(@NotNull PsiShortNamesCache cache);
 
   public abstract @NotNull PsiMigration startMigration();
 
+  /**
+   * Returns the JavaDoc manager for the project, which can be used to retrieve
+   * information about JavaDoc tags known to IDEA.
+   *
+   * @return the JavaDoc manager instance.
+   */
   public abstract @NotNull JavadocManager getJavadocManager();
 
+  /**
+   * Returns the name helper for the project, which can be used to validate
+   * and parse Java identifiers.
+   *
+   * @return the name helper instance.
+   */
   public abstract @NotNull PsiNameHelper getNameHelper();
 
+  /**
+   * Returns the constant expression evaluator for the project.
+   *
+   * @return the evaluator instance.
+   */
   public abstract @NotNull PsiConstantEvaluationHelper getConstantEvaluationHelper();
 
+  /**
+   * Returns the modification tracker for the project, which can be used to get the PSI
+   * modification count value.
+   *
+   * @return the modification tracker instance.
+   */
   public abstract @NotNull PsiModificationTracker getModificationTracker();
 
+  /**
+   * Returns the aspect manager for the project, which can be used to access AspectJ-related
+   * functionality.
+   *
+   * @return the aspect manager instance.
+   */
   public abstract @NotNull PsiAspectManager getAspectManager();
 
+  /**
+   * Returns the cached values manager for the project, which can be used to create values
+   * which are automatically recalculated based on changes of the elements on which they depend.
+   *
+   * @return the cached values manager instance.
+   */
   public abstract @NotNull CachedValuesManager getCachedValuesManager();
 
+  /**
+   * Moves the specified file to the specified directory.
+   *
+   * @param file         the file to move.
+   * @param newParentDir the directory to move the file into.
+   * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
+   */
   public abstract void moveFile(@NotNull PsiFile file, @NotNull PsiDirectory newParentDir) throws IncorrectOperationException;
 
+  /**
+   * Moves the specified directory to the specified parent directory.
+   *
+   * @param dir          the directory to move.
+   * @param newParentDir the directory to move <code>dir</code> into.
+   * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
+   */
   public abstract void moveDirectory(@NotNull PsiDirectory dir, @NotNull PsiDirectory newParentDir) throws IncorrectOperationException;
 
+  /**
+   * Checks if it is possible to move the specified PSI element under the specified container,
+   * and throws an exception if the move is not possible. Does not actually modify anything.
+   *
+   * @param element      the element to check the move possibility.
+   * @param newContainer the target container element to move into.
+   * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
+   */
   public abstract void checkMove(@NotNull PsiElement element, @NotNull PsiElement newContainer) throws IncorrectOperationException;
 
+  /**
+   * Notifies the PSI manager that a batch operation sequentially processing multiple files
+   * is starting. Memory occupied by cached PSI trees is released more eagerly during such a
+   * batch operation.
+   */
   public abstract void startBatchFilesProcessingMode();
 
+  /**
+   * Notifies the PSI manager that a batch operation sequentially processing multiple files
+   * is finishing. Memory occupied by cached PSI trees is released more eagerly during such a
+   * batch operation.
+   */
   public abstract void finishBatchFilesProcessingMode();
 
   public abstract boolean isDisposed();
