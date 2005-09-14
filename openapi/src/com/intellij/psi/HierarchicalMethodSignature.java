@@ -18,8 +18,6 @@ package com.intellij.psi;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 
 import java.util.List;
-import java.util.ArrayList;
-import java.util.Collections;
 
 /**
  * @author ven
