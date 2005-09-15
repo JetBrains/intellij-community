@@ -50,6 +50,7 @@ public class FindSettingsImpl extends FindSettings implements ApplicationCompone
   public JDOMExternalizableStringList RECENT_FIND_STRINGS = new JDOMExternalizableStringList();
   public JDOMExternalizableStringList RECENT_REPLACE_STRINGS = new JDOMExternalizableStringList();
   public JDOMExternalizableStringList RECENT_DIR_STRINGS = new JDOMExternalizableStringList();
+  public JDOMExternalizableStringList RECENT_FILE_MASKS = new JDOMExternalizableStringList();
 
   public String getComponentName(){
     return "FindSettings";
@@ -62,6 +63,13 @@ public class FindSettingsImpl extends FindSettings implements ApplicationCompone
 
   public void readExternal(Element element) throws InvalidDataException{
     DefaultJDOMExternalizer.readExternal(this, element);
+    if (RECENT_FILE_MASKS.size() == 0) {
+      RECENT_FILE_MASKS.add("*.properties");
+      RECENT_FILE_MASKS.add("*.html");
+      RECENT_FILE_MASKS.add("*.jsp");
+      RECENT_FILE_MASKS.add("*.xml");
+      RECENT_FILE_MASKS.add("*.java");
+    }
   }
 
   public void writeExternal(Element element) throws WriteExternalException{
@@ -167,7 +175,7 @@ public class FindSettingsImpl extends FindSettings implements ApplicationCompone
     model.setFileFilter(FILE_MASK);
   }
 
-  private static void addStringToList(String str, List list, int maxSize){
+  private static void addStringToList(String str, List<String> list, int maxSize){
     if(list.contains(str)){
       list.remove(str);
     }
@@ -199,11 +207,15 @@ public class FindSettingsImpl extends FindSettings implements ApplicationCompone
   }
 
   public String[] getRecentFindStrings(){
-    return (String[])RECENT_FIND_STRINGS.toArray(new String[RECENT_FIND_STRINGS.size()]);
+    return RECENT_FIND_STRINGS.toArray(new String[RECENT_FIND_STRINGS.size()]);
   }
 
   public String[] getRecentReplaceStrings(){
-    return (String[])RECENT_REPLACE_STRINGS.toArray(new String[RECENT_REPLACE_STRINGS.size()]);
+    return RECENT_REPLACE_STRINGS.toArray(new String[RECENT_REPLACE_STRINGS.size()]);
+  }
+
+  public String[] getRecentFileMasks() {
+    return RECENT_FILE_MASKS.toArray(new String[RECENT_FILE_MASKS.size()]);
   }
 
   public ArrayList getRecentDirectories(){
@@ -216,5 +228,8 @@ public class FindSettingsImpl extends FindSettings implements ApplicationCompone
 
   public void setFileMask(String _fileMask) {
     this.FILE_MASK = _fileMask;
+    if (_fileMask != null && _fileMask.length() > 0) {
+      addStringToList(_fileMask, RECENT_FILE_MASKS, MAX_RECENT_SIZE);
+    }
   }
 }

@@ -269,11 +269,10 @@ final class FindDialog extends DialogWrapper {
     useFileFilter.setMnemonic('m');
     filterPanel.add(myFileFilter,BorderLayout.CENTER);
     myFileFilter.setEditable(true);
-    myFileFilter.addItem("*.java");
-    myFileFilter.addItem("*.xml");
-    myFileFilter.addItem("*.jsp");
-    myFileFilter.addItem("*.html");
-    myFileFilter.addItem("*.properties");
+    String[] fileMasks = FindSettings.getInstance().getRecentFileMasks();
+    for(int i=fileMasks.length-1; i >= 0; i--) {
+      myFileFilter.addItem(fileMasks [i]);
+    }
     myFileFilter.setEnabled(false);
 
     useFileFilter.addActionListener(

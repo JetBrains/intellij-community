@@ -64,6 +64,15 @@ public abstract class FindSettings{
 
   public abstract String[] getRecentReplaceStrings();
 
+  /**
+   * Returns the list of file masks used by the user in the "File name filter"
+   * group box.
+   *
+   * @return the recent file masks list
+   * @since 5.0.2
+   */
+  public abstract String[] getRecentFileMasks();
+
   public abstract ArrayList getRecentDirectories();
 
   public abstract void setWithSubdirectories(boolean b);
