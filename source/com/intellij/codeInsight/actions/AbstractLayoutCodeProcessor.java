@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.Language;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -308,7 +309,9 @@ public abstract class AbstractLayoutCodeProcessor {
   }
 
   private static boolean isFormatable(PsiFile file) {
-    return file instanceof PsiJavaFile || file instanceof XmlFile;
+    final Language language = file.getLanguage();
+    if (language == null) return false;
+    return language.getFormattingModelBuilder() != null;
   }
 
   private void collectFilesToProcess(ArrayList<PsiFile> array, PsiDirectory dir, boolean recursive) {
