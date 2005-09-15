@@ -193,6 +193,12 @@ public abstract class PsiManager implements UserDataHolder {
    */
   public abstract void registerShortNamesCache(@NotNull PsiShortNamesCache cache);
 
+  /**
+   * Initiates a migrate refactoring. The refactoring is finished when
+   * {@link com.intellij.psi.PsiMigration#finish()} is called.
+   *
+   * @return the migrate operation object.
+   */
   public abstract @NotNull PsiMigration startMigration();
 
   /**
@@ -284,24 +290,74 @@ public abstract class PsiManager implements UserDataHolder {
    */
   public abstract void finishBatchFilesProcessingMode();
 
+  /**
+   * Checks if the PSI manager has been disposed and the PSI for this project can no
+   * longer be used.
+   *
+   * @return true if the PSI manager is disposed, false otherwise.
+   */
   public abstract boolean isDisposed();
 
+  /**
+   * Returns the language level set for this project.
+   *
+   * @return the language level instance.
+   */
   public abstract @NotNull LanguageLevel getEffectiveLanguageLevel();
 
+  /**
+   * Checks if the specified package name is part of the package prefix for
+   * any of the modules in this project.
+   *
+   * @param packageName the package name to check.
+   * @return true if it is part of the package prefix, false otherwise. 
+   */
   public abstract boolean isPartOfPackagePrefix(String packageName);
 
   /**
-   * For tests only
+   * Sets the language level to use for this project. For tests only.
+   *
+   * @param languageLevel the language level to set.
    */
   public abstract void setEffectiveLanguageLevel(@NotNull LanguageLevel languageLevel);
 
+  /**
+   * Clears the resolve caches of the PSI manager. Can be used to reduce memory consumption
+   * in batch operations sequentially processing multiple files.
+   */
   public abstract void dropResolveCaches();
 
+  /**
+   * Checks if the specified PSI element belongs to the specified package.
+   *
+   * @param element  the element to check the package for.
+   * @param aPackage the package to check.
+   * @return true if the element belongs to the package, false otherwise.
+   */
   public abstract boolean isInPackage(@NotNull PsiElement element, @NotNull PsiPackage aPackage);
 
+  /**
+   * Checks if the specified PSI elements belong to the same package.
+   *
+   * @param element1 the first element to check.
+   * @param element2 the second element to check.
+   * @return true if the elements are in the same package, false otherwise.
+   */
   public abstract boolean arePackagesTheSame(@NotNull PsiElement element1, @NotNull PsiElement element2);
 
+  /**
+   * Checks if the specified PSI element belongs to this project.
+   *
+   * @param element the element to check.
+   * @return true if the element belongs to the project, false otherwise.
+   */
   public abstract boolean isInProject(@NotNull PsiElement element);
 
+  /**
+   * Disables automatic formatting of modified PSI elements, runs the specified operation
+   * and re-enables the formatting.
+   *
+   * @param r the operation to run.
+   */
   public abstract void performActionWithFormatterDisabled(Runnable r);
 }
