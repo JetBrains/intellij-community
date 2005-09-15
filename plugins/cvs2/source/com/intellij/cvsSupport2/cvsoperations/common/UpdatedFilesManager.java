@@ -26,7 +26,8 @@ public class UpdatedFilesManager implements IMessageListener {
 
   private ICvsFileSystem myCvsFileSystem;
   public static final String CREATED_BY_SECOND_PARTY_PREFIX = "cvs server: conflict: ";
-  public static final String CREATED_BY_SECOND_PARTY_POSTFIX = " created independently by second party";
+  public static final String CREATED_BY_SECOND_PARTY_POSTFIX1 = " created independently by second party";
+  public static final String CREATED_BY_SECOND_PARTY_POSTFIX2 = " has been added, but already exists";
   private CurrentMergedFileInfo myCurrentMergedFile;
   private final Collection<Entry> myNewlyCreatedEntries = new HashSet<Entry>();
   private Collection<File> myNonUpdatedFiles = new HashSet<File>();
@@ -77,20 +78,14 @@ public class UpdatedFilesManager implements IMessageListener {
                                                   message.length()
                                                   -
                                                   MERGED_FILE_MESSAGE_POSTFIX.length());
-      String relativeRepositoryPath = myCvsFileSystem.getRelativeRepositoryPath(pathInRepository);
+      String relativeRepositoryPath = myCvsFileSystem.getRelativeRepositoryPath(normalizePath(pathInRepository));
       final File file = myCvsFileSystem.getLocalFileSystem().getFile(removeModuleNameFrom(relativeRepositoryPath));
       ensureFileIsInMap(file);
       myCurrentMergedFile = myMergedFiles.get(file);
     }
-    else if (message.startsWith(CREATED_BY_SECOND_PARTY_PREFIX) && message.endsWith(CREATED_BY_SECOND_PARTY_POSTFIX)) {
-      String pathInRepository = message.substring(CREATED_BY_SECOND_PARTY_PREFIX.length(),
-                                                  message.length()
-                                                  -
-                                                  CREATED_BY_SECOND_PARTY_POSTFIX.length());
-      File ioFile = myCvsFileSystem.getLocalFileSystem().getFile(pathInRepository);
-      String relativeRepositoryPath = myCvsFileSystem.getRelativeRepositoryPath(ioFile.getPath());
-      File file = myCvsFileSystem.getLocalFileSystem().getFile(removeModuleNameFrom(relativeRepositoryPath));
-      myCreatedBySecondParty.add(file);
+    else if (message.startsWith(CREATED_BY_SECOND_PARTY_PREFIX)) {
+      processMessageWithPostfix(message, CREATED_BY_SECOND_PARTY_POSTFIX1);
+      processMessageWithPostfix(message, CREATED_BY_SECOND_PARTY_POSTFIX2);
 
     }
     else if (MERGE_PATTERN.matcher(message).matches()) {
@@ -108,6 +103,21 @@ public class UpdatedFilesManager implements IMessageListener {
         String secondRevision = matcher.group(4);
         myCurrentMergedFile.addRevisions(firstRevision, secondRevision);
       }
+    }
+  }
+
+  private String normalizePath(final String pathInRepository) {
+    return pathInRepository.replace(File.separatorChar, '/');
+  }
+
+  private void processMessageWithPostfix(final String message, final String postfix) {
+    if (message.endsWith(postfix)) {
+      String pathInRepository = message.substring(CREATED_BY_SECOND_PARTY_PREFIX.length(),
+                                                  message.length()
+                                                  -
+                                                  postfix.length());
+      File ioFile = myCvsFileSystem.getLocalFileSystem().getFile(pathInRepository);
+      myCreatedBySecondParty.add(ioFile);
     }
   }
 

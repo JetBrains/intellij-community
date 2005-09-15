@@ -162,4 +162,8 @@ public class FileGroup implements JDOMExternalizable {
   public String getUpdateName() {
     return myUpdateName;
   }
+
+  public String toString() {
+    return myId + " " + myFiles.size() + " items";
+  }
 }
