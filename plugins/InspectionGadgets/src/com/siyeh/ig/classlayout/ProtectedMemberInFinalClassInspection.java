@@ -17,7 +17,6 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
@@ -61,7 +60,7 @@ public class ProtectedMemberInFinalClassInspection extends MethodInspection {
 
 
     private static boolean methodOverrides(PsiMethod meth) {
-      final PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods(meth);
+      final PsiMethod[] superMethods = meth.findSuperMethods();
       return superMethods != null && superMethods.length != 0;
     }
 

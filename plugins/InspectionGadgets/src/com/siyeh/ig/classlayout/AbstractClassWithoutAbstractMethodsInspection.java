@@ -17,10 +17,8 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import org.jetbrains.annotations.NotNull;
@@ -76,7 +74,7 @@ public class AbstractClassWithoutAbstractMethodsInspection extends ClassInspecti
     }
 
     private static void calculateOverriddenMethods(PsiMethod method, Set<PsiMethod> overriddenMethods) {
-      final PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods(method);
+      final PsiMethod[] superMethods = method.findSuperMethods();
       for (final PsiMethod superMethod : superMethods) {
         overriddenMethods.add(superMethod);
       }

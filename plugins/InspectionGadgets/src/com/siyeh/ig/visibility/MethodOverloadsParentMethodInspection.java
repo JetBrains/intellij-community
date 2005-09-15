@@ -17,7 +17,6 @@ package com.siyeh.ig.visibility;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
@@ -71,8 +70,7 @@ public class MethodOverloadsParentMethodInspection extends MethodInspection{
                 return;
             }
 
-            final PsiMethod[] superMethods = PsiSuperMethodUtil
-                    .findSuperMethods(method);
+          final PsiMethod[] superMethods = method.findSuperMethods();
             if(superMethods != null && superMethods.length != 0){
                 return;
             }
@@ -124,8 +122,7 @@ public class MethodOverloadsParentMethodInspection extends MethodInspection{
             final PsiMethod[] methods = aClass.getMethods();
             for(PsiMethod testMethod : methods){
                 if(testMethod.getName().equals(method.getName())){
-                    final PsiMethod[] superMethods = PsiSuperMethodUtil
-                            .findSuperMethods(testMethod, true);
+                  final PsiMethod[] superMethods = testMethod.findSuperMethods(true);
                     for(final PsiMethod superMethod : superMethods){
                         if(superMethod .equals(method)){
                             return true;
@@ -153,8 +150,7 @@ public class MethodOverloadsParentMethodInspection extends MethodInspection{
 
         private static boolean methodOverrides(PsiMethod meth,
                                                PsiClass ancestorClass){
-            final PsiMethod[] superMethods = PsiSuperMethodUtil
-                    .findSuperMethods(meth, true);
+          final PsiMethod[] superMethods = meth.findSuperMethods(true);
             for(final PsiMethod superMethod : superMethods){
                 if(ancestorClass.equals(superMethod.getContainingClass())){
                     return true;

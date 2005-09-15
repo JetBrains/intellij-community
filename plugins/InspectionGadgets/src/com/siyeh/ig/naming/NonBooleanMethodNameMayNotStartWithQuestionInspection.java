@@ -155,7 +155,7 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends Metho
 
     private boolean isOverrideOfLibraryMethod(PsiMethod method) {
       final PsiMethod[] superMethods =
-        PsiSuperMethodUtil.findSuperMethods(method);
+        method.findSuperMethods();
 
       for (PsiMethod superMethod : superMethods) {
         final PsiClass containingClass =

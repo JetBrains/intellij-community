@@ -17,10 +17,8 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import org.jetbrains.annotations.NotNull;
@@ -53,8 +51,7 @@ public class AbstractMethodOverridesConcreteMethodInspection extends MethodInspe
       if (!method.hasModifierProperty(PsiModifier.ABSTRACT)) {
         return;
       }
-      final PsiMethod[] superMethods = PsiSuperMethodUtil
-        .findSuperMethods(method);
+      final PsiMethod[] superMethods = method.findSuperMethods();
       for (final PsiMethod superMethod : superMethods) {
         final PsiClass superClass = superMethod.getContainingClass();
         if (superClass == null) {

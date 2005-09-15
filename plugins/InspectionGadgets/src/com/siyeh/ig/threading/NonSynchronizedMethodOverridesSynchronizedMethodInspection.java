@@ -16,10 +16,8 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +42,7 @@ public class NonSynchronizedMethodOverridesSynchronizedMethodInspection extends 
       if (method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
         return;
       }
-      final PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods(method);
+      final PsiMethod[] superMethods = method.findSuperMethods();
       for (final PsiMethod superMethod : superMethods) {
         if (superMethod.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
           registerMethodError(method);

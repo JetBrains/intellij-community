@@ -79,7 +79,7 @@ public class PublicMethodNotExposedInInterfaceInspection extends MethodInspectio
         }
 
         private boolean exposedInInterface(PsiMethod method) {
-            final PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods(method);
+          final PsiMethod[] superMethods = method.findSuperMethods();
             for(final PsiMethod superMethod : superMethods){
                 final PsiClass superClass = superMethod.getContainingClass();
                 if(superClass.isInterface()){

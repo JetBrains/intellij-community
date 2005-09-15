@@ -19,7 +19,6 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -79,7 +78,7 @@ public class AbstractMethodOverridesAbstractMethodInspection extends MethodInspe
           !containingClass.isInterface()) {
         return;
       }
-      final PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods(method);
+      final PsiMethod[] superMethods = method.findSuperMethods();
       for (final PsiMethod superMethod : superMethods) {
         if (isAbstract(superMethod)) {
           if (methodsHaveSameReturnTypes(method, superMethod) &&

@@ -17,7 +17,6 @@ package com.siyeh.ig.methodmetrics;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -69,7 +68,7 @@ public class ParametersPerMethodInspection extends MethodMetricInspection {
         return;
       }
 
-      final PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods(method);
+      final PsiMethod[] superMethods = method.findSuperMethods();
       for (final PsiMethod superMethod : superMethods) {
         final PsiClass containingClass = superMethod.getContainingClass();
         if (containingClass != null) {
