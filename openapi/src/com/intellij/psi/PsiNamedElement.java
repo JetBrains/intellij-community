@@ -17,8 +17,29 @@ package com.intellij.psi;
 
 import com.intellij.util.IncorrectOperationException;
 
+/**
+ * A PSI element which has a name and can be renamed (for example, a class or a method).
+ */
 public interface PsiNamedElement extends PsiElement{
+  /**
+   * The empty array of PSI named elements which can be reused to avoid unnecessary allocations.
+   */
   PsiNamedElement[] EMPTY_ARRAY = new PsiNamedElement[0];
+
+  /**
+   * Returns the name of the element.
+   *
+   * @return the element name.
+   */
   String getName();
+
+  /**
+   * Renames the element.
+   *
+   * @param name the new element name.
+   * @return the element corresponding to this element after the rename (either <code>this</code>
+   * or a different element if the rename caused the element to be replaced).
+   * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
+   */
   PsiElement setName(String name) throws IncorrectOperationException;
 }

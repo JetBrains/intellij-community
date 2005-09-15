@@ -430,6 +430,8 @@ public interface PsiElement extends UserDataHolder, Iconable {
   /**
    * Checks if an actual source or class file corresponds to the element. Non-physical elements include,
    * for example, PSI elements created for the watch expressions in the debugger.
+   * Non-physical elements do not generate tree change events.
+   * Also, {@link PsiDocumentManager#getDocument(PsiFile)} returns null for non-physical elements.
    *
    * @return true if the element is physical, false otherwise.
    */

@@ -17,6 +17,10 @@ package com.intellij.psi;
 
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Represents the occurrence of a type in Java source code, for example, as a return
+ * type of the method or the type of a method parameter.
+ */
 public interface PsiTypeElement extends PsiElement {
   PsiTypeElement[] EMPTY_ARRAY = new PsiTypeElement[0];
   @NotNull PsiType getType();

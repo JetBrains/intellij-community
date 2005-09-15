@@ -18,8 +18,22 @@ package com.intellij.psi;
 import com.intellij.psi.javadoc.PsiDocComment;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Represents a PSI element which can have an attached JavaDoc comment.
+ */
 public interface PsiDocCommentOwner extends PsiMember {
+  /**
+   * Returns the JavaDoc comment for the element.
+   *
+   * @return the JavaDoc comment instance, or null if the element has no JavaDoc comment.
+   */
   @Nullable
   PsiDocComment getDocComment();
+
+  /**
+   * Checks if the element is marked as deprecated via an annotation or JavaDoc tag.
+   *
+   * @return true is the element is marked as deprecated, false otherwise.
+   */
   boolean isDeprecated();
 }

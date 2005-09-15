@@ -346,16 +346,17 @@ public abstract class PsiManager implements UserDataHolder {
   public abstract boolean arePackagesTheSame(@NotNull PsiElement element1, @NotNull PsiElement element2);
 
   /**
-   * Checks if the specified PSI element belongs to this project.
+   * Checks if the specified PSI element belongs to the sources of the project.
    *
    * @param element the element to check.
-   * @return true if the element belongs to the project, false otherwise.
+   * @return true if the element belongs to the sources of the project, false otherwise.
    */
   public abstract boolean isInProject(@NotNull PsiElement element);
 
   /**
    * Disables automatic formatting of modified PSI elements, runs the specified operation
-   * and re-enables the formatting.
+   * and re-enables the formatting. Can be used to improve performance of PSI write
+   * operations.
    *
    * @param r the operation to run.
    */

@@ -15,7 +15,25 @@
  */
 package com.intellij.psi;
 
+/**
+ * Represents a PSI element which has a list of modifiers (public/private/protected/etc.)
+ * and annotations.
+ */
 public interface PsiModifierListOwner extends PsiElement {
+  /**
+   * Returns the list of modifiers for the element.
+   *
+   * @return the list of modifiers, or null if the element (for example, an anonymous
+   * inner class) does not have the list of modifiers.
+   */
   PsiModifierList getModifierList();
+
+  /**
+   * Checks if the element has the specified modifier. Possible modifiers are defined
+   * as constants in the {@link PsiModifier} class.
+   *
+   * @param name the name of the modifier to check.
+   * @return true if the element has the modifier, false otherwise
+   */
   boolean hasModifierProperty(String name);
 }

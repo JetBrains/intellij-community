@@ -17,19 +17,62 @@ package com.intellij.psi;
 
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+/**
+ * Represents a Java local variable, method parameter or field.
+ */
 public interface PsiVariable extends PsiElement, PsiModifierListOwner, PsiNamedElement {
+  /**
+   * Returns the type of the variable.
+   *
+   * @return the variable type.
+   */
   PsiType getType();
 
+  /**
+   * Returns the type element declaring the type of the variable.
+   *
+   * @return the type element for the variable type.
+   */
   PsiTypeElement getTypeElement();
 
-  PsiExpression getInitializer();
+  /**
+   * Returns the initializer for the variable.
+   *
+   * @return the initializer expression, or null if it has no initializer.
+   */
+  @Nullable PsiExpression getInitializer();
+
+  /**
+   * Checks if the variable has an initializer.
+   *
+   * @return true if the variable has an initializer, false otherwise
+   */
   boolean hasInitializer();
 
-  // Q: split into normalizeBrackets and splitting declarations?
-  void normalizeDeclaration() throws IncorrectOperationException;
+  /**
+   * Ensures that the variable declaration is not combined in the same statement with
+   * other declarations. Also, if the variable is an array, ensures that the array
+   * brackets are used in Java style (<code>int[] a</code>)
+   * and not in C style (<code> int a[]</code>).
+   * 
+   * @throws IncorrectOperationException if the modification fails for some reason.
+   */
+  void normalizeDeclaration() throws IncorrectOperationException; // Q: split into normalizeBrackets and splitting declarations?
 
-  Object computeConstantValue();
+  /**
+   * Calculates and returns the constant value of the variable initializer.
+   *
+   * @return the calculated value, or null if the variable has no initializer or
+   * the initializer does not evaluate to a constant.
+   */
+  @Nullable Object computeConstantValue();
 
+  /**
+   * Returns the identifier declaring the name of the variable.
+   *
+   * @return the variable name identifier.
+   */
   @NotNull PsiIdentifier getNameIdentifier();
 }
