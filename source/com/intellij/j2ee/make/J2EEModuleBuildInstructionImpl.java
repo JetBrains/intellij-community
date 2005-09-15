@@ -9,12 +9,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Degenerator;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.ZipUtil;
+import com.intellij.j2ee.make.impl.MakeUtilImpl;
 import gnu.trove.THashSet;
 
 import java.io.*;
 import java.util.Set;
 import java.util.Collection;
-import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
@@ -64,12 +64,7 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
         }, false);
       }
       if (externalDependencyFound.get().booleanValue()) {
-        Manifest manifest = MakeUtil.getInstance().createManifest(buildRecipe);
-        File manifestFile = new File(target, JarFile.MANIFEST_NAME);
-        FileUtil.createParentDirs(manifestFile);
-        FileOutputStream out = new FileOutputStream(manifestFile);
-        manifest.write(out);
-        out.close();
+        MakeUtilImpl.writeManifest(buildRecipe, context, target);
       }
     }
     catch (Exception e) {
