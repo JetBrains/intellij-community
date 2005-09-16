@@ -45,6 +45,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
   public static ReferenceProviderType PROPERTY_FILE_KEY_PROVIDER = new ReferenceProviderType("Property File Key Provider");
   public static ReferenceProviderType CLASS_REFERENCE_PROVIDER = new ReferenceProviderType("Class Reference Provider");
   public static ReferenceProviderType PATH_REFERENCES_PROVIDER = new ReferenceProviderType("Path References Provider");
+  public static ReferenceProviderType DYNAMIC_PATH_REFERENCES_PROVIDER = new ReferenceProviderType("Dynamic Path References Provider");
   public static ReferenceProviderType CSS_CLASS_OR_ID_KEY_PROVIDER = new ReferenceProviderType("Css Class or ID Provider");
   public static ReferenceProviderType URI_PROVIDER = new ReferenceProviderType("Uri references provider");
 
@@ -70,6 +71,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
 
     myReferenceTypeToProviderMap.put(CLASS_REFERENCE_PROVIDER, new JavaClassReferenceProvider());
     myReferenceTypeToProviderMap.put(PATH_REFERENCES_PROVIDER, new JspxIncludePathReferenceProvider());
+    myReferenceTypeToProviderMap.put(DYNAMIC_PATH_REFERENCES_PROVIDER, new JspxDynamicPathReferenceProvider());
     myReferenceTypeToProviderMap.put(PROPERTY_FILE_KEY_PROVIDER, new PropertiesReferenceProvider());
 
     registerXmlAttributeValueReferenceProvider(
@@ -227,7 +229,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
             )
           ), 2
         )
-      ), getProviderByType(PATH_REFERENCES_PROVIDER)
+      ), getProviderByType(DYNAMIC_PATH_REFERENCES_PROVIDER)
     );
 
     registerXmlAttributeValueReferenceProvider(
@@ -245,7 +247,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
             )
           ), 2
         )
-      ), getProviderByType(PATH_REFERENCES_PROVIDER)
+      ), getProviderByType(DYNAMIC_PATH_REFERENCES_PROVIDER)
     );
 
     registerXmlAttributeValueReferenceProvider(
@@ -314,7 +316,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
             )
           ), 2
         )
-      ), getProviderByType(PATH_REFERENCES_PROVIDER)
+      ), getProviderByType(DYNAMIC_PATH_REFERENCES_PROVIDER)
     );
 
     registerXmlAttributeValueReferenceProvider(
