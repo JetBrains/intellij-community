@@ -91,7 +91,6 @@ public class SdkEditor implements Configurable{
 
   public JComponent createComponent(){
     createMainPanel();
-    reset();
     return myMainPanel;
   }
 
