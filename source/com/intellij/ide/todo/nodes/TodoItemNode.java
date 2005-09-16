@@ -14,11 +14,13 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.ui.HighlightedRegion;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> implements HighlightedRegionProvider{
   private static final Logger LOG=Logger.getInstance("#com.intellij.ide.toDo.TodoItemNodeDescriptor");
@@ -40,8 +42,9 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
     return myHighlightedRegions;
   }
 
+  @NotNull
   public Collection<AbstractTreeNode> getChildren() {
-    return new ArrayList<AbstractTreeNode>();
+    return Collections.EMPTY_LIST;
   }
 
   public void update(PresentationData presentation) {

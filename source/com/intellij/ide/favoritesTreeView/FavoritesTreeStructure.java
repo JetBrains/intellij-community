@@ -23,6 +23,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -147,15 +148,17 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
   }
 
   private AbstractTreeNode<String> getEmptyScreen() {
-    return new AbstractTreeNode<String>(myProject, "There is nothing to display. Add item to favorites list: Main Menu -> View -> Add To Favorites "){
-                                public Collection<AbstractTreeNode> getChildren() {
-                                  return null;
-                                }
+    return new AbstractTreeNode<String>(myProject,
+                                        "There is nothing to display. Add item to favorites list: Main Menu -> View -> Add To Favorites ") {
+      @NotNull
+      public Collection<AbstractTreeNode> getChildren() {
+        return Collections.EMPTY_LIST;
+      }
 
-                                public void update(final PresentationData presentation) {
-                                  presentation.setPresentableText(getValue());
-                                }
-                              };
+      public void update(final PresentationData presentation) {
+        presentation.setPresentableText(getValue());
+      }
+    };
   }
 
   public Object getParentElement(Object element) {
@@ -169,6 +172,7 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
     return parent;
   }
 
+  @NotNull
   public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
     return new FavoritesTreeNodeDescriptor(myProject, parentDescriptor, (AbstractTreeNode)element);
   }

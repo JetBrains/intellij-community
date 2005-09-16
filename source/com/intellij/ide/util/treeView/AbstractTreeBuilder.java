@@ -41,7 +41,8 @@ public abstract class AbstractTreeBuilder {
       if (n1 instanceof LoadingNode || n2 instanceof LoadingNode) return 0;
       NodeDescriptor nodeDescriptor1 = (NodeDescriptor)((DefaultMutableTreeNode)n1).getUserObject();
       NodeDescriptor nodeDescriptor2 = (NodeDescriptor)((DefaultMutableTreeNode)n2).getUserObject();
-      return (myNodeDescriptorComparator !=  null)? myNodeDescriptorComparator.compare(nodeDescriptor1, nodeDescriptor2) : nodeDescriptor1.getIndex() - nodeDescriptor2.getIndex();
+      return myNodeDescriptorComparator != null ? myNodeDescriptorComparator.compare(nodeDescriptor1, nodeDescriptor2) :
+             nodeDescriptor1.getIndex() - nodeDescriptor2.getIndex();
     }
   };
 
@@ -335,11 +336,11 @@ public abstract class AbstractTreeBuilder {
     int index = 0;
     for (Object child : children) {
       if (child instanceof ProjectViewNode) {
-        final ProjectViewNode projectViewNode = ((ProjectViewNode)child);
+        final ProjectViewNode projectViewNode = (ProjectViewNode)child;
         projectViewNode.update();
         if (projectViewNode.getValue() == null) continue;
       }
-      elementToIndexMap.put(child, index);
+      elementToIndexMap.put(child, new Integer(index));
       index++;
     }
     return elementToIndexMap;
@@ -386,7 +387,7 @@ public abstract class AbstractTreeBuilder {
         LOG.error("childDescr == null, treeStructure = " + myTreeStructure + ", child = " + child);
         continue;
       }
-      childDescr.setIndex(index);
+      childDescr.setIndex(index.intValue());
       childDescr.update();
       if (childDescr.getElement() == null) {
         LOG.error("childDescr.getElement() == null, child = " + child + ", builder = " + this);
@@ -473,10 +474,10 @@ public abstract class AbstractTreeBuilder {
     Object newElement = childDescr.getElement();
     Integer index = newElement != null ? elementToIndexMap.get(newElement) : null;
     if (index != null) {
-      if (childDescr.getIndex() != index) {
+      if (childDescr.getIndex() != index.intValue()) {
         changes = true;
       }
-      childDescr.setIndex(index);
+      childDescr.setIndex(index.intValue());
     }
     if (newElement != null && changes) {
       updateNodeImageAndPosition(childNode);
@@ -622,7 +623,7 @@ public abstract class AbstractTreeBuilder {
       for (int i = 0; i < parentNode.getChildCount(); i++) {
         DefaultMutableTreeNode node1 = (DefaultMutableTreeNode)parentNode.getChildAt(i);
         if (node == node1) continue;
-        if ((node1.getUserObject() instanceof NodeDescriptor) && ((NodeDescriptor)node1.getUserObject()).getElement() == null) continue;
+        if (node1.getUserObject() instanceof NodeDescriptor && ((NodeDescriptor)node1.getUserObject()).getElement() == null) continue;
         if (myNodeComparator.compare(node, node1) > 0) newIndex++;
       }
 
@@ -851,15 +852,13 @@ public abstract class AbstractTreeBuilder {
   }
 
   private static class AbstractTreeNodeWrapper extends AbstractTreeNode<Object> {
-    private static final ArrayList<AbstractTreeNode> EMPTY_LIST = new ArrayList<AbstractTreeNode>();
-
     public AbstractTreeNodeWrapper(Object element) {
       super(null, element);
     }
 
     @NotNull
     public Collection<AbstractTreeNode> getChildren() {
-      return EMPTY_LIST;
+      return Collections.EMPTY_LIST;
     }
 
     public void update(PresentationData presentation) {
