@@ -68,6 +68,7 @@ public class URIReferenceProvider implements PsiReferenceProvider {
       final PsiFile containingFile = myElement.getContainingFile();
       if (containingFile instanceof XmlFile) {
         final XmlTag rootTag = ((XmlFile)containingFile).getDocument().getRootTag();
+        if (rootTag == null) return null;
         final XmlNSDescriptor nsDescriptor = rootTag.getNSDescriptor(canonicalText, true);
         if (nsDescriptor != null) return nsDescriptor.getDescriptorFile();
         if (canonicalText.equals(rootTag.getAttributeValue("targetNamespace"))) return containingFile;
