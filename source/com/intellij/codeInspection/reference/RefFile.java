@@ -45,10 +45,14 @@ public class RefFile extends RefElement {
           if (module == null) return;
           final ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
           for (ContentEntry contentEntry : contentEntries) {
-            if (VfsUtil.isAncestor(contentEntry.getFile(), parentDirectory, false)){
+            final VirtualFile contentEntryFile = contentEntry.getFile();
+            if (contentEntryFile == null) continue; //invalid entry
+            if (VfsUtil.isAncestor(contentEntryFile, parentDirectory, false)){
               final SourceFolder[] sourceFolderFiles = contentEntry.getSourceFolders();
               for (SourceFolder folder : sourceFolderFiles) {
-                if (VfsUtil.isAncestor(folder.getFile(), parentDirectory, false)){
+                final VirtualFile folderFile = folder.getFile();
+                if (folderFile == null) continue; //invalid source path
+                if (VfsUtil.isAncestor(folderFile, parentDirectory, false)){
                   String qualifiedName = aPackage.getQualifiedName();
                   final int prefixLength = folder.getPackagePrefix().length();
                   if (prefixLength > 0 && qualifiedName.length() > prefixLength){ //consider package prefixes
