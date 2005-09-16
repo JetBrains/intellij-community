@@ -215,7 +215,7 @@ public class FindUtil {
     else {
       editor.putUserData(KEY, null);
       offset = editor.getCaretModel().getOffset();
-      if (!model.isForward()) {
+      if (!model.isForward() && offset > 0 ) {
         offset--;
       }
     }
