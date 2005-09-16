@@ -152,7 +152,8 @@ public class ForCanBeForeachInspection extends StatementInspection {
         contentVariableName = createNewVarName(project,
                                                forStatement,
                                                componentType,
-                                               collectionName);
+                                               collectionName,
+                                               arrayReference.resolve());
         finalString = "";
         statementToSkip = null;
       }
@@ -266,12 +267,12 @@ public class ForCanBeForeachInspection extends StatementInspection {
           contentVariableName = createNewVarName(project,
                                                  forStatement,
                                                  contentType,
-                                                 collectionName);
+                                                 collectionName, ((PsiReferenceExpression) collection).resolve());
         }
         else {
           contentVariableName = createNewVarName(project,
                                                  forStatement,
-                                                 contentType, null);
+                                                 contentType, null, null);
         }
         if (CodeStyleSettingsManager
           .getSettings(project).GENERATE_FINAL_LOCALS) {
@@ -358,7 +359,8 @@ public class ForCanBeForeachInspection extends StatementInspection {
         contentVariableName = createNewVarName(project,
                                                forStatement,
                                                componentType,
-                                               collectionName);
+                                               collectionName,
+                                               arrayReference.resolve());
         finalString = "";
         statementToSkip = null;
       }
@@ -646,11 +648,18 @@ public class ForCanBeForeachInspection extends StatementInspection {
     private static String createNewVarName(Project project,
                                            PsiForStatement scope,
                                            PsiType type,
-                                           String containerName) {
+                                           String containerName,
+                                           PsiElement collectionVariable) {
       final CodeStyleManager codeStyleManager =
         CodeStyleManager.getInstance(project);
       @NonNls String baseName;
-      if (containerName != null) {
+      if (collectionVariable instanceof PsiVariable) {
+        PsiVariable variable = (PsiVariable) collectionVariable;
+        String variableName = variable.getName();
+        String propertyName = codeStyleManager.variableNameToPropertyName(variableName, codeStyleManager.getVariableKind(variable));
+        propertyName = StringUtils.createSingularFromName(propertyName);
+        baseName = codeStyleManager.propertyNameToVariableName(propertyName, VariableKind.LOCAL_VARIABLE);
+      } else if (containerName != null) {
         baseName = StringUtils.createSingularFromName(containerName);
       }
       else {
