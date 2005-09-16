@@ -812,8 +812,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       else {
         rootFilter = null;
       }
+
+      final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       long[] candidateIds = repositoryIndex.getNameOccurrencesInExtendsLists(name, rootFilter);
       for (long id : candidateIds) {
+        if (indicator != null) indicator.checkCanceled();
         PsiClass candidate = (PsiClass)repositoryElementsManager.findOrCreatePsiElementById(id);
         LOG.assertTrue(candidate.isValid());
         if (!processInheritorCandidate(processor, candidate, aClass, searchScope, checkDeep, processed,
