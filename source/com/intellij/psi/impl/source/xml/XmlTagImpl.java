@@ -430,17 +430,21 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     if(myNamespaceMap == null && hasNamespaceDeclarations()){
       myNamespaceMap = new BidirectionalMap<String, String>();
       final XmlAttribute[] attributes = getAttributes();
+      
       for (final XmlAttribute attribute : attributes) {
         if (attribute.isNamespaceDeclaration()) {
           final String name = attribute.getName();
           int splitIndex = name.indexOf(':');
-          if (splitIndex < 0) {
-            myNamespaceMap.put("", attribute.getValue());
+          final String value = attribute.getValue();
+          
+          if (value != null) {
+            if (splitIndex < 0) {
+              myNamespaceMap.put("", value);
+            }
+            else {
+              myNamespaceMap.put(XmlUtil.findLocalNameByQualifiedName(name), value);
+            }
           }
-          else {
-            myNamespaceMap.put(XmlUtil.findLocalNameByQualifiedName(name), attribute.getValue());
-          }
-
         }
       }
 
