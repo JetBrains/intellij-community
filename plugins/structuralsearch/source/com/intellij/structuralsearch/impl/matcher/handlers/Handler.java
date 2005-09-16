@@ -38,6 +38,10 @@ public abstract class Handler {
    * @return true if matching was successfull and false otherwise
    */
   public boolean match(PsiElement patternNode,PsiElement matchedNode, MatchContext context) {
+    if (patternNode == null) {
+      return matchedNode == null;
+    }
+    
     if (filter!=null) {
       if (!filter.accepts(matchedNode)) return false;
       return true;
