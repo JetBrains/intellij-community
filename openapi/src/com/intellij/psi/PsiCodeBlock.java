@@ -19,24 +19,51 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- *
+ * Represents a Java code block, usually surrounded by curly braces.
  */
-public interface PsiCodeBlock extends PsiElement{
+public interface PsiCodeBlock extends PsiElement {
+  /**
+   * The empty array of PSI code blocks which can be reused to avoid unnecessary allocations.
+   */
   PsiCodeBlock[] EMPTY_ARRAY = new PsiCodeBlock[0];
 
+  /**
+   * Returns the array of statements contained in the block.
+   *
+   * @return the array of statements.
+   */
   @NotNull
   PsiStatement[] getStatements();
 
+  /**
+   * Returns the first PSI element contained in the block.
+   *
+   * @return the first PSI element, or null if the block is empty.
+   */
   @Nullable
   PsiElement getFirstBodyElement();
 
+  /**
+   * Returns the last PSI element contained in the block.
+   *
+   * @return the last PSI element, or null if the block is empty.
+   */
   @Nullable
   PsiElement getLastBodyElement();
 
+  /**
+   * Returns the opening curly brace of the block.
+   *
+   * @return the opening curly brace, or null if the block does not have one.
+   */
   @Nullable
   PsiJavaToken getLBrace();
 
+  /**
+   * Returns the closing curly brace of the block.
+   *
+   * @return the closing curly brace, or null if the block does not have one.
+   */
   @Nullable
   PsiJavaToken getRBrace();
-
 }

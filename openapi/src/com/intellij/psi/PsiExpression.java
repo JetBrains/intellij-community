@@ -15,7 +15,22 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * Represents a Java epxression.
+ */
 public interface PsiExpression extends PsiElement, PsiAnnotationMemberValue {
+  /**
+   * The empty array of PSI expressions which can be reused to avoid unnecessary allocations.
+   */
   PsiExpression[] EMPTY_ARRAY = new PsiExpression[0];
+
+  /**
+   * Returns the type of the expression.
+   *
+   * @return the expression type, or null if the type is not known.
+   */
+  @Nullable
   PsiType getType();
 }

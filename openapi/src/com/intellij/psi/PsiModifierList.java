@@ -19,12 +19,65 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Represents the list of modifiers and annotations on a Java element (class, method,
+ * field and so on). Possible modifiers are defined as constants in the {@link PsiModifier} class.
+ *
+ * @see PsiModifierListOwner#getModifierList()
+ */
 public interface PsiModifierList extends PsiElement {
+  /**
+   * Checks if the modifier list has the specified modifier set either by an explicit keyword
+   * or implicitly (for example, interface methods are implicitly public).
+   *
+   * @param name the name of the modifier to check.
+   * @return true if the list has the modifier, false otherwise
+   * @see #hasExplicitModifier(String)
+   */
   boolean hasModifierProperty(@NotNull String name);
+
+  /**
+   * Checks if the modifier list has the specified modifier set by an explicit keyword.
+   *
+   * @param name the name of the modifier to check.
+   * @return true if the list has the modifier, false otherwise
+   * @see #hasModifierProperty(String)
+   */
   boolean hasExplicitModifier(@NotNull String name);
+
+  /**
+   * Adds or removes the specified modifier to the modifier list.
+   *
+   * @param name  the name of the modifier to add or remove.
+   * @param value true if the modifier should be added, false if it should be removed.
+   * @throws IncorrectOperationException if the modification fails for some reason.
+   */
   void setModifierProperty(@NotNull String name, boolean value) throws IncorrectOperationException;
+
+  /**
+   * Checks if it is possible to add or remove the specified modifier to the modifier list,
+   * and throws an exception if the operation is not possible. Does not actually modify
+   * anything.
+   *
+   * @param name  the name of the modifier to check the add or remove possibility for.
+   * @param value true if the modifier should be added, false if it should be removed.
+   * @throws IncorrectOperationException if the modification fails for some reason.
+   */
   void checkSetModifierProperty(@NotNull String name, boolean value) throws IncorrectOperationException;
 
+  /**
+   * Returns the list of annotations contained in the modifier list.
+   *
+   * @return the list of annotations.
+   */
   @NotNull PsiAnnotation[] getAnnotations();
+
+  /**
+   * Searches the modifier list for an annotation with the specified fully qualified name
+   * and returns one if it is found.
+   *
+   * @param qualifiedName the fully qualified name of the annotation to find.
+   * @return the annotation instance, or null if no such annotation is found.
+   */
   @Nullable PsiAnnotation findAnnotation(@NotNull String qualifiedName);
 }

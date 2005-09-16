@@ -17,9 +17,20 @@ package com.intellij.psi;
 
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Represents a Java class initializer block.
+ */
 public interface PsiClassInitializer extends PsiMember, PsiModifierListOwner {
+  /**
+   * The empty array of PSI class initializers which can be reused to avoid unnecessary allocations.
+   */
   PsiClassInitializer[] EMPTY_ARRAY = new PsiClassInitializer[0];
 
+  /**
+   * Returns the contents of the class initializer block.
+   *
+   * @return the code block representing the contents of the class initializer block.
+   */
   @NotNull
   PsiCodeBlock getBody();
 }

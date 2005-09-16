@@ -234,9 +234,11 @@ public interface PsiElement extends UserDataHolder, Iconable {
   void acceptChildren(@NotNull PsiElementVisitor visitor);
 
   /**
-   * Creates a copy of the PSI element.
+   * Creates a copy of the file containing the PSI element and returns the corresponding
+   * element in the created copy. Resolve operations performed on elements in the copy
+   * of the file will resolve to elements in the copy, not in the original file. 
    *
-   * @return the copy instance.
+   * @return the element in the file copy corresponding to this element.
    */
   PsiElement copy();
 

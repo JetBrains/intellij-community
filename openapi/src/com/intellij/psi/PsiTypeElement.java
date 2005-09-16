@@ -16,13 +16,32 @@
 package com.intellij.psi;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents the occurrence of a type in Java source code, for example, as a return
  * type of the method or the type of a method parameter.
  */
 public interface PsiTypeElement extends PsiElement {
+  /**
+   * The empty array of PSI directories which can be reused to avoid unnecessary allocations.
+   */
   PsiTypeElement[] EMPTY_ARRAY = new PsiTypeElement[0];
+
+  /**
+   * Returns the type referenced by the type element.
+   *
+   * @return the referenced type.
+   */
   @NotNull PsiType getType();
+
+  /**
+   * Returns the reference element pointing to the referenced type, or if the type element
+   * is an array, the reference element for the innermost component type of the array.
+   *
+   * @return the referenced element instance, or null if the type element references
+   * a primitive type.
+   */
+  @Nullable
   PsiJavaCodeReferenceElement getInnermostComponentReferenceElement();
 }

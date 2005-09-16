@@ -18,9 +18,12 @@ package com.intellij.psi;
 import com.intellij.util.IncorrectOperationException;
 
 /**
- *
+ * Represents a Java identifier.
  */
 public interface PsiIdentifier extends PsiJavaToken {
+  /**
+   * The empty array of PSI identifiers which can be reused to avoid unnecessary allocations.
+   */
   PsiIdentifier[] EMPTY_ARRAY = new PsiIdentifier[0];
   
   PsiElement replace(PsiElement newElement) throws IncorrectOperationException;

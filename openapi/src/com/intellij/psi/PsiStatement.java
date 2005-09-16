@@ -16,8 +16,11 @@
 package com.intellij.psi;
 
 /**
- *
+ * Represents a Java statement.
  */
 public interface PsiStatement extends PsiElement {
+  /**
+   * The empty array of PSI statements which can be reused to avoid unnecessary allocations.
+   */
   PsiStatement[] EMPTY_ARRAY = new PsiStatement[0];
 }

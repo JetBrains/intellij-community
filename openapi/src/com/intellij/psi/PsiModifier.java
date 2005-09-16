@@ -15,6 +15,9 @@
  */
 package com.intellij.psi;
 
+/**
+ * Provides a list of possible modifier keywords for Java classes, methods and fields.
+ */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public interface PsiModifier {
   String PUBLIC = "public";

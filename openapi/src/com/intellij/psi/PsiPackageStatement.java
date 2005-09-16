@@ -16,10 +16,27 @@
 package com.intellij.psi;
 
 /**
- *
+ * Represents a <code>package</code> Java statement.
  */
 public interface PsiPackageStatement extends PsiElement {
+  /**
+   * Returns the Java code reference element specifying the declared name of the package.
+   *
+   * @return the element for the name of the package.
+   */
   PsiJavaCodeReferenceElement getPackageReference();
+
+  /**
+   * Returns the declared name of the package.
+   *
+   * @return the declared name of the package.
+   */
   String getPackageName();
+
+  /**
+   * Returns the list of annotations for the package.
+   *
+   * @return the modifier list containing the annotations applied to the package statement.
+   */
   PsiModifierList getAnnotationList();
 }
