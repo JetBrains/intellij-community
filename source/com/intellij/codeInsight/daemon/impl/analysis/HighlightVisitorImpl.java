@@ -329,7 +329,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       final PsiFile containingFile = element.getContainingFile();
       if (containingFile instanceof JspFile) {
         nextSibling = ((JspFile)containingFile).getBaseLanguageRoot().findElementAt(element.getTextOffset()+1);
-        //if (nextSibling != null) nextSibling = nextSibling.getParent();
       }
     }
 
@@ -337,9 +336,11 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       nextSibling = nextSibling.getNextSibling();
     }
 
-    if (nextSibling instanceof JspText ||
-        nextSibling instanceof JspExpression ||
-        nextSibling instanceof ELExpressionHolder
+    if ((nextSibling instanceof JspText ||
+         nextSibling instanceof JspExpression ||
+         nextSibling instanceof ELExpressionHolder
+        ) &&
+        !(PsiTreeUtil.findCommonParent(nextSibling,element) instanceof PsiFile) // error is not inside jsp text
        ) {
       return true;
     }
