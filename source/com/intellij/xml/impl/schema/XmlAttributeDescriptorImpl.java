@@ -51,8 +51,8 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
   private boolean hasSimpleSchemaType(String type) {
     final String attributeValue = myTag.getAttributeValue("type");
 
-    if (attributeValue!=null) {
-      if (type.endsWith(type)) {
+    if (attributeValue != null) {
+      if (attributeValue.endsWith(type)) {
         final String namespacePrefix = myTag.getNamespacePrefix();
 
         if (namespacePrefix.length() > 0) {
