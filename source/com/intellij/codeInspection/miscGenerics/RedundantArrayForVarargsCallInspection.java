@@ -1,19 +1,17 @@
 package com.intellij.codeInspection.miscGenerics;
 
-import com.intellij.codeInspection.*;
-import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInspection.*;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.List;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
+import java.util.List;
 
 /**
  * @author ven
