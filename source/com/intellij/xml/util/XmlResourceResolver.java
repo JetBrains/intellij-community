@@ -48,6 +48,10 @@ public class XmlResourceResolver implements XMLEntityResolver {
     return myExternalResourcesMap.get(baseId);
   }
   
+  public String[] getResourcePaths() {
+    return myExternalResourcesMap.values().toArray(new String[myExternalResourcesMap.size()]);
+  }
+  
   public PsiFile resolve(final String baseSystemId, final String systemId) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: resolveEntity(baseSystemId='" + baseSystemId + "' systemId='" + systemId + "')");

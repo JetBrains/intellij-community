@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.*;
 import com.intellij.ui.content.*;
 import com.intellij.util.ui.ErrorTreeView;
@@ -54,6 +55,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
   private static final String GRAMMAR_FEATURE_ID = Constants.XERCES_PROPERTY_PREFIX + Constants.XMLGRAMMAR_POOL_PROPERTY;
   private static final Key<XMLGrammarPoolImpl> GRAMMAR_POOL_KEY = Key.create("GrammarPoolKey");
   private static final Key<Long> GRAMMAR_POOL_TIME_STAMP_KEY = Key.create("GrammarPoolTimeStampKey");
+  private static final Key<VirtualFile[]> DEPENDENT_FILES_KEY = Key.create("GrammarPoolFilesKey");
 
   private Project myProject;
   private XmlFile myFile;
@@ -199,9 +201,8 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
     }
     private void removeCompileContents(Content notToRemove) {
       MessageView messageView = myProject.getComponent(MessageView.class);
-      Content[] contents = messageView.getContents();
-      for (int i = 0; i < contents.length; i++) {
-        Content content = contents[i];
+
+      for (Content content : messageView.getContents()) {
         if (content.isPinned()) continue;
         if (CONTENT_NAME.equals(content.getDisplayName()) && content != notToRemove) {
           ErrorTreeView listErrorView = (ErrorTreeView)content.getComponent();
@@ -342,6 +343,17 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
               );
             }
           });
+          
+          final String[] resourcePaths = myXmlResourceResolver.getResourcePaths();
+          if (resourcePaths.length > 0) { // if caches are used
+            final VirtualFile[] files = new VirtualFile[resourcePaths.length];
+            for(int i = 0; i < resourcePaths.length; ++i) {
+              files[i] = VfsUtil.findRelativeFile(resourcePaths[i], null);
+            }
+            
+            myFile.putUserData(DEPENDENT_FILES_KEY, files);
+            myFile.putUserData(GRAMMAR_POOL_TIME_STAMP_KEY, new Long(calculateTimeStamp(files)));
+          }
         }
         catch (SAXException e) {
           LOG.debug(e);
@@ -377,23 +389,34 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
         factory.setNamespaceAware(true);
         schemaChecking = true;
       }
+      
       SAXParser parser = factory.newSAXParser();
 
       parser.setProperty("http://apache.org/xml/properties/internal/entity-resolver", myXmlResourceResolver);
-      XMLGrammarPoolImpl grammarPool = myFile.getUserData(GRAMMAR_POOL_KEY);
+      
+      final XMLGrammarPoolImpl previousGrammarPool = myFile.getUserData(GRAMMAR_POOL_KEY);
+      XMLGrammarPoolImpl grammarPool = null;
+      
+      // check if the pool is valid
+      final VirtualFile[] files = myFile.getUserData(DEPENDENT_FILES_KEY);
       final Long grammarPoolTimeStamp = myFile.getUserData(GRAMMAR_POOL_TIME_STAMP_KEY);
       
-      final long timeStamp = System.currentTimeMillis();
-     
-      if (forceChecking ||
-          grammarPool == null ||
-          ( grammarPoolTimeStamp != null &&
-            (timeStamp - grammarPoolTimeStamp.longValue()) > 60 * 1000L // update pool after one minute
-          )  
+      if (grammarPoolTimeStamp != null && 
+          files != null &&
+          !forceChecking
          ) {
+        long dependentFilesTimestamp = calculateTimeStamp(files);
+
+        if (dependentFilesTimestamp == grammarPoolTimeStamp.longValue() &&
+            dependentFilesTimestamp != 0
+          ) {
+          grammarPool = previousGrammarPool;
+        }
+      }
+      
+      if (grammarPool == null) {
         grammarPool = new XMLGrammarPoolImpl();
         myFile.putUserData(GRAMMAR_POOL_KEY,grammarPool);
-        myFile.putUserData(GRAMMAR_POOL_TIME_STAMP_KEY, new Long(timeStamp));
       }
       
       parser.getXMLReader().setProperty(GRAMMAR_FEATURE_ID, grammarPool);
@@ -413,6 +436,22 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
     }
 
     return null;
+  }
+
+  private long calculateTimeStamp(final VirtualFile[] files) {
+    long timestamp = 0;
+
+    for(VirtualFile file:files) {
+      if (file == null || !file.isValid()) break;
+      final PsiFile psifile = PsiManager.getInstance(myProject).findFile(file);
+
+      if (psifile != null && psifile.isValid()) {
+        timestamp += psifile.getModificationStamp();
+      } else {
+        break;
+      }
+    }
+    return timestamp;
   }
 
   private boolean hasDtdDeclaration() {
@@ -440,8 +479,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
     if (rootTag == null) return false;
 
     XmlAttribute[] attributes = rootTag.getAttributes();
-    for (int i = 0; i < attributes.length; i++) {
-      XmlAttribute attribute = attributes[i];
+    for (XmlAttribute attribute : attributes) {
       if (attribute.getName().startsWith("xmlns")) return true;
     }
 
@@ -462,7 +500,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
         return;
       }
       myMessageView.removeContentManagerListener(this);
-      NewErrorTreeViewPanel errorTreeView = (NewErrorTreeViewPanel)eventContent.getUserData(KEY);
+      NewErrorTreeViewPanel errorTreeView = eventContent.getUserData(KEY);
       if (errorTreeView != null) {
         errorTreeView.dispose();
       }
