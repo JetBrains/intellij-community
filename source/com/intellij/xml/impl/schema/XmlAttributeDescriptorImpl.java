@@ -58,7 +58,7 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
         if (namespacePrefix.length() > 0) {
           return attributeValue.equals(namespacePrefix+":"+type);
         } else {
-          return true;
+          return attributeValue.equals(type);
         }
       }
     }
