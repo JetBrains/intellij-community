@@ -485,6 +485,12 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     );
     
     registerXmlAttributeValueReferenceProvider(
+      new String[] {"scope"},
+      null,
+      jspReferencesProvider
+    );
+    
+    registerXmlAttributeValueReferenceProvider(
       new String[] {"name"},
       new ScopeFilter(
         new ParentElementFilter(
