@@ -426,9 +426,7 @@ public class ControlFlowUtils{
     @Nullable
     private static PsiElement getContainingStatementOrBlock(
             @NotNull PsiElement statement){
-        return PsiTreeUtil
-                .getParentOfType(statement,
-                                 new Class[]{PsiStatement.class, PsiCodeBlock.class});
+        return PsiTreeUtil.getParentOfType(statement, PsiStatement.class, PsiCodeBlock.class);
     }
 
     private static boolean statementIsLastInBlock(@NotNull PsiCodeBlock block,
