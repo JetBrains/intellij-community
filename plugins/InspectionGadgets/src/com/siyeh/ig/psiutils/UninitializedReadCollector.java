@@ -169,45 +169,48 @@ public class UninitializedReadCollector {
             @NotNull PsiSwitchStatement switchStatement,
             @NotNull PsiVariable variable,
             @NotNull Set<MethodSignature> checkedMethods) {
-        //final PsiExpression expression = switchStatement.getExpression();
-        //if (expressionAssignsVariable(expression, variable, checkedMethods)) {
-        //    return true;
-        //}
-        //final PsiCodeBlock body = switchStatement.getBody();
-        //if (body == null) {
-        //    return false;
-        //}
-        //final PsiStatement[] statements = body.getStatements();
-        //boolean containsDefault = false;
-        //boolean assigns = false;
-        //for (int i = 0; i < statements.length; i++) {
-        //    final PsiStatement statement = statements[i];
-        //    if (statement instanceof PsiSwitchLabelStatement) {
-        //        final PsiSwitchLabelStatement labelStatement
-        //                = (PsiSwitchLabelStatement) statement;
-        //        if (labelStatement.isDefaultCase()) {
-        //            containsDefault = true;
-        //        }
-        //    } else if (statement instanceof PsiBreakStatement) {
-        //        final PsiBreakStatement breakStatement
-        //                = (PsiBreakStatement) statement;
-        //        if (breakStatement.getLabelIdentifier() != null) {
-        //            return false;
-        //        }
-        //        if (!assigns) {
-        //            return false;
-        //        }
-        //        assigns = false;
-        //    } else {
-        //        assigns |= statementAssignsVariable(statement, variable,
-        //                                            checkedMethods);
-        //        if (i == statements.length - 1 && !assigns) {
-        //            return false;
-        //        }
-        //    }
-        //}
-        return false;
-        //return containsDefault;
+        final PsiExpression expression = switchStatement.getExpression();
+        if (expressionAssignsVariable(expression, variable, checkedMethods)) {
+            return true;
+        }
+        final PsiCodeBlock body = switchStatement.getBody();
+        if (body == null) {
+            return false;
+        }
+        final PsiStatement[] statements = body.getStatements();
+        boolean containsDefault = false;
+        boolean assigns = false;
+        for (int i = 0; i < statements.length; i++) {
+            final PsiStatement statement = statements[i];
+            if (statement instanceof PsiSwitchLabelStatement) {
+                final PsiSwitchLabelStatement labelStatement
+                        = (PsiSwitchLabelStatement) statement;
+                if (i == statements.length - 1) {
+                    return false;
+                }
+                if (labelStatement.isDefaultCase()) {
+                    containsDefault = true;
+                }
+                assigns = false;
+            } else if (statement instanceof PsiBreakStatement) {
+                final PsiBreakStatement breakStatement
+                        = (PsiBreakStatement) statement;
+                if (breakStatement.getLabelIdentifier() != null) {
+                    return false;
+                }
+                if (!assigns) {
+                    return false;
+                }
+                assigns = false;
+            } else {
+                assigns |= statementAssignsVariable(statement, variable,
+                                                    checkedMethods);
+                if (i == statements.length - 1 && !assigns) {
+                    return false;
+                }
+            }
+        }
+        return containsDefault;
     }
 
     private boolean declarationStatementAssignsVariable(
