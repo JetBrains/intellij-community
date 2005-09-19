@@ -18,11 +18,24 @@ package com.intellij.openapi.options;
 import javax.swing.*;
 
 /**
- * author: lesya
+ * Component which provides a configuration user interface.
+ *
+ * @author lesya
  */
 public interface UnnamedConfigurable {
+  /**
+   * Returns the user interface component for editing the configuration.
+   *
+   * @return the component instance.
+   */
   JComponent createComponent();
 
+  /**
+   * Checks if the settings in the user interface component were modified by the user and
+   * need to be saved.
+   *
+   * @return true if the settings were modified, false otherwise.
+   */
   boolean isModified();
 
   /**
@@ -35,5 +48,8 @@ public interface UnnamedConfigurable {
    */
   void reset();
 
+  /**
+   * Disposes the Swing components used for displaying the configuration.
+   */
   void disposeUIResources();
 }

@@ -21,32 +21,91 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
+/**
+ * Manages the version control systems used by a specific project.
+ */
 public abstract class ProjectLevelVcsManager {
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static final String FILE_VIEW_TOOL_WINDOW_ID = "File View";
+  @NonNls public static final String FILE_VIEW_TOOL_WINDOW_ID = "File View";
 
+  /**
+   * Returns the <code>ProjectLevelVcsManager<code> instance for the specified project.
+   *
+   * @param project the project for which the instance is requested.
+   * @return the manager instance.
+   */
   public static ProjectLevelVcsManager getInstance(Project project) {
     return project.getComponent(ProjectLevelVcsManager.class);
   }
 
+  /**
+   * Returns the list of all registered version control systems.
+   *
+   * @return the list of registered version control systems.
+   */
   public abstract AbstractVcs[] getAllVcss();
 
-
+  /**
+   * Returns the version control system with the specified name.
+   *
+   * @param name the name of the VCS to find.
+   * @return the VCS instance, or null if none is found.
+   */
   public abstract AbstractVcs findVcsByName(String name);
 
+  /**
+   * Checks if all files in the specified array are managed by the specified VCS.
+   *
+   * @param abstractVcs the VCS to check.
+   * @param files the files to check.
+   * @return true if all files are managed by the VCS, false otherwise.
+   */
   public abstract boolean checkAllFilesAreUnder(AbstractVcs abstractVcs, VirtualFile[] files);
 
+  /**
+   * Returns the VCS managing the specified file.
+   *
+   * @param file the file to check.
+   * @return the VCS instance, or null if the file does not belong to any module or the module
+   * it belongs to is not under version control.
+   */
   public abstract AbstractVcs getVcsFor(VirtualFile file);
 
+  /**
+   * Checks if the specified VCS is used by any of the modules in the project.
+   *
+   * @param vcs the VCS to check.
+   * @return true if the VCS is used by any of the modules, false otherwise
+   */
   public abstract boolean checkVcsIsActive(AbstractVcs vcs);
 
+  /**
+   * Returns the user-visible relative path from the content root under which the
+   * specified file is located to the file itself, prefixed by the module name in
+   * angle brackets.
+   *
+   * @param file the file for which the path is requested.
+   * @return the relative path.
+   */
   public abstract String getPresentableRelativePathFor(VirtualFile file);
 
   public abstract DataProvider createVirtualAndPsiFileDataProvider(VirtualFile[] virtualFileArray, VirtualFile selectedFile);
 
+  /**
+   * Returns the list of all modules in the project which are managed by the specified VCS.
+   *
+   * @param vcs the CVS to check.
+   * @return the list of modules under the VCS.
+   */
   public abstract Module[] getAllModulesUnder(AbstractVcs vcs);
 
+  /**
+   * Returns the list of VCSes used by at least one module in the project.
+   *
+   * @return the list of VCSes used in the project.
+   */
   public abstract AbstractVcs[] getAllActiveVcss();
 
   public abstract void addMessageToConsoleWindow(String message, TextAttributes attributes);
@@ -57,7 +116,7 @@ public abstract class ProjectLevelVcsManager {
 
   @NotNull
   public abstract VcsShowConfirmationOption getStandardConfirmation(@NotNull VcsConfiguration.StandardConfirmation option,
-                                                             @NotNull AbstractVcs vcs);
+                                                                    @NotNull AbstractVcs vcs);
 
   @NotNull
   public abstract VcsShowSettingOption getOrCreateCustomOption(@NotNull String vcsActionName,

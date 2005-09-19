@@ -28,6 +28,12 @@ import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * The base class for a version control system integrated with IDEA.
+ *
+ * @see ProjectLevelVcsManager
+ * @see ModuleLevelVcsManager 
+ */
 public abstract class AbstractVcs {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.AbstractVcs");
@@ -83,7 +89,12 @@ public abstract class AbstractVcs {
     return VcsConfiguration.getInstance(myProject);
   }
 
-  public EditFileProvider getEditFileProvider() {
+  /**
+   * Returns the interface for performing check out / edit file operations.
+   *
+   * @return the interface implementation, or null if none is provided.
+   */
+  @Nullable public EditFileProvider getEditFileProvider() {
     return null;
   }
 
@@ -215,8 +226,7 @@ public abstract class AbstractVcs {
   }
 
   /**
-   * Returns the interface for selecting file version numbers, or null if no implementation
-   * is provided.
+   * Returns the interface for selecting file version numbers.
    *
    * @return the revision selector implementation, or null if none is provided.
    * @since 5.0.2

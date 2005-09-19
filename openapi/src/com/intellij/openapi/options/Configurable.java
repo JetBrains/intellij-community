@@ -15,10 +15,40 @@
  */
 package com.intellij.openapi.options;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 
+/**
+ * Named component which provides a configuration user interface. Components which
+ * implement {@link com.intellij.openapi.components.ApplicationComponent} and
+ * this interface are shown as items in the "IDE Settings" group of the main
+ * IDEA settings dialog.
+ * Components which implement {@link com.intellij.openapi.components.ProjectComponent} and
+ * this interface are shown in the "Project Settings" group of that dialog.
+ */
 public interface Configurable extends UnnamedConfigurable {
+  /**
+   * Returns the user-visible name of the settings component.
+   *
+   * @return the visible name of the component.
+   */
   String getDisplayName();
+
+  /**
+   * Returns the icon representing the settings component. Components
+   * shown in the IDEA settings dialog have 32x32 icons.
+   *
+   * @return the icon for the component.
+   */
   Icon getIcon();
+
+  /**
+   * Returns the topic in the help file which is shown when help for the configurable
+   * is requested.
+   *
+   * @return the help topic, or null if no help is available.
+   */
+  @Nullable
   String getHelpTopic();
 }
