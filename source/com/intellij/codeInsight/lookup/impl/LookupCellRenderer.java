@@ -128,7 +128,9 @@ class LookupCellRenderer implements ListCellRenderer {
 
     Color sampleBackground = background;
 
-    if (item.getObject() instanceof LookupValueWithUIHint) {
+    if (item.getObject() instanceof LookupValueWithUIHint &&
+        label3.getText().length() == 0
+       ) {
       Color proposedBackground = ((LookupValueWithUIHint)item.getObject()).getColorHint();
 
       if (proposedBackground == null) {
@@ -317,6 +319,8 @@ class LookupCellRenderer implements ListCellRenderer {
     }
     else if (o instanceof Template){
       text = getTemplateDescriptionString((Template)o);
+    } else if (o instanceof LookupValueWithUIHint) {
+      text = ((LookupValueWithUIHint)o).getTypeHint();
     }
 
     JLabel label = myLabel3;
@@ -466,6 +470,9 @@ class LookupCellRenderer implements ListCellRenderer {
     }
     else if (o instanceof Template){
       text += getTemplateDescriptionString((Template)o) + TYPE_GAP;
+    } else if (o instanceof LookupValueWithUIHint &&
+               ((LookupValueWithUIHint)o).getTypeHint() != null) {
+      text += ((LookupValueWithUIHint)o).getTypeHint() + TYPE_GAP;
     }
 
     if(item.getAttribute(LookupItem.FORCE_QUALIFY) != null){

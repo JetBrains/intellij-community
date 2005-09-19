@@ -10,5 +10,6 @@ import java.awt.*;
  * To change this template use File | Settings | File Templates.
  */
 public interface LookupValueWithUIHint extends PresentableLookupValue {
+  String getTypeHint();
   Color getColorHint();
 }
