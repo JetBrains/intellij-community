@@ -3,11 +3,14 @@ package com.intellij.psi.impl.source.resolve.reference.impl;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.CollectionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -98,8 +101,15 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     return chooseReference().isReferenceTo(element);
   }
 
-  public Object[] getVariants(){
-    return chooseReference().getVariants();
+  public Object[] getVariants() {
+    Set variants = new HashSet();
+    for(PsiReference ref: myReferences) {
+      Object[] refVariants = ref.getVariants();
+      for(Object refVariant : refVariants) {
+        variants.add(refVariant);
+      }
+    }
+    return variants.toArray();
   }
 
   public boolean isSoft(){
