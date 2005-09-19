@@ -300,10 +300,13 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
                 final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(boundClass);
                 while (iterator.hasNext()) {
                   final PsiTypeParameter typeParameter = iterator.next();
-                  final Pair<PsiType, ConstraintType> res = getSubstitutionForTypeParameterInner(boundResult.getSubstitutor().substitute(typeParameter),
-                                                                             superSubstitutor.substitute(typeParameter),
-                                                                             patternType, captureWildcard, ConstraintType.EQUALS);
-                  if (res != null) return res;
+                  final PsiType substituted = superSubstitutor.substitute(typeParameter);
+                  if (substituted != null) {
+                    final Pair<PsiType, ConstraintType> res = getSubstitutionForTypeParameterInner(boundResult.getSubstitutor().substitute(typeParameter),
+                                                                                                   substituted,
+                                                                                                   patternType, captureWildcard, ConstraintType.EQUALS);
+                    if (res != null) return res;
+                  }
                 }
               }
             }
@@ -313,10 +316,13 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
                 final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(argClass);
                 while (iterator.hasNext()) {
                   final PsiTypeParameter typeParameter = iterator.next();
-                  final Pair<PsiType, ConstraintType> res = getSubstitutionForTypeParameterInner(superSubstitutor.substitute(typeParameter),
-                                                                             argResult.getSubstitutor().substitute(typeParameter),
-                                                                             patternType, captureWildcard, ConstraintType.EQUALS);
-                  if (res != null) return res;
+                  final PsiType substituted = argResult.getSubstitutor().substitute(typeParameter);
+                  if (substituted != null) {
+                    final Pair<PsiType, ConstraintType> res = getSubstitutionForTypeParameterInner(superSubstitutor.substitute(typeParameter),
+                                                                                                   substituted,
+                                                                                                   patternType, captureWildcard, ConstraintType.EQUALS);
+                    if (res != null) return res;
+                  }
                 }
               }
             }
