@@ -143,9 +143,9 @@ public class CompositeShortNamesCache implements PsiShortNamesCache {
     return result != null ? result : ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
-  public void getAllFieldNames(boolean checkBoxState, HashSet<String> set) {
+  public void getAllFieldNames(boolean searchInLibraries, HashSet<String> set) {
     for (PsiShortNamesCache cache : myCaches) {
-      cache.getAllFieldNames(checkBoxState, set);
+      cache.getAllFieldNames(searchInLibraries, set);
     }
   }
 

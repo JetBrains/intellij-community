@@ -21,20 +21,118 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.containers.HashSet;
 
+/**
+ * Allows to retrieve files and Java classes, methods and fields in a project by
+ * non-qualified names.
+ *
+ * @see com.intellij.psi.PsiManager#getShortNamesCache()
+ */
 public interface PsiShortNamesCache {
+  /**
+   * Initializes the cache. To be used by custom PsiShortNameCache implementations
+   * registered through {@link com.intellij.psi.PsiManager#registerShortNamesCache(PsiShortNamesCache)} }.
+   */
   void runStartupActivity();
+
+  /**
+   * Returns the list of files with the specified name.
+   *
+   * @param name the name of the files to find.
+   * @return the list of files in the project which have the specified name.
+   */
   PsiFile[] getFilesByName(String name);
+
+  /**
+   * Returns the list of names of all files in the project.
+   *
+   * @return the list of all file names in the project.
+   */
   String [] getAllFileNames();
 
+  /**
+   * Returns the list of all classes with the specified name in the specified scope.
+   *
+   * @param name  the non-qualified name of the classes to find.
+   * @param scope the scope in which classes are searched.
+   * @return the list of found classes.
+   */
   PsiClass[] getClassesByName(String name, GlobalSearchScope scope);
+
+  /**
+   * Returns the list of names of all classes in the project and
+   * (optionally) libraries.
+   *
+   * @param searchInLibraries if true, libraries are included in the search;
+   *                          otherwise, only the project is searched.
+   * @return the list of all class names.
+   */
   String  [] getAllClassNames(boolean searchInLibraries);
+
+  /**
+   * Adds the names of all classes in the project and (optionally) libraries
+   * to the specified set.
+   *
+   * @param searchInLibraries if true, libraries are included in the search;
+   *                          otherwise, only the project is searched.
+   * @param dest              the set to add the names to.
+   */
   void       getAllClassNames(boolean searchInLibraries, HashSet<String> dest);
 
+  /**
+   * Returns the list of all methods with the specified name in the specified scope.
+   *
+   * @param name  the name of the methods to find.
+   * @param scope the scope in which methods are searched.
+   * @return the list of found methods.
+   */
   PsiMethod[] getMethodsByName(String name, GlobalSearchScope scope);
+
+  /**
+   * Returns the list of names of all methods in the project and
+   * (optionally) libraries.
+   *
+   * @param searchInLibraries if true, libraries are included in the search;
+   *                          otherwise, only the project is searched.
+   * @return the list of all method names.
+   */
   String   [] getAllMethodNames(boolean searchInLibraries);
+
+  /**
+   * Adds the names of all methods in the project and (optionally) libraries
+   * to the specified set.
+   *
+   * @param searchInLibraries if true, libraries are included in the search;
+   *                          otherwise, only the project is searched.
+   * @param set               the set to add the names to.
+   */
   void        getAllMethodNames(boolean searchInLibraries, HashSet<String> set);
 
+  /**
+   * Returns the list of all fields with the specified name in the specified scope.
+   *
+   * @param name  the name of the fields to find.
+   * @param scope the scope in which fields are searched.
+   * @return the list of found fields.
+   */
   PsiField[] getFieldsByName (String name, GlobalSearchScope scope);
+
+  /**
+   * Returns the list of names of all fields in the project and
+   * (optionally) libraries.
+   *
+   * @param searchInLibraries if true, libraries are included in the search;
+   *                          otherwise, only the project is searched.
+   * @return the list of all field names.
+   */
   String  [] getAllFieldNames(boolean searchInLibraries);
-  void       getAllFieldNames(boolean checkBoxState, HashSet<String> set);
+
+  /**
+   * Adds the names of all methods in the project and (optionally) libraries
+   * to the specified set.
+   *
+   * @param searchInLibraries if true, libraries are included in the search;
+   *                          otherwise, only the project is searched.
+   * @param set               the set to add the names to.
+   */
+  void       getAllFieldNames(boolean searchInLibraries, HashSet<String> set);
 }

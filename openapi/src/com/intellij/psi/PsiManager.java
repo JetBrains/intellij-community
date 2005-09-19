@@ -186,8 +186,8 @@ public abstract class PsiManager implements UserDataHolder {
   public abstract @NotNull PsiShortNamesCache getShortNamesCache();
 
   /**
-   * Registers a custom short name cache implementation for the project. Should not
-   * be used by most plugins.
+   * Registers a custom short name cache implementation for the project, which is used
+   * in addition to the standard IDEA implementation. Should not be used by most plugins.
    *
    * @param cache the short name cache instance.
    */

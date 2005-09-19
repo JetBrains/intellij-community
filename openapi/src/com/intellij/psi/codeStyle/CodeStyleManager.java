@@ -24,17 +24,38 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Service for reformatting code fragments, getting names for elements
+ * according to the user's code style and working with import statements and full-qualified names.
  *
+ * @see com.intellij.psi.PsiManager#getCodeStyleManager()
  */
 public abstract class CodeStyleManager {
+  /**
+   * Returns the code style manager for the specified project.
+   *
+   * @param project the project to get the code style manager for.
+   * @return the code style manager instance.
+   */
   public static CodeStyleManager getInstance(Project project){
     return project.getComponent(CodeStyleManager.class);
   }
 
+  /**
+   * Returns the code style manager for the project associated with the specified
+   * PSI manager.
+   *
+   * @param manager the PSI manager to get the code style manager for.
+   * @return the code style manager instance.
+   */
   public static CodeStyleManager getInstance(PsiManager manager) {
     return getInstance(manager.getProject());
   }
 
+  /**
+   * Gets the project with which the code style manager is associated.
+   *
+   * @return the project instance.
+   */
   public abstract Project getProject();
 
   public abstract PsiElement reformat(PsiElement element) throws IncorrectOperationException;
