@@ -28,6 +28,8 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.DocumentAdapter;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -35,9 +37,6 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.io.File;
-
-import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * User: anna
@@ -58,6 +57,7 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
   private Module myModule;
   @NonNls private static final String META_INF = "META-INF";
   @NonNls private static final String PLUGIN_XML = "plugin.xml";
+  @NonNls private static final String MANIFEST_MF = "manifest.mf";
 
   public PluginModuleBuildConfEditor(ModuleConfigurationState state) {
     myModule = state.getRootModel().getModule();
@@ -71,7 +71,7 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
         myModified = !myPluginXML.getText().equals(myBuildProperties.getPluginXmlPath());
       }
     });
-    myManifest.addActionListener(new BrowseFilesListener(myManifest.getTextField(), DevKitBundle.message("deployment.view.select", "manifest.mf"), DevKitBundle.message("manifest.selection", "manifest.mf"), BrowseFilesListener.SINGLE_FILE_DESCRIPTOR));
+    myManifest.addActionListener(new BrowseFilesListener(myManifest.getTextField(), DevKitBundle.message("deployment.view.select", MANIFEST_MF), DevKitBundle.message("manifest.selection", MANIFEST_MF), BrowseFilesListener.SINGLE_FILE_DESCRIPTOR));
     myManifest.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
         myModified = !myManifest.getText().equals(myBuildProperties.getManifestPath());
