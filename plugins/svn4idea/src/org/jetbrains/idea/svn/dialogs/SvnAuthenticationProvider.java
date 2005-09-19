@@ -87,9 +87,9 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
               if (passphrase != null && passphrase.length() == 0) {
                 passphrase = null;
               }
-              result[0] = new SVNSSHAuthentication(dialog.getUserName(), new File(dialog.getKeyFile()), passphrase, dialog.isSaveAllowed());
+              result[0] = new SVNSSHAuthentication(dialog.getUserName(), new File(dialog.getKeyFile()), passphrase, -1, dialog.isSaveAllowed());
             } else {
-              result[0] = new SVNSSHAuthentication(dialog.getUserName(), dialog.getPassword(), dialog.isSaveAllowed());
+              result[0] = new SVNSSHAuthentication(dialog.getUserName(), dialog.getPassword(), -1, dialog.isSaveAllowed());
             }
           }
         }
