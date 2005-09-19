@@ -27,7 +27,6 @@ import com.intellij.usages.*;
 import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.UsageView;
 import com.intellij.util.Processor;
-import com.intellij.ui.ReplacePromptDialog;
 
 import javax.swing.*;
 import java.util.Set;
@@ -199,15 +198,15 @@ public class ReplaceInProjectManager implements ProjectComponent {
       String title = "Replace Usage " + (i+1) + " of " + usages.length + " Found";
       int result = FindManager.getInstance(myProject).showPromptDialog(replaceContext.getFindModel(), title);
 
-      if (result == ReplacePromptDialog.PromptResult.CANCEL){
+      if (result == FindManager.PromptResult.CANCEL){
         return;
       }
-      if (result == ReplacePromptDialog.PromptResult.SKIP){
+      if (result == FindManager.PromptResult.SKIP){
         continue;
       }
 
       final int currentNumber = i;
-      if (result == ReplacePromptDialog.PromptResult.OK){
+      if (result == FindManager.PromptResult.OK){
         Runnable runnable = new Runnable() {
           public void run() {
             doReplace(replaceContext, usage);
@@ -221,7 +220,7 @@ public class ReplaceInProjectManager implements ProjectComponent {
         }
       }
 
-      if (result == ReplacePromptDialog.PromptResult.ALL_IN_THIS_FILE){
+      if (result == FindManager.PromptResult.ALL_IN_THIS_FILE){
         final int[] nextNumber = new int[1];
 
         Runnable runnable = new Runnable() {
@@ -250,12 +249,12 @@ public class ReplaceInProjectManager implements ProjectComponent {
         i = nextNumber[0] - 1;
       }
 
-      if (result == ReplacePromptDialog.PromptResult.ALL_FILES) {
+      if (result == FindManager.PromptResult.ALL_FILES) {
         CommandProcessor.getInstance().executeCommand(
             myProject, new Runnable() {
             public void run() {
-              for(int i = 0;i < usages.length;++i){
-                doReplace(replaceContext, usages[i]);
+              for (Usage usage1 : usages) {
+                doReplace(replaceContext, usage1);
               }
               replaceContext.getUsageView().close();
             }
@@ -317,7 +316,7 @@ public class ReplaceInProjectManager implements ProjectComponent {
         FindManager findManager = FindManager.getInstance(myProject);
         final CharSequence foundString = document.getCharsSequence().subSequence(textOffset, textEndOffset);
         FindResult findResult = findManager.findString(foundString, 0, replaceContext.getFindModel());
-        if (findResult == null || !findResult.isStringFound()){
+        if (!findResult.isStringFound()){
           return;
         }
         String stringToReplace = findManager.getStringToReplace(foundString.toString(), replaceContext.getFindModel());
@@ -366,8 +365,8 @@ public class ReplaceInProjectManager implements ProjectComponent {
         myProject, new Runnable() {
         public void run() {
           doReplace(replaceContext, selectedUsages);
-          for (Iterator<Usage> i = selectedUsages.iterator(); i.hasNext(); ) {
-            replaceContext.getUsageView().removeUsage(i.next());
+          for (final Usage selectedUsage : selectedUsages) {
+            replaceContext.getUsageView().removeUsage(selectedUsage);
           }
 
           if (replaceContext.getUsageView().getUsages().size() == 0){

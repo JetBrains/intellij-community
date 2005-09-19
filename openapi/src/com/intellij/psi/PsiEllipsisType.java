@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 
 /**
+ * Represents the type of a variable arguments array passed as a method parameter.
  * @author ven
  */
 public class PsiEllipsisType extends PsiArrayType {

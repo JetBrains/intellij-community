@@ -15,5 +15,8 @@
  */
 package com.intellij.psi;
 
+/**
+ * Represents a binary file.
+ */
 public interface PsiBinaryFile extends PsiFile{
 }

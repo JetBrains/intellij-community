@@ -31,6 +31,7 @@ import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.find.FindManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -79,13 +80,13 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
                 ReplacePromptDialog promptDialog = new ReplacePromptDialog(false, "Replace Fragment", project);
                 promptDialog.show();
                 final int promptResult = promptDialog.getExitCode();
-                if (promptResult == ReplacePromptDialog.PromptResult.SKIP) continue;
-                if (promptResult == ReplacePromptDialog.PromptResult.CANCEL) break;
+                if (promptResult == FindManager.PromptResult.SKIP) continue;
+                if (promptResult == FindManager.PromptResult.CANCEL) break;
 
-                if (promptResult == ReplacePromptDialog.PromptResult.OK) {
+                if (promptResult == FindManager.PromptResult.OK) {
                   doReplaceRange(includePath, ((XmlTagChild)pair.getFirst()), (XmlTagChild)pair.getSecond());
                 }
-                else if (promptResult == ReplacePromptDialog.PromptResult.ALL) {
+                else if (promptResult == FindManager.PromptResult.ALL) {
                   doReplaceRange(includePath, ((XmlTagChild)pair.getFirst()), (XmlTagChild)pair.getSecond());
                   replaceAll = true;
                 }
@@ -200,7 +201,5 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
       }, REFACTORING_NAME, null);
 
     }
-
-    return;
   }
 }

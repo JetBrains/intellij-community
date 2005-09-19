@@ -3,21 +3,14 @@ package com.intellij.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.find.FindManager;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 
 public class ReplacePromptDialog extends DialogWrapper {
-  public interface PromptResult {
-    int OK = 0;
-    int CANCEL = 1;
-    int SKIP = 2;
-    int ALL = 3;
-    int ALL_IN_THIS_FILE = 4;
-    int ALL_FILES = 5;
-  }
-  
+
   private boolean myIsMultiple;
 
   public ReplacePromptDialog(boolean isMultipleFiles, String title, Project project) {
@@ -29,21 +22,21 @@ public class ReplacePromptDialog extends DialogWrapper {
   }
 
   protected Action[] createActions(){
-    DoAction replaceAction = new DoAction("&Replace",PromptResult.OK);
+    DoAction replaceAction = new DoAction("&Replace",FindManager.PromptResult.OK);
     replaceAction.putValue(DEFAULT_ACTION,Boolean.TRUE);
     if (myIsMultiple){
       return new Action[]{
         replaceAction,
-        new DoAction("&Skip",PromptResult.SKIP),
-        new DoAction("All in This &File",PromptResult.ALL_IN_THIS_FILE),
-        new DoAction("&All Files",PromptResult.ALL_FILES),
+        new DoAction("&Skip",FindManager.PromptResult.SKIP),
+        new DoAction("All in This &File",FindManager.PromptResult.ALL_IN_THIS_FILE),
+        new DoAction("&All Files", FindManager.PromptResult.ALL_FILES),
         getCancelAction()
       };
     }else{
       return new Action[]{
         replaceAction,
-        new DoAction("&Skip",PromptResult.SKIP),
-        new DoAction("&All",PromptResult.ALL),
+        new DoAction("&Skip",FindManager.PromptResult.SKIP),
+        new DoAction("&All",FindManager.PromptResult.ALL),
         getCancelAction()
       };
     }

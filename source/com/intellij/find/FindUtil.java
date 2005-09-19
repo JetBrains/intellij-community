@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LightweightHint;
-import com.intellij.ui.ReplacePromptDialog;
 
 import javax.swing.*;
 import java.awt.event.FocusEvent;
@@ -340,14 +339,14 @@ public class FindUtil {
         model.setFromCursor(true);
         if (toPrompt) {
           int promptResult = findManager.showPromptDialog(model, "Replace");
-          if (promptResult == ReplacePromptDialog.PromptResult.SKIP) {
+          if (promptResult == FindManager.PromptResult.SKIP) {
             offset = model.isForward() ? result.getEndOffset() : startResultOffset;
             continue;
           }
-          if (promptResult == ReplacePromptDialog.PromptResult.CANCEL) {
+          if (promptResult == FindManager.PromptResult.CANCEL) {
             break;
           }
-          if (promptResult == ReplacePromptDialog.PromptResult.ALL) {
+          if (promptResult == FindManager.PromptResult.ALL) {
             toPrompt = false;
           }
         }
@@ -393,9 +392,6 @@ public class FindUtil {
     Document document = editor.getDocument();
 
     final FindResult result = findManager.findString(document.getCharsSequence(), offset, model);
-    if (result == null) {
-      return null;
-    }
     String stringToFind = model.getStringToFind();
     if (stringToFind == null) {
       return null;

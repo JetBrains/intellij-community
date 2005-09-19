@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Defines the support for the "Find Usages" feature in a custom language.
+ *
  * @author max
  * @see com.intellij.lang.Language#getFindUsagesProvider()
  */
@@ -30,14 +31,16 @@ public interface FindUsagesProvider {
   /**
    * Checks if tokens of the specified type can contain references when the search
    * is done with the specified context.
-   * @param token the token type to check for references.
+   *
+   * @param token         the token type to check for references.
    * @param searchContext represents find usages request,
-   * a combination of constants in {@link com.intellij.psi.search.UsageSearchContext}
+   *                      a combination of constants in {@link com.intellij.psi.search.UsageSearchContext}
    */
   boolean mayHaveReferences(IElementType token, final short searchContext);
 
   /**
    * Gets the word scanner for building a word index for the specified language.
+   *
    * @return the word scanner implementation, or null if Find Usages is not supported for the language.
    */
   @Nullable
@@ -45,14 +48,17 @@ public interface FindUsagesProvider {
 
   /**
    * Checks if it makes sense to search for usages of the specified element.
+   *
    * @param psiElement the element for which usages are searched.
    * @return true if the search is allowed, false otherwise.
+   * @see com.intellij.find.FindManager#canFindUsages(com.intellij.psi.PsiElement)
    */
   boolean canFindUsagesFor(PsiElement psiElement);
 
   /**
    * Returns the ID of the help topic which is shown when the specified element is selected
    * in the "Find Usages" dialog.
+   *
    * @param psiElement the element for which the help topic is requested.
    * @return the help topic ID, or null if no help is available.
    */
@@ -62,6 +68,7 @@ public interface FindUsagesProvider {
   /**
    * Returns the user-visible type of the specified element, shown in the "Find Usages"
    * dialog (for example, "class" or "variable"). The type name should not be upper-cased.
+   *
    * @param element the element for which the type is requested.
    * @return the type of the element.
    */
@@ -72,6 +79,7 @@ public interface FindUsagesProvider {
    * Returns an expanded user-visible name of the specified element, shown in the "Find Usages"
    * dialog. For classes, this can return a fully qualified name of the class; for methods -
    * a signature of the method with parameters.
+   *
    * @param element the element for which the name is requested.
    * @return the user-visible name.
    */
@@ -80,7 +88,8 @@ public interface FindUsagesProvider {
 
   /**
    * Returns the text representing the specified PSI element in the Find Usages tree.
-   * @param element the element for which the node text is requested.
+   *
+   * @param element     the element for which the node text is requested.
    * @param useFullName if true, the returned text should use fully qualified names
    * @return the text representing the element.
    */

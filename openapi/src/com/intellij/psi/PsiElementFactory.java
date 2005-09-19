@@ -59,7 +59,7 @@ public interface PsiElementFactory {
    * @param type the type of the field to create.
    * @return the created field instance.
    * @throws IncorrectOperationException <code>name</code> is not a valid Java identifier
-   * or <code>type</code> represents an invalid type.
+   *                                     or <code>type</code> represents an invalid type.
    */
   PsiField createField(String name, PsiType type) throws IncorrectOperationException;
 
@@ -70,7 +70,7 @@ public interface PsiElementFactory {
    * @param returnType the return type of the method to create.
    * @return the created method instance.
    * @throws IncorrectOperationException <code>name</code> is not a valid Java identifier
-   * or <code>type</code> represents an invalid type.
+   *                                     or <code>type</code> represents an invalid type.
    */
   PsiMethod createMethod(String name, PsiType returnType) throws IncorrectOperationException;
 
@@ -96,7 +96,7 @@ public interface PsiElementFactory {
    * @param type the type of the parameter to create.
    * @return the created parameter instance.
    * @throws IncorrectOperationException <code>name</code> is not a valid Java identifier
-   * or <code>type</code> represents an invalid type.
+   *                                     or <code>type</code> represents an invalid type.
    */
   PsiParameter createParameter(String name, PsiType type) throws IncorrectOperationException;
 
@@ -114,6 +114,16 @@ public interface PsiElementFactory {
    * @return the class type instance.
    */
   PsiClassType createType(PsiClass aClass);
+
+  /**
+   * Creates a class type for the specified class, using the specified substitutor
+   * to replace generic type parameters on the class.
+   *
+   * @param resolve     the class for which the class type is created.
+   * @param substitutor the substitutor to use.
+   * @return the class type instance.
+   */
+  PsiClassType createType(PsiClass resolve, PsiSubstitutor substitutor);
 
   /**
    * Creates a class type for the specified reference pointing to a class.
@@ -147,14 +157,14 @@ public interface PsiElementFactory {
    * @param map the type parameter to type map used by the substitutor.
    * @return the substitutor instance.
    */
-  PsiSubstitutor createSubstitutor(Map<PsiTypeParameter,PsiType> map);
+  PsiSubstitutor createSubstitutor(Map<PsiTypeParameter, PsiType> map);
 
   /**
    * Returns the primitive type instance for the specified type name.
    *
    * @param text the name of a Java primitive type (for example, <code>int</code>)
    * @return the primitive type instance, or null if <code>name</code> is not a valid
-   * primitive type name.
+   *         primitive type name.
    */
   PsiPrimitiveType createPrimitiveType(String text);
 
@@ -297,7 +307,7 @@ public interface PsiElementFactory {
    * @param initializer the initializer for the variable.
    * @return the variable instance.
    * @throws IncorrectOperationException if <code>name</code> is not a valid identifier or
-   * <code>type</code> is not a valid type.
+   *                                     <code>type</code> is not a valid type.
    */
   PsiDeclarationStatement createVariableDeclarationStatement(String name, PsiType type, PsiExpression initializer)
     throws IncorrectOperationException;
@@ -312,7 +322,7 @@ public interface PsiElementFactory {
    * @param reformat    if true, the declaration is reformatted.
    * @return the variable instance.
    * @throws IncorrectOperationException if <code>name</code> is not a valid identifier or
-   * <code>type</code> is not a valid type.
+   *                                     <code>type</code> is not a valid type.
    */
   PsiDeclarationStatement createVariableDeclarationStatement(String name, PsiType type, PsiExpression initializer, boolean reformat)
     throws IncorrectOperationException;
@@ -392,8 +402,8 @@ public interface PsiElementFactory {
   /**
    * Creates a Java method from the specified text.
    *
-   * @param text          the text of the method to create.
-   * @param context       the PSI element used as context for resolving references from the method.
+   * @param text    the text of the method to create.
+   * @param context the PSI element used as context for resolving references from the method.
    * @return the created method instance.
    * @throws IncorrectOperationException if the text is not a valid method body.
    */
@@ -402,8 +412,8 @@ public interface PsiElementFactory {
   /**
    * Creates a Java parameter from the specified text.
    *
-   * @param text          the text of the parameter to create.
-   * @param context       the PSI element used as context for resolving references from the parameter.
+   * @param text    the text of the parameter to create.
+   * @param context the PSI element used as context for resolving references from the parameter.
    * @return the created parameter instance.
    * @throws IncorrectOperationException if the text is not a valid parameter body.
    */
@@ -471,6 +481,7 @@ public interface PsiElementFactory {
 
   /**
    * Creates an XML attribute with the specified name and value.
+   *
    * @param name  the name of the attribute to create.
    * @param value the value of the attribute to create.
    * @return the created attribute instance.
@@ -487,15 +498,98 @@ public interface PsiElementFactory {
    */
   PsiTypePattern createTypePattern(String pattern) throws IncorrectOperationException;
 
+  /**
+   * Creates a Java expression code fragment from the text of the expression.
+   *
+   * @param text         the text of the expression to create.
+   * @param context      the context for resolving references from the code fragment.
+   * @param expectedType expected type of the expression (does not have any effect on creation
+   *                     but can be accessed as {@link PsiExpressionCodeFragment#getExpectedType()}).
+   * @param isPhysical   whether the code fragment is created as a physical element
+   *                     (see {@link PsiElement#isPhysical()}).
+   * @return the created code fragment.
+   */
   PsiExpressionCodeFragment createExpressionCodeFragment(String text, PsiElement context, final PsiType expectedType, boolean isPhysical);
+
+  /**
+   * Creates a Java code fragment from the text of a Java code block.
+   *
+   * @param text       the text of the code block to create.
+   * @param context    the context for resolving references from the code fragment.
+   * @param isPhysical whether the code fragment is created as a physical element
+   *                   (see {@link PsiElement#isPhysical()}).
+   * @return the created code fragment.
+   */
   PsiCodeFragment createCodeBlockCodeFragment(String text, PsiElement context, boolean isPhysical);
+
+  /**
+   * Creates a Java type code fragment from the text of the name of a Java type (the name
+   * of a primitive type, array type or class), with <code>void</code> and ellipsis
+   * not treated as a valid type.
+   *
+   * @param text       the text of the Java type to create.
+   * @param context    the context for resolving references from the code fragment.
+   * @param isPhysical whether the code fragment is created as a physical element
+   *                   (see {@link PsiElement#isPhysical()}).
+   * @return the created code fragment.
+   */
   PsiTypeCodeFragment createTypeCodeFragment(String text, PsiElement context, boolean isPhysical);
+
+  /**
+   * Creates a Java type code fragment from the text of the name of a Java type (the name
+   * of a primitive type, array type or class), with <code>void</code> optionally treated
+   * as a valid type, and ellipsis not treated as a valid type.
+   *
+   * @param text        the text of the Java type to create.
+   * @param context     the context for resolving references from the code fragment.
+   * @param isVoidValid whether <code>void</code> is a valid type for the fragment.
+   * @param isPhysical  whether the code fragment is created as a physical element
+   *                    (see {@link PsiElement#isPhysical()}).
+   * @return the created code fragment.
+   */
   PsiTypeCodeFragment createTypeCodeFragment(String text, PsiElement context, boolean isVoidValid, boolean isPhysical);
 
+  /**
+   * Creates a Java type code fragment from the text of the name of a Java type (the name
+   * of a primitive type, array type or class), with <code>void</code> optionally treated
+   * as a valid type, and ellipsis not treated as a valid type.
+   *
+   * @param text          the text of the Java type to create.
+   * @param context       the context for resolving references from the code fragment.
+   * @param isVoidValid   whether <code>void</code> is a valid type for the fragment.
+   * @param isPhysical    whether the code fragment is created as a physical element
+   *                      (see {@link PsiElement#isPhysical()}).
+   * @param allowEllipsis whether {@link PsiEllipsisType} is a valid type for the element.
+   * @return the created code fragment.
+   */
+  PsiTypeCodeFragment createTypeCodeFragment(String text,
+                                             PsiElement context,
+                                             boolean isVoidValid,
+                                             boolean isPhysical, boolean allowEllipsis);
+
+  /**
+   * Returns a synthetic Java class containing methods which are defined on Java arrays.
+   *
+   * @return the array synthetic class.
+   */
   PsiClass getArrayClass();
+
+  /**
+   * Returns the class type for a synthetic Java class containing methods which
+   * are defined on Java arrays with the specified element type.
+   *
+   * @return the class type the array synthetic class.
+   */
   PsiClassType getArrayClassType(PsiType componentType);
 
-  PsiClassType createType(PsiClass resolve, PsiSubstitutor substitutor);
+  /**
+   * Creates a type parameter from the specified text.
+   *
+   * @param text    the text of the type parameter to create.
+   * @param context the context for resolving references.
+   * @return the created type parameter instance.
+   * @throws IncorrectOperationException if the text does not specify a valid type parameter.
+   */
   PsiTypeParameter createTypeParameterFromText(String text, PsiElement context) throws IncorrectOperationException;
 
   /**
@@ -509,28 +603,93 @@ public interface PsiElementFactory {
 
   XmlTag getAntImplicitDeclarationTag() throws IncorrectOperationException;
 
+  /**
+   * Creates a Java reference code fragment from the text of a Java reference to a
+   * package or class.
+   *
+   * @param text              the text of the reference to create.
+   * @param context           the context for resolving the reference.
+   * @param isPhysical        whether the code fragment is created as a physical element
+   *                          (see {@link PsiElement#isPhysical()}).
+   * @param isClassesAccepted if true then classes as well as packages are accepted as
+   *                          reference target, otherwise only packages are
+   * @return the created reference fragment.
+   */
   PsiJavaCodeReferenceCodeFragment createReferenceCodeFragment(String text,
                                                                PsiElement context,
                                                                boolean isPhysical,
                                                                boolean isClassesAccepted);
 
-  PsiTypeCodeFragment createTypeCodeFragment(String text,
-                                             PsiElement context,
-                                             boolean isVoidValid,
-                                             boolean isPhysical, boolean allowEllipsis);
-
+  /**
+   * Creates an annotation from the specified text.
+   *
+   * @param annotationText the text of the annotation to create.
+   * @param context        the context for resolving references from the annotation.
+   * @return the created annotation instance.
+   * @throws IncorrectOperationException if the text does not specify a valid annotation.
+   */
   PsiAnnotation createAnnotationFromText(String annotationText, PsiElement context) throws IncorrectOperationException;
 
+  /**
+   * Creates an <code>import static</code> statement for importing the specified member
+   * from the specified class.
+   *
+   * @param aClass     the class from which the member is imported.
+   * @param memberName the name of the member to import.
+   * @return the created statement.
+   * @throws IncorrectOperationException if the class is inner or local, or
+   *                                     <code>memberName</code> is not a valid identifier.
+   */
   PsiImportStaticStatement createImportStaticStatement(PsiClass aClass, String memberName) throws IncorrectOperationException;
 
+  /**
+   * Creates a parameter list from the specified parameter names and types.
+   *
+   * @param names the array of names for the parameters to create.
+   * @param types the array of types for the parameters to create.
+   * @return the created parameter list.
+   * @throws IncorrectOperationException if some of the parameter names or types are invalid.
+   */
   PsiParameterList createParameterList(String[] names, PsiType[] types) throws IncorrectOperationException;
 
+  /**
+   * Creates a reference list element from the specified array of references.
+   *
+   * @param references the array of references to include in the list.
+   * @return the created reference list.
+   * @throws IncorrectOperationException if some of the references are invalid.
+   */
   PsiReferenceList createReferenceList(PsiJavaCodeReferenceElement[] references) throws IncorrectOperationException;
 
-  PsiCatchSection createCatchSection (PsiClassType exceptionType, String exceptionName, PsiElement context) throws IncorrectOperationException;
+  /**
+   * Creates a <code>catch</code> section for catching an exception of the specified
+   * type and name.
+   *
+   * @param exceptionType the type of the exception to catch.
+   * @param exceptionName the name of the variable in which the caught exception is stored (may be an empty string)
+   * @param context       the context for resolving references.
+   * @return the created catch section instance.
+   * @throws IncorrectOperationException if some of the parameters are not valid.
+   */
+  PsiCatchSection createCatchSection(PsiClassType exceptionType, String exceptionName, PsiElement context)
+    throws IncorrectOperationException;
 
+  /**
+   * Creates an XML text element from the specified string, escaping the special
+   * characters in the string as necessary.
+   *
+   * @param s the text of the element to create.
+   * @return the created element.
+   * @throws IncorrectOperationException if the creation failed for some reason.
+   */
   XmlText createDisplayText(String s) throws IncorrectOperationException;
 
+  /**
+   * Creates an XHTML tag with the specified text.
+   *
+   * @param s the text of an XHTML tag (which can contain attributes and subtags).
+   * @return the created tag instance.
+   * @throws IncorrectOperationException if the text does not specify a valid XML fragment.
+   */
   XmlTag createXHTMLTagFromText(String s) throws IncorrectOperationException;
-
 }
