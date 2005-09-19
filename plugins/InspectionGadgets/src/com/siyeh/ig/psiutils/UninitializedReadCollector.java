@@ -66,20 +66,21 @@ public class UninitializedReadCollector {
         if(statement == null){
             return false;
         }
-//        if(InitializationUtils.statementMustThrowException(statement)){
-//            return true;
-//        }
+        if(ExceptionUtils.statementThrowsException(statement)){
+            return true;
+        }
         if(statement instanceof PsiBreakStatement ||
                 statement instanceof PsiContinueStatement ||
                 statement instanceof PsiAssertStatement ||
                 statement instanceof PsiEmptyStatement){
             return false;
         } else if(statement instanceof PsiReturnStatement){
-            final PsiReturnStatement returnStatement =
-                    (PsiReturnStatement) statement;
-            final PsiExpression returnValue = returnStatement.getReturnValue();
-            return expressionAssignsVariable(returnValue, variable,
-                                             checkedMethods);
+            //final PsiReturnStatement returnStatement =
+            //        (PsiReturnStatement) statement;
+            //final PsiExpression returnValue = returnStatement.getReturnValue();
+            //return expressionAssignsVariable(returnValue, variable,
+            //                                 checkedMethods);
+            return true;
         } else if(statement instanceof PsiThrowStatement){
             final PsiThrowStatement throwStatement =
                     (PsiThrowStatement) statement;
@@ -101,45 +102,44 @@ public class UninitializedReadCollector {
         } else if(statement instanceof PsiExpressionStatement){
             final PsiExpressionStatement expressionStatement =
                     (PsiExpressionStatement) statement;
-            final PsiExpression expression = expressionStatement
-                    .getExpression();
+            final PsiExpression expression =
+                    expressionStatement.getExpression();
             return expressionAssignsVariable(expression, variable,
-                                             checkedMethods);
-        } else if(statement instanceof PsiDeclarationStatement){
+                    checkedMethods);
+        } else if (statement instanceof PsiDeclarationStatement){
             final PsiDeclarationStatement declarationStatement =
                     (PsiDeclarationStatement)statement;
             return declarationStatementAssignsVariable(declarationStatement,
-                                                       variable,
-                                                       checkedMethods);
-        } else if(statement instanceof PsiForStatement){
-            return forStatementAssignsVariable((PsiForStatement) statement,
-                                               variable,
-                                               checkedMethods);
+                    variable, checkedMethods);
+        } else if (statement instanceof PsiForStatement){
+            final PsiForStatement forStatement = (PsiForStatement)statement;
+            return forStatementAssignsVariable(forStatement, variable,
+                    checkedMethods);
         } else if(statement instanceof PsiForeachStatement){
             final PsiForeachStatement foreachStatement =
                     (PsiForeachStatement)statement;
-            return foreachStatementAssignsVariable(foreachStatement, variable
-            );
+            return foreachStatementAssignsVariable(foreachStatement, variable);
         } else if(statement instanceof PsiWhileStatement){
             final PsiWhileStatement whileStatement =
                     (PsiWhileStatement) statement;
             return whileStatementAssignsVariable(whileStatement, variable,
                                                  checkedMethods);
-        } else if(statement instanceof PsiDoWhileStatement){
-            return doWhileAssignsVariable((PsiDoWhileStatement) statement,
-                                          variable,
-                                          checkedMethods);
+        } else if(statement instanceof PsiDoWhileStatement) {
+            final PsiDoWhileStatement doWhileStatement =
+                    (PsiDoWhileStatement)statement;
+            return doWhileAssignsVariable(doWhileStatement, variable,
+                    checkedMethods);
         } else if(statement instanceof PsiSynchronizedStatement){
-            final PsiCodeBlock body = ((PsiSynchronizedStatement) statement)
-                    .getBody();
+            final PsiSynchronizedStatement synchronizedStatement =
+                    (PsiSynchronizedStatement)statement;
+            final PsiCodeBlock body = synchronizedStatement.getBody();
             return blockAssignsVariable(body, variable, checkedMethods);
         } else if(statement instanceof PsiBlockStatement){
             final PsiBlockStatement blockStatement =
                     (PsiBlockStatement) statement;
             final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
-            return blockAssignsVariable(codeBlock, variable,
-                                        checkedMethods);
-        } else if(statement instanceof PsiLabeledStatement){
+            return blockAssignsVariable(codeBlock, variable, checkedMethods);
+        } else if (statement instanceof PsiLabeledStatement){
             final PsiLabeledStatement labeledStatement =
                     (PsiLabeledStatement) statement;
             final PsiStatement statementLabeled =
@@ -169,44 +169,45 @@ public class UninitializedReadCollector {
             @NotNull PsiSwitchStatement switchStatement,
             @NotNull PsiVariable variable,
             @NotNull Set<MethodSignature> checkedMethods) {
-        final PsiExpression expression = switchStatement.getExpression();
-        if (expressionAssignsVariable(expression, variable, checkedMethods)) {
-            return true;
-        }
-        final PsiCodeBlock body = switchStatement.getBody();
-        if (body == null) {
-            return false;
-        }
-        final PsiStatement[] statements = body.getStatements();
-        boolean containsDefault = false;
-        boolean assigns = false;
-        for (int i = 0; i < statements.length; i++) {
-            final PsiStatement statement = statements[i];
-            if (statement instanceof PsiSwitchLabelStatement) {
-                final PsiSwitchLabelStatement labelStatement
-                        = (PsiSwitchLabelStatement) statement;
-                if (labelStatement.isDefaultCase()) {
-                    containsDefault = true;
-                }
-            } else if (statement instanceof PsiBreakStatement) {
-                final PsiBreakStatement breakStatement
-                        = (PsiBreakStatement) statement;
-                if (breakStatement.getLabelIdentifier() != null) {
-                    return false;
-                }
-                if (!assigns) {
-                    return false;
-                }
-                assigns = false;
-            } else {
-                assigns |= statementAssignsVariable(statement, variable,
-                                                    checkedMethods);
-                if (i == statements.length - 1 && !assigns) {
-                    return false;
-                }
-            }
-        }
-        return containsDefault;
+        //final PsiExpression expression = switchStatement.getExpression();
+        //if (expressionAssignsVariable(expression, variable, checkedMethods)) {
+        //    return true;
+        //}
+        //final PsiCodeBlock body = switchStatement.getBody();
+        //if (body == null) {
+        //    return false;
+        //}
+        //final PsiStatement[] statements = body.getStatements();
+        //boolean containsDefault = false;
+        //boolean assigns = false;
+        //for (int i = 0; i < statements.length; i++) {
+        //    final PsiStatement statement = statements[i];
+        //    if (statement instanceof PsiSwitchLabelStatement) {
+        //        final PsiSwitchLabelStatement labelStatement
+        //                = (PsiSwitchLabelStatement) statement;
+        //        if (labelStatement.isDefaultCase()) {
+        //            containsDefault = true;
+        //        }
+        //    } else if (statement instanceof PsiBreakStatement) {
+        //        final PsiBreakStatement breakStatement
+        //                = (PsiBreakStatement) statement;
+        //        if (breakStatement.getLabelIdentifier() != null) {
+        //            return false;
+        //        }
+        //        if (!assigns) {
+        //            return false;
+        //        }
+        //        assigns = false;
+        //    } else {
+        //        assigns |= statementAssignsVariable(statement, variable,
+        //                                            checkedMethods);
+        //        if (i == statements.length - 1 && !assigns) {
+        //            return false;
+        //        }
+        //    }
+        //}
+        return false;
+        //return containsDefault;
     }
 
     private boolean declarationStatementAssignsVariable(
@@ -369,10 +370,10 @@ public class UninitializedReadCollector {
         } else if(expression instanceof PsiArrayAccessExpression){
             final PsiArrayAccessExpression accessExpression =
                     (PsiArrayAccessExpression) expression;
-            final PsiExpression arrayExpression = accessExpression
-                    .getArrayExpression();
-            final PsiExpression indexExpression = accessExpression
-                    .getIndexExpression();
+            final PsiExpression arrayExpression =
+                    accessExpression.getArrayExpression();
+            final PsiExpression indexExpression =
+                    accessExpression.getIndexExpression();
             return expressionAssignsVariable(arrayExpression, variable,
                                              checkedMethods) ||
                     expressionAssignsVariable(
@@ -403,10 +404,10 @@ public class UninitializedReadCollector {
             if(expressionAssignsVariable(condition, variable, checkedMethods)){
                 return true;
             }
-            final PsiExpression thenExpression = conditional
-                    .getThenExpression();
-            final PsiExpression elseExpression = conditional
-                    .getElseExpression();
+            final PsiExpression thenExpression =
+                    conditional.getThenExpression();
+            final PsiExpression elseExpression =
+                    conditional.getElseExpression();
             return expressionAssignsVariable(thenExpression, variable,
                                              checkedMethods)
                     && expressionAssignsVariable(elseExpression, variable,
