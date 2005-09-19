@@ -32,7 +32,9 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
       if (arrayInitializer == null) return;
       PsiExpression[] initializers = arrayInitializer.getInitializers();
       try {
-        argumentList.addRange(initializers[0], initializers[initializers.length - 1]);
+        if (initializers.length > 0) {
+          argumentList.addRange(initializers[0], initializers[initializers.length - 1]);
+        }
         args[args.length - 1].delete();
       } catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -98,7 +100,9 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
         PsiExpression[] args = copyArgumentList.getExpressions();
         try {
           args[args.length - 1].delete();
-          copyArgumentList.addRange(arrayElements[0], arrayElements[arrayElements.length - 1]);
+          if (arrayElements.length > 0) {
+            copyArgumentList.addRange(arrayElements[0], arrayElements[arrayElements.length - 1]);
+          }
           return copy.resolveMethod() == oldRefMethod;
         } catch (IncorrectOperationException e) {
           return false;
