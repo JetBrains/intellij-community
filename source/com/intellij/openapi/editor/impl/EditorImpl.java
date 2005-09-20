@@ -1684,7 +1684,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
       myLastCache.addContent(g, data, start, end, x, y, null);
     }
     else {
-      FontInfo fnt = fontForChar(data[0], fontType);
+      FontInfo fnt = fontForChar(data[start], fontType);
       CachedFontContent cache = null;
       for (int i = 0; i < myFontCache.size(); i++) {
         CachedFontContent cache1 = myFontCache.get(i);
