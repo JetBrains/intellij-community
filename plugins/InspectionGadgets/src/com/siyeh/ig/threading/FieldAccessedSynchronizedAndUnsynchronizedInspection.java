@@ -22,44 +22,70 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.JComponent;
 import java.util.Set;
 
-public class FieldAccessedSynchronizedAndUnsynchronizedInspection extends ClassInspection {
+public class FieldAccessedSynchronizedAndUnsynchronizedInspection
+        extends ClassInspection{
 
-  public String getGroupDisplayName() {
-    return GroupNames.THREADING_GROUP_NAME;
-  }
+    /** @noinspection PublicField*/
+    public boolean countGettersAndSetters = false;
 
-  public BaseInspectionVisitor buildVisitor() {
-    return new FieldAccessedSynchronizedAndUnsynchronizedVisitor();
-  }
-
-  private static class FieldAccessedSynchronizedAndUnsynchronizedVisitor
-    extends BaseInspectionVisitor {
-    public void visitClass(@NotNull PsiClass aClass) {
-      if (!containsSynchronization(aClass)) {
-        return;
-      }
-      final VariableAccessVisitor visitor = new VariableAccessVisitor(aClass);
-      aClass.accept(visitor);
-      final Set<PsiField> fields =
-        visitor.getInappropriatelyAccessedFields();
-      for (final PsiField field : fields) {
-        if (!field.hasModifierProperty(PsiModifier.FINAL)) {
-          final PsiClass containingClass = field.getContainingClass();
-          if (aClass.equals(containingClass)) {
-            registerFieldError(field);
-          }
-        }
-      }
+    public String getDisplayName(){
+        return InspectionGadgetsBundle.message("field.accessed.synchronized.and.unsynchronized.display.name");
     }
-  }
 
-  private static boolean containsSynchronization(PsiClass aClass) {
-    final ContainsSynchronizationVisitor visitor = new ContainsSynchronizationVisitor();
-    aClass.accept(visitor);
-    return visitor.containsSynchronization();
-  }
+    public String getGroupDisplayName(){
+        return GroupNames.THREADING_GROUP_NAME;
+    }
+
+    protected String buildErrorString(PsiElement location){
+        return InspectionGadgetsBundle.message("field.accessed.synchronized.and.unsynchronized.problem.descriptor");
+    }
+
+    @Nullable
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(
+          InspectionGadgetsBundle.message("field.accessed.synchronized.and.unsynchronized.options.panel.text"),
+                this, "countGettersAndSetters");
+    }
+
+    public BaseInspectionVisitor buildVisitor(){
+        return new FieldAccessedSynchronizedAndUnsynchronizedVisitor();
+    }
+
+    private class FieldAccessedSynchronizedAndUnsynchronizedVisitor
+            extends BaseInspectionVisitor{
+
+        public void visitClass(@NotNull PsiClass aClass){
+            if(!containsSynchronization(aClass)){
+                return;
+            }
+            final VariableAccessVisitor visitor =
+                    new VariableAccessVisitor(aClass, countGettersAndSetters);
+            aClass.accept(visitor);
+            final Set<PsiField> fields =
+                    visitor.getInappropriatelyAccessedFields();
+            for(final PsiField field  : fields){
+                if(!field.hasModifierProperty(PsiModifier.FINAL)){
+                    final PsiClass containingClass = field.getContainingClass();
+                    if(aClass.equals(containingClass)){
+                        registerFieldError(field);
+                    }
+                }
+            }
+        }
+
+        private boolean containsSynchronization(PsiClass aClass){
+            final ContainsSynchronizationVisitor visitor =
+                    new ContainsSynchronizationVisitor();
+            aClass.accept(visitor);
+            return visitor.containsSynchronization();
+        }
+    }
 }

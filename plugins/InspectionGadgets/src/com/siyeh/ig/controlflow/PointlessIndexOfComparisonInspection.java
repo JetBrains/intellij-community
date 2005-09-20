@@ -8,20 +8,22 @@ package com.siyeh.ig.controlflow;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author <A href="bas@carp-technologies.nl">Bas Leijdekkers</a>
  */
 public class PointlessIndexOfComparisonInspection extends ExpressionInspection {
 
-    public String getDisplayName() {
-        return "Pointless '.indexOf()' comparison";
-    }
+  public String getDisplayName() {
+      return InspectionGadgetsBundle.message("pointless.indexof.comparison.display.name");
+  }
 
     public String getGroupDisplayName() {
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
@@ -32,37 +34,41 @@ public class PointlessIndexOfComparisonInspection extends ExpressionInspection {
         final PsiBinaryExpression expression = (PsiBinaryExpression)location;
         final PsiExpression lhs = expression.getLOperand();
         final PsiJavaToken sign = expression.getOperationSign();
-        final String text;
+        final boolean value;
         if (lhs instanceof PsiMethodCallExpression) {
-            text = createContainsExpressionText(sign, false);
+            value = createContainsExpressionValue(sign, false);
         } else {
-            text = createContainsExpressionText(sign, true);
+            value = createContainsExpressionValue(sign, true);
         }
-        return "'#ref' is always " + text;
+        if (value) {
+          return InspectionGadgetsBundle.message("pointless.indexof.comparison.always.true.problem.descriptor");
+        } else {
+          return InspectionGadgetsBundle.message("pointless.indexof.comparison.always.false.problem.descriptor");
+        }
     }
 
-    static String createContainsExpressionText(
+    static boolean createContainsExpressionValue(
             @NotNull PsiJavaToken sign,
             boolean flipped) {
         final IElementType tokenType = sign.getTokenType();
         if (tokenType.equals(JavaTokenType.EQEQ)) {
-            return "false";
+            return false;
         }
         if (tokenType.equals(JavaTokenType.NE)) {
-            return "true";
+            return true;
         }
         if (flipped) {
             if (tokenType.equals(JavaTokenType.GT) ||
                 tokenType.equals(JavaTokenType.GE)) {
-                return "false";
+                return false;
             }
         } else {
             if (tokenType.equals(JavaTokenType.LT) ||
                 tokenType.equals(JavaTokenType.LE)) {
-                return "false";
+                return false;
             }
         }
-        return "true";
+        return true;
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -71,29 +77,30 @@ public class PointlessIndexOfComparisonInspection extends ExpressionInspection {
 
     private static class PointlessIndexOfComparisonVisitor
             extends BaseInspectionVisitor {
+      @NonNls private static final String INDEX_OF_METHOD = "indexOf";
 
-        public void visitBinaryExpression(PsiBinaryExpression expression) {
-            super.visitBinaryExpression(expression);
-            final PsiExpression rhs = expression.getROperand();
-            if (rhs == null) {
-                return;
-            }
-            if (!ComparisonUtils.isComparison(expression)) {
-                return;
-            }
-            final PsiExpression lhs = expression.getLOperand();
-            if (lhs instanceof PsiMethodCallExpression) {
-                final PsiJavaToken sign = expression.getOperationSign();
-                if (isPointLess(lhs, sign, rhs, false)) {
-                    registerError(expression);
-                }
-            } else if (rhs instanceof PsiMethodCallExpression) {
-                final PsiJavaToken sign = expression.getOperationSign();
-                if (isPointLess(rhs, sign, lhs, true)) {
-                    registerError(expression);
-                }
-            }
-        }
+      public void visitBinaryExpression(PsiBinaryExpression expression) {
+          super.visitBinaryExpression(expression);
+          final PsiExpression rhs = expression.getROperand();
+          if (rhs == null) {
+              return;
+          }
+          if (!ComparisonUtils.isComparison(expression)) {
+              return;
+          }
+          final PsiExpression lhs = expression.getLOperand();
+          if (lhs instanceof PsiMethodCallExpression) {
+              final PsiJavaToken sign = expression.getOperationSign();
+              if (isPointLess(lhs, sign, rhs, false)) {
+                  registerError(expression);
+              }
+          } else if (rhs instanceof PsiMethodCallExpression) {
+              final PsiJavaToken sign = expression.getOperationSign();
+              if (isPointLess(rhs, sign, lhs, true)) {
+                  registerError(expression);
+              }
+          }
+      }
 
         private static boolean isPointLess(PsiExpression lhs, PsiJavaToken sign,
                                            PsiExpression rhs, boolean flipped) {
@@ -147,7 +154,7 @@ public class PointlessIndexOfComparisonInspection extends ExpressionInspection {
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
             final String methodName = methodExpression.getReferenceName();
-            return "indexOf".equals(methodName);
+            return INDEX_OF_METHOD.equals(methodName);
         }
     }
 }

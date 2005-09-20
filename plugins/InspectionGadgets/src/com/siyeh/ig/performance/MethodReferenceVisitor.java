@@ -52,7 +52,10 @@ class MethodReferenceVisitor extends PsiRecursiveElementVisitor{
         if(!(scope instanceof PsiClass)){
             return;
         }
-        m_referencesStaticallyAccessible &= aClass.hasModifierProperty(PsiModifier.STATIC);
+        if (aClass.hasModifierProperty(PsiModifier.STATIC)){
+            return;
+        }
+        m_referencesStaticallyAccessible = false;
     }
 
     public void visitReferenceExpression(@NotNull PsiReferenceExpression expression){
@@ -61,12 +64,24 @@ class MethodReferenceVisitor extends PsiRecursiveElementVisitor{
         }
         super.visitReferenceExpression(expression);
 
+        final PsiElement qualifier = expression.getQualifierExpression();
+        if (qualifier != null && !(qualifier instanceof PsiThisExpression) &&
+                !(qualifier instanceof PsiSuperExpression)){
+            return;
+        }
         final PsiElement element = expression.resolve();
         if(element instanceof PsiField){
-            m_referencesStaticallyAccessible &= isFieldStaticallyAccessible((PsiField) element);
+            if (isFieldStaticallyAccessible((PsiField) element)){
+                return;
+            }
         } else if(element instanceof PsiMethod){
-            m_referencesStaticallyAccessible &= isMethodStaticallyAccessible((PsiMethod) element);
+            if (isMethodStaticallyAccessible((PsiMethod) element)){
+                return;
+            }
+        } else {
+            return;
         }
+        m_referencesStaticallyAccessible = false;
     }
 
     public void visitThisExpression(@NotNull PsiThisExpression expression){

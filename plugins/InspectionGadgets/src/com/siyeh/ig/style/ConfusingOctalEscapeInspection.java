@@ -21,6 +21,7 @@ import com.intellij.psi.PsiLiteralExpression;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ConfusingOctalEscapeInspection extends ExpressionInspection {
@@ -30,7 +31,7 @@ public class ConfusingOctalEscapeInspection extends ExpressionInspection {
     }
 
     public String getDisplayName() {
-        return "Confusing octal escape sequence";
+        return InspectionGadgetsBundle.message("confusing.octal.escape.sequence.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -38,8 +39,7 @@ public class ConfusingOctalEscapeInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "String '#ref' contains potentially confusing octal escape "
-                + "sequence #loc";
+        return InspectionGadgetsBundle.message("confusing.octal.escape.sequence.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

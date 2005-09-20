@@ -32,6 +32,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -43,6 +44,9 @@ public class ObjectEqualityInspection extends ExpressionInspection {
     public boolean m_ignoreEnums = true;
     /** @noinspection PublicField*/
     public boolean m_ignoreClassObjects = false;
+
+    /** @noinspection PublicField*/
+    public boolean m_ignorePrivateConstructors = false;
 
     private final EqualityToEqualsFix fix = new EqualityToEqualsFix();
 
@@ -57,31 +61,45 @@ public class ObjectEqualityInspection extends ExpressionInspection {
     public JComponent createOptionsPanel() {
         final GridBagLayout layout = new GridBagLayout();
         final JPanel panel = new JPanel(layout);
-        final JCheckBox arrayCheckBox = new JCheckBox(InspectionGadgetsBundle.message("object.comparison.enumerated.ignore.option"), m_ignoreEnums);
+      final JCheckBox arrayCheckBox = new JCheckBox(InspectionGadgetsBundle.message("object.comparison.enumerated.ignore.option"), m_ignoreEnums);
         final ButtonModel enumeratedObjectModel = arrayCheckBox.getModel();
         enumeratedObjectModel.addChangeListener(new ChangeListener() {
-
             public void stateChanged(ChangeEvent e) {
                 m_ignoreEnums = enumeratedObjectModel.isSelected();
             }
         });
-        final JCheckBox classObjectCheckbox = new JCheckBox(InspectionGadgetsBundle.message("object.comparison.klass.ignore.option"), m_ignoreClassObjects);
+      final JCheckBox classObjectCheckbox = new JCheckBox(InspectionGadgetsBundle.message("object.comparison.klass.ignore.option"), m_ignoreClassObjects);
         final ButtonModel classObjectModel = classObjectCheckbox.getModel();
         classObjectModel.addChangeListener(new ChangeListener() {
-
             public void stateChanged(ChangeEvent e) {
                 m_ignoreClassObjects = classObjectModel.isSelected();
             }
         });
+
+        final JCheckBox privateConstructorCheckBox =
+                new JCheckBox(InspectionGadgetsBundle.message(
+                  "object.equality.ignore.between.objects.of.a.type.with.only.private.constructors.option"),
+                              m_ignorePrivateConstructors);
+        final ButtonModel privateConstructorModel =
+                privateConstructorCheckBox.getModel();
+        privateConstructorModel.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                m_ignorePrivateConstructors =
+                        privateConstructorModel.isSelected();
+            }
+        });
+
         final GridBagConstraints constraints = new GridBagConstraints();
         constraints.gridx = 0;
         constraints.gridy = 0;
         constraints.fill = GridBagConstraints.HORIZONTAL;
         panel.add(arrayCheckBox, constraints);
 
-        constraints.gridx = 0;
         constraints.gridy = 1;
         panel.add(classObjectCheckbox, constraints);
+
+        constraints.gridy = 2;
+        panel.add(privateConstructorCheckBox, constraints);
         return panel;
     }
 
@@ -98,15 +116,16 @@ public class ObjectEqualityInspection extends ExpressionInspection {
     }
 
     private static class EqualityToEqualsFix extends InspectionGadgetsFix {
+
         public String getName() {
             return InspectionGadgetsBundle.message("object.comparison.replace.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
+                throws IncorrectOperationException {
             final PsiElement comparisonToken = descriptor.getPsiElement();
-            final PsiBinaryExpression
-                    expression = (PsiBinaryExpression) comparisonToken.getParent();
+            final PsiBinaryExpression expression = (PsiBinaryExpression)
+                    comparisonToken.getParent();
             assert expression != null;
             boolean negated=false;
             final PsiJavaToken sign = expression.getOperationSign();
@@ -115,18 +134,22 @@ public class ObjectEqualityInspection extends ExpressionInspection {
                 negated = true;
             }
             final PsiExpression lhs = expression.getLOperand();
-            final PsiExpression strippedLhs = ParenthesesUtils.stripParentheses(lhs);
+            final PsiExpression strippedLhs =
+                    ParenthesesUtils.stripParentheses(lhs);
             final PsiExpression rhs = expression.getROperand();
             if (rhs == null) {
                 return;
             }
-            final PsiExpression strippedRhs = ParenthesesUtils.stripParentheses(rhs);
-
+            final PsiExpression strippedRhs =
+                    ParenthesesUtils.stripParentheses(rhs);
             @NonNls final String expString;
-            if (ParenthesesUtils.getPrecendence(strippedLhs) > ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
-                expString = '(' + strippedLhs.getText() + ").equals(" + strippedRhs.getText() + ')';
+            if (ParenthesesUtils.getPrecendence(strippedLhs) >
+                    ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
+                expString = '(' + strippedLhs.getText() + ").equals(" +
+                        strippedRhs.getText() + ')';
             } else {
-                expString = strippedLhs.getText() + ".equals(" + strippedRhs.getText() + ')';
+                expString = strippedLhs.getText() + ".equals(" +
+                        strippedRhs.getText() + ')';
             }
             final String newExpression;
             if (negated) {
@@ -140,8 +163,8 @@ public class ObjectEqualityInspection extends ExpressionInspection {
 
     private class ObjectEqualityVisitor extends BaseInspectionVisitor {
 
-
-        public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
+        public void visitBinaryExpression(
+                @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             if(!(expression.getROperand() != null)){
                 return;
@@ -164,6 +187,10 @@ public class ObjectEqualityInspection extends ExpressionInspection {
             if (m_ignoreClassObjects && (isClass(rhs) || isClass(lhs))) {
                 return;
             }
+            if (m_ignorePrivateConstructors && (typeHasPrivateConstructor(lhs) ||
+                    typeHasPrivateConstructor(rhs))) {
+                return;
+            }
             final PsiMethod method =
                     PsiTreeUtil.getParentOfType(expression,
                                                             PsiMethod.class);
@@ -177,51 +204,78 @@ public class ObjectEqualityInspection extends ExpressionInspection {
             registerError(sign);
         }
 
-        private boolean isClass(PsiExpression expression){
+        private boolean typeHasPrivateConstructor(@Nullable PsiExpression expression) {
             if (expression == null) {
                 return false;
             }
-            if(expression instanceof PsiClassObjectAccessExpression)
-            {
+            final PsiType type = expression.getType();
+            if (!(type instanceof PsiClassType)) {
+                return false;
+            }
+            final PsiClassType classType = (PsiClassType)type;
+            final PsiClass psiClass = classType.resolve();
+            if (psiClass == null) {
+                return false;
+            }
+            return hasOnlyPrivateConstructors(psiClass);
+        }
+
+        private boolean hasOnlyPrivateConstructors(PsiClass aClass) {
+            if (aClass == null) {
+                return false;
+            }
+            final PsiMethod[] constructors = aClass.getConstructors();
+            if (constructors.length == 0) {
+                return false;
+            }
+            for (PsiMethod constructor : constructors) {
+                if (!constructor.hasModifierProperty(PsiModifier.PRIVATE)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private boolean isClass(@Nullable PsiExpression expression) {
+            if (expression == null) {
+                return false;
+            }
+            if (expression instanceof PsiClassObjectAccessExpression) {
                 return true;
             }
             final PsiType type = expression.getType();
-            if(!(type instanceof PsiClassType))
-            {
+            if (!(type instanceof PsiClassType)) {
                 return false;
             }
             final PsiClassType classType = (PsiClassType) type;
-            final String className = classType.rawType().getCanonicalText();
+            final PsiClassType rawType = classType.rawType();
+            final String className = rawType.getCanonicalText();
             return "java.lang.Class".equals(className);
         }
 
-        private boolean isEnumType(PsiExpression exp) {
-            if (exp == null) {
+        private boolean isEnumType(@Nullable PsiExpression expression) {
+            if (expression == null) {
                 return false;
             }
-
-            final PsiType type = exp.getType();
+            final PsiType type = expression.getType();
             if (type == null) {
                 return false;
             }
-            if(!(type instanceof PsiClassType))
-            {
+            if(!(type instanceof PsiClassType)) {
                 return false;
             }
             final PsiClass aClass = ((PsiClassType)type).resolve();
-            if(aClass == null)
-            {
+            if(aClass == null) {
                 return false;
             }
             return aClass.isEnum();
         }
 
-        private  boolean isObjectType(PsiExpression exp) {
-            if (exp == null) {
+        private  boolean isObjectType(PsiExpression expression) {
+            if (expression == null) {
                 return false;
             }
-
-            final PsiType type = exp.getType();
+            final PsiType type = expression.getType();
             if (type == null) {
                 return false;
             }
@@ -231,7 +285,5 @@ public class ObjectEqualityInspection extends ExpressionInspection {
             return !(type instanceof PsiPrimitiveType)
                     && !TypeUtils.isJavaLangString(type);
         }
-
     }
-
 }

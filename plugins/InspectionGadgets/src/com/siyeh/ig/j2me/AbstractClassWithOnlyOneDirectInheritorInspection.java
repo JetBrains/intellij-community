@@ -26,16 +26,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class AbstractClassWithOnlyOneDirectInheritorInspection extends ClassInspection {
 
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("abstract.class.one.inheritor.display.name");
-    }
-
     public String getGroupDisplayName() {
         return GroupNames.J2ME_GROUP_NAME;
-    }
-
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("abstract.class.one.inheritor.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

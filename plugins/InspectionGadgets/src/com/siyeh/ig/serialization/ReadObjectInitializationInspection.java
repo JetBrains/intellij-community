@@ -25,9 +25,11 @@ import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ReadObjectInitializationInspection extends ClassInspection {
-    public String getID(){
+
+    public String getID() {
         return "InstanceVariableMayNotBeInitializedByReadObject";
     }
+
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("readobject.initialization.display.name");
     }
@@ -37,20 +39,20 @@ public class ReadObjectInitializationInspection extends ClassInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("readobject.initialization.problem.descriptor");
+      return InspectionGadgetsBundle.message("readobject.initialization.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new ReadObjectInitializationVisitor();
     }
 
-    private static class ReadObjectInitializationVisitor extends BaseInspectionVisitor {
+    private static class ReadObjectInitializationVisitor
+            extends BaseInspectionVisitor {
 
         public void visitMethod(@NotNull PsiMethod method) {
             // no call to super, so it doesn't drill down
             final PsiClass aClass = method.getContainingClass();
-            if(aClass == null)
-            {
+            if(aClass == null) {
                 return;
             }
             if (aClass.isInterface() || aClass.isAnnotationType()) {
@@ -64,24 +66,25 @@ public class ReadObjectInitializationInspection extends ClassInspection {
                 return;
             }
             final PsiField[] fields = aClass.getFields();
-            for(final PsiField field : fields){
-                if(!isFieldInitialized(field, method)){
+            for(final PsiField field : fields) {
+                if(!isFieldInitialized(field, method)) {
                     registerFieldError(field);
                 }
             }
 
         }
 
-        public static boolean isFieldInitialized(PsiField field, PsiMethod method) {
+        public static boolean isFieldInitialized(@NotNull PsiField field,
+                                                 @NotNull PsiMethod method) {
             if (field.hasModifierProperty(PsiModifier.STATIC)) {
                 return true;
             }
-            if (field.hasModifierProperty(PsiModifier.FINAL) && field.getInitializer() != null) {
+            if (field.hasModifierProperty(PsiModifier.FINAL) &&
+                field.getInitializer() != null) {
                 return true;
             }
             final PsiCodeBlock body = method.getBody();
-            return InitializationUtils.blockMustAssignVariableOrFail(field, body);
+            return InitializationUtils.blockAssignsVariableOrFails(body, field);
         }
-
     }
 }

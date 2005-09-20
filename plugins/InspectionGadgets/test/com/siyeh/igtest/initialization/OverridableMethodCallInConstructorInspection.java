@@ -35,3 +35,12 @@ public  class OverridableMethodCallInConstructorInspection
 
     }
 }
+class Sub extends OverridableMethodCallInConstructorInspection {
+    public Sub() {
+        super.fooOverridable(); // should mark
+    }
+
+    public Sub(OverridableMethodCallInConstructorInspection other) {
+        other.fooOverridable(); // don't mark
+    }
+}

@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -42,7 +43,7 @@ public class CachedNumberConstructorCallInspection
     }
 
     public String getDisplayName() {
-        return "Number constructor call with primitive argument";
+        return InspectionGadgetsBundle.message("cached.number.constructor.call.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -50,7 +51,7 @@ public class CachedNumberConstructorCallInspection
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Number constructor call with primitive argument '#ref' #loc";
+        return InspectionGadgetsBundle.message("cached.number.constructor.call.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -76,7 +77,7 @@ public class CachedNumberConstructorCallInspection
         }
 
         public String getName() {
-            return "Replace with " + className + ".valueOf() call";
+            return InspectionGadgetsBundle.message("cached.number.constructor.call.quickfix", className);
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
@@ -88,8 +89,7 @@ public class CachedNumberConstructorCallInspection
             final PsiExpression[] args = argList.getExpressions();
             final PsiExpression arg = args[0];
             final String text = arg.getText();
-            final String newExpression = className + ".valueOf(" + text + ')';
-            replaceExpression(expression, newExpression);
+          replaceExpression(expression, className + ".valueOf(" + text + ')');
         }
     }
 

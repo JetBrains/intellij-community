@@ -40,13 +40,12 @@ public class AnonymousInnerClassMayBeStaticInspection extends ClassInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("anonymous.inner.may.be.named.static.inner.class.problem.descriptor");
+      return InspectionGadgetsBundle.message("anonymous.inner.may.be.named.static.inner.class.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
         return fix;
     }
-
 
     public BaseInspectionVisitor buildVisitor() {
         return new AnonymousInnerClassCanBeStaticVisitor();
@@ -70,6 +69,5 @@ public class AnonymousInnerClassMayBeStaticInspection extends ClassInspection {
                 registerError(classNameIdentifier);
             }
         }
-
     }
 }

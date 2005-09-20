@@ -19,7 +19,6 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
@@ -29,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 public class ArrayEqualsInspection extends ExpressionInspection{
+
     private InspectionGadgetsFix fix = new ArrayEqualsFix();
 
     public String getDisplayName(){
@@ -40,7 +40,7 @@ public class ArrayEqualsInspection extends ExpressionInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("equals.called.on.array.problem.descriptor");
+      return InspectionGadgetsBundle.message("equals.called.on.array.problem.descriptor");
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
@@ -48,12 +48,13 @@ public class ArrayEqualsInspection extends ExpressionInspection{
     }
 
     private static class ArrayEqualsFix extends InspectionGadgetsFix{
+
         public String getName(){
-            return InspectionGadgetsBundle.message("equals.called.on.array.replace.quickfix");
+          return InspectionGadgetsBundle.message("equals.called.on.array.replace.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
+                throws IncorrectOperationException{
             final PsiIdentifier name =
                     (PsiIdentifier) descriptor.getPsiElement();
             final PsiReferenceExpression expression =
@@ -71,22 +72,7 @@ public class ArrayEqualsInspection extends ExpressionInspection{
             @NonNls final String newExpressionText =
                     "java.util.Arrays.equals(" + qualifierText + ", " +
                     argText + ')';
-            replaceExpressionAndShorten(project, call, newExpressionText);
-        }
-
-        private void replaceExpressionAndShorten(Project project,
-                                                 PsiMethodCallExpression call,
-                                                 String newExpressionText)
-                throws IncorrectOperationException{
-                final PsiManager manager = PsiManager.getInstance(project);
-                final PsiElementFactory factory = manager.getElementFactory();
-                final PsiExpression newExp =
-                        factory.createExpressionFromText(newExpressionText,
-                                                         null);
-                final PsiElement replacementExp = call.replace(newExp);
-                final CodeStyleManager styleManager =
-                        manager.getCodeStyleManager();
-                styleManager.reformat(replacementExp);
+            replaceExpressionAndShorten(call, newExpressionText);
         }
     }
 
@@ -96,10 +82,10 @@ public class ArrayEqualsInspection extends ExpressionInspection{
 
     private static class ArrayEqualsVisitor extends BaseInspectionVisitor{
 
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
-            if(!IsEqualsUtil.isEquals(expression))
-            {
+            if(!IsEqualsUtil.isEquals(expression)){
                 return;
             }
             final PsiReferenceExpression methodExpression =

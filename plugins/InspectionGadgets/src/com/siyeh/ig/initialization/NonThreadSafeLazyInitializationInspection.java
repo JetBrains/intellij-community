@@ -21,22 +21,19 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class NonThreadSafeLazyInitializationInspection
         extends ExpressionInspection{
-
-     public String getDisplayName(){
-        return "Unsafe lazy initialization of static field";
-    }
 
     public String getGroupDisplayName(){
         return GroupNames.INITIALIZATION_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location){
-        return "Lazy initialization of static field '#ref' is not thread-safe"
-                + " #loc";
+        return InspectionGadgetsBundle.message("non.thread.safe.lazy.initialization.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -45,33 +42,34 @@ public class NonThreadSafeLazyInitializationInspection
 
     private static class UnsafeSafeLazyInitializationVisitor
             extends BaseInspectionVisitor{
+      @NonNls private static final String NULL = "null";
 
-        public void visitAssignmentExpression(
-                @NotNull PsiAssignmentExpression expression){
-            super.visitAssignmentExpression(expression);
-            final PsiExpression lhs = expression.getLExpression();
-            if(!(lhs instanceof PsiReferenceExpression)){
-                return;
-            }
-            final PsiElement referent = ((PsiReference) lhs).resolve();
-            if(!(referent instanceof PsiField)){
-                return;
-            }
-            final PsiField field = (PsiField) referent;
-            if(!field.hasModifierProperty(PsiModifier.STATIC)){
-                return;
-            }
-            if(isInStaticInitializer(expression)){
-                return;
-            }
-            if(isInSynchronizedContext(expression)){
-                return;
-            }
-            if(!isLazy(expression, (PsiReferenceExpression) lhs)){
-                return;
-            }
-            registerError(lhs);
-        }
+      public void visitAssignmentExpression(
+              @NotNull PsiAssignmentExpression expression){
+          super.visitAssignmentExpression(expression);
+          final PsiExpression lhs = expression.getLExpression();
+          if(!(lhs instanceof PsiReferenceExpression)){
+              return;
+          }
+          final PsiElement referent = ((PsiReference) lhs).resolve();
+          if(!(referent instanceof PsiField)){
+              return;
+          }
+          final PsiField field = (PsiField) referent;
+          if(!field.hasModifierProperty(PsiModifier.STATIC)){
+              return;
+          }
+          if(isInStaticInitializer(expression)){
+              return;
+          }
+          if(isInSynchronizedContext(expression)){
+              return;
+          }
+          if(!isLazy(expression, (PsiReferenceExpression) lhs)){
+              return;
+          }
+          registerError(lhs);
+      }
 
         private static boolean isLazy(PsiAssignmentExpression expression,
                                       PsiReferenceExpression lhs){
@@ -107,12 +105,12 @@ public class NonThreadSafeLazyInitializationInspection
             }
             final String lhsText = lhs.getText();
             final String rhsText = rhs.getText();
-            if(!"null".equals(lhsText)&& !"null".equals(rhsText)){
+            if(!NULL.equals(lhsText)&& !NULL.equals(rhsText)){
                 return false;
             }
             final String referenceText = reference.getText();
             return referenceText.equals(lhsText) ||
-                    referenceText.equals(rhsText);
+                   referenceText.equals(rhsText);
         }
 
         private static boolean isInSynchronizedContext(PsiElement element){
@@ -126,8 +124,8 @@ public class NonThreadSafeLazyInitializationInspection
                     PsiTreeUtil.getParentOfType(element,
                                                 PsiMethod.class);
             return method != null &&
-                    method.hasModifierProperty(PsiModifier.SYNCHRONIZED)
-                    && method.hasModifierProperty(PsiModifier.STATIC);
+                   method.hasModifierProperty(PsiModifier.SYNCHRONIZED)
+                   && method.hasModifierProperty(PsiModifier.STATIC);
         }
 
         private static boolean isInStaticInitializer(PsiElement element){
@@ -135,7 +133,7 @@ public class NonThreadSafeLazyInitializationInspection
                     PsiTreeUtil.getParentOfType(element,
                                                 PsiClassInitializer.class);
             return initializer != null &&
-                    initializer.hasModifierProperty(PsiModifier.STATIC);
+                   initializer.hasModifierProperty(PsiModifier.STATIC);
         }
     }
 }

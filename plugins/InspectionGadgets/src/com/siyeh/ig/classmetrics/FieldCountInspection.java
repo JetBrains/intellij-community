@@ -32,11 +32,14 @@ import javax.swing.text.Document;
 import java.awt.*;
 import java.text.NumberFormat;
 
-public class FieldCountInspection
-        extends ClassMetricInspection {
+public class FieldCountInspection extends ClassMetricInspection {
+
     private static final int FIELD_COUNT_LIMIT = 10;
     /** @noinspection PublicField*/
     public boolean m_countConstantFields = false;
+
+    /** @noinspection PublicField*/
+    public boolean m_considerStaticFinalFieldsConstant = false;
 
     public String getID(){
         return "ClassWithTooManyFields";
@@ -58,7 +61,6 @@ public class FieldCountInspection
     }
 
     public JComponent createOptionsPanel() {
-        final JPanel panel = new JPanel(new GridBagLayout());
         final String configurationLabel = getConfigurationLabel();
         final JLabel label = new JLabel(configurationLabel);
         final NumberFormat formatter = NumberFormat.getIntegerInstance();
@@ -86,20 +88,33 @@ public class FieldCountInspection
             }
         });
 
-        final JCheckBox checkBox = new JCheckBox(InspectionGadgetsBundle.message("too.many.fields.include.constant.option"), m_countConstantFields);
-        final ButtonModel model = checkBox.getModel();
-        model.addChangeListener(new ChangeListener() {
-
+        final JCheckBox includeCheckBox =
+                new JCheckBox(InspectionGadgetsBundle.message("field.count.inspection.include.constant.fields.in.count.checkbox"),
+                              m_countConstantFields);
+        final ButtonModel includeModel = includeCheckBox.getModel();
+        includeModel.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent e) {
-                m_countConstantFields = model.isSelected();
+                m_countConstantFields = includeModel.isSelected();
             }
         });
+
+        final JCheckBox considerCheckBox =
+                new JCheckBox(InspectionGadgetsBundle.message("field.count.inspection.static.final.fields.count.as.constant.checkbox"),
+                              m_considerStaticFinalFieldsConstant);
+        final ButtonModel considerModel = considerCheckBox.getModel();
+        considerModel.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                m_considerStaticFinalFieldsConstant = considerModel.isSelected();
+            }
+        });
+
         final GridBagConstraints constraints = new GridBagConstraints();
         constraints.gridx = 0;
         constraints.gridy = 0;
         constraints.weightx = 1.0;
         constraints.anchor = GridBagConstraints.WEST;
         constraints.fill = GridBagConstraints.NONE;
+        final JPanel panel = new JPanel(new GridBagLayout());
         panel.add(label, constraints);
         constraints.gridx = 1;
         constraints.gridy = 0;
@@ -114,7 +129,9 @@ public class FieldCountInspection
         constraints.weightx = 1.0;
         constraints.anchor = GridBagConstraints.WEST;
         constraints.fill = GridBagConstraints.NONE;
-        panel.add(checkBox, constraints);
+        panel.add(includeCheckBox, constraints);
+        constraints.gridy = 2;
+        panel.add(considerCheckBox, constraints);
         return panel;
     }
 
@@ -129,7 +146,7 @@ public class FieldCountInspection
     }
 
     private class FieldCountVisitor extends BaseInspectionVisitor {
-    
+
         public void visitClass(@NotNull PsiClass aClass) {
             // note: no call to super
             final int totalFields = countFields(aClass);
@@ -143,11 +160,11 @@ public class FieldCountInspection
     private int countFields(PsiClass aClass) {
         int totalFields = 0;
         final PsiField[] fields = aClass.getFields();
-        for(final PsiField field : fields){
-            if(m_countConstantFields){
+        for(final PsiField field : fields) {
+            if (m_countConstantFields) {
                 totalFields++;
-            } else{
-                if(!fieldIsConstant(field)){
+            } else {
+                if(!fieldIsConstant(field)) {
                     totalFields++;
                 }
             }
@@ -155,15 +172,17 @@ public class FieldCountInspection
         return totalFields;
     }
 
-    private static boolean fieldIsConstant(PsiField field) {
+    private boolean fieldIsConstant(PsiField field) {
         if (!field.hasModifierProperty(PsiModifier.STATIC)) {
             return false;
         }
         if (!field.hasModifierProperty(PsiModifier.FINAL)) {
             return false;
         }
+        if (m_considerStaticFinalFieldsConstant) {
+            return true;
+        }
         final PsiType type = field.getType();
         return ClassUtils.isImmutable(type);
     }
-
 }

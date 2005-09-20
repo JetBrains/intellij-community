@@ -1,57 +1,67 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.siyeh.ig.errorhandling.BadExceptionDeclaredInspection.Form">
-  <grid id="9993d" binding="contentPanel" row-count="2" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-    <margin top="0" left="0" bottom="0" right="0"/>
+  <grid id="9c2f7" binding="contentPanel" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="4" vgap="4">
+    <margin top="4" left="4" bottom="4" right="4"/>
     <constraints>
-      <xy x="92" y="33" width="211" height="192"/>
+      <xy x="97" y="40" width="337" height="279"/>
       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
-      <scrollpane id="14807">
+      <component id="36295" class="javax.swing.JCheckBox" binding="ignoreTestCasesCheckBox">
         <constraints>
-          <xy x="0" y="0" width="211" height="162"/>
-          <grid row="0" column="0" row-span="1" col-span="3" vsize-policy="3" hsize-policy="7" anchor="0" fill="3"/>
-        </constraints>
-        <properties/>
-        <border type="none"/>
-        <children>
-          <component id="b0978" class="javax.swing.JTable" binding="table">
-            <constraints/>
-            <properties>
-              <autoResizeMode value="0"/>
-              <intercellSpacing width="0" height="0"/>
-              <showHorizontalLines value="false"/>
-              <showVerticalLines value="false"/>
-            </properties>
-          </component>
-        </children>
-      </scrollpane>
-      <component id="f6174" class="javax.swing.JButton" binding="deleteButton">
-        <constraints>
-          <xy x="144" y="167" width="67" height="25"/>
-          <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1"/>
+          <xy x="4" y="253" width="247" height="22"/>
+          <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
         </constraints>
         <properties>
-          <text resource-bundle="com/intellij/CommonBundle" key="button.delete"/>
+          <text resource-bundle="com/siyeh/InspectionGadgetsBundle" key="bad.exception.declared.ignore.exceptions.declared.in.junit.test.cases.option"/>
         </properties>
       </component>
       <component id="52926" class="javax.swing.JButton" binding="addButton">
         <constraints>
-          <xy x="79" y="167" width="55" height="25"/>
+          <xy x="274" y="4" width="59" height="25"/>
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1"/>
+        </constraints>
+        <properties>
+          <horizontalAlignment value="0"/>
+          <iconTextGap value="0"/>
+          <margin top="3" left="8" bottom="3" right="8"/>
+          <text resource-bundle="com/siyeh/InspectionGadgetsBundle" key="button.add"/>
+        </properties>
+      </component>
+      <component id="f6174" class="javax.swing.JButton" binding="deleteButton">
+        <constraints>
+          <xy x="274" y="33" width="59" height="25"/>
           <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1"/>
         </constraints>
         <properties>
-          <text resource-bundle="com/intellij/CommonBundle" key="button.add"/>
+          <enabled value="true"/>
+          <iconTextGap value="0"/>
+          <margin top="3" left="8" bottom="3" right="8"/>
+          <text resource-bundle="com/siyeh/InspectionGadgetsBundle" key="button.remove"/>
         </properties>
       </component>
-      <hspacer id="76f3f">
+      <scrollpane id="73c2b">
         <constraints>
-          <xy x="0" y="174" width="79" height="11"/>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
+          <xy x="4" y="4" width="266" height="245"/>
+          <grid row="0" column="0" row-span="3" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="3"/>
         </constraints>
-      </hspacer>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="f8a4f" class="javax.swing.JTable" binding="table">
+            <constraints/>
+            <properties/>
+          </component>
+        </children>
+      </scrollpane>
+      <vspacer id="dd704">
+        <constraints>
+          <xy x="298" y="62" width="11" height="187"/>
+          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
+        </constraints>
+      </vspacer>
     </children>
   </grid>
 </form>

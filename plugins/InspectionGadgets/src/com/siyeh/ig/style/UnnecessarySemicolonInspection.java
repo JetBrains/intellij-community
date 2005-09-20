@@ -19,105 +19,154 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.FileInspection;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class UnnecessarySemicolonInspection extends ClassInspection {
+public class UnnecessarySemicolonInspection extends FileInspection{
+    private final UnnecessarySemicolonFix fix = new UnnecessarySemicolonFix();
 
-  private final UnnecessarySemicolonFix fix = new UnnecessarySemicolonFix();
-
-  public String getGroupDisplayName() {
-    return GroupNames.STYLE_GROUP_NAME;
-  }
-
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new UnnecessarySemicolonVisitor();
-  }
-
-  public InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  private static class UnnecessarySemicolonFix extends InspectionGadgetsFix {
-    public String getName() {
-      return InspectionGadgetsBundle.message("unnecessary.semicolon.remove.quickfix");
+    public String getGroupDisplayName(){
+        return GroupNames.STYLE_GROUP_NAME;
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiElement semicolonElement = descriptor.getPsiElement();
-      deleteElement(semicolonElement);
+    public boolean isEnabledByDefault(){
+        return true;
     }
-  }
 
-  private static class UnnecessarySemicolonVisitor
-    extends BaseInspectionVisitor {
+    public String buildErrorString(PsiElement location){
+        return InspectionGadgetsBundle.message("unnecessary.semicolon.problem.descriptor");
+    }
 
-    private boolean classAlreadyVisited;
+    public BaseInspectionVisitor buildVisitor(){
+        return new UnnecessarySemicolonVisitor();
+    }
 
-    public void visitClass(@NotNull PsiClass aClass) {
-      if (classAlreadyVisited) return;
-      classAlreadyVisited = true;
-      PsiElement sibling = skipForwardWhiteSpacesAndComments(aClass);
-      while (sibling != null) {
-        if (sibling instanceof PsiJavaToken &&
-            ((PsiJavaToken)sibling).getTokenType()
-              .equals(JavaTokenType.SEMICOLON)) {
-          registerError(sibling);
+    public InspectionGadgetsFix buildFix(PsiElement location){
+        return fix;
+    }
+
+    private static class UnnecessarySemicolonFix extends InspectionGadgetsFix{
+        public String getName(){
+            return InspectionGadgetsBundle.message("unnecessary.semicolon.remove.quickfix");
         }
-        else {
-          break;
-        }
-        sibling = skipForwardWhiteSpacesAndComments(sibling);
-      }
 
-      //TODO: Dave, correct me if I'm wrong but I think that only semicolon after last member in enum is unneccessary
-      //Also your indentation level differs from ours:)
-      if (aClass.isEnum()) {
-        final PsiField[] fields = aClass.getFields();
-        if (fields.length > 0) {
-          final PsiField last = fields[fields.length - 1];
-          if (last instanceof PsiEnumConstant) {
-            final PsiElement element = skipForwardWhiteSpacesAndComments(last);
-            if (element instanceof PsiJavaToken &&
-                ((PsiJavaToken)element).getTokenType()
-                  .equals(JavaTokenType.SEMICOLON)) {
-              final PsiElement next = skipForwardWhiteSpacesAndComments(element);
-              if (next == null || next == aClass.getRBrace()) {
-                registerError(element);
-              }
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException{
+            final PsiElement semicolonElement = descriptor.getPsiElement();
+            final PsiElement parent = semicolonElement.getParent();
+            if(parent instanceof PsiEmptyStatement){
+                final PsiElement lastChild = parent.getLastChild();
+                if(lastChild instanceof PsiComment){
+                    parent.replace(lastChild);
+                } else{
+                    deleteElement(parent);
+                }
+            } else{
+                deleteElement(semicolonElement);
             }
-          }
         }
-      }
-      super.visitClass(aClass);
     }
 
-    private static
-    @Nullable
-    PsiElement skipForwardWhiteSpacesAndComments(PsiElement element) {
-      return PsiTreeUtil.skipSiblingsForward(element,
-                                             new Class[]{
-                                               PsiWhiteSpace.class,
-                                               PsiComment.class});
-    }
+    private static class UnnecessarySemicolonVisitor
+            extends BaseInspectionVisitor{
 
-    public void visitEmptyStatement(PsiEmptyStatement statement) {
-      super.visitEmptyStatement(statement);
-      final PsiElement parent = statement.getParent();
-      if (parent instanceof PsiCodeBlock) {
-        registerError(statement);
-      }
+        public void visitFile(PsiFile file){
+            final PsiElement firstChild = file.getFirstChild();
+            PsiElement sibling = skipForwardWhiteSpacesAndComments(firstChild);
+            while(sibling != null){
+                if(sibling instanceof PsiJavaToken){
+                    final PsiJavaToken token = (PsiJavaToken)sibling;
+                    final IElementType tokenType = token.getTokenType();
+                    if(tokenType.equals(JavaTokenType.SEMICOLON)){
+                        registerError(sibling);
+                    }
+                }
+                sibling = skipForwardWhiteSpacesAndComments(sibling);
+            }
+            super.visitFile(file);
+        }
+
+        public void visitClass(@NotNull PsiClass aClass){
+            super.visitClass(aClass);
+
+            PsiElement child = aClass.getFirstChild();
+            while(child != null){
+                if(child instanceof PsiJavaToken){
+                    final PsiJavaToken token = (PsiJavaToken)child;
+                    final IElementType tokenType = token.getTokenType();
+                    if(tokenType.equals(JavaTokenType.SEMICOLON)){
+                        final PsiElement prevSibling =
+                                skipBackwardWhiteSpacesAndComments(child);
+                        if(!(prevSibling instanceof PsiEnumConstant)){
+                            registerError(child);
+                        }
+                    }
+                }
+                child = skipForwardWhiteSpacesAndComments(child);
+            }
+
+            if(!aClass.isEnum()){
+                return;
+            }
+            final PsiField[] fields = aClass.getFields();
+            if(fields.length <= 0){
+                return;
+            }
+            final PsiField lastField = fields[fields.length - 1];
+            if(!(lastField instanceof PsiEnumConstant)){
+                return;
+            }
+            final PsiElement element =
+                    skipForwardWhiteSpacesAndComments(lastField);
+            if(!(element instanceof PsiJavaToken)){
+                return;
+            }
+            final PsiJavaToken token = (PsiJavaToken)element;
+            final IElementType tokenType = token.getTokenType();
+            if(!tokenType.equals(JavaTokenType.SEMICOLON)){
+                return;
+            }
+            final PsiElement next = skipForwardWhiteSpacesAndComments(element);
+            if(next == null || !next.equals(aClass.getRBrace())){
+                return;
+            }
+            registerError(element);
+        }
+
+        @Nullable
+        private static PsiElement skipForwardWhiteSpacesAndComments(
+                PsiElement element){
+            return PsiTreeUtil.skipSiblingsForward(element,
+                                                   new Class[]{
+                                                       PsiWhiteSpace.class,
+                                                       PsiComment.class
+                                                   });
+        }
+
+        @Nullable
+        private static PsiElement skipBackwardWhiteSpacesAndComments(
+                PsiElement element){
+            return PsiTreeUtil.skipSiblingsBackward(element,
+                                                    new Class[]{
+                                                            PsiWhiteSpace.class,
+                                                            PsiComment.class
+                                                    });
+        }
+
+        public void visitEmptyStatement(PsiEmptyStatement statement){
+            super.visitEmptyStatement(statement);
+            final PsiElement parent = statement.getParent();
+            if(parent instanceof PsiCodeBlock){
+                final PsiElement semicolon = statement.getFirstChild();
+                registerError(semicolon);
+            }
+        }
     }
-  }
 }

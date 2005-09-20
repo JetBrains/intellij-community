@@ -22,7 +22,9 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.JComponent;
 
@@ -32,7 +34,7 @@ public class RefusedBequestInspection extends MethodInspection{
     public boolean ignoreEmptySuperMethods = false;
 
     public String getDisplayName(){
-        return "Refused bequest";
+        return InspectionGadgetsBundle.message("refused.bequest.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -40,13 +42,15 @@ public class RefusedBequestInspection extends MethodInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "Method '#ref()' ignores defined method in superclass #loc";
+        return InspectionGadgetsBundle.message("refused.bequest.problem.descriptor");
     }
 
     public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(
-                "<html>Ignore empty super methods (degrades performance of " +
-                "this inspection)</html>", this, "ignoreEmptySuperMethods");
+      //noinspection HardCodedStringLiteral
+      return new SingleCheckboxOptionsPanel(
+              "<html>" +
+              InspectionGadgetsBundle.message("reqused.bequest.ignore.empty.super.methods.text") +
+              "</html>", this, "ignoreEmptySuperMethods");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -108,11 +112,12 @@ public class RefusedBequestInspection extends MethodInspection{
 
         private PsiMethod methodToSearchFor;
         private boolean hasSuperCall = false;
+      @NonNls private static final String SUPER = "super";
 
-        SuperCallVisitor(PsiMethod methodToSearchFor){
-            super();
-            this.methodToSearchFor = methodToSearchFor;
-        }
+      SuperCallVisitor(PsiMethod methodToSearchFor){
+          super();
+          this.methodToSearchFor = methodToSearchFor;
+      }
 
         public void visitElement(@NotNull PsiElement element){
             if(!hasSuperCall){
@@ -137,7 +142,7 @@ public class RefusedBequestInspection extends MethodInspection{
                 return;
             }
             final String text = qualifier.getText();
-            if(!"super".equals(text)){
+            if(!SUPER.equals(text)){
                 return;
             }
             final PsiMethod method = expression.resolveMethod();

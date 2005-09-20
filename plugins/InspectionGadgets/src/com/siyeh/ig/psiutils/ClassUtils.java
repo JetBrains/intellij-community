@@ -40,8 +40,7 @@ public class ClassUtils {
     /** @noinspection StaticCollection*/
     private static final Set<PsiType> integralTypes = new HashSet<PsiType>(10);
 
-    static
-    {
+    static {
         integralTypes.add(PsiType.LONG);
         integralTypes.add(PsiType.INT);
         integralTypes.add(PsiType.SHORT);
@@ -76,7 +75,7 @@ public class ClassUtils {
         numericTypes.add("java.lang.Double");
     }
 
-    private ClassUtils(){
+    private ClassUtils() {
         super();
     }
 
@@ -97,11 +96,10 @@ public class ClassUtils {
     }
 
     public static boolean isImmutable(PsiType type) {
-        if(TypeConversionUtil.isPrimitiveAndNotNull(type))
-        {
+        if(TypeConversionUtil.isPrimitiveAndNotNull(type)) {
             return true;
         }
-        if(!(type instanceof PsiClassType)){
+        if(!(type instanceof PsiClassType)) {
             return false;
         }
         final PsiClassType classType = (PsiClassType) type;
@@ -110,8 +108,8 @@ public class ClassUtils {
     }
 
     public static boolean inSamePackage(@Nullable PsiClass class1,
-                                         @Nullable PsiClass class2) {
-        if(class1 == null || class2==null){
+                                        @Nullable PsiClass class2) {
+        if (class1 == null || class2==null) {
             return false;
         }
         final String className1 = class1.getQualifiedName();
@@ -141,8 +139,7 @@ public class ClassUtils {
 
     public static boolean isFieldVisible(PsiField field, PsiClass fromClass) {
         final PsiClass fieldClass = field.getContainingClass();
-        if(fieldClass == null)
-        {
+        if (fieldClass == null) {
             return false;
         }
         if (fieldClass.equals(fromClass)) {
@@ -160,7 +157,7 @@ public class ClassUtils {
     }
 
     public static boolean isWrappedNumericType(PsiType type) {
-        if(!(type instanceof PsiClassType)){
+        if (!(type instanceof PsiClassType)) {
             return false;
         }
         final PsiClassType classType = (PsiClassType) type;
@@ -177,15 +174,15 @@ public class ClassUtils {
         return parentClass != null;
     }
 
-    public static @Nullable PsiClass getContainingClass(PsiElement aClass) {
+    @Nullable
+    public static PsiClass getContainingClass(PsiElement aClass) {
         return PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
     }
 
     public static PsiClass getOutermostContainingClass(PsiClass aClass) {
         PsiClass outerClass = aClass;
         while (true) {
-            final PsiClass containingClass =
-                    ClassUtils.getContainingClass(outerClass);
+            final PsiClass containingClass = getContainingClass(outerClass);
             if (containingClass != null) {
                 outerClass = containingClass;
             } else {
@@ -195,21 +192,14 @@ public class ClassUtils {
     }
 
     public static boolean isClassVisibleFromClass(PsiClass baseClass,
-                                               PsiClass referencedClass){
-        if(referencedClass.hasModifierProperty(PsiModifier.PUBLIC))
-        {
+                                                  PsiClass referencedClass) {
+        if (referencedClass.hasModifierProperty(PsiModifier.PUBLIC)) {
             return true;
-        }
-        else if(referencedClass.hasModifierProperty(PsiModifier.PROTECTED))
-        {
+        } else if (referencedClass.hasModifierProperty(PsiModifier.PROTECTED)) {
             return inSamePackage(baseClass, referencedClass);
-        }
-        else if(referencedClass.hasModifierProperty(PsiModifier.PRIVATE))
-        {
+        } else if (referencedClass.hasModifierProperty(PsiModifier.PRIVATE)) {
             return PsiTreeUtil.findCommonParent(baseClass, referencedClass)!=null;
-        }
-        else
-        {
+        } else {
             return inSamePackage(baseClass, referencedClass);
         }
     }

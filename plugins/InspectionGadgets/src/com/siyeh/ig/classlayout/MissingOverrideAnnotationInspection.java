@@ -73,66 +73,68 @@ public class MissingOverrideAnnotationInspection extends MethodInspection {
   }
 
   private static class MissingOverrideAnnotationVisitor
-    extends BaseInspectionVisitor {
-    public void visitMethod(@NotNull PsiMethod method) {
-      if (method.isConstructor()) {
-        return;
+          extends BaseInspectionVisitor{
+      public void visitMethod(@NotNull PsiMethod method){
+          if(method.isConstructor()){
+              return;
+          }
+          if(method.hasModifierProperty(PsiModifier.PRIVATE) ||
+                  method.hasModifierProperty(PsiModifier.STATIC)){
+              return;
+          }
+          final PsiManager manager = method.getManager();
+          final LanguageLevel languageLevel =
+                  manager.getEffectiveLanguageLevel();
+          if(languageLevel.equals(LanguageLevel.JDK_1_3) ||
+                  languageLevel.equals(LanguageLevel.JDK_1_4)){
+              return;
+          }
+          if(!isOverride(method)){
+              return;
+          }
+          if(hasOverrideAnnotation(method)){
+              return;
+          }
+          registerMethodError(method);
       }
-      if (method.hasModifierProperty(PsiModifier.PRIVATE) ||
-          method.hasModifierProperty(PsiModifier.STATIC)) {
-        return;
-      }
-      final PsiManager manager = method.getManager();
-      final LanguageLevel languageLevel =
-        manager.getEffectiveLanguageLevel();
-      if (languageLevel.equals(LanguageLevel.JDK_1_3) ||
-          languageLevel.equals(LanguageLevel.JDK_1_4)) {
-        return;
-      }
-      if (!isOverridden(method)) {
-        return;
-      }
-      if (hasOverrideAnnotation(method)) {
-        return;
-      }
-      registerMethodError(method);
-    }
-  }
 
-  private static boolean hasOverrideAnnotation(PsiModifierListOwner element) {
-    final PsiModifierList modifierList = element.getModifierList();
-    if (modifierList == null) {
-      return false;
-    }
-    final PsiAnnotation[] annotations = modifierList.getAnnotations();
-    for (final PsiAnnotation annotation : annotations) {
-      final PsiJavaCodeReferenceElement reference =
-        annotation.getNameReferenceElement();
-      if (reference == null) {
-        return false;
+      private static boolean hasOverrideAnnotation(PsiModifierListOwner element){
+          final PsiModifierList modifierList = element.getModifierList();
+          if(modifierList == null){
+              return false;
+          }
+          final PsiAnnotation[] annotations = modifierList.getAnnotations();
+          for(final PsiAnnotation annotation : annotations){
+              final PsiJavaCodeReferenceElement reference =
+                      annotation.getNameReferenceElement();
+              if(reference == null)
+              {
+                  return false;
+              }
+              final PsiClass annotationClass =
+                      (PsiClass) reference.resolve();
+              if(annotationClass == null){
+                  return false;
+              }
+              final String annotationClassName =
+                      annotationClass.getQualifiedName();
+              if("java.lang.Override".equals(annotationClassName)){
+                  return true;
+              }
+          }
+          return false;
       }
-      final PsiClass annotationClass =
-        (PsiClass)reference.resolve();
-      if (annotationClass == null) {
-        return false;
-      }
-      final String annotationClassName =
-        annotationClass.getQualifiedName();
-      if ("java.lang.Override".equals(annotationClassName)) {
-        return true;
-      }
-    }
-    return false;
-  }
 
-  private static boolean isOverridden(PsiMethod method) {
-    final PsiMethod[] superMethods = method.findSuperMethods();
-    for (PsiMethod superMethod : superMethods) {
-      final PsiClass containingClass = superMethod.getContainingClass();
-      if (containingClass == null || !containingClass.isInterface()) {
-        return true;
+
+      private static boolean isOverride(PsiMethod method){
+          final PsiMethod[] superMethods = method.findSuperMethods();
+          for(PsiMethod superMethod : superMethods){
+              final PsiClass containingClass = superMethod.getContainingClass();
+              if(containingClass == null || !containingClass.isInterface()){
+                  return true;
+              }
+          }
+          return false;
       }
-    }
-    return false;
   }
 }

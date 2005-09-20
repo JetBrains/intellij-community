@@ -20,173 +20,202 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 
 import java.lang.reflect.Method;
 
-public abstract class BaseInspection extends LocalInspectionTool{
-    private final String m_shortName = null;
-    private InspectionRunListener listener = null;
-    private boolean telemetryEnabled = true;
-    @NonNls private static final String INSPECTION = "Inspection";
+public abstract class BaseInspection extends LocalInspectionTool {
+  private final String m_shortName = null;
+  private InspectionRunListener listener = null;
+  private boolean telemetryEnabled = true;
+  @NonNls private static final String INSPECTION = "Inspection";
+  @NonNls private static final String INSPECTION_GADGETS_COMPONENT_NAME = "InspectionGadgets";
 
-  public String getShortName(){
-      if(m_shortName == null){
-          final Class<? extends BaseInspection> aClass = getClass();
-          final String name = aClass.getName();
-          return name.substring(name.lastIndexOf((int) '.') + 1,
-                                name.length() - INSPECTION.length());
-      }
-      return m_shortName;
+  public String getShortName() {
+    if (m_shortName == null) {
+      final Class<? extends BaseInspection> aClass = getClass();
+      final String name = aClass.getName();
+      return name.substring(name.lastIndexOf((int)'.') + 1,
+                            name.length() - INSPECTION.length());
+    }
+    return m_shortName;
   }
 
-    protected BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                                  boolean onTheFly){
-        final BaseInspectionVisitor visitor = buildVisitor();
-        visitor.setInspectionManager(inspectionManager);
-        visitor.setOnTheFly(onTheFly);
-        visitor.setInspection(this);
-        return visitor;
-    }
+  protected BaseInspectionVisitor createVisitor(
+    InspectionManager inspectionManager, boolean onTheFly) {
+    final BaseInspectionVisitor visitor = buildVisitor();
+    visitor.setInspectionManager(inspectionManager);
+    visitor.setOnTheFly(onTheFly);
+    visitor.setInspection(this);
+    return visitor;
+  }
 
-    @Nullable protected String buildErrorString(PsiElement location){
-        @NonNls final String problemDescriptor = ".problem.descriptor";
-        return InspectionGadgetsBundle.message(getPrefix(getShortName()) + problemDescriptor);
-    }
+  @Nullable
+  protected String buildErrorString(PsiElement location) {
+    @NonNls final String problemDescriptor = ".problem.descriptor";
+    return InspectionGadgetsBundle.message(getPrefix(getShortName()) + problemDescriptor);
+  }
 
-    @Nullable protected String buildErrorString(Object arg){
-        @NonNls final String problemDescriptor = ".problem.descriptor";
-        return InspectionGadgetsBundle.message(getPrefix(getShortName()) + problemDescriptor);
-    }
+  @Nullable
+  protected String buildErrorString(Object arg) {
+    @NonNls final String problemDescriptor = ".problem.descriptor";
+    return InspectionGadgetsBundle.message(getPrefix(getShortName()) + problemDescriptor);
+  }
 
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
-        return false;
-    }
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return false;
+  }
 
-    @Nullable protected InspectionGadgetsFix buildFix(PsiElement location){
-        return null;
-    }
+  @Nullable
+  protected InspectionGadgetsFix buildFix(PsiElement location) {
+    return null;
+  }
 
-    @Nullable protected InspectionGadgetsFix[] buildFixes(PsiElement location){
-        return null;
-    }
+  @Nullable
+  protected InspectionGadgetsFix[] buildFixes(PsiElement location) {
+    return null;
+  }
 
-    @Nullable  public ProblemDescriptor[] checkMethod(PsiMethod method,
-                                                   InspectionManager manager,
-                                                   boolean isOnTheFly){
-        if(telemetryEnabled){
-            initializeTelemetryIfNecessary();
-            final long start = System.currentTimeMillis();
-            try{
-                return doCheckMethod(method, manager, isOnTheFly);
-            } finally{
-                final long end = System.currentTimeMillis();
-                final String displayName = getDisplayName();
-                listener.reportRun(displayName, end - start);
-            }
-        } else{
-            return doCheckMethod(method, manager, isOnTheFly);
-        }
+  @Nullable
+  public ProblemDescriptor[] checkFile(PsiFile file,
+                                       InspectionManager manager,
+                                       boolean isOnTheFly) {
+    if (telemetryEnabled) {
+      initializeTelemetryIfNecessary();
+      final long start = System.currentTimeMillis();
+      try {
+        return doCheckFile(file, manager, isOnTheFly);
+      }
+      finally {
+        final long end = System.currentTimeMillis();
+        final String displayName = getDisplayName();
+        listener.reportRun(displayName, end - start);
+      }
     }
-
-    @Nullable  protected ProblemDescriptor[] doCheckMethod(PsiMethod method,
-                                                        InspectionManager manager,
-                                                        boolean isOnTheFly){
-        return super.checkMethod(method, manager, isOnTheFly);
+    else {
+      return doCheckFile(file, manager, isOnTheFly);
     }
+  }
 
-    @Nullable public ProblemDescriptor[] checkClass(PsiClass aClass,
-                                                  InspectionManager manager,
-                                                  boolean isOnTheFly){
-        initializeTelemetryIfNecessary();
-        if(telemetryEnabled){
-            final long start = System.currentTimeMillis();
-            try{
-                return doCheckClass(aClass, manager, isOnTheFly);
-            } finally{
-                final long end = System.currentTimeMillis();
-                final String name = getDisplayName();
-                listener.reportRun(name, end - start);
-            }
-        } else{
-            return doCheckClass(aClass, manager, isOnTheFly);
-        }
+  @Nullable
+  protected ProblemDescriptor[] doCheckFile(PsiFile file,
+                                            InspectionManager manager,
+                                            boolean isOnTheFly) {
+    return super.checkFile(file, manager, isOnTheFly);
+  }
+
+  @Nullable
+  public ProblemDescriptor[] checkMethod(PsiMethod method,
+                                         InspectionManager manager,
+                                         boolean isOnTheFly) {
+    if (telemetryEnabled) {
+      initializeTelemetryIfNecessary();
+      final long start = System.currentTimeMillis();
+      try {
+        return doCheckMethod(method, manager, isOnTheFly);
+      }
+      finally {
+        final long end = System.currentTimeMillis();
+        final String displayName = getDisplayName();
+        listener.reportRun(displayName, end - start);
+      }
     }
-
-    @Nullable
-    protected ProblemDescriptor[] doCheckClass(PsiClass aClass,
-                                               InspectionManager manager,
-                                               boolean isOnTheFly){
-        return super.checkClass(aClass, manager, isOnTheFly);
+    else {
+      return doCheckMethod(method, manager, isOnTheFly);
     }
+  }
 
-    @Nullable
-    public ProblemDescriptor[] checkField(PsiField field,
-                                                  InspectionManager manager,
-                                                  boolean isOnTheFly){
-        if(telemetryEnabled){
-            initializeTelemetryIfNecessary();
-            final long start = System.currentTimeMillis();
-            try{
-                return doCheckField(field, manager, isOnTheFly);
-            } finally{
-                final long end = System.currentTimeMillis();
-                final String displayName = getDisplayName();
-                listener.reportRun(displayName, end - start);
-            }
-        } else{
-            return doCheckField(field, manager, isOnTheFly);
-        }
+  @Nullable
+  protected ProblemDescriptor[] doCheckMethod(PsiMethod method,
+                                              InspectionManager manager,
+                                              boolean isOnTheFly) {
+    return super.checkMethod(method, manager, isOnTheFly);
+  }
+
+  @Nullable
+  public ProblemDescriptor[] checkClass(PsiClass aClass,
+                                        InspectionManager manager,
+                                        boolean isOnTheFly) {
+    if (telemetryEnabled) {
+      initializeTelemetryIfNecessary();
+      final long start = System.currentTimeMillis();
+      try {
+        return doCheckClass(aClass, manager, isOnTheFly);
+      }
+      finally {
+        final long end = System.currentTimeMillis();
+        final String name = getDisplayName();
+        listener.reportRun(name, end - start);
+      }
     }
-
-    private void initializeTelemetryIfNecessary(){
-        if(telemetryEnabled && listener == null){
-            final Application application = ApplicationManager.getApplication();
-            final InspectionGadgetsPlugin plugin =
-                     application.getComponent(InspectionGadgetsPlugin.class);
-            telemetryEnabled = plugin.isTelemetryEnabled();
-            listener = plugin.getTelemetry();
-        }
+    else {
+      return doCheckClass(aClass, manager, isOnTheFly);
     }
+  }
 
-    @Nullable protected ProblemDescriptor[] doCheckField(PsiField field,
-                                                       InspectionManager manager,
-                                                       boolean isOnTheFly){
-        return super.checkField(field, manager, isOnTheFly);
+  @Nullable
+  protected ProblemDescriptor[] doCheckClass(PsiClass aClass,
+                                             InspectionManager manager,
+                                             boolean isOnTheFly) {
+    return super.checkClass(aClass, manager, isOnTheFly);
+  }
+
+  @Nullable
+  public ProblemDescriptor[] checkField(PsiField field,
+                                        InspectionManager manager,
+                                        boolean isOnTheFly) {
+    if (telemetryEnabled) {
+      initializeTelemetryIfNecessary();
+      final long start = System.currentTimeMillis();
+      try {
+        return doCheckField(field, manager, isOnTheFly);
+      }
+      finally {
+        final long end = System.currentTimeMillis();
+        final String displayName = getDisplayName();
+        listener.reportRun(displayName, end - start);
+      }
     }
-
-    public boolean hasQuickFix(){
-        final Method[] methods = getClass().getDeclaredMethods();
-        for(final Method method : methods){
-            @NonNls final String methodName = method.getName();
-            if("buildFix".equals(methodName)){
-                return true;
-            }
-        }
-        return false;
+    else {
+      return doCheckField(field, manager, isOnTheFly);
     }
+  }
 
-    public abstract BaseInspectionVisitor buildVisitor();
+  @Nullable
+  protected ProblemDescriptor[] doCheckField(PsiField field,
+                                             InspectionManager manager,
+                                             boolean isOnTheFly) {
+    return super.checkField(field, manager, isOnTheFly);
+  }
 
-    private String getPropertyPrefixForInspection(){
-      String shortName = getShortName();
-      return getPrefix(shortName);
+  private void initializeTelemetryIfNecessary() {
+    if (telemetryEnabled && listener == null) {
+      final Application application = ApplicationManager.getApplication();
+      final InspectionGadgetsPlugin plugin = (InspectionGadgetsPlugin)
+        application.getComponent(INSPECTION_GADGETS_COMPONENT_NAME);
+      telemetryEnabled = plugin.isTelemetryEnabled();
+      listener = plugin.getTelemetry();
     }
+  }
+
+
+  private String getPropertyPrefixForInspection() {
+    String shortName = getShortName();
+    return getPrefix(shortName);
+  }
 
   public String getPrefix(final String shortName) {
     StringBuffer buf = new StringBuffer(shortName.length() + 10);
     buf.append(Character.toLowerCase(shortName.charAt(0)));
-    for (int i = 1; i < shortName.length(); i++){
+    for (int i = 1; i < shortName.length(); i++) {
       final char c = shortName.charAt(i);
-      if (Character.isUpperCase(c)){
+      if (Character.isUpperCase(c)) {
         buf.append('.').append(Character.toLowerCase(c));
-      } else {
+      }
+      else {
         buf.append(c);
       }
     }
@@ -197,4 +226,17 @@ public abstract class BaseInspection extends LocalInspectionTool{
     @NonNls final String displayNameSuffix = ".display.name";
     return InspectionGadgetsBundle.message(getPropertyPrefixForInspection() + displayNameSuffix);
   }
+
+  public boolean hasQuickFix() {
+    final Method[] methods = getClass().getDeclaredMethods();
+    for (final Method method : methods) {
+      @NonNls final String methodName = method.getName();
+      if ("buildFix".equals(methodName)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public abstract BaseInspectionVisitor buildVisitor();
 }

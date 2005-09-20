@@ -22,88 +22,95 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
 
-public class StringBufferReplaceableByStringInspection extends ExpressionInspection {
-
-  public String getGroupDisplayName() {
-    return GroupNames.PERFORMANCE_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new StringBufferReplaceableByStringBuilderVisitor();
-  }
-
-  private static class StringBufferReplaceableByStringBuilderVisitor
-    extends BaseInspectionVisitor {
-
-    public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
-      super.visitLocalVariable(variable);
-
-      final PsiCodeBlock codeBlock =
-        PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
-      if (codeBlock == null) {
-        return;
-      }
-      final PsiType type = variable.getType();
-      if (!TypeUtils.typeEquals("java.lang.StringBuffer", type) &&
-          !TypeUtils.typeEquals("java.lang.StringBuilder", type)) {
-        return;
-      }
-      final PsiExpression initializer = variable.getInitializer();
-      if (initializer == null) {
-        return;
-      }
-      if (!isNewStringBufferOrStringBuilder(initializer)) {
-        return;
-      }
-      if (VariableAccessUtils.variableIsAssigned(variable, codeBlock)) {
-        return;
-      }
-      if (VariableAccessUtils.variableIsAssignedFrom(variable, codeBlock)) {
-        return;
-      }
-      if (VariableAccessUtils.variableIsReturned(variable, codeBlock)) {
-        return;
-      }
-      if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable,
-                                                               codeBlock)) {
-        return;
-      }
-      if (variableIsModified(variable, codeBlock)) {
-        return;
-      }
-      registerVariableError(variable);
+public class StringBufferReplaceableByStringInspection
+        extends ExpressionInspection{
+    public String getDisplayName(){
+        return InspectionGadgetsBundle.message("string.buffer.replaceable.by.string.display.name");
     }
 
-    public static boolean variableIsModified(PsiVariable variable,
-                                             PsiElement context) {
-      final VariableIsModifiedVisitor visitor =
-        new VariableIsModifiedVisitor(variable);
-      context.accept(visitor);
-      return visitor.isModified();
+    public String getGroupDisplayName(){
+        return GroupNames.PERFORMANCE_GROUP_NAME;
     }
 
-    private boolean isNewStringBufferOrStringBuilder(PsiExpression expression) {
-      if (expression == null) {
-        return false;
-      }
-      else if (expression instanceof PsiNewExpression) {
-        return true;
-      }
-      else if (expression instanceof PsiMethodCallExpression) {
-        final PsiReferenceExpression methodExpression =
-          ((PsiMethodCallExpression)expression).getMethodExpression();
-        @NonNls final String methodName = methodExpression.getReferenceName();
-        if (!"append".equals(methodName)) {
-          return false;
+    public String buildErrorString(PsiElement location){
+        return InspectionGadgetsBundle.message("string.buffer.replaceable.by.string.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor(){
+        return new StringBufferReplaceableByStringBuilderVisitor();
+    }
+
+    private static class StringBufferReplaceableByStringBuilderVisitor
+            extends BaseInspectionVisitor{
+
+        public void visitLocalVariable(@NotNull PsiLocalVariable variable){
+            super.visitLocalVariable(variable);
+
+            final PsiCodeBlock codeBlock =
+                    PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+            if(codeBlock == null){
+            return;
+            }
+            final PsiType type = variable.getType();
+            if(!TypeUtils.typeEquals("java.lang.StringBuffer", type) &&
+                       !TypeUtils.typeEquals("java.lang.StringBuilder", type)){
+                return;
+            }
+            final PsiExpression initializer = variable.getInitializer();
+            if(initializer == null){
+                return;
+            }
+            if(!isNewStringBufferOrStringBuilder(initializer)){
+                return;
+            }
+            if(VariableAccessUtils.variableIsAssigned(variable, codeBlock)){
+                return;
+            }
+            if(VariableAccessUtils.variableIsAssignedFrom(variable, codeBlock)){
+                return;
+            }
+            if(VariableAccessUtils.variableIsReturned(variable, codeBlock)){
+                return;
+            }
+            if(VariableAccessUtils.variableIsPassedAsMethodArgument(variable,
+                                                                    codeBlock)){
+                return;
+            }
+            if(variableIsModified(variable, codeBlock)){
+                return;
+            }
+            registerVariableError(variable);
         }
-        final PsiExpression qualifier =
-          methodExpression.getQualifierExpression();
-        return isNewStringBufferOrStringBuilder(qualifier);
-      }
-      return false;
+
+        public static boolean variableIsModified(PsiVariable variable,
+                                                 PsiElement context){
+            final VariableIsModifiedVisitor visitor =
+                    new VariableIsModifiedVisitor(variable);
+            context.accept(visitor);
+            return visitor.isModified();
+        }
+
+        private static boolean isNewStringBufferOrStringBuilder(PsiExpression expression){
+            if(expression == null){
+                return false;
+            } else if(expression instanceof PsiNewExpression){
+                return true;
+            } else if(expression instanceof PsiMethodCallExpression){
+                final PsiMethodCallExpression methodCallExpression =
+                        (PsiMethodCallExpression)expression;
+                if (!VariableIsModifiedVisitor.isStringBufferUpdate(methodCallExpression)) {
+                    return false;
+                }
+                final PsiReferenceExpression methodExpression =
+                        ((PsiMethodCallExpression) expression).getMethodExpression();
+                final PsiExpression qualifier =
+                        methodExpression.getQualifierExpression();
+                return isNewStringBufferOrStringBuilder(qualifier);
+            }
+            return false;
+        }
     }
-  }
 }

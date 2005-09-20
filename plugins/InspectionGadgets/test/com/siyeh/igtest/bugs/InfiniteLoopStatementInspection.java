@@ -86,4 +86,19 @@ public class InfiniteLoopStatementInspection
         return true;
     }
 
+    static void compute() {
+        int i = 0;
+
+        label:
+        {
+            while (true) { // not an infinite loop
+                if (i == 100) {
+                    break label;
+                }
+                i++;
+            }
+        }
+
+        System.out.println("i = " + i);
+    }
 }

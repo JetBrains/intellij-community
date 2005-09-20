@@ -25,7 +25,7 @@ import com.siyeh.InspectionGadgetsBundle;
 public class AddSerialVersionUIDFix extends InspectionGadgetsFix{
 
     public String getName(){
-        return InspectionGadgetsBundle.message("add.serialversionuidfield.quickfix");
+      return InspectionGadgetsBundle.message("add.serialversionuidfield.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)

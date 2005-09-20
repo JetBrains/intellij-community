@@ -12,12 +12,12 @@ public class
         String foo = "";
         for(int i = 0; i < 5; i++)
         {
-            foo = foo + "  " + i;
+            (foo) = ((foo) + ("  ") + (i));
             foo += foo + "  " + i;
             baz( foo + "  " + i);
             if(bar())
             {
-                return baz("foo" + "bar");
+                return baz(("foo" + "bar"));
             }
             if(bar())
             {

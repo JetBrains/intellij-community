@@ -26,93 +26,107 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
-public class BooleanConstructorInspection extends ExpressionInspection {
+public class BooleanConstructorInspection extends ExpressionInspection{
 
-  private final BooleanConstructorFix fix = new BooleanConstructorFix();
+    private final BooleanConstructorFix fix = new BooleanConstructorFix();
 
-  public String getID() {
-    return "BooleanConstructorCall";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.PERFORMANCE_GROUP_NAME;
-  }
-
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new BooleanConstructorVisitor();
-  }
-
-  public InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  private static class BooleanConstructorFix extends InspectionGadgetsFix {
-    public String getName() {
-      return InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
+    public String getID(){
+        return "BooleanConstructorCall";
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiNewExpression expression =
-        (PsiNewExpression)descriptor.getPsiElement();
-      final PsiExpressionList argList = expression.getArgumentList();
-      assert argList != null;
-      final PsiExpression[] args = argList.getExpressions();
-      final PsiExpression arg = args[0];
-      final String text = arg.getText();
-      final PsiManager psiManager = expression.getManager();
-      final LanguageLevel languageLevel =
-        psiManager.getEffectiveLanguageLevel();
-      @NonNls final String newExpression;
-      if (PsiKeyword.TRUE.equals(text) || ("\""+ PsiKeyword.TRUE +"\"").equalsIgnoreCase(text)) {
-        newExpression = "Boolean.TRUE";
-      }
-      else if (PsiKeyword.FALSE.equals(text) || ("\"" + PsiKeyword.FALSE + "\"").equalsIgnoreCase(text)) {
-        newExpression = "Boolean.FALSE";
-      }
-      else if (languageLevel.equals(LanguageLevel.JDK_1_3)) {
-        final PsiType argType = arg.getType();
-        if (PsiType.BOOLEAN.equals(argType)) {
-          if (ParenthesesUtils.getPrecendence(arg) > ParenthesesUtils.CONDITIONAL_PRECEDENCE)
-            newExpression = text + "?Boolean.TRUE:Boolean.FALSE";
-          else
-            newExpression = '(' + text + ")?Boolean.TRUE:Boolean.FALSE";
+    public String getDisplayName(){
+        return InspectionGadgetsBundle.message("boolean.constructor.display.name");
+    }
 
+    public String getGroupDisplayName(){
+        return GroupNames.PERFORMANCE_GROUP_NAME;
+    }
+
+    public boolean isEnabledByDefault(){
+        return true;
+    }
+
+    public String buildErrorString(PsiElement location){
+        return InspectionGadgetsBundle.message("boolean.constructor.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor(){
+        return new BooleanConstructorVisitor();
+    }
+
+    public InspectionGadgetsFix buildFix(PsiElement location){
+        return fix;
+    }
+
+    private static class BooleanConstructorFix extends InspectionGadgetsFix{
+      @NonNls private static final String TRUE = Boolean.TRUE.toString();
+      @NonNls private static final String FALSE = Boolean.FALSE.toString();
+
+      public String getName(){
+          return InspectionGadgetsBundle.message("boolean.aonstructor.simplify.quickfix");
+      }
+
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException{
+            final PsiNewExpression expression =
+                    (PsiNewExpression) descriptor.getPsiElement();
+            final PsiExpressionList argList = expression.getArgumentList();
+            assert argList != null;
+            final PsiExpression[] args = argList.getExpressions();
+            final PsiExpression arg = args[0];
+            final String text = arg.getText();
+            final PsiManager psiManager = expression.getManager();
+            final LanguageLevel languageLevel =
+                    psiManager.getEffectiveLanguageLevel();
+            @NonNls final String newExpression;
+          if(TRUE.equals(text) || withDoubleQuotes(TRUE).equalsIgnoreCase(text)){
+              newExpression = "Boolean.TRUE";
+          } else if(FALSE.equals(text) ||
+                    withDoubleQuotes(FALSE).equalsIgnoreCase(text)){
+              newExpression = "Boolean.FALSE";
+          } else if(languageLevel.equals(LanguageLevel.JDK_1_3)){
+              final PsiType argType = arg.getType();
+              if(PsiType.BOOLEAN.equals(argType)){
+                  if(ParenthesesUtils.getPrecendence(arg) >
+                     ParenthesesUtils.CONDITIONAL_PRECEDENCE){
+                      newExpression = text + "?Boolean.TRUE:Boolean.FALSE";
+                  } else{
+                      newExpression =
+                              '(' + text + ")?Boolean.TRUE:Boolean.FALSE";
+                  }
+              } else{
+                  newExpression = "Boolean.valueOf(" + text + ')';
+              }
+          } else{
+              newExpression = "Boolean.valueOf(" + text + ')';
+          }
+            replaceExpression(expression, newExpression);
         }
-        else {
-          newExpression = "Boolean.valueOf(" + text + ')';
+
+      private String withDoubleQuotes(final String expr) {
+        return "\"" + expr + "\"";
+      }
+    }
+
+    private static class BooleanConstructorVisitor
+            extends BaseInspectionVisitor{
+
+        public void visitNewExpression(@NotNull PsiNewExpression expression){
+            super.visitNewExpression(expression);
+            final PsiType type = expression.getType();
+            if (type == null || !type.equalsToText("java.lang.Boolean")){
+                return;
+            }
+            final PsiClass aClass = ClassUtils.getContainingClass(expression);
+            if(aClass!=null &&
+               "java.lang.Boolean".equals(aClass.getQualifiedName())){
+                return;
+            }
+            registerError(expression);
         }
-      }
-      else {
-        newExpression = "Boolean.valueOf(" + text + ')';
-      }
-      replaceExpression(expression, newExpression);
     }
-  }
-
-  private static class BooleanConstructorVisitor
-    extends BaseInspectionVisitor {
-
-    public void visitNewExpression(@NotNull PsiNewExpression expression) {
-      super.visitNewExpression(expression);
-      final PsiType type = expression.getType();
-      if (!TypeUtils.typeEquals("java.lang.Boolean", type)) {
-        return;
-      }
-      final PsiClass aClass = ClassUtils.getContainingClass(expression);
-      if (aClass != null && "java.lang.Boolean".equals(aClass.getQualifiedName())) {
-        return;
-      }
-      registerError(expression);
-    }
-  }
 }

@@ -22,6 +22,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -37,7 +38,7 @@ public class MethodOverridesPackageLocalMethodInspection
     }
 
     public String getDisplayName() {
-        return "Method overrides package local method of superclass located in other package";
+        return InspectionGadgetsBundle.message("method.overrides.package.local.method.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -53,8 +54,7 @@ public class MethodOverridesPackageLocalMethodInspection
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Method '#ref()' overrides a package local method of a "
-                + "superclass located in another package #loc";
+        return InspectionGadgetsBundle.message("method.overrides.package.local.method.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

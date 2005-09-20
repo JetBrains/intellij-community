@@ -38,6 +38,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,10 +54,6 @@ public class TooBroadScopeInspection extends StatementInspection
         return "TooBroadScope";
     }
 
-    public String getDisplayName()
-    {
-        return "Scope of variable is too broad";
-    }
 
     public String getGroupDisplayName()
     {
@@ -68,17 +65,14 @@ public class TooBroadScopeInspection extends StatementInspection
     {
 		// html allows text to wrap
 		return new SingleCheckboxOptionsPanel(
-				"<html>Allow initializer of variables to construct objects. "
-                        + "Potentially unsafe: quick fix may modify semantics "
-                        + "if the constructor has non-local side-effects."
-                        + "</html>",
+                  InspectionGadgetsBundle.message("too.broad.scope.allow.option"),
                 this, "m_allowConstructorAsInitializer");
 	}
 
 	@Nullable
     protected String buildErrorString(PsiElement location)
     {
-        return "Scope of variable '#ref' is too broad #loc";
+        return InspectionGadgetsBundle.message("too.broad.scope.problem.descriptor");
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location)
@@ -98,7 +92,7 @@ public class TooBroadScopeInspection extends StatementInspection
 
         public String getName()
         {
-            return "Narrow scope of '" + m_name + '\'';
+            return InspectionGadgetsBundle.message("too.broad.scope.narrow.quickfix", m_name);
         }
 
         protected void doFix(Project project, ProblemDescriptor descriptor)
@@ -241,7 +235,7 @@ public class TooBroadScopeInspection extends StatementInspection
 
             final WindowManager windowManager = WindowManager.getInstance();
             final StatusBar statusBar = windowManager.getStatusBar(project);
-            statusBar.setInfo("Press Escape to remove the highlighting");
+            statusBar.setInfo(InspectionGadgetsBundle.message("too.broad.scope.status.bar.remove.highlighting.message"));
         }
 
         private static PsiDeclarationStatement moveDeclarationToLocation(

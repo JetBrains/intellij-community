@@ -29,48 +29,60 @@ import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class IfStatementWithIdenticalBranchesInspection extends StatementInspection {
+public class IfStatementWithIdenticalBranchesInspection
+        extends StatementInspection{
 
-  private InspectionGadgetsFix fix = new CollapseIfFix();
+    private InspectionGadgetsFix fix = new CollapseIfFix();
 
-  public String getGroupDisplayName() {
-    return GroupNames.CONTROL_FLOW_GROUP_NAME;
-  }
-
-  public InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  private static class CollapseIfFix extends InspectionGadgetsFix {
-    public String getName() {
-      return InspectionGadgetsBundle.message("if.statement.with.identical.branches.collapse.quickfix");
+    public String getDisplayName(){
+        return InspectionGadgetsBundle.message("if.statement.with.identical.branches.display.name");
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiElement identifier = descriptor.getPsiElement();
-      final PsiIfStatement statement =
-        (PsiIfStatement)identifier.getParent();
-      assert statement != null;
-      final String bodyText = statement.getThenBranch().getText();
-      replaceStatement(statement, bodyText);
-    }
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new IfStatementWithIdenticalBranchesVisitor();
-  }
-
-  private static class IfStatementWithIdenticalBranchesVisitor extends BaseInspectionVisitor {
-
-    public void visitIfStatement(@NotNull PsiIfStatement statement) {
-      super.visitIfStatement(statement);
-      final PsiStatement thenBranch = statement.getThenBranch();
-      final PsiStatement elseBranch = statement.getElseBranch();
-      if (EquivalenceChecker.statementsAreEquivalent(thenBranch, elseBranch)) {
-        registerStatementError(statement);
-      }
+    public String getGroupDisplayName(){
+        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
-  }
+    public String buildErrorString(PsiElement location){
+        return InspectionGadgetsBundle.message("if.statement.with.identical.branches.problem.descriptor");
+    }
+
+    public InspectionGadgetsFix buildFix(PsiElement location){
+        return fix;
+    }
+
+    private static class CollapseIfFix extends InspectionGadgetsFix{
+
+        public String getName(){
+            return InspectionGadgetsBundle.message("if.statement.with.identical.branches.collapse.quickfix");
+        }
+
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException{
+            final PsiElement identifier = descriptor.getPsiElement();
+            final PsiIfStatement statement =
+                    (PsiIfStatement) identifier.getParent();
+            assert statement != null;
+            final PsiStatement thenBranch = statement.getThenBranch();
+            final String bodyText = thenBranch.getText();
+            replaceStatement(statement, bodyText);
+        }
+    }
+
+    public BaseInspectionVisitor buildVisitor(){
+        return new IfStatementWithIdenticalBranchesVisitor();
+    }
+
+    private static class IfStatementWithIdenticalBranchesVisitor
+            extends BaseInspectionVisitor{
+
+        public void visitIfStatement(@NotNull PsiIfStatement statement){
+            super.visitIfStatement(statement);
+            final PsiStatement thenBranch = statement.getThenBranch();
+            final PsiStatement elseBranch = statement.getElseBranch();
+            if(EquivalenceChecker.statementsAreEquivalent(thenBranch,
+                    elseBranch)){
+                registerStatementError(statement);
+            }
+        }
+    }
 }

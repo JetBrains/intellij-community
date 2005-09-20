@@ -29,7 +29,9 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class AssignmentToMethodParameterInspection extends ExpressionInspection{
 
@@ -37,7 +39,7 @@ public class AssignmentToMethodParameterInspection extends ExpressionInspection{
             new AssignmentToMethodParameterFix();
 
     public String getDisplayName(){
-        return "Assignment to method parameter";
+        return InspectionGadgetsBundle.message("assignment.to.method.parameter.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -45,7 +47,7 @@ public class AssignmentToMethodParameterInspection extends ExpressionInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "Assignment to method parameter '#ref' #loc ";
+        return InspectionGadgetsBundle.message("assignment.to.method.parameter.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
@@ -56,7 +58,7 @@ public class AssignmentToMethodParameterInspection extends ExpressionInspection{
             extends InspectionGadgetsFix{
 
         public String getName(){
-            return "Extract parameter as local variable";
+            return InspectionGadgetsBundle.message("assignment.to.catch.block.parameter.extract.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
@@ -81,7 +83,7 @@ public class AssignmentToMethodParameterInspection extends ExpressionInspection{
                                                  originalVariableName + '1',
                                                  variable, type);
             final String[] names = suggestions.names;
-            final String baseName;
+            @NonNls final String baseName;
             if(names != null && names.length > 0){
                 baseName = names[0];
             } else{
@@ -99,10 +101,10 @@ public class AssignmentToMethodParameterInspection extends ExpressionInspection{
                                     originalVariableName, buffer);
             }
             final String replacementText = '{' + className + ' ' + variableName
-                    + " = " +
-                    originalVariableName +
-                    ';' +
-                    buffer;
+                                           + " = " +
+                                           originalVariableName +
+                                           ';' +
+                                           buffer;
 
             final PsiElementFactory elementFactory =
                     psiManager.getElementFactory();
@@ -114,9 +116,9 @@ public class AssignmentToMethodParameterInspection extends ExpressionInspection{
         }
 
         private static void replaceVariableName(PsiElement element,
-                                         String newName,
-                                         String originalName,
-                                         StringBuffer out){
+                                                String newName,
+                                                String originalName,
+                                                StringBuffer out){
             final String text = element.getText();
             if(element instanceof PsiReferenceExpression){
                 if(text.equals(originalName)){
@@ -162,7 +164,7 @@ public class AssignmentToMethodParameterInspection extends ExpressionInspection{
             }
             final IElementType tokenType = sign.getTokenType();
             if(!tokenType.equals(JavaTokenType.PLUSPLUS) &&
-                    !tokenType.equals(JavaTokenType.MINUSMINUS)){
+               !tokenType.equals(JavaTokenType.MINUSMINUS)){
                 return;
             }
             final PsiExpression operand = expression.getOperand();
@@ -181,7 +183,7 @@ public class AssignmentToMethodParameterInspection extends ExpressionInspection{
             }
             final IElementType tokenType = sign.getTokenType();
             if(!tokenType.equals(JavaTokenType.PLUSPLUS) &&
-                    !tokenType.equals(JavaTokenType.MINUSMINUS)){
+               !tokenType.equals(JavaTokenType.MINUSMINUS)){
                 return;
             }
             final PsiExpression operand = expression.getOperand();

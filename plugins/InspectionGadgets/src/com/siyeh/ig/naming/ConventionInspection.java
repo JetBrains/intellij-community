@@ -50,19 +50,19 @@ public abstract class ConventionInspection extends BaseInspection {
 
     protected abstract int getDefaultMaxLength();
 
-    String getRegex() {
+    protected String getRegex() {
         return m_regex;
     }
 
-    int getMinLength() {
+    protected int getMinLength() {
         return m_minLength;
     }
 
-    int getMaxLength() {
+    protected int getMaxLength() {
         return m_maxLength;
     }
 
-    boolean isValid(String name) {
+    protected boolean isValid(String name) {
         final int length = name.length();
         if (length < m_minLength) {
             return false;

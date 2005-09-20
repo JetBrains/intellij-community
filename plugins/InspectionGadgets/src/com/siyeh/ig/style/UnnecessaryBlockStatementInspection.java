@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -39,7 +40,7 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
     }
 
     public String getDisplayName(){
-        return "Unnecessary code block";
+        return InspectionGadgetsBundle.message("unnecessary.code.block.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -47,7 +48,7 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "Braces around this statement are unnecessary #loc";
+        return InspectionGadgetsBundle.message("unnecessary.block.statement.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -61,7 +62,7 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
     private static class UnnecessaryBlockFix extends InspectionGadgetsFix{
 
         public String getName(){
-            return "Unwrap block";
+            return InspectionGadgetsBundle.message("unnecessary.code.block.unwrap.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)

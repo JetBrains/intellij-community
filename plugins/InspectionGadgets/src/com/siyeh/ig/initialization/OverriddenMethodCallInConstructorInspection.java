@@ -16,21 +16,18 @@
 package com.siyeh.ig.initialization;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class OverriddenMethodCallInConstructorInspection
-                                                         extends MethodInspection{
+        extends MethodInspection{
     public String getDisplayName(){
         return InspectionGadgetsBundle.message("overridden.method.call.in.constructor.display.name");
     }
@@ -40,7 +37,7 @@ public class OverriddenMethodCallInConstructorInspection
     }
 
     public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("overridden.method.call.in.constructor.problem.descriptor");
+      return InspectionGadgetsBundle.message("overridden.method.call.in.constructor.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -48,7 +45,7 @@ public class OverriddenMethodCallInConstructorInspection
     }
 
     private static class AbstractMethodCallInConstructorVisitor
-                                                                extends BaseInspectionVisitor{
+            extends BaseInspectionVisitor{
 
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
             super.visitMethodCallExpression(call);
@@ -64,9 +61,13 @@ public class OverriddenMethodCallInConstructorInspection
             if(methodExpression == null){
                 return;
             }
-            if(methodExpression.isQualified() &&
-                    !(methodExpression.getQualifierExpression() instanceof PsiThisExpression)){
-                return;
+            final PsiExpression qualifierExpression =
+                    methodExpression.getQualifierExpression();
+            if(qualifierExpression != null) {
+                if(!(qualifierExpression instanceof PsiThisExpression ||
+                        qualifierExpression instanceof PsiSuperExpression)){
+                    return;
+                }
             }
             final PsiClass containingClass = method.getContainingClass();
             if(containingClass == null){
@@ -79,7 +80,7 @@ public class OverriddenMethodCallInConstructorInspection
             if(calledMethod == null){
                 return;
             }
-            if(!isOverridable(calledMethod)){
+            if(!PsiUtil.canBeOverriden(calledMethod)){
                 return;
             }
             final PsiClass calledMethodClass = calledMethod.getContainingClass();
@@ -87,28 +88,10 @@ public class OverriddenMethodCallInConstructorInspection
                                                   calledMethodClass, true)){
                 return;
             }
-            if(!isOverridden(calledMethod)){
+            if(!MethodUtils.isOverridden(calledMethod)){
                 return;
             }
             registerMethodCallError(call);
-        }
-
-        private static boolean isOverridden(PsiMethod method){
-            final PsiManager psiManager = method.getManager();
-            final Project project = psiManager.getProject();
-            final SearchScope globalScope = GlobalSearchScope.allScope(project);
-            final PsiSearchHelper searchHelper = psiManager.getSearchHelper();
-            final PsiElementProcessor.FindElement<PsiMethod> processor = new PsiElementProcessor.FindElement<PsiMethod>();
-            searchHelper.processOverridingMethods(processor, method,
-                                                  globalScope, true);
-            return processor.getFoundElement() != null;
-        }
-
-        private static boolean isOverridable(PsiMethod calledMethod){
-            return !calledMethod.isConstructor() &&
-                    !calledMethod.hasModifierProperty(PsiModifier.FINAL) &&
-                    !calledMethod.hasModifierProperty(PsiModifier.STATIC) &&
-                    !calledMethod.hasModifierProperty(PsiModifier.PRIVATE);
         }
     }
 }

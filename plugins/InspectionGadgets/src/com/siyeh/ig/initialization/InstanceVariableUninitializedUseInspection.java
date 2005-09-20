@@ -21,22 +21,23 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.FieldInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.InitializationReadUtils;
+import com.siyeh.ig.psiutils.UninitializedReadCollector;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.List;
 
 public class InstanceVariableUninitializedUseInspection
         extends FieldInspection {
+
     /** @noinspection PublicField*/
     public boolean m_ignorePrimitives = false;
 
-    public String getID(){
+    public String getID() {
         return "InstanceVariableUsedBeforeInitialized";
     }
+
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("instance.variable.used.before.initialized.display.name");
     }
@@ -46,12 +47,12 @@ public class InstanceVariableUninitializedUseInspection
     }
 
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("instance.variable.used.before.initialized.problem.descriptor");
+      return InspectionGadgetsBundle.message("instance.variable.used.before.initialized.problem.descriptor");
     }
 
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("primitive.fields.ignore.option"),
-                this, "m_ignorePrimitives");
+                                              this, "m_ignorePrimitives");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -61,7 +62,8 @@ public class InstanceVariableUninitializedUseInspection
     private class InstanceVariableInitializationVisitor
             extends BaseInspectionVisitor {
 
-        private InitializationReadUtils iru = new InitializationReadUtils();
+        private UninitializedReadCollector uninitializedReadsCollector =
+                new UninitializedReadCollector();
 
         public void visitField(@NotNull PsiField field) {
             if (field.hasModifierProperty(PsiModifier.STATIC)) {
@@ -85,40 +87,37 @@ public class InstanceVariableUninitializedUseInspection
             if (searchHelper.isFieldBoundToForm(field)) {
                 return;
             }
-
             if (!isInitializedInInitializer(field)) {
                 final PsiMethod[] constructors = aClass.getConstructors();
-
                 for(final PsiMethod constructor : constructors){
                     final PsiCodeBlock body = constructor.getBody();
-                    iru.blockMustAssignVariable(field, body);
+                    uninitializedReadsCollector.blockAssignsVariable(body,
+                                                                     field);
                 }
             }
-
-            final List<PsiExpression> badReads = iru.getUninitializedReads();
+            final PsiExpression[] badReads =
+                    uninitializedReadsCollector.getUninitializedReads();
             for(PsiExpression expression : badReads){
                 registerError(expression);
             }
-
         }
 
-        private boolean isInitializedInInitializer(PsiField field) {
+        private boolean isInitializedInInitializer(@NotNull PsiField field) {
             final PsiClass aClass = field.getContainingClass();
-            if(aClass == null)
-            {
+            if(aClass == null) {
                 return false;
             }
             final PsiClassInitializer[] initializers = aClass.getInitializers();
-            for(final PsiClassInitializer initializer : initializers){
-                if(!initializer.hasModifierProperty(PsiModifier.STATIC)){
+            for(final PsiClassInitializer initializer : initializers) {
+                if(!initializer.hasModifierProperty(PsiModifier.STATIC)) {
                     final PsiCodeBlock body = initializer.getBody();
-                    if(iru.blockMustAssignVariable(field, body)){
+                    if(uninitializedReadsCollector.blockAssignsVariable(
+                            body, field)) {
                         return true;
                     }
                 }
             }
             return false;
         }
-
     }
 }

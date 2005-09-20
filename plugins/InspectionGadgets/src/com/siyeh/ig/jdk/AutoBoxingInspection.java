@@ -57,7 +57,7 @@ public class AutoBoxingInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("auto.boxing.problem.descriptor");
+      return InspectionGadgetsBundle.message("auto.boxing.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -74,7 +74,7 @@ public class AutoBoxingInspection extends ExpressionInspection {
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
+                throws IncorrectOperationException {
             final PsiExpression expression = (PsiExpression) descriptor.getPsiElement();
             final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false);
             assert expectedType != null;
@@ -95,7 +95,7 @@ public class AutoBoxingInspection extends ExpressionInspection {
 
     private static class AutoBoxingVisitor extends BaseInspectionVisitor {
 
-        public void visitBinaryExpression(PsiBinaryExpression expression){
+        public void visitBinaryExpression(PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             checkExpression(expression);
         }
@@ -106,72 +106,67 @@ public class AutoBoxingInspection extends ExpressionInspection {
             checkExpression(expression);
         }
 
-        public void visitLiteralExpression(PsiLiteralExpression expression){
+        public void visitLiteralExpression(PsiLiteralExpression expression) {
             super.visitLiteralExpression(expression);
             checkExpression(expression);
         }
 
-        public void visitPostfixExpression(PsiPostfixExpression expression){
+        public void visitPostfixExpression(PsiPostfixExpression expression) {
             super.visitPostfixExpression(expression);
             checkExpression(expression);
         }
 
-        public void visitPrefixExpression(PsiPrefixExpression expression){
+        public void visitPrefixExpression(PsiPrefixExpression expression) {
             super.visitPrefixExpression(expression);
             checkExpression(expression);
         }
 
-        public void visitReferenceExpression(PsiReferenceExpression expression){
+        public void visitReferenceExpression(PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
             checkExpression(expression);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression)
-        {
+        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             checkExpression(expression);
         }
 
-        public void visitTypeCastExpression(PsiTypeCastExpression expression){
+        public void visitTypeCastExpression(PsiTypeCastExpression expression) {
             super.visitTypeCastExpression(expression);
             checkExpression(expression);
         }
 
-        public void visitAssignmentExpression(PsiAssignmentExpression expression)
-        {
+        public void visitAssignmentExpression(PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
             checkExpression(expression);
         }
 
-        public void visitParenthesizedExpression(PsiParenthesizedExpression expression)
-        {
+        public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
             super.visitParenthesizedExpression(expression);
             checkExpression(expression);
         }
 
-        private void checkExpression(PsiExpression expression){
+        private void checkExpression(PsiExpression expression) {
             final PsiType expressionType = expression.getType();
-            if(expressionType == null){
+            if(expressionType == null) {
                 return;
             }
-            if(expressionType.equals(PsiType.VOID))
-            {
+            if(expressionType.equals(PsiType.VOID)) {
                 return;
             }
-            if(!ClassUtils.isPrimitive(expressionType)){
+            if(!ClassUtils.isPrimitive(expressionType)) {
                 return;
             }
             final PsiType expectedType =
                     ExpectedTypeUtils.findExpectedType(expression, false);
-            if(expectedType == null){
+            if(expectedType == null) {
                 return;
             }
 
-            if(ClassUtils.isPrimitive(expectedType)){
+            if(ClassUtils.isPrimitive(expectedType)) {
                 return;
             }
             registerError(expression);
         }
     }
-
 }

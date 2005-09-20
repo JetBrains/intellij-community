@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class NoopMethodInAbstractClassInspection extends MethodInspection {
@@ -34,32 +35,28 @@ public class NoopMethodInAbstractClassInspection extends MethodInspection {
   private static class NoopMethodInAbstractClassVisitor extends BaseInspectionVisitor {
 
     public void visitMethod(@NotNull PsiMethod method) {
-      //no call to super, so we don't drill into anonymous classes
-      if (method.isConstructor()) {
-        return;
-      }
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null) {
-        return;
-      }
-      if (containingClass.isInterface() || containingClass.isAnnotationType()) {
-        return;
-      }
-      if (!containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        return;
-      }
-      if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        return;
-      }
-      final PsiCodeBlock body = method.getBody();
-      if (body == null) {
-        return;
-      }
-      final PsiStatement[] statements = body.getStatements();
-      if (statements.length > 0) {
-        return;
-      }
-      registerMethodError(method);
+        //no call to super, so we don't drill into anonymous classes
+        if (method.isConstructor()) {
+            return;
+        }
+        final PsiClass containingClass = method.getContainingClass();
+        if(containingClass == null)
+        {
+            return;
+        }
+        if (containingClass.isInterface() || containingClass.isAnnotationType()) {
+            return;
+        }
+        if (!containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+            return;
+        }
+        if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+            return;
+        }
+        if (!MethodUtils.isEmpty(method)) {
+            return;
+        }
+        registerMethodError(method);
     }
   }
 }

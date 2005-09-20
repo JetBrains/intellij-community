@@ -2,7 +2,7 @@ package com.siyeh.igtest.verbose;
 
 import java.io.PrintStream;
 import java.util.Properties;
-       
+
 /**
  * {@link java.lang.String}
  */
@@ -16,4 +16,11 @@ public class UnnecessaryFullyQualifiedNameInspection
     private java.awt.List m_awtList;
     PrintStream stream = java.lang.System.out;
     Properties props = java.lang.System.getProperties();
+
+    public UnnecessaryFullyQualifiedNameInspection(java.lang.String s) {}
+
+    class String {}
+
+    java.util.Vector v;
+    class Vector {}
 }

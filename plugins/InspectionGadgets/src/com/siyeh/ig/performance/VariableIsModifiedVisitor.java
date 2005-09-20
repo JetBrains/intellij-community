@@ -17,8 +17,26 @@ package com.siyeh.ig.performance;
 
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
+
+import java.util.Set;
+import java.util.HashSet;
 
 class VariableIsModifiedVisitor extends PsiRecursiveElementVisitor{
+    @NonNls private static final Set<String> updateNames = new HashSet<String>(33);
+    static {
+        updateNames.add("append");
+        updateNames.add("appendCodePoint");
+        updateNames.add("delete");
+        updateNames.add("deleteCharAt");
+        updateNames.add("insert");
+        updateNames.add("replace");
+        updateNames.add("reverse");
+        updateNames.add("setCharAt");
+        updateNames.add("setLength");
+    }
+
     private boolean modified = false;
     private final PsiVariable variable;
 
@@ -38,21 +56,11 @@ class VariableIsModifiedVisitor extends PsiRecursiveElementVisitor{
             return;
         }
         super.visitMethodCallExpression(call);
+        if (!isStringBufferUpdate(call)){
+            return;
+        }
         final PsiReferenceExpression methodExpression =
                 call.getMethodExpression();
-        final PsiMethod method = (PsiMethod) methodExpression.resolve();
-        if(method == null){
-            return;
-        }
-        final PsiType returnType = method.getReturnType();
-        if(returnType == null){
-            return;
-        }
-        final String canonicalText = returnType.getCanonicalText();
-        if(!"java.lang.StringBuffer".equals(canonicalText) &&
-                   !"java.lang.StringBuilder".equals(canonicalText)){
-            return;
-        }
         final PsiExpression qualifier =
                 methodExpression.getQualifierExpression();
         if(!(qualifier instanceof PsiReferenceExpression)){
@@ -64,6 +72,20 @@ class VariableIsModifiedVisitor extends PsiRecursiveElementVisitor{
         if(variable.equals(referent)){
             modified = true;
         }
+    }
+
+    public static boolean isStringBufferUpdate(
+            @Nullable PsiMethodCallExpression methodCallExpression) {
+        if (methodCallExpression == null) {
+            return false;
+        }
+        final PsiReferenceExpression methodExpression =
+                methodCallExpression.getMethodExpression();
+        if (methodExpression == null) {
+            return false;
+        }
+        final String methodName = methodExpression.getReferenceName();
+        return updateNames.contains(methodName);
     }
 
     public boolean isModified(){

@@ -25,6 +25,7 @@ import com.siyeh.ig.fixes.InlineVariableFix;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ig.psiutils.VariableAssignedVisitor;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -36,7 +37,7 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
     private final InlineVariableFix fix = new InlineVariableFix();
 
     public String getDisplayName() {
-        return "Redundant local variable";
+        return InspectionGadgetsBundle.message("redundant.local.variable.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -45,7 +46,7 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
 
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(
-                "Ignore immediately returned or thrown variables",
+          InspectionGadgetsBundle.message("redundant.local.variable.ignore.option"),
                 this, "m_ignoreImmediatelyReturnedVariables");
     }
 
@@ -54,7 +55,7 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Local variable #ref is redundant #loc";
+        return InspectionGadgetsBundle.message("unnecessary.local.variable.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

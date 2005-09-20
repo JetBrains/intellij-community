@@ -24,16 +24,8 @@ import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class AbstractMethodCallInConstructorInspection extends MethodInspection{
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message("abstract.method.call.in.constructor.display.name");
-    }
-
     public String getGroupDisplayName(){
         return GroupNames.INITIALIZATION_GROUP_NAME;
-    }
-
-    public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("abstract.method.call.in.constructor.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){

@@ -139,8 +139,7 @@ public class RecursionUtils{
                 return true;
             }
         }
-        return statementMayReturnBeforeRecursing(
-                statements[statements.length - 1], method);
+        return false;
     }
 
     private static boolean tryStatementMayReturnBeforeRecursing(

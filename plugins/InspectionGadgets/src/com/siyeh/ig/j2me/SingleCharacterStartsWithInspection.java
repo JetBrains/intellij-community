@@ -20,12 +20,14 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class SingleCharacterStartsWithInspection extends ExpressionInspection {
 
     public String getDisplayName() {
-        return "Single character '.startsWith()' or '.endsWith()'";
+        return InspectionGadgetsBundle.message("single.character.startswith.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -33,7 +35,7 @@ public class SingleCharacterStartsWithInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Single character '.#ref()' could be replaced by '.charAt(0)' expression #loc";
+        return InspectionGadgetsBundle.message("single.character.startswith.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -41,35 +43,37 @@ public class SingleCharacterStartsWithInspection extends ExpressionInspection {
     }
 
     private static class SingleCharacterStartsWithVisitor extends BaseInspectionVisitor {
+      @NonNls private static final String STARTS_WITH_METHOD = "startsWith";
+      @NonNls private static final String ENDS_WITH_METHOD = "endsWith";
 
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
-            super.visitMethodCallExpression(call);
-            final PsiReferenceExpression methodExpression = call.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
-            if (!"startsWith".equals(methodName) && !"endsWith".equals(methodName)) {
-                return;
-            }
-            final PsiExpressionList argumentList = call.getArgumentList();
-            if (argumentList == null) {
-                return;
-            }
-            final PsiExpression[] args = argumentList.getExpressions();
-            if (args.length != 1 && args.length != 2) {
-                return;
-            }
-            if (!isSingleCharacterStringLiteral(args[0])) {
-                return;
-            }
-            final PsiExpression qualifier = methodExpression.getQualifierExpression();
-            if (qualifier == null) {
-                return;
-            }
-            final PsiType type = qualifier.getType();
-            if (!TypeUtils.isJavaLangString(type)) {
-                return;
-            }
-            registerMethodCallError(call);
-        }
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
+          super.visitMethodCallExpression(call);
+          final PsiReferenceExpression methodExpression = call.getMethodExpression();
+          final String methodName = methodExpression.getReferenceName();
+          if (!STARTS_WITH_METHOD.equals(methodName) && !ENDS_WITH_METHOD.equals(methodName)) {
+              return;
+          }
+          final PsiExpressionList argumentList = call.getArgumentList();
+          if (argumentList == null) {
+              return;
+          }
+          final PsiExpression[] args = argumentList.getExpressions();
+          if (args.length != 1 && args.length != 2) {
+              return;
+          }
+          if (!isSingleCharacterStringLiteral(args[0])) {
+              return;
+          }
+          final PsiExpression qualifier = methodExpression.getQualifierExpression();
+          if (qualifier == null) {
+              return;
+          }
+          final PsiType type = qualifier.getType();
+          if (!TypeUtils.isJavaLangString(type)) {
+              return;
+          }
+          registerMethodCallError(call);
+      }
 
         private static boolean isSingleCharacterStringLiteral(PsiExpression arg) {
             final PsiType type = arg.getType();

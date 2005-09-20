@@ -70,8 +70,8 @@ public class ControlFlowUtils{
         } else if(statement instanceof PsiSwitchStatement){
             return switchStatementMayReturnNormally(
                     (PsiSwitchStatement) statement);
-        } else   // unknown statement type
-        {
+        } else{
+            // unknown statement type
             return true;
         }
     }
@@ -136,7 +136,7 @@ public class ControlFlowUtils{
             }
             numCases++;
         }
-        boolean isEnum = isEnumSwitch(switchStatement);
+        final boolean isEnum = isEnumSwitch(switchStatement);
         if(!hasDefaultCase && !isEnum){
             return true;
         }
@@ -147,7 +147,8 @@ public class ControlFlowUtils{
             final PsiField[] fields = aClass.getFields();
             int numEnums = 0;
             for(final PsiField field : fields){
-                if(field.getType().equals(type)){
+                final PsiType fieldType = field.getType();
+                if(fieldType.equals(type)){
                     numEnums++;
                 }
             }
@@ -270,7 +271,14 @@ public class ControlFlowUtils{
             final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
             if(finallyBlock != null){
                 if(PsiTreeUtil.isAncestor(finallyBlock, currentElement, true)){
-                    return true;
+                    final PsiMethod elementMethod =
+                            PsiTreeUtil.getParentOfType(currentElement,
+                                                        PsiMethod.class);
+                    final PsiMethod finallyMethod =
+                            PsiTreeUtil.getParentOfType(finallyBlock,
+                                                        PsiMethod.class);
+                    return elementMethod != null &&
+                            elementMethod.equals(finallyMethod);
                 }
             }
             currentElement = tryStatement;
@@ -426,11 +434,12 @@ public class ControlFlowUtils{
     @Nullable
     private static PsiElement getContainingStatementOrBlock(
             @NotNull PsiElement statement){
-        return PsiTreeUtil.getParentOfType(statement, PsiStatement.class, PsiCodeBlock.class);
+      return PsiTreeUtil.getParentOfType(
+              statement, PsiStatement.class, PsiCodeBlock.class);
     }
 
-    private static boolean statementIsLastInBlock(@NotNull PsiCodeBlock block,
-                                                  @NotNull PsiStatement statement){
+    private static boolean statementIsLastInBlock(
+            @NotNull PsiCodeBlock block, @NotNull PsiStatement statement) {
         final PsiStatement[] statements = block.getStatements();
         for(int i = statements.length - 1; i >= 0; i--){
             final PsiStatement childStatement = statements[i];
@@ -447,11 +456,7 @@ public class ControlFlowUtils{
     private static class ReturnFinder extends PsiRecursiveElementVisitor{
         private boolean m_found = false;
 
-        private ReturnFinder(){
-            super();
-        }
-
-        private boolean returnFound(){
+        public boolean returnFound(){
             return m_found;
         }
 
@@ -478,7 +483,7 @@ public class ControlFlowUtils{
             m_target = target;
         }
 
-        private boolean breakFound(){
+        public boolean breakFound(){
             return m_found;
         }
 
@@ -490,7 +495,10 @@ public class ControlFlowUtils{
             super.visitBreakStatement(breakStatement);
             final PsiStatement exitedStatement =
                     breakStatement.findExitedStatement();
-            if(m_target.equals(exitedStatement)){
+            if (exitedStatement == null) {
+                return;
+            }
+            if(PsiTreeUtil.isAncestor(exitedStatement, m_target, false)){
                 m_found = true;
             }
         }
@@ -512,7 +520,7 @@ public class ControlFlowUtils{
             }
         }
 
-        private boolean continueFound(){
+        public boolean continueFound(){
             return m_found;
         }
 
@@ -594,8 +602,8 @@ public class ControlFlowUtils{
     private static boolean isInThrowStatementArgument(
             @NotNull PsiExpression expression){
         final PsiThrowStatement throwStatement =
-                PsiTreeUtil
-                        .getParentOfType(expression, PsiThrowStatement.class);
+                PsiTreeUtil.getParentOfType(expression,
+                                            PsiThrowStatement.class);
         return throwStatement != null;
     }
 

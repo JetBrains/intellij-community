@@ -26,7 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 
 public class MoveAnonymousToInnerClassFix extends InspectionGadgetsFix {
     public String getName() {
-        return InspectionGadgetsBundle.message("move.anonymous.to.inner.quickfix");
+      return InspectionGadgetsBundle.message("move.anonymous.to.inner.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor) {

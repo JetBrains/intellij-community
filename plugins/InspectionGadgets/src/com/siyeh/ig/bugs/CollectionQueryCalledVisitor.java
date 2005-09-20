@@ -26,8 +26,7 @@ class CollectionQueryCalledVisitor extends PsiRecursiveElementVisitor{
     /**
          * @noinspection StaticCollection
          */
-    @NonNls private static final Set<String> queryNames = new HashSet<String>(10);
-
+    @NonNls private static final Set<String> queryNames = new HashSet<String>(33);
     static{
         queryNames.add("clone");
         queryNames.add("contains");
@@ -38,10 +37,12 @@ class CollectionQueryCalledVisitor extends PsiRecursiveElementVisitor{
         queryNames.add("entrySet");
         queryNames.add("elements");
         queryNames.add("empty");
+        queryNames.add("enumeration");
         queryNames.add("firstElement");
         queryNames.add("get");
         queryNames.add("getFirst");
         queryNames.add("getLast");
+        queryNames.add("getProperty");
         queryNames.add("indexOf");
         queryNames.add("isEmpty");
         queryNames.add("iterator");
@@ -52,8 +53,11 @@ class CollectionQueryCalledVisitor extends PsiRecursiveElementVisitor{
         queryNames.add("peek");
         queryNames.add("poll");
         queryNames.add("pop");
+        queryNames.add("propertyNames");
+        queryNames.add("save");
         queryNames.add("size");
         queryNames.add("store");
+        queryNames.add("storeToXml");
         queryNames.add("subList");
         queryNames.add("toArray");
         queryNames.add("values");

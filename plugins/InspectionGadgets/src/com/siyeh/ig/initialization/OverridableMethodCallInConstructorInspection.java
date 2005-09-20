@@ -17,14 +17,21 @@ package com.siyeh.ig.initialization;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class OverridableMethodCallInConstructorInspection extends MethodInspection {
+public class OverridableMethodCallInConstructorInspection
+        extends MethodInspection {
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("overridable.method.call.in.constructor.display.name");
@@ -35,34 +42,80 @@ public class OverridableMethodCallInConstructorInspection extends MethodInspecti
     }
 
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("overridable.method.call.in.constructor.problem.descriptor");
+      return InspectionGadgetsBundle.message("overridable.method.call.in.constructor.problem.descriptor");
+    }
+
+    @Nullable
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        final PsiElement methodExpression = location.getParent();
+        final PsiMethodCallExpression methodCallExpression =
+                (PsiMethodCallExpression)methodExpression.getParent();
+        final PsiClass callClass = PsiTreeUtil
+                .getParentOfType(methodCallExpression, PsiClass.class);
+        final PsiMethod method = methodCallExpression.resolveMethod();
+        assert method != null;
+        final PsiClass containingClass = method.getContainingClass();
+        if (!containingClass.equals(callClass) ||
+                MethodUtils.isOverridden(method)) {
+            return null;
+        }
+        return new MakeMethodFinalFix(location.getText());
+    }
+
+    private static class MakeMethodFinalFix extends InspectionGadgetsFix {
+        private final String methodName;
+
+        MakeMethodFinalFix(String methodName) {
+            this.methodName = methodName;
+        }
+
+        public String getName() {
+            return InspectionGadgetsBundle.message("make.method.final.fix.name", methodName);
+        }
+
+        protected void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiElement methodName = descriptor.getPsiElement();
+            final PsiElement methodExpression = methodName.getParent();
+            final PsiMethodCallExpression methodCall =
+                    (PsiMethodCallExpression)methodExpression.getParent();
+            final PsiMethod method = methodCall.resolveMethod();
+            assert method != null;
+            final PsiModifierList modifierList = method.getModifierList();
+            modifierList.setModifierProperty(PsiModifier.FINAL, true);
+        }
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new AbstractMethodCallInConstructorVisitor();
     }
 
-    private static class AbstractMethodCallInConstructorVisitor extends BaseInspectionVisitor {
+    private static class AbstractMethodCallInConstructorVisitor
+            extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression call) {
             super.visitMethodCallExpression(call);
             final PsiMethod method =
-                    PsiTreeUtil.getParentOfType(call,
-                                                            PsiMethod.class);
-            if(method == null) {
+                    PsiTreeUtil.getParentOfType(call, PsiMethod.class);
+            if (method == null) {
                 return;
             }
             if (!method.isConstructor()) {
                 return;
             }
-            final PsiReferenceExpression methodExpression = call.getMethodExpression();
+            final PsiReferenceExpression methodExpression =
+                    call.getMethodExpression();
             if (methodExpression == null) {
                 return;
             }
-            if (methodExpression.isQualified() &&
-                !(methodExpression.getQualifierExpression() instanceof PsiThisExpression))
-            {
-                return;
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            if (qualifier != null) {
+                if (!(qualifier instanceof PsiThisExpression
+                        || qualifier instanceof PsiSuperExpression)) {
+                    return;
+                }
             }
             final PsiClass containingClass = method.getContainingClass();
             if (containingClass == null) {
@@ -71,26 +124,15 @@ public class OverridableMethodCallInConstructorInspection extends MethodInspecti
             if (containingClass.hasModifierProperty(PsiModifier.FINAL)) {
                 return;
             }
-            final PsiMethod calledMethod = (PsiMethod) methodExpression.resolve();
+            final PsiMethod calledMethod = 
+                    (PsiMethod) methodExpression.resolve();
             if (calledMethod == null) {
                 return;
             }
-            if (!isOverridable(calledMethod)) {
-                return;
-            }
-            final PsiClass calledMethodClass = calledMethod.getContainingClass();
-            if (!InheritanceUtil.isInheritorOrSelf(containingClass, calledMethodClass, true))
-            {
+            if (!PsiUtil.canBeOverriden(calledMethod)) {
                 return;
             }
             registerMethodCallError(call);
-        }
-
-        private static boolean isOverridable(PsiMethod calledMethod) {
-            return !calledMethod.isConstructor() &&
-                    !calledMethod.hasModifierProperty(PsiModifier.FINAL) &&
-                    !calledMethod.hasModifierProperty(PsiModifier.STATIC) &&
-                    !calledMethod.hasModifierProperty(PsiModifier.PRIVATE);
         }
     }
 }

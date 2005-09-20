@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class BaseInspectionVisitor extends PsiRecursiveElementVisitor{
+
     private BaseInspection inspection = null;
     private InspectionManager inspectionManager = null;
     private boolean onTheFly = false;
@@ -106,11 +107,10 @@ public abstract class BaseInspectionVisitor extends PsiRecursiveElementVisitor{
 
     private void registerError(PsiElement location, String description,
                                LocalQuickFix[] fixes){
-        final ProblemDescriptor problem
-                =
-                inspectionManager.createProblemDescriptor(location,
-                                                          description, fixes,
-                                                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+        final ProblemDescriptor problem =
+                inspectionManager.createProblemDescriptor(
+                        location, description, fixes,
+                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         addError(problem);
     }
 
@@ -135,12 +135,18 @@ public abstract class BaseInspectionVisitor extends PsiRecursiveElementVisitor{
         }
         final InspectionGadgetsFix[] fixes = inspection.buildFixes(location);
         if(fixes != null){
+            for (InspectionGadgetsFix fix : fixes){
+                location.putCopyableUserData(InspectionGadgetsFix.FIX_KEY,
+                                             fix.getName());
+            }
             return fixes;
         }
         final InspectionGadgetsFix fix = inspection.buildFix(location);
         if(fix == null){
             return null;
         }
+        location.putCopyableUserData(InspectionGadgetsFix.FIX_KEY,
+                                     fix.getName());
         return new InspectionGadgetsFix[]{fix};
     }
 

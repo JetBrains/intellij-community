@@ -42,8 +42,12 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
         return GroupNames.ABSTRACTION_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("overly.strong.type.cast.problem.descriptor");
+  @NotNull
+  protected String buildErrorString(Object arg) {
+      final PsiType expectedType = (PsiType)arg;
+      assert expectedType != null;
+      final String typeText = expectedType.getPresentableText();
+      return InspectionGadgetsBundle.message("overly.strong.type.cast.problem.descriptor", typeText);  
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -56,7 +60,7 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
+		        throws IncorrectOperationException{
             final PsiElement castTypeElement = descriptor.getPsiElement();
             final PsiTypeCastExpression expression =
                     (PsiTypeCastExpression) castTypeElement.getParent();
@@ -80,7 +84,7 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
 
         public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
             super.visitTypeCastExpression(expression);
-            
+
             final PsiExpression operand = expression.getOperand();
             if (operand == null) {
                 return;
@@ -101,12 +105,10 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
             if (expectedType.equals(type)) {
                 return;
             }
-
             final PsiClass resolved = PsiUtil.resolveClassInType(expectedType);
             if (resolved != null && !resolved.isPhysical()) {
                 return;
             }
-            final String expectedTypeText = expectedType.getCanonicalText();
             if (expectedType.isAssignableFrom(operandType)) {
                 return;     //then it's redundant, and caught by the built-in exception
             }
@@ -127,12 +129,13 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
                 return;
             }
             final String typeText = type.getCanonicalText();
+            final String expectedTypeText = expectedType.getCanonicalText();
             if (TypeConversionUtil.isPrimitiveWrapper(typeText) ||
                     TypeConversionUtil.isPrimitiveWrapper(expectedTypeText)) {
                 return;
             }
             final PsiTypeElement castTypeElement = expression.getCastType();
-            registerError(castTypeElement);
+            registerError(castTypeElement, expectedType);
         }
 
         private static boolean isTypeParameter(PsiType type){

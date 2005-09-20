@@ -19,13 +19,14 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class OverloadedMethodsWithSameNumberOfParametersInspection
         extends MethodInspection {
 
     public String getDisplayName() {
-        return "Overloaded methods with same number of parameters";
+        return InspectionGadgetsBundle.message("overloaded.methods.with.same.number.parameters.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -33,7 +34,7 @@ public class OverloadedMethodsWithSameNumberOfParametersInspection
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Multiple methods named '#ref' with the same number of parameters";
+        return InspectionGadgetsBundle.message("overloaded.methods.with.same.number.parameters.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

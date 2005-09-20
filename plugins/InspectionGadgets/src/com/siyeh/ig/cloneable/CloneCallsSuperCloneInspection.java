@@ -16,17 +16,22 @@
 package com.siyeh.ig.cloneable;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
-import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.ig.psiutils.CloneUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class CloneCallsSuperCloneInspection extends MethodInspection {
-    public String getID(){
+
+    public String getID() {
         return "CloneDoesntCallSuperClone";
     }
+
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("clone.doesnt.call.super.clone.display.name");
     }
@@ -36,49 +41,48 @@ public class CloneCallsSuperCloneInspection extends MethodInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("clone.doesnt.call.super.clone.problem.descriptor");
+      return InspectionGadgetsBundle.message("clone.doesnt.call.super.clone.problem.descriptor");
     }
 
-    public boolean isEnabledByDefault(){
+    public boolean isEnabledByDefault() {
         return true;
     }
+
     public BaseInspectionVisitor buildVisitor() {
         return new NoExplicitCloneCallsVisitor();
     }
 
-    private static class NoExplicitCloneCallsVisitor extends BaseInspectionVisitor {
+    private static class NoExplicitCloneCallsVisitor
+            extends BaseInspectionVisitor {
 
         public void visitMethod(@NotNull PsiMethod method) {
             //note: no call to super;
-            final String methodName = method.getName();
-            if (!HardcodedMethodConstants.CLONE.equals(methodName)) {
+          if (!CloneUtils.isClone(method)) {
               return;
             }
             if(method.hasModifierProperty(PsiModifier.ABSTRACT) ||
-                    method.hasModifierProperty(PsiModifier.NATIVE))
-            {
-                return;
-            }
-            final PsiParameterList parameterList = method.getParameterList();
-            if (parameterList.getParameters().length != 0) {
+                    method.hasModifierProperty(PsiModifier.NATIVE)) {
                 return;
             }
             final PsiClass containingClass = method.getContainingClass();
-            if(containingClass == null)
-            {
+            if(containingClass == null) {
                 return;
             }
-            if (containingClass.isInterface() || containingClass.isAnnotationType()) {
+            if (containingClass.isInterface() ||
+                containingClass.isAnnotationType()) {
                 return;
             }
-            final CallToSuperCloneVisitor visitor = new CallToSuperCloneVisitor();
+            if (CloneUtils.onlyThrowsCloneNotSupportedException(method) &&
+                    method.hasModifierProperty(PsiModifier.FINAL)) {
+                return;
+            }
+            final CallToSuperCloneVisitor visitor =
+                    new CallToSuperCloneVisitor();
             method.accept(visitor);
             if (visitor.isCallToSuperCloneFound()) {
                 return;
             }
             registerMethodError(method);
         }
-
     }
-
 }

@@ -30,9 +30,12 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class StaticVariableInitializationInspection extends FieldInspection {
+
     /** @noinspection PublicField*/
     public boolean m_ignorePrimitives = false;
-    private final MakeInitializerExplicitFix fix = new MakeInitializerExplicitFix();
+
+    private final MakeInitializerExplicitFix fix =
+            new MakeInitializerExplicitFix();
 
     public String getID(){
         return "StaticVariableMayNotBeInitialized";
@@ -46,7 +49,7 @@ public class StaticVariableInitializationInspection extends FieldInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("static.variable.may.not.be.initialized.problem.descriptor");
+      return InspectionGadgetsBundle.message("static.variable.may.not.be.initialized.problem.descriptor");
     }
 
     public JComponent createOptionsPanel() {
@@ -62,7 +65,9 @@ public class StaticVariableInitializationInspection extends FieldInspection {
         return new StaticVariableInitializationVisitor();
     }
 
-    private class StaticVariableInitializationVisitor extends BaseInspectionVisitor {
+    private class StaticVariableInitializationVisitor
+            extends BaseInspectionVisitor {
+
         public void visitField(@NotNull PsiField field) {
             if (!field.hasModifierProperty(PsiModifier.STATIC)) {
                 return;
@@ -85,18 +90,18 @@ public class StaticVariableInitializationInspection extends FieldInspection {
                 }
             }
 
-            final PsiClassInitializer[] initializers = containingClass.getInitializers();
+            final PsiClassInitializer[] initializers =
+                    containingClass.getInitializers();
             for(final PsiClassInitializer initializer : initializers){
                 if(initializer.hasModifierProperty(PsiModifier.STATIC)){
                     final PsiCodeBlock body = initializer.getBody();
-                    if(InitializationUtils.blockMustAssignVariableOrFail(field,
-                                                                         body)){
+                    if(InitializationUtils.blockAssignsVariableOrFails(body,
+                            field)) {
                         return;
                     }
                 }
             }
             registerFieldError(field);
         }
-
     }
 }

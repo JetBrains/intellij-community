@@ -22,13 +22,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class AssignmentToForLoopParameterInspection
         extends ExpressionInspection {
 
     public String getDisplayName() {
-        return "Assignment to 'for' loop parameter";
+        return InspectionGadgetsBundle.message("assignment.to.for.loop.parameter.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -36,7 +37,7 @@ public class AssignmentToForLoopParameterInspection
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Assignment to for-loop parameter '#ref' #loc";
+        return InspectionGadgetsBundle.message("assignment.to.for.loop.parameter.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

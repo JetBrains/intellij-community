@@ -26,6 +26,7 @@ import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class UnnecessaryLabelOnBreakStatementInspection extends StatementInspection {
 
@@ -44,6 +45,8 @@ public class UnnecessaryLabelOnBreakStatementInspection extends StatementInspect
   }
 
   private static class UnnecessaryLabelOnBreakStatementFix extends InspectionGadgetsFix {
+    @NonNls private static final String BREAK_STATEMENT = "break;";
+
     public String getName() {
       return InspectionGadgetsBundle.message("unnecessary.label.remove.quickfix");
     }
@@ -53,7 +56,8 @@ public class UnnecessaryLabelOnBreakStatementInspection extends StatementInspect
       final PsiElement breakKeywordElement = descriptor.getPsiElement();
       final PsiBreakStatement breakStatement =
         (PsiBreakStatement)breakKeywordElement.getParent();
-      replaceStatement(breakStatement, "break;");
+      replaceStatement(breakStatement,
+                       BREAK_STATEMENT);
     }
   }
 

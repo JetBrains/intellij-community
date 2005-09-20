@@ -24,6 +24,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.naming.ConventionInspection;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class JUnitAbstractTestClassNamingConventionInspection
@@ -34,7 +35,7 @@ public class JUnitAbstractTestClassNamingConventionInspection
     private final RenameFix fix = new RenameFix();
 
     public String getDisplayName() {
-        return "JUnit abstract test class naming convention";
+        return InspectionGadgetsBundle.message("j.unit.abstract.test.class.naming.convention.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -54,12 +55,11 @@ public class JUnitAbstractTestClassNamingConventionInspection
         assert aClass != null;
         final String className = aClass.getName();
         if (className.length() < getMinLength()) {
-            return "Abstract JUnit test class name '#ref' is too short #loc";
+            return InspectionGadgetsBundle.message("j.unit.abstract.test.class.naming.convention.problem.descriptor.short");
         } else if (className.length() > getMaxLength()) {
-            return "Abstract JUnit test class name '#ref' is too long #loc";
+            return InspectionGadgetsBundle.message("j.unit.abstract.test.class.naming.convention.problem.descriptor.long");
         }
-        return "Abstract JUnit test class name '#ref' doesn't match regex '" +
-                getRegex() + "' #loc";
+        return InspectionGadgetsBundle.message("j.unit.abstract.test.class.naming.convention.problem.descriptor.regex.mismatch", getRegex());
     }
 
     protected String getDefaultRegex() {

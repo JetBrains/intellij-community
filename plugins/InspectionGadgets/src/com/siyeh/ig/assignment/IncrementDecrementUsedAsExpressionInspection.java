@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class IncrementDecrementUsedAsExpressionInspection
@@ -29,7 +30,7 @@ public class IncrementDecrementUsedAsExpressionInspection
         return "ValueOfIncrementOrDecrementUsed";
     }
     public String getDisplayName() {
-        return "Value of ++ or -- used";
+        return InspectionGadgetsBundle.message("increment.decrement.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -44,9 +45,9 @@ public class IncrementDecrementUsedAsExpressionInspection
             final PsiJavaToken sign = postfixExpression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
             if (tokenType.equals(JavaTokenType.PLUSPLUS)) {
-                expressionType = "post-increment";
+              return InspectionGadgetsBundle.message("value.of.post.increment.problem.descriptor");
             } else {
-                expressionType = "post-decrement";
+              return InspectionGadgetsBundle.message("value.of.post.decrement.problem.descriptor");
             }
         } else {
             final PsiPrefixExpression prefixExpression =
@@ -54,12 +55,12 @@ public class IncrementDecrementUsedAsExpressionInspection
             final PsiJavaToken sign = prefixExpression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
             if (tokenType.equals(JavaTokenType.PLUSPLUS)) {
-                expressionType = "pre-increment";
+              return InspectionGadgetsBundle.message("value.of.pre.increment.problem.descriptor");
             } else {
-                expressionType = "pre-decrement";
+              return InspectionGadgetsBundle.message("value.of.pre.decrement.problem.descriptor");
             }
         }
-        return "Value of " + expressionType + " expression '#ref' is used #loc";
+
     }
 
     public BaseInspectionVisitor buildVisitor() {

@@ -26,6 +26,7 @@ import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class UnnecessaryLabelOnContinueStatementInspection extends StatementInspection {
 
@@ -44,6 +45,8 @@ public class UnnecessaryLabelOnContinueStatementInspection extends StatementInsp
   }
 
   private static class UnnecessaryLabelOnContinueStatementFix extends InspectionGadgetsFix {
+    @NonNls private static final String CONTINUE_STATEMENT = "continue;";
+
     public String getName() {
       return InspectionGadgetsBundle.message("unnecessary.label.remove.quickfix");
     }
@@ -53,7 +56,8 @@ public class UnnecessaryLabelOnContinueStatementInspection extends StatementInsp
       final PsiElement continueKeywordElement = descriptor.getPsiElement();
       final PsiContinueStatement continueStatement =
         (PsiContinueStatement)continueKeywordElement.getParent();
-      replaceStatement(continueStatement, "continue;");
+      replaceStatement(continueStatement,
+                       CONTINUE_STATEMENT);
     }
   }
 

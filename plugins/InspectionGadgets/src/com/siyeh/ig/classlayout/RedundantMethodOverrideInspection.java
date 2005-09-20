@@ -27,6 +27,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nullable;
 
 public class RedundantMethodOverrideInspection extends MethodInspection {
@@ -36,12 +37,12 @@ public class RedundantMethodOverrideInspection extends MethodInspection {
     }
 
     public String getDisplayName() {
-        return "Method is identical to its super method";
+        return InspectionGadgetsBundle.message("redundant.method.override.display.name");
     }
 
     @Nullable
     protected String buildErrorString(PsiElement location) {
-        return "Method '#ref()' is identical to its super method";
+        return InspectionGadgetsBundle.message("redundant.method.override.problem.descriptor");
     }
 
     @Nullable
@@ -53,7 +54,7 @@ public class RedundantMethodOverrideInspection extends MethodInspection {
             extends InspectionGadgetsFix {
 
         public String getName() {
-            return "Remove redundant method";
+            return InspectionGadgetsBundle.message("redundant.method.override.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)

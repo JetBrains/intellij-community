@@ -19,6 +19,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -28,6 +29,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 public abstract class InspectionGadgetsFix implements LocalQuickFix{
+
+    public static final Key<Object> FIX_KEY =
+            Key.create("InspectionGadgetsFix.applyFix.FIX_KEY");
+
     //to appear in "Apply Fix" statement when multiple Quick Fixes exist
     public String getFamilyName() {
         return "";
@@ -40,6 +45,10 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
             return;
         }
         if(isQuickFixOnReadOnlyFile(problemElement)){
+            return;
+        }
+        final Object data = problemElement.getCopyableUserData(FIX_KEY);
+        if (data == null || !data.equals(getName())) {
             return;
         }
         try{
@@ -65,19 +74,20 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
             throws IncorrectOperationException{
         final PsiManager psiManager = expression.getManager();
         final PsiElementFactory factory = psiManager.getElementFactory();
-        final PsiExpression newExp = factory.createExpressionFromText(newExpression,
-                                                                      expression);
+        final PsiExpression newExp =
+                factory.createExpressionFromText(newExpression, expression);
         final PsiElement replacementExp = expression.replace(newExp);
         final CodeStyleManager styleManager = psiManager.getCodeStyleManager();
         styleManager.reformat(replacementExp);
     }
+
     protected static void replaceExpressionAndShorten(PsiExpression expression,
                                                       String newExpression)
             throws IncorrectOperationException{
         final PsiManager psiManager = expression.getManager();
         final PsiElementFactory factory = psiManager.getElementFactory();
-        final PsiExpression newExp = factory.createExpressionFromText(newExpression,
-                                                                      expression);
+        final PsiExpression newExp =
+                factory.createExpressionFromText(newExpression, expression);
         final PsiElement replacementExp = expression.replace(newExp);
         final CodeStyleManager styleManager = psiManager.getCodeStyleManager();
         styleManager.shortenClassReferences(replacementExp);
@@ -85,23 +95,24 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
     }
 
     protected static void replaceStatement(PsiStatement statement,
-                                           @NonNls String newStatement)
+                                           String newStatement)
             throws IncorrectOperationException{
         final PsiManager psiManager = statement.getManager();
         final PsiElementFactory factory = psiManager.getElementFactory();
-        final PsiStatement newExp = factory.createStatementFromText(newStatement,
-                                                                    statement);
+        final PsiStatement newExp =
+                factory.createStatementFromText(newStatement, statement);
         final PsiElement replacementExp = statement.replace(newExp);
         final CodeStyleManager styleManager = psiManager.getCodeStyleManager();
         styleManager.reformat(replacementExp);
     }
-    protected static void replaceStatementAndShortenClassNames(PsiStatement statement,
-                                                               String newStatement)
+
+    protected static void replaceStatementAndShortenClassNames(
+            PsiStatement statement, String newStatement)
             throws IncorrectOperationException{
         final PsiManager psiManager = statement.getManager();
         final PsiElementFactory factory = psiManager.getElementFactory();
-        final PsiStatement newExp = factory.createStatementFromText(newStatement,
-                                                                    statement);
+        final PsiStatement newExp =
+                factory.createStatementFromText(newStatement, statement);
         final PsiElement replacementStatement = statement.replace(newExp);
         final CodeStyleManager styleManager = psiManager.getCodeStyleManager();
         styleManager.shortenClassReferences(replacementStatement);
@@ -116,7 +127,8 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
         final VirtualFile virtualFile = containingPsiFile.getVirtualFile();
         final PsiManager psiManager = problemElement.getManager();
         final Project project = psiManager.getProject();
-        final ReadonlyStatusHandler handler = ReadonlyStatusHandler.getInstance(project);
+        final ReadonlyStatusHandler handler =
+                ReadonlyStatusHandler.getInstance(project);
         final ReadonlyStatusHandler.OperationStatus status =
                 handler.ensureFilesWritable(new VirtualFile[]{virtualFile});
         return status.hasReadonlyFiles();

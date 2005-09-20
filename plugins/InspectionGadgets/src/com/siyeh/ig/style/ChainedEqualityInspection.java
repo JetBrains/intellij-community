@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ChainedEqualityInspection extends ExpressionInspection {
@@ -29,7 +30,7 @@ public class ChainedEqualityInspection extends ExpressionInspection {
     }
     
     public String getDisplayName() {
-        return "Chained equality comparisons";
+        return InspectionGadgetsBundle.message("chained.equality.comparisons.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -37,7 +38,7 @@ public class ChainedEqualityInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Chained equality comparison '#ref' #loc";
+        return InspectionGadgetsBundle.message("chained.equality.comparisons.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

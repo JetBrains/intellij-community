@@ -20,21 +20,22 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.FieldInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.InitializationReadUtils;
+import com.siyeh.ig.psiutils.UninitializedReadCollector;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.List;
 
 public class StaticVariableUninitializedUseInspection extends FieldInspection {
+
     /** @noinspection PublicField*/
     public boolean m_ignorePrimitives = false;
 
-    public String getID(){
+    public String getID() {
         return "StaticVariableUsedBeforeInitialization";
     }
+
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("static.variable.used.before.initialization.display.name");
     }
@@ -44,12 +45,12 @@ public class StaticVariableUninitializedUseInspection extends FieldInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("static.variable.used.before.initialization.problem.descriptor");
+      return InspectionGadgetsBundle.message("static.variable.used.before.initialization.problem.descriptor");
     }
 
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("primitive.fields.ignore.option"),
-                this, "m_ignorePrimitives");
+                                              this, "m_ignorePrimitives");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -80,24 +81,27 @@ public class StaticVariableUninitializedUseInspection extends FieldInspection {
                     return;
                 }
             }
-            final PsiClassInitializer[] initializers = containingClass.getInitializers();
-            // Do the static initializers come in actual order in file? (They need to.)
-            final InitializationReadUtils iru = new InitializationReadUtils();
-
-            for(final PsiClassInitializer initializer : initializers){
-                if(initializer.hasModifierProperty(PsiModifier.STATIC)){
+            final PsiClassInitializer[] initializers =
+                    containingClass.getInitializers();
+            // Do the static initializers come in actual order in file?
+            // (They need to.)
+            final UninitializedReadCollector uninitializedReadCollector =
+                    new UninitializedReadCollector();
+            for(final PsiClassInitializer initializer : initializers) {
+                if(initializer.hasModifierProperty(PsiModifier.STATIC)) {
                     final PsiCodeBlock body = initializer.getBody();
-                    if(iru.blockMustAssignVariable(field, body)){
+                    if(uninitializedReadCollector.blockAssignsVariable(
+                            body, field)) {
                         break;
                     }
                 }
             }
 
-            final List<PsiExpression> badReads = iru.getUninitializedReads();
-            for(PsiExpression badRead : badReads){
+            final PsiExpression[] badReads =
+                    uninitializedReadCollector.getUninitializedReads();
+            for(PsiExpression badRead : badReads) {
                 registerError(badRead);
             }
         }
-
     }
 }

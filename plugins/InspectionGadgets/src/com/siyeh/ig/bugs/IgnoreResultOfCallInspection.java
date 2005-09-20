@@ -32,6 +32,8 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableCellEditor;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -67,9 +69,9 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
     }
 
     private void parseCallCheckString(){
+        final String[] strings = callCheckString.split(",");
         synchronized(lock){
             callsToCheck.clear();
-            final String[] strings = callCheckString.split(",");
             for(int i = 0; i < strings.length-1; i += 2){
                 final String className = strings[i];
                 final String methodName = strings[i + 1];
@@ -203,37 +205,52 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
         }
     }
 
-    /** @noinspection PublicInnerClass*/
-    public class Form{
-        private JPanel contentPanel;
-        private JButton addButton;
-        private JButton deleteButton;
-        private JTable table;
-        private JCheckBox nonLibraryCheckbox;
+    private class Form{
+        JPanel contentPanel;
+        JButton addButton;
+        JButton deleteButton;
+        JTable table;
+        JCheckBox nonLibraryCheckbox;
 
-        public Form(){
+        Form(){
             super();
             table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
             table.setRowSelectionAllowed(true);
             table.setSelectionMode(
                     ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-            table.setEnabled(true);
             final ReturnCheckSpecificationTableModel model =
                     new ReturnCheckSpecificationTableModel();
             table.setModel(model);
-            addButton.setEnabled(true);
             addButton.addActionListener(new ActionListener(){
                 public void actionPerformed(ActionEvent e){
+                    final int listSize;
                     synchronized(lock){
+                        listSize = callsToCheck.size();
                         callsToCheck.add(new ReturnCheckSpecification());
                     }
                     model.fireTableStructureChanged();
+
+                    EventQueue.invokeLater(new Runnable() {
+                        public void run() {
+                            final Rectangle rect = table.getCellRect(listSize, 0, true);
+                            table.scrollRectToVisible(rect);
+                            table.editCellAt(listSize, 0);
+                            final TableCellEditor editor = table.getCellEditor();
+                            final Component component =
+                                    editor.getTableCellEditorComponent(table, null, true, listSize, 0);
+                            component.requestFocus();
                 }
             });
-            deleteButton.setEnabled(true);
+
+                }
+            });
             deleteButton.addActionListener(new ActionListener(){
                 public void actionPerformed(ActionEvent e){
                     final int[] selectedRows = table.getSelectedRows();
+                    if (selectedRows.length == 0) {
+                        return;
+                    }
+                    final int row = selectedRows[selectedRows.length - 1] - 1;
                     Arrays.sort(selectedRows);
                     synchronized(lock){
                         for(int i = selectedRows.length - 1; i >= 0; i--){
@@ -241,6 +258,12 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
                         }
                     }
                     model.fireTableStructureChanged();
+                    final int count = table.getRowCount();
+                    if (count <= row) {
+                        table.setRowSelectionInterval(count - 1, count - 1);
+                    } else {
+                        table.setRowSelectionInterval(row, row);
+                    }
                 }
             });
             nonLibraryCheckbox.setEnabled(true);
@@ -256,6 +279,7 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
         public JComponent getContentPanel(){
             return contentPanel;
         }
+
     }
 
     private class ReturnCheckSpecificationTableModel

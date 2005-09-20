@@ -22,12 +22,13 @@ import com.intellij.psi.PsiExpressionListStatement;
 import com.intellij.psi.PsiExpressionStatement;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class NestedAssignmentInspection extends ExpressionInspection {
 
     public String getDisplayName() {
-        return "Nested assignment";
+        return InspectionGadgetsBundle.message("nested.assignment.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -35,7 +36,7 @@ public class NestedAssignmentInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Nested assignment '#ref' #loc";
+        return InspectionGadgetsBundle.message("nested.assignment.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

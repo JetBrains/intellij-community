@@ -23,6 +23,11 @@ public class ImportUtils{
         super();
     }
 
+    // doesn't work for the following case:
+    // class UnnecessaryFullQualifiedNameInspection {
+    //     java.util.Vector v;
+    //     class Vector {}
+    // }
     public static boolean nameCanBeImported(String fqName, PsiJavaFile file){
         if(hasExactImportMatch(fqName, file)){
             return true;
@@ -41,7 +46,6 @@ public class ImportUtils{
 
     private static boolean containsConflictingClassName(String fqName,
                                                         PsiJavaFile file){
-
         final int lastDotIndex = fqName.lastIndexOf((int) '.');
         final String shortName = fqName.substring(lastDotIndex + 1);
         final PsiClass[] classes = file.getClasses();
@@ -50,7 +54,6 @@ public class ImportUtils{
                 return true;
             }
         }
-
         return false;
     }
 
@@ -64,7 +67,7 @@ public class ImportUtils{
         for(final PsiImportStatement importStatement : importStatements){
             if(!importStatement.isOnDemand()){
                 final String importName = importStatement.getQualifiedName();
-                if(importName.equals(fqName)){
+                if(fqName.equals(importName)){
                     return true;
                 }
             }
@@ -86,7 +89,9 @@ public class ImportUtils{
         for(final PsiImportStatement importStatement : importStatements){
             if(!importStatement.isOnDemand()){
                 final String importName = importStatement.getQualifiedName();
-
+                if (importName ==  null){
+                    return false;
+                }
                 if(!importName.equals(fqName)){
                     if(importName.endsWith(dottedShortName)){
                         return true;
@@ -161,8 +166,8 @@ public class ImportUtils{
                 }
             }
         }
-        final ClassReferenceVisitor visitor = new ClassReferenceVisitor(
-                shortName, fqName);
+        final ClassReferenceVisitor visitor =
+                new ClassReferenceVisitor(shortName, fqName);
         file.accept(visitor);
         return visitor.isReferenceFound();
     }
@@ -213,7 +218,7 @@ public class ImportUtils{
             }
         }
 
-        private boolean isReferenceFound(){
+        public boolean isReferenceFound(){
             return m_referenceFound;
         }
     }

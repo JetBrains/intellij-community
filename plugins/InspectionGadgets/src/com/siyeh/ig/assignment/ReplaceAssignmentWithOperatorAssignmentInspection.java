@@ -27,6 +27,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ReplaceAssignmentWithOperatorAssignmentInspection
@@ -37,7 +38,7 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
     }
 
     public String getDisplayName(){
-        return "Assignment replaceable with operator assignment";
+        return InspectionGadgetsBundle.message("assignment.replaceable.with.operator.assignment.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -47,8 +48,8 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
     public String buildErrorString(PsiElement location){
         final PsiAssignmentExpression assignmentExpression =
                 (PsiAssignmentExpression)location;
-        return "'#ref' could be simplified to '" +
-                calculateReplacementExpression(assignmentExpression) + "' #loc";
+        return InspectionGadgetsBundle.message("assignment.replaceable.with.operator.assignment.problem.descriptor",
+                                               calculateReplacementExpression(assignmentExpression));
     }
 
     private static String calculateReplacementExpression(
@@ -96,7 +97,7 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
             } else if("||".equals(signText)){
                 signText = "|";
             }
-            m_name = "Replace = with " + signText + '=';
+            m_name = InspectionGadgetsBundle.message("assignment.replaceable.with.operator.replace.quickfix", signText, '=');
         }
 
         public String getName(){

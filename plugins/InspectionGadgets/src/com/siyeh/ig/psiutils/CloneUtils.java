@@ -64,4 +64,31 @@ public class CloneUtils{
         }
         return true;
     }
+
+    public static boolean onlyThrowsCloneNotSupportedException(
+            @NotNull PsiMethod method){
+        final PsiCodeBlock body = method.getBody();
+        final PsiStatement[] statements = body.getStatements();
+        if(statements.length != 1){
+            return false;
+        }
+        final PsiStatement statement = statements[0];
+        if(!(statement instanceof PsiThrowStatement)){
+            return false;
+        }
+        final PsiThrowStatement throwStatement =
+                (PsiThrowStatement)statement;
+        final PsiExpression exception = throwStatement.getException();
+        if(!(exception instanceof PsiNewExpression)){
+            return false;
+        }
+        final PsiNewExpression newExpression = (PsiNewExpression)exception;
+        final PsiJavaCodeReferenceElement classReference =
+                newExpression.getClassReference();
+        if(classReference == null){
+            return false;
+        }
+        final String qualifiedName = classReference.getQualifiedName();
+        return qualifiedName.equals("java.lang.CloneNotSupportedException");
+    }
 }

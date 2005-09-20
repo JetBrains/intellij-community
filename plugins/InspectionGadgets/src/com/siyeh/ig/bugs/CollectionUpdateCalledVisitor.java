@@ -27,8 +27,7 @@ class CollectionUpdateCalledVisitor extends PsiRecursiveElementVisitor{
     /**
          * @noinspection StaticCollection
          */
-    @NonNls private static final Set<String> updateNames = new HashSet<String>(10);
-
+    @NonNls private static final Set<String> updateNames = new HashSet<String>(25);
     static{
         updateNames.add("add");
         updateNames.add("addAll");
@@ -39,6 +38,7 @@ class CollectionUpdateCalledVisitor extends PsiRecursiveElementVisitor{
         updateNames.add("clear");
         updateNames.add("insertElementAt");
         updateNames.add("load");
+        updateNames.add("loadFromXml");
         updateNames.add("offer");
         updateNames.add("push");
         updateNames.add("put");
@@ -53,7 +53,7 @@ class CollectionUpdateCalledVisitor extends PsiRecursiveElementVisitor{
         updateNames.add("removeRange");
         updateNames.add("set");
         updateNames.add("setElementAt");
-        updateNames.add("trimToSize");
+        updateNames.add("setProperty");
     }
 
     private boolean updated = false;

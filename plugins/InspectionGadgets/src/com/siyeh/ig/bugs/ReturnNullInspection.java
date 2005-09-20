@@ -30,14 +30,16 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 
 public class ReturnNullInspection extends StatementInspection {
+
     /** @noinspection PublicField*/
     public boolean m_reportObjectMethods = true;
     /** @noinspection PublicField*/
     public boolean m_reportArrayMethods = true;
 
-    public String getID(){
+    public String getID() {
         return "ReturnOfNull";
     }
+
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("return.of.null.display.name");
     }
@@ -53,7 +55,7 @@ public class ReturnNullInspection extends StatementInspection {
     public JComponent createOptionsPanel() {
         final GridBagLayout layout = new GridBagLayout();
         final JPanel panel = new JPanel(layout);
-        final JCheckBox arrayCheckBox = new JCheckBox(InspectionGadgetsBundle.message("return.of.null.arrays.option"), m_reportArrayMethods);
+      final JCheckBox arrayCheckBox = new JCheckBox(InspectionGadgetsBundle.message("return.of.null.arrays.option"), m_reportArrayMethods);
         final ButtonModel arrayModel = arrayCheckBox.getModel();
         arrayModel.addChangeListener(new ChangeListener() {
 
@@ -61,7 +63,7 @@ public class ReturnNullInspection extends StatementInspection {
                 m_reportArrayMethods = arrayModel.isSelected();
             }
         });
-        final JCheckBox objectCheckBox = new JCheckBox(InspectionGadgetsBundle.message("return.of.null.objects.option"), m_reportObjectMethods);
+      final JCheckBox objectCheckBox = new JCheckBox(InspectionGadgetsBundle.message("return.of.null.objects.option"), m_reportObjectMethods);
         final ButtonModel model = objectCheckBox.getModel();
         model.addChangeListener(new ChangeListener() {
 
@@ -70,13 +72,15 @@ public class ReturnNullInspection extends StatementInspection {
             }
         });
         final GridBagConstraints constraints = new GridBagConstraints();
+        constraints.anchor = GridBagConstraints.FIRST_LINE_START;
         constraints.gridx = 0;
         constraints.gridy = 0;
-        constraints.fill = GridBagConstraints.HORIZONTAL;
+        constraints.weightx = 1.0;
         panel.add(arrayCheckBox, constraints);
 
         constraints.gridx = 0;
         constraints.gridy = 1;
+        constraints.weighty = 1.0;
         panel.add(objectCheckBox, constraints);
         return panel;
     }
@@ -87,7 +91,8 @@ public class ReturnNullInspection extends StatementInspection {
 
     private class ReturnNullVisitor extends StatementInspectionVisitor {
     
-        public void visitLiteralExpression(@NotNull PsiLiteralExpression value) {
+        public void visitLiteralExpression(
+                @NotNull PsiLiteralExpression value) {
             super.visitLiteralExpression(value);
             final String text = value.getText();
             if (!PsiKeyword.NULL.equals(text)) {
@@ -104,9 +109,8 @@ public class ReturnNullInspection extends StatementInspection {
                 return;
             }
             final PsiMethod method =
-                    PsiTreeUtil.getParentOfType(value,
-                                                            PsiMethod.class);
-            if(method == null) {
+                    PsiTreeUtil.getParentOfType(value, PsiMethod.class);
+            if (method == null) {
                 return;
             }
             final PsiType returnType = method.getReturnType();
@@ -114,6 +118,11 @@ public class ReturnNullInspection extends StatementInspection {
                 return;
             }
             final boolean isArray = returnType.getArrayDimensions() > 0;
+            final PsiModifierList modifierList = method.getModifierList();
+            if (modifierList.findAnnotation(
+                    "org.jetbrains.annotations.Nullable") != null) {
+                return;
+            }
             if (m_reportArrayMethods && isArray) {
                 registerError(value);
             }
@@ -121,7 +130,5 @@ public class ReturnNullInspection extends StatementInspection {
                 registerError(value);
             }
         }
-
     }
-
 }

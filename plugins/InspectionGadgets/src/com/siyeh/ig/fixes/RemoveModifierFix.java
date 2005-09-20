@@ -23,19 +23,19 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
 
 public class RemoveModifierFix extends InspectionGadgetsFix {
-    private final PsiElement modifier;
+    private final String modifierText;
 
     public RemoveModifierFix(PsiElement modifier) {
         super();
-        this.modifier = modifier;
+        modifierText = modifier.getText();
     }
 
     public String getName() {
-        return InspectionGadgetsBundle.message("remove.modifier.quickfix", modifier.getText());
+      return InspectionGadgetsBundle.message("remove.modifier.quickfix", modifierText);
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                     throws IncorrectOperationException{
+            throws IncorrectOperationException {
         final PsiElement modifierElement = descriptor.getPsiElement();
         deleteElement(modifierElement);
     }

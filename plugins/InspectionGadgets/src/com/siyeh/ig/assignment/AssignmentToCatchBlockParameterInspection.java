@@ -28,7 +28,9 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class AssignmentToCatchBlockParameterInspection
         extends ExpressionInspection{
@@ -37,7 +39,7 @@ public class AssignmentToCatchBlockParameterInspection
             new AssignmentToCatchBlockParameterFix();
 
     public String getDisplayName(){
-        return "Assignment to catch block parameter";
+        return InspectionGadgetsBundle.message("assignment.to.catch.block.parameter.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -45,7 +47,7 @@ public class AssignmentToCatchBlockParameterInspection
     }
 
     public String buildErrorString(PsiElement location){
-        return "Assignment to catch block parameter '#ref' #loc ";
+        return InspectionGadgetsBundle.message("assignment.to.catch.block.parameter.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
@@ -56,7 +58,7 @@ public class AssignmentToCatchBlockParameterInspection
             extends InspectionGadgetsFix{
 
         public String getName(){
-            return "Extract parameter as local variable";
+            return InspectionGadgetsBundle.message("assignment.to.catch.block.parameter.extract.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
@@ -81,7 +83,7 @@ public class AssignmentToCatchBlockParameterInspection
                             VariableKind.LOCAL_VARIABLE,
                             originalVariableName + '1', variable, type);
             final String[] names = suggestions.names;
-            final String baseName;
+            @NonNls final String baseName;
             if(names != null && names.length > 0){
                 baseName = names[0];
             } else{
@@ -100,9 +102,9 @@ public class AssignmentToCatchBlockParameterInspection
                                     originalVariableName, buffer);
             }
             final String text = '{' + className + ' ' + variableName + " = " +
-                    originalVariableName +
-                    ';' +
-                    buffer;
+                                originalVariableName +
+                                ';' +
+                                buffer;
 
             final PsiElementFactory elementFactory =
                     psiManager.getElementFactory();

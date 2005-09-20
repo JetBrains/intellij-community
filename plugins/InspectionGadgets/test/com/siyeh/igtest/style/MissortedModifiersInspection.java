@@ -22,12 +22,11 @@ final public class MissortedModifiersInspection
 
       private transient static Hashtable mAttributeMeta;
 
-    public class TestQuickFix
+    final public class TestQuickFix
     {
        protected final static String A = "a";
        protected final static String B = "b";
        protected final static String C = "c";
        protected final static String D = "d";
     }
-    
 }

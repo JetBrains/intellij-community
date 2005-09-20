@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.siyeh.ig.naming.NonBooleanMethodNameMayNotStartWithQuestionInspection.Form">
-  <grid id="9993d" binding="contentPanel" row-count="2" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-    <margin top="2" left="2" bottom="2" right="2"/>
+  <grid id="c36c6" binding="contentPanel" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="4" vgap="4">
+    <margin top="4" left="4" bottom="4" right="4"/>
     <constraints>
-      <xy x="92" y="33" width="211" height="192"/>
+      <xy x="94" y="35" width="298" height="158"/>
       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
     </constraints>
     <properties/>
@@ -11,8 +11,8 @@
     <children>
       <scrollpane id="14807">
         <constraints>
-          <xy x="2" y="2" width="207" height="158"/>
-          <grid row="0" column="0" row-span="1" col-span="3" vsize-policy="3" hsize-policy="7" anchor="0" fill="3"/>
+          <xy x="4" y="4" width="223" height="150"/>
+          <grid row="0" column="0" row-span="3" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="3"/>
         </constraints>
         <properties/>
         <border type="none"/>
@@ -25,30 +25,31 @@
           </component>
         </children>
       </scrollpane>
-      <component id="f6174" class="javax.swing.JButton" binding="deleteButton">
-        <constraints>
-          <xy x="142" y="165" width="67" height="25"/>
-          <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1"/>
-        </constraints>
-        <properties>
-          <text resource-bundle="com/intellij/CommonBundle" key="button.delete"/>
-        </properties>
-      </component>
       <component id="52926" class="javax.swing.JButton" binding="addButton">
         <constraints>
-          <xy x="77" y="165" width="55" height="25"/>
+          <xy x="231" y="4" width="63" height="25"/>
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="com/siyeh/InspectionGadgetsBundle" key="button.add"/>
+        </properties>
+      </component>
+      <component id="f6174" class="javax.swing.JButton" binding="deleteButton">
+        <constraints>
+          <xy x="231" y="33" width="63" height="25"/>
           <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1"/>
         </constraints>
         <properties>
-          <text resource-bundle="com/intellij/CommonBundle" key="button.add"/>
+          <margin top="3" left="8" bottom="3" right="8"/>
+          <text resource-bundle="com/siyeh/InspectionGadgetsBundle" key="button.remove"/>
         </properties>
       </component>
-      <hspacer id="f4582">
+      <vspacer id="5ac98">
         <constraints>
-          <xy x="2" y="172" width="75" height="11"/>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
+          <xy x="257" y="58" width="11" height="96"/>
+          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
         </constraints>
-      </hspacer>
+      </vspacer>
     </children>
   </grid>
 </form>

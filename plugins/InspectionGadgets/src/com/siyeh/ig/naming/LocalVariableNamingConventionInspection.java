@@ -39,254 +39,269 @@ import java.awt.*;
 import java.text.NumberFormat;
 import java.util.regex.Pattern;
 
-public class LocalVariableNamingConventionInspection extends ConventionInspection {
+public class LocalVariableNamingConventionInspection
+        extends ConventionInspection {
 
-  /**
-   * @noinspection PublicField
-   */
-  public boolean m_ignoreForLoopParameters = false;
-  /**
-   * @noinspection PublicField
-   */
-  public boolean m_ignoreCatchParameters = false;
-  private static final int DEFAULT_MIN_LENGTH = 1;
-  private static final int DEFAULT_MAX_LENGTH = 20;
-  private final RenameFix fix = new RenameFix();
+    /** @noinspection PublicField*/
+    public boolean m_ignoreForLoopParameters = false;
+    /** @noinspection PublicField*/
+    public boolean m_ignoreCatchParameters = false;
 
-  public String getGroupDisplayName() {
-    return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
-  }
+    private static final int DEFAULT_MIN_LENGTH = 1;
+    private static final int DEFAULT_MAX_LENGTH = 20;
+    private final RenameFix fix = new RenameFix();
 
-  public String buildErrorString(PsiElement location) {
-    final PsiVariable var = (PsiVariable)location.getParent();
-    assert var != null;
-    final String varName = var.getName();
-    if (varName.length() < getMinLength()) {
-      return InspectionGadgetsBundle.message("local.variable.naming.convention.problem.descriptor.short");
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message("local.variable.naming.convention.display.name");
     }
-    else if (varName.length() > getMaxLength()) {
-      return InspectionGadgetsBundle.message("local.variable.naming.convention.problem.descriptor.long");
+
+    public String getGroupDisplayName() {
+        return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
     }
-    else {
-      return InspectionGadgetsBundle.message("local.variable.naming.convention.problem.descriptor.regex.mismatch", getRegex());
-    }
-  }
 
-  protected InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-    return true;
-  }
-
-  protected String getDefaultRegex() {
-    return "[a-z][A-Za-z]*";
-  }
-
-  protected int getDefaultMinLength() {
-    return DEFAULT_MIN_LENGTH;
-  }
-
-  protected int getDefaultMaxLength() {
-    return DEFAULT_MAX_LENGTH;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new NamingConventionsVisitor();
-  }
-
-  public ProblemDescriptor[] doCheckMethod(PsiMethod method, InspectionManager manager, boolean isOnTheFly) {
-    final PsiClass containingClass = method.getContainingClass();
-    if (containingClass == null) {
-      return super.doCheckMethod(method, manager, isOnTheFly);
-    }
-    if (!containingClass.isPhysical()) {
-      return super.doCheckMethod(method, manager, isOnTheFly);
-    }
-    final BaseInspectionVisitor visitor = createVisitor(manager, isOnTheFly);
-    method.accept(visitor);
-    return visitor.getErrors();
-  }
-
-  private class NamingConventionsVisitor extends BaseInspectionVisitor {
-
-
-    public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
-      super.visitLocalVariable(variable);
-      if (m_ignoreForLoopParameters) {
-        final PsiElement declStatement = variable.getParent();
-        if (declStatement != null && declStatement.getParent() instanceof PsiForStatement) {
-          final PsiForStatement forLoop = (PsiForStatement)declStatement.getParent();
-          assert forLoop != null;
-          final PsiStatement initialization = forLoop.getInitialization();
-          if (declStatement.equals(initialization)) {
-            return;
-          }
+    public String buildErrorString(PsiElement location) {
+        final PsiVariable var = (PsiVariable) location.getParent();
+        assert var != null;
+        final String varName = var.getName();
+        if (varName.length() < getMinLength()) {
+            return InspectionGadgetsBundle.message("local.variable.naming.convention.problem.descriptor.short");
+        } else if (varName.length() > getMaxLength()) {
+            return InspectionGadgetsBundle.message("local.variable.naming.convention.problem.descriptor.long");
+        } else {
+          return InspectionGadgetsBundle.message("local.variable.naming.convention.problem.descriptor.regex.mismatch", getRegex());
         }
-      }
-      final String name = variable.getName();
-      if (name == null) {
-        return;
-      }
-      if (isValid(name)) {
-        return;
-      }
-      registerVariableError(variable);
     }
 
-    public void visitParameter(@NotNull PsiParameter variable) {
-      final boolean isCatchParameter =
-        variable.getDeclarationScope() instanceof PsiCatchSection;
-      if (!isCatchParameter) {
-        return;
-      }
-      if (m_ignoreCatchParameters && isCatchParameter) {
-        return;
-      }
-      final String name = variable.getName();
-      if (name == null) {
-        return;
-      }
-      if (isValid(name)) {
-        return;
-      }
-      registerVariableError(variable);
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return fix;
     }
 
-  }
+    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+        return true;
+    }
 
-  private static final int LOCAL_REGEX_COLUMN_COUNT = 25;
+    protected String getDefaultRegex() {
+        return "[a-z][A-Za-z]*";
+    }
 
-  public JComponent createOptionsPanel() {
-    final GridBagLayout layout = new GridBagLayout();
-    final JPanel panel = new JPanel(layout);
+    protected int getDefaultMinLength() {
+        return DEFAULT_MIN_LENGTH;
+    }
 
-    final JLabel patternLabel = new JLabel(InspectionGadgetsBundle.message("convention.pattern.option"));
-    patternLabel.setHorizontalAlignment(SwingConstants.TRAILING);
-    final JLabel minLengthLabel = new JLabel(InspectionGadgetsBundle.message("convention.min.length.option"));
-    minLengthLabel.setHorizontalAlignment(SwingConstants.TRAILING);
-    final JLabel maxLengthLabel = new JLabel(InspectionGadgetsBundle.message("convention.max.length.option"));
-    maxLengthLabel.setHorizontalAlignment(SwingConstants.TRAILING);
+    protected int getDefaultMaxLength() {
+        return DEFAULT_MAX_LENGTH;
+    }
 
-    final JCheckBox forLoopCheckBox = new JCheckBox(InspectionGadgetsBundle.message("local.variable.naming.convention.ignore.option"), m_ignoreForLoopParameters);
-    final ButtonModel forLoopModel = forLoopCheckBox.getModel();
-    forLoopModel.addChangeListener(new ChangeListener() {
-      public void stateChanged(ChangeEvent e) {
-        m_ignoreForLoopParameters = forLoopModel.isSelected();
-      }
-    });
-    final JCheckBox catchCheckBox = new JCheckBox(InspectionGadgetsBundle.message("local.variable.naming.convention.ignore.catch.option"), m_ignoreCatchParameters);
-    final ButtonModel catchBlockModel = catchCheckBox.getModel();
-    catchBlockModel.addChangeListener(new ChangeListener() {
-      public void stateChanged(ChangeEvent e) {
-        m_ignoreCatchParameters = catchBlockModel.isSelected();
-      }
-    });
+    public BaseInspectionVisitor buildVisitor() {
+        return new NamingConventionsVisitor();
+    }
 
-    final NumberFormat format = NumberFormat.getIntegerInstance();
-    format.setParseIntegerOnly(true);
-    format.setMinimumIntegerDigits(1);
-    format.setMaximumIntegerDigits(2);
-    final InternationalFormatter formatter = new InternationalFormatter(format);
-    formatter.setAllowsInvalid(false);
-    formatter.setCommitsOnValidEdit(true);
+    public ProblemDescriptor[] doCheckMethod(PsiMethod method,
+                                             InspectionManager manager,
+                                             boolean isOnTheFly) {
+        final PsiClass containingClass = method.getContainingClass();
+        if (containingClass == null) {
+            return super.doCheckMethod(method, manager, isOnTheFly);
+        }
+        if (!containingClass.isPhysical()) {
+            return super.doCheckMethod(method, manager, isOnTheFly);
+        }
+        final BaseInspectionVisitor visitor = createVisitor(manager,
+                                                            isOnTheFly);
+        method.accept(visitor);
+        return visitor.getErrors();
+    }
 
-    final JFormattedTextField minLengthField = new JFormattedTextField(formatter);
-    final Font panelFont = panel.getFont();
-    minLengthField.setFont(panelFont);
-    minLengthField.setValue(m_minLength);
-    minLengthField.setColumns(2);
-    FormattedTextFieldMacFix.apply(minLengthField);
+    private class NamingConventionsVisitor extends BaseInspectionVisitor {
 
-    final JFormattedTextField maxLengthField = new JFormattedTextField(formatter);
-    maxLengthField.setFont(panelFont);
-    maxLengthField.setValue(m_maxLength);
-    maxLengthField.setColumns(2);
-    FormattedTextFieldMacFix.apply(maxLengthField);
+        public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
+            super.visitLocalVariable(variable);
+            if (m_ignoreForLoopParameters) {
+                final PsiElement declStatement = variable.getParent();
+                if (declStatement!=null &&
+                        declStatement.getParent() instanceof PsiForStatement) {
+                    final PsiForStatement forLoop =
+                            (PsiForStatement) declStatement.getParent();
+                    assert forLoop != null;
+                    final PsiStatement initialization =
+                            forLoop.getInitialization();
+                    if (declStatement.equals(initialization)) {
+                        return;
+                    }
+                }
+            }
+            final String name = variable.getName();
+            if (name == null) {
+                return;
+            }
+            if (isValid(name)) {
+                return;
+            }
+            registerVariableError(variable);
+        }
 
-    final JFormattedTextField regexField = new JFormattedTextField(new RegExFormatter());
-    regexField.setFont(panelFont);
-    regexField.setValue(m_regexPattern);
-    regexField.setColumns(LOCAL_REGEX_COLUMN_COUNT);
-    regexField.setInputVerifier(new RegExInputVerifier());
-    regexField.setFocusLostBehavior(JFormattedTextField.COMMIT);
-    FormattedTextFieldMacFix.apply(regexField);
+        public void visitParameter(@NotNull PsiParameter variable) {
+            final PsiElement scope = variable.getDeclarationScope();
+            final boolean isCatchParameter =
+                    scope instanceof PsiCatchSection;
+            final boolean isForeachParameter =
+                    scope instanceof PsiForeachStatement;
+            if (!isCatchParameter && !isForeachParameter) {
+                return;
+            }
+            if (m_ignoreCatchParameters && isCatchParameter) {
+                return;
+            }
+            final String name = variable.getName();
+            if (name == null) {
+                return;
+            }
+            if (isValid(name)) {
+                return;
+            }
+            registerVariableError(variable);
+        }
+    }
 
-    final DocumentListener listener = new DocumentListener() {
-      public void changedUpdate(DocumentEvent e) {
-        textChanged();
-      }
+    private static final int LOCAL_REGEX_COLUMN_COUNT = 25;
 
-      public void insertUpdate(DocumentEvent e) {
-        textChanged();
-      }
+    public JComponent createOptionsPanel() {
+        final GridBagLayout layout = new GridBagLayout();
+        final JPanel panel = new JPanel(layout);
 
-      public void removeUpdate(DocumentEvent e) {
-        textChanged();
-      }
+        final JLabel patternLabel = new JLabel(InspectionGadgetsBundle.message("convention.pattern.option"));
+        patternLabel.setHorizontalAlignment(SwingConstants.TRAILING);
+        final JLabel minLengthLabel = new JLabel(InspectionGadgetsBundle.message("convention.min.length.option"));
+        minLengthLabel.setHorizontalAlignment(SwingConstants.TRAILING);
+        final JLabel maxLengthLabel = new JLabel(InspectionGadgetsBundle.message("convention.max.length.option"));
+        maxLengthLabel.setHorizontalAlignment(SwingConstants.TRAILING);
 
-      private void textChanged() {
-        m_regexPattern = (Pattern)regexField.getValue();
-        m_regex = m_regexPattern.pattern();
-        m_minLength = ((Number)minLengthField.getValue()).intValue();
-        m_maxLength = ((Number)maxLengthField.getValue()).intValue();
-      }
-    };
-    final Document regexDocument = regexField.getDocument();
-    regexDocument.addDocumentListener(listener);
-    final Document minLengthDocument = minLengthField.getDocument();
-    minLengthDocument.addDocumentListener(listener);
-    final Document maxLengthDocument = maxLengthField.getDocument();
-    maxLengthDocument.addDocumentListener(listener);
+        final JCheckBox forLoopCheckBox =
+                new JCheckBox(InspectionGadgetsBundle.message("local.variable.naming.convention.ignore.option"),
+                              m_ignoreForLoopParameters);
+        final ButtonModel forLoopModel = forLoopCheckBox.getModel();
+        forLoopModel.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                m_ignoreForLoopParameters = forLoopModel.isSelected();
+            }
+        });
+        final JCheckBox catchCheckBox =
+                new JCheckBox(InspectionGadgetsBundle.message("local.variable.naming.convention.ignore.catch.option"),
+                              m_ignoreCatchParameters);
+        final ButtonModel catchBlockModel = catchCheckBox.getModel();
+        catchBlockModel.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                m_ignoreCatchParameters = catchBlockModel.isSelected();
+            }
+        });
 
-    final GridBagConstraints constraints = new GridBagConstraints();
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.weightx = 1.0;
-    constraints.anchor = GridBagConstraints.EAST;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    panel.add(patternLabel, constraints);
+        final NumberFormat format = NumberFormat.getIntegerInstance();
+        format.setParseIntegerOnly(true);
+        format.setMinimumIntegerDigits(1);
+        format.setMaximumIntegerDigits(2);
+        final InternationalFormatter formatter =
+                new InternationalFormatter(format);
+        formatter.setAllowsInvalid(false);
+        formatter.setCommitsOnValidEdit(true);
 
-    constraints.gridx = 1;
-    constraints.gridy = 0;
-    constraints.gridwidth = 3;
-    constraints.anchor = GridBagConstraints.WEST;
-    panel.add(regexField, constraints);
+        final JFormattedTextField minLengthField =
+                new JFormattedTextField(formatter);
+        final Font panelFont = panel.getFont();
+        minLengthField.setFont(panelFont);
+        minLengthField.setValue(m_minLength);
+        minLengthField.setColumns(2);
+        FormattedTextFieldMacFix.apply(minLengthField);
 
-    constraints.gridx = 0;
-    constraints.gridy = 1;
-    constraints.gridwidth = 1;
-    constraints.anchor = GridBagConstraints.EAST;
-    panel.add(minLengthLabel, constraints);
+        final JFormattedTextField maxLengthField =
+                new JFormattedTextField(formatter);
+        maxLengthField.setFont(panelFont);
+        maxLengthField.setValue(m_maxLength);
+        maxLengthField.setColumns(2);
+        FormattedTextFieldMacFix.apply(maxLengthField);
 
-    constraints.gridx = 1;
-    constraints.gridy = 1;
-    constraints.anchor = GridBagConstraints.WEST;
-    panel.add(minLengthField, constraints);
+        final JFormattedTextField regexField =
+                new JFormattedTextField(new RegExFormatter());
+        regexField.setFont(panelFont);
+        regexField.setValue(m_regexPattern);
+        regexField.setColumns(LOCAL_REGEX_COLUMN_COUNT);
+        regexField.setInputVerifier(new RegExInputVerifier());
+        regexField.setFocusLostBehavior(JFormattedTextField.COMMIT);
+        FormattedTextFieldMacFix.apply(regexField);
 
-    constraints.gridx = 2;
-    constraints.gridy = 1;
-    constraints.anchor = GridBagConstraints.EAST;
-    panel.add(maxLengthLabel, constraints);
+        final DocumentListener listener = new DocumentListener() {
+            public void changedUpdate(DocumentEvent e) {
+                textChanged();
+            }
 
-    constraints.gridx = 3;
-    constraints.gridy = 1;
-    constraints.anchor = GridBagConstraints.WEST;
-    panel.add(maxLengthField, constraints);
+            public void insertUpdate(DocumentEvent e) {
+                textChanged();
+            }
 
-    constraints.gridx = 1;
-    constraints.gridy = 2;
-    constraints.gridwidth = 3;
-    constraints.anchor = GridBagConstraints.WEST;
-    panel.add(forLoopCheckBox, constraints);
+            public void removeUpdate(DocumentEvent e) {
+                textChanged();
+            }
 
-    constraints.gridx = 1;
-    constraints.gridy = 3;
-    constraints.gridwidth = 3;
-    constraints.anchor = GridBagConstraints.WEST;
-    panel.add(catchCheckBox, constraints);
+            private void textChanged() {
+                m_regexPattern = (Pattern) regexField.getValue();
+                m_regex = m_regexPattern.pattern();
+                m_minLength = ((Number) minLengthField.getValue()).intValue();
+                m_maxLength = ((Number) maxLengthField.getValue()).intValue();
+            }
+        };
+        final Document regexDocument = regexField.getDocument();
+        regexDocument.addDocumentListener(listener);
+        final Document minLengthDocument = minLengthField.getDocument();
+        minLengthDocument.addDocumentListener(listener);
+        final Document maxLengthDocument = maxLengthField.getDocument();
+        maxLengthDocument.addDocumentListener(listener);
 
-    return panel;
-  }
+        final GridBagConstraints constraints = new GridBagConstraints();
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        constraints.weightx = 1.0;
+        constraints.anchor = GridBagConstraints.EAST;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(patternLabel, constraints);
+
+        constraints.gridx = 1;
+        constraints.gridy = 0;
+        constraints.gridwidth = 3;
+        constraints.anchor = GridBagConstraints.WEST;
+        panel.add(regexField, constraints);
+
+        constraints.gridx = 0;
+        constraints.gridy = 1;
+        constraints.gridwidth = 1;
+        constraints.anchor = GridBagConstraints.EAST;
+        panel.add(minLengthLabel, constraints);
+
+        constraints.gridx = 1;
+        constraints.gridy = 1;
+        constraints.anchor = GridBagConstraints.WEST;
+        panel.add(minLengthField, constraints);
+
+        constraints.gridx = 2;
+        constraints.gridy = 1;
+        constraints.anchor = GridBagConstraints.EAST;
+        panel.add(maxLengthLabel, constraints);
+
+        constraints.gridx = 3;
+        constraints.gridy = 1;
+        constraints.anchor = GridBagConstraints.WEST;
+        panel.add(maxLengthField, constraints);
+
+        constraints.gridx = 1;
+        constraints.gridy = 2;
+        constraints.gridwidth = 3;
+        constraints.anchor = GridBagConstraints.WEST;
+        panel.add(forLoopCheckBox, constraints);
+
+        constraints.gridx = 1;
+        constraints.gridy = 3;
+        constraints.gridwidth = 3;
+        constraints.anchor = GridBagConstraints.WEST;
+        panel.add(catchCheckBox, constraints);
+
+        return panel;
+    }
 }

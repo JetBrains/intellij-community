@@ -32,8 +32,10 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 public class ReuseOfLocalVariableInspection
         extends ExpressionInspection{
@@ -42,7 +44,7 @@ public class ReuseOfLocalVariableInspection
             new AssignmentToCatchBlockParameterFix();
 
     public String getDisplayName(){
-        return "Reuse of local variable";
+        return InspectionGadgetsBundle.message("reuse.of.local.variable.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -50,7 +52,7 @@ public class ReuseOfLocalVariableInspection
     }
 
     public String buildErrorString(PsiElement location){
-        return "Reuse of local variable #ref #loc ";
+        return InspectionGadgetsBundle.message("reuse.of.local.variable.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
@@ -61,7 +63,7 @@ public class ReuseOfLocalVariableInspection
             extends InspectionGadgetsFix{
 
         public String getName(){
-            return "Split local variable";
+            return InspectionGadgetsBundle.message("reuse.of.local.variable.split.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
@@ -90,7 +92,7 @@ public class ReuseOfLocalVariableInspection
                             lExpression,
                             type);
             final String[] names = suggestions.names;
-            final String baseName;
+            @NonNls final String baseName;
             if(names != null && names.length > 0){
                 baseName = names[0];
             } else{
@@ -111,7 +113,7 @@ public class ReuseOfLocalVariableInspection
                     final TextRange textRange =
                             assignmentStatement.getTextRange();
                     if(referenceElement.getTextOffset() >
-                                            textRange.getEndOffset()){
+                       textRange.getEndOffset()){
                         replaceExpression((PsiExpression) referenceElement,
                                           newVariableName);
                     }
@@ -121,9 +123,9 @@ public class ReuseOfLocalVariableInspection
             assert rhs != null;
             final String newStatement =
                     type.getPresentableText() + ' '
-                            + newVariableName +
-                            " =  " + rhs.getText()
-                            + ';';
+                    + newVariableName +
+                    " =  " + rhs.getText()
+                    + ';';
             replaceStatement(assignmentStatement, newStatement);
         }
     }
@@ -221,9 +223,9 @@ public class ReuseOfLocalVariableInspection
                     return false;
                 }
                 if(elementToTest instanceof PsiWhileStatement ||
-                        elementToTest instanceof PsiForeachStatement ||
-                        elementToTest instanceof PsiForStatement ||
-                        elementToTest instanceof PsiDoWhileStatement) {
+                   elementToTest instanceof PsiForeachStatement ||
+                   elementToTest instanceof PsiForStatement ||
+                   elementToTest instanceof PsiDoWhileStatement) {
                     return true;
                 }
                 elementToTest = elementToTest.getParent();

@@ -31,11 +31,14 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class InstanceVariableInitializationInspection extends FieldInspection{
+
     /**
      * @noinspection PublicField
      */
     public boolean m_ignorePrimitives = false;
-    private final MakeInitializerExplicitFix fix = new MakeInitializerExplicitFix();
+
+    private final MakeInitializerExplicitFix fix =
+            new MakeInitializerExplicitFix();
 
     public String getID(){
         return "InstanceVariableMayNotBeInitialized";
@@ -50,7 +53,7 @@ public class InstanceVariableInitializationInspection extends FieldInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("instance.variable.may.not.be.initialized.problem.descriptor");
+      return InspectionGadgetsBundle.message("instance.variable.may.not.be.initialized.problem.descriptor");
     }
 
     public JComponent createOptionsPanel(){
@@ -68,6 +71,7 @@ public class InstanceVariableInitializationInspection extends FieldInspection{
 
     private class InstanceVariableInitializationVisitor
             extends BaseInspectionVisitor{
+
         public void visitField(@NotNull PsiField field){
             if(field.hasModifierProperty(PsiModifier.STATIC)){
                 return;
@@ -102,15 +106,15 @@ public class InstanceVariableInitializationInspection extends FieldInspection{
 
             for(final PsiMethod constructor : constructors){
                 final PsiCodeBlock body = constructor.getBody();
-                if(!InitializationUtils.blockMustAssignVariableOrFail(field,
-                                                                      body)){
+                if(!InitializationUtils.blockAssignsVariableOrFails(body,
+                        field)) {
                     registerFieldError(field);
                     return;
                 }
             }
         }
 
-        private boolean isInitializedInInitializer(PsiField field){
+        private boolean isInitializedInInitializer(@NotNull PsiField field){
             final PsiClass aClass = field.getContainingClass();
             if(aClass == null){
                 return false;
@@ -119,8 +123,8 @@ public class InstanceVariableInitializationInspection extends FieldInspection{
             for(final PsiClassInitializer initializer : initializers){
                 if(!initializer.hasModifierProperty(PsiModifier.STATIC)){
                     final PsiCodeBlock body = initializer.getBody();
-                    if(InitializationUtils.blockMustAssignVariableOrFail(field,
-                                                                         body)){
+                    if(InitializationUtils.blockAssignsVariableOrFails(body,
+                            field)) {
                         return true;
                     }
                 }
