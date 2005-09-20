@@ -57,7 +57,7 @@ public class ClassElement extends RepositoryTreeElement {
     }
 
     if (isEnum()) {
-      if (!ENUM_CONSTANT_LIST_ELEMENTS_BIT_SET.isInSet(first.getElementType())) {
+      if (!ENUM_CONSTANT_LIST_ELEMENTS_BIT_SET.contains(first.getElementType())) {
         ASTNode semicolonPlace = findEnumConstantListDelimiterPlace();
         if (semicolonPlace == null || semicolonPlace.getElementType() != SEMICOLON) {
             final LeafElement semicolon = Factory.createSingleLeafElement(SEMICOLON, new char[]{';'}, 0, 1,
@@ -137,12 +137,11 @@ public class ClassElement extends RepositoryTreeElement {
   }
 
   public boolean isEnum() {
-    final ASTNode keyword = findChildByRole(ChildRole.CLASS_OR_INTERFACE_KEYWORD);
-    return keyword != null && keyword.getElementType() == ENUM_KEYWORD;
+    return getFirstChildNode().getElementType() == ENUM_KEYWORD;
   }
 
   public boolean isAnnotationType() {
-    return findChildByRole(ChildRole.AT) != null;
+    return getFirstChildNode().getElementType() == AT;
   }
 
   private static final TokenSet MODIFIERS_TO_REMOVE_IN_INTERFACE_BIT_SET = TokenSet.create(
@@ -195,7 +194,7 @@ public class ClassElement extends RepositoryTreeElement {
 
       case ChildRole.CLASS_OR_INTERFACE_KEYWORD:
         for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
-          if (CLASS_KEYWORD_BIT_SET.isInSet(child.getElementType())) return child;
+          if (CLASS_KEYWORD_BIT_SET.contains(child.getElementType())) return child;
         }
         LOG.assertTrue(false);
         return null;
@@ -225,7 +224,7 @@ public class ClassElement extends RepositoryTreeElement {
     if (first == null) return null;
     for (ASTNode child = first.getTreeNext(); child != null; child = child.getTreeNext()) {
       final IElementType childType = child.getElementType();
-      if (WHITE_SPACE_OR_COMMENT_BIT_SET.isInSet(childType) ||
+      if (WHITE_SPACE_OR_COMMENT_BIT_SET.contains(childType) ||
           childType == ERROR_ELEMENT || childType == ENUM_CONSTANT) {
         continue;
       }
