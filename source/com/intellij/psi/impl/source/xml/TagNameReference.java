@@ -85,7 +85,11 @@ class TagNameReference implements PsiReference {
       if (owner.getMetaData() instanceof XmlElementDescriptor){
         getElement().setName(owner.getMetaData().getName(getElement()));
       }
+    } else if (element instanceof JspFile) {
+      // implicit reference to tag file
+      return getElement();
     }
+    
     throw new IncorrectOperationException("Cant bind to not a xml element definition!");
   }
 
