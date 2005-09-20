@@ -16,27 +16,30 @@
 package org.jetbrains.idea.svn.checkin;
 
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.CheckinProjectDialogImplementer;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.RollbackProvider;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
-import com.intellij.openapi.vcs.checkin.DifferenceType;
-import com.intellij.openapi.vcs.checkin.RevisionsFactory;
-import com.intellij.openapi.vcs.checkin.VcsOperation;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.actions.VcsContext;
+import com.intellij.openapi.vcs.checkin.*;
 import com.intellij.openapi.vcs.checkin.changeListBasedCheckin.CommitChangeOperation;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnConfiguration;
+import org.jetbrains.idea.svn.actions.MarkResolvedAction;
 import com.intellij.util.ui.DialogUtil;
+import com.intellij.util.Icons;
+import com.intellij.peer.PeerFactory;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.*;
@@ -44,6 +47,8 @@ import org.tmatesoft.svn.core.wc.*;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
+import java.awt.event.ItemListener;
+import java.awt.event.ItemEvent;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -77,13 +82,11 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   public RefreshableOnComponent createAdditionalOptionsPanelForCheckinProject(Refreshable panel) {
-    myKeepLocksComponent = new KeepLocksComponent();
-    return myKeepLocksComponent;
+    return new KeepLocksComponent(panel, true);
   }
 
   public RefreshableOnComponent createAdditionalOptionsPanelForCheckinFile(Refreshable panel) {
-    myKeepLocksComponent = new KeepLocksComponent();
-    return myKeepLocksComponent;
+    return new KeepLocksComponent(panel, false);
   }
 
   public RefreshableOnComponent createAdditionalOptionsPanel(Refreshable panel, boolean checkinProject) {
@@ -101,7 +104,71 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   public AnAction[] getAdditionalActions(int index) {
-    return new AnAction[0];
+    return new AnAction[] {new MarkResolvedAction()};
+  }
+
+  private class MarkResolvedAction extends AnAction {
+    public MarkResolvedAction() {
+      super(SvnBundle.message("action.name.mark.resolved"), SvnBundle.message("mark.resolved.action.description"), IconLoader.getIcon("/actions/submit2.png"));
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      final VcsContext context = PeerFactory.getInstance().getVcsContextFactory().createContextOn(e);
+
+      final Refreshable refreshableDialog = context.getRefreshableDialog();
+      if (refreshableDialog != null) {
+        refreshableDialog.saveState();
+      }
+
+      final FilePath[] pathsArray = context.getSelectedFilePaths();
+
+      try {
+        SVNWCClient wcClient = mySvnVcs.createWCClient();
+        for (int i = 0; i < pathsArray.length; i++) {
+          File ioFile = pathsArray[i].getIOFile();
+          wcClient.doResolve(ioFile, false);
+        }
+      }
+      catch (SVNException svnEx) {
+        Messages.showErrorDialog(SvnBundle.message("cannot.mark.file.as.resolved.error.message", svnEx.getLocalizedMessage()),
+                                 SvnBundle.message("mark.resolved.dialog.title"));
+      }
+      finally {
+        FileStatusManager.getInstance(mySvnVcs.getProject()).fileStatusesChanged();
+
+        if (refreshableDialog != null) {
+          refreshableDialog.refresh();
+        }
+
+      }
+
+    }
+
+    public void update(AnActionEvent e) {
+      DiffTreeNode[] presentableElements = (DiffTreeNode[])e.getDataContext().getData(
+            DiffTreeNode.TREE_NODES);
+
+      Presentation presentation = e.getPresentation();
+
+      if ((presentableElements == null) || (presentableElements.length == 0)){
+        presentation.setEnabled(false);
+        presentation.setVisible(false);
+        return;
+      }
+
+      presentation.setEnabled(true);
+      presentation.setVisible(true);
+
+      for (int i = 0; i < presentableElements.length; i++) {
+        DiffTreeNode presentableElement = presentableElements[i];
+        if (presentableElement.getDifference() != SvnRevisions.CONFLICTED_DIFF_TYPE) {
+          presentation.setEnabled(false);
+          presentation.setVisible(false);
+          return;
+        }
+      }
+
+    }
   }
 
   public String prepareCheckinMessage(String text) {
@@ -259,15 +326,41 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     private boolean myIsKeepLocks;
     private JPanel myPanel;
 
-    public JComponent getComponent() {
-      if (myPanel == null) {
-        myPanel = new JPanel(new BorderLayout());
-        myKeepLocksBox = new JCheckBox(SvnBundle.message("checkbox.chckin.keep.files.locked"));
-        myKeepLocksBox.setSelected(myIsKeepLocks);
+    private final JCheckBox myShowUnresolvedFileCheckBox;
 
-        myPanel.add(myKeepLocksBox, BorderLayout.CENTER);
-        myPanel.setBorder(new TitledBorder(SvnBundle.message("border.show.changes.dialog.subversion.group")));
+    public KeepLocksComponent(final Refreshable panel, boolean showShowUnresolvedCheckBox) {
+
+      myPanel = new JPanel(new BorderLayout());
+      myKeepLocksBox = new JCheckBox(SvnBundle.message("checkbox.chckin.keep.files.locked"));
+      myKeepLocksBox.setSelected(myIsKeepLocks);
+
+      myPanel.add(myKeepLocksBox, BorderLayout.CENTER);
+      myPanel.setBorder(new TitledBorder(SvnBundle.message("border.show.changes.dialog.subversion.group")));
+
+      if (showShowUnresolvedCheckBox) {
+        myShowUnresolvedFileCheckBox = new JCheckBox(SvnBundle.message("commit.dialog.setings.show.unresolved.checkbox"));
+
+        myPanel.add(myShowUnresolvedFileCheckBox, BorderLayout.NORTH);
+
+        myShowUnresolvedFileCheckBox.addItemListener(new ItemListener() {
+          public void itemStateChanged(ItemEvent e) {
+            final SvnConfiguration conf = SvnConfiguration.getInstance(mySvnVcs.getProject());
+            if (myShowUnresolvedFileCheckBox.isSelected() != conf.PROCESS_UNRESOLVED) {
+
+              panel.saveState();
+              conf.PROCESS_UNRESOLVED = myShowUnresolvedFileCheckBox.isSelected();
+              panel.refresh();
+            }
+          }
+        });
+
+      } else {
+        myShowUnresolvedFileCheckBox = null;
       }
+
+    }
+
+    public JComponent getComponent() {
       return myPanel;
     }
 
@@ -276,6 +369,9 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     }
 
     public void refresh() {
+      if (myShowUnresolvedFileCheckBox != null) {
+        myShowUnresolvedFileCheckBox.setSelected(SvnConfiguration.getInstance(mySvnVcs.getProject()).PROCESS_UNRESOLVED);
+      }
     }
 
     public void saveState() {

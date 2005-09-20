@@ -44,6 +44,7 @@ import org.jetbrains.idea.svn.dialogs.SelectFilesDialog;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.*;
 
+import javax.swing.*;
 import java.io.File;
 import java.util.Collection;
 import java.util.TreeSet;

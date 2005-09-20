@@ -69,6 +69,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
   private ISVNAuthenticationManager myAuthManager;
 
   public static final AuthStorage RUNTIME_AUTH_CACHE = new AuthStorage();
+  public boolean PROCESS_UNRESOLVED = false;
 
   public static SvnConfiguration getInstance(Project project) {
     return project.getComponent(SvnConfiguration.class);
