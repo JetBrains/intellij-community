@@ -2,6 +2,7 @@ package com.intellij.openapi.editor.actions.moveUpDown;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -20,7 +21,7 @@ class DeclarationMover extends LineMover {
 
     final PsiMember firstMember = PsiTreeUtil.getParentOfType(psiRange.getFirst(), PsiMember.class, false);
     final PsiMember lastMember = PsiTreeUtil.getParentOfType(psiRange.getSecond(), PsiMember.class, false);
-    final LineRange range;
+    LineRange range;
     if (firstMember != null && firstMember == lastMember) {
       range = memberRange(firstMember, editor, oldRange);
       if (range == null) return null;
@@ -39,10 +40,27 @@ class DeclarationMover extends LineMover {
       final LineRange lineRange2 = memberRange(combinedRange.getSecond(), editor, oldRange);
       if (lineRange2 == null) return null;
 
-
       range = new LineRange(lineRange1.startLine, lineRange2.endLine);
       range.firstElement = combinedRange.getFirst();
       range.lastElement = combinedRange.getSecond();
+    }
+    PsiElement nextWhitespace = range.lastElement.getNextSibling();
+    if (nextWhitespace instanceof PsiWhiteSpace) {
+      int endLine = editor.offsetToLogicalPosition(nextWhitespace.getTextRange().getEndOffset()).line;
+      Document document = editor.getDocument();
+      while (true) {
+        int lineStartOffset = document.getLineStartOffset(endLine);
+        int lineEndOffset = document.getLineEndOffset(endLine);
+        PsiElement elementAtStart = file.findElementAt(lineStartOffset);
+        PsiElement elementAtEnd = file.findElementAt(lineEndOffset - 1);
+        if (elementAtEnd == nextWhitespace && elementAtStart == nextWhitespace) break;
+        endLine--;
+        if (endLine == range.endLine) break;
+      }
+      LineRange newRange = new LineRange(range.startLine, endLine);
+      newRange.firstElement = range.firstElement;
+      newRange.lastElement = nextWhitespace;
+      range = newRange;
     }
     return calcInsertOffset(editor, range, isDown);
   }
@@ -80,7 +98,7 @@ class DeclarationMover extends LineMover {
 
   // 0 means we are not moving in/out class
   // -1 means illegal move in/out class
-  // other offset - sepcific offset inside/outside class
+  // other offset - specific offset inside/outside class
   private static int moveInsideOutsideClassOffset(Editor editor,
                                                   PsiElement sibling,
                                                   final boolean isDown,

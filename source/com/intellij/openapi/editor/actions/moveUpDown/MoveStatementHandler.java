@@ -42,8 +42,8 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     final int start = editor.logicalPositionToOffset(new LogicalPosition(startLine, 0));
     final int end = editor.logicalPositionToOffset(new LogicalPosition(endLine+1, 0));
     final String toInsert = document.getCharsSequence().subSequence(start, end).toString();
-    final int insStart = isDown ? insertOffset - toInsert.length() : insertOffset;
-    final int insEnd = insStart + toInsert.length();
+    final int insStartAfterMove = isDown ? insertOffset - toInsert.length() : insertOffset;
+    final int insEndAfterMove = insStartAfterMove + toInsert.length();
 
     final CaretModel caretModel = editor.getCaretModel();
     final int caretRelativePos = caretModel.getOffset() - start;
@@ -56,22 +56,24 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     caretModel.moveToOffset(0);
 
     document.deleteString(start, end);
-    document.insertString(insStart, toInsert);
+    document.insertString(insStartAfterMove, toInsert);
     documentManager.commitDocument(document);
 
     if (hasSelection) {
-      restoreSelection(editor, selectionStart, selectionEnd, start, insStart);
+      restoreSelection(editor, selectionStart, selectionEnd, start, insStartAfterMove);
     }
 
     try {
       final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-      final int line1 = editor.offsetToLogicalPosition(insStart).line;
-      final int line2 = editor.offsetToLogicalPosition(insEnd).line;
-      caretModel.moveToOffset(insStart + caretRelativePos);
+      final int line1 = editor.offsetToLogicalPosition(insStartAfterMove).line;
+      final int line2 = editor.offsetToLogicalPosition(insEndAfterMove).line;
+      caretModel.moveToOffset(insStartAfterMove + caretRelativePos);
 
       for (int line = line1; line <= line2; line++) {
-        int lineStart = document.getLineStartOffset(line);
-        codeStyleManager.adjustLineIndent(file, lineStart);
+        if (lineContainsNonSpaces(document, line)) {
+          int lineStart = document.getLineStartOffset(line);
+          codeStyleManager.adjustLineIndent(file, lineStart);
+        }
       }
     }
     catch (IncorrectOperationException e) {
@@ -79,6 +81,13 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     }
 
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+  }
+
+  private static boolean lineContainsNonSpaces(final Document document, final int line) {
+    int lineStartOffset = document.getLineStartOffset(line);
+    int lineEndOffset = document.getLineEndOffset(line);
+    String text = document.getCharsSequence().subSequence(lineStartOffset, lineEndOffset).toString();
+    return !text.matches("^\\s*$");
   }
 
   private static void restoreSelection(final Editor editor, final int selectionStart, final int selectionEnd, final int moveOffset, int insOffset) {
@@ -101,14 +110,11 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     final int maxLine = editor.offsetToLogicalPosition(editor.getDocument().getTextLength()).line;
     final LineRange range = insertionInfo.whatToMove;
     if (range.startLine <= 1 && !isDown) return false;
-    if (range.endLine >= maxLine - 1 && isDown) return false;
-
-    return true;
+    return range.endLine < maxLine - 1 || !isDown;
   }
 
   private InsertionInfo getInsertionInfo(final Editor editor, final PsiFile file) {
-    for (int i = 0; i < myMovers.length; i++) {
-      final Mover mover = myMovers[i];
+    for (final Mover mover : myMovers) {
       final InsertionInfo range = mover.getInsertionInfo(editor, file, isDown);
       if (range != null) return range;
     }
