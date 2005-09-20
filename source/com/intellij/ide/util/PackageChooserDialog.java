@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
@@ -289,7 +290,7 @@ public class PackageChooserDialog extends DialogWrapper {
                 catch (IncorrectOperationException e) {
                   Messages.showMessageDialog(
                     getContentPane(),
-                    e.getMessage(),
+                    StringUtil.getMessage(e),
                     "Error",
                     Messages.getErrorIcon()
                   );
