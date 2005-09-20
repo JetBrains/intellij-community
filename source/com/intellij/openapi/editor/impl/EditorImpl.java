@@ -165,6 +165,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
   private Alarm myAppleRepaintAlarm;
   private boolean myEmbeddedIntoDialogWrapper;
   private CachedFontContent myLastCache;
+  private boolean mySpacesHaveSameWidth;
 
   static {
     ourCaretThread = new RepaintCursorThread();
@@ -1321,6 +1322,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
 
   private void paintText(Graphics g, Rectangle clip) {
     myLastCache = null;
+    final int plainSpaceWidth = getSpaceWidth(Font.PLAIN);
+    final int boldSpaceWidth = getSpaceWidth(Font.BOLD);
+    final int italicSpaceWidth = getSpaceWidth(Font.ITALIC);
+    final int boldItalicSpaceWidth = getSpaceWidth(Font.BOLD | Font.ITALIC);
+    mySpacesHaveSameWidth = plainSpaceWidth == boldSpaceWidth && plainSpaceWidth == italicSpaceWidth && plainSpaceWidth == boldItalicSpaceWidth;
+
     int lineHeight = getLineHeight();
 
     int visibleLineNumber = clip.y / lineHeight;
@@ -1673,7 +1680,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
                                int y,
                                int fontType,
                                Color color) {
-    if (myLastCache != null && spacesOnly(data, start, end)) {
+    if (mySpacesHaveSameWidth && myLastCache != null && spacesOnly(data, start, end)) {
       myLastCache.addContent(g, data, start, end, x, y, null);
     }
     else {
