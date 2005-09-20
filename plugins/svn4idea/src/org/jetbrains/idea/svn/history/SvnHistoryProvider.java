@@ -126,7 +126,11 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
     try {
       SVNWCClient wcClient = myVcs.createWCClient();
       SVNInfo info = wcClient.doInfo(new File(file.getPath()).getAbsoluteFile(), SVNRevision.WORKING);
-      return new SvnRevisionNumber(info.getCommittedRevision());
+      if (info != null) {
+        return new SvnRevisionNumber(info.getCommittedRevision());
+      } else {
+        return null;
+      }
     }
     catch (SVNException e) {
       return null;
