@@ -9,36 +9,40 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 
 class DeclarationMover extends LineMover {
-  public InsertionInfo getInsertionInfo(Editor editor, PsiFile file, boolean isDown) {
+  public DeclarationMover(final boolean isDown) {
+    super(isDown);
+  }
+
+  protected boolean checkAvailable(Editor editor, PsiFile file) {
     if (!(file instanceof PsiJavaFile)) {
-      return null;
+      return false;
     }
-    final InsertionInfo oldInsertionInfo = super.getInsertionInfo(editor, file, isDown);
-    if (oldInsertionInfo == null) return null;
-    LineRange oldRange = oldInsertionInfo.whatToMove;
+    boolean available = super.checkAvailable(editor, file);
+    if (!available) return false;
+    LineRange oldRange = whatToMove;
     final Pair<PsiElement, PsiElement> psiRange = getElementRange(editor, file, oldRange);
-    if (psiRange == null) return null;
+    if (psiRange == null) return false;
 
     final PsiMember firstMember = PsiTreeUtil.getParentOfType(psiRange.getFirst(), PsiMember.class, false);
     final PsiMember lastMember = PsiTreeUtil.getParentOfType(psiRange.getSecond(), PsiMember.class, false);
     LineRange range;
     if (firstMember != null && firstMember == lastMember) {
       range = memberRange(firstMember, editor, oldRange);
-      if (range == null) return null;
+      if (range == null) return false;
       range.firstElement = firstMember;
       range.lastElement = lastMember;
     }
     else {
-      if (firstMember == null || lastMember == null) return null;
+      if (firstMember == null || lastMember == null) return false;
       final PsiElement parent = PsiTreeUtil.findCommonParent(firstMember, lastMember);
-      if (parent == null) return null;
+      if (parent == null) return false;
 
       final Pair<PsiElement, PsiElement> combinedRange = getElementRange(parent, firstMember, lastMember);
-      if (combinedRange == null) return null;
+      if (combinedRange == null) return false;
       final LineRange lineRange1 = memberRange(combinedRange.getFirst(), editor, oldRange);
-      if (lineRange1 == null) return null;
+      if (lineRange1 == null) return false;
       final LineRange lineRange2 = memberRange(combinedRange.getSecond(), editor, oldRange);
-      if (lineRange2 == null) return null;
+      if (lineRange2 == null) return false;
 
       range = new LineRange(lineRange1.startLine, lineRange2.endLine);
       range.firstElement = combinedRange.getFirst();
@@ -62,7 +66,32 @@ class DeclarationMover extends LineMover {
       newRange.lastElement = nextWhitespace;
       range = newRange;
     }
-    return calcInsertOffset(editor, range, isDown);
+
+
+    PsiElement sibling = myIsDown ? range.lastElement.getNextSibling() : range.firstElement.getPrevSibling();
+    if (sibling == null) return false;
+    final boolean areWeMovingClass = range.firstElement instanceof PsiClass;
+    sibling = firstNonWhiteElement(sibling, myIsDown);
+    int offset = moveInsideOutsideClassOffset(editor, sibling, myIsDown, areWeMovingClass);
+    if (offset == -1) {
+      insertOffset = -1;
+      return true;
+    }
+    if (offset != 0) {
+      whatToMove = range;
+      insertOffset = offset;
+      return true;
+    }
+    if (myIsDown) {
+      sibling = sibling.getNextSibling();
+      if (sibling == null) return false;
+      sibling = firstNonWhiteElement(sibling, myIsDown);
+      if (sibling == null) return false;
+    }
+
+    whatToMove = range;
+    insertOffset = sibling.getTextRange().getStartOffset();
+    return true;
   }
 
   private static LineRange memberRange(PsiElement member, Editor editor, LineRange lineRange) {
@@ -77,23 +106,6 @@ class DeclarationMover extends LineMover {
     }
 
     return new LineRange(startLine, endLine);
-  }
-  private static InsertionInfo calcInsertOffset(Editor editor, LineRange range, final boolean isDown) {
-    PsiElement sibling = isDown ? range.lastElement.getNextSibling() : range.firstElement.getPrevSibling();
-    if (sibling == null) return null;
-    final boolean areWeMovingClass = range.firstElement instanceof PsiClass;
-    sibling = firstNonWhiteElement(sibling, isDown);
-    int offset = moveInsideOutsideClassOffset(editor, sibling, isDown, areWeMovingClass);
-    if (offset == -1) return InsertionInfo.ILLEGAL_INFO;
-    if (offset != 0) return new InsertionInfo(range, offset);
-    if (isDown) {
-      sibling = sibling.getNextSibling();
-      if (sibling == null) return null;
-      sibling = firstNonWhiteElement(sibling, isDown);
-      if (sibling == null) return null;
-    }
-
-    return new InsertionInfo(range, sibling.getTextRange().getStartOffset());
   }
 
   // 0 means we are not moving in/out class

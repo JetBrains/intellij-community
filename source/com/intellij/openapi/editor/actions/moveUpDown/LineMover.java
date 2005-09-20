@@ -9,9 +9,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 
-class LineMover implements Mover {
+class LineMover extends Mover {
+  public LineMover(final boolean isDown) {
+    super(isDown);
+  }
 
-  public InsertionInfo getInsertionInfo(Editor editor, PsiFile file, boolean isDown) {
+  protected boolean checkAvailable(Editor editor, PsiFile file) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     final int startLine;
     final int endLine;
@@ -29,11 +32,13 @@ class LineMover implements Mover {
     }
 
     final int maxLine = editor.offsetToLogicalPosition(editor.getDocument().getTextLength()).line;
-    if (range.startLine <= 1 && !isDown) return null;
-    if (range.endLine >= maxLine - 1 && isDown) return null;
+    if (range.startLine <= 1 && !myIsDown) return false;
+    if (range.endLine >= maxLine - 1 && myIsDown) return false;
 
-    int nearLine = isDown ? range.endLine + 2 : range.startLine - 1;
-    return new InsertionInfo(range, editor.logicalPositionToOffset(new LogicalPosition(nearLine, 0)));
+    int nearLine = myIsDown ? range.endLine + 2 : range.startLine - 1;
+    whatToMove = range;
+    insertOffset = editor.logicalPositionToOffset(new LogicalPosition(nearLine, 0));
+    return true;
   }
 
   protected static Pair<PsiElement, PsiElement> getElementRange(Editor editor, PsiFile file, final LineRange range) {

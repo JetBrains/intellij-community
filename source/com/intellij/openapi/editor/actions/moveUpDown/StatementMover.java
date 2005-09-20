@@ -15,62 +15,63 @@ import com.intellij.util.IncorrectOperationException;
 class StatementMover extends LineMover {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.actions.moveUpDown.StatementMover");
 
-  private static class StatementInsertionInfo extends InsertionInfo {
-    PsiElement statementToSurroundWithCodeBlock;
+  private PsiElement statementToSurroundWithCodeBlock;
 
-    public StatementInsertionInfo(final LineRange whatToMove, final int insertOffset, final PsiElement statementToSurroundWithCodeBlock) {
-      super(whatToMove, insertOffset);
-      this.statementToSurroundWithCodeBlock = statementToSurroundWithCodeBlock;
-    }
+  public StatementMover(final boolean isDown) {
+    super(isDown);
+  }
 
-    public void prepareToMove(boolean isDown) {
-      super.prepareToMove(isDown);
-      if (statementToSurroundWithCodeBlock != null) {
-        try {
-          final Document document = PsiDocumentManager.getInstance(statementToSurroundWithCodeBlock.getProject()).getDocument(statementToSurroundWithCodeBlock.getContainingFile());
-          final int startOffset = document.getLineStartOffset(whatToMove.startLine);
-          final int endOffset = document.getLineEndOffset(whatToMove.endLine);
-          final RangeMarker lineRangeMarker = document.createRangeMarker(startOffset, endOffset);
+  protected void beforeMove() {
+    super.beforeMove();
+    if (statementToSurroundWithCodeBlock != null) {
+      try {
+        final Document document = PsiDocumentManager.getInstance(statementToSurroundWithCodeBlock.getProject()).getDocument(statementToSurroundWithCodeBlock.getContainingFile());
+        final int startOffset = document.getLineStartOffset(whatToMove.startLine);
+        final int endOffset = document.getLineEndOffset(whatToMove.endLine);
+        final RangeMarker lineRangeMarker = document.createRangeMarker(startOffset, endOffset);
 
-          final PsiElementFactory factory = statementToSurroundWithCodeBlock.getManager().getElementFactory();
-          PsiCodeBlock codeBlock = factory.createCodeBlock();
-          codeBlock.add(statementToSurroundWithCodeBlock);
-          final PsiBlockStatement blockStatement = (PsiBlockStatement)factory.createStatementFromText("{}", statementToSurroundWithCodeBlock);
-          blockStatement.getCodeBlock().replace(codeBlock);
-          final PsiBlockStatement newStatement = (PsiBlockStatement)statementToSurroundWithCodeBlock.replace(blockStatement);
+        final PsiElementFactory factory = statementToSurroundWithCodeBlock.getManager().getElementFactory();
+        PsiCodeBlock codeBlock = factory.createCodeBlock();
+        codeBlock.add(statementToSurroundWithCodeBlock);
+        final PsiBlockStatement blockStatement = (PsiBlockStatement)factory.createStatementFromText("{}", statementToSurroundWithCodeBlock);
+        blockStatement.getCodeBlock().replace(codeBlock);
+        final PsiBlockStatement newStatement = (PsiBlockStatement)statementToSurroundWithCodeBlock.replace(blockStatement);
 
-          whatToMove = new LineRange(document.getLineNumber(lineRangeMarker.getStartOffset()),
-                                     document.getLineNumber(lineRangeMarker.getEndOffset()));
-          insertOffset = isDown ? newStatement.getCodeBlock().getFirstBodyElement().getTextRange().getEndOffset() :
-                         newStatement.getCodeBlock().getRBrace().getTextRange().getStartOffset();
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+        whatToMove = new LineRange(document.getLineNumber(lineRangeMarker.getStartOffset()),
+                                   document.getLineNumber(lineRangeMarker.getEndOffset()));
+        insertOffset = myIsDown ? newStatement.getCodeBlock().getFirstBodyElement().getTextRange().getEndOffset() :
+                       newStatement.getCodeBlock().getRBrace().getTextRange().getStartOffset();
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
       }
     }
   }
 
-  public InsertionInfo getInsertionInfo(Editor editor, PsiFile file, boolean isDown) {
-    if (!(file instanceof PsiJavaFile)) return null;
-    final InsertionInfo lineInsertionInfo = super.getInsertionInfo(editor, file, isDown);
-    if (lineInsertionInfo == null) return null;
-    LineRange range = lineInsertionInfo.whatToMove;
+  protected boolean checkAvailable(Editor editor, PsiFile file) {
+    if (!(file instanceof PsiJavaFile)) return false;
+    final boolean available = super.checkAvailable(editor, file);
+    if (!available) return false;
+    LineRange range = whatToMove;
 
     range = expandLineRangeToCoverPsiElements(range, editor, file);
-    if (range == null) return null;
+    if (range == null) return false;
     final int startOffset = editor.logicalPositionToOffset(new LogicalPosition(range.startLine, 0));
     final int endOffset = editor.logicalPositionToOffset(new LogicalPosition(range.endLine+1, 0));
     final PsiElement[] statements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
-    if (statements == null || statements.length == 0) return null;
+    if (statements == null || statements.length == 0) return false;
     range.firstElement = statements[0];
     range.lastElement = statements[statements.length-1];
-    if (!checkMovingInsideOutside(file, editor, range, isDown)) return InsertionInfo.ILLEGAL_INFO;
-    return calcInsertOffset(editor, file, range, isDown);
+    if (!checkMovingInsideOutside(file, editor, range, myIsDown)) {
+      insertOffset = -1;
+      return true;
+    }
+    calcInsertOffset(editor, file, range);
+    return true;
   }
 
-  private static StatementInsertionInfo calcInsertOffset(final Editor editor, PsiFile file, LineRange range, final boolean isDown) {
-    int nearLine = isDown ? range.endLine + 2 : range.startLine - 1;
+  private void calcInsertOffset(final Editor editor, PsiFile file, LineRange range) {
+    int nearLine = myIsDown ? range.endLine + 2 : range.startLine - 1;
     int line = nearLine;
 
     while (true) {
@@ -96,14 +97,20 @@ class StatementMover extends LineMover {
             found = true;
           }
           if (found) {
-            return new StatementInsertionInfo(range, offset, elementToSurround);
+            statementToSurroundWithCodeBlock = elementToSurround;
+            whatToMove = range;
+            insertOffset = offset;
+            return;
           }
         }
         element = element.getParent();
       }
-      line += isDown ? 1 : -1;
+      line += myIsDown ? 1 : -1;
       if (line == 0 || line >= editor.getDocument().getLineCount()) {
-        return new StatementInsertionInfo(range, editor.logicalPositionToOffset(new LogicalPosition(nearLine, 0)), null);
+        statementToSurroundWithCodeBlock = null;
+        whatToMove = range;
+        insertOffset = editor.logicalPositionToOffset(new LogicalPosition(nearLine, 0));
+        return;
       }
     }
   }
@@ -125,7 +132,7 @@ class StatementMover extends LineMover {
     return false;
   }
 
-  private static boolean checkMovingInsideOutside(final PsiFile file, final Editor editor, final LineRange result, final boolean isDown) {
+  private boolean checkMovingInsideOutside(final PsiFile file, final Editor editor, final LineRange result, final boolean isDown) {
     final int offset = editor.getCaretModel().getOffset();
     PsiElement elementAt = file.findElementAt(offset);
     if (elementAt == null) return false;
@@ -133,9 +140,7 @@ class StatementMover extends LineMover {
     final Class[] classes = new Class[]{PsiMethod.class, PsiClassInitializer.class, PsiClass.class, PsiComment.class,};
     final PsiElement guard = PsiTreeUtil.getParentOfType(elementAt, classes);
     // cannot move in/outside method/class/initializer/comment
-    final StatementInsertionInfo insertionInfo = calcInsertOffset(editor, file, result, isDown);
-    if (insertionInfo == null) return false;
-    final int insertOffset = insertionInfo.insertOffset;
+    calcInsertOffset(editor, file, result);
     elementAt = file.findElementAt(insertOffset);
     final PsiElement newGuard = PsiTreeUtil.getParentOfType(elementAt, classes);
     if (newGuard == guard && isInside(insertOffset, newGuard) == isInside(offset, guard)) return true;
