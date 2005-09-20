@@ -30,8 +30,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
 import javax.swing.*;
@@ -117,7 +117,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
       if (tools.exists()){
         return tools.getPath();
       }
-   }
+    }
 
     final String javaHome = System.getProperty(JAVA_HOME_PROPERTY);
     File tools = new File(new File(javaHome, LIB_DIR_NAME), toolsJar);
@@ -213,8 +213,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     File lib = new File(home + File.separator + LIB_DIR_NAME);
     File[] jars = lib.listFiles();
     if (jars != null) {
-      for (int i = 0; i < jars.length; i++) {
-        File jar = jars[i];
+      for (File jar : jars) {
         @NonNls String name = jar.getName();
         if (jar.isFile() && !name.equals("idea.jar") && (name.endsWith(".jar") || name.endsWith(".zip"))) {
           result.add(jfs.findFileByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR));
@@ -239,8 +238,8 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     if (!isFromIDEAProject(sdk.getHomePath())) {
       final VirtualFile[] ideaLib = getIdeaLibrary(sdk.getHomePath());
       if (ideaLib != null) {
-        for (int i = 0; i < ideaLib.length; i++) {
-          sdkModificator.addRoot(ideaLib[i], ProjectRootType.CLASS);
+        for (VirtualFile aIdeaLib : ideaLib) {
+          sdkModificator.addRoot(aIdeaLib, ProjectRootType.CLASS);
         }
       }
       addSources(home, sdkModificator);
@@ -299,9 +298,9 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     if (!addOrderEntries(OrderRootType.JAVADOC, ProjectRootType.JAVADOC, getInternalJavaSdk(sdkModificator.getHomePath()), sdkModificator) &&
         SystemInfo.isMac){
       ProjectJdk [] jdks = ProjectJdkTable.getInstance().getAllJdks();
-      for(int i = 0; i < jdks.length; i++){
-        if (jdks[i].getSdkType() instanceof JavaSdk){
-          addOrderEntries(OrderRootType.JAVADOC, ProjectRootType.JAVADOC, jdks[i], sdkModificator);
+      for (ProjectJdk jdk : jdks) {
+        if (jdk.getSdkType() instanceof JavaSdk) {
+          addOrderEntries(OrderRootType.JAVADOC, ProjectRootType.JAVADOC, jdk, sdkModificator);
           break;
         }
       }
@@ -339,8 +338,8 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   private boolean addOrderEntries(OrderRootType orderRootType, ProjectRootType projectRootType, Sdk sdk, SdkModificator toModificator){
     boolean wasSmthAdded = false;
     final String[] entries = sdk.getRootProvider().getUrls(orderRootType);
-    for (int i = 0; i < entries.length; i++) {
-      VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(entries[i]);
+    for (String entry : entries) {
+      VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(entry);
       toModificator.addRoot(virtualFile, projectRootType);
       wasSmthAdded = true;
     }

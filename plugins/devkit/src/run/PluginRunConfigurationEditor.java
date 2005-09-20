@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit.run;
 
+import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -24,12 +25,11 @@ import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.ui.RawCommandLineEditor;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
-import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -39,8 +39,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.ArrayList;
 
 public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfiguration> {
 
@@ -89,16 +88,19 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
     });
   }
 
-  private void setShow(PluginRunConfiguration prc, Boolean show){
-    final Map<Pair<String, String>, Boolean> logFiles = prc.getLogFiles();
-    for (Iterator<Pair<String, String >> iterator = logFiles.keySet().iterator(); iterator.hasNext();) {
-      final Pair<String, String> pair = iterator.next();
-      logFiles.put(pair, show);
+  private void setShow(PluginRunConfiguration prc, boolean show){
+    final ArrayList<RunConfigurationBase.LogFileOptions> logFiles = prc.getLogFiles();
+    for (RunConfigurationBase.LogFileOptions logFile: logFiles) {
+      logFile.setEnable(show);      
     }
   }
 
   private boolean isShow(PluginRunConfiguration prc){
-    return prc.getLogFiles().values().contains(Boolean.TRUE);
+    final ArrayList<RunConfigurationBase.LogFileOptions> logFiles = prc.getLogFiles();
+    for (RunConfigurationBase.LogFileOptions logFile : logFiles) {
+      if (logFile.isEnabled()) return true;
+    }
+    return false;
   }
 
   public void resetEditorFrom(PluginRunConfiguration prc) {

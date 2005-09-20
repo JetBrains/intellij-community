@@ -31,11 +31,11 @@ import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.*;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
-import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
@@ -177,8 +177,7 @@ public class PluginRunConfiguration extends RunConfigurationBase {
   public Module[] getModules() {
     List<Module> modules = new ArrayList<Module>();
     Module[] allModules = ModuleManager.getInstance(getProject()).getModules();
-    for (int i = 0; i < allModules.length; i++) {
-      Module module = allModules[i];
+    for (Module module : allModules) {
       if (module.getModuleType() == PluginModuleType.getInstance()) {
         modules.add(module);
       }

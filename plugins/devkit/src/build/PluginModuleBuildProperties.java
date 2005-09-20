@@ -25,14 +25,13 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.module.PluginDescriptorMetaData;
 
 import java.io.File;
@@ -134,7 +133,12 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
   }
 
   public String getPluginXmlPath() {
-    return FileUtil.toSystemDependentName(getPluginXMLPointer().getFile().getPath());
+    VirtualFile file = getPluginXMLPointer().getFile();
+    if (file == null){ //e.g. file deleted
+      myPluginXMLPointer = null;
+      file = getPluginXMLPointer().getFile(); //to suggest default location
+    }
+    return FileUtil.toSystemDependentName(file.getPath());
   }
 
   public void setPluginXMLUrl(final String pluginXMLUrl) {
