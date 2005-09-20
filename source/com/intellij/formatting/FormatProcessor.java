@@ -675,6 +675,7 @@ class FormatProcessor {
   }
 
   private Block getPreviousIncompletedBlock(final LeafBlockWrapper block, final int offset) {
+    if (block == null) return null;
     AbstractBlockWrapper current = block;
     while (current.getParent() != null && current.getParent().getStartOffset() > offset) {
       current = current.getParent();

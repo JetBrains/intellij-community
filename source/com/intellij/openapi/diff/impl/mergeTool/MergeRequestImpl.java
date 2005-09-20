@@ -20,7 +20,7 @@ import javax.swing.*;
 import java.io.IOException;
 
 public class MergeRequestImpl extends MergeRequest {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.mergeTool.MergeData");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.mergeTool.MergeRequestImpl");
   private final DiffContent[] myDiffContents = new DiffContent[3];
   private String myWindowTitle = null;
   private String[] myVersionTitles = null;
@@ -78,7 +78,7 @@ public class MergeRequestImpl extends MergeRequest {
     String actionName = myActionButtonPresenation.getName();
     final int index = actionName.indexOf("&");
     final char mnemonic;
-    if (index >= index && index < actionName.length() - 1) {
+    if (index >= 0 && index < actionName.length() - 1) {
       mnemonic = actionName.charAt(index + 1);
       actionName = actionName.substring(0, index) + actionName.substring(index + 1);
     } else {

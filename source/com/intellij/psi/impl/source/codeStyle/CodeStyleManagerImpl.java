@@ -1035,9 +1035,11 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
           PsiIdentifier identifier = parms[index].getNameIdentifier();
           if (identifier != null) {
             String name = identifier.getText();
-            name = variableNameToPropertyName(name, VariableKind.PARAMETER);
-            String[] names = getSuggestionsByName(name, variableKind, false);
-            return new NamesByExprInfo(names, name);
+            if (name != null) {
+              name = variableNameToPropertyName(name, VariableKind.PARAMETER);
+              String[] names = getSuggestionsByName(name, variableKind, false);
+              return new NamesByExprInfo(names, name);
+            }
           }
         }
       }

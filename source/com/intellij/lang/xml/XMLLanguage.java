@@ -111,11 +111,15 @@ public class XMLLanguage extends Language {
 
   @Nullable
   public StructureViewBuilder getStructureViewBuilder(final PsiFile psiFile) {
-    return new TreeBasedStructureViewBuilder() {
-      public StructureViewModel createStructureViewModel() {
-        return new XmlStructureViewTreeModel((XmlFile)psiFile);
-      }
-    };
+    if (psiFile instanceof XmlFile) {
+      return new TreeBasedStructureViewBuilder() {
+        public StructureViewModel createStructureViewModel() {
+          return new XmlStructureViewTreeModel((XmlFile)psiFile);
+        }
+      };
+    } else {
+      return null;
+    }
   }
 
   @Nullable
