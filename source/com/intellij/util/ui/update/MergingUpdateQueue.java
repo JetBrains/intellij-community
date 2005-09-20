@@ -20,7 +20,8 @@ public class MergingUpdateQueue implements Runnable, Disposable {
 
   private boolean myActive;
 
-  private final Set<Update> mySheduledUpdates = new TreeSet<Update>();
+  // protected for Fabrique:
+  protected final Set<Update> mySheduledUpdates = new TreeSet<Update>();
 
   private Alarm myWaiterForMerge = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
