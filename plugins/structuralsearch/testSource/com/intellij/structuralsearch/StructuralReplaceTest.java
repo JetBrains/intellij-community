@@ -18,6 +18,7 @@ import java.util.Calendar;
  * Time: 9:18:10 PM
  * To change this template use File | Settings | File Templates.
  */
+@SuppressWarnings({"ALL"})
 public class StructuralReplaceTest extends IdeaTestCase {
   private Replacer replacer;
   private ReplaceOptions options;
@@ -1169,7 +1170,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
 
     String expectedResult14 = "class A { void B () { System.out.println(\"B\");} int C(char ch) { System.out.println(\"C\"); int z = 1; } }";
 
-    if (!IdeaTestUtil.bombExplodes(2005,Calendar.SEPTEMBER,20,12,0,"-maxim.mossienko","Fix class replacements with multiple members")) return;
+    if (!IdeaTestUtil.bombExplodes(2005,Calendar.OCTOBER,20,12,0,"-maxim.mossienko","Fix class replacements with multiple members")) return;
     actualResult = replacer.testReplace(s37,s38,s39,options, true);
 
     assertEquals(

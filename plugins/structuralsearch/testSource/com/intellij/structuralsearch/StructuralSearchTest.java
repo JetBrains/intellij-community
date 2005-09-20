@@ -17,6 +17,7 @@ import java.util.Calendar;
  * Time: 5:45:17 PM
  * To change this template use File | Settings | File Templates.
  */
+@SuppressWarnings({"ALL"})
 public class StructuralSearchTest extends IdeaTestCase {
   private static final String s1 =
     "debug(\"In action performed:\"+event);"+
@@ -573,7 +574,7 @@ public class StructuralSearchTest extends IdeaTestCase {
       findMatchesCount(s9,s10_2)
     );
 
-    if (!IdeaTestUtil.bombExplodes(2005, Calendar.SEPTEMBER,20,12,0,"-maxim.mossienko","Covariant array types")) return;
+    if (!IdeaTestUtil.bombExplodes(2005, Calendar.OCTOBER,20,12,0,"-maxim.mossienko","Covariant array types")) return;
     String s11 = "class A {\n" +
                  "  void main(String[] argv);" +
                  "}";
