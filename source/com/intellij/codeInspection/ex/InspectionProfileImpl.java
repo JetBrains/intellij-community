@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.InspectionProfileConvertor;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
@@ -15,6 +16,7 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -483,7 +485,11 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
       }
     }
     catch (Exception e) {
-      Messages.showErrorDialog("Error reading inspection profile " + (myFile != null ? " from " + myFile.getName() : ""), "Errors Occured");
+      ApplicationManager.getApplication().invokeLater(new Runnable(){
+        public void run() {
+          Messages.showErrorDialog("Error reading inspection profile " + (myFile != null ? " from " + myFile.getName() : ""), "Errors Occured");
+        }
+      }, ModalityState.NON_MMODAL);
     }
   }
 
