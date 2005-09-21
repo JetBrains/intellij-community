@@ -452,9 +452,14 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
 
   public XmlElementDescriptor[] getRootElementsDescriptors(final XmlDocument doc) {
     final List<XmlElementDescriptor> result = new ArrayList<XmlElementDescriptor>();
-    XmlDocument document = myFile.getDocument();
+    collectElements(myFile.getDocument(), result);
+
+    return result.toArray(new XmlElementDescriptor[result.size()]);
+  }
+
+  private void collectElements(final XmlDocument document, final List<XmlElementDescriptor> result) {
     XmlTag rootTag = document.getRootTag();
-    if (rootTag == null) return null;
+    if (rootTag == null) return;
     XmlTag[] tags = rootTag.getSubTags();
 
     for (XmlTag tag : tags) {
@@ -467,10 +472,22 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
             result.add(elementDescriptor);
           }
         }
+      } else if (equalsToSchemaName(tag, "include")) {
+        final String schemaLocation = tag.getAttributeValue("schemaLocation");
+
+        if (schemaLocation != null) {
+          final XmlFile xmlFile = XmlUtil.findXmlFile(rootTag.getContainingFile(), schemaLocation);
+
+          if (xmlFile != null) {
+            final XmlDocument includedDocument = xmlFile.getDocument();
+            
+            if (includedDocument != null) {
+              collectElements(includedDocument, result);
+            }
+          }
+        }
       }
     }
-
-    return result.toArray(new XmlElementDescriptor[result.size()]);
   }
 
   protected static boolean equalsToSchemaName(XmlTag tag, String schemaName) {
