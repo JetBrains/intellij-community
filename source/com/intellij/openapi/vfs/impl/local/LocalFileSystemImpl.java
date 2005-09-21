@@ -527,6 +527,12 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
         for (VirtualFile fileToWatch : myFilesToWatchManual) {
           if (VfsUtil.isAncestor(fileToWatch, file, false)) {
             ((VirtualFileImpl)file).refreshInternal(recursive, worker, modalityState, false);
+            if (isRoot && !recursive && ((VirtualFileImpl) file).areChildrenCached()) {
+              VirtualFile[] children = file.getChildren();
+              for (VirtualFile child : children) {
+                ((VirtualFileImpl)child).refreshInternal(false, worker, modalityState, false);
+              }
+            }
             return;
           }
         }
