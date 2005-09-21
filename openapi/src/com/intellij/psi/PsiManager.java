@@ -162,7 +162,7 @@ public abstract class PsiManager implements UserDataHolder {
 
   /**
    * Returns the search helper for the project, which provides low-level search and
-   * find usages functionality. It can be used to perform  operations like finding references
+   * find usages functionality. It can be used to perform operations like finding references
    * to an element, finding overriding / inheriting elements, finding to do items and so on.
    *
    * @return the search helper instance.
