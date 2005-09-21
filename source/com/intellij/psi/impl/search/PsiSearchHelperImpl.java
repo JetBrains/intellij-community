@@ -803,26 +803,29 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     final SearchScope searchScope1 = searchScope.intersectWith(aClass.getUseScope());
 
-    synchronized (PsiLock.LOCK) {
-      RepositoryIndex repositoryIndex = repositoryManager.getIndex();
-      VirtualFileFilter rootFilter;
-      if (!checkDeep && searchScope1 instanceof GlobalSearchScope) {
-        rootFilter = repositoryIndex.rootFilterBySearchScope((GlobalSearchScope)searchScope1);
-      }
-      else {
-        rootFilter = null;
-      }
+    RepositoryIndex repositoryIndex = repositoryManager.getIndex();
+    VirtualFileFilter rootFilter;
+    if (!checkDeep && searchScope1 instanceof GlobalSearchScope) {
+      rootFilter = repositoryIndex.rootFilterBySearchScope((GlobalSearchScope)searchScope1);
+    }
+    else {
+      rootFilter = null;
+    }
 
-      final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    PsiClass[] candidates;
+    synchronized (PsiLock.LOCK) {
       long[] candidateIds = repositoryIndex.getNameOccurrencesInExtendsLists(name, rootFilter);
-      for (long id : candidateIds) {
-        if (indicator != null) indicator.checkCanceled();
-        PsiClass candidate = (PsiClass)repositoryElementsManager.findOrCreatePsiElementById(id);
-        LOG.assertTrue(candidate.isValid());
-        if (!processInheritorCandidate(processor, candidate, aClass, searchScope, checkDeep, processed,
-                                       checkInheritance)) {
-          return false;
-        }
+      candidates = new PsiClass[candidateIds.length];
+      for (int i = 0; i < candidateIds.length; i++) {
+        candidates[i] = (PsiClass)repositoryElementsManager.findOrCreatePsiElementById(candidateIds[i]);
+      }
+    }
+
+    for (PsiClass candidate : candidates) {
+      LOG.assertTrue(candidate.isValid());
+      if (!processInheritorCandidate(processor, candidate, aClass, searchScope, checkDeep, processed,
+                                     checkInheritance)) {
+        return false;
       }
     }
 
