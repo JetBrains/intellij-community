@@ -211,9 +211,11 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     for (int i = 0; i < elements.length; i++) {
       final XmlElementDescriptorImpl element = (XmlElementDescriptorImpl) elements[i];
 
+      final String namespaceByContext = element.getNamespaceByContext(context);
       if (element.getName().equals(localName) &&
           ( namespace == null ||
-            namespace.equals(element.getNamespaceByContext(context))
+            namespace.equals(namespaceByContext) ||
+            namespaceByContext.equals(XmlUtil.EMPTY_URI)
           )
          ) {
         return element;

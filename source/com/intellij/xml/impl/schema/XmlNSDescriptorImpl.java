@@ -130,7 +130,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     if (!localAttrName.equals(localName)) return false;
     if(myTargetNamespace == null){
       final String attrNamespace = context.getNamespaceByPrefix(XmlUtil.findPrefixByQualifiedName(fqn));
-      if(attrNamespace.equals(namespace))
+      if(attrNamespace.equals(namespace) || XmlUtil.EMPTY_URI.equals(attrNamespace))
         return true;
     }
     else return myTargetNamespace.equals(namespace);
