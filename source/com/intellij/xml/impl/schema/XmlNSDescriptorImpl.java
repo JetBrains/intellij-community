@@ -436,7 +436,17 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
       }
     }
     else {
-      return getElementDescriptor(tag.getLocalName(), tag.getNamespace());
+      XmlElementDescriptor elementDescriptor = getElementDescriptor(tag.getLocalName(), tag.getNamespace());
+      
+      if (elementDescriptor == null) {
+        parent = tag.getParent();
+        if (parent instanceof XmlTag) {
+          final XmlElementDescriptor descriptor = ((XmlTag)parent).getDescriptor();
+          if (descriptor != null) elementDescriptor = descriptor.getElementDescriptor(tag);
+        }
+      }
+      
+      return elementDescriptor;
     }
   }
 
