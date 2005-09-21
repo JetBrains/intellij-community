@@ -21,8 +21,8 @@ class StatementMover extends LineMover {
     super(isDown);
   }
 
-  protected void beforeMove() {
-    super.beforeMove();
+  protected void beforeMove(final Editor editor) {
+    super.beforeMove(editor);
     if (statementToSurroundWithCodeBlock != null) {
       try {
         final Document document = PsiDocumentManager.getInstance(statementToSurroundWithCodeBlock.getProject()).getDocument(statementToSurroundWithCodeBlock.getContainingFile());
