@@ -16,8 +16,14 @@
 package com.intellij.psi;
 
 /**
+ * Represents a PSI element which can be used as the value of an annotation
+ * element.
+ *
  * @author ven
  */
 public interface PsiAnnotationMemberValue extends PsiElement {
+  /**
+   * The empty array of PSI annotation member values which can be reused to avoid unnecessary allocations.
+   */
   PsiAnnotationMemberValue[] EMPTY_ARRAY = new PsiAnnotationMemberValue[0];
 }

@@ -15,12 +15,27 @@
  */
 package com.intellij.psi.codeStyle;
 
+/**
+ * Represents an array of suggested variable names and allows to keep statistics on
+ * which of the suggestions has been accepted.
+ *
+ * @see CodeStyleManager#suggestVariableName(VariableKind, String, com.intellij.psi.PsiExpression, com.intellij.psi.PsiType)
+ */
 public abstract class SuggestedNameInfo {
+  /**
+   * The suggested names.
+   */
   public final String[] names;
 
   public SuggestedNameInfo(String[] names) {
     this.names = names;
   }
 
+  /**
+   * Should be called when one of the suggested names has been chosen by the user, to
+   * update the statistics on name usage.
+   *
+   * @param name the accepted suggestion.
+   */
   public abstract void nameChoosen(String name);
 }

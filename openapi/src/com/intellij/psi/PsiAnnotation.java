@@ -56,6 +56,13 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue {
   @Nullable
   PsiJavaCodeReferenceElement getNameReferenceElement();
 
+  /**
+   * Returns the value of the annotation element with the specified name.
+   *
+   * @param attributeName name of the annotation element for which the value is requested.
+   * @return the element value, or null if the annotation does not contain a value for
+   * the element and the element has no default value.
+   */
   @Nullable
   PsiAnnotationMemberValue findAttributeValue(String attributeName);
 }

@@ -15,14 +15,39 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
+ * Represents a single element-value pair of an annotation parameter list.
+ *
  * @author ven
+ * @see PsiAnnotation
+ * @see PsiAnnotationParameterList
  */
 public interface PsiNameValuePair extends PsiElement {
+  /**
+   * The empty array of PSI name/value pairs which can be reused to avoid unnecessary allocations.
+   */
   PsiNameValuePair[] EMPTY_ARRAY = new PsiNameValuePair[0];
 
-  PsiIdentifier getNameIdentifier ();
-  String getName ();
+  /**
+   * Returns the identifier specifying the name of the element.
+   *
+   * @return the name identifier, or null if the annotation declaration is incomplete.
+   */
+  PsiIdentifier getNameIdentifier();
 
+  /**
+   * Returns the name of the element.
+   *
+   * @return the name, or null if the annotation declaration is incomplete.
+   */
+  String getName();
+
+  /**
+   * Returns the value for the element.
+   *
+   * @return the value for the element.
+   */
   PsiAnnotationMemberValue getValue();
 }

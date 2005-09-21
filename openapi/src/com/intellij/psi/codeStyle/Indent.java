@@ -15,6 +15,10 @@
  */
 package com.intellij.psi.codeStyle;
 
+/**
+ * @deprecated
+ * @see com.intellij.formatting.Indent
+ */
 public interface Indent {
   boolean isGreaterThan(Indent indent);
 

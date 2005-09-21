@@ -601,9 +601,9 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   }
 
   public SuggestedNameInfo suggestVariableName(final VariableKind kind,
-                                               final String propertyName,
-                                               final PsiExpression expr,
-                                               PsiType type) {
+                                               @Nullable final String propertyName,
+                                               @Nullable final PsiExpression expr,
+                                               @Nullable PsiType type) {
     LinkedHashSet<String> names = new LinkedHashSet<String>();
 
     if (expr != null && type == null) {

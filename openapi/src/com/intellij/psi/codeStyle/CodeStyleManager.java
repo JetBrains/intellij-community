@@ -36,7 +36,7 @@ public abstract class CodeStyleManager {
    * @param project the project to get the code style manager for.
    * @return the code style manager instance.
    */
-  public static CodeStyleManager getInstance(Project project){
+  public static CodeStyleManager getInstance(Project project) {
     return project.getComponent(CodeStyleManager.class);
   }
 
@@ -58,49 +58,269 @@ public abstract class CodeStyleManager {
    */
   public abstract Project getProject();
 
+  /**
+   * Reformats the contents of the specified PSI element, enforces braces and splits import
+   * statements according to the user's code style.
+   *
+   * @param element the element to reformat.
+   * @return the element in the PSI tree after the reformat operation corresponding to the
+   *         original element.
+   * @throws IncorrectOperationException if the file to reformat is read-only.
+   * @see #reformatText(com.intellij.psi.PsiFile, int, int)
+   */
   public abstract PsiElement reformat(PsiElement element) throws IncorrectOperationException;
+
+  /**
+   * Reformats the contents of the specified PSI element, and optionally enforces braces
+   * and splits import statements according to the user's code style.
+   *
+   * @param element                  the element to reformat.
+   * @param canChangeWhiteSpacesOnly if true, only reformatting is performed; if false,
+   *                                 braces and import statements also can be modified if necessary.
+   * @return the element in the PSI tree after the reformat operation corresponding to the
+   *         original element.
+   * @throws IncorrectOperationException if the file to reformat is read-only.
+   * @see #reformatText(com.intellij.psi.PsiFile, int, int)
+   */
   public abstract PsiElement reformat(PsiElement element, boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException;
+
+  /**
+   * Reformats part of the contents of the specified PSI element, enforces braces
+   * and splits import statements according to the user's code style.
+   *
+   * @param element     the element to reformat.
+   * @param startOffset the start offset in the document of the text range to reformat.
+   * @param endOffset   the end offset in the document of the text range to reformat.
+   * @return the element in the PSI tree after the reformat operation corresponding to the
+   *         original element.
+   * @throws IncorrectOperationException if the file to reformat is read-only.
+   * @see #reformatText(com.intellij.psi.PsiFile, int, int)
+   */
   public abstract PsiElement reformatRange(PsiElement element, int startOffset, int endOffset) throws IncorrectOperationException;
 
-  public abstract void reformatText(PsiFile element, int startOffset, int endOffset) throws IncorrectOperationException;
-
+  /**
+   * Reformats part of the contents of the specified PSI element, and optionally enforces braces
+   * and splits import statements according to the user's code style.
+   *
+   * @param element                  the element to reformat.
+   * @param startOffset              the start offset in the document of the text range to reformat.
+   * @param endOffset                the end offset in the document of the text range to reformat.
+   * @param canChangeWhiteSpacesOnly if true, only reformatting is performed; if false,
+   *                                 braces and import statements also can be modified if necessary.
+   * @return the element in the PSI tree after the reformat operation corresponding to the
+   *         original element.
+   * @throws IncorrectOperationException if the file to reformat is read-only.
+   * @see #reformatText(com.intellij.psi.PsiFile, int, int)
+   */
   public abstract PsiElement reformatRange(PsiElement element,
                                            int startOffset,
                                            int endOffset,
                                            boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException;
+
+  /**
+   * Reformats a range of text in the specified file. This method works faster than
+   * {@link #reformatRange(com.intellij.psi.PsiElement, int, int)} but invalidates the
+   * PSI structure for the file.
+   *
+   * @param element     the file to reformat.
+   * @param startOffset the start of the text range to reformat.
+   * @param endOffset   the end of the text range to reformat.
+   * @throws IncorrectOperationException if the file to reformat is read-only.
+   */
+  public abstract void reformatText(PsiFile element, int startOffset, int endOffset) throws IncorrectOperationException;
+
+  /**
+   * Replaces fully-qualified class names in the contents of the specified element with
+   * non-qualified names and adds import statements as necessary.
+   *
+   * @param element the element to shorten references in.
+   * @return the element in the PSI tree after the shorten references operation corresponding
+   *         to the original element.
+   * @throws IncorrectOperationException if the file to shorten references in is read-only.
+   */
   public abstract PsiElement shortenClassReferences(PsiElement element) throws IncorrectOperationException;
+
+  /**
+   * Replaces fully-qualified class names in a part of contents of the specified element with
+   * non-qualified names and adds import statements as necessary.
+   *
+   * @param element     the element to shorten references in.
+   * @param startOffset the start offset in the <b>element</b> of the part where class references are
+   *                    shortened.
+   * @param endOffset   the end offset in the <b>element</b> of the part where class references are
+   *                    shortened.
+   * @throws IncorrectOperationException if the file to shorten references in is read-only.
+   */
   public abstract void shortenClassReferences(PsiElement element, int startOffset, int endOffset) throws IncorrectOperationException;
 
+  /**
+   * Optimizes imports in the specified Java or JSP file.
+   *
+   * @param file the file to optimize the imports in.
+   * @throws IncorrectOperationException if the file is read-only.
+   */
   public abstract void optimizeImports(PsiFile file) throws IncorrectOperationException;
+
+  /**
+   * Calculates the import list that would be substituted in the specified Java or JSP
+   * file if an Optimize Imports operation was performed on it.
+   *
+   * @param file the file to calculate the import list for.
+   * @return the calculated import list.
+   */
   public abstract PsiImportList prepareOptimizeImportsResult(PsiFile file);
 
+  /**
+   * Reformats the specified range of a file, modifying only line indents and leaving
+   * all other whitespace intact.
+   *
+   * @param file          the file to reformat.
+   * @param rangeToAdjust the range of text in which indents should be reformatted.
+   * @throws IncorrectOperationException if the file is read-only.
+   */
   public abstract void adjustLineIndent(PsiFile file, TextRange rangeToAdjust) throws IncorrectOperationException;
+
+  /**
+   * Reformats the line at the specified offset in the specified file, modifying only the line indent
+   * and leaving all other whitespace intact.
+   *
+   * @param file   the file to reformat.
+   * @param offset the offset the line at which should be reformatted.
+   * @throws IncorrectOperationException if the file is read-only.
+   */
   public abstract int adjustLineIndent(PsiFile file, int offset) throws IncorrectOperationException;
+
+  /**
+   * @deprecated this method is not intended to be used by plugins.
+   */
   public abstract boolean isLineToBeIndented(PsiFile file, int offset);
+
+  /**
+   * Calculates the indent that should be used for the specified line in
+   * the specified file.
+   *
+   * @param file   the file for which the indent should be calculated.
+   * @param offset the offset for the line at which the indent should be calculated.
+   * @return the indent string (containing of tabs and/or whitespaces), or null if it
+   *         was not possible to calculate the indent.
+   */
   @Nullable
   public abstract String getLineIndent(PsiFile file, int offset);
 
+  /**
+   * Calculates the indent that should be used for the current line in the specified
+   * editor.
+   *
+   * @param editor the editor for which the indent should be calculated.
+   * @return the indent string (containing of tabs and/or whitespaces), or null if it
+   *         was not possible to calculate the indent.
+   */
   @Nullable
   public abstract String getLineIndent(Editor editor);
 
+  /**
+   * @deprecated
+   */
   public abstract Indent getIndent(String text, FileType fileType);
+
+  /**
+   * @deprecated
+   */
   public abstract String fillIndent(Indent indent, FileType fileType);
+
+  /**
+   * @deprecated
+   */
   public abstract Indent zeroIndent();
 
+  /**
+   * @deprecated this method is not designed to be used by plugins.
+   */
   public abstract PsiElement insertNewLineIndentMarker(PsiFile file, int offset) throws IncorrectOperationException;
 
+  /**
+   * Returns the kind of the specified variable (local, parameter, field, static field or static
+   * final field).
+   *
+   * @param variable the variable to get the kind for.
+   * @return the variable kind.
+   */
   public abstract VariableKind getVariableKind(PsiVariable variable);
 
-  public abstract SuggestedNameInfo suggestVariableName(VariableKind kind, String propertyName, PsiExpression expr, PsiType type);
+  /**
+   * Suggests a name for a variable of the specified kind, depending on the code style and
+   * the intended use of the variable.
+   * @param kind         the kind of the variable.
+   * @param propertyName the base name (without code style prefixes) for the variable, or null
+   *                     if the base name is not known.
+   * @param expr         the expression which will be assigned to the variable, or null if unknown
+   * @param type         the expected type of the variable, or null if unknown
+   * @return the array of name suggested by the variable, in the order that should be displayed to the user.
+   */
+  public abstract SuggestedNameInfo suggestVariableName(VariableKind kind,
+                                                        @Nullable String propertyName,
+                                                        @Nullable PsiExpression expr,
+                                                        @Nullable PsiType type);
 
+  /**
+   * Generates a stripped-down name (with no code style defined prefixes or suffixes, usable as
+   * a property name) from the specified name of a variable of the specified kind.
+   *
+   * @param name         the name of the variable.
+   * @param variableKind the kind of the variable.
+   * @return the stipped-down name.
+   */
   public abstract String variableNameToPropertyName(String name, VariableKind variableKind);
+
+  /**
+   * Appends code style defined prefixes and/or suffixes for the specified variable kind
+   * to the specified variable name.
+   *
+   * @param propertyName the base name of the variable.
+   * @param variableKind the kind of the variable.
+   * @return the variable name.
+   */
   public abstract String propertyNameToVariableName(String propertyName, VariableKind variableKind);
 
+  /**
+   * Suggests a unique name for the variable used at the specified location.
+   *
+   * @param baseName    the base name for the variable.
+   * @param place       the location where the variable will be used.
+   * @param lookForward if true, the existing variables are searched in both directions; if false - only backward
+   * @return the generated unique name,
+   */
   public abstract String suggestUniqueVariableName(String baseName, PsiElement place, boolean lookForward);
 
+  /**
+   * Checks if the specified identifier is valid for the specified role (local variable,
+   * field name etc.) according to the user's code style.
+   *
+   * @param identifier the identifier to check.
+   * @param role       the role to check for.
+   * @return true if the identifier is valid, false it it does not match the coding style
+   *         or the role is unknown.
+   * @deprecated
+   */
   public abstract boolean checkIdentifierRole(String identifier, IdentifierRole role);
 
+  /**
+   * Replaces all references to Java classes in the contents of the specified element,
+   * except for references to classes in the same package or in implicitly imported packages,
+   * with full-qualified references.
+   *
+   * @param element the element to replace the references in.
+   * @return the element in the PSI tree after the qualify operation corresponding to the
+   *         original element.
+   */
   public abstract PsiElement qualifyClassReferences(PsiElement element);
 
+  /**
+   * Removes unused import statements from the specified Java file.
+   *
+   * @param file the file to remove the import statements from.
+   * @throws IncorrectOperationException if the operation fails for some reason (for example,
+   *                                     the file is read-only).
+   */
   public abstract void removeRedundantImports(PsiJavaFile file) throws IncorrectOperationException;
 }

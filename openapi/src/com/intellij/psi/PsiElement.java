@@ -316,7 +316,8 @@ public interface PsiElement extends UserDataHolder, Iconable {
   /**
    * Deletes this PSI element from the tree.
    *
-   * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
+   * @throws IncorrectOperationException if the modification is not supported
+   * or not possible for some reason (for example, the file containing the element is read-only).
    */
   void delete() throws IncorrectOperationException;
 

@@ -18,10 +18,15 @@ package com.intellij.psi.codeStyle;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 
+/**
+ * Defines different types of variables for which the code style specifies naming settings.
+ *
+ * @see CodeStyleManager#getVariableKind(com.intellij.psi.PsiVariable)
+ */
 public class VariableKind {
   private final String myName;
 
-  private static HashMap ourNameToObjectMap = new HashMap();
+  private static HashMap<String,VariableKind> ourNameToObjectMap = new HashMap<String, VariableKind>();
 
   private VariableKind(@NonNls String name) {
     myName = name;
@@ -33,7 +38,7 @@ public class VariableKind {
   }
 
   public static VariableKind fromString(String s){
-    return (VariableKind)ourNameToObjectMap.get(s);
+    return ourNameToObjectMap.get(s);
   }
 
   public static final VariableKind FIELD = new VariableKind("FIELD");
