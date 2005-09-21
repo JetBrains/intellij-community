@@ -873,7 +873,8 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
   }
 
   public ProblemDescriptor[] getSelectedDescriptors() {
-    if (myTree.getSelectionCount() == 0 || !(getSelectedTool() instanceof DescriptorProviderInspection)) return EMPTY_DESCRIPTORS;
+    final InspectionTool tool = getSelectedTool();
+    if (myTree.getSelectionCount() == 0 || !(tool instanceof DescriptorProviderInspection)) return EMPTY_DESCRIPTORS;
     final TreePath[] paths = myTree.getSelectionPaths();
     Set<ProblemDescriptor> descriptors = new HashSet<ProblemDescriptor>();
     for (TreePath path : paths) {
@@ -881,15 +882,13 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       if (node instanceof ProblemDescriptionNode) {
         final ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
         descriptors.add(problemNode.getDescriptor());
+      } else if (node instanceof RefElementNode){
+        RefElement element = ((RefElementNode)node).getElement();
+        final ProblemDescriptor[] descriptions = ((DescriptorProviderInspection)tool).getDescriptions(element);
+        if (descriptions != null) descriptors.addAll(Arrays.asList(descriptions));
       }
     }
 
-    final RefElement[] elements = getSelectedElements();
-    final DescriptorProviderInspection tool = (DescriptorProviderInspection)getSelectedTool();
-    for (RefElement element : elements) {
-      final ProblemDescriptor[] descriptions = tool.getDescriptions(element);
-      if (descriptions != null) descriptors.addAll(Arrays.asList(descriptions));
-    }
     return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
   }
 

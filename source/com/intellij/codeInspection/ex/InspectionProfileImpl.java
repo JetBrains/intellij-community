@@ -7,16 +7,15 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -464,7 +463,7 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
       Element root = new Element("inspections");
       root.setAttribute("profile_name", name);
       writeExternal(root);
-      if (file != null) {
+      if (file != null && file.exists()) {
         JDOMUtil.writeDocument(new Document(root), file, CodeStyleSettingsManager.getSettings(null).getLineSeparator());
       }
     }
