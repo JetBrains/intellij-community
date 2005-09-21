@@ -100,7 +100,7 @@ public class ExternalDocumentValidator {
                 return;
               }
               
-              if (document.getLineCount() <= e.getLineNumber() || e.getLineNumber() <= 0) {
+              if (document.getLineCount() < e.getLineNumber() || e.getLineNumber() <= 0) {
                 return;
               }
 
