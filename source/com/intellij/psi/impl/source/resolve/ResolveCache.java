@@ -168,16 +168,16 @@ public class ResolveCache {
 
   private JavaResolveResult[] getCachedJavaResolve(PsiReference ref, boolean physical, boolean ic){
     int index = getIndex(physical, ic);
-    final Reference reference = (Reference)myJavaResolveMaps[index].get(ref);
+    final Reference<JavaResolveResult[]> reference = (Reference<JavaResolveResult[]>)myJavaResolveMaps[index].get(ref);
     if(reference == null) return null;
-    return (JavaResolveResult[]) reference.get();
+    return reference.get();
   }
 
   public static interface ConstValueComputer{
-    Object execute(PsiVariable variable, Set visitedVars);
+    Object execute(PsiVariable variable, Set<PsiVariable> visitedVars);
   }
 
-  public Object computeConstantValueWithCaching(PsiVariable variable, ConstValueComputer computer, Set visitedVars){
+  public Object computeConstantValueWithCaching(PsiVariable variable, ConstValueComputer computer, Set<PsiVariable> visitedVars){
     boolean physical = variable.isPhysical();
 
     Object cached = (physical ? myVarToConstValueMap1 : myVarToConstValueMap2).get(variable);

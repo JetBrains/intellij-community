@@ -268,7 +268,6 @@ public class HighlightUtil {
     try {
       PsiModifierList modifierListCopy = refElement.getManager().getElementFactory().createFieldFromText("int a;", null).getModifierList();
       modifierListCopy.setModifierProperty(PsiModifier.STATIC, modifierList.hasModifierProperty(PsiModifier.STATIC));
-      String[] modifiers = new String[]{PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED, PsiModifier.PUBLIC};
       int i = 0;
       if (refElement.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
         i = 1;
@@ -276,6 +275,7 @@ public class HighlightUtil {
       if (refElement.hasModifierProperty(PsiModifier.PROTECTED)) {
         i = 2;
       }
+      String[] modifiers = new String[]{PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED, PsiModifier.PUBLIC};
       for (; i < modifiers.length; i++) {
         String modifier = modifiers[i];
         modifierListCopy.setModifierProperty(modifier, true);
@@ -320,7 +320,7 @@ public class HighlightUtil {
     PsiExpression operand = expression.getOperand();
     PsiType checkType = expression.getCheckType().getType();
     PsiType operandType = operand.getType();
-    if (checkType == null || operandType == null) return null;
+    if (operandType == null) return null;
     if (TypeConversionUtil.isPrimitiveAndNotNull(operandType)
         || TypeConversionUtil.isPrimitiveAndNotNull(checkType)
         || !TypeConversionUtil.areTypesConvertible(operandType, checkType)) {
@@ -339,9 +339,7 @@ public class HighlightUtil {
     PsiExpression operand = expression.getOperand();
     PsiType castType = expression.getCastType().getType();
     PsiType operandType = operand == null ? null : operand.getType();
-    if (operandType != null
-        && castType != null
-        && !TypeConversionUtil.areTypesConvertible(operandType, castType)) {
+    if (operandType != null && !TypeConversionUtil.areTypesConvertible(operandType, castType)) {
       String message = MessageFormat.format(INCONVERTIBLE_TYPE_CAST,
                                             new Object[]{formatType(operandType), formatType(castType)});
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
@@ -353,7 +351,6 @@ public class HighlightUtil {
 
   
   static HighlightInfo checkVariableExpected(PsiExpression expression) {
-    HighlightInfo errorResult = null;
     PsiExpression lValue;
     if (expression instanceof PsiAssignmentExpression) {
       PsiAssignmentExpression assignment = (PsiAssignmentExpression)expression;
@@ -367,6 +364,7 @@ public class HighlightUtil {
     else {
       lValue = null;
     }
+    HighlightInfo errorResult = null;
     if (lValue != null && !TypeConversionUtil.isLValue(lValue)) {
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                       lValue,
@@ -440,7 +438,7 @@ public class HighlightUtil {
 
   @Nullable
   static HighlightInfo checkAssignmentCompatibleTypes(PsiAssignmentExpression assignment) {
-    if (assignment.getOperationSign() == null || !"=".equals(assignment.getOperationSign().getText())) return null;
+    if (!"=".equals(assignment.getOperationSign().getText())) return null;
     PsiExpression lExpr = assignment.getLExpression();
     PsiExpression rExpr = assignment.getRExpression();
     if (rExpr == null) return null;
@@ -1146,13 +1144,13 @@ public class HighlightUtil {
   @Nullable
   public static HighlightInfo checkArrayInitalizerCompatibleTypes(PsiExpression initializer) {
     if (!(initializer.getParent() instanceof PsiArrayInitializerExpression)) return null;
-    PsiType elementType;
     PsiElement element = initializer.getParent();
     int dimensions = 0;
     while (element instanceof PsiArrayInitializerExpression) {
       element = element.getParent();
       dimensions++;
     }
+    PsiType elementType;
     if (element instanceof PsiVariable) {
       elementType = ((PsiVariable)element).getType();
     }
@@ -1258,10 +1256,18 @@ public class HighlightUtil {
                                                "Case statement outside switch");
     }
     if (switchStatement.getBody() == null) return null;
-    Object value = null;
+    PsiExpression switchExpression = switchStatement.getExpression();
+    PsiType switchType = switchExpression == null ? PsiType.INT : switchExpression.getType();
     // check constant expression
     PsiExpression caseValue = statement.getCaseValue();
-    PsiConstantEvaluationHelper evalHelper = statement.getManager().getConstantEvaluationHelper();
+
+    // Every case constant expression associated with a switch statement must be assignable (?5.2) to the type of the switch Expression.
+    if (caseValue != null && switchExpression != null) {
+      HighlightInfo highlightInfo = checkAssignability(switchType, caseValue.getType(), caseValue, caseValue);
+      if (highlightInfo != null) return highlightInfo;
+    }
+    Object value = null;
+
     boolean isEnumSwitch = false;
     if (!statement.isDefaultCase() && caseValue != null) {
       if (caseValue instanceof PsiReferenceExpression) {
@@ -1278,19 +1284,13 @@ public class HighlightUtil {
         }
       }
       if (!isEnumSwitch) {
-        value = evalHelper.computeConstantExpression(caseValue);
+        value = ConstantExpressionUtil.computeCastTo(caseValue, switchType);
       }
       if (value == null) {
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                  caseValue,
                                                  "Constant expression required");
       }
-    }
-    // Every case constant expression associated with a switch statement must be assignable (?5.2) to the type of the switch Expression.
-    PsiExpression switchExpression = switchStatement.getExpression();
-    if (caseValue != null && switchExpression != null) {
-      HighlightInfo highlightInfo = checkAssignability(switchExpression.getType(), caseValue.getType(), caseValue, caseValue);
-      if (highlightInfo != null) return highlightInfo;
     }
 
     // check duplicate
@@ -1305,7 +1305,11 @@ public class HighlightUtil {
         PsiElement element = ((PsiReferenceExpression)caseExpr).resolve();
         if (!(element instanceof PsiEnumConstant && Comparing.equal(((PsiEnumConstant)element).getName(), value))) continue;
       }
-      else if (!Comparing.equal(evalHelper.computeConstantExpression(caseExpr), value)) continue;
+      else {
+        // not assignable error already caught
+        if (!TypeConversionUtil.areTypesAssignmentCompatible(switchType, caseExpr)) continue;
+        if (!Comparing.equal(ConstantExpressionUtil.computeCastTo(caseExpr, switchType), value)) continue;
+      }
       String description = statement.isDefaultCase() ?
                            "Duplicate default label" :
                            MessageFormat.format("Duplicate label ''{0}''", new Object[]{value});
@@ -1449,9 +1453,9 @@ public class HighlightUtil {
 
   @Nullable
   public static HighlightInfo checkMemberReferencedBeforeConstructorCalled(PsiElement expression) {
-    String resolvedName;
-    PsiClass referencedClass;
     if (expression.getParent() instanceof PsiJavaCodeReferenceElement) return null;
+    PsiClass referencedClass;
+    String resolvedName;
     if (expression instanceof PsiJavaCodeReferenceElement) {
       PsiElement resolved = ((PsiJavaCodeReferenceElement)expression).advancedResolve(true).getElement();
 
@@ -2230,7 +2234,7 @@ public class HighlightUtil {
 
   public static boolean isSerializationImplicitlyUsedField(PsiField field) {
     final String name = field.getName();
-    if (!name.equals("serialVersionUID") && !name.equals("serialPersistentFields")) return false;
+    if (!"serialVersionUID".equals(name) && !"serialPersistentFields".equals(name)) return false;
     if (!field.hasModifierProperty(PsiModifier.STATIC)) return false;
     PsiClass aClass = field.getContainingClass();
     return aClass == null || isSerializable(aClass);

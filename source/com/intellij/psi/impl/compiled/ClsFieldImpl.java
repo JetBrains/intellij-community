@@ -19,9 +19,9 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.cls.BytePointer;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.cls.ClsUtil;
+import gnu.trove.THashSet;
 
 import java.text.StringCharacterIterator;
-import java.util.HashSet;
 import java.util.Set;
 
 public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, PsiVariableEx, ClsModifierListOwner {
@@ -478,10 +478,10 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
   }
 
   public Object computeConstantValue() {
-    return computeConstantValue(new HashSet());
+    return computeConstantValue(new THashSet<PsiVariable>());
   }
 
-  public Object computeConstantValue(Set visitedVars) {
+  public Object computeConstantValue(Set<PsiVariable> visitedVars) {
     if (!hasModifierProperty(PsiModifier.FINAL)) return null;
     PsiExpression initializer = getInitializer();
     if (initializer == null) return null;

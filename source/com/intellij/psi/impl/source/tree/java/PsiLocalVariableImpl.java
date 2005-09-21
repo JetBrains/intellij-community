@@ -12,9 +12,9 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.jsp.JspxFileImpl;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspUtil;
-import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.LocalSearchScope;
@@ -22,8 +22,8 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import gnu.trove.THashSet;
 
-import java.util.HashSet;
 import java.util.Set;
 
 public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLocalVariable, PsiVariableEx {
@@ -87,10 +87,10 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
   }
 
   public Object computeConstantValue() {
-    return computeConstantValue(new HashSet());
+    return computeConstantValue(new THashSet<PsiVariable>());
   }
 
-  public Object computeConstantValue(Set visitedVars) {
+  public Object computeConstantValue(Set<PsiVariable> visitedVars) {
     if (!hasModifierProperty(PsiModifier.FINAL)) return null;
 
     PsiType type = getType();

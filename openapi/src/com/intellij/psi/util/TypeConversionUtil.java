@@ -22,6 +22,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.TObjectIntHashMap;
+import gnu.trove.THashMap;
 
 import java.util.*;
 
@@ -447,7 +448,6 @@ public class TypeConversionUtil {
     if (element instanceof PsiArrayAccessExpression) {
       final PsiArrayAccessExpression arrayAccessExpression = (PsiArrayAccessExpression)element;
       final PsiExpression arrayExpression = arrayAccessExpression.getArrayExpression();
-      if (arrayExpression == null) return false;
       final PsiType type = arrayExpression.getType();
       if (type == null || !(type instanceof PsiArrayType)) return false;
       final PsiExpression indexExpression = arrayAccessExpression.getIndexExpression();
@@ -700,10 +700,10 @@ public class TypeConversionUtil {
   private static boolean typeParametersAgree(PsiClassType.ClassResolveResult leftResult,
                                              PsiClassType.ClassResolveResult rightResult,
                                              boolean allowUncheckedConversion) {
-    final PsiSubstitutor substitutor;
     PsiSubstitutor rightSubstitutor = rightResult.getSubstitutor();
     PsiClass leftClass = leftResult.getElement();
     if (!leftClass.hasTypeParameters()) return true;
+    final PsiSubstitutor substitutor;
 
     PsiClass rightClass = rightResult.getElement();
     if (leftClass.getManager().areElementsEquivalent(leftClass, rightClass)) {
@@ -996,4 +996,317 @@ public class TypeConversionUtil {
       }
     });
   }
+
+  public static Object computeCastTo(final Object operand, final PsiType castType) {
+    if (operand == null || castType == null) return null;
+    Object value;
+    if (operand instanceof String && castType.equalsToText("java.lang.String")) {
+      value = operand;
+    }
+    else if (operand instanceof Boolean && castType == PsiType.BOOLEAN) {
+      value = operand;
+    }
+    else {
+      final PsiType primitiveType = wrapperToPrimitive(operand);
+      if (primitiveType == null) return null;
+      // identity cast, including (boolean)boolValue
+      if (castType.equals(primitiveType)) return operand;
+      final int rankFrom = getTypeRank(primitiveType);
+      if (rankFrom > caster.length) return null;
+      final int rankTo = getTypeRank(castType);
+      if (rankTo > caster.length) return null;
+
+      value = caster[rankFrom - 1][rankTo - 1].cast(operand);
+    }
+    return value;
+  }
+
+  private interface Caster {
+    Object cast(Object operand);
+  }
+
+  private static final Caster[][] caster = new Caster[][]{
+    {
+      new Caster() {
+        public Object cast(Object operand) {
+          return operand;
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Short((short) ((Number) operand).intValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Character((char) ((Number) operand).intValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Integer(((Number) operand).intValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Long(((Number) operand).intValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Float(((Number) operand).intValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Double(((Number) operand).intValue());
+        }
+      }
+    }
+    ,
+    {
+      new Caster() {
+        public Object cast(Object operand) {
+          return new Byte((byte) ((Short) operand).shortValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Short(((Short) operand).shortValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Character((char) ((Short) operand).shortValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Integer(((Short) operand).shortValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Long(((Short) operand).shortValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Float(((Short) operand).shortValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Double(((Short) operand).shortValue());
+        }
+      }
+    }
+    ,
+    {
+      new Caster() {
+        public Object cast(Object operand) {
+          return new Byte((byte) ((Character) operand).charValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Short((short) ((Character) operand).charValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Character(((Character) operand).charValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Integer(((Character) operand).charValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Long(((Character) operand).charValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Float(((Character) operand).charValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Double(((Character) operand).charValue());
+        }
+      }
+    }
+    ,
+    {
+      new Caster() {
+        public Object cast(Object operand) {
+          return new Byte((byte) ((Integer) operand).intValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Short((short) ((Integer) operand).intValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Character((char) ((Integer) operand).intValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Integer(((Integer) operand).intValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Long(((Integer) operand).intValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Float(((Integer) operand).intValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Double(((Integer) operand).intValue());
+        }
+      }
+    }
+    ,
+    {
+      new Caster() {
+        public Object cast(Object operand) {
+          return new Byte((byte) ((Long) operand).longValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Short((short) ((Long) operand).longValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Character((char) ((Long) operand).longValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Integer((int) ((Long) operand).longValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Long(((Long) operand).longValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Float(((Long) operand).longValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Double(((Long) operand).longValue());
+        }
+      }
+    }
+    ,
+    {
+      new Caster() {
+        public Object cast(Object operand) {
+          return new Byte((byte) ((Float) operand).floatValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Short((short) ((Float) operand).floatValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Character((char) ((Float) operand).floatValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Integer((int) ((Float) operand).floatValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Long((long) ((Float) operand).floatValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Float(((Float) operand).floatValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Double(((Float) operand).floatValue());
+        }
+      }
+    }
+    ,
+    {
+      new Caster() {
+        public Object cast(Object operand) {
+          return new Byte((byte) ((Double) operand).doubleValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Short((short) ((Double) operand).doubleValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Character((char) ((Double) operand).doubleValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Integer((int) ((Double) operand).doubleValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Long((long) ((Double) operand).doubleValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Float(((Double) operand).doubleValue());
+        }
+      }
+      , new Caster() {
+        public Object cast(Object operand) {
+          return new Double(((Double) operand).doubleValue());
+        }
+      }
+    }
+  };
+
+  private static final Map<Class, PsiType> WRAPPER_TO_PRIMITIVE = new THashMap<Class, PsiType>(8);
+  static {
+    WRAPPER_TO_PRIMITIVE.put(Boolean.class, PsiType.BOOLEAN);
+    WRAPPER_TO_PRIMITIVE.put(Byte.class, PsiType.BYTE);
+    WRAPPER_TO_PRIMITIVE.put(Character.class, PsiType.CHAR);
+    WRAPPER_TO_PRIMITIVE.put(Short.class, PsiType.SHORT);
+    WRAPPER_TO_PRIMITIVE.put(Integer.class, PsiType.INT);
+    WRAPPER_TO_PRIMITIVE.put(Long.class, PsiType.LONG);
+    WRAPPER_TO_PRIMITIVE.put(Float.class, PsiType.FLOAT);
+    WRAPPER_TO_PRIMITIVE.put(Double.class, PsiType.DOUBLE);
+  }
+
+  private static PsiType wrapperToPrimitive(Object o) {
+    return WRAPPER_TO_PRIMITIVE.get(o.getClass());
+  }
+
 }

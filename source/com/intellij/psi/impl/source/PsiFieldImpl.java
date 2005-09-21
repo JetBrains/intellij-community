@@ -224,12 +224,12 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
   private static class OurConstValueComputer implements ResolveCache.ConstValueComputer{
     private static final OurConstValueComputer INSTANCE = new OurConstValueComputer();
 
-    public Object execute(PsiVariable variable, Set visitedVars) {
+    public Object execute(PsiVariable variable, Set<PsiVariable> visitedVars) {
       return ((PsiFieldImpl)variable)._computeConstantValue(visitedVars);
     }
   }
 
-  private Object _computeConstantValue(Set visitedVars) {
+  private Object _computeConstantValue(Set<PsiVariable> visitedVars) {
     if (myCachedInitializerValue != null && !(myCachedInitializerValue instanceof PsiExpression)){
       return myCachedInitializerValue;
     }
@@ -282,10 +282,10 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
       return myCachedInitializerValue;
     }
 
-    return computeConstantValue(new HashSet(2));
+    return computeConstantValue(new HashSet<PsiVariable>(2));
   }
 
-  public Object computeConstantValue(Set visitedVars) {
+  public Object computeConstantValue(Set<PsiVariable> visitedVars) {
     if (!hasModifierProperty(PsiModifier.FINAL)) return null;
 
     return myManager.getResolveCache().computeConstantValueWithCaching(this, OurConstValueComputer.INSTANCE, visitedVars);

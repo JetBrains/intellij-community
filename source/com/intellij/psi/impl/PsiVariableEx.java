@@ -5,5 +5,5 @@ import com.intellij.psi.*;
 import java.util.Set;
 
 public interface PsiVariableEx extends PsiVariable{
-  Object computeConstantValue(Set visitedVars);
+  Object computeConstantValue(Set<PsiVariable> visitedVars);
 }
