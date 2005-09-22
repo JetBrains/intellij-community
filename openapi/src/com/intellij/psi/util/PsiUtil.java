@@ -155,8 +155,8 @@ public final class PsiUtil {
     }
     else {
       PsiType type = accessObject.getType();
-      if (!(type instanceof PsiClassType || type instanceof PsiArrayType)) return JavaResolveResult.EMPTY;
-      return PsiUtil.resolveGenericsClassInType(type);
+      if (!(type instanceof PsiClassType)) return JavaResolveResult.EMPTY;
+      return ((PsiClassType)type).resolveGenerics();
     }
   }
 
