@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Foo.java</file>
+    <line>5</line>
+    <description>Duplicate @throws tag for exception 'java.lang.Exception'</description>
+  </problem>
+</problems>
+

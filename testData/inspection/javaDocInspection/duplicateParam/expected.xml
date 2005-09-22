@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Foo.java</file>
+    <line>5</line>
+    <description>Duplicate @param tag for parameter 's'</description>
+  </problem>
+</problems>
+
