@@ -264,11 +264,11 @@ public class CopyReferenceAction extends AnAction {
     }
 
     public DataFlavor[] getTransferDataFlavors() {
-      return new DataFlavor[]{OUR_DATA_FLAVOR};
+      return new DataFlavor[]{OUR_DATA_FLAVOR, DataFlavor.stringFlavor};
     }
 
     public boolean isDataFlavorSupported(DataFlavor flavor) {
-      return OUR_DATA_FLAVOR.equals(flavor);
+      return OUR_DATA_FLAVOR.equals(flavor) || DataFlavor.stringFlavor.equals(flavor);
     }
 
     public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
