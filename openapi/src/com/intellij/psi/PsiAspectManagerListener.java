@@ -16,6 +16,8 @@
 package com.intellij.psi;
 
 /**
+ * AspectJ functionality; currently not supported.
+ * 
  * @author max
  */
 public interface PsiAspectManagerListener {

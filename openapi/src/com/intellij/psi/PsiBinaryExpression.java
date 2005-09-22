@@ -19,15 +19,31 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- *
+ * Represents a Java binary expression (addition, multiplication and so on).
  */
 public interface PsiBinaryExpression extends PsiExpression {
+  /**
+   * Returns the left operand of the expression.
+   *
+   * @return the left operand.
+   */
   @NotNull
   PsiExpression getLOperand();
 
+  /**
+   * Returns the right operand of the expression.
+   *
+   * @return the right operand, or null if the expression is incomplete.
+   */
   @Nullable
   PsiExpression getROperand();
 
+  /**
+   * Returns the token representing the operation (for example, {@link JavaTokenType.PLUS} for an
+   * addition operation).
+   *
+   * @return the operation token.
+   */
   @NotNull
   PsiJavaToken getOperationSign();
 }

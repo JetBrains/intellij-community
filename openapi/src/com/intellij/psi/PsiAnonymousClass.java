@@ -19,15 +19,30 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- *
+ * Represents a Java anonymous class.
  */
 public interface PsiAnonymousClass extends PsiClass {
+  /**
+   * Returns the reference element specifying the base class for the anonymous class.
+   *
+   * @return the reference element for the base class.
+   */
   @NotNull
   PsiJavaCodeReferenceElement getBaseClassReference();
 
+  /**
+   * Returns the type for the base class of the anonymous class.
+   *
+   * @return the type for the base class.
+   */
   @NotNull
   PsiClassType getBaseClassType();
 
+  /**
+   * Returns the list of arguments passed to the base class constructor.
+   *
+   * @return the argument list, or null if no argument list was specified.
+   */
   @Nullable
   PsiExpressionList getArgumentList();
 }

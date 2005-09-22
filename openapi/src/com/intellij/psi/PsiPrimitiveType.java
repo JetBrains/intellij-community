@@ -28,9 +28,11 @@ import com.intellij.util.containers.HashMap;
 import java.util.Map;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents primitive types of Java language
+ * Represents primitive types of Java language.
  */
 public class PsiPrimitiveType extends PsiType {
   protected static final PsiPrimitiveType VOID = new PsiPrimitiveType("void");
@@ -81,10 +83,18 @@ public class PsiPrimitiveType extends PsiType {
     return null;
   }
 
+  @NotNull
   public PsiType[] getSuperTypes() {
     return new PsiType[0];
   }
 
+  /**
+   * Returns the primitive type corresponding to a boxed class type.
+   *
+   * @param type the type to get the unboxed primitive type for.
+   * @return the primitive type, or null if the type does not represent a boxed primitive type.
+   */
+  @Nullable
   public static PsiPrimitiveType getUnboxedType(PsiType type) {
     if (!(type instanceof PsiClassType)) return null;
     final PsiClass psiClass = ((PsiClassType)type).resolve();
@@ -93,6 +103,15 @@ public class PsiPrimitiveType extends PsiType {
     return ourQNameToUnboxed.get(psiClass.getQualifiedName());
   }
 
+  /**
+   * Returns a boxed class type corresponding to the primitive type.
+   *
+   * @param manager      the manager used to create the class type.
+   * @param resolveScope the scope for searching the class.
+   * @return the class type, or null if the current language level does not support autoboxing or
+   *         it was not possible to resolve the reference to the class.
+   */
+  @Nullable
   public PsiClassType getBoxedType(PsiManager manager, GlobalSearchScope resolveScope) {
     if (!manager.getEffectiveLanguageLevel().hasEnumKeywordAndAutoboxing()) return null;
     final String boxedQName = ourUnboxedToQName.get(this);

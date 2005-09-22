@@ -19,12 +19,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- *
+ * Represents an array access expession, for example, <code>i [1]</code>.
  */
 public interface PsiArrayAccessExpression extends PsiExpression {
+  /**
+   * Returns the expression specifying the accessed array.
+   *
+   * @return the array expression.
+   */
   @NotNull
   PsiExpression getArrayExpression();
 
+  /**
+   * Returns the index expression (the expression in square brackets).
+   *
+   * @return the index expression, or null if the array access expression is incomplete.
+   */
   @Nullable
   PsiExpression getIndexExpression();
 }

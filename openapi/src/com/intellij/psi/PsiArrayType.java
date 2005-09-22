@@ -16,13 +16,21 @@
 package com.intellij.psi;
 
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 
 /**
+ * Represents an array type.
+ *
  * @author max
  */
 public class PsiArrayType extends PsiType {
   private PsiType myComponentType;
 
+  /**
+   * Creates an array type with the specified component type.
+   *
+   * @param componentType the type of the array component.
+   */
   public PsiArrayType(PsiType componentType) {
     myComponentType = componentType;
   }
@@ -55,6 +63,7 @@ public class PsiArrayType extends PsiType {
     return myComponentType.getResolveScope();
   }
 
+  @NotNull
   public PsiType[] getSuperTypes() {
     final PsiType[] superTypes = myComponentType.getSuperTypes();
     final PsiType[] result = new PsiType[superTypes.length];
@@ -64,6 +73,11 @@ public class PsiArrayType extends PsiType {
     return superTypes;
   }
 
+  /**
+   * Returns the component type of the array.
+   *
+   * @return the component type instance.
+   */
   public PsiType getComponentType() {
     return myComponentType;
   }

@@ -18,7 +18,10 @@ package com.intellij.psi;
 import com.intellij.openapi.application.ApplicationManager;
 
 /**
+ * The substitutor which does not provide any mappings for the type parameters.
+ *
  * @author dsl
+ * @see PsiSubstitutor#EMPTY
  */
 public abstract class EmptySubstitutor implements PsiSubstitutor {
   public static EmptySubstitutor getInstance()  {

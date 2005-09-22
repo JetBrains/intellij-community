@@ -18,19 +18,41 @@ package com.intellij.psi;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 
 /**
+ * Represents a class type.
+ *
  * @author max
  */
 public abstract class PsiClassType extends PsiType {
+  /**
+   * The empty array of PSI class types which can be reused to avoid unnecessary allocations.
+   */
   public static final PsiClassType[] EMPTY_ARRAY = new PsiClassType[0];
 
+  /**
+   * Resolves the class reference and returns the resulting class.
+   *
+   * @return the class instance, or null if the reference resolve failed.
+   */
+  @Nullable
   public abstract PsiClass resolve();
 
+  /**
+   * Returns the non-qualified name of the class referenced by the type.
+   *
+   * @return the name of the class.
+   */
   public abstract String getClassName();
 
+  /**
+   * Returns the list of type arguments for the type.
+   *
+   * @return the array of type arguments, or an empty array if the type does not point to a generic class or interface.
+   */
   @NotNull public abstract PsiType[] getParameters();
 
   public boolean equals(Object obj) {
@@ -60,6 +82,11 @@ public abstract class PsiClassType extends PsiType {
     return aClass.getManager().areElementsEquivalent(aClass, otherClass);
   }
 
+  /**
+   * Checks if the class type has any parameters with no substituted arguments.
+   *
+   * @return true if the class type has non-substituted parameters, false otherwise
+   */
   public boolean hasParameters() {
     final ClassResolveResult resolveResult = resolveGenerics();
     if (resolveResult.getElement() == null) return false;
@@ -72,6 +99,12 @@ public abstract class PsiClassType extends PsiType {
     return true;
   }
 
+  /**
+   * Checks if the class type has any parameters which are not unbounded wildcards
+   * and do not have substituted arguments.
+   *
+   * @return true if the class type has nontrivial non-substituted parameters, false otherwise
+   */
   public boolean hasNonTrivialParameters() {
     final ClassResolveResult resolveResult = resolveGenerics();
     if (resolveResult.getElement() == null) return false;
@@ -95,6 +128,7 @@ public abstract class PsiClassType extends PsiType {
     return className.hashCode();
   }
 
+  @NotNull
   public PsiType[] getSuperTypes() {
     final ClassResolveResult resolveResult = resolveGenerics();
     final PsiClass aClass = resolveResult.getElement();
@@ -108,6 +142,11 @@ public abstract class PsiClassType extends PsiType {
     return subtitutionResults;
   }
 
+  /**
+   * Checks whether the specified resolve result representss a raw type. <br>
+   * Raw type is a class type for a class <i>with type parameters</i> which does not assign
+   * any value to them. If a class does not have any type parameters, it cannot generate any raw type.
+   */
   public static boolean isRaw(ClassResolveResult resolveResult) {
     if (resolveResult.getElement() == null) return false;
     return PsiUtil.isRawSubstitutor(resolveResult.getElement(), resolveResult.getSubstitutor());
@@ -122,14 +161,29 @@ public abstract class PsiClassType extends PsiType {
     return isRaw(resolveGenerics());
   }
 
+  /**
+   * Returns the resolve result containing the class referenced by the class type and the
+   * substitutor which can substitute the values of type arguments used in the class type
+   * declaration.
+   *
+   * @return the resolve result instance.
+   */
   @NotNull public abstract ClassResolveResult resolveGenerics();
 
+  /**
+   * Returns the raw type (with no values assigned to type parameters) corresponding to this type.
+   *
+   * @return the raw type instance.
+   */
   @NotNull public abstract PsiClassType rawType();
 
   public <A> A accept(PsiTypeVisitor<A> visitor) {
     return visitor.visitClassType(this);
   }
 
+  /**
+   * Represents the result of resolving a reference to a Java class.
+   */
   public interface ClassResolveResult extends JavaResolveResult {
     PsiClass getElement();
 

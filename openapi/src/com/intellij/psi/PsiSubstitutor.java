@@ -15,13 +15,17 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Map;
 
 /**
  * Represents a mapping between type parameters and their values.
+ *
  * @author ik, dsl
  */
-public interface PsiSubstitutor{
+public interface PsiSubstitutor {
   /**
    * Empty, or natural, substitutor. For any type parameter <code>T</code>,
    * substitues type <code>T</code>.
@@ -33,15 +37,18 @@ public interface PsiSubstitutor{
 
   /**
    * Returns a mapping that this substitutor contains for a given type parameter.
-   * Returns <code>null</code> for raw type.
+   *
+   * @return the mapping for the type parameter, or <code>null</code> for a raw type.
    */
+  @Nullable
   PsiType substitute(PsiTypeParameter typeParameter);
 
   /**
    * Substitutes type parameters occuring in <code>type</code> with their values.
    * If value for type parameter is <code>null<code>, appropriate erasure is returned.
-   * @param type
-   * @return
+   *
+   * @param type the type to substitute the type parameters for.
+   * @return the result of the substitution.
    */
   PsiType substitute(PsiType type);
 
@@ -49,6 +56,9 @@ public interface PsiSubstitutor{
    * Substitutes type parameters occuring in <code>type</code> with their values.
    * If value for type parameter is <code>null<code>, appropriate erasure is returned.
    * If value of a <b>class</b> type parameter is a wildcard type, captures it in {@link PsiCapturedWildcardType}
+   *
+   * @param type the type to substitute the type parameters for.
+   * @return the result of the substitution.
    */
   PsiType substituteAndCapture(PsiType type);
 
@@ -56,16 +66,59 @@ public interface PsiSubstitutor{
    * Substitutes type parameters occuring in <code>type</code> with their values.
    * If value for type parameter is <code>null<code>, appropriate erasure is returned.
    * If value of a type parameter is a wildcard type, captures it in {@link PsiCapturedWildcardType}
+   *
+   * @param type the type to substitute the type parameters for.
+   * @return the result of the substitution.
    */
   PsiType substituteAndFullCapture(PsiType type);
 
+  /**
+   * Creates a substitutor instance which provides the specified parameter to type mapping in addition
+   * to mappings contained in this substitutor.
+   *
+   * @param classParameter the parameter which is mapped.
+   * @param mapping        the type to which the parameter is mapped.
+   * @return the new substitutor instance.
+   */
   PsiSubstitutor put(PsiTypeParameter classParameter, PsiType mapping);
+
+  /**
+   * Creates a substitutor instance which maps the type parameters of the specified class to the
+   * specified types in addition to mappings contained in this substitutor.
+   *
+   * @param parentClass the class whose parameters are mapped.
+   * @param mappings    the types to which the parameters are mapped.
+   * @return the new substitutor instance.
+   */
   PsiSubstitutor putAll(PsiClass parentClass, PsiType[] mappings);
+
+  /**
+   * Creates a substitutor instance containing all mappings from this substitutor and the
+   * specified substitutor.
+   *
+   * @param another the substitutor to get the mappings from.
+   * @return the new substitutor instance.
+   */
   PsiSubstitutor putAll(PsiSubstitutor another);
 
+  /**
+   * @deprecated use {@link #putAll(PsiSubstitutor)} instead.
+   */
   PsiSubstitutor merge(PsiSubstitutor other);
 
+  /**
+   * Returns the map from type parameters to types used for substution by this substitutor.
+   *
+   * @return the substitution map instance.
+   */
+  @NotNull
   Map<PsiTypeParameter, PsiType> getSubstitutionMap();
 
+  /**
+   * Checks if all types which the substitutor can substitute are valid.
+   *
+   * @return true if all types are valid, false otherwise.
+   * @see PsiType#isValid()
+   */
   boolean isValid();
 }

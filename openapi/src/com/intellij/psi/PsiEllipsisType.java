@@ -18,9 +18,15 @@ package com.intellij.psi;
 
 /**
  * Represents the type of a variable arguments array passed as a method parameter.
+ *
  * @author ven
  */
 public class PsiEllipsisType extends PsiArrayType {
+  /**
+   * Creates an ellipsis type instance with the specified component type.
+   *
+   * @param componentType the type of the varargs array component.
+   */
   public PsiEllipsisType(PsiType componentType) {
     super(componentType);
   }
@@ -38,6 +44,11 @@ public class PsiEllipsisType extends PsiArrayType {
            super.equalsToText(text);
   }
 
+  /**
+   * Converts the ellipsis type to an array type with the same component type.
+   *
+   * @return the array type instance.
+   */
   public PsiType toArrayType() {
     return getComponentType().createArrayType();
   }

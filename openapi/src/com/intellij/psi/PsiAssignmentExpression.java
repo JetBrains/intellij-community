@@ -19,15 +19,32 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- *
+ * Represents a simple assignment (<code>a=b</code>) or a compound assignment (<code>a+=1</code>) expression.
  */
 public interface PsiAssignmentExpression extends PsiExpression {
+  /**
+   * Returns the expression on the left side of the assignment.
+   *
+   * @return the left side expression.
+   */
   @NotNull
   PsiExpression getLExpression();
 
+  /**
+   * Returns the expression on the right side of the assignment.
+   *
+   * @return the right side expression, or null if the assignment
+   * expression is incomplete.
+   */
   @Nullable
   PsiExpression getRExpression();
 
+  /**
+   * Returns the token representing the assignment operation ({@link JavaTokenType.EQ} for a simple
+   * assignment, {@link JavaTokenType.PLUSEQ} etc. for a compound assignment).
+   *
+   * @return the assignment operation token.
+   */
   @NotNull
   PsiJavaToken getOperationSign();
 }

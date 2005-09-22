@@ -18,9 +18,14 @@ package com.intellij.psi;
 import org.jetbrains.annotations.NotNull;
 
 /**
- *
+ * Represents a Java block statement (sequence of statements surrounded with curly braces).
  */
 public interface PsiBlockStatement extends PsiStatement {
+  /**
+   * Returns the code block representing the contents of the block statement.
+   *
+   * @return the code block instance.
+   */
   @NotNull
   PsiCodeBlock getCodeBlock();
 }

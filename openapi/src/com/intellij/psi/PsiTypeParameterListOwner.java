@@ -13,18 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi;import org.jetbrains.annotations.NotNull;
+package com.intellij.psi;
+
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Represents a PSI element (class, interface, method or constructor) which can own a type
+ * parameter list.
+ *
  * @author dsl
  */
 public interface PsiTypeParameterListOwner extends PsiMember {
+  /**
+   * Checks if the element has any type parameters.
+   *
+   * @return true if the element has type parameters, false otherwise
+   */
   boolean hasTypeParameters();
 
+  /**
+   * Returns the type parameter list for the element.
+   *
+   * @return the type parameter list, or null if the element has no type parameters.
+   */
   @Nullable
   PsiTypeParameterList getTypeParameterList();
 
+  /**
+   * Returns the array of type parameters for the element.
+   *
+   * @return the array of type parameters, or an empty array if the element has no type parameters.
+   */
   @NotNull
   PsiTypeParameter[] getTypeParameters();
 }

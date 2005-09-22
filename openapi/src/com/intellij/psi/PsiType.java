@@ -18,9 +18,10 @@ package com.intellij.psi;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * Representation of Java type.
+ * Representation of Java type (primitive type, array or class type).
  */
 public abstract class PsiType {
   public static final PsiType BYTE = PsiPrimitiveType.BYTE;
@@ -43,7 +44,7 @@ public abstract class PsiType {
   }
 
   /**
-   * Returns text of this type taht can be presented to user.
+   * Returns text of this type that can be presented to user.
    */
   public abstract String getPresentableText();
 
@@ -51,6 +52,12 @@ public abstract class PsiType {
 
   public abstract String getInternalCanonicalText();
 
+  /**
+   * Checks if the type is currently valid.
+   *
+   * @return true if the type is valid, false otherwise.
+   * @see PsiElement#isValid()
+   */
   public abstract boolean isValid();
 
   /**
@@ -67,35 +74,93 @@ public abstract class PsiType {
     return TypeConversionUtil.areTypesConvertible(type, this);
   }
 
-
+  /**
+   * Checks if the specified string is equivalent to the canonical text of the type.
+   *
+   * @param text the text to compare with.
+   * @return true if the string is equivalent to the type, false otherwise
+   */
   public abstract boolean equalsToText(String text);
 
+  /**
+   * Returns the class type for the java.lang.Object class.
+   *
+   * @param manager      the PSI manager used to create the class type.
+   * @param resolveScope the scope in which the class is searched.
+   * @return the class instance.
+   */
   public static PsiClassType getJavaLangObject(PsiManager manager, GlobalSearchScope resolveScope) {
     return manager.getElementFactory().createTypeByFQClassName("java.lang.Object", resolveScope);
   }
 
+  /**
+   * Returns the class type for the java.lang.Class class.
+   *
+   * @param manager      the PSI manager used to create the class type.
+   * @param resolveScope the scope in which the class is searched.
+   * @return the class instance.
+   */
   public static PsiClassType getJavaLangClass(PsiManager manager, GlobalSearchScope resolveScope) {
     return manager.getElementFactory().createTypeByFQClassName("java.lang.Class", resolveScope);
   }
 
+  /**
+   * Returns the class type for the java.lang.Throwable class.
+   *
+   * @param manager      the PSI manager used to create the class type.
+   * @param resolveScope the scope in which the class is searched.
+   * @return the class instance.
+   */
   public static PsiClassType getJavaLangTrowable(PsiManager manager, GlobalSearchScope resolveScope) {
     return manager.getElementFactory().createTypeByFQClassName("java.lang.Throwable", resolveScope);
   }
 
+  /**
+   * Returns the class type for the java.lang.String class.
+   *
+   * @param manager      the PSI manager used to create the class type.
+   * @param resolveScope the scope in which the class is searched.
+   * @return the class instance.
+   */
   public static PsiClassType getJavaLangString(PsiManager manager, GlobalSearchScope resolveScope) {
     return manager.getElementFactory().createTypeByFQClassName("java.lang.String", resolveScope);
   }
 
+  /**
+   * Returns the class type for the java.lang.Error class.
+   *
+   * @param manager      the PSI manager used to create the class type.
+   * @param resolveScope the scope in which the class is searched.
+   * @return the class instance.
+   */
   public static PsiClassType getJavaLangError(PsiManager manager, GlobalSearchScope resolveScope) {
     return manager.getElementFactory().createTypeByFQClassName("java.lang.Error", resolveScope);
   }
 
+  /**
+   * Returns the class type for the java.lang.RuntimeException class.
+   *
+   * @param manager      the PSI manager used to create the class type.
+   * @param resolveScope the scope in which the class is searched.
+   * @return the class instance.
+   */
   public static PsiClassType getJavaLangRuntimeException(PsiManager manager, GlobalSearchScope resolveScope) {
     return manager.getElementFactory().createTypeByFQClassName("java.lang.RuntimeException", resolveScope);
   }
 
+  /**
+   * Passes the type to the specified visitor.
+   *
+   * @param visitor the visitor to accept the type.
+   * @return the value returned by the visitor.
+   */
   public abstract <A> A accept(PsiTypeVisitor<A> visitor);
 
+  /**
+   * Returns the number of array dimensions for the type.
+   *
+   * @return the number of dimensions, or 0 if the type is not an array type.
+   */
   public final int getArrayDimensions() {
     PsiType type = this;
     int dims = 0;
@@ -106,6 +171,13 @@ public abstract class PsiType {
     return dims;
   }
 
+  /**
+   * Returns the innermost component type for an array type.
+   *
+   * @return the innermost (non-array) component of the type, or <code>this</code> if the type is not
+   * an array type.
+   */
+  @NotNull
   public final PsiType getDeepComponentType() {
     PsiType type = this;
     while (type instanceof PsiArrayType) {
@@ -113,8 +185,13 @@ public abstract class PsiType {
     }
     return type;
   }
-  
-  @Nullable(documentation = "for primitives and arrays of primitives")
+
+  /**
+   * Returns the scope in which the reference to the underlying class of a class type is searched.
+   *
+   * @return the resolve scope instance, or null if the type is a primitive or an array of primitives.
+   */
+  @Nullable
   public abstract GlobalSearchScope getResolveScope();
 
   public String toString() {
@@ -122,5 +199,11 @@ public abstract class PsiType {
     return "PsiType:" + getPresentableText();
   }
 
+  /**
+   * Returns the list of superclass types for a class type.
+   *
+   * @return the array of superclass types, or an empty array if the type is not a class type.
+   */
+  @NotNull
   public abstract PsiType[] getSuperTypes();
 }

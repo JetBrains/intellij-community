@@ -21,30 +21,134 @@ import com.intellij.openapi.util.Computable;
 
 import java.util.EventListener;
 
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * Manages the relationship between documents and PSI trees.
+ */
 public abstract class PsiDocumentManager {
+  /**
+   * Returns the document manager instance for the specified project.
+   *
+   * @param project the project for which the document manager is requested.
+   * @return the document manager instance.
+   */
   public static PsiDocumentManager getInstance(Project project) {
     return project.getComponent(PsiDocumentManager.class);
   }
 
+  /**
+   * Returns the PSI file for the specified document.
+   *
+   * @param document the document for which the PSI file is requested.
+   * @return the PSI file instance.
+   */
   public abstract PsiFile getPsiFile(Document document);
+
+  /**
+   * Returns the cached PSI file for the specified document.
+   *
+   * @param document the document for which the PSI file is requested.
+   * @return the PSI file instance, or null if there is currently no cached PSI tree for the file.
+   */
+  @Nullable
   public abstract PsiFile getCachedPsiFile(Document document);
 
+  /**
+   * Returns the document for the specified PSI file.
+   *
+   * @param file the file for which the document is requested.
+   * @return the document instance, or null if the file is binary or has no associated document.
+   */
   public abstract Document getDocument(PsiFile file);
+
+  /**
+   * Returns the cached document for the specified PSI file.
+   *
+   * @param file the file for which the document is requested.
+   * @return the document instance, or null if there is currently no cached document for the file.
+   */
+  @Nullable
   public abstract Document getCachedDocument(PsiFile file);
 
+  /**
+   * Commits (updates the PSI tree for) all modified but not committed documents.
+   * Before a modified document is committed, accessing its PSI may return elements
+   * corresponding to original (unmodified) state of the document.
+   */
   public abstract void commitAllDocuments();
+
+  /**
+   * Updates the PSI tree for the specified document.
+   * Before a modified document is committed, accessing its PSI may return elements
+   * corresponding to original (unmodified) state of the document.
+   *
+   * @param document the document to commit.
+   */
   public abstract void commitDocument(Document document);
+
+  /**
+   * Returns the list of documents which have been modified but not committed.
+   *
+   * @return the list of uncommitted documents.
+   * @see #commitDocument(com.intellij.openapi.editor.Document)
+   */
   public abstract Document[] getUncommittedDocuments();
+
+  /**
+   * Checks if the specified document has been committed.
+   *
+   * @param document the document to check.
+   * @return true if the document was modified but not committed, false otherwise
+   * @see #commitDocument(com.intellij.openapi.editor.Document)
+   */
   public abstract boolean isUncommited(Document document);
+
+  /**
+   * Checks if any modified documents have not been committed.
+   *
+   * @return true if there are uncommitted documents, false otherwise
+   */
   public abstract boolean hasUncommitedDocuments();
+
   public abstract void commitAndRunReadAction(Runnable runnable);
   public abstract <T> T commitAndRunReadAction(final Computable<T> computation);
 
+  /**
+   * Listener for receiving notifications about creation of {@link Document} and {@link PsiFile} instances.
+   */
   public interface Listener extends EventListener {
+    /**
+     * Called when a document instance is created for a file.
+     *
+     * @param document the created document instance.
+     * @param psiFile the file for which the document was created.
+     * @see PsiDocumentManager#getDocument(PsiFile)
+     */
     void documentCreated(Document document, PsiFile psiFile);
+
+    /**
+     * Called when a file instance is created for a document.
+     *
+     * @param file the created file instance.
+     * @param document the created document instance.
+     * @param document the document for which the file was created.
+     * @see PsiDocumentManager#getDocument(PsiFile)
+     */
     void fileCreated(PsiFile file, Document document);
   }
 
+  /**
+   * Adds a listener for receiving notifications about creation of {@link Document} and {@link PsiFile} instances.
+   *
+   * @param listener the listener to add.
+   */
   public abstract void addListener(Listener listener);
+
+  /**
+   * Removes a listener for receiving notifications about creation of {@link Document} and {@link PsiFile} instances.
+   *
+   * @param listener the listener to add.
+   */
   public abstract void removeListener(Listener listener);
 }

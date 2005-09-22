@@ -18,12 +18,23 @@ package com.intellij.psi;
 import org.jetbrains.annotations.Nullable;
 
 /**
- *
+ * Represents a Java <code>break</code> statement.
  */
 public interface PsiBreakStatement extends PsiStatement {
+  /**
+   * Returns the identifier representing label specified on the statement.
+   *
+   * @return the identifier for the label, or null if the statement has no label.
+   */
   @Nullable
   PsiIdentifier getLabelIdentifier();
 
+  /**
+   * Returns the statement instance ({@link PsiForStatement}, {@link PsiSwitchStatement} etc.) representing
+   * the statement out of which <code>break</code> transfers control.
+   *
+   * @return the statement instance, or null if the statement is not valid in the context where it is located.
+   */
   @Nullable
   PsiStatement findExitedStatement();
 }

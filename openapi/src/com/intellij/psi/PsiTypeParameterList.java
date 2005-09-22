@@ -16,9 +16,23 @@
 package com.intellij.psi;
 
 /**
- *  @author dsl
+ * Represents a list of generic type parameters for a class or method.
+ *
+ * @author dsl
  */
 public interface PsiTypeParameterList extends PsiElement {
+  /**
+   * Returns the array of type parameters contained in the list.
+   *
+   * @return the array of type parameters.
+   */
   PsiTypeParameter[] getTypeParameters();
+
+  /**
+   * Returns the index of the specified parameter in the list.
+   *
+   * @param typeParameter the parameter to find.
+   * @return the index of the parameter.
+   */
   int getTypeParameterIndex (PsiTypeParameter typeParameter);
 }

@@ -18,9 +18,17 @@ package com.intellij.psi;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Represents an array used as a value of an annotation element. For example:
+ * <code>@Endorsers({"Children", "Unscrupulous dentists"})</code>
+ *
  * @author ven
  */
 public interface PsiArrayInitializerMemberValue extends PsiAnnotationMemberValue {
+  /**
+   * Returns the list of elements in the initializer array.
+   *
+   * @return the initializer array elements.
+   */
   @NotNull
   PsiAnnotationMemberValue[] getInitializers();
 }
