@@ -5,6 +5,7 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -84,6 +85,12 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
     private PsiElement myElement;
     private TextRange myRange;
 
+    enum ReferenceType {
+      ElementReference, AttributeReference, GroupReference, AttributeGroupReference, TypeReference
+    }
+    
+    private ReferenceType myType;
+    
     TypeOrElementOrAttributeReference(PsiElement element) {
       this(element,new TextRange(1,element.getTextLength()-1));
     }
@@ -91,6 +98,28 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
     TypeOrElementOrAttributeReference(PsiElement element, TextRange range) {
       myElement = element;
       myRange   = range;
+      
+      final XmlAttribute attribute = PsiTreeUtil.getParentOfType(myElement, XmlAttribute.class);
+      final XmlTag tag = attribute.getParent();
+      final String localName = tag.getLocalName();
+      final String attributeLocalName = attribute.getLocalName();
+
+      if ("ref".equals(attributeLocalName) || "substitutionGroup".equals(attributeLocalName)) {
+        if (localName.equals("group")) {
+          myType = ReferenceType.GroupReference;
+        } else if (localName.equals("attributeGroup")) {
+          myType = ReferenceType.AttributeGroupReference;
+        } else if ("element".equals(localName)) {
+          myType = ReferenceType.ElementReference;
+        } else if ("attribute".equals(localName)) {
+          myType = ReferenceType.AttributeReference;
+        }
+      } else if ("type".equals(attributeLocalName) || 
+                 "base".equals(attributeLocalName) ||
+                 "memberTypes".equals(attributeLocalName)
+                ) {
+        myType = ReferenceType.TypeReference;
+      }
     }
 
     public PsiElement getElement() {
@@ -103,27 +132,19 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
 
     @Nullable
     public PsiElement resolve() {
-      final XmlAttribute attribute = PsiTreeUtil.getParentOfType(myElement, XmlAttribute.class);
-      final XmlTag tag = attribute.getParent();
-      XmlDocument document = ((XmlFile)tag.getContainingFile()).getDocument();
-
+      final XmlTag tag = PsiTreeUtil.getParentOfType(myElement, XmlTag.class);
+      if (tag == null) return null;
+      
       String canonicalText = getCanonicalText();
-      XmlNSDescriptor nsDescriptor = (XmlNSDescriptor)document.getMetaData();
-      if (nsDescriptor == null) nsDescriptor = tag.getNSDescriptor(tag.getNamespace(), true);
+      XmlNSDescriptorImpl nsDescriptor = getDescriptor(tag);
 
-      if (nsDescriptor instanceof XmlNSDescriptorImpl) {
-        XmlNSDescriptorImpl xmlNSDescriptor = ((XmlNSDescriptorImpl)nsDescriptor);
-
-        final String localName = tag.getLocalName();
-        final String attributeLocalName = attribute.getLocalName();
-
-        if ("ref".equals(attributeLocalName) || "substitutionGroup".equals(attributeLocalName)) {
-          if (localName.equals("group")) {
-            return xmlNSDescriptor.findGroup(canonicalText);
-          } else if (localName.equals("attributeGroup")) {
-            return xmlNSDescriptor.findAttributeGroup(canonicalText);
-          } else if ("element".equals(localName)) {
-            XmlElementDescriptor descriptor = xmlNSDescriptor.getElementDescriptor(
+      if (nsDescriptor != null) {
+        
+        switch(myType) {
+          case GroupReference: return nsDescriptor.findGroup(canonicalText);
+          case AttributeGroupReference: return nsDescriptor.findAttributeGroup(canonicalText);
+          case ElementReference: {
+            XmlElementDescriptor descriptor = nsDescriptor.getElementDescriptor(
               XmlUtil.findLocalNameByQualifiedName(canonicalText),
               tag.getNamespaceByPrefix(XmlUtil.findPrefixByQualifiedName(canonicalText)),
               new HashSet<XmlNSDescriptorImpl>(),
@@ -131,26 +152,48 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
             );
 
             return descriptor != null ? descriptor.getDeclaration(): null;
-          } else if ("attribute".equals(localName)) {
-            XmlAttributeDescriptor descriptor = xmlNSDescriptor.getAttribute(
-              XmlUtil.findLocalNameByQualifiedName(canonicalText),
-              tag.getNamespaceByPrefix(XmlUtil.findPrefixByQualifiedName(canonicalText))
+          }
+          case AttributeReference: {
+            final String prefixByQualifiedName = XmlUtil.findPrefixByQualifiedName(canonicalText);
+            final String localNameByQualifiedName = XmlUtil.findLocalNameByQualifiedName(canonicalText);
+            XmlAttributeDescriptor descriptor = nsDescriptor.getAttribute(
+              localNameByQualifiedName,
+              tag.getNamespaceByPrefix(prefixByQualifiedName)
             );
 
-            return descriptor != null ? descriptor.getDeclaration(): null;
+            if (descriptor != null) return descriptor.getDeclaration();
+            
+            if ("xml".equals(prefixByQualifiedName) &&
+                ( "lang".equals(localNameByQualifiedName) ||
+                  "base".equals(localNameByQualifiedName) ||
+                  "space".equals(localNameByQualifiedName) 
+                )
+               ) {
+              return myElement; // for compatibility
+            }
+            
+            return null;
           }
-        } else if ("type".equals(attributeLocalName) || 
-                   "base".equals(attributeLocalName) ||
-                   "memberTypes".equals(attributeLocalName)
-                  ) {
-          TypeDescriptor typeDescriptor = ((XmlNSDescriptorImpl)nsDescriptor).getTypeDescriptor(canonicalText,tag);
-          if (typeDescriptor instanceof ComplexTypeDescriptor) {
-            return ((ComplexTypeDescriptor)typeDescriptor).getDeclaration();
+          case TypeReference: {
+            TypeDescriptor typeDescriptor = nsDescriptor.getTypeDescriptor(canonicalText,tag);
+            if (typeDescriptor instanceof ComplexTypeDescriptor) {
+              return ((ComplexTypeDescriptor)typeDescriptor).getDeclaration();
+            } else if (typeDescriptor instanceof TypeDescriptor) {
+              return myElement;
+            }
           }
         }
       }
 
       return null;
+    }
+
+    private XmlNSDescriptorImpl getDescriptor(final XmlTag tag) {
+      XmlDocument document = ((XmlFile)myElement.getContainingFile()).getDocument();
+      XmlNSDescriptor nsDescriptor = (XmlNSDescriptor)document.getMetaData();
+      if (nsDescriptor == null) nsDescriptor = tag.getNSDescriptor(tag.getNamespace(), true);
+      
+      return nsDescriptor instanceof XmlNSDescriptorImpl ? (XmlNSDescriptorImpl)nsDescriptor:null;
     }
 
     public String getCanonicalText() {
@@ -177,12 +220,91 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
       return myElement.getManager().areElementsEquivalent(resolve(), element);
     }
 
+    static class CompletionProcessor implements PsiElementProcessor<XmlTag> {
+      List<String> myElements = new ArrayList<String>(1);
+      String namespace;
+      XmlTag tag;
+      
+      public boolean execute(final XmlTag element) {
+        String name = element.getAttributeValue("name");
+        final String prefixByNamespace = tag.getPrefixByNamespace(namespace);
+        if (prefixByNamespace != null && prefixByNamespace.length() > 0) {
+          name = prefixByNamespace + ":" + name;
+        }
+        myElements.add( name );
+        return true;
+      }
+    }
+    
     public Object[] getVariants() {
-      return new Object[0];
+      final XmlTag tag = PsiTreeUtil.getParentOfType(myElement, XmlTag.class);
+      if (tag == null) return null;
+      
+      String[] tagNames = null;
+
+      switch (myType) {
+        case GroupReference:
+          tagNames = new String[] {"group"};
+          break;
+        case AttributeGroupReference:
+          tagNames = new String[] {"attributeGroup"};
+          break;
+        case AttributeReference:
+          tagNames = new String[] {"attribute"};
+          break;
+        case ElementReference:
+          tagNames = new String[] {"element"};
+          break;
+        case TypeReference:
+          tagNames = new String[] {"simpleType","complexType"};
+          break;
+      }
+      
+      CompletionProcessor processor = new CompletionProcessor();
+      processor.tag = tag;
+      HashSet<String> visitedNamespaces = new HashSet<String>(1);
+
+      for(String namespace:tag.knownNamespaces()) {
+        final XmlNSDescriptor nsDescriptor = tag.getNSDescriptor(namespace, true);
+
+        if (nsDescriptor instanceof XmlNSDescriptorImpl) {
+          processNamespace(namespace, processor, nsDescriptor, tagNames);
+          visitedNamespaces.add(namespace);
+        }
+      }
+      
+      XmlDocument document = ((XmlFile)myElement.getContainingFile()).getDocument();
+      final XmlTag rootTag = document.getRootTag();
+      final String namespace = rootTag != null ? rootTag.getAttributeValue("targetNamespace") : "";
+      
+      if (!visitedNamespaces.contains(namespace)) {
+        XmlNSDescriptor nsDescriptor = (XmlNSDescriptor)document.getMetaData();
+        processNamespace(
+          namespace,
+          processor,
+          nsDescriptor,
+          tagNames
+        );
+      }
+      
+      return processor.myElements.toArray(new String[processor.myElements.size()]);
+    }
+
+    private void processNamespace(final String namespace,
+                                  final CompletionProcessor processor,
+                                  final XmlNSDescriptor nsDescriptor,
+                                  final String[] tagNames) {
+      processor.namespace = namespace;
+
+      ((XmlNSDescriptorImpl)nsDescriptor).processTagsInNamespace(
+        nsDescriptor.getDescriptorFile().getDocument(),
+        tagNames,
+        processor
+      );
     }
 
     public boolean isSoft() {
-      return true;
+      return false;
     }
   }
 

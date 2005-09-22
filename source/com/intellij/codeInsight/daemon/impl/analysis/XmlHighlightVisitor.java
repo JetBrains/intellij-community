@@ -517,6 +517,10 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       if (XmlUtil.XML_SCHEMA_INSTANCE_URI.equals(namespace)) {
         if (attribute.getName().endsWith("Location")) {
           checkSchemaLocationAttribute(attribute);
+        } else {
+          if(attribute.getValueElement() != null) {
+            checkReferences(attribute.getValueElement(), QuickFixProvider.NULL);
+          }
         }
         return;
       }

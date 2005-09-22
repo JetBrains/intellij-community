@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
@@ -26,6 +27,7 @@ import java.util.*;
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
   private static final Set<String> STD_TYPES = new HashSet<String>();
+  private static final Set<String> UNDECLARED_STD_TYPES = new HashSet<String>();
   XmlFile myFile;
   private String myTargetNamespace;
 
@@ -226,8 +228,15 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
   }
 
   public TypeDescriptor getTypeDescriptor(final String name, XmlTag context) {
-    if(checkSchemaNamespace(name, context) && STD_TYPES.contains(name)){
-      return new StdTypeDescriptor(name);
+    if(checkSchemaNamespace(name, context)){
+      final String localNameByQualifiedName = XmlUtil.findLocalNameByQualifiedName(name);
+      
+      if (STD_TYPES.contains(localNameByQualifiedName) &&
+          ( name.length() == localNameByQualifiedName.length() ||
+            UNDECLARED_STD_TYPES.contains(localNameByQualifiedName)
+          )
+         )
+        return new StdTypeDescriptor(localNameByQualifiedName);
     }
 
     final XmlDocument document = myFile.getDocument();
@@ -451,28 +460,43 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
   }
 
   public XmlElementDescriptor[] getRootElementsDescriptors(final XmlDocument doc) {
-    final List<XmlElementDescriptor> result = new ArrayList<XmlElementDescriptor>();
-    collectElements(myFile.getDocument(), result);
+    class CollectElementsProcessor implements PsiElementProcessor<XmlTag> {
+      final List<XmlElementDescriptor> result = new ArrayList<XmlElementDescriptor>();
+      
+      public boolean execute(final XmlTag element) {
+        result.add(getElementDescriptor(element.getAttributeValue("name"),getDefaultNamespace()));
+        return true;
+      }
+    }
+    
+    CollectElementsProcessor processor = new CollectElementsProcessor();
+    processTagsInNamespace(myFile.getDocument(), new String[] {"element"}, processor);
 
-    return result.toArray(new XmlElementDescriptor[result.size()]);
+    return processor.result.toArray(new XmlElementDescriptor[processor.result.size()]);
   }
 
-  private void collectElements(final XmlDocument document, final List<XmlElementDescriptor> result) {
+  public boolean processTagsInNamespace(final XmlDocument document, String[] tagNames, PsiElementProcessor<XmlTag> processor) {
     XmlTag rootTag = document.getRootTag();
-    if (rootTag == null) return;
+    if (rootTag == null) return true;
     XmlTag[] tags = rootTag.getSubTags();
 
+    NextTag:
     for (XmlTag tag : tags) {
-      if (equalsToSchemaName(tag, "element")) {
-        String name = tag.getAttributeValue("name");
-
-        if (name != null) {
-          final XmlElementDescriptor elementDescriptor = getElementDescriptor(name, getDefaultNamespace());
-          if (elementDescriptor != null) {
-            result.add(elementDescriptor);
+      for(String tagName:tagNames) {
+        if (equalsToSchemaName(tag, tagName)) {
+          final String name = tag.getAttributeValue("name");
+  
+          if (name != null) {
+            if (!processor.execute(tag)) {
+              return false;
+            }
           }
+          
+          continue NextTag;
         }
-      } else if (equalsToSchemaName(tag, "include")) {
+      }
+      
+      if (equalsToSchemaName(tag, "include")) {
         final String schemaLocation = tag.getAttributeValue("schemaLocation");
 
         if (schemaLocation != null) {
@@ -480,16 +504,18 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
 
           if (xmlFile != null) {
             final XmlDocument includedDocument = xmlFile.getDocument();
-            
+          
             if (includedDocument != null) {
-              collectElements(includedDocument, result);
+              if (!processTagsInNamespace(includedDocument, tagNames, processor)) return false;
             }
           }
         }
       }
     }
+    
+    return true;
   }
-
+  
   protected static boolean equalsToSchemaName(XmlTag tag, String schemaName) {
     return schemaName.equals(tag.getLocalName()) && checkSchemaNamespace(tag);
   }
@@ -678,6 +704,9 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     STD_TYPES.add("NOTATION");
     STD_TYPES.add("NMTOKEN");
     STD_TYPES.add("NMTOKENS");
+    STD_TYPES.add("anySimpleType");
+    
+    UNDECLARED_STD_TYPES.add("anySimpleType");
   }
 
   public void validate(PsiElement context, Validator.ValidationHost host) {
