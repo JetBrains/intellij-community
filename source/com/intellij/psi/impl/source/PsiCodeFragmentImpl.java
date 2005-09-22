@@ -13,13 +13,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
 
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.StringTokenizer;
 
@@ -164,15 +164,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
       }
 
       if (myContext == null) {
-        PsiPackage langPackage = getManager().findPackage("java.lang");
-        if (langPackage != null) {
-          if (!langPackage.processDeclarations(processor, substitutor, null, place)) return false;
-        }
-
-        PsiPackage defaultPackage = getManager().findPackage("");
-        if (defaultPackage != null) {
-          if (!defaultPackage.processDeclarations(processor, substitutor, null, place)) return false;
-        }
+        return ResolveUtil.processImplicitlyImportedPackages(processor, substitutor, place, getManager());
       }
     }
 

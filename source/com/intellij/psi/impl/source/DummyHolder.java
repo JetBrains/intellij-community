@@ -13,12 +13,12 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.CharTable;
 
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 
 public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
@@ -123,16 +123,7 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
       }
 
       if (myContext == null) {
-        //process classes in lang&default package
-        PsiPackage langPackage = getManager().findPackage("java.lang");
-        if (langPackage != null) {
-          if (!langPackage.processDeclarations(processor, substitutor, null, place)) return false;
-        }
-
-        PsiPackage defaultPackage = getManager().findPackage("");
-        if (defaultPackage != null) {
-          if (!defaultPackage.processDeclarations(processor, substitutor, null, place)) return false;
-        }
+        if (!ResolveUtil.processImplicitlyImportedPackages(processor, substitutor, place, getManager())) return false;
       }
     }
     return true;
