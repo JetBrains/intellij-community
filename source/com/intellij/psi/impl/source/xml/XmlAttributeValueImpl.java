@@ -5,7 +5,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.ReplaceableTextPsiElement;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
@@ -14,7 +13,7 @@ import com.intellij.util.IncorrectOperationException;
 /**
  * @author Mike
  */
-public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttributeValue, ReplaceableTextPsiElement{
+public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttributeValue{
   public XmlAttributeValueImpl() {
     super(XML_ATTRIBUTE_VALUE);
   }
