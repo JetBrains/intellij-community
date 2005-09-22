@@ -21,6 +21,8 @@ import com.intellij.util.CharTable;
 
 import java.util.LinkedHashMap;
 
+import org.jetbrains.annotations.NotNull;
+
 public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.DummyHolder");
 
@@ -89,7 +91,7 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
         return resolved.equals(aClass);
       }
     }
-    
+
     String className = aClass.getName();
     if (!myPseudoImports.containsKey(className)) {
       myPseudoImports.put(className, aClass);
@@ -140,7 +142,8 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
   public boolean isSamePackage(PsiElement other) {
     if (other instanceof DummyHolder) {
       final PsiElement otherContext = ((DummyHolder)other).myContext;
-      return (myContext == null && otherContext == null) || myContext.getManager().arePackagesTheSame(myContext, otherContext);
+      if (myContext == null) return otherContext == null;
+      return myContext.getManager().arePackagesTheSame(myContext, otherContext);
     }
     if (other instanceof PsiJavaFile) {
       if (myContext != null) return myContext.getManager().arePackagesTheSame(myContext, other);
@@ -150,6 +153,7 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
     return false;
   }
 
+  @NotNull
   public FileType getFileType() {
     if (myContext != null) {
       PsiFile containingFile = myContext.getContainingFile();
@@ -174,6 +178,7 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
     return holderElement;
   }
 
+  @NotNull
   public Language getLanguage() {
     return myLanguage;
   }
