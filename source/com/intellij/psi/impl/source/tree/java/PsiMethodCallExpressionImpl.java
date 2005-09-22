@@ -10,6 +10,7 @@ import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.HashMap;
 
 import java.util.Map;
@@ -58,7 +59,9 @@ public class PsiMethodCallExpressionImpl extends CompositePsiElement implements 
     final PsiType ret = method.getReturnType();
     if (ret == null) return null;
     if (getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0) {
-      PsiType substitutedReturnType = result.getSubstitutor().substituteAndCapture(ret);
+      final PsiSubstitutor substitutor = result.getSubstitutor();
+      if (PsiUtil.isRawSubstitutor(method, substitutor)) return TypeConversionUtil.erasure(ret);
+      PsiType substitutedReturnType = substitutor.substituteAndCapture(ret);
       return PsiImplUtil.normalizeWildcardTypeByPosition(substitutedReturnType, this);
     }
     return TypeConversionUtil.erasure(ret);
