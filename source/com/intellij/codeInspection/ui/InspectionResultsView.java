@@ -876,14 +876,17 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     final InspectionTool tool = getSelectedTool();
     if (myTree.getSelectionCount() == 0 || !(tool instanceof DescriptorProviderInspection)) return EMPTY_DESCRIPTORS;
     final TreePath[] paths = myTree.getSelectionPaths();
+    Collection<RefElement> out = new ArrayList<RefElement>();
     Set<ProblemDescriptor> descriptors = new HashSet<ProblemDescriptor>();
     for (TreePath path : paths) {
       Object node = path.getLastPathComponent();
       if (node instanceof ProblemDescriptionNode) {
         final ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
         descriptors.add(problemNode.getDescriptor());
-      } else if (node instanceof RefElementNode){
-        RefElement element = ((RefElementNode)node).getElement();
+      } else if (node instanceof InspectionTreeNode){
+        addElementsInNode((InspectionTreeNode)node, out);
+      }
+      for (RefElement element : out) {
         final ProblemDescriptor[] descriptions = ((DescriptorProviderInspection)tool).getDescriptions(element);
         if (descriptions != null) descriptors.addAll(Arrays.asList(descriptions));
       }
