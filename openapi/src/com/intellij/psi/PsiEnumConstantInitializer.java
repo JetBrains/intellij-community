@@ -15,9 +15,20 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
+ * Represents the class body attached to a constant in a Java enum type.
+ *
  * @author dsl
+ * @see com.intellij.psi.PsiEnumConstant#getInitializingClass()
  */
 public interface PsiEnumConstantInitializer extends PsiAnonymousClass {
+  /**
+   * Returns the enum constant to which the class body is attached.
+   *
+   * @return the enum constant instance.
+   */
+  @NotNull
   PsiEnumConstant getEnumConstant();
 }

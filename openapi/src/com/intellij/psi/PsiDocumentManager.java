@@ -111,7 +111,21 @@ public abstract class PsiDocumentManager {
    */
   public abstract boolean hasUncommitedDocuments();
 
+  /**
+   * Commits the documents and runs the specified operation, which does not return a value, in a read action.
+   * Can be called from a thread other than the Swing dispatch thread.
+   *
+   * @param runnable the operation to execute.
+   */
   public abstract void commitAndRunReadAction(Runnable runnable);
+
+  /**
+   * Commits the documents and runs the specified operation, which returns a value, in a read action.
+   * Can be called from a thread other than the Swing dispatch thread.
+   *
+   * @param computation the operation to execute.
+   * @return the value returned by the operation.
+   */
   public abstract <T> T commitAndRunReadAction(final Computable<T> computation);
 
   /**

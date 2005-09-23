@@ -17,7 +17,16 @@ package com.intellij.psi;
 
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Represents a Java local variable or class declaration statement.
+ */
 public interface PsiDeclarationStatement extends PsiStatement{
+  /**
+   * Returns the elements declared by the statement.
+   *
+   * @return the array of elements, which can contain elements of types {@link PsiLocalVariable} or
+   * {@link PsiClass} (and possibly other types).
+   */
   @NotNull
   PsiElement[] getDeclaredElements();
 }

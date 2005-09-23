@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface PsiBreakStatement extends PsiStatement {
   /**
-   * Returns the identifier representing label specified on the statement.
+   * Returns the identifier representing the label specified on the statement.
    *
    * @return the identifier for the label, or null if the statement has no label.
    */

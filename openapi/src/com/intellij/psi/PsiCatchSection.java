@@ -19,20 +19,45 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Represents a single <code>catch</code> section of a Java <code>try ... catch</code> statement.
+ *
  * @author ven
  */
 public interface PsiCatchSection extends PsiElement {
+  /**
+   * The empty array of PSI catch sections which can be reused to avoid unnecessary allocations.
+   */
   PsiCatchSection[] EMPTY_ARRAY = new PsiCatchSection[0];
 
+  /**
+   * Returns the variable in which the caught exception is captured.
+   *
+   * @return the parameter for the called variable, or null if none is specified.
+   */
   @Nullable
   PsiParameter getParameter();
 
+  /**
+   * Returns the code block contained in the catch section.
+   *
+   * @return the code block, or null if the section is incomplete.
+   */
   @Nullable
   PsiCodeBlock getCatchBlock();
 
+  /**
+   * Returns the type of the caught exception.
+   *
+   * @return the type, or null if the section is incomplete.
+   */
   @Nullable
   PsiType getCatchType();
 
+  /**
+   * Returns the <code>try</code> statement to which the catch section is attached.
+   *
+   * @return the statement instance.
+   */
   @NotNull
   PsiTryStatement getTryStatement();
 }

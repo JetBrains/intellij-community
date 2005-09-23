@@ -17,11 +17,61 @@ package com.intellij.psi;
 
 import com.intellij.psi.search.GlobalSearchScope;
 
+/**
+ * Allows to extend the mechanism of locating classes and packages by full-qualified name.
+ * Implementations of this interface need to be registered as project components in order
+ * to be picked up by {@link PsiManager}.
+ */
 public interface PsiElementFinder {
+  /**
+   * Searches the specified scope within the project for a class with the specified full-qualified
+   * name and returns one if it is found.
+   *
+   * @param qualifiedName the full-qualified name of the class to find.
+   * @param scope the scope to search.
+   * @return the PSI class, or null if no class with such name is found.
+   * @see PsiManager#findClass(String, com.intellij.psi.search.GlobalSearchScope)
+   */
   public abstract PsiClass findClass(String qualifiedName, GlobalSearchScope scope);
+
+  /**
+   * Searches the specified scope within the project for classes with the specified full-qualified
+   * name and returns all found classes.
+   *
+   * @param qualifiedName the full-qualified name of the class to find.
+   * @param scope the scope to search.
+   * @return the array of found classes, or an empty array if no classes are found.
+   * @see PsiManager#findClasses(String, com.intellij.psi.search.GlobalSearchScope)
+   */
   public abstract PsiClass[] findClasses(String qualifiedName, GlobalSearchScope scope);
+
+  /**
+   * Searches the project for the package with the specified full-qualified name and retunrs one
+   * if it is found.
+   *
+   * @param qualifiedName the full-qualified name of the package to find.
+   * @return the PSI package, or null if no package with such name is found.
+   * @see PsiManager#findPackage(String)
+   */
   public abstract PsiPackage findPackage(String qualifiedName);
 
+  /**
+   * Returns the list of subpackages of the specified package in the specified search scope.
+   *
+   * @param psiPackage the package to return the list of subpackages for.
+   * @param scope the scope in which subpackages are searched.
+   * @return the list of subpackages.
+   * @see PsiPackage#getSubPackages(com.intellij.psi.search.GlobalSearchScope)
+   */
   PsiPackage[] getSubPackages(PsiPackage psiPackage, GlobalSearchScope scope);
+
+  /**
+   * Returns the list of classes in the specified package and in the specified search scope.
+   *
+   * @param psiPackage the package to return the list of classes in.
+   * @param scope the scope in which classes are searched.
+   * @return the list of classes.
+   * @see PsiPackage#getClasses(com.intellij.psi.search.GlobalSearchScope)
+   */
   PsiClass[] getClasses(PsiPackage psiPackage, GlobalSearchScope scope);
 }

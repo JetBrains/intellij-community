@@ -19,13 +19,31 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Represents the call of a Java method or constructor or a Java enum constant..
+ *
  * @author ven
  */
 public interface PsiCall extends PsiElement {
+  /**
+   * Returns the list of arguments passed to the called method.
+   *
+   * @return the argument list, or null if the call is incomplete.
+   */
   @Nullable PsiExpressionList getArgumentList();
 
+  /**
+   * Resolves the reference to the called method and returns the method.
+   *
+   * @return the called method, or null if the resolve failed.
+   */
   @Nullable PsiMethod resolveMethod();
 
-  @NotNull(documentation = "Returns JavaResolveResult.EMPTY if unresolved")
+  /**
+   * Resolves the reference to the called method and returns the resolve result
+   * containing the method and the substitutor for generic type parameters.
+   *
+   * @return the resolve result, or {@link JavaResolveResult.EMPTY} if unresolved
+   */
+  @NotNull
   JavaResolveResult resolveMethodGenerics();
 }

@@ -18,12 +18,24 @@ package com.intellij.psi;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Represents the call of a Java method or constructor.
+ *
  * @author dsl
  */
 public interface PsiCallExpression extends PsiExpression, PsiCall {
+  /**
+   * Returns the type argument list specified on the called method.
+   *
+   * @return the type argument list, or an empty list if no type arguments are specified.
+   */
   @NotNull
   PsiReferenceParameterList getTypeArgumentList();
 
+  /**
+   * Returns the type arguments specified on the called method as an array.
+   *
+   * @return the array of type arguments, or an empty array if no type arguments are specified.
+   */
   @NotNull
   PsiType[] getTypeArguments();
 }

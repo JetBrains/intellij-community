@@ -15,6 +15,14 @@
  */
 package com.intellij.psi;
 
-public interface PsiErrorElement extends PsiElement{
+/**
+ * Represents a syntax error (for example, invalid token) in Java or custom language code.
+ */
+public interface PsiErrorElement extends PsiElement {
+  /**
+   * Returns the description of the error.
+   *
+   * @return the error description.
+   */
   String getErrorDescription();
 }

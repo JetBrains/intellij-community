@@ -15,9 +15,17 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
- *
+ * Represents a Java expression statement.
  */
 public interface PsiExpressionStatement extends PsiStatement {
+  /**
+   * Returns the expression contained in the statement.
+   *
+   * @return the expression instance.
+   */
+  @NotNull
   PsiExpression getExpression();
 }

@@ -15,8 +15,32 @@
  */
 package com.intellij.psi;
 
+/**
+ * Represents a fragment of Java code the contents of which is an expression.
+ *
+ * @see PsiElementFactory#createExpressionCodeFragment(String, PsiElement, PsiType, boolean)
+ */
 public interface PsiExpressionCodeFragment extends PsiCodeFragment {
+  /**
+   * Returns the expression contained in the fragment.
+   *
+   * @return the expression contained in the fragment.
+   */
   PsiExpression getExpression();
-  public PsiType getExpectedType();
-  public void setExpectedType(PsiType type);
+
+  /**
+   * Returns the expected type of the expression (not used by the expression itself,
+   * but can be used by its clients).
+   *
+   * @return the expected type of the expression.
+   */
+  PsiType getExpectedType();
+
+  /**
+   * Sets the expected type of the expression (not used by the expression itself,
+   * but can be used by its clients).
+   *
+   * @param type the expected type of the expression. 
+   */
+  void setExpectedType(PsiType type);
 }

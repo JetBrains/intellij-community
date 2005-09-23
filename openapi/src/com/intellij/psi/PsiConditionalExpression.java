@@ -19,15 +19,30 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- *
+ * Represents a Java conditional expression (for example, <code>a ? 1 : 2</code>.
  */
 public interface PsiConditionalExpression extends PsiExpression {
+  /**
+   * Returns the expression representing the condition part of the expression.
+   *
+   * @return the condition expression.
+   */
   @NotNull
   PsiExpression getCondition();
 
+  /**
+   * Returns the expression which is the result used when the condition is true.
+   *
+   * @return the true result expression, or null if the conditional expression is incomplete.
+   */
   @Nullable
   PsiExpression getThenExpression();
 
+  /**
+   * Returns the expression which is the result used when the condition is false.
+   *
+   * @return the false result expression, or null if the conditional expression is incomplete.
+   */
   @Nullable
   PsiExpression getElseExpression();
 }

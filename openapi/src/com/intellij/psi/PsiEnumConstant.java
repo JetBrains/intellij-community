@@ -15,10 +15,29 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
+ * Represents a constant in a Java enum type.
+ *
  * @author dsl
  */
 public interface PsiEnumConstant extends PsiField, PsiConstructorCall {
+  /**
+   * Returns the list of arguments passed to the constructor of the enum type to create the
+   * instance of the constant.
+   *
+   * @return the list of arguments, or null
+   */
+  @Nullable
   PsiExpressionList getArgumentList();
+
+  /**
+   * Returns the class body attached to the enum constant declaration.
+   *
+   * @return the enum constant class body, or null if
+   * the enum constant does not have one.
+   */
+  @Nullable
   PsiEnumConstantInitializer getInitializingClass();
 }

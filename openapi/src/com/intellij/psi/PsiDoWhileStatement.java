@@ -15,16 +15,49 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
- *
+ * Represents a Java <code>do ... while</code> statement.
  */
 public interface PsiDoWhileStatement extends PsiStatement {
+  /**
+   * Returns the expression representing the exit condition of the loop.
+   *
+   * @return the expression, or null if the statement is incomplete.
+   */
+  @Nullable
   PsiExpression getCondition();
+
+  /**
+   * Returns the body of the statement.
+   *
+   * @return the body of the statement, or null if the statement is complete.
+   */
+  @Nullable
   PsiStatement getBody();
 
+  /**
+   * Returns the <code>while</code> keyword of the statement.
+   *
+   * @return the keyword, or null if the statement is incomplete.
+   */
+  @Nullable
   PsiKeyword getWhileKeyword();
 
+  /**
+   * Returns the opening parenthesis enclosing the statement condition.
+   *
+   * @return the opening parenthesis, or null if the statement is incomplete.
+   */
+  @Nullable
   PsiJavaToken getLParenth();
 
+  /**
+   * Returns the closing parenthesis enclosing the statement condition.
+   *
+   * @return the closing parenthesis, or null if the statement is incomplete.
+   */
+  @Nullable
   PsiJavaToken getRParenth();
 }

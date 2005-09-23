@@ -16,7 +16,7 @@
 package com.intellij.psi;
 
 /**
- *
+ * Represents an empty statement in Java.
  */
 public interface PsiEmptyStatement extends PsiStatement {
 }

@@ -18,8 +18,16 @@ package com.intellij.psi;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Represents a list of expressions separated by commas.
  *
+ * @see PsiCall#getArgumentList()
+ * @see PsiExpressionListStatement#getExpressionList()
  */
 public interface PsiExpressionList extends PsiElement {
+  /**
+   * Returns the expressions contained in the list.
+   *
+   * @return the array of expressions contained in the list.
+   */
   @NotNull PsiExpression[] getExpressions();
 }

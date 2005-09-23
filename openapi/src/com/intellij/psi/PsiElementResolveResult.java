@@ -19,11 +19,16 @@ package com.intellij.psi;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Trivial implementation of the <code>{@link ResolveResult}</code>.
+ * Trivial implementation of {@link ResolveResult}.
  */
 public class PsiElementResolveResult implements ResolveResult{
   @NotNull private final PsiElement myElement;
 
+  /**
+   * Creates a resolve result with the specified resolve target.
+   *
+   * @param element the resolve target element.
+   */
   public PsiElementResolveResult(@NotNull PsiElement element) {
     myElement = element;
   }

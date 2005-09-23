@@ -15,13 +15,34 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
+ * Service for evaluating values of constant expressions.
+ *
  * @author ven
+ * @see com.intellij.psi.PsiManager#getConstantEvaluationHelper()
  */
 public abstract class PsiConstantEvaluationHelper {
+  /**
+   * Evaluates the value of the specified expression.
+   *
+   * @param expression the expression to evaluate.
+   * @return the result of the evaluation, or null if the expression is not a constant expression.
+   */
+  @Nullable
   public Object computeConstantExpression(PsiExpression expression) {
     return computeConstantExpression(expression, false);
   }
 
+  /**
+   * Evaluates the value of the specified expression and optionally throws
+   * {@link com.intellij.psi.util.ConstantEvaluationOverflowException} if an overflow is detected
+   * during the evaluation.
+   *
+   * @param expression the expression to evaluate.
+   * @param throwExceptionOnOverflow if true, an exception is thrown if an overflow is detected during the evaluation.
+   * @return the result of the evaluation, or null if the expression is not a constant expression.
+   */
   public abstract Object computeConstantExpression(PsiExpression expression, boolean throwExceptionOnOverflow);
 }

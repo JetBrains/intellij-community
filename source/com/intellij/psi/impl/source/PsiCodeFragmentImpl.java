@@ -23,6 +23,8 @@ import com.intellij.psi.tree.IElementType;
 import java.util.LinkedHashMap;
 import java.util.StringTokenizer;
 
+import org.jetbrains.annotations.NotNull;
+
 public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment, PsiImportHolder {
   private PsiElement myContext;
   private boolean myPhysical;
@@ -59,6 +61,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
     return true;
   }
 
+  @NotNull
   public FileType getFileType() {
     return StdFileTypes.JAVA;
   }

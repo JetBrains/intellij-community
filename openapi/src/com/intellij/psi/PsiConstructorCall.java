@@ -18,9 +18,17 @@ package com.intellij.psi;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Represents a Java constructor call or enum constant.
+ *
  * @author ven
  */
 public interface PsiConstructorCall extends PsiCall {
+  /**
+   * Resolves the reference to the called constructor and returns the constructor.
+   * Equivalent to {@link com.intellij.psi.PsiCall#resolveMethod()}.
+   *
+   * @return the called constructor, or null if the resolve failed.
+   */
   @Nullable
   PsiMethod resolveConstructor();
 }

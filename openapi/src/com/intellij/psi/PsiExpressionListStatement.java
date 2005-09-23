@@ -16,8 +16,15 @@
 package com.intellij.psi;
 
 /**
- *
+ * Represents the list of expressions separated by commas, used as the initialize
+ * or update part of a <code>for</code> loop.
  */
 public interface PsiExpressionListStatement extends PsiStatement {
+  /**
+   * Returns the expression list contained in the statement.
+   *
+   * @return the expression list instance.
+   */
   PsiExpressionList getExpressionList();
+
 }
