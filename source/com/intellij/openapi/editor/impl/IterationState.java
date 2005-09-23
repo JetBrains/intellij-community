@@ -501,7 +501,8 @@ public class IterationState {
         return caret;
       }
 
-      if (highlighter.getTargetArea() != HighlighterTargetArea.LINES_IN_RANGE) continue;
+      if (highlighter.getTargetArea() != HighlighterTargetArea.LINES_IN_RANGE
+        || myDocument.getLineNumber(highlighter.getEndOffset()) < myDocument.getLineCount() - 1) continue;
 
       TextAttributes textAttributes = highlighter.getTextAttributes();
       if (textAttributes != null) {
