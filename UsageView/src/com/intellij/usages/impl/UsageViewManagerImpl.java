@@ -116,7 +116,6 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
                                        ) {
     final UsageViewImpl[] usageView = new UsageViewImpl[]{null};
     final SearchForUsagesRunnable runnable = new SearchForUsagesRunnable(usageView, presentation, searchFor, searcherFactory, processPresentation, listener);
-
     final Factory<ProgressIndicator> progressIndicatorFactory = processPresentation.getProgressIndicatorFactory();
 
     UsageViewImplUtil.runProcessWithProgress(
@@ -124,9 +123,6 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
       new Runnable() {
         public void run() {
           runnable.searchUsages();
-          if (usageView[0] != null) {
-            usageView[0].setProgressIndicatorFactory(progressIndicatorFactory);
-          }
         }
       },
       new Runnable() {
@@ -223,6 +219,8 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
             myListener.usageViewCreated(usageView);
           }
           showToolWindow(false);
+          
+          myUsageView[0].setProgressIndicatorFactory(myProcessPresentation.getProgressIndicatorFactory());
         }
       });
     }
