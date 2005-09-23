@@ -18,37 +18,38 @@ class DeclarationMover extends LineMover {
 
   protected void afterMove(final Editor editor, final PsiFile file) {
     super.afterMove(editor, file);
-    final int line1 = editor.offsetToLogicalPosition(myInsertStartAfterCut).line;
-    final int line2 = editor.offsetToLogicalPosition(myInsertEndAfterCut).line;
-    PsiElement above;
-    PsiElement hereStart;
-    PsiElement hereEnd;
-    PsiElement below;
-    if (myIsDown) {
-      above = findMemberOnLineEnd(line1-1, editor, file);
-      hereStart = findMemberOnLineStart(line1, editor, file);
-      hereEnd = findMemberOnLineEnd(line1, editor, file);
-      below = findMemberOnLineStart(line2, editor, file);
-    }
-    else {
-      above = findMemberOnLineEnd(line1, editor, file);
-      hereStart = findMemberOnLineStart(line2, editor, file);
-      hereEnd = findMemberOnLineEnd(line2, editor, file);
-      below = hereEnd == null? null : hereEnd.getNextSibling();
-      if (below instanceof PsiWhiteSpace) below = below.getNextSibling();
-    }
-    fixupWhiteSpaceBetween(above, hereStart);
-    fixupWhiteSpaceBetween(hereEnd, below);
+    final int line1 = editor.offsetToLogicalPosition(myInsertStartAfterCutOffset).line;
+    final int line2 = editor.offsetToLogicalPosition(myInsertEndAfterCutOffset).line;
+    Document document = editor.getDocument();
+    PsiWhiteSpace whiteSpace1 = findWhitespaceNear(document.getLineStartOffset(line1), file, false);
+    fixupWhiteSpace(whiteSpace1);
+    PsiWhiteSpace whiteSpace2 = findWhitespaceNear(document.getLineStartOffset(line2), file, false);
+    fixupWhiteSpace(whiteSpace2);
+
+    PsiWhiteSpace whiteSpace = findWhitespaceNear(myDeleteStartAfterMoveOffset, file, false);
+    fixupWhiteSpace(whiteSpace);
   }
 
-  private void fixupWhiteSpaceBetween(final PsiElement element1, final PsiElement element2) {
-    if (element1 != null && element2 != null && element1.getNextSibling() instanceof PsiWhiteSpace && element1.getNextSibling().getNextSibling() == element2) {
-      String whiteSpace = CodeEditUtil.getStringWhiteSpaceBetweenTokens(element1.getNode(), element2.getNode(), StdLanguages.JAVA);
-      LeafElement ws = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, whiteSpace.toCharArray(), 0, whiteSpace.length(), SharedImplUtil.findCharTableByTree(element1.getNode()), element1.getManager());
-      element1.getNextSibling().getParent().getNode().replaceChild(element1.getNextSibling().getNode(), ws);
-      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(element1.getProject());
-      documentManager.commitDocument(documentManager.getDocument(element1.getContainingFile()));
+  private static PsiWhiteSpace findWhitespaceNear(final int offset, final PsiFile file, boolean lookRight) {
+    PsiElement element = file.findElementAt(offset);
+    if (element instanceof PsiWhiteSpace) {
+      return (PsiWhiteSpace)element;
     }
+    if (element == null) return null;
+    element = lookRight ? element.getNextSibling() : element.getPrevSibling();
+    return element instanceof PsiWhiteSpace ? (PsiWhiteSpace)element : null;
+  }
+
+  private static void fixupWhiteSpace(final PsiWhiteSpace whitespace) {
+    if (whitespace == null) return;
+    PsiElement element1 = whitespace.getPrevSibling();
+    PsiElement element2 = whitespace.getNextSibling();
+    if (element2 == null || element1 == null) return;
+    String ws = CodeEditUtil.getStringWhiteSpaceBetweenTokens(whitespace.getNode(), element2.getNode(), StdLanguages.JAVA);
+    LeafElement node = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, ws.toCharArray(), 0, ws.length(), SharedImplUtil.findCharTableByTree(whitespace.getNode()), whitespace.getManager());
+    whitespace.getParent().getNode().replaceChild(whitespace.getNode(), node);
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(whitespace.getProject());
+    documentManager.commitDocument(documentManager.getDocument(whitespace.getContainingFile()));
   }
 
   private static PsiElement findMemberOnLineStart(final int line, final Editor editor, final PsiFile file) {
@@ -57,8 +58,8 @@ class DeclarationMover extends LineMover {
     return element;
   }
   private static PsiElement findMemberOnLineEnd(final int line, final Editor editor, final PsiFile file) {
-    int lineStartOffset = editor.getDocument().getLineEndOffset(line);
-    PsiElement element = firstNonWhiteElement(lineStartOffset, file, false);
+    int offset = editor.getDocument().getLineEndOffset(line);
+    PsiElement element = firstNonWhiteElement(offset, file, false);
     return element;
   }
 
