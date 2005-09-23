@@ -340,8 +340,9 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
         }
       }
     }
-    else if("synchronized".equals(myLookupItem.getLookupString())
-             || "catch".equals(myLookupItem.getLookupString()))
+    else if(PsiKeyword.SYNCHRONIZED.equals(myLookupItem.getLookupString())
+             || PsiKeyword.CATCH.equals(myLookupItem.getLookupString())
+             || PsiKeyword.SWITCH.equals(myLookupItem.getLookupString()))
       hasParms = true;
     return hasParms;
   }
