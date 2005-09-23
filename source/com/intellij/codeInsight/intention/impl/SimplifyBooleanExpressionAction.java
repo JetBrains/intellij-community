@@ -3,10 +3,9 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -16,8 +15,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
 public class SimplifyBooleanExpressionAction implements IntentionAction{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.SimplifyBooleanExpressionAction");
-
   public String getText() {
     return getFamilyName();
   }
@@ -27,17 +24,12 @@ public class SimplifyBooleanExpressionAction implements IntentionAction{
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    try {
-      final PsiExpression newExpression = simplifyExpression(editor, file, false);
-      return newExpression != null;
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
-    return false;
+    PsiExpression expression = getExpressionToSimplify(editor, file);
+    if (expression == null) return false;
+    return SimplifyBooleanExpressionFix.canBeSimplified(expression);
   }
 
-  private static PsiExpression simplifyExpression(final Editor editor, final PsiFile file, boolean replace) throws IncorrectOperationException {
+  private static PsiExpression getExpressionToSimplify(final Editor editor, final PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
@@ -46,13 +38,14 @@ public class SimplifyBooleanExpressionAction implements IntentionAction{
     while (expression.getParent() instanceof PsiExpression) {
       expression = (PsiExpression)expression.getParent();
     }
-    final PsiExpression newExpression = SimplifyBooleanExpressionFix.canBeSimplified(expression);
-    return replace ? (PsiExpression)expression.replace(newExpression) : newExpression;
+    return expression;
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
-    simplifyExpression(editor, file, true);
+    PsiExpression expression = getExpressionToSimplify(editor, file);
+    final PsiExpression newExpression = SimplifyBooleanExpressionFix.simplifyExpression(expression);
+    expression.replace(newExpression);
   }
 
   public boolean startInWriteAction() {

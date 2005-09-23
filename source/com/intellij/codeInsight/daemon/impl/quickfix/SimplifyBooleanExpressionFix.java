@@ -7,10 +7,10 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 
 public class SimplifyBooleanExpressionFix implements IntentionAction {
@@ -18,8 +18,6 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
 
   private final PsiExpression mySubExpression;
   private final Boolean mySubExpressionValue;
-  private PsiExpression trueExpression;
-  private PsiExpression falseExpression;
 
   // subExpressionValue == Boolean.TRUE or Boolean.FALSE if subExpression evaluates to boolean constant and needs to be replaced
   //   otherwise subExpressionValue= null and we starting to simplify expression without any further knowledge
@@ -63,14 +61,13 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     expression.replace(newExpression);
   }
 
-  public PsiExpression simplifyExpression(PsiExpression expression) throws IncorrectOperationException {
-    trueExpression = expression.getManager().getElementFactory().createExpressionFromText(Boolean.toString(true), null);
-    falseExpression = expression.getManager().getElementFactory().createExpressionFromText(Boolean.toString(false), null);
+  public static PsiExpression simplifyExpression(PsiExpression expression) {
     final PsiExpression[] copy = new PsiExpression[]{(PsiExpression)expression.copy()};
+    final ExpressionVisitor expressionVisitor = new ExpressionVisitor(expression.getManager(), true);
     copy[0].accept(new PsiRecursiveElementVisitor() {
       public void visitExpression(PsiExpression expression) {
         super.visitExpression(expression);
-        ExpressionVisitor expressionVisitor = new ExpressionVisitor();
+        expressionVisitor.clear();
         expression.accept(expressionVisitor);
         if (expressionVisitor.resultExpression != null) {
           LOG.assertTrue(expressionVisitor.resultExpression.isValid());
@@ -90,9 +87,55 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     });
     return copy[0];
   }
+  public static boolean canBeSimplified(PsiExpression expression) {
+    final ExpressionVisitor expressionVisitor = new ExpressionVisitor(expression.getManager(), false);
+    final Ref<Boolean> canBeSimplified = new Ref<Boolean>(Boolean.FALSE);
+    expression.accept(new PsiRecursiveElementVisitor() {
+      public void visitElement(PsiElement element) {
+        if (!canBeSimplified.get().booleanValue()) {
+          super.visitElement(element);
+        }
+      }
 
-  private class ExpressionVisitor extends PsiElementVisitor {
+      public void visitExpression(PsiExpression expression) {
+        super.visitExpression(expression);
+        expressionVisitor.clear();
+        expression.accept(expressionVisitor);
+        if (expressionVisitor.canBeSimplifiedFlag) {
+          canBeSimplified.set(Boolean.TRUE);
+        }
+      }
+    });
+    return canBeSimplified.get().booleanValue();
+  }
+
+  private static class ExpressionVisitor extends PsiElementVisitor {
     private PsiExpression resultExpression;
+    private final PsiExpression trueExpression;
+    private final PsiExpression falseExpression;
+    private final boolean isCreateResult;
+    boolean canBeSimplifiedFlag;
+
+    public ExpressionVisitor(PsiManager psiManager, final boolean createResult) {
+      isCreateResult = createResult;
+      trueExpression = createResult ? createExpression(psiManager, Boolean.toString(true)) : null;
+      falseExpression = createResult ? createExpression(psiManager, Boolean.toString(true)) : null;
+    }
+
+    private static PsiExpression createExpression(final PsiManager psiManager, String text) {
+      try {
+        return psiManager.getElementFactory().createExpressionFromText(text, null);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+        return null;
+      }
+    }
+
+    private boolean markAndCheckCreateResult() {
+      canBeSimplifiedFlag = true;
+      return isCreateResult;
+    }
 
     public void visitBinaryExpression(PsiBinaryExpression expression) {
       PsiExpression lOperand = expression.getLOperand();
@@ -111,6 +154,9 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     }
 
     private void simplifyBinary(IElementType tokenType, Boolean lConstBoolean, PsiExpression rOperand) {
+      if (!markAndCheckCreateResult()) {
+        return;
+      }
       if (JavaTokenType.ANDAND == tokenType || JavaTokenType.AND == tokenType) {
         resultExpression = lConstBoolean.booleanValue() ? rOperand : falseExpression;
       }
@@ -142,18 +188,14 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     public void visitConditionalExpression(PsiConditionalExpression expression) {
       Boolean condition = getConstBoolean(expression.getCondition());
       if (condition == null) return;
+      if (!markAndCheckCreateResult()) {
+        return;
+      }
       resultExpression = condition.booleanValue() ? expression.getThenExpression() : expression.getElseExpression();
     }
 
-    private PsiPrefixExpression createNegatedExpression(PsiExpression otherOperand)  {
-      try {
-        return (PsiPrefixExpression)otherOperand.getManager().getElementFactory()
-            .createExpressionFromText("!(" + otherOperand.getText()+")", otherOperand);
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
-      return null;
+    private static PsiPrefixExpression createNegatedExpression(PsiExpression otherOperand)  {
+      return (PsiPrefixExpression)createExpression(otherOperand.getManager(), "!(" + otherOperand.getText()+")");
     }
 
     public void visitPrefixExpression(PsiPrefixExpression expression) {
@@ -163,6 +205,9 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
       PsiJavaToken operationSign = expression.getOperationSign();
       IElementType tokenType = operationSign.getTokenType();
       if (JavaTokenType.EXCL == tokenType) {
+        if (!markAndCheckCreateResult()) {
+          return;
+        }
         resultExpression = constBoolean.booleanValue() ? falseExpression : trueExpression;
       }
     }
@@ -172,11 +217,18 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
       PsiExpression subexpr = expression.getExpression();
       Boolean constBoolean = getConstBoolean(subexpr);
       if (constBoolean == null) return;
+      if (!markAndCheckCreateResult()) {
+        return;
+      }
       resultExpression = constBoolean.booleanValue() ? trueExpression : falseExpression;
     }
 
     public void visitReferenceExpression(PsiReferenceExpression expression) {
       visitReferenceElement(expression);
+    }
+
+    public void clear() {
+      resultExpression = null;
     }
   }
 
@@ -184,19 +236,6 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     if (operand == null) return null;
     String text = operand.getText();
     return "true".equals(text) ? Boolean.TRUE : "false".equals(text) ? Boolean.FALSE : null;
-  }
-
-  public static PsiExpression canBeSimplified(PsiExpression expression) {
-    try {
-      SimplifyBooleanExpressionFix fix = new SimplifyBooleanExpressionFix(expression, null);
-      PsiExpression newExpression = fix.simplifyExpression(expression);
-      if (Comparing.strEqual(newExpression.getText(), expression.getText())) return null;
-      return newExpression;
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-      return null;
-    }
   }
 
   public boolean startInWriteAction() {
