@@ -109,7 +109,7 @@ public class PsiElementRenameHandler implements RenameHandler {
     if (!PsiManager.getInstance(project).isInProject(element)) {
       String message =
         "Cannot perform the refactoring.\n" +
-        "Selected " + UsageViewUtil.getType(element) + " is not located inside the project";
+        "Selected " + UsageViewUtil.getType(element) + " is not located inside the project.";
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
       return false;
     }
