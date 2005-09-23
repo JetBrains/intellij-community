@@ -331,8 +331,8 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       },
       processPresentation,
       presentation,
-      new com.intellij.usages.UsageViewManager.UsageViewStateListener() {
-        public void usageViewCreated(com.intellij.usages.UsageView usageView) {
+      new UsageViewManager.UsageViewStateListener() {
+        public void usageViewCreated(UsageView usageView) {
           context.setUsageView(usageView);
           configureActions(context);
         }

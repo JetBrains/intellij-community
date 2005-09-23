@@ -3,8 +3,10 @@ package com.intellij.structuralsearch.impl.matcher.compiler;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.*;
 import com.intellij.structuralsearch.MalformedPatternException;
@@ -35,7 +37,32 @@ public class PatternCompiler {
     StringToConstraintsTransformer.transformOldPattern(options);
   }
 
-  public static CompiledPattern compilePattern(Project project,MatchOptions options) {
+  public static CompiledPattern compilePattern(final Project project, final MatchOptions options) {
+    final CompiledPattern[] result = new CompiledPattern[1];
+
+    final Runnable runnable = new Runnable() {
+      public void run() {
+        result[0] = ApplicationManager.getApplication().runWriteAction(new Computable<CompiledPattern>() {
+          public CompiledPattern compute() {
+            return compilePatternImpl(project, options);
+          }
+        });
+      }
+    };
+    
+    if (!ApplicationManager.getApplication().isDispatchThread()) {
+      ApplicationManager.getApplication().invokeAndWait(
+        runnable,
+        ModalityState.defaultModalityState()
+      );
+    } else {
+      runnable.run();
+    }
+    
+    return result[0];
+  }
+  
+  private static CompiledPattern compilePatternImpl(Project project,MatchOptions options) {
     CompiledPattern result;
 
     result = (options.getFileType() == StdFileTypes.JAVA)?
@@ -202,9 +229,9 @@ public class PatternCompiler {
       compilingVisitor.compile(patternNode,context);
       List<PsiElement> elements = new LinkedList<PsiElement>();
 
-      for (int i = 0; i < matchStatements.length; i++) {
-        if (!filter.accepts(matchStatements[i])) {
-          elements.add(matchStatements[i]);
+      for (PsiElement matchStatement : matchStatements) {
+        if (!filter.accepts(matchStatement)) {
+          elements.add(matchStatement);
         }
       }
       context.pattern.setNodes(
