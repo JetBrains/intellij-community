@@ -144,6 +144,8 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Appl
         }
       });
       myBtnCheckNow.setEnabled(myCheckNowEnabled);
+
+      LabelTextReplacingUtil.replaceText(myPanel);
     }
 
     private void updateLastCheckedLabel() {

@@ -8,13 +8,12 @@
  */
 package com.intellij.openapi.updateSettings.impl;
 
-import com.intellij.ide.license.LicenseManager;
 import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.net.HttpConfigurable;
 import org.jdom.Document;
@@ -23,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 
 /**
@@ -45,13 +43,12 @@ public final class UpdateChecker implements ApplicationComponent {
   private static long checkInterval = 0;
   private static boolean myVeryFirstOpening = true;
 
-  static {
-    if (LicenseManager.getInstance().isEap()) {
-      UPDATE_URL = "http://www.jetbrains.com/updates/eap-update.xml";
+  private static String getUpdateUrl() {
+    if (UPDATE_URL == null) {
+      ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+      UPDATE_URL = appInfo.getUpdateUrls().getCheckingUrl();
     }
-    else {
-      UPDATE_URL = "http://www.jetbrains.com/updates/update.xml";
-    }
+    return UPDATE_URL;
   }
 
   public String getComponentName() {
@@ -75,7 +72,7 @@ public final class UpdateChecker implements ApplicationComponent {
   public static boolean checkNeeded() {
 
     final UpdateSettingsConfigurable settings = UpdateSettingsConfigurable.getInstance();
-    if (settings == null || UPDATE_URL == null) return false;
+    if (settings == null || getUpdateUrl() == null) return false;
 
     final String checkPeriod = settings.CHECK_PERIOD;
     if (checkPeriod.equals(UpdateSettingsConfigurable.ON_START_UP)) {
@@ -141,15 +138,15 @@ public final class UpdateChecker implements ApplicationComponent {
 
   private static Document loadVersionInfo() throws Exception {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: loadVersionInfo(UPDATE_URL='" + UPDATE_URL + "' )");
+      LOG.debug("enter: loadVersionInfo(UPDATE_URL='" + getUpdateUrl() + "' )");
     }
     final Document[] document = new Document[] {null};
     final Exception[] exception = new Exception[] {null};
     Thread downloadThread = new Thread(new Runnable() {
       public void run() {
         try {
-          HttpConfigurable.getInstance().prepareURL(UPDATE_URL);
-          final InputStream inputStream = new URL(UPDATE_URL).openStream();
+          HttpConfigurable.getInstance().prepareURL(getUpdateUrl());
+          final InputStream inputStream = new URL(getUpdateUrl()).openStream();
           try {
             document[0] = JDOMUtil.loadDocument(inputStream);
           }

@@ -13,6 +13,8 @@ import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.EmptyIcon;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,6 +24,7 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.PixelGrabber;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -75,8 +78,6 @@ public class WelcomeScreen {
 
   private static final Icon LEARN_MORE_ICON = IconLoader.getIcon("/general/learnMore.png");
   private static final Icon OPEN_PLUGINS_ICON = IconLoader.getIcon("/general/openPluginManager.png");
-  private static final Icon CAPTION_IMAGE = IconLoader.getIcon("/general/welcomeCaption.png");
-  private static final Icon DEVELOP_SLOGAN = IconLoader.getIcon("/general/developSlogan.png");
   private static final Icon NEW_PROJECT_ICON = IconLoader.getIcon("/general/createNewProject.png");
   private static final Icon OPEN_PROJECT_ICON = IconLoader.getIcon("/general/openProject.png");
   private static final Icon REOPEN_RECENT_ICON = IconLoader.getIcon("/general/reopenRecentProject.png");
@@ -85,6 +86,8 @@ public class WelcomeScreen {
   private static final Icon READ_HELP_ICON = IconLoader.getIcon("/general/readHelp.png");
   private static final Icon PLUGIN_ICON = IconLoader.getIcon("/general/pluginManager.png");
   private static final Icon DEFAULT_ICON = IconLoader.getIcon("/general/configurableDefault.png");
+  private static Icon CAPTION_IMAGE;
+  private static Icon DEVELOPER_SLOGAN;
 
   private static final String PLUGIN_URL = PathManager.getHomePath() + "/Plugin Development Readme.html";
 
@@ -100,7 +103,7 @@ public class WelcomeScreen {
   private static final Color MAIN_PANEL_BACKGROUND = new Color(238, 238, 238);
   private static final Color LEARN_MORE_BUTTON_COLOR = new Color(238, 238, 238);
   private static final Color GRAY_BORDER_COLOR = new Color(177, 177, 177);
-  private static final Color CAPTION_BACKGROUND = new Color(24, 52, 146);
+  private static Color CAPTION_BACKGROUND = new Color(24, 52, 146);
   private static final Color ACTION_BUTTON_COLOR = new Color(201, 205, 217);
   private static final Color ACTION_BUTTON_BORDER_COLOR = new Color(166, 170, 182);
   private static final Color WHITE_BORDER_COLOR = new Color(255, 255, 255);
@@ -206,6 +209,7 @@ public class WelcomeScreen {
   }
 
   private WelcomeScreen() {
+    initApplicationSpecificImages();
 
     GridBagConstraints gBC;
     final ActionManager actionManager = ActionManager.getInstance();
@@ -259,6 +263,26 @@ public class WelcomeScreen {
     myWelcomePanel.add(myPluginsScrollPane, gBC);
   }
 
+  private static void initApplicationSpecificImages() {
+    if (CAPTION_IMAGE == null) {
+      ApplicationInfoEx applicationInfoEx = ApplicationInfoEx.getInstanceEx();
+      CAPTION_IMAGE = IconLoader.getIcon(applicationInfoEx.getWelcomeScreenCaptionUrl());
+      DEVELOPER_SLOGAN = IconLoader.getIcon(applicationInfoEx.getWelcomeScreenDeveloperSloganUrl());
+
+      if (CAPTION_IMAGE instanceof ImageIcon) {
+        Image image = ((ImageIcon)CAPTION_IMAGE).getImage();
+        final int[] pixels = new int[1];
+        final PixelGrabber pixelGrabber = new PixelGrabber(image, CAPTION_IMAGE.getIconWidth() - 1, CAPTION_IMAGE.getIconHeight() - 1, 1, 1, pixels, 0, 1);
+        try {
+          pixelGrabber.grabPixels();
+          CAPTION_BACKGROUND = new Color(pixels[0]);
+        }
+        catch (InterruptedException e) {
+        }
+      }
+    }
+  }
+
   public static JPanel createWelcomePanel() {
     return new WelcomeScreen().myWelcomePanel;
   }
@@ -280,7 +304,7 @@ public class WelcomeScreen {
 
     topPanel.add(transparentTopPanel,
                  new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-    topPanel.add(new JLabel(DEVELOP_SLOGAN),
+    topPanel.add(new JLabel(DEVELOPER_SLOGAN),
                  new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.SOUTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
 
     // Create the base welcome panel
@@ -295,7 +319,7 @@ public class WelcomeScreen {
         HelpManagerImpl.getInstance().invokeHelp("");
       }
     };
-    docsGroup.addButton(readHelp, "Read Help", "Open IntelliJ IDEA \"Help Topics\" in a new window.");
+    docsGroup.addButton(readHelp, "Read Help", "Open " + ApplicationNamesInfo.getInstance().getFullProductName() + " \"Help Topics\" in a new window.");
 
     docsGroup.appendButtonForAction(actionManager.getAction(IdeActions.ACTION_KEYMAP_REFERENCE));
 
@@ -310,7 +334,7 @@ public class WelcomeScreen {
           }
         }
       };
-      docsGroup.addButton(pluginDev, "Plugin Development", "Get started developing plugins for IntelliJ IDEA.");
+      docsGroup.addButton(pluginDev, "Plugin Development", "Get started developing plugins for " + ApplicationNamesInfo.getInstance().getFullProductName() + ".");
     }
   }
 
@@ -337,7 +361,7 @@ public class WelcomeScreen {
       }
     };
 
-    quickStarts.addButton(openProject, "Open Project", "You can open any arbitrary IntelliJ IDEA project. " +
+    quickStarts.addButton(openProject, "Open Project", "You can open any arbitrary " + ApplicationNamesInfo.getInstance().getFullProductName() + " project. " +
                                                        "Click the icon or link to select the .IPR file from the File Chooser.");
 
     MyActionButton openRecentProject = new ButtonWithExtension(REOPEN_RECENT_ICON, null) {
@@ -375,7 +399,8 @@ public class WelcomeScreen {
       }
     };
 
-    quickStarts.addButton(checkForUpdate, "Check for Update", "IntelliJ IDEA will check for a new available update of itself, " +
+    quickStarts.addButton(checkForUpdate, "Check for Update", ApplicationNamesInfo.getInstance().getFullProductName() +
+                                                              " will check for a new available update of itself, " +
                                                               "using your internet connection.");
     */
   }

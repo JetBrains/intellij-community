@@ -8,11 +8,13 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.ide.license.LicenseManager;
 import org.jdom.Document;
 import org.jdom.Element;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.awt.*;
 
 /**
  *
@@ -28,6 +30,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private Calendar myBuildDate = null;
   private String myPackageCode = null;
   private boolean myShowLicensee = true;
+  private String myWelcomeScreenCaptionUrl;
+  private String myWelcomeScreenDeveloperSloganUrl;
+  private UpdateUrls myUpdateUrls;
+  private UpdateUrls myEapUpdateUrls;
 
   public void initComponent() { }
 
@@ -64,6 +70,22 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   public String getPackageCode() {
     return myPackageCode;
+  }
+
+  public String getWelcomeScreenCaptionUrl() {
+    return myWelcomeScreenCaptionUrl;
+  }
+
+  public String getWelcomeScreenDeveloperSloganUrl() {
+    return myWelcomeScreenDeveloperSloganUrl;
+  }
+
+  public UpdateUrls getUpdateUrls() {
+    return LicenseManager.getInstance().isEap() ? myEapUpdateUrls :  myUpdateUrls;
+  }
+
+  public UpdateUrls getEapUpdateUrls() {
+    return myEapUpdateUrls;
   }
 
   public String getFullApplicationName() {
@@ -153,6 +175,18 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     if (showLicensee != null) {
       myShowLicensee = Boolean.valueOf(showLicensee.getAttributeValue("show")).booleanValue();
     }
+
+    Element welcomeScreen = parentNode.getChild("welcome-screen");
+    if (welcomeScreen != null) {
+      myWelcomeScreenCaptionUrl = welcomeScreen.getAttributeValue("caption-url");
+      myWelcomeScreenDeveloperSloganUrl = welcomeScreen.getAttributeValue("slogan-url");
+    }
+
+    Element updateUrls = parentNode.getChild("update-urls");
+    myUpdateUrls = new UpdateUrlsImpl(updateUrls);
+
+    Element eapUpdateUrls = parentNode.getChild("eap-update-urls");
+    myEapUpdateUrls = new UpdateUrlsImpl(eapUpdateUrls);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -164,4 +198,23 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     return ApplicationNamesInfo.COMPONENT_NAME;
   }
 
+  private static class UpdateUrlsImpl implements UpdateUrls {
+    private String myCheckingUrl;
+    private String myDownloadUrl;
+
+    public UpdateUrlsImpl(Element element) {
+      if (element != null) {
+        myCheckingUrl = element.getAttributeValue("check");
+        myDownloadUrl = element.getAttributeValue("download");
+      }
+    }
+
+    public String getCheckingUrl() {
+      return myCheckingUrl;
+    }
+
+    public String getDownloadUrl() {
+      return myDownloadUrl;
+    }
+  }
 }

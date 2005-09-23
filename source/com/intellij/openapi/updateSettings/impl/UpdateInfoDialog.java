@@ -3,6 +3,8 @@ package com.intellij.openapi.updateSettings.impl;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.license.LicenseManager;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 
@@ -20,9 +22,6 @@ import java.awt.event.MouseListener;
  */
 
 class UpdateInfoDialog extends DialogWrapper {
-
-  private static final String RELEASE_URL = "http://www.jetbrains.com/idea/download/";
-  private static final String EAP_URL = "http://www.intellij.net/eap/products/idea/download.jsp";
   private UpdateInfoPanel myUpdateInfoPanel;
   private UpdateChecker.NewVersion myNewVersion;
 
@@ -47,14 +46,11 @@ class UpdateInfoDialog extends DialogWrapper {
   }
 
   protected void doOKAction() {
-    final String downloadUrl;
-    if (LicenseManager.getInstance().isEap()) {
-      downloadUrl = EAP_URL;
-    }
-    else {
-      downloadUrl = RELEASE_URL;
-    }
-    BrowserUtil.launchBrowser(downloadUrl);
+    BrowserUtil.launchBrowser(getDownloadUrl());
+  }
+
+  private String getDownloadUrl() {
+    return ApplicationInfoEx.getInstanceEx().getUpdateUrls().getDownloadUrl();
   }
 
   public boolean shouldCloseOnCross() {
@@ -112,10 +108,12 @@ class UpdateInfoDialog extends DialogWrapper {
       else {
         version = ApplicationInfo.getInstance().getVersionName();
       }
-      
+
       myVersionNumber.setText(version);
       myNewBuildNumber.setText(Integer.toString(myNewVersion.getLatestBuild()) + ")");
       myNewVersionNumber.setText(myNewVersion.getLatestVersion());
+
+      LabelTextReplacingUtil.replaceText(myPanel);
     }
 
     public JComponent getComponent() {

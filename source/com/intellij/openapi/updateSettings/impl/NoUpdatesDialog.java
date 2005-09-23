@@ -67,5 +67,9 @@ class NoUpdatesDialog extends DialogWrapper {
   private static class NoUpdatesPanel {
     private JLabel myUpdatesLink;
     private JPanel myPanel;
+
+    public NoUpdatesPanel() {
+      LabelTextReplacingUtil.replaceText(myPanel);
+    }
   }
 }

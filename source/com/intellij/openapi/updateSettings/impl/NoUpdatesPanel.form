@@ -15,12 +15,12 @@
           <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
         </constraints>
         <properties>
-          <text value="&lt;html&gt;&lt;h4&gt;You are using the latest version of IntelliJ IDEA.&lt;/h4&gt;&lt;/html&gt;"/>
+          <text value="&lt;html&gt;&lt;h4&gt;You are using the latest version of $FULLNAME$.&lt;/h4&gt;&lt;/html&gt;"/>
         </properties>
       </component>
       <component id="bc6f7" class="javax.swing.JLabel">
         <constraints>
-          <xy x="26" y="77" width="5" height="16"/>
+          <xy x="26" y="77" width="1" height="16"/>
           <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
         </constraints>
         <properties>
@@ -78,7 +78,7 @@
         <children>
           <component id="d1aab" class="javax.swing.JLabel">
             <constraints>
-              <xy x="0" y="2" width="235" height="28"/>
+              <xy x="0" y="2" width="231" height="28"/>
               <grid row="0" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
             </constraints>
             <properties>
