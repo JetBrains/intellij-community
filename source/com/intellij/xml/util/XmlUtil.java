@@ -45,6 +45,7 @@ public class XmlUtil {
   public static final String TAGLIB_1_2_a_URI = "http://java.sun.com/j2ee/dtds/web-jsptaglibrary_1_2.dtd";
   public static final String TAGLIB_1_2_b_URI = "http://java.sun.com/JSP/TagLibraryDescriptor";
   public static final String TAGLIB_2_0_URI = "http://java.sun.com/xml/ns/j2ee";
+  public static final String TAGLIB_2_1_URI = "http://java.sun.com/xml/ns/javaee";
 
   public static final String XML_SCHEMA_URI = "http://www.w3.org/2001/XMLSchema";
   public static final String XML_SCHEMA_URI2 = "http://www.w3.org/1999/XMLSchema";
