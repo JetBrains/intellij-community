@@ -14,6 +14,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
@@ -68,6 +69,16 @@ public interface MergeVersion {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           setDocumentText(myDocument, text, "Merge", project);
+
+          FileDocumentManager.getInstance().saveDocument(myDocument);
+          final VirtualFile file = getFile();
+          if (file != null) {
+            final FileType fileType = file.getFileType();
+            if (fileType == StdFileTypes.IDEA_MODULE || fileType == StdFileTypes.IDEA_PROJECT || fileType == StdFileTypes.IDEA_WORKSPACE) {
+              ProjectManagerEx.getInstanceEx().saveChangedProjectFile(file);
+            }
+          }
+          
         }
       });
     }

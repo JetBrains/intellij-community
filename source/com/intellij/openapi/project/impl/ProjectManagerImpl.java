@@ -374,28 +374,32 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     virtualFileManager.addVirtualFileListener(new VirtualFileAdapter() {
       public void contentsChanged(VirtualFileEvent event) {
         if (event.getRequestor() == null && myIsInRefresh) { // external change
-          final VirtualFile file = event.getFile();
-          final Project[] projects = getOpenProjects();
-          for (int i = 0; i < projects.length; i++) {
-            Project project = projects[i];
-            if (file == project.getProjectFile() || file == project.getWorkspaceFile()) {
-              copyToTemp(file);
-              registerProjectToReload(project, file);
-            }
-
-            ModuleManager moduleManager = ModuleManager.getInstance(project);
-            final Module[] modules = moduleManager.getModules();
-            for (int j = 0; j < modules.length; j++) {
-              if (modules[j].getModuleFile() == file) {
-                copyToTemp(file);
-                registerProjectToReload(project, file);
-              }
-            }
-          }
+          saveChangedProjectFile(event.getFile());
         }
       }
     });
   }
+
+  public void saveChangedProjectFile(final VirtualFile file) {
+    final Project[] projects = getOpenProjects();
+    for (int i = 0; i < projects.length; i++) {
+      Project project = projects[i];
+      if (file == project.getProjectFile() || file == project.getWorkspaceFile()) {
+        copyToTemp(file);
+        registerProjectToReload(project, file);
+      }
+
+      ModuleManager moduleManager = ModuleManager.getInstance(project);
+      final Module[] modules = moduleManager.getModules();
+      for (int j = 0; j < modules.length; j++) {
+        if (modules[j].getModuleFile() == file) {
+          copyToTemp(file);
+          registerProjectToReload(project, file);
+        }
+      }
+    }
+  }
+
 
   private void registerProjectToReload(final Project project, final VirtualFile cause) {
     List<VirtualFile> changedProjectFiles = myChangedProjectFiles.get(project);

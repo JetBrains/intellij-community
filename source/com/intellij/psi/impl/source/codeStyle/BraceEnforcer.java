@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -61,6 +62,13 @@ public class BraceEnforcer extends AbstractPostFormatProcessor {
     }
   }
 
+  public void visitJspFile(JspFile file) {
+    final PsiClass javaRoot = file.getJavaRoot();
+    if (javaRoot != null) {
+      javaRoot.accept(this);
+    }
+  }
+  
   private void processStatement(PsiStatement statement, PsiStatement blockCandidate, int options) {
     if (blockCandidate instanceof PsiBlockStatement || blockCandidate == null) return;
     if (options == CodeStyleSettings.FORCE_BRACES_ALWAYS ||

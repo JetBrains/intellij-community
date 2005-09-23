@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.JDOMException;
 
 import java.io.IOException;
@@ -25,4 +26,6 @@ public abstract class ProjectManagerEx extends ProjectManager {
   public abstract boolean isProjectOpened(Project project);
 
   public abstract boolean canClose(Project project);
+
+  public abstract void saveChangedProjectFile(VirtualFile file);
 }

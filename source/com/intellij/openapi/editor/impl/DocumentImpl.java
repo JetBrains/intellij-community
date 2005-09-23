@@ -337,7 +337,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       endOffset--;
     }
     if (newEndInString - newStartInString == 0 && startOffset == endOffset) {
-      setModificationStamp(newModificationStamp);
+      //setModificationStamp(newModificationStamp);
       return;
     }
 
