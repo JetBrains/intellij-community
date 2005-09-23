@@ -11,6 +11,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -177,8 +178,8 @@ public class CodeStyleSchemesConfigurable implements Configurable, ApplicationCo
   public boolean isModified() {
     if (myPanel == null) return false; // Disposed
     if (getSelectedScheme() != CodeStyleSchemes.getInstance().getCurrentScheme()) return true;
-    Set configuredSchemesSet = new HashSet(getCurrentSchemes());
-    Set savedSchemesSet = new HashSet(Arrays.asList(CodeStyleSchemes.getInstance().getSchemes()));
+    Set<CodeStyleScheme> configuredSchemesSet = new HashSet<CodeStyleScheme>(getCurrentSchemes());
+    Set<CodeStyleScheme> savedSchemesSet = new HashSet<CodeStyleScheme>(Arrays.asList(CodeStyleSchemes.getInstance().getSchemes()));
     if (!configuredSchemesSet.equals(savedSchemesSet)) return true;
     return mySettingsStack.isModified();
   }
@@ -298,21 +299,21 @@ public class CodeStyleSchemesConfigurable implements Configurable, ApplicationCo
 
   public void apply() throws ConfigurationException {
     final CodeStyleScheme[] savedSchemes = CodeStyleSchemes.getInstance().getSchemes();
-    final Set savedSchemesSet = new HashSet(Arrays.asList(savedSchemes));
+    final Set<CodeStyleScheme> savedSchemesSet = new HashSet<CodeStyleScheme>(Arrays.asList(savedSchemes));
     List<CodeStyleScheme> configuredSchemes = getCurrentSchemes();
 
-    for (int i = 0; i < savedSchemes.length; i++) {
-      CodeStyleScheme savedScheme = savedSchemes[i];
+    for (CodeStyleScheme savedScheme : savedSchemes) {
       if (!configuredSchemes.contains(savedScheme)) {
         CodeStyleSchemes.getInstance().deleteScheme(savedScheme);
       }
     }
 
-    for (int i = 0; i < configuredSchemes.size(); i++) {
-      CodeStyleScheme scheme = configuredSchemes.get(i);
-      if (!savedSchemesSet.contains(scheme)) {
-        CodeStyleSchemes.getInstance().addScheme(scheme);
+    nextScheme:
+    for (CodeStyleScheme scheme : configuredSchemes) {
+      for (CodeStyleScheme saved : savedSchemes) {
+        if (Comparing.strEqual(saved.getName(), scheme.getName())) continue nextScheme;
       }
+      CodeStyleSchemes.getInstance().addScheme(scheme);
     }
 
     CodeStyleScheme currentScheme = getSelectedScheme();
@@ -368,7 +369,7 @@ public class CodeStyleSchemesConfigurable implements Configurable, ApplicationCo
 
   private void onSaveAs() {
     CodeStyleScheme[] schemes = CodeStyleSchemes.getInstance().getSchemes();
-    ArrayList names = new ArrayList();
+    ArrayList<String> names = new ArrayList<String>();
     for (int i = 0; i < schemes.length; i++) {
       CodeStyleScheme scheme = schemes[i];
       names.add(scheme.getName());

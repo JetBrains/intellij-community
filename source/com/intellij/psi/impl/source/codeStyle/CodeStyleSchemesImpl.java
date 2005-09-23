@@ -109,7 +109,7 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
 
   public void addScheme(CodeStyleScheme scheme) {
     String name = scheme.getName();
-    LOG.assertTrue(!mySchemes.containsKey(name), "Not unique scheme name");
+    LOG.assertTrue(!mySchemes.containsKey(name), "Not unique scheme name: "+name);
     mySchemes.put(name, scheme);
   }
 
