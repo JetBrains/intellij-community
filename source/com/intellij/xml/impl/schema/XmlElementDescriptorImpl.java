@@ -54,14 +54,16 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   }
 
   public String getNamespaceByContext(PsiElement context){
-    while(context != null){
-      if(context instanceof XmlTag){
-        final XmlTag contextTag = ((XmlTag)context);
-        final String typeAttr = contextTag.getAttributeValue("type", XmlUtil.XML_SCHEMA_INSTANCE_URI);
-        if(typeAttr != null) return contextTag.getNamespace();
-      }
-      context = context.getContext();
-    }
+    //while(context != null){
+    //  if(context instanceof XmlTag){
+    //    final XmlTag contextTag = ((XmlTag)context);
+    //    final XmlNSDescriptorImpl schemaDescriptor = XmlUtil.findXmlNSDescriptorByType(contextTag);
+    //    if (schemaDescriptor != null) {
+    //      return schemaDescriptor.getDefaultNamespace();
+    //    }
+    //  }
+    //  context = context.getContext();
+    //}
     return getNamespace();
   }
 
@@ -87,7 +89,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
 
   public XmlNSDescriptor getNSDescriptor() {
     if (NSDescriptor==null) {
-      final XmlFile file = (XmlFile) XmlUtil.getContainingFile(getDeclaration());
+      final XmlFile file = XmlUtil.getContainingFile(getDeclaration());
       if(file == null) return null;
       final XmlDocument document = file.getDocument();
       if(document == null) return null;
@@ -164,9 +166,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   public XmlAttributeDescriptor getAttribute(String attributeName, String namespace) {
     XmlAttributeDescriptor[] descriptors = getAttributesDescriptors();
 
-    for (int i = 0; i < descriptors.length; i++) {
-      XmlAttributeDescriptor descriptor = descriptors[i];
-
+    for (XmlAttributeDescriptor descriptor : descriptors) {
       if (descriptor.getName().equals(attributeName)) {
         return descriptor;
       }
@@ -208,16 +208,16 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   protected XmlElementDescriptor getElementDescriptor(final String localName, final String namespace, XmlElement context) {
     XmlElementDescriptor[] elements = getElementsDescriptors();
 
-    for (int i = 0; i < elements.length; i++) {
-      final XmlElementDescriptorImpl element = (XmlElementDescriptorImpl) elements[i];
+    for (XmlElementDescriptor element1 : elements) {
+      final XmlElementDescriptorImpl element = (XmlElementDescriptorImpl)element1;
 
       final String namespaceByContext = element.getNamespaceByContext(context);
       if (element.getName().equals(localName) &&
-          ( namespace == null ||
-            namespace.equals(namespaceByContext) ||
-            namespaceByContext.equals(XmlUtil.EMPTY_URI)
+          (namespace == null ||
+           namespace.equals(namespaceByContext) ||
+           namespaceByContext.equals(XmlUtil.EMPTY_URI)
           )
-         ) {
+        ) {
         return element;
       }
     }

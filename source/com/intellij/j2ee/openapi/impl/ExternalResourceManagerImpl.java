@@ -183,6 +183,13 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     fireExternalResourceChanged();
   }
 
+  public void removeIgnoredResource(String url) {
+    if(myIgnoredResources.remove(url)) {
+      myModificationCount++;
+      fireExternalResourceChanged();
+    }
+  }
+
   public boolean isIgnoredResource(String url) {
     return myIgnoredResources.contains(url);
   }

@@ -118,11 +118,8 @@ public class XmlUtil {
     if (document == null) return null;
     final XmlTag tag = document.getRootTag();
     if (tag == null) return null;
-    XmlAttribute[] attributes = tag.getAttributes();
 
-
-    for (int i = 0; i < attributes.length; i++) {
-      XmlAttribute attribute = attributes[i];
+    for (XmlAttribute attribute : tag.getAttributes()) {
       if (attribute.getName().startsWith("xmlns:") &&
           attribute.getValue().equals(uri)) {
         String ns = attribute.getName().substring("xmlns:".length());
@@ -382,10 +379,9 @@ public class XmlUtil {
     final XmlElementDescriptor parentDescriptor = parent.getDescriptor();
     final XmlTag[] subTags = parent.getSubTags();
     if (parentDescriptor == null || subTags.length == 0) return (XmlTag)parent.add(child);
-    final XmlElementDescriptor[] childElementDescriptors = parentDescriptor.getElementsDescriptors(parent);
     int subTagNum = -1;
-    for (int i = 0; i < childElementDescriptors.length; i++) {
-      XmlElementDescriptor childElementDescriptor = childElementDescriptors[i];
+    
+    for (XmlElementDescriptor childElementDescriptor : parentDescriptor.getElementsDescriptors(parent)) {
       final String childElementName = childElementDescriptor.getName();
       int prevSubTagNum = subTagNum;
       while (subTagNum < subTags.length - 1 && subTags[subTagNum + 1].getName().equals(childElementName)) {
@@ -402,9 +398,7 @@ public class XmlUtil {
   }
 
   public static String getAttributeValue(XmlTag tag, String name) {
-    final XmlAttribute[] attributes = tag.getAttributes();
-    for (int i = 0; i < attributes.length; i++) {
-      XmlAttribute attribute = attributes[i];
+    for (XmlAttribute attribute : tag.getAttributes()) {
       if (name.equals(attribute.getName())) return attribute.getValue();
     }
     return null;
@@ -412,8 +406,7 @@ public class XmlUtil {
 
   public static XmlTag findOnAnyLevel(XmlTag root, String[] chain) {
     XmlTag curTag = root;
-    for (int i = 0; i < chain.length; i++) {
-      String s = chain[i];
+    for (String s : chain) {
       curTag = curTag.findFirstSubTag(s);
       if (curTag == null) return null;
     }
@@ -425,8 +418,7 @@ public class XmlUtil {
     String[] pathElements = path.split("/");
 
     XmlTag curTag = rootTag;
-    for (int i = 0; i < pathElements.length; i++) {
-      String curTagName = pathElements[i];
+    for (String curTagName : pathElements) {
       curTag = curTag.findFirstSubTag(curTagName);
       if (curTag == null) break;
     }
@@ -436,8 +428,7 @@ public class XmlUtil {
   public static XmlTag findSubTagWithValue(XmlTag rootTag, String tagName, String tagValue) {
     if (rootTag == null) return null;
     final XmlTag[] subTags = rootTag.findSubTags(tagName);
-    for (int i = 0; i < subTags.length; i++) {
-      XmlTag subTag = subTags[i];
+    for (XmlTag subTag : subTags) {
       if (subTag.getValue().getTrimmedText().equals(tagValue)) {
         return subTag;
       }
@@ -452,9 +443,7 @@ public class XmlUtil {
     }
     else {
       final XmlTag[] subTags = baseTag.getSubTags();
-      for (int i = 0; i < subTags.length; i++) {
-        XmlTag subTag = subTags[i];
-
+      for (XmlTag subTag : subTags) {
         // It will return the first entry of subtag in the tree
         final XmlTag subTagFound = findSubTagWithValueOnAnyLevel(subTag, tagName, tagValue);
         if (subTagFound != null) return subTagFound;
@@ -467,9 +456,10 @@ public class XmlUtil {
   // Read the function name and parameter names to find out what this function does... :-)
   public static XmlTag find(String subTag, String withValue, String forTag, XmlTag insideRoot) {
     final XmlTag[] forTags = insideRoot.findSubTags(forTag);
-    for (int i = 0; i < forTags.length; i++) {
-      XmlTag tag = forTags[i];
+    
+    for (XmlTag tag : forTags) {
       final XmlTag[] allTags = tag.findSubTags(subTag);
+      
       for (int j = 0; j < allTags.length; j++) {
         XmlTag curTag = allTags[j];
         if (curTag.getName().equals(subTag) && curTag.getValue().getTrimmedText().equalsIgnoreCase(withValue)) {
@@ -513,8 +503,6 @@ public class XmlUtil {
     }
     return false;
   }
-
-
 
   public static String[][] getDefaultNamespaces(final XmlDocument document) {
     final XmlFile file = XmlUtil.getContainingFile(document);
@@ -660,20 +648,20 @@ public class XmlUtil {
   }
 
   public static void collectEnumerationValues(final XmlTag element, final HashSet<String> variants) {
-    final XmlTag[] subtags = element.getSubTags();
 
-    for (int i = 0; i < subtags.length; i++) {
-      final XmlTag tag = subtags[i];
+    for (final XmlTag tag : element.getSubTags()) {
       final String localName = tag.getLocalName();
-      
+
       if (localName.equals("enumeration")) {
         final String attributeValue = tag.getAttributeValue("value");
         if (attributeValue != null) variants.add(attributeValue);
-      } else if (localName.equals("union")) {
+      }
+      else if (localName.equals("union")) {
         variants.clear();
         return;
-      } else {
-        collectEnumerationValues(tag,variants);
+      }
+      else {
+        collectEnumerationValues(tag, variants);
       }
     }
   }

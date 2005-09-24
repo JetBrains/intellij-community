@@ -16,6 +16,7 @@ public abstract class ExternalResourceManagerEx extends ExternalResourceManager 
   public abstract void clearAllResources();
 
   public abstract void addIgnoredResource(String url);
+  public abstract void removeIgnoredResource(String url);
 
   public abstract boolean isIgnoredResource(String url);
 
