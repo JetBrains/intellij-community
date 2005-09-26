@@ -25,10 +25,7 @@ import org.apache.xmlrpc.Base64;
 import org.jdom.Element;
 
 import java.io.IOException;
-import java.net.Authenticator;
-import java.net.HttpURLConnection;
-import java.net.PasswordAuthentication;
-import java.net.URL;
+import java.net.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -119,9 +116,11 @@ public class HttpConfigurable implements JDOMExternalizable, ApplicationComponen
       Authenticator.setDefault(null);
     }
 
-    HttpURLConnection connection = (HttpURLConnection)new URL (url).openConnection();
+    URLConnection connection = new URL (url).openConnection();
     connection.connect();
     connection.getInputStream();
-    connection.disconnect();
+    if (connection instanceof HttpURLConnection) {
+      ((HttpURLConnection)connection).disconnect();
+    }
   }
 }
