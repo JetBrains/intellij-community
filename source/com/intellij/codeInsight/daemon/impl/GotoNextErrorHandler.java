@@ -46,10 +46,9 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     int offsetToGo = myGoForward ? Integer.MAX_VALUE : Integer.MIN_VALUE;
     HighlightInfo infoToGo = null;
     for (HighlightInfo info : highlights) {
-      int startOffset = info.highlighter.getStartOffset();
-      int endOffset = info.highlighter.getStartOffset();
+      int startOffset = getNavigationPositionFor(info);
       boolean isItBetter = myGoForward ? startOffset > caretOffset && startOffset < offsetToGo
-                                 : endOffset < caretOffset && startOffset > offsetToGo;
+                                 : startOffset < caretOffset && startOffset > offsetToGo;
       if (isItBetter) {
         offsetToGo = startOffset;
         infoToGo = info;
