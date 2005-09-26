@@ -245,8 +245,10 @@ public class ImplementationViewComponent extends JPanel {
 
     final Document doc = PsiDocumentManager.getInstance(project).getDocument(psiFile);
 
-    int start = getElementStart(elt);
-    final int end = elt.getTextRange().getEndOffset();
+    final HintUtil.ImplementationTextSelectioner implementationTextSelectioner =
+      HintUtil.getImplementationTextSelectioner(psiFile.getFileType());
+    int start = implementationTextSelectioner.getTextStartOffset(elt);
+    final int end = implementationTextSelectioner.getTextEndOffset(elt);
 
     final int lineStart = doc.getLineStartOffset(doc.getLineNumber(start));
     final int lineEnd = doc.getLineEndOffset(doc.getLineNumber(end));
@@ -273,17 +275,6 @@ public class ImplementationViewComponent extends JPanel {
     PsiFile originalFile = psiFile.getOriginalFile();
     if (originalFile != null) psiFile = originalFile;
     return psiFile;
-  }
-
-  private int getElementStart(PsiElement elt) {
-    if (elt instanceof PsiDocCommentOwner) {
-      PsiDocComment comment = ((PsiDocCommentOwner)elt).getDocComment();
-      if (comment != null) {
-        elt = comment.getNextSibling();
-        while (elt instanceof PsiWhiteSpace) elt = elt.getNextSibling();
-      }
-    }
-    return elt.getTextRange().getStartOffset();
   }
 
   public void removeNotify() {

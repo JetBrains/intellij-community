@@ -1,12 +1,21 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.ui.SideBorder2;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredText;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiDocCommentOwner;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.javadoc.PsiDocComment;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Map;
+import java.util.HashMap;
 
 public class HintUtil {
   public static final Color INFORMATION_COLOR = new Color(253, 254, 226);
@@ -78,6 +87,47 @@ public class HintUtil {
     return label;
   }
 
+  public static ImplementationTextSelectioner getImplementationTextSelectioner(final FileType fileType) {
+    ImplementationTextSelectioner implementationTextSelectioner = ourTextSelectionsMap.get(fileType);
+    if (implementationTextSelectioner == null) implementationTextSelectioner = ourTextSelectionsMap.get(StdFileTypes.JAVA);
+    return implementationTextSelectioner;
+  }
+
+  public static void registerImplementationTextSelectioner(final FileType fileType, final ImplementationTextSelectioner selectioner) {
+    ourTextSelectionsMap.put(fileType, selectioner);
+  }
+
+  public interface ImplementationTextSelectioner {
+    int getTextStartOffset(PsiElement element);
+    int getTextEndOffset(PsiElement element);
+  }
+
+  // TODO: Move to Language OpeanAPI
+  private static final Map<FileType,ImplementationTextSelectioner> ourTextSelectionsMap
+    = new HashMap<FileType, ImplementationTextSelectioner>(2);
+  
+  static class DefaultImplementationTextSelectioner implements ImplementationTextSelectioner {
+
+    public int getTextStartOffset(PsiElement element) {
+      if (element instanceof PsiDocCommentOwner) {
+        PsiDocComment comment = ((PsiDocCommentOwner)element).getDocComment();
+        if (comment != null) {
+          element = comment.getNextSibling();
+          while (element instanceof PsiWhiteSpace) element = element.getNextSibling();
+        }
+      }
+      return element.getTextRange().getStartOffset();
+    }
+
+    public int getTextEndOffset(PsiElement element) {
+      return element.getTextRange().getEndOffset();
+    }
+  }
+  
+  static {
+    ourTextSelectionsMap.put(StdFileTypes.JAVA, new DefaultImplementationTextSelectioner());
+  }
+
   public static JLabel createErrorLabel(String text) {
     JLabel label = new HintLabel();
     label.setText(text);
@@ -99,7 +149,7 @@ public class HintUtil {
   private static Font getBoldFont() {
     return UIManager.getFont("Label.font").deriveFont(Font.BOLD);
   }
-  
+
   private static class HintLabel extends JLabel {
     public void setText(String s) {
       if (s == null) {
