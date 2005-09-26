@@ -15,6 +15,15 @@
  */
 package com.intellij.psi;
 
+/**
+ * Represents a code fragment to which import statements can be added.
+ */
 public interface PsiImportHolder {
+  /**
+   * Adds an import statement for importing the specified class.
+   *
+   * @param aClass the class to import.
+   * @return true if the import statement was added successfully, false otherwise.
+   */
   boolean importClass(PsiClass aClass);
 }

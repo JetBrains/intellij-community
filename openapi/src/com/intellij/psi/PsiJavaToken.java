@@ -17,6 +17,14 @@ package com.intellij.psi;
 
 import com.intellij.psi.tree.IElementType;
 
+/**
+ * Represents a single token in a Java file (the lowest-level element in the Java PSI tree).
+ */
 public interface PsiJavaToken extends PsiElement {
+  /**
+   * Returns the type of the token.
+   *
+   * @return the token type.
+   */
   IElementType getTokenType();
 }

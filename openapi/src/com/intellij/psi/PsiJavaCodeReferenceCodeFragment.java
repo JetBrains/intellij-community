@@ -16,14 +16,25 @@
 package com.intellij.psi;
 
 /**
+ * Represents a fragment of Java code the contents of which is a reference element
+ * referencing a Java class or package.
+ *
  * @author ven
+ * @see PsiElementFactory#createReferenceCodeFragment(String, PsiElement, boolean, boolean)
  */
 public interface PsiJavaCodeReferenceCodeFragment extends PsiCodeFragment {
+  /**
+   * Returns the reference contained in the fragment.
+   *
+   * @return the reference element instance.
+   */
   PsiJavaCodeReferenceElement getReferenceElement();
 
   /**
-   * if true then classes as well as packages are accepted as reference target,
-   * otherwise only packages are
+   * Checks if classes are accepted as the target of the reference.
+   *
+   * @return if true then classes as well as packages are accepted as reference target,
+   * otherwise only packages are.
    */
-  boolean isClassesAccepted ();
+  boolean isClassesAccepted();
 }

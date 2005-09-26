@@ -16,18 +16,16 @@
 package com.intellij.psi;
 
 import com.intellij.psi.scope.PsiScopeProcessor;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 09.06.2003
- * Time: 16:02:15
- * To change this template use Options | File Templates.
+ * Represents a reference found in Java code.
  */
 public interface PsiJavaReference extends PsiPolyVariantReference {
   void processVariants(PsiScopeProcessor processor);
 
   JavaResolveResult advancedResolve(boolean incompleteCode);
+  @NotNull
   JavaResolveResult[] multiResolve(boolean incompleteCode);
 
 }

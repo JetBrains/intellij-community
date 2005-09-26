@@ -18,9 +18,27 @@ package com.intellij.psi;
 import com.intellij.util.IncorrectOperationException;
 
 /**
+ * Represents a reference to the member imported by a Java <code>import static</code>
+ * statement.
+ *
  * @author dsl
  */
 public interface PsiImportStaticReferenceElement extends PsiJavaCodeReferenceElement {
+  /**
+   * Returns the reference element specifying the class from which the member is imported.
+   *
+   * @return the reference element specifying the class.
+   */
   PsiJavaCodeReferenceElement getClassReference();
+
+  /**
+   * Binds the reference element to the specified class.
+   *
+   * @param aClass the class to bind the reference element to.
+   * @return the element corresponding to this element in the PSI tree after the rebind.
+   * @throws IncorrectOperationException if the modification fails for some reason (for example,
+   * the containing file is read-only).
+   * @see PsiReference#bindToElement(PsiElement) 
+   */
   PsiImportStaticStatement bindToTargetClass(PsiClass aClass) throws IncorrectOperationException;
 }

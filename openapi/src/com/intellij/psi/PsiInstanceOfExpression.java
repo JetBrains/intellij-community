@@ -15,10 +15,26 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+
 /**
- *
+ * Represents a Java <code>instanceof</code> expression.
  */
 public interface PsiInstanceOfExpression extends PsiExpression {
+  /**
+   * Returns the expression on the left side of the <code>instanceof</code>.
+   *
+   * @return the checked expression.
+   */
+  @NotNull
   PsiExpression getOperand();
+
+  /**
+   * Returns the type element on the right side of the <code>instanceof</code>.
+   *
+   * @return the type element, or null if the expression is incomplete.
+   */
+  @Nullable
   PsiTypeElement getCheckType();
 }

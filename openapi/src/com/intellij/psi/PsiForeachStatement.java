@@ -15,14 +15,52 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 /**
+ * Represents a Java enhanced <code>for</code>   statement.
+ *
  * @author dsl
  */
 public interface PsiForeachStatement extends PsiStatement {
+  /**
+   * Returns the variable containing the iteration parameter of the statement.
+   *
+   * @return the iteration parameter instance.
+   */
+  @NotNull
   PsiParameter getIterationParameter();
+
+  /**
+   * Returns the expression representing the sequence over which the iteration is performed.
+   *
+   * @return the iterated value expression instance, or null if the statement is incomplete.
+   */
+  @Nullable
   PsiExpression getIteratedValue();
+
+  /**
+   * Returns the body of the statement.
+   *
+   * @return the body of the statement, or null if the statement is complete.
+   */
+  @Nullable
   PsiStatement getBody();
 
+  /**
+   * Returns the opening parenthesis enclosing the statement header.
+   *
+   * @return the opening parenthesis.
+   */
+  @NotNull
   PsiJavaToken getLParenth();
+
+  /**
+   * Returns the closing parenthesis enclosing the statement header.
+   *
+   * @return the closing parenthesis, or null if the statement is incomplete.
+   */
+  @Nullable
   PsiJavaToken getRParenth();
 }

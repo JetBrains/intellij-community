@@ -15,10 +15,26 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+
 /**
- *
+ * Represents a Java statement with an attached label.
  */
 public interface PsiLabeledStatement extends PsiStatement, PsiNamedElement {
+  /**
+   * Returns the identifier representing the label attached to the statement.
+   *
+   * @return the label identifier.
+   */
+  @NotNull
   PsiIdentifier getLabelIdentifier();
+
+  /**
+   * Returns the statement to which the label is attached.
+   *
+   * @return the statement instance, or null if the label is not followed by any statement.
+   */
+  @Nullable
   PsiStatement getStatement();
 }

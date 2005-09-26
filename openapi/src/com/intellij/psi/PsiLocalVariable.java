@@ -18,6 +18,9 @@ package com.intellij.psi;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Represents a Java local variable.
+ */
 public interface PsiLocalVariable extends PsiVariable {
   /**
    * Adds initializer to the variable declaration statement or, if <code>initializer</code>

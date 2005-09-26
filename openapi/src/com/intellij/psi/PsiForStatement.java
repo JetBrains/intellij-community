@@ -15,13 +15,57 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * Represents a Java basic <code>for</code> statement.
+ */
 public interface PsiForStatement extends PsiStatement{
+  /**
+   * Returns the initialization part of the statement.
+   *
+   * @return the initialization part, or null if the statement is incomplete.
+   */
+  @Nullable
   PsiStatement getInitialization();
+
+  /**
+   * Returns the condition part of the statement.
+   *
+   * @return the condition part, or null if the statement is incomplete.
+   */
+  @Nullable
   PsiExpression getCondition();
+
+  /**
+   * Returns the update part of the statement.
+   *
+   * @return the update part, or null if the statement is incomplete.
+   */
+  @Nullable
   PsiStatement getUpdate();
+
+  /**
+   * Returns the body of the statement.
+   *
+   * @return the body of the statement, or null if the statement is complete.
+   */
+  @Nullable
   PsiStatement getBody();
 
+  /**
+   * Returns the opening parenthesis enclosing the statement header.
+   *
+   * @return the opening parenthesis, or null if the statement is incomplete.
+   */
+  @Nullable
   PsiJavaToken getLParenth();
 
+  /**
+   * Returns the closing parenthesis enclosing the statement header.
+   *
+   * @return the closing parenthesis, or null if the statement is incomplete.
+   */
+  @Nullable
   PsiJavaToken getRParenth();
 }

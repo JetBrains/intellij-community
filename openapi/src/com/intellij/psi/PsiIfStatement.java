@@ -16,17 +16,80 @@
 package com.intellij.psi;
 
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
- *
+ * Represents a Java <code>if</code> or <code>if ... else</code> statement.
  */
 public interface PsiIfStatement extends PsiStatement {
+  /**
+   * Returns the expression representing the condition of the statement.
+   *
+   * @return the expression instance, or null if the statement is incomplete.
+   */
+  @Nullable
   PsiExpression getCondition();
+
+  /**
+   * Returns the statement which is executed when the condition is true.
+   *
+   * @return the statement instance, or null if the statement is incomplete.
+   */
+  @Nullable
   PsiStatement getThenBranch();
+
+  /**
+   * Returns the statement which is executed when the condition is true.
+   *
+   * @return the statement instance, or null if the statement has no <code>else</code>
+   * part or is incomplete.
+   */
+  @Nullable
   PsiStatement getElseBranch();
+
+  /**
+   * Returns the <code>else</code> keyword of the statement.
+   *
+   * @return the keyword instance, or null if the statement has no <code>else</code>
+   * part.
+   */
+  @Nullable
   PsiKeyword getElseElement();
-  void setElseBranch(PsiStatement statement) throws IncorrectOperationException;
-  void setThenBranch(PsiStatement statement) throws IncorrectOperationException;
+
+  /**
+   * Sets the statement which is executed when the condition is false to the specified value.
+   * Adds the <code>else</code> keyword if required.
+   *
+   * @param statement the statement to use as the else branch.
+   * @throws IncorrectOperationException if the modification fails for some reason (for example,
+   * the containing file is read-only).
+   */
+  void setElseBranch(@NotNull PsiStatement statement) throws IncorrectOperationException;
+
+  /**
+   * Sets the statement which is executed when the condition is true to the specified value.
+   * Adds the parentheses if required.
+   *
+   * @param statement the statement to use as the then branch.
+   * @throws IncorrectOperationException if the modification fails for some reason (for example,
+   * the containing file is read-only).
+   */
+  void setThenBranch(@NotNull PsiStatement statement) throws IncorrectOperationException;
+
+  /**
+   * Returns the opening parenthesis enclosing the statement condition.
+   *
+   * @return the opening parenthesis, or null if the statement is incomplete.
+   */
+  @Nullable
   PsiJavaToken getLParenth();
+
+  /**
+   * Returns the closing parenthesis enclosing the statement condition.
+   *
+   * @return the closing parenthesis, or null if the statement is incomplete.
+   */
+  @Nullable
   PsiJavaToken getRParenth();
 }

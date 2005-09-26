@@ -25,6 +25,8 @@ import java.util.List;
 
 /**
  * Represents a Java class or interface.
+ *
+ * @see PsiJavaFile#getClasses() 
  */
 public interface PsiClass
   extends PsiElement, PsiNamedElement, PsiModifierListOwner, PsiDocCommentOwner, PsiMetaOwner, PsiTypeParameterListOwner, PsiMember {

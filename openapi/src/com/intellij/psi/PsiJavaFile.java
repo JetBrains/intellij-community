@@ -18,11 +18,36 @@ package com.intellij.psi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface PsiJavaFile extends PsiFile{
+/**
+ * Represents a Java or JSP file.
+ */
+public interface PsiJavaFile extends PsiFile {
+  /**
+   * Returns the list of classes contained in the file.
+   *
+   * @return the array of classes in the file.
+   */
   @NotNull PsiClass[] getClasses();
 
+  /**
+   * Returns the package statement contained in the file.
+   *
+   * @return the package statement, or null if one is missing.
+   */
   @Nullable PsiPackageStatement getPackageStatement();
+
+  /**
+   * Returns the name of the package to which the file belongs.
+   *
+   * @return the name specified in the package statement, or an empty string for a JSP page or
+   * file which has no package statement.
+   */
   @NotNull String getPackageName();
 
+  /**
+   * Returns the import list contained in the file.
+   *
+   * @return the import list, or null if this element represents a compiled class.
+   */
   @Nullable PsiImportList getImportList();
 }

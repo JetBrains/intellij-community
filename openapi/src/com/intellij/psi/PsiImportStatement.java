@@ -15,7 +15,22 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * Represents a Java <code>import</code> statement.
+ */
 public interface PsiImportStatement extends PsiImportStatementBase {
+  /**
+   * The empty array of PSI import statements which can be reused to avoid unnecessary allocations.
+   */
   PsiImportStatement[] EMPTY_ARRAY = new PsiImportStatement[0];
+
+  /**
+   * Returns the full-qualified name of the imported class or package.
+   *
+   * @return the full-qualified name, or null if the statement is incomplete.
+   */
+  @Nullable
   String getQualifiedName();
 }

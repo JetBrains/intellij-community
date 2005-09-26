@@ -15,8 +15,29 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * Represents a Java literal expression.
+ */
 public interface PsiLiteralExpression extends PsiExpression {
   //TODO: consider getValue to throw exception when parsing error and remove method getParsingError()!
+
+  /**
+   * Returns the value of the literal expression (an Integer for an integer constant, a String
+   * for a string literal, and so on).
+   *
+   * @return the value of the expression, or null if the parsing of the literal failed.
+   */
+  @Nullable
   Object getValue();
+
+  /**
+   * Returns the description of the error which occurred when parsing the value of the
+   * literal expression.
+   *
+   * @return the error description, or null if no error occurred when parsing.
+   */
+  @Nullable
   String getParsingError();
 }

@@ -16,7 +16,8 @@
 package com.intellij.psi;
 
 /**
- *
+ * Represents a Java keyword. Constants defined in this interface represent all
+ * keywords of the Java language.
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public interface PsiKeyword extends PsiJavaToken {
