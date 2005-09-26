@@ -25,7 +25,7 @@ import gnu.trove.THashMap;
 import javax.swing.*;
 import java.util.*;
 
-public class OverridenMarkersPass extends TextEditorHighlightingPass {
+public class OverriddenMarkersPass extends TextEditorHighlightingPass {
   private static final Icon OVERRIDEN_METHOD_MARKER_RENDERER = IconLoader.getIcon("/gutter/overridenMethod.png");
   private static final Icon IMPLEMENTED_METHOD_MARKER_RENDERER = IconLoader.getIcon("/gutter/implementedMethod.png");
   private static final Icon IMPLEMENTED_INTERFACE_MARKER_RENDERER = IconLoader.getIcon("/gutter/implementedMethod.png");
@@ -41,7 +41,7 @@ public class OverridenMarkersPass extends TextEditorHighlightingPass {
 
   private Map<PsiClass,PsiClass> myClassToFirstDerivedMap = new THashMap<PsiClass, PsiClass>();
 
-  public OverridenMarkersPass(
+  public OverriddenMarkersPass(
     Project project,
     PsiFile file,
     Document document,
@@ -130,12 +130,12 @@ public class OverridenMarkersPass extends TextEditorHighlightingPass {
       if (!aClass.hasModifierProperty(PsiModifier.FINAL)) {
         if ("java.lang.Object".equals(aClass.getQualifiedName())) return; // It's useless to have overriden markers for object.
 
-        PsiElementProcessor.CollectElements<PsiClass> processor = new PsiElementProcessor.CollectElements<PsiClass>();
+        PsiElementProcessor.FindElement<PsiClass> processor = new PsiElementProcessor.FindElement<PsiClass>();
         helper.processInheritors(processor, aClass, GlobalSearchScope.allScope(myProject), false);
-        Collection<PsiClass> inheritors = processor.getCollection();
-        if (!inheritors.isEmpty()) {
+        PsiClass inheritor = processor.getFoundElement();
+        if (inheritor != null) {
           if (!myClassToFirstDerivedMap.containsKey(aClass)){
-            myClassToFirstDerivedMap.put(aClass, inheritors.toArray(PsiClass.EMPTY_ARRAY)[0]);
+            myClassToFirstDerivedMap.put(aClass, inheritor);
           }
           int offset = element.getTextRange().getStartOffset();
           LineMarkerInfo info = new LineMarkerInfo(LineMarkerInfo.SUBCLASSED_CLASS, aClass, offset, aClass.isInterface() ? IMPLEMENTED_INTERFACE_MARKER_RENDERER : SUBCLASSED_CLASS_MARKER_RENDERER);
