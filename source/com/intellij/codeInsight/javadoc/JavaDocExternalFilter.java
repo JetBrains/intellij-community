@@ -1,28 +1,23 @@
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.ide.BrowserUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMember;
-import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.Alarm;
+import com.intellij.util.net.HttpConfigurable;
 
 import javax.swing.*;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.IOException;
+import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.List;
-import java.net.MalformedURLException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -238,7 +233,9 @@ public class JavaDocExternalFilter {
         return file.getInputStream();
       }
 
-      return BrowserUtil.getURL(surl).openStream();
+      URL url = BrowserUtil.getURL(surl);
+      HttpConfigurable.getInstance().prepareURL(url.toString());
+      return url.openStream();
     }
     catch (final IOException e) {
       SwingUtilities.invokeLater(new Runnable() {
