@@ -579,6 +579,28 @@ public class CodeEditUtil {
     }
   }
 
+  private static boolean isLineComment(final ASTNode prevNonWSElement) {
+    return prevNonWSElement.getElementType() == ElementType.END_OF_LINE_COMMENT;
+  }
+
+  private static ASTNode findWSBefore(final ASTNode firstNonSpaceLeaf) {
+    final ASTNode elem = TreeUtil.prevLeaf(firstNonSpaceLeaf);
+    if (elem != null && elem.getElementType() == ElementType.WHITE_SPACE) {
+      return elem;
+    } else {
+      return null;
+    }
+  }
+
+  private static ASTNode findElementBefore(final ASTNode firstNonSpaceLeaf) {
+    ASTNode current = TreeUtil.prevLeaf(firstNonSpaceLeaf);
+    while (current != null && current.getElementType() == ElementType.WHITE_SPACE) {
+      current = TreeUtil.prevLeaf(current);
+    }
+
+    return current;
+  }
+
 
   private static String composeNewWS(final String firstText,
                                      final String secondText,
@@ -693,7 +715,13 @@ public class CodeEditUtil {
       final List<ASTNode> treePrev = getPreviousElements(newChild);
 
       adjustWhiteSpaceBefore(newChild, true, false, changeFirstWS, false, file);
-      if (elementAfter != null && !isWS(elementAfter)) {
+
+      if (shouldInsertNewLineBefore(findElementAfter(newChild, false))) {
+        adjustWhiteSpaceBefore(findElementAfter(newChild, false),
+                               true, true, true, true, file);
+      }
+
+      else if (elementAfter != null && !isWS(elementAfter)) {
         adjustWhiteSpaceBefore(elementAfter, true, true, true, false, file);
       }
 
@@ -703,6 +731,21 @@ public class CodeEditUtil {
     finally {
       clearIndentInfo(dirtyElements);
     }
+  }
+
+  private static boolean shouldInsertNewLineBefore(final ASTNode treeNode) {
+
+    if (treeNode == null) return false;
+
+    ASTNode prevNonWSElement = findElementBefore(treeNode);
+    ASTNode ws = findWSBefore(treeNode);
+
+    if (prevNonWSElement != null && isLineComment(prevNonWSElement) && (ws == null || !ws.textContains('\n'))) {
+      return true;
+    } else {
+      return false;
+    }
+
   }
 
   private static void clearIndentInfo(final Collection<PsiElement> dirtyElements) {

@@ -35,7 +35,20 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     final String text = pair.getFirst();
     final boolean actionShouldBeAvailable = pair.getSecond().booleanValue();
 
-    doAction(text, actionShouldBeAvailable, testFullPath, testName);
+    beforeActionStarted(testName, contents);
+
+    try {
+      doAction(text, actionShouldBeAvailable, testFullPath, testName);
+    }
+    finally {
+      afterActionCompleted(testName, contents);
+    }
+  }
+
+  protected void afterActionCompleted(final String testName, final String contents) {
+  }
+
+  protected void beforeActionStarted(final String testName, final String contents) {
   }
 
   public static Pair<String, Boolean> parseActionHint(final PsiFile file) throws IOException {
