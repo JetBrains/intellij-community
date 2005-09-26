@@ -135,7 +135,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
 
           // bother only * withing text
           if (ch == '*' && (i != len - 1 || i == 0)) {
-            buf.append("\\w");
+            buf.append("(\\w|:)"); // ':' for xml tags
           }
           else if ("{}[].+^$*()?".indexOf(ch) != -1) {
             // do not bother with other metachars
