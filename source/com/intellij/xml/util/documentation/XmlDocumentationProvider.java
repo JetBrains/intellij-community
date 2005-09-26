@@ -1,22 +1,35 @@
 package com.intellij.xml.util.documentation;
 
+import com.intellij.ant.AntConfiguration;
+import com.intellij.ant.BuildFile;
+import com.intellij.ant.impl.AntInstallation;
+import com.intellij.ant.impl.references.PsiNoWhereElement;
 import com.intellij.codeInsight.javadoc.JavaDocManager;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
-import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.util.XmlUtil;
-import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
-import com.intellij.xml.impl.schema.TypeDescriptor;
-import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
-import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlComment;
+import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
+import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
+import com.intellij.xml.impl.schema.TypeDescriptor;
+import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
+import com.intellij.xml.util.XmlUtil;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Iterator;
 
 /**
  * Created by IntelliJ IDEA.
@@ -31,21 +44,21 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
   public String getUrlFor(PsiElement element, PsiElement originalElement) {
     if (element instanceof XmlTag) {
       XmlTag tag = (XmlTag)element;
-  
+
       MyPsiElementProcessor processor = new MyPsiElementProcessor();
       XmlUtil.processXmlElements(tag,processor, true);
-      
+
       if (processor.url == null) {
         XmlTag declaration = getComplexTypeDefinition(element, originalElement);
-        
+
         if (declaration != null) {
           XmlUtil.processXmlElements(declaration,processor, true);
         }
       }
-      
+
       return processor.url;
     }
-    
+
     return null;
   }
 
@@ -76,7 +89,7 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
 
       if (processor.result == null) {
         XmlTag declaration = getComplexTypeDefinition(element, originalElement);
-        
+
         if (declaration != null) {
           XmlUtil.processXmlElements(declaration,processor, true);
           typeName = declaration.getName();
@@ -84,6 +97,65 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
       }
 
       return generateDoc(processor.result, name, typeName);
+    } else if (element instanceof PsiNoWhereElement) {
+      PsiFile containingFile = originalElement.getContainingFile();
+      AntConfiguration instance = AntConfiguration.getInstance(originalElement.getProject());
+
+      for(Iterator<BuildFile> i = instance.getBuildFiles(); i.hasNext();) {
+        BuildFile buildFile = i.next();
+
+        if (buildFile.getXmlFile().equals(containingFile)) {
+          AntInstallation installation = BuildFile.ANT_INSTALLATION.get(buildFile.getAllOptions());
+
+          if (installation != null) {
+            String path = AntInstallation.HOME_DIR.get(installation.getProperties());
+            path += "/docs/manual";
+            XmlTag tag = PsiTreeUtil.getParentOfType(originalElement, XmlTag.class);
+            final String helpFileShortName = tag.getName() + ".html";
+
+            if (tag == null) return null;
+            File file = new File(path);
+            File helpFile = null;
+
+            if (file.exists()) {
+              File candidateHelpFile = new File(path + "/CoreTasks/" + helpFileShortName);
+              if (candidateHelpFile.exists()) helpFile = candidateHelpFile;
+
+              if (helpFile == null) {
+                candidateHelpFile = new File(path + "/CoreTypes/" + helpFileShortName);
+                if (candidateHelpFile.exists()) helpFile = candidateHelpFile;
+              }
+
+              if (helpFile == null) {
+                candidateHelpFile = new File(path + "/OptionalTasks/" + helpFileShortName);
+                if (candidateHelpFile.exists()) helpFile = candidateHelpFile;
+              }
+
+              if (helpFile == null) {
+                candidateHelpFile = new File(path + "/OptionalTypes/" + helpFileShortName);
+                if (candidateHelpFile.exists()) helpFile = candidateHelpFile;
+              }
+            }
+
+            if (helpFile != null) {
+              final File helpFile1 = helpFile;
+              VirtualFile fileByIoFile = ApplicationManager.getApplication().runReadAction(
+                new Computable<VirtualFile>() {
+                  public VirtualFile compute() {
+                    return LocalFileSystem.getInstance().findFileByIoFile(helpFile1);
+                  }
+                }
+              );
+              
+              if (fileByIoFile != null) {
+                try {
+                  return new String(fileByIoFile.contentsToCharArray());
+                } catch(IOException ex) {}
+              }
+            }
+          }
+        }
+      }
     }
 
     return null;
@@ -91,9 +163,9 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
 
   private XmlTag getComplexTypeDefinition(PsiElement element, PsiElement originalElement) {
     XmlElementDescriptor descriptor = element.getUserData(DESCRIPTOR_KEY);
-    
-    if (descriptor == null && 
-        originalElement != null && 
+
+    if (descriptor == null &&
+        originalElement != null &&
         originalElement.getParent() instanceof XmlTag) {
       descriptor = ((XmlTag)originalElement.getParent()).getDescriptor();
     }
@@ -105,10 +177,10 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
         return ((ComplexTypeDescriptor)type).getDeclaration();
       }
     }
-    
+
     return null;
   }
-  
+
   private String generateDoc(String str, String name, String typeName) {
     if (str == null) return null;
     StringBuffer buf = new StringBuffer(str.length() + 20);
