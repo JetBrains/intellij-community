@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.cache.impl.repositoryCache;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lexer.FilterLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,6 +10,7 @@ import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.compiled.ClsTypeElementImpl;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
@@ -17,6 +19,7 @@ import com.intellij.util.io.NameStore;
 import com.intellij.util.io.RecordDataOutput;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -28,6 +31,9 @@ import java.util.List;
  * @author max
  */
 public class RecordUtil {
+  private static final @NonNls String DEPRECATED_ANNOTATION_NAME = "Deprecated";
+  private static final @NonNls String DEPRECATED_TAG = "@deprecated";
+
   private RecordUtil() {}
 
   private static final Ref<ArrayList<PsiClass>> ourList = new Ref<ArrayList<PsiClass>>();
@@ -180,7 +186,7 @@ public class RecordUtil {
         PsiAnnotation[] annotations = modifierList.getAnnotations();
         for (PsiAnnotation annotation : annotations) {
           PsiJavaCodeReferenceElement nameElement = annotation.getNameReferenceElement();
-          if (nameElement != null && "Deprecated".equals(nameElement.getReferenceName())) return true;
+          if (nameElement != null && DEPRECATED_ANNOTATION_NAME.equals(nameElement.getReferenceName())) return true;
         }
       }
     }
@@ -241,7 +247,17 @@ public class RecordUtil {
 
   private static boolean isDeprecatedByDocComment(PsiElement psiElement) {
     if (!(psiElement instanceof PsiDocCommentOwner)) return false;
-    PsiDocComment docComment = ((PsiDocCommentOwner)psiElement).getDocComment();
+
+    final PsiDocCommentOwner owner = (PsiDocCommentOwner)psiElement;
+    if (owner instanceof PsiCompiledElement) {
+      return owner.isDeprecated();
+    }
+
+    final ASTNode node = psiElement.getNode();
+    final ASTNode docNode = node.findChildByType(JavaDocElementType.DOC_COMMENT);
+    if (docNode == null || docNode.getText().indexOf(DEPRECATED_TAG) < 0) return false;
+
+    PsiDocComment docComment = owner.getDocComment();
     return docComment != null && docComment.findTagByName("deprecated") != null;
   }
 
