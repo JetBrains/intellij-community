@@ -17,11 +17,12 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RemoveModifierFix;
-import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class PublicConstructorInNonPublicClassInspection extends MethodInspection {
@@ -63,9 +64,10 @@ public class PublicConstructorInNonPublicClassInspection extends MethodInspectio
       if (containingClass.hasModifierProperty(PsiModifier.PUBLIC)) {
         return;
       }
+      if (SerializationUtils.isExternalizable(containingClass)) {
+          return;
+      }
       registerModifierError(PsiModifier.PUBLIC, method);
-
     }
-
   }
 }

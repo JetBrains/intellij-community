@@ -17,13 +17,14 @@ package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ClassReferencesSubclassInspection extends ClassInspection{
+
     public String getDisplayName(){
         return InspectionGadgetsBundle.message("class.references.subclass.display.name");
     }
@@ -44,20 +45,14 @@ public class ClassReferencesSubclassInspection extends ClassInspection{
         return new ClassReferencesSubclassVisitor();
     }
 
-    private static class ClassReferencesSubclassVisitor extends BaseInspectionVisitor{
-        private boolean m_inClass = false;
+    private static class ClassReferencesSubclassVisitor
+            extends BaseInspectionVisitor{
+
         private PsiClass containingClass = null;
 
         public void visitClass(@NotNull PsiClass aClass){
-            final boolean wasInClass = m_inClass;
-            if(!m_inClass){
-
-                m_inClass = true;
-                containingClass = aClass;
-                super.visitClass(aClass);
-                containingClass = null;
-            }
-            m_inClass = wasInClass;
+            containingClass = aClass;
+            super.visitClass(aClass);
         }
 
         public void visitVariable(@NotNull PsiVariable variable){
@@ -72,20 +67,23 @@ public class ClassReferencesSubclassInspection extends ClassInspection{
             checkTypeElement(typeElement);
         }
 
-        public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression exp){
+        public void visitInstanceOfExpression(
+                @NotNull PsiInstanceOfExpression exp){
             super.visitInstanceOfExpression(exp);
             final PsiTypeElement typeElement = exp.getCheckType();
             checkTypeElement(typeElement);
         }
 
 
-        public void visitTypeCastExpression(@NotNull PsiTypeCastExpression exp){
+        public void visitTypeCastExpression(
+                @NotNull PsiTypeCastExpression exp){
             super.visitTypeCastExpression(exp);
             final PsiTypeElement typeElement = exp.getCastType();
             checkTypeElement(typeElement);
         }
 
-        public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression exp){
+        public void visitClassObjectAccessExpression(
+                @NotNull PsiClassObjectAccessExpression exp){
             super.visitClassObjectAccessExpression(exp);
             final PsiTypeElement typeElement = exp.getOperand();
             checkTypeElement(typeElement);
@@ -96,9 +94,6 @@ public class ClassReferencesSubclassInspection extends ClassInspection{
                 return;
             }
             final PsiType type = typeElement.getType();
-            if(type == null){
-                return;
-            }
             final PsiType componentType = type.getDeepComponentType();
             if(!(componentType instanceof PsiClassType)){
                 return;
@@ -110,8 +105,8 @@ public class ClassReferencesSubclassInspection extends ClassInspection{
             registerError(typeElement);
         }
 
-        private static boolean isSubclass(PsiClassType childClass,
-                                          PsiClass parent){
+        private static boolean isSubclass(@NotNull PsiClassType childClass,
+                                          @NotNull PsiClass parent){
             final PsiClass child = childClass.resolve();
             if(child == null){
                 return false;

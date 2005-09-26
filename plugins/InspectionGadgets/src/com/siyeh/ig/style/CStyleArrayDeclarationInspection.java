@@ -18,12 +18,15 @@ package com.siyeh.ig.style;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiVariable;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class CStyleArrayDeclarationInspection extends ClassInspection {
@@ -57,20 +60,9 @@ public class CStyleArrayDeclarationInspection extends ClassInspection {
   }
 
   private static class CStyleArrayDeclarationVisitor
-    extends BaseInspectionVisitor {
-    private boolean m_inClass = false;
+            extends BaseInspectionVisitor{
 
-    public void visitClass(@NotNull PsiClass aClass) {
-      final boolean wasInClass = m_inClass;
-      if (!m_inClass) {
-
-        m_inClass = true;
-        super.visitClass(aClass);
-      }
-      m_inClass = wasInClass;
-    }
-
-    public void visitVariable(@NotNull PsiVariable var) {
+   public void visitVariable(@NotNull PsiVariable var) {
       super.visitVariable(var);
       final PsiType declaredType = var.getType();
       if (declaredType.getArrayDimensions() == 0) {
@@ -88,3 +80,4 @@ public class CStyleArrayDeclarationInspection extends ClassInspection {
     }
   }
 }
+

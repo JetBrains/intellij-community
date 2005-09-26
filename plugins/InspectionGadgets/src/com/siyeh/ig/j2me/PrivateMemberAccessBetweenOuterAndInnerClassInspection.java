@@ -21,16 +21,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
         extends ClassInspection{
+
     public String getDisplayName(){
         return InspectionGadgetsBundle.message("private.member.access.between.outer.and.inner.classes.display.name");
     }
@@ -48,6 +49,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
     }
 
     private static class MakePackagePrivateFix extends InspectionGadgetsFix{
+
         private String elementName;
 
         private MakePackagePrivateFix(PsiElement location){
@@ -68,7 +70,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
+                throws IncorrectOperationException{
                 final PsiReferenceExpression reference =
                         (PsiReferenceExpression) descriptor.getPsiElement();
                 final PsiModifierListOwner member =
@@ -88,18 +90,9 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
 
     private static class PrivateMemberAccessFromInnerClassVisior
             extends BaseInspectionVisitor{
-        private boolean m_inClass = false;
 
-        public void visitClass(@NotNull PsiClass aClass){
-            final boolean wasInClass = m_inClass;
-            if(!m_inClass){
-                m_inClass = true;
-                super.visitClass(aClass);
-            }
-            m_inClass = wasInClass;
-        }
-
-        public void visitReferenceExpression(@NotNull PsiReferenceExpression expression){
+        public void visitReferenceExpression(
+                @NotNull PsiReferenceExpression expression){
             super.visitReferenceExpression(expression);
             final PsiElement element = expression.resolve();
             if(!(element instanceof PsiMethod || element instanceof PsiField)){
@@ -116,8 +109,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
             }
             final PsiClass memberClass =
                     ClassUtils.getContainingClass(member);
-            if(memberClass == null)
-            {
+            if(memberClass == null){
                 return;
             }
             if(memberClass.equals(containingClass)){
@@ -130,13 +122,14 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
         @Nullable
         private static PsiClass getContainingContextClass(
                 PsiReferenceExpression expression){
-            final PsiClass aClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
-            if(aClass instanceof PsiAnonymousClass)
-            {
-                final PsiExpressionList args = ((PsiAnonymousClass) aClass).getArgumentList();
+            final PsiClass aClass =
+                    PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+            if(aClass instanceof PsiAnonymousClass){
+                final PsiAnonymousClass anonymousClass =
+                        (PsiAnonymousClass) aClass;
+                final PsiExpressionList args = anonymousClass.getArgumentList();
                 if(args!=null &&
-                        PsiTreeUtil.isAncestor(args, expression, true))
-                {
+                        PsiTreeUtil.isAncestor(args, expression, true)){
                     return PsiTreeUtil
                             .getParentOfType(aClass, PsiClass.class);
                 }

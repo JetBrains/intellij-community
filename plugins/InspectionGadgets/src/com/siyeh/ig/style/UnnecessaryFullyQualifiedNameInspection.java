@@ -23,20 +23,20 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
-import com.siyeh.InspectionGadgetsBundle;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
+
     @SuppressWarnings("PublicField")
     public boolean m_ignoreJavadoc = false;
 
@@ -102,17 +102,6 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
     private class UnnecessaryFullyQualifiedNameVisitor
             extends BaseInspectionVisitor{
 
-        private boolean m_inClass = false;
-
-        public void visitClass(@NotNull PsiClass aClass){
-            final boolean wasInClass = m_inClass;
-            if(!m_inClass){
-                m_inClass = true;
-                super.visitClass(aClass);
-            }
-            m_inClass = wasInClass;
-        }
-
         public void visitReferenceElement(
                 PsiJavaCodeReferenceElement reference){
             super.visitReferenceElement(reference);
@@ -150,7 +139,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
             final PsiResolveHelper resolveHelper = manager.getResolveHelper();
             final PsiClass psiClass =
                     resolveHelper.resolveReferencedClass(className, reference);
-            if (psiClass != null && !aClass.equals(psiClass)) {
+            if(psiClass != null && !aClass.equals(psiClass)){
                 return;
             }
             registerError(reference);

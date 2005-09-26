@@ -20,11 +20,10 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.InspectionGadgetsBundle;
-import org.jetbrains.annotations.NonNls;
 
 public class TypeParameterExtendsObjectInspection extends ClassInspection {
 
@@ -52,18 +51,20 @@ public class TypeParameterExtendsObjectInspection extends ClassInspection {
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-
-      final PsiElement extendClassIdentifier = descriptor.getPsiElement();
-      final PsiTypeParameter element =
-        (PsiTypeParameter)extendClassIdentifier.getParent();
-      assert element != null;
-      final PsiReferenceList extendsList = element.getExtendsList();
-      final PsiJavaCodeReferenceElement[] elements =
-        extendsList.getReferenceElements();
-      for (PsiJavaCodeReferenceElement element1 : elements) {
-        deleteElement(element1);
-      }
+            throws IncorrectOperationException{
+        final PsiElement extendClassIdentifier = descriptor.getPsiElement();
+        final PsiTypeParameter element =
+                (PsiTypeParameter) extendClassIdentifier.getParent();
+        if (element == null) {
+            return;
+        }
+        final PsiReferenceList extendsList = element.getExtendsList();
+        final PsiJavaCodeReferenceElement[] referenceElements =
+                extendsList.getReferenceElements();
+        for(PsiJavaCodeReferenceElement referenceElement :
+                referenceElements){
+            deleteElement(referenceElement);
+        }
     }
   }
 
@@ -73,19 +74,18 @@ public class TypeParameterExtendsObjectInspection extends ClassInspection {
 
   private static class ExtendsObjectVisitor extends BaseInspectionVisitor {
 
-    public void visitTypeParameter(PsiTypeParameter parameter) {
+    public void visitTypeParameter(PsiTypeParameter parameter){
       super.visitTypeParameter(parameter);
-      final PsiIdentifier nameIdentifier = parameter.getNameIdentifier();
-      final PsiReferenceList extendsList = parameter.getExtendsList();
-      final PsiJavaCodeReferenceElement[] elements =
-        extendsList.getReferenceElements();
-      for (final PsiJavaCodeReferenceElement element : elements) {
-        @NonNls final String text = element.getText();
-        if ("Object".equals(text) ||
-            "java.lang.Object".equals(text)) {
-          registerError(nameIdentifier);
-        }
+      final PsiClassType[] extendsListTypes =
+              parameter.getExtendsListTypes();
+      for(final PsiClassType extendsListType : extendsListTypes) {
+          if(extendsListType.equalsToText("java.lang.Object")){
+              final PsiIdentifier nameIdentifier =
+                      parameter.getNameIdentifier();
+              registerError(nameIdentifier);
+          }
       }
     }
   }
+
 }

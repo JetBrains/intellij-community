@@ -29,16 +29,19 @@ import java.util.Set;
 
 public class ClassUtils {
 
+    /** @noinspection StaticCollection*/
+    private static final Set<String> immutableTypes =
+            new HashSet<String>(11);
 
-    private static final int NUM_IMMUTABLE_TYPES = 17;
     /** @noinspection StaticCollection*/
-    private static final Set<String> immutableTypes = new HashSet<String>(NUM_IMMUTABLE_TYPES);
-    /** @noinspection StaticCollection*/
-    private static final Set<PsiType> primitiveNumericTypes = new HashSet<PsiType>(6);
+    private static final Set<PsiType> primitiveNumericTypes =
+            new HashSet<PsiType>(6);
+
     /** @noinspection StaticCollection*/
     private static final Set<String> numericTypes = new HashSet<String>(6);
+
     /** @noinspection StaticCollection*/
-    private static final Set<PsiType> integralTypes = new HashSet<PsiType>(10);
+    private static final Set<PsiType> integralTypes = new HashSet<PsiType>(5);
 
     static {
         integralTypes.add(PsiType.LONG);
@@ -79,11 +82,13 @@ public class ClassUtils {
         super();
     }
 
-    public static boolean isSubclass(@NotNull PsiClass aClass, String ancestorName) {
+    public static boolean isSubclass(@NotNull PsiClass aClass,
+                                     String ancestorName) {
         final PsiManager psiManager = aClass.getManager();
         final Project project = psiManager.getProject();
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-        final PsiClass ancestorClass = psiManager.findClass(ancestorName, scope);
+        final PsiClass ancestorClass =
+                psiManager.findClass(ancestorName, scope);
         return InheritanceUtil.isInheritorOrSelf(aClass, ancestorClass, true);
     }
 
@@ -198,7 +203,8 @@ public class ClassUtils {
         } else if (referencedClass.hasModifierProperty(PsiModifier.PROTECTED)) {
             return inSamePackage(baseClass, referencedClass);
         } else if (referencedClass.hasModifierProperty(PsiModifier.PRIVATE)) {
-            return PsiTreeUtil.findCommonParent(baseClass, referencedClass)!=null;
+            return PsiTreeUtil.findCommonParent(baseClass, referencedClass) !=
+                   null;
         } else {
             return inSamePackage(baseClass, referencedClass);
         }

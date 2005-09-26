@@ -20,11 +20,11 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class TransientFieldInNonSerializableClassInspection extends ClassInspection {
@@ -47,45 +47,35 @@ public class TransientFieldInNonSerializableClassInspection extends ClassInspect
     return fix;
   }
 
+
   private static class TransientFieldInNonSerializableClassFix extends InspectionGadgetsFix {
-    public String getName() {
-      return InspectionGadgetsBundle.message("transient.field.in.non.serializable.class.remove.quickfix");
+        public String getName() {
+            return InspectionGadgetsBundle.message("transient.field.in.non.serializable.class.remove.quickfix");
+        }
+
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
+            final PsiElement transientModifier = descriptor.getPsiElement();
+            deleteElement(transientModifier);
+        }
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiElement transientModifier = descriptor.getPsiElement();
-      deleteElement(transientModifier);
-    }
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new TransientFieldInNonSerializableClassVisitor();
-  }
-
-  private static class TransientFieldInNonSerializableClassVisitor extends BaseInspectionVisitor {
-    private boolean m_inClass = false;
-
-
-    public void visitClass(@NotNull PsiClass aClass) {
-      final boolean wasInClass = m_inClass;
-      if (!m_inClass) {
-
-        m_inClass = true;
-        super.visitClass(aClass);
-      }
-      m_inClass = wasInClass;
+    public BaseInspectionVisitor buildVisitor() {
+        return new TransientFieldInNonSerializableClassVisitor();
     }
 
-    public void visitField(@NotNull PsiField field) {
-      if (!field.hasModifierProperty(PsiModifier.TRANSIENT)) {
-        return;
-      }
-      final PsiClass aClass = field.getContainingClass();
-      if (SerializationUtils.isSerializable(aClass)) {
-        return;
-      }
-      registerModifierError(PsiModifier.TRANSIENT, field);
+    private static class TransientFieldInNonSerializableClassVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitField(@NotNull PsiField field) {
+            if (!field.hasModifierProperty(PsiModifier.TRANSIENT)) {
+                return;
+            }
+            final PsiClass aClass = field.getContainingClass();
+            if (SerializationUtils.isSerializable(aClass)) {
+                return;
+            }
+            registerModifierError(PsiModifier.TRANSIENT, field);
+        }
     }
-  }
 }

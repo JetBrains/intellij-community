@@ -18,6 +18,7 @@ package com.siyeh.ig;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.abstraction.*;
 import com.siyeh.ig.assignment.*;
 import com.siyeh.ig.bitwise.IncompatibleMaskInspection;
@@ -64,12 +65,10 @@ import com.siyeh.ig.style.*;
 import com.siyeh.ig.telemetry.InspectionGadgetsTelemetry;
 import com.siyeh.ig.threading.*;
 import com.siyeh.ig.visibility.*;
-import com.siyeh.InspectionGadgetsBundle;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
 import java.util.*;
-
-import org.jetbrains.annotations.NonNls;
 
 @SuppressWarnings({"OverlyCoupledClass",
         "OverlyCoupledMethod",
@@ -412,6 +411,8 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(NullArgumentToVariableArgMethodInspection.class);
         m_inspectionClasses.add(EnumSwitchStatementWhichMissesCasesInspection.class);
         m_inspectionClasses.add(PointlessIndexOfComparisonInspection.class);
+        m_inspectionClasses.add(SuspiciousSystemArraycopyInspection.class);
+        m_inspectionClasses.add(SuspiciousToArrayCallInspection.class);
     }
 
     private static boolean classExists(String className){
