@@ -27,8 +27,7 @@ public class ParseUtil implements Constants {
   public static final Key<String> UNCLOSED_ELEMENT_PROPERTY = Key.create("UNCLOSED_ELEMENT_PROPERTY");
 
   public static boolean isStrongWhitespaceHolder(IElementType type){
-    if (type == XmlElementType.XML_TEXT) return true;
-    return false;
+    return type == XmlElementType.XML_TEXT;
   }
 
   public static TreeElement createTokenElement(Lexer lexer, CharTable table) {
@@ -296,7 +295,7 @@ public class ParseUtil implements Constants {
   private static void initStrongWhitespaceHolder(CommonParentState commonParent, ASTNode start, boolean slopeSide) {
     if(start instanceof CompositeElement
        && (isStrongWhitespaceHolder(start.getElementType())
-       || (start.getUserData(UNCLOSED_ELEMENT_PROPERTY) != null) && slopeSide)){
+       || slopeSide && start.getUserData(UNCLOSED_ELEMENT_PROPERTY) != null)){
       commonParent.strongWhiteSpaceHolder = (CompositeElement)start;
       commonParent.isStrongElementOnRisingSlope = slopeSide;
     }
@@ -397,16 +396,19 @@ public class ParseUtil implements Constants {
     if (element.getElementType() == CLASS || element.getElementType() == FIELD || element.getElementType() == METHOD ||
         element.getElementType() == ENUM_CONSTANT) {
       TreeElement first = (TreeElement)element.getFirstChildNode();
-      TreeUtil.remove(docComment);
-      TreeUtil.insertBefore(first, docComment);
-      if (startSpaces != null) {
+
+      TreeElement endRange = docComment;
+      if(startSpaces != null){
         element = startSpaces.getTreeNext();
-
         if (startSpaces.getElementType() != IMPORT_LIST) {
-          TreeUtil.remove(startSpaces);
-          TreeUtil.insertBefore(first, startSpaces);
+          endRange = startSpaces;
         }
+      }
 
+      TreeUtil.removeRange(docComment, endRange.getTreeNext());
+      TreeUtil.insertBefore(first, docComment);
+
+      if (startSpaces != null) {
         TreeElement anchor = startSpaces;
 
         while (element != endSpaces) {
