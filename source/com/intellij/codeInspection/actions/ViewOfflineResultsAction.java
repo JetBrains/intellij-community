@@ -8,7 +8,11 @@
  */
 package com.intellij.codeInspection.actions;
 
-import com.intellij.codeInspection.offlineViewer.OfflineViewerHandler;
+import com.intellij.CommonBundle;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.offlineViewer.OfflineView;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
@@ -20,16 +24,21 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.Icons;
 import com.intellij.util.io.FileTypeFilter;
 import org.jdom.Document;
+import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileView;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 public class ViewOfflineResultsAction extends AnAction {
 
@@ -51,17 +60,18 @@ public class ViewOfflineResultsAction extends AnAction {
     FileView fileView = new FileView() {
       public Icon getIcon(File f) {
         if (f.isDirectory()) return super.getIcon(f);
-        if (f.getName().endsWith(".ipr")) {
+        @NonNls final String name = f.getName();
+        if (name.endsWith(".ipr")) {
           return Icons.PROJECT_ICON;
         }
-        FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(f.getName());
+        FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(name);
         return fileType.getIcon();
       }
     };
 
     fileChooser.setFileView(fileView);
     fileChooser.setAcceptAllFileFilterUsed(false);
-    fileChooser.setDialogTitle("Open File");
+    fileChooser.setDialogTitle(InspectionsBundle.message("inspection.offline.results.file.chooser.title"));
 
     fileChooser.addChoosableFileFilter(new FileTypeFilter(StdFileTypes.XML));
 
@@ -73,22 +83,38 @@ public class ViewOfflineResultsAction extends AnAction {
     Document doc;
     try {
       doc = JDOMUtil.loadDocument(file);
+      assert project != null;
       ((ProjectEx) project).getExpandMacroReplacements().substitute(doc.getRootElement(), SystemInfo.isFileSystemCaseSensitive);
     } catch (JDOMException e) {
-      Messages.showMessageDialog(project, "Error parsing the results file", "Error", Messages.getErrorIcon());
+      Messages.showMessageDialog(project, InspectionsBundle.message("inspection.offline.parsing.error"), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
       return;
     } catch (IOException e) {
-      Messages.showMessageDialog(project, "Error loading the results file", "Error", Messages.getErrorIcon());
+      Messages.showMessageDialog(project, InspectionsBundle.message("inspection.offline.loading.error"), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
       return;
     }
 
-    new OfflineViewerHandler(project).execute(doc);
+    OfflineView view = OfflineView.create(file.getName(), project);
+
+    Element root = doc.getRootElement();
+    InspectionManagerEx manager = (InspectionManagerEx) InspectionManager.getInstance(project);
+    manager.close();
+
+    List problems = root.getChildren(InspectionsBundle.message("inspection.export.results.problem"));
+    for (final Object problemElement : problems) {
+      Element problem = (Element)problemElement;
+      view.addProblem(problem);
+    }
+    view.init();
+    manager.getContentManager().addContent(view.getContent());
+    ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.INSPECTION).activate(null);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static String getLastFilePath(Project project) {
     return PropertiesComponent.getInstance(project).getValue("last_opened_file_path");
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void setLastFilePath(Project project,String path) {
     PropertiesComponent.getInstance(project).setValue("last_opened_file_path",path);
   }
