@@ -133,14 +133,15 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
               }
             });
             semaphore.waitFor();
-            if (!someSessionWasCanceled(updateSessions)) {
-              for (final UpdateSession updateSession : updateSessions) {
-                updateSession.onRefreshFilesCompleted();
-              }
-            }
           }
 
         }, getCompleteActionName(context), true, project);
+
+        if (!someSessionWasCanceled(updateSessions)) {
+          for (final UpdateSession updateSession : updateSessions) {
+            updateSession.onRefreshFilesCompleted();
+          }
+        }
 
         if (!someSessionWasCanceled(updateSessions)) {
 
@@ -314,6 +315,11 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       presentation.setVisible(true);
       presentation.setEnabled(true);
 
+      if (updateSupportingVcsesAreEmpty(vcsContext.getProject())) {
+        presentation.setVisible(false);
+        presentation.setEnabled(false);
+      }
+
       if (filterRootsBeforeAction()) {
         FilePath[] roots = filterRoots(myScopeInfo.getRoots(vcsContext, myActionInfo), vcsContext);
         if ( roots == null || roots.length == 0) {
@@ -329,6 +335,14 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
   }
 
+  private boolean updateSupportingVcsesAreEmpty(final Project project) {
+    if (project == null) return true;
+    final AbstractVcs[] allActiveVcss = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
+    for (AbstractVcs activeVcs : allActiveVcss) {
+      if (activeVcs.getUpdateEnvironment() != null) return false;
+    }
+    return true;
+  }
 
 
 }

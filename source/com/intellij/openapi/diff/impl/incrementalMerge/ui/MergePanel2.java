@@ -268,6 +268,10 @@ public class MergePanel2 implements DiffViewer {
     return myBuilder;
   }
 
+  public MergeRequestImpl getMergeRequest() {
+    return (MergeRequestImpl)(myData instanceof MergeRequestImpl ? myData : null);
+  }
+
   private class MyEditingSides implements EditingSides {
     private final FragmentSide mySide;
 

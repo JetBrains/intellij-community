@@ -38,7 +38,10 @@ public class MergeTool implements DiffTool {
     data.setActions(builder, mergePanel, true);
     builder.setHelpId(data.getHelpId());
     int result = builder.show();
-    data.setResult(result);
+    MergeRequestImpl lastData = mergePanel.getMergeRequest();
+    if (lastData != null) {
+      lastData.setResult(result);
+    }
   }
 
   public boolean canShow(DiffRequest data) {

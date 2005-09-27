@@ -101,11 +101,7 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
       return new UpdateSessionAdapter(result.getErrorsAndWarnings(), result.isCanceled() || !result.isLoggedIn()) {
         public void onRefreshFilesCompleted() {
           if (!updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).isEmpty()) {
-            ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-              public void run() {
-                invokeManualMerging(updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID), myProject);
-              }
-            }, ModalityState.defaultModalityState());
+            invokeManualMerging(updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID), myProject);
           }
         }
       };
