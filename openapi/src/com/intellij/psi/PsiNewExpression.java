@@ -18,22 +18,54 @@ package com.intellij.psi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Represents the call of a Java class constructor (a simple or qualified class instance
+ * creation expression, or an array creation expression).
+ */
 public interface PsiNewExpression extends PsiCallExpression, PsiConstructorCall {
+  /**
+   * Returns the qualifier (expression specifying instance of outer class) for a
+   * qualified class instance creation expression.
+   *
+   * @return the qualifier, or null if the expression is not qualified.
+   */
   @Nullable
   PsiExpression getQualifier();
 
+  /**
+   * Returns the expressions specifying the dimensions of the created array in
+   * an array creation expression.
+   *
+   * @return the array of expressions for the dimensions, or an empty array if the
+   * <code>new</code> expression is not an array creation expression.
+   */
   @NotNull
   PsiExpression[] getArrayDimensions();
 
+  /**
+   * Returns the expression specifying the initializer for the created array in
+   * an array creation expression.
+   *
+   * @return the array initializer expression, or null if the <code>new</code>
+   * expression is not an array creation expression or has no initializer.
+   */
   @Nullable
   PsiArrayInitializerExpression getArrayInitializer();
 
   /**
-   * @return class reference
+   * Returns the reference element specifying the class the instance of which is created.
+   *
+   * @return class reference, or null if the expression is incomplete.
    */
   @Nullable
   PsiJavaCodeReferenceElement getClassReference();
 
+  /**
+   * Returns the anonymous class created by the <code>new</code> expression.
+   *
+   * @return the anonymous class, or null if the expression does not create an
+   * anonymous class.
+   */
   @Nullable
   PsiAnonymousClass getAnonymousClass();
 }

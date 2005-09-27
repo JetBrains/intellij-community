@@ -15,10 +15,25 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
- *
+ * Represents a Java <code>synchronized</code> statement.
  */
 public interface PsiSynchronizedStatement extends PsiStatement {
+  /**
+   * Returns the expression representing the value on which the lock is acquired.
+   *
+   * @return the expression for the value, or null if the statement is incomplete.
+   */
+  @Nullable
   PsiExpression getLockExpression();
+
+  /**
+   * Returns the body of the statement.
+   *
+   * @return the body of the statement, or null if the statement is incomplete. 
+   */
+  @Nullable
   PsiCodeBlock getBody();
 }

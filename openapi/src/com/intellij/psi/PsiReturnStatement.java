@@ -15,9 +15,17 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
- *
+ * Represents a Java <code>return</code> statement.
  */
 public interface PsiReturnStatement extends PsiStatement {
+  /**
+   * Returns the expression representing the value returned by the statement.
+   *
+   * @return the return value expression, or null if the statement does not return any value. 
+   */
+  @Nullable
   PsiExpression getReturnValue();
 }

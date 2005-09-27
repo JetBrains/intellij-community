@@ -19,6 +19,8 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents an array initializer expression.
+ *
+ * @see PsiNewExpression#getArrayInitializer() 
  */
 public interface PsiArrayInitializerExpression extends PsiExpression {
   /**

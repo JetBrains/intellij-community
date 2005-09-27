@@ -16,8 +16,29 @@
 package com.intellij.psi;
 
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
+/**
+ * Represents a reference in Java code used as part of an expression.
+ */
 public interface PsiReferenceExpression extends PsiExpression, PsiJavaCodeReferenceElement {
+  /**
+   * Returns the expression used as the qualifier of the reference (the content up to the
+   * last period).
+   *
+   * @return the qualifier, or null if the reference is not qualified.
+   */
+  @Nullable
   PsiExpression getQualifierExpression();
+
+  /**
+   * Creates an <code>import static</code> statement importing the referenced member
+   * from the specified class, or qualifies the reference with the class name if
+   * that class is already imported by a regular import statement.
+   *
+   * @param qualifierClass the class to import.
+   * @return the element corresponding to this element in the PSI tree after the modification.
+   * @throws IncorrectOperationException if the modification failed for some reason.
+   */
   PsiElement bindToElementViaStaticImport(PsiClass qualifierClass) throws IncorrectOperationException ;
 }

@@ -17,7 +17,10 @@ package com.intellij.psi;
 
 import java.util.Stack;
 
-
+/**
+ * Represents a PSI element visitor which recursively visits the children of the element
+ * on which the visit was started. 
+ */
 public abstract class PsiRecursiveElementVisitor extends PsiElementVisitor {
   // This stack thing is intended to prevent exponential child traversing due to visitReferenceExpression calls both visitRefElement
   // and visitExpression.

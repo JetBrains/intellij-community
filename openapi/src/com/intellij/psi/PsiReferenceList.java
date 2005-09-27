@@ -15,7 +15,30 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * Represents a list of Java classes referenced by the <code>implements</code>,
+ * <code>extends</code> or <code>throws</code> clause.
+ *
+ * @see PsiClass#getExtendsList()
+ * @see PsiClass#getImplementsList()
+ * @see PsiMethod#getThrowsList()
+ */
 public interface PsiReferenceList extends PsiElement {
+  /**
+   * Returns the array of reference elements contained in the list.
+   *
+   * @return the array of reference elements.
+   */
+  @NotNull
   PsiJavaCodeReferenceElement[] getReferenceElements();
+
+  /**
+   * Returns the array of classes referenced by elements in the list.
+   *
+   * @return the array of referenced classes.
+   */
+  @NotNull
   PsiClassType[] getReferencedTypes();
 }

@@ -24,16 +24,49 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+/**
+ * Service for validating and parsing Java identifiers.
+ *
+ * @see com.intellij.psi.PsiManager#getNameHelper()
+ */
 public abstract class PsiNameHelper {
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static final Pattern WHITESPACE_PATTERN = Pattern.compile("(?:\\s)|(?:/\\*.*\\*/)|(?://[^\\n]*)");
 
+  /**
+   * Checks if the specified text is a Java identifier, using the language level of the project
+   * with which the name helper is associated to filter out keywords.
+   *
+   * @param text the text to check.
+   * @return true if the text is an identifier, false otherwise
+   */
   public abstract boolean isIdentifier(String text);
 
+  /**
+   * Checks if the specified text is a Java identifier, using the specified language level
+   * with which the name helper is associated to filter out keywords.
+   *
+   * @param text the text to check.
+   * @return true if the text is an identifier, false otherwise
+   */
   public abstract boolean isIdentifier(String text, LanguageLevel languageLevel);
 
+  /**
+   * Checks if the specified text is a Java keyword, using the language level of the project
+   * with which the name helper is associated.
+   *
+   * @param text the text to check.
+   * @return true if the text is a keyword, false otherwise
+   */
   public abstract boolean isKeyword(String text);
 
+  /**
+   * Checks if the specified string is a qualified name (sequence of identifiers separated by
+   * periods).
+   *
+   * @param text the text to check.
+   * @return true if the text is a qualified name, false otherwise.
+   */
   public abstract boolean isQualifiedName(String text);
 
   public static String getShortClassName(String referenceText) {
@@ -122,11 +155,11 @@ public abstract class PsiNameHelper {
 
   /**
    * Obtains text of all type parameter values in a reference.
-   * They go in lft-to-right order: <code>A&lt;List&lt;String&gt&gt;.B&lt;Integer&gt;</code> yields
+   * They go in left-to-right order: <code>A&lt;List&lt;String&gt&gt;.B&lt;Integer&gt;</code> yields
    * <code>["List&lt;String&gt","Integer"]</code>
    *
-   * @param referenceText
-   * @return
+   * @param referenceText the text of the reference to calculate type parameters for.
+   * @return the calculated array of type parameters. 
    */
   public static String[] getClassParametersText(String referenceText) {
     if (referenceText.indexOf('<') < 0) return ArrayUtil.EMPTY_STRING_ARRAY;
@@ -134,8 +167,7 @@ public abstract class PsiNameHelper {
     final char[] chars = referenceText.toCharArray();
     int count = 0;
     int dim = 0;
-    for (int i = 0; i < chars.length; i++) {
-      final char aChar = chars[i];
+    for(final char aChar : chars) {
       switch (aChar) {
         case '<':
           count++;
@@ -178,15 +210,16 @@ public abstract class PsiNameHelper {
   }
 
   /**
-   * Splits identifier into words.
-   * @param name
-   * @return
+   * Splits an identifier into words, separated with underscores or upper-case characters
+   * (camel-case).
+   *
+   * @param name the identifier to split.
+   * @return the array of strings into which the identifier has been split.
    */
   public static String[] splitNameIntoWords(String name) {
     final String[] underlineDelimited = name.split("_");
     List<String> result = new ArrayList<String>();
-    for (int i = 0; i < underlineDelimited.length; i++) {
-      String word = underlineDelimited[i];
+    for (String word : underlineDelimited) {
       addAllWords(word, result);
     }
     return result.toArray(new String[result.size()]);

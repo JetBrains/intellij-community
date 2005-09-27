@@ -18,9 +18,25 @@ package com.intellij.psi;
 import org.jetbrains.annotations.NotNull;
 
 /**
- *  @author dsl
+ * Represents the list of type arguments specified on a Java reference.
+ *
+ * @author dsl
+ * @see PsiJavaCodeReferenceElement#getParameterList()
  */
 public interface PsiReferenceParameterList extends PsiElement {
+  /**
+   * Returns the array of type elements used as type arguments.
+   *
+   * @return the array of type elements.
+   */
+  @NotNull
   PsiTypeElement[] getTypeParameterElements();
-  @NotNull PsiType[] getTypeArguments();
+
+  /**
+   * Returns the array of types corresponding to type elements used as type arguments.
+   *
+   * @return the array of types.
+   */
+  @NotNull
+  PsiType[] getTypeArguments();
 }

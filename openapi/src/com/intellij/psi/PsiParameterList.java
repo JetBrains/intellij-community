@@ -16,9 +16,23 @@
 package com.intellij.psi;
 
 /**
+ * Represents the list of parameters of a Java method.
  *
+ * @see PsiMethod#getParameterList()
  */
 public interface PsiParameterList extends PsiElement {
+  /**
+   * Returns the array of parameters in the list.
+   *
+   * @return the array of parameters.
+   */
   PsiParameter[] getParameters();
+
+  /**
+   * Returns the index of the specified parameter in the list.
+   *
+   * @param parameter the parameter to search for (must belong to this parameter list).
+   * @return the index of the parameter.
+   */
   int getParameterIndex(PsiParameter parameter);
 }

@@ -15,5 +15,11 @@
  */
 package com.intellij.psi;
 
-public interface PsiPlainTextFile extends PsiFile{
+/**
+ * Represents a plain-text file (a file belonging to the type "Text files" or a custom
+ * file type which has no associated language).
+ *
+ * @see PsiPlainText
+ */
+public interface PsiPlainTextFile extends PsiFile {
 }

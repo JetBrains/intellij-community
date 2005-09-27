@@ -20,6 +20,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a Java anonymous class.
+ *
+ * @see PsiNewExpression#getAnonymousClass() 
  */
 public interface PsiAnonymousClass extends PsiClass {
   /**

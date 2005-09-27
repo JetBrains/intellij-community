@@ -25,5 +25,14 @@ import org.jetbrains.annotations.NotNull;
  * for later analysis by highlighting pass.
  */
 public interface PsiPolyVariantReference extends PsiReference {
+  /**
+   * Returns the results of resolving the reference.
+   *
+   * @param incompleteCode if true, the code in the context of which the reference is
+   * being resolved is considered incomplete, and the method may return additional
+   * invalid results.
+   *
+   * @return the array of results for resolving the reference.
+   */
   @NotNull ResolveResult[] multiResolve(final boolean incompleteCode);
 }

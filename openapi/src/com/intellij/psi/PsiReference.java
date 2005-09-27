@@ -28,6 +28,9 @@ import org.jetbrains.annotations.Nullable;
  */
 
 public interface PsiReference {
+  /**
+   * The empty array of PSI references which can be reused to avoid unnecessary allocations.
+   */
   PsiReference[] EMPTY_ARRAY = new PsiReference[0];
 
   /**

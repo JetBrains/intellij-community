@@ -15,7 +15,26 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * Represents a Java expression with an unary prefix operator.
+ */
 public interface PsiPrefixExpression extends PsiExpression {
+  /**
+   * Returns the expression representing the operand of the unary operator.
+   *
+   * @return the operand expression, or null if the expression is incomplete.
+   */
+  @Nullable
   PsiExpression getOperand();
+
+  /**
+   * Returns the token representing the operation performed.
+   *
+   * @return the token for the operation performed.
+   */
+  @NotNull
   PsiJavaToken getOperationSign();
 }

@@ -15,10 +15,27 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
+ * Represents a Java <code>switch</code> statement.
  *
+ * @see PsiSwitchLabelStatement
  */
 public interface PsiSwitchStatement extends PsiStatement {
+  /**
+   * Returns the expression on which the switch is performed.
+   *
+   * @return the switch expression, or null if the statement is incomplete.
+   */
+  @Nullable
   PsiExpression getExpression();
+
+  /**
+   * Returns the body of the switch statement.
+   *
+   * @return the statement body, or null if the statement is incomplete.
+   */
+  @Nullable
   PsiCodeBlock getBody();
 }

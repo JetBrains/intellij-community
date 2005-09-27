@@ -15,9 +15,17 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
- *
+ * Represents a Java expression enclosed in parentheses.
  */
 public interface PsiParenthesizedExpression extends PsiExpression {
+  /**
+   * Returns the expression inside the parentheses.
+   *
+   * @return the enclosed expression, or null if there is nothing between the parentheses. 
+   */
+  @Nullable
   PsiExpression getExpression();
 }

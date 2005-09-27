@@ -16,8 +16,13 @@
 package com.intellij.psi;
 
 /**
- *
+ * Represents a call of a Java method.
  */
 public interface PsiMethodCallExpression extends PsiCallExpression {
+  /**
+   * Returns the reference expression specifying the called method.
+   *
+   * @return the reference expression for the method.
+   */
   PsiReferenceExpression getMethodExpression();
 }

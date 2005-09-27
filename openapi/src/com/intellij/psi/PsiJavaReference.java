@@ -22,9 +22,26 @@ import org.jetbrains.annotations.NotNull;
  * Represents a reference found in Java code.
  */
 public interface PsiJavaReference extends PsiPolyVariantReference {
+  /**
+   * Passes all variants to which the reference may resolve to the specified
+   * processor.
+   *
+   * @param processor the processor accepting the variants.s
+   */
   void processVariants(PsiScopeProcessor processor);
 
+  /**
+   * Resolves the reference and returns the result as a {@link JavaResolveResult}
+   * instead of a plain {@link PsiElement}.
+   *
+   * @param incompleteCode if true, the code in the context of which the reference is
+   * being resolved is considered incomplete, and the method may return an invalid
+   * result.
+   * @return the result of the resolve.
+   */
+  @NotNull
   JavaResolveResult advancedResolve(boolean incompleteCode);
+  
   @NotNull
   JavaResolveResult[] multiResolve(boolean incompleteCode);
 

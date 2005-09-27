@@ -15,5 +15,10 @@
  */
 package com.intellij.psi;
 
-public interface PsiPlainText extends PsiElement{
+/**
+ * Represents the contents of a plain-text file.
+ *
+ * @see PsiPlainTextFile
+ */
+public interface PsiPlainText extends PsiElement {
 }

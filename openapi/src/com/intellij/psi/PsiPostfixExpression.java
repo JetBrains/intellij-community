@@ -15,10 +15,26 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
- *
+ * Represents a Java postfix increment or decrement expression.
  */
 public interface PsiPostfixExpression extends PsiExpression {
+  /**
+   * Returns the expression representing the operand of the increment or decrement.
+   *
+   * @return the operand expression.
+   */
+  @NotNull
   PsiExpression getOperand();
+
+  /**
+   * Returns the token representing the operation performed (of type {@link JavaTokenType.PLUSPLUS} or
+   * {@link JavaTokenType.MINUSMINUS}).
+   *
+   * @return the token for the operation performed.
+   */
+  @NotNull
   PsiJavaToken getOperationSign();
 }

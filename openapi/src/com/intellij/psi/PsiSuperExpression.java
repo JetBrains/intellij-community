@@ -15,6 +15,18 @@
  */
 package com.intellij.psi;
 
-public interface PsiSuperExpression extends PsiExpression{
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * Represents a Java <code>super</code> expression.
+ */
+public interface PsiSuperExpression extends PsiExpression {
+  /**
+   * Returns the expression representing the class name qualifying the <code>super</code>
+   * expression.
+   *
+   * @return the qualifier, or null if the expression has no qualifier.
+   */
+  @Nullable
   PsiJavaCodeReferenceElement getQualifier();
 }
