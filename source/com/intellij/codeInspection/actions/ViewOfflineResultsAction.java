@@ -10,7 +10,6 @@ package com.intellij.codeInspection.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.offlineViewer.OfflineView;
 import com.intellij.ide.RecentProjectsManager;
@@ -71,7 +70,7 @@ public class ViewOfflineResultsAction extends AnAction {
 
     fileChooser.setFileView(fileView);
     fileChooser.setAcceptAllFileFilterUsed(false);
-    fileChooser.setDialogTitle(InspectionsBundle.message("inspection.offline.results.file.chooser.title"));
+    fileChooser.setDialogTitle("Open File");
 
     fileChooser.addChoosableFileFilter(new FileTypeFilter(StdFileTypes.XML));
 
@@ -86,10 +85,10 @@ public class ViewOfflineResultsAction extends AnAction {
       assert project != null;
       ((ProjectEx) project).getExpandMacroReplacements().substitute(doc.getRootElement(), SystemInfo.isFileSystemCaseSensitive);
     } catch (JDOMException e) {
-      Messages.showMessageDialog(project, InspectionsBundle.message("inspection.offline.parsing.error"), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+      Messages.showMessageDialog(project, "Error parsing the results file", "Error", Messages.getErrorIcon());
       return;
     } catch (IOException e) {
-      Messages.showMessageDialog(project, InspectionsBundle.message("inspection.offline.loading.error"), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+      Messages.showMessageDialog(project, "Error loading the results file", "Error", Messages.getErrorIcon());
       return;
     }
 
@@ -99,7 +98,7 @@ public class ViewOfflineResultsAction extends AnAction {
     InspectionManagerEx manager = (InspectionManagerEx) InspectionManager.getInstance(project);
     manager.close();
 
-    List problems = root.getChildren(InspectionsBundle.message("inspection.export.results.problem"));
+    List problems = root.getChildren("problem");
     for (final Object problemElement : problems) {
       Element problem = (Element)problemElement;
       view.addProblem(problem);
