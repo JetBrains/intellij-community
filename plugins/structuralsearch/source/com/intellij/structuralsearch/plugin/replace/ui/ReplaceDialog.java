@@ -131,16 +131,25 @@ public class ReplaceDialog extends SearchDialog {
         LocalVcs instance = LocalVcs.getInstance(searchContext.getProject());
         LvcsAction lvcsAction = instance.startAction("StructuralReplace",null,false);
 
-        for(Iterator<Usage> i = infos.iterator();i.hasNext();) {
-          final UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)i.next();
+        for (final Usage info : infos) {
+          final UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)info;
 
-          if (isValid(usage,context)) {
+          if (isValid(usage, context)) {
             ensureFileWritable(usage);
-            replaceOne(usage, context, searchContext.getProject(),false);
+            replaceOne(usage, context, searchContext.getProject(), false);
           }
         }
 
         lvcsAction.finish();
+        
+        if(context.getUsageView().getUsagesCount() > 0) {
+          for(Usage usage:context.getUsageView().getUsages()) {
+            if (!context.isExcluded(usage)) {
+              context.getUsageView().selectUsages(new Usage[] {usage});
+              return;
+            }
+          }
+        }
       }
     };
 
