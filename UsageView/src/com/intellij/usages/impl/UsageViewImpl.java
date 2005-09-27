@@ -482,6 +482,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     myIsFirstVisibleUsageFound = false;
     ((UsageViewTreeModelBuilder)myTree.getModel()).reset();
     TreeUtil.expand(myTree, 2);
+    myUsages.clear();
   }
 
   public void appendUsageLater(final Usage usage) {
