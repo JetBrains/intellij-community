@@ -5,6 +5,7 @@ import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -17,6 +18,7 @@ public class ReplacementInfoImpl extends ReplacementInfo {
   List<SmartPsiElementPointer> matchesPtrList;
   String result;
   MatchResult matchResult;
+  Map<String,MatchResult> variableMap;
 
   public String getReplacement() {
     return result;

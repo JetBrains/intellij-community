@@ -1014,7 +1014,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
                  "}";
 
     String expectedResult5 = "    class CustomThread extends CustomThread {\n" +
-                             "    CustomThread(InputStream in,OutputStream out,boolean closeOutOnExit ) {\n" +
+                             "    CustomThread(InputStream in, OutputStream out,boolean closeOutOnExit ) {\n" +
                              "      super(\"CustomThread\");\n" +
                              "    setDaemon(true);\n" +
                              "    if (in instanceof BufferedInputStream) {\n" +
@@ -1054,12 +1054,12 @@ public class StructuralReplaceTest extends IdeaTestCase {
     String expectedResult8 = "public class A extends Object implements Cloneable { private Log log = LogFactory.createLog();  }\n";
     assertEquals("Extends / implements list for class",expectedResult8,actualResult);
 
-    String s22 = "public class A<T> { int A; }\n";
+    String s22 = "public class A<T> { int Afield; }\n";
     String s23 = "class 'A { 'Other* }";
     String s24 = "class $A$ { private Log log = LogFactory.createLog(); $Other$ }";
 
     actualResult = replacer.testReplace(s22,s23,s24,options);
-    String expectedResult9 = "public class A<T> { private Log log = LogFactory.createLog(); int A; }\n";
+    String expectedResult9 = "public class A<T> { private Log log = LogFactory.createLog(); int Afield; }\n";
     assertEquals("Type parameters for the class",expectedResult9,actualResult);
 
     String s25 = "class A {\n" +
@@ -1170,12 +1170,60 @@ public class StructuralReplaceTest extends IdeaTestCase {
 
     String expectedResult14 = "class A { void B () { System.out.println(\"B\");} int C(char ch) { System.out.println(\"C\"); int z = 1; } }";
 
-    if (!IdeaTestUtil.bombExplodes(2005,Calendar.OCTOBER,20,12,0,"-maxim.mossienko","Fix class replacements with multiple members")) return;
-    actualResult = replacer.testReplace(s37,s38,s39,options, true);
+    if (IdeaTestUtil.bombExplodes(2005,Calendar.OCTOBER,20,12,0,"-maxim.mossienko","Fix class replacements with multiple members")) {
+      actualResult = replacer.testReplace(s37,s38,s39,options, true);
+  
+      assertEquals(
+        "Multiple methods replacement",
+        expectedResult14,
+        actualResult
+      );
+    }
+  }
+
+  public void testClassReplacement2() {
+    final String actualResult;
+    String s40 = "class A {\n" +
+                 "  /* special comment*/\n" +
+                 "  private List<String> a = new ArrayList();\n" +
+                 "  static {\n" +
+                 "    int a = 1;" +
+                 "  }\n" +
+                 "}";
+    String s41 = "class 'Class {\n" +
+                 "  'Stuff2*\n" +
+                 "  'FieldType 'FieldName = 'Init?;\n" +
+                 "  static {\n" +
+                 "    'Stmt*;\n" +
+                 "  }\n" +
+                 "  'Stuff*\n" +
+                 "}";
+    String s42 = "class $Class$ {\n" +
+                 "  $Stuff2$\n" +
+                 "  $FieldType$ $FieldName$ = build$FieldName$Map();\n" +
+                 "  private static $FieldType$ build$FieldName$Map() {\n" +
+                 "    $FieldType$ $FieldName$ = $Init$;\n" +
+                 "    $Stmt$;\n" +
+                 "    return $FieldName$;\n" +
+                 "  }\n" +
+                 "  $Stuff$\n" +
+                 "}";
+    String expectedResult15 = "class A {\n\n" +
+                              "/* special comment*/ " +
+                              "private List<String> a = buildaMap();\n" +
+                              "private static List<String> buildaMap() {\n" +
+                              "List<String> a = new ArrayList();\n" +
+                              "int a = 1;\n" +
+                              "return a;\n" +
+                              "}\n" +
+                              "\n" +
+                              "}";
+
+    actualResult = replacer.testReplace(s40,s41,s42,options, true);
 
     assertEquals(
-      "Multiple methods replacement",
-      expectedResult14,
+      "Preserving var modifiers and generic information in type during replacement",
+      expectedResult15,
       actualResult
     );
   }

@@ -1181,6 +1181,15 @@ public class MatchingVisitor extends PsiElementVisitor {
 
         if (!result) return false;
         el = ((PsiJavaCodeReferenceElement)el).getReferenceNameElement();
+      } else {
+        if (type2 instanceof PsiTypeElement) {
+          if (typeparams == null || typeparams.length == 0) {
+            final PsiJavaCodeReferenceElement innermostComponentReferenceElement = ((PsiTypeElement)type2).getInnermostComponentReferenceElement();
+            if (innermostComponentReferenceElement != null) el2 = innermostComponentReferenceElement;
+          } else {
+            el2 = type2;
+          }
+        }
       }
     }
 

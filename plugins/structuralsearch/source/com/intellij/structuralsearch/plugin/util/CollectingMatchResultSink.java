@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.LinkedList;
 
 public class CollectingMatchResultSink implements MatchResultSink {
-  private List matches = new LinkedList();
+  private List<MatchResult> matches = new LinkedList<MatchResult>();
 
   public void newMatch(MatchResult result) {
     matches.add(result);
@@ -32,7 +32,7 @@ public class CollectingMatchResultSink implements MatchResultSink {
   public void setMatchingProcess(MatchingProcess process) {
   }
 
-  public List getMatches() {
+  public List<MatchResult> getMatches() {
     return matches;
   }
 }

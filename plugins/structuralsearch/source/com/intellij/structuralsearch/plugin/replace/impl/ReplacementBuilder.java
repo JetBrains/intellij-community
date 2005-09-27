@@ -118,13 +118,13 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
     }
 
     //if (!r.isScopeMatch()) {
-      for(Iterator<MatchResult> i = r.getAllSons().iterator(); i.hasNext(); ) {
-        fill(i.next(),m);
-      }
+    for (final MatchResult matchResult : r.getAllSons()) {
+      fill(matchResult, m);
+    }
     //}
   }
 
-  String process(MatchResult match) {
+  String process(MatchResult match, ReplacementInfoImpl replacementInfo) {
     if (parameterizations==null) {
       return replacement;
     }
@@ -135,28 +135,30 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
 
     int offset = 0;
 
-    for(int i = 0; i < parameterizations.size(); ++i) {
-      final ParameterInfo info = parameterizations.get(i);
-
+    for (final ParameterInfo info : parameterizations) {
       MatchResult r = map.get(info.name);
-      if (r!=null) {
+      if (r != null) {
         offset = handleSubstitution(info, r, result, offset);
-      } else {
+      }
+      else {
         if (info.hasCommaBefore) {
-          result.delete(info.beforeDelimiterPos+offset,info.beforeDelimiterPos+1+offset);
+          result.delete(info.beforeDelimiterPos + offset, info.beforeDelimiterPos + 1 + offset);
           --offset;
-        } else if (info.hasCommaAfter) {
-          result.delete(info.afterDelimiterPos+offset,info.afterDelimiterPos+1+offset);
-          --offset;
-        } else if (info.variableInitialContext) {
-          result.delete(info.beforeDelimiterPos+offset,info.afterDelimiterPos+offset-1);
-          offset -= (info.afterDelimiterPos-info.beforeDelimiterPos-1);
         }
-        offset = insertSubstitution(result,offset,info,"");
+        else if (info.hasCommaAfter) {
+          result.delete(info.afterDelimiterPos + offset, info.afterDelimiterPos + 1 + offset);
+          --offset;
+        }
+        else if (info.variableInitialContext) {
+          result.delete(info.beforeDelimiterPos + offset, info.afterDelimiterPos + offset - 1);
+          offset -= (info.afterDelimiterPos - info.beforeDelimiterPos - 1);
+        }
+        offset = insertSubstitution(result, offset, info, "");
       }
 
     }
 
+    replacementInfo.variableMap = (Map<String, MatchResult>)map.clone();
     map.clear();
     return result.toString();
   }
@@ -180,15 +182,15 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
         if (info.methodParameterContext) {
           handleMethodParameter(buf,info);
         } else {
-          for(Iterator<MatchResult> i=match.getAllSons().iterator();i.hasNext();) {
+          for (final MatchResult matchResult : match.getAllSons()) {
             previous = r;
-            r = i.next();
+            r = matchResult;
 
             if (buf.length() > 0) {
               if (info.statementContext) {
                 if (!(previous.getMatchRef().getElement() instanceof PsiComment) &&
-                    buf.charAt(buf.length()-1)!='}'
-                    ) {
+                    buf.charAt(buf.length() - 1) != '}'
+                  ) {
                   buf.append(';');
                 }
 
@@ -196,10 +198,11 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
 
                 if (prevSibling instanceof PsiWhiteSpace &&
                     prevSibling.getPrevSibling() == previous.getMatch()
-                    ) {
+                  ) {
                   // consequent statements matched so preserve whitespacing
                   buf.append(prevSibling.getText());
-                } else {
+                }
+                else {
                   buf.append('\n');
                 }
               }
@@ -214,7 +217,7 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
               }
             }
 
-            buf.append( r.getMatchImage() );
+            buf.append(r.getMatchImage());
             removeExtraSemicolon(info, r, buf);
           }
         }
@@ -268,8 +271,7 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
   private ParameterInfo findParameterization(String name) {
     if (parameterizations==null) return null;
 
-    for(Iterator i=parameterizations.iterator();i.hasNext();) {
-      final ParameterInfo info = (ParameterInfo)i.next();
+    for (final ParameterInfo info : parameterizations) {
 
       if (info.name.equals(name)) {
         return info;
@@ -381,7 +383,7 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
     return type.substring(1,type.length()-1);
   }
 
-  private boolean isTypedVariable(final String name) {
+  static boolean isTypedVariable(final String name) {
     return name.charAt(0)=='$' && name.charAt(name.length()-1)=='$';
   }
 }
