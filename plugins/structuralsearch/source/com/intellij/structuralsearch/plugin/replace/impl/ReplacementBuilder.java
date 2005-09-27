@@ -117,11 +117,16 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
       }
     }
 
-    //if (!r.isScopeMatch()) {
-    for (final MatchResult matchResult : r.getAllSons()) {
-      fill(matchResult, m);
+    if (!r.isScopeMatch() || !r.isMultipleMatch()) {
+      for (final MatchResult matchResult : r.getAllSons()) {
+        fill(matchResult, m);
+      }
+    } else if (r.hasSons()) {
+      final List<MatchResult> allSons = r.getAllSons();
+      if (allSons.size() > 0) {
+        fill(allSons.get(0),m);
+      }
     }
-    //}
   }
 
   String process(MatchResult match, ReplacementInfoImpl replacementInfo) {
@@ -152,6 +157,8 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
         else if (info.variableInitialContext) {
           result.delete(info.beforeDelimiterPos + offset, info.afterDelimiterPos + offset - 1);
           offset -= (info.afterDelimiterPos - info.beforeDelimiterPos - 1);
+        } else if (info.statementContext) {
+          offset = removeExtraSemicolon2(info, offset, result, r);
         }
         offset = insertSubstitution(result, offset, info, "");
       }
@@ -238,9 +245,13 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
   private int removeExtraSemicolon2(ParameterInfo info, int offset, StringBuffer result, MatchResult match) {
     if (info.statementContext) {
       int index = offset+info.startIndex;
-      if (result.charAt(index-1)=='}' &&
-          result.charAt(index)==';' &&
-          !(match.getMatch() instanceof PsiDeclarationStatement)   // array init in dcl
+      if (result.charAt(index)==';' &&
+          ( ( result.charAt(index-1)=='}' &&
+              !(match.getMatch() instanceof PsiDeclarationStatement) // array init in dcl
+            ) ||
+            ( match == null
+            )
+           )   
          ) {
         result.deleteCharAt(index);
         --offset;

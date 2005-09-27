@@ -6,10 +6,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.Replacer;
 import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.idea.Bombed;
-import com.intellij.idea.IdeaTestUtil;
-
-import java.util.Calendar;
 
 /**
  * Created by IntelliJ IDEA.
@@ -152,7 +148,6 @@ public class StructuralReplaceTest extends IdeaTestCase {
     );
   }
 
-  @Bombed(year = 2005, month = Calendar.JUNE, day = 30, time = 15, user = "Maxim.Mossienko")
   public void testReplace() {
     String str = "// searching for several constructions\n" +
                  "    lastTest = \"several constructions match\";\n" +
@@ -1168,17 +1163,16 @@ public class StructuralReplaceTest extends IdeaTestCase {
     String s38 = "class 'A { 'T* 'M*('PT* 'PN*) { 'S*; } 'O* }";
     String s39 = "class $A$ { $T$ $M$($PT$ $PN$) { System.out.println(\"$M$\"); $S$; } $O$ }";
 
-    String expectedResult14 = "class A { void B () { System.out.println(\"B\");} int C(char ch) { System.out.println(\"C\"); int z = 1; } }";
+    String expectedResult14 = "class A { void B( ) { System.out.println(\"B\");  } int C(char ch) { System.out.println(\"C\"); int z = 1; } }";
+    String expectedResult14_2 = "class A { void B( ) { System.out.println(\"B\");  }  }";
 
-    if (IdeaTestUtil.bombExplodes(2005,Calendar.OCTOBER,20,12,0,"-maxim.mossienko","Fix class replacements with multiple members")) {
-      actualResult = replacer.testReplace(s37,s38,s39,options, true);
-  
-      assertEquals(
-        "Multiple methods replacement",
-        expectedResult14,
-        actualResult
-      );
-    }
+    actualResult = replacer.testReplace(s37,s38,s39,options, true);
+
+    assertEquals(
+      "Multiple methods replacement",
+      expectedResult14_2,
+      actualResult
+    );
   }
 
   public void testClassReplacement2() {

@@ -148,8 +148,8 @@ public final class MatchResultImpl extends MatchResult {
     }
 
     if (matches!=null) {
-      for(Iterator i=matches.iterator();i.hasNext();) {
-        ((MatchResultImpl)i.next()).clear();
+      for (final MatchResult matche : matches) {
+        ((MatchResultImpl)matche).clear();
       }
       matches = null;
     }
@@ -169,8 +169,8 @@ public final class MatchResultImpl extends MatchResult {
   public MatchResultImpl findSon(String name) {
     if (matches!=null) {
       // @todo this could be performance bottleneck, replace with hash lookup!
-      for(Iterator i=matches.iterator();i.hasNext();) {
-        final MatchResultImpl res = (MatchResultImpl)i.next();
+      for (final MatchResult matche : matches) {
+        final MatchResultImpl res = (MatchResultImpl)matche;
 
         if (name.equals(res.getName())) {
           return res;
