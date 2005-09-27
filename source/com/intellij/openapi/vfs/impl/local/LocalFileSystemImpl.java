@@ -396,6 +396,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
                 boolean isDirectory = rootFile.isDirectory();
                 fireBeforeFileDeletion(null, rootFile);
                 synchronized (LOCK) {
+                  rootFile.setParent(null);
                   myRoots.remove(rootFile);
                   myRootsToWatch.remove(request);
                   updateFileWatcher();
