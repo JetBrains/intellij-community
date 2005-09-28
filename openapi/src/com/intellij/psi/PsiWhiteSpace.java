@@ -16,7 +16,7 @@
 package com.intellij.psi;
 
 /**
- *
+ * Represents a whitespace token.
  */
 public interface PsiWhiteSpace extends PsiElement{
 }

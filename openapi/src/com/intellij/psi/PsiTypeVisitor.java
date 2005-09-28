@@ -16,7 +16,9 @@
 package com.intellij.psi;
 
 /**
- *  @author dsl
+ * Visitor which can be used to visit Java types.
+ * 
+ * @author dsl
  */
 public class PsiTypeVisitor<A> {
   public A visitType(PsiType type) {

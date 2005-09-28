@@ -19,6 +19,7 @@ import com.intellij.psi.javadoc.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspImplicitVariable;
 
+@SuppressWarnings({"JavaDoc"})
 public abstract class JavaElementVisitor {
   public void visitElement(PsiElement element) {
   }

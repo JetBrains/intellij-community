@@ -246,7 +246,7 @@ public interface PsiClass
 
   /**
    * Returns the list of methods in the class and all its superclasses, along with their
-   * substitutors
+   * substitutors.
    *
    * @return the list of methods and their substitutors
    */

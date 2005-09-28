@@ -19,9 +19,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a wildcard type, with bounds.
+ *
  * @author dsl
  */
 public class PsiWildcardType extends PsiType {
@@ -111,6 +113,7 @@ public class PsiWildcardType extends PsiType {
     }
   }
 
+  @NotNull
   public PsiType[] getSuperTypes() {
     return new PsiType[]{getExtendsBound()};
   }
@@ -135,7 +138,8 @@ public class PsiWildcardType extends PsiType {
     PsiWildcardType that = (PsiWildcardType)o;
     if (myBound == null && that.myBound != null) {
       return that.isExtends() && that.myBound.equalsToText("java.lang.Object");
-    } else if (myBound != null && that.myBound == null) {
+    }
+    else if (myBound != null && that.myBound == null) {
       return isExtends() && myBound.equalsToText("java.lang.Object");
     }
     return myIsExtending == that.myIsExtending && Comparing.equal(myBound, that.myBound);
@@ -147,6 +151,7 @@ public class PsiWildcardType extends PsiType {
 
   /**
    * Use this method to obtain a bound of wildcard type.
+   *
    * @return <code>null</code> if unbounded, a bound otherwise.
    */
   public PsiType getBound() {
@@ -163,8 +168,9 @@ public class PsiWildcardType extends PsiType {
 
   /**
    * Returns whether this is a lower bound (<code>? extends XXX</code>).
+   *
    * @return <code>true</code> for <code>extends</code> wildcards, <code>false</code> for <code>super</code>
-   * and unbounded wildcards.
+   *         and unbounded wildcards.
    */
   public boolean isExtends() {
     return myBound != null && myIsExtending;
@@ -172,8 +178,9 @@ public class PsiWildcardType extends PsiType {
 
   /**
    * Returns whether this is an upper bound (<code>? super XXX</code>).
+   *
    * @return <code>true</code> for <code>super</code> wildcards, <code>false</code> for <code>extends</code>
-   * and unbounded wildcards.
+   *         and unbounded wildcards.
    */
   public boolean isSuper() {
     return myBound != null && !myIsExtending;
@@ -182,11 +189,12 @@ public class PsiWildcardType extends PsiType {
   /**
    * A lower bound that this wildcard imposes on type parameter value.<br>
    * That is:<br>
-   *  <ul>
-   *  <li> for <code>? extends XXX</code>: <code>XXX</code>
-   *  <li> for <code>? super XXX</code>: <code>java.lang.Object</code>
-   *  <li> for <code>?</code>: <code>java.lang.Object</code>
-   *  </ul>
+   * <ul>
+   * <li> for <code>? extends XXX</code>: <code>XXX</code>
+   * <li> for <code>? super XXX</code>: <code>java.lang.Object</code>
+   * <li> for <code>?</code>: <code>java.lang.Object</code>
+   * </ul>
+   *
    * @return <code>PsiType</code> representing a lower bound. Never returns <code>null</code>.
    */
   public PsiType getExtendsBound() {
@@ -199,11 +207,12 @@ public class PsiWildcardType extends PsiType {
   /**
    * An upper bound that this wildcard imposes on type parameter value.<br>
    * That is:<br>
-   *  <ul>
-   *  <li> for <code>? extends XXX</code>: null type
-   *  <li> for <code>? super XXX</code>: <code>XXX</code>
-   *  <li> for <code>?</code>: null type
-   *  </ul>
+   * <ul>
+   * <li> for <code>? extends XXX</code>: null type
+   * <li> for <code>? super XXX</code>: <code>XXX</code>
+   * <li> for <code>?</code>: null type
+   * </ul>
+   *
    * @return <code>PsiType</code> representing an upper bound. Never returns <code>null</code>.
    */
   public PsiType getSuperBound() {
@@ -213,6 +222,9 @@ public class PsiWildcardType extends PsiType {
     else if (!myIsExtending) {
       return myBound;
     }
-    else return NULL;
+    else {
+      return NULL;
+    }
   }
+
 }

@@ -145,7 +145,6 @@ public abstract class PsiDocumentManager {
      * Called when a file instance is created for a document.
      *
      * @param file the created file instance.
-     * @param document the created document instance.
      * @param document the document for which the file was created.
      * @see PsiDocumentManager#getDocument(PsiFile)
      */

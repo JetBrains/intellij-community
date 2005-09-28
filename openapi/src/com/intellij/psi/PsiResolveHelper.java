@@ -16,24 +16,72 @@
 package com.intellij.psi;
 
 import com.intellij.psi.infos.CandidateInfo;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+/**
+ * Service for resolving references to declarations.
+ *
+ * @see PsiManager#getResolveHelper()
+ */
 public interface PsiResolveHelper {
   /**
    * Resolves a constructor.
-   * The resolved constructor is not neccessary accessible from the point of the call,
+   * The resolved constructor is not necessarily accessible from the point of the call,
    * but accessible constructors have a priority.
    *
    * @param type              the class containing the constructor
    * @param argumentList      list of arguments of the call or new expression
    * @param place             place where constructor is invoked (used for checking access)
+   * @return the result of the resolve, or {@link JavaResolveResult.EMPTY} if the resolve failed.
    */
+  @NotNull
   JavaResolveResult resolveConstructor(PsiClassType type, PsiExpressionList argumentList, PsiElement place);
 
+  /**
+   * Resolves a constructor and returns all variants for the resolve.
+   * The resolved constructors are not necessarily accessible from the point of the call,
+   * but accessible constructors have a priority.
+   *
+   * @param type              the class containing the constructor
+   * @param argumentList      list of arguments of the call or new expression
+   * @param place             place where constructor is invoked (used for checking access)
+   * @return the result of the resolve, or {@link JavaResolveResult.EMPTY} if the resolve failed.
+   */
+  @NotNull
   JavaResolveResult[] multiResolveConstructor(PsiClassType type, PsiExpressionList argumentList, PsiElement place);
 
+  /**
+   * Resolves a call expression and returns an array of possible resolve results.
+   *
+   * @param call the call expression to resolve.
+   * @param dummyImplicitConstructor if true, implicit empty constructor which does not actually exist
+   * can be returned as a candidate for the resolve.
+   * @return the array of resolve results.
+   */
+  @NotNull
   CandidateInfo[] getReferencedMethodCandidates(PsiCallExpression call, boolean dummyImplicitConstructor);
 
+  /**
+   * Resolves a reference to a class, given the text of the reference and the context
+   * in which it was encountered.
+   *
+   * @param referenceText the text of the reference.
+   * @param context       the context in which the reference is found.
+   * @return the resolve result, or null if the resolve was not successful.
+   */
+  @Nullable
   PsiClass resolveReferencedClass(String referenceText, PsiElement context);
+
+  /**
+   * Resolves a reference to a variable, given the text of the reference and the context
+   * in which it was encountered.
+   *
+   * @param referenceText the text of the reference.
+   * @param context       the context in which the reference is found.
+   * @return the resolve result, or null if the resolve was not successful.
+   */
+  @Nullable
   PsiVariable resolveReferencedVariable(String referenceText, PsiElement context);
 
   boolean isAccessible(PsiMember member, PsiModifierList modifierList,
@@ -54,7 +102,7 @@ public interface PsiResolveHelper {
                                           final boolean forCompletion);
 
   PsiType getSubstitutionForTypeParameter(PsiTypeParameter typeParam,
-                                                        PsiType param,
-                                                        PsiType arg,
-                                                        boolean isContraVariantPosition);
+                                          PsiType param,
+                                          PsiType arg,
+                                          boolean isContraVariantPosition);
 }

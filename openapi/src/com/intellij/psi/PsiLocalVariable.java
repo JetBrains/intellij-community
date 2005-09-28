@@ -26,6 +26,8 @@ public interface PsiLocalVariable extends PsiVariable {
    * Adds initializer to the variable declaration statement or, if <code>initializer</code>
    * parameter is null, removes initializer from variable.
    *
+   * @param initializer the initializer to add.
+   * @throws IncorrectOperationException if the modifications fails for some reason.
    * @since 5.0.2
    */
   void setInitializer(@Nullable PsiExpression initializer) throws IncorrectOperationException;

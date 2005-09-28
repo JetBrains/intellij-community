@@ -578,6 +578,7 @@ public interface PsiElementFactory {
    * Returns the class type for a synthetic Java class containing methods which
    * are defined on Java arrays with the specified element type.
    *
+   * @param componentType the component type of the array for which the class type is returned.
    * @return the class type the array synthetic class.
    */
   PsiClassType getArrayClassType(PsiType componentType);

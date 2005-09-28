@@ -130,6 +130,7 @@ public interface PsiMethod extends PsiMember, PsiNamedElement, PsiModifierListOw
    * if the base class and/or one or more of the implemented interfaces have a method
    * with the same signature.
    *
+   * @param parentClass the class to search for super methods.
    * @return the array of super methods, or an empty array if no methods are found.
    */
   PsiMethod[] findSuperMethods(PsiClass parentClass);

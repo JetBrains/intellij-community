@@ -38,6 +38,7 @@ public interface PsiSubstitutor {
   /**
    * Returns a mapping that this substitutor contains for a given type parameter.
    *
+   * @param typeParameter the parameter to return the mapping for.
    * @return the mapping for the type parameter, or <code>null</code> for a raw type.
    */
   @Nullable

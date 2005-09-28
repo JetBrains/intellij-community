@@ -15,16 +15,28 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * Represents the result of resolving a reference.
+ */
 public interface ResolveResult {
-  ResolveResult[] EMPTY_ARRAY = new ResolveResult[0];
-  
   /**
-   * @return an element reference is resolved to.
+   * The empty array of PSI resolve results which can be reused to avoid unnecessary allocations.
    */
+  ResolveResult[] EMPTY_ARRAY = new ResolveResult[0];
+
+  /**
+   * Returns the result of the resolve.
+   *
+   * @return an element the reference is resolved to.
+   */
+  @Nullable
   PsiElement getElement();
 
   /**
-   *
+   * Checks if the reference was resolved to a valid element.
+   * 
    * @return true if the resolve encountered no problems
    */
   boolean isValidResult();

@@ -21,6 +21,7 @@ import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.tree.java.IKeywordElementType;
 
 
+@SuppressWarnings({"JavaDoc"})
 public interface JavaTokenType extends TokenType{
   //IElementType WHITE_SPACE = new IJavaElementType("WHITE_SPACE");
   IElementType IDENTIFIER = new IJavaElementType("IDENTIFIER");

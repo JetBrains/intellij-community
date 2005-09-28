@@ -16,7 +16,7 @@
 package com.intellij.psi;
 
 /**
- *
+ * Default empty implementation of {@link PsiTreeChangeListener}.
  */
 public abstract class PsiTreeChangeAdapter implements PsiTreeChangeListener {
   public void beforeChildAddition(PsiTreeChangeEvent event) {

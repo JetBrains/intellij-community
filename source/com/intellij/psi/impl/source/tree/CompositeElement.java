@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.java.ReplaceExpressionUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.NotNull;
 
 public class CompositeElement extends TreeElement implements Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.CompositeElement");
@@ -185,7 +186,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
     return TreeUtil.findChild(this, type);
   }
 
-  
+
 
   public String getText() {
     synchronized (PsiLock.LOCK) {
@@ -265,6 +266,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
   }
 
 
+  @NotNull
   public <T extends PsiElement> T[] getChildrenAsPsiElements(TokenSet filter, PsiElementArrayConstructor<T> constructor) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 

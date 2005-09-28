@@ -223,6 +223,7 @@ public interface ASTNode extends UserDataHolder {
    * when the AST tree nodes are copied.
    *
    * @param key the key for accessing the user data object.
+   * @param value the user data object to attach.
    * @see #getCopyableUserData(com.intellij.openapi.util.Key)
    */
   <T> void putCopyableUserData(Key<T> key, T value);

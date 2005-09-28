@@ -15,9 +15,17 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
- *
+ * Represents a Java <code>throw</code> statement.
  */
 public interface PsiThrowStatement extends PsiStatement {
+  /**
+   * Returns the expression representing the thrown exception.
+   *
+   * @return the expression, or null if the statement is incomplete.
+   */
+  @Nullable
   PsiExpression getException();
 }
