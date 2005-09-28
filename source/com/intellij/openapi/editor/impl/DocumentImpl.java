@@ -336,10 +336,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       newEndInString--;
       endOffset--;
     }
-    if (newEndInString - newStartInString == 0 && startOffset == endOffset) {
+    //if (newEndInString - newStartInString == 0 && startOffset == endOffset) {
       //setModificationStamp(newModificationStamp);
-      return;
-    }
+      //return;
+    //}
 
     s = s.subSequence(newStartInString, newEndInString);
     CharSequence sToDelete = myText.substring(startOffset, endOffset);
