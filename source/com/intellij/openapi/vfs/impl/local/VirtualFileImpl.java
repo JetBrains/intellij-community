@@ -863,7 +863,7 @@ public class VirtualFileImpl extends VirtualFile {
     myChildren = newChildren;
   }
 
-  private void removeChild(VirtualFileImpl child) {
+  void removeChild(VirtualFileImpl child) {
     getChildren(); // to initialize myChildren
 
     for (int i = 0; i < myChildren.length; i++) {
