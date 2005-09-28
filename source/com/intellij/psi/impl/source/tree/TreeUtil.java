@@ -273,13 +273,14 @@ public class TreeUtil {
     }
 
     start.setTreePrev(null);
-    if (parent != null){
-      for(TreeElement element = start; element != end; element = element.getTreeNext()){
-        element.setTreeParent(null);
-      }
-    }
     if (endPrev != null){
       endPrev.setTreeNext(null);
+    }
+
+    if (parent != null){
+      for(TreeElement element = start; element != null; element = element.getTreeNext()){
+        element.setTreeParent(null);
+      }
     }
 
     if (DebugUtil.CHECK){

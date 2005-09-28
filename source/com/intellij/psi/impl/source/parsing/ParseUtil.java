@@ -378,63 +378,50 @@ public class ParseUtil implements Constants {
     TreeElement element = docComment.getTreeNext();
     if (element == null) return false;
     TreeElement startSpaces = null;
-    ASTNode endSpaces;
+    TreeElement lastSpace = null;
 
+    TreeElement importList = null;
     // Bypass meaningless tokens and hold'em in hands
     while (element.getElementType() == WHITE_SPACE ||
            element.getElementType() == C_STYLE_COMMENT ||
            element.getElementType() == END_OF_LINE_COMMENT ||
            (element.getElementType() == IMPORT_LIST && element.getTextLength() == 0)
       ) {
+      if (element.getElementType() == IMPORT_LIST) importList = element;
       if (startSpaces == null) startSpaces = element;
+      lastSpace = element;
       element = element.getTreeNext();
       if (element == null) return false;
     }
 
-    endSpaces = element;
-
     if (element.getElementType() == CLASS || element.getElementType() == FIELD || element.getElementType() == METHOD ||
         element.getElementType() == ENUM_CONSTANT) {
       TreeElement first = (TreeElement)element.getFirstChildNode();
-
-      TreeElement endRange = docComment;
-      if(startSpaces != null){
-        element = startSpaces.getTreeNext();
-        if (startSpaces.getElementType() != IMPORT_LIST) {
-          endRange = startSpaces;
-        }
+      if (startSpaces != null) {
+        TreeUtil.removeRange(docComment, element);
+      } else {
+        TreeUtil.remove(docComment);
       }
 
-      TreeUtil.removeRange(docComment, endRange.getTreeNext());
       TreeUtil.insertBefore(first, docComment);
 
-      if (startSpaces != null) {
-        TreeElement anchor = startSpaces;
-
-        while (element != endSpaces) {
-          TreeElement next = element.getTreeNext();
-          if (element.getElementType() != IMPORT_LIST) {
-            TreeUtil.remove(element);
-            TreeUtil.insertAfter(anchor, element);
-            anchor = element;
-          }
-          element = next;
-        }
+      if (importList != null) {
+        TreeUtil.remove(importList);
+        TreeUtil.insertBefore(element, importList);
       }
+
       return true;
     }
     return false;
   }
 
-  private static final TokenSet BIND_TRAINLING_COMMENT_BIT_SET = TokenSet.orSet(TokenSet.create(new IElementType[]{
-    FIELD,
-    METHOD,
-    CLASS,
-    CLASS_INITIALIZER,
-    IMPORT_STATEMENT,
-    IMPORT_STATIC_STATEMENT,
-    PACKAGE_STATEMENT
-  }),
+  private static final TokenSet BIND_TRAINLING_COMMENT_BIT_SET = TokenSet.orSet(TokenSet.create(FIELD,
+      METHOD,
+      CLASS,
+      CLASS_INITIALIZER,
+      IMPORT_STATEMENT,
+      IMPORT_STATIC_STATEMENT,
+      PACKAGE_STATEMENT),
                                                                                      STATEMENT_BIT_SET);
 
   private static boolean bindTrailingComment(TreeElement comment) {
