@@ -2,9 +2,7 @@ package com.intellij.psi.filters.getters;
 
 import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -43,11 +41,28 @@ public class AllClassesGetter implements ContextGetter{
     }
 
     final GlobalSearchScope scope = context.getContainingFile().getResolveScope();
-
     final String[] names = cache.getAllClassNames(true);
+    
+    boolean lookingForAnnotations = false;
+    final PsiElement prevSibling = context.getParent().getPrevSibling();
+    if (prevSibling instanceof PsiJavaToken && 
+        ((PsiJavaToken)prevSibling).getTokenType() == JavaTokenType.AT) {
+      lookingForAnnotations = true;
+    }
+
     for (final String name : names) {
       if (prefix != null && !(CompletionUtil.checkName(name, prefix) || myMatcher.matches(name, myPattern))) continue;
-      classesList.addAll(Arrays.asList(cache.getClassesByName(name, scope)));
+      final PsiClass[] classesByName = cache.getClassesByName(name, scope);
+      
+      if (lookingForAnnotations) {
+        for (PsiClass psiClass : classesByName) {
+          if (psiClass.isAnnotationType()) {
+            classesList.add(psiClass);
+          }
+        }
+      } else {
+        classesList.addAll(Arrays.asList(classesByName));
+      }
     }
 
     Collections.sort(classesList, new Comparator<PsiClass>() {
