@@ -56,7 +56,7 @@ public class PsiArrayInitializerMemberValueImpl extends CompositePsiElement impl
   }
 
   public String toString(){
-    return "PsiArrayInitializerMemerValue:" + getText();
+    return "PsiArrayInitializerMemberValue:" + getText();
   }
 
   public final void accept(PsiElementVisitor visitor) {
