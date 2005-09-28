@@ -5,27 +5,28 @@ import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.Language;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.cacheBuilder.WordOccurrence;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.properties.parsing.PropertiesLexer;
 import com.intellij.lexer.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.impl.CacheManagerImpl;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.compiler.Utils;
@@ -38,6 +39,9 @@ import gnu.trove.TIntIntHashMap;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class IdTableBuilding {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding");
@@ -244,24 +248,30 @@ public class IdTableBuilding {
     registerCacheBuilder(StdFileTypes.IDEA_PROJECT, new EmptyBuilder());
   }
 
-  public static IdCacheBuilder getCacheBuilder(FileType fileType) {
+  public static IdCacheBuilder getCacheBuilder(FileType fileType, final Project project) {
     final IdCacheBuilder idCacheBuilder = cacheBuilders.get(fileType);
 
     if (idCacheBuilder != null) return idCacheBuilder;
 
+    final SyntaxHighlighter highlighter = fileType.getHighlighter(project);
+    final Lexer highlightingLexer = highlighter != null ? highlighter.getHighlightingLexer() : null;
     if (fileType instanceof LanguageFileType) {
       final Language lang = ((LanguageFileType)fileType).getLanguage();
-      if (lang != null) {
-        final FindUsagesProvider findUsagesProvider = lang.getFindUsagesProvider();
-        final WordsScanner scanner = findUsagesProvider == null ? null : findUsagesProvider.getWordsScanner();
-        if (scanner != null) {
-          return new WordsScannerIdCacheBuilderAdapter(scanner);
-        }
+      final FindUsagesProvider findUsagesProvider = lang.getFindUsagesProvider();
+      final WordsScanner scanner = findUsagesProvider.getWordsScanner();
+      final ParserDefinition parserDef = lang.getParserDefinition();
+      final TokenSet commentTokens = parserDef != null ? parserDef.getCommentTokens() : null;
+      if (scanner != null) {
+        return new WordsScannerIdCacheBuilderAdapter(scanner, highlightingLexer, commentTokens);
       }
     }
 
     if (fileType instanceof CustomFileType) {
-      return new WordsScannerIdCacheBuilderAdapter(((CustomFileType)fileType).getWordsScanner());
+      final TokenSet commentTokens = TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT,
+                                                     CustomHighlighterTokenType.MULTI_LINE_COMMENT);
+
+      return new WordsScannerIdCacheBuilderAdapter(((CustomFileType)fileType).getWordsScanner(),
+                                                   highlightingLexer, commentTokens);
     }
 
     return null;
@@ -269,9 +279,15 @@ public class IdTableBuilding {
 
   private static class WordsScannerIdCacheBuilderAdapter implements IdCacheBuilder {
     private WordsScanner myScanner;
+    @Nullable private final Lexer myHighlightingLexer;
+    @Nullable private final TokenSet myCommentTokens;
 
-    public WordsScannerIdCacheBuilderAdapter(final WordsScanner scanner) {
+    public WordsScannerIdCacheBuilderAdapter(@NotNull final WordsScanner scanner,
+                                             @Nullable final Lexer highlightingLexer,
+                                             @Nullable final TokenSet commentTokens) {
       myScanner = scanner;
+      myHighlightingLexer = highlightingLexer;
+      myCommentTokens = commentTokens;
     }
 
     public void build(char[] chars,
@@ -283,23 +299,6 @@ public class IdTableBuilding {
       myScanner.processWords(new CharArrayCharSequence(chars, 0, length), new Processor<WordOccurrence>() {
         public boolean process(final WordOccurrence t) {
           IdCacheUtil.addOccurrence(wordsTable, t.getText(), convertToMask(t.getKind()));
-
-          if (t.getKind() == WordOccurrence.Kind.COMMENTS || t.getKind() == null) {
-            if (todoCounts != null) {
-              for (int index = 0; index < todoPatterns.length; index++) {
-                Pattern pattern = todoPatterns[index].getPattern();
-                if (pattern != null) {
-                  CharSequence input = t.getText();
-                  Matcher matcher = pattern.matcher(input);
-                  while (matcher.find()) {
-                    if (matcher.start() != matcher.end()) {
-                      todoCounts[index]++;
-                    }
-                  }
-                }
-              }
-            }
-          }
           return true;
         }
 
@@ -311,6 +310,20 @@ public class IdTableBuilding {
           return 0;
         }
       });
+
+      if (myHighlightingLexer != null && myCommentTokens != null && todoCounts != null) {
+        BaseFilterLexer filterLexer = new BaseFilterLexer(myHighlightingLexer, wordsTable, todoCounts) {
+          public void advance() {
+            IElementType tokenType = myOriginalLexer.getTokenType();
+            if (myCommentTokens.contains(tokenType)) {
+              advanceTodoItemCounts(getBuffer(), getTokenStart(), getTokenEnd());
+            }
+            myOriginalLexer.advance();
+          }
+        };
+        filterLexer.start(chars);
+        while (filterLexer.getTokenType() != null) filterLexer.advance();
+      }
     }
   }
 
@@ -347,7 +360,7 @@ public class IdTableBuilding {
     final char[] chars = psiFile.textToCharArray();
     final int textLength = psiFile.getTextLength();
 
-    final IdCacheBuilder cacheBuilder = getCacheBuilder(fileType);
+    final IdCacheBuilder cacheBuilder = getCacheBuilder(fileType, manager.getProject());
 
     if (cacheBuilder==null) return null;
 
@@ -374,7 +387,7 @@ public class IdTableBuilding {
 
   private static final FilterLexer.Filter TOKEN_FILTER = new FilterLexer.Filter() {
     public boolean reject(IElementType type) {
-      return !(type instanceof IJavaElementType) || ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET.isInSet(type);
+      return !(type instanceof IJavaElementType) || ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(type);
     }
   };
 
