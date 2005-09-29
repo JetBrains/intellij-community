@@ -34,7 +34,7 @@ public class DiffContentUtil {
   }
 
   public static boolean isTextType(FileType fileType) {
-    return fileType != null && !fileType.isBinary() && !fileType.isReadOnly();
+    return fileType != null && !fileType.isBinary();
   }
 
   public static String getTitle(VirtualFile virtualFile) {
