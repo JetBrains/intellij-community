@@ -12,11 +12,11 @@ import java.util.ResourceBundle;
  * @author max
  */
 public class PsiBundle {
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.intellij.psi.PsiBundle");
+  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.PsiBundle");
 
   private PsiBundle() {}
 
-  public static String message(@PropertyKey(resourceBundle = "com.intellij.psi.PsiBundle") String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "messages.PsiBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

@@ -26,7 +26,7 @@ import java.util.ResourceBundle;
  *         Date: Aug 29, 2005
  */
 public class ActionsBundle {
-  @NonNls private static final String IDEA_ACTIONS_BUNDLE = "idea.ActionsBundle";
+  @NonNls private static final String IDEA_ACTIONS_BUNDLE = "messages.ActionsBundle";
   private static final ResourceBundle ourBundle = ResourceBundle.getBundle(IDEA_ACTIONS_BUNDLE);
 
   @SuppressWarnings({"HardCodedStringLiteral", "UnresolvedPropertyKey"})

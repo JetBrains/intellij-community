@@ -17,17 +17,18 @@ package com.intellij.debugger;
 
 import com.intellij.CommonBundle;
 import com.intellij.execution.configurations.RemoteConnection;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
 
 public class DebuggerBundle {
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.intellij.debugger.DebuggerBundle");
+  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.DebuggerBundle");
 
   private DebuggerBundle() {
   }
 
-  public static String message(@PropertyKey(resourceBundle = "com.intellij.debugger.DebuggerBundle") String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "messages.DebuggerBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 

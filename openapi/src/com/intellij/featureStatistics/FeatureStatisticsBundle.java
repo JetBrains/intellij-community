@@ -16,6 +16,7 @@
 package com.intellij.featureStatistics;
 
 import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
@@ -24,9 +25,12 @@ import java.util.ResourceBundle;
  * @author max
  */
 public class FeatureStatisticsBundle {
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.intellij.featureStatistics.FeatureStatisticsBundle");
+  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.FeatureStatisticsBundle");
 
-  public static String message(@PropertyKey(resourceBundle = "com.intellij.featureStatistics.FeatureStatisticsBundle") String key, Object... params) {
+  private FeatureStatisticsBundle() {
+  }
+
+  public static String message(@PropertyKey(resourceBundle = "messages.FeatureStatisticsBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

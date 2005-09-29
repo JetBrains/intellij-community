@@ -16,8 +16,8 @@
 package com.intellij.openapi.application;
 
 import com.intellij.CommonBundle;
-import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
 
@@ -25,11 +25,11 @@ import java.util.ResourceBundle;
  * Provides access to localized properties for the application component of IDEA.
  */
 public class ApplicationBundle {
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.intellij.openapi.application.ApplicationBundle");
+  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.ApplicationBundle");
 
   private ApplicationBundle() {}
 
-  public static String message(@PropertyKey(resourceBundle = "com.intellij.openapi.application.ApplicationBundle") String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "messages.ApplicationBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

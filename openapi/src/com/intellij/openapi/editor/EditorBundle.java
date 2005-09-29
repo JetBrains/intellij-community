@@ -3,9 +3,9 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.PropertyKey;
-import com.intellij.CommonBundle;
 
 import java.util.ResourceBundle;
 
@@ -17,11 +17,13 @@ import java.util.ResourceBundle;
  * To change this template use File | Settings | File Templates.
  */
 public class EditorBundle {
-    @NonNls protected static final String PATH_TO_BUNDLE = "com.intellij.openapi.editor.EditorBundle";
-      private final static ResourceBundle ourResourceBundle = ResourceBundle.getBundle(PATH_TO_BUNDLE);
+  @NonNls protected static final String PATH_TO_BUNDLE = "messages.EditorBundle";
+  private final static ResourceBundle ourResourceBundle = ResourceBundle.getBundle(PATH_TO_BUNDLE);
 
-      public static String message(@PropertyKey(resourceBundle = "com.intellij.openapi.editor.EditorBundle") String key, Object... params) {
-        return CommonBundle.message(ourResourceBundle, key, params);
-      }
+  private EditorBundle() {
+  }
 
+  public static String message(@PropertyKey(resourceBundle = "messages.EditorBundle") String key, Object... params) {
+    return CommonBundle.message(ourResourceBundle, key, params);
+  }
 }

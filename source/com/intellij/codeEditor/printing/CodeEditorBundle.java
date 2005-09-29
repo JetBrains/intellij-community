@@ -1,6 +1,7 @@
 package com.intellij.codeEditor.printing;
 
 import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
@@ -13,11 +14,11 @@ import java.util.ResourceBundle;
  * To change this template use File | Settings | File Templates.
  */
 public class CodeEditorBundle {
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.intellij.codeEditor.printing.CodeEditorBundle");
+  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.CodeEditorBundle");
 
   private CodeEditorBundle() {}
 
-  public static String message(@PropertyKey(resourceBundle = "com.intellij.codeEditor.printing.CodeEditorBundle") String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "messages.CodeEditorBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

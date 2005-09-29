@@ -1,10 +1,10 @@
 package com.intellij.openapi.fileTypes;
 
+import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
-
-import com.intellij.CommonBundle;
 
 /**
  * Created by IntelliJ IDEA.
@@ -14,11 +14,11 @@ import com.intellij.CommonBundle;
  * To change this template use File | Settings | File Templates.
  */
 public class FileTypesBundle {
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.intellij.openapi.fileTypes.FileTypesBundle");
+  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.FileTypesBundle");
 
   private FileTypesBundle() {}
 
-  public static String message(@PropertyKey(resourceBundle = "com.intellij.openapi.fileTypes.FileTypesBundle") String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "messages.FileTypesBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

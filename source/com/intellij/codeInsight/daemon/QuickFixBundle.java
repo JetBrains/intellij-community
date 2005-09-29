@@ -4,6 +4,7 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
@@ -12,11 +13,11 @@ import java.util.ResourceBundle;
  * @author max
  */
 public class QuickFixBundle {
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.intellij.codeInsight.daemon.QuickFixBundle");
+  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.QuickFixBundle");
 
   private QuickFixBundle() {}
 
-  public static String message(@PropertyKey(resourceBundle = "com.intellij.codeInsight.daemon.QuickFixBundle") String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "messages.QuickFixBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

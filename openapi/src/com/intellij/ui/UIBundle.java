@@ -3,9 +3,9 @@
  */
 package com.intellij.ui;
 
+import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.PropertyKey;
-import com.intellij.CommonBundle;
 
 import java.util.ResourceBundle;
 
@@ -17,10 +17,13 @@ import java.util.ResourceBundle;
  * To change this template use File | Settings | File Templates.
  */
 public class UIBundle {
-  @NonNls protected static final String PATH_TO_BUNDLE = "com.intellij.ui.UIBundle";
+  @NonNls protected static final String PATH_TO_BUNDLE = "messages.UIBundle";
   private final static ResourceBundle ourResourceBundle = ResourceBundle.getBundle(PATH_TO_BUNDLE);
 
-  public static String message(@PropertyKey(resourceBundle = "com.intellij.ui.UIBundle") String key, Object... params) {
+  private UIBundle() {
+  }
+
+  public static String message(@PropertyKey(resourceBundle = "messages.UIBundle") String key, Object... params) {
     return CommonBundle.message(ourResourceBundle, key, params);
   }
 

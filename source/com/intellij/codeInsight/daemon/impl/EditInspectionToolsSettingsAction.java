@@ -26,8 +26,8 @@ import javax.swing.*;
  * Date: Feb 7, 2005
  */
 public class EditInspectionToolsSettingsAction implements IntentionAction {
-  private String myDisplayName = null;
-  private String myShortName = null;
+  private final String myDisplayName;
+  private final String myShortName;
 
   public EditInspectionToolsSettingsAction(LocalInspectionTool tool) {
     myDisplayName = tool.getDisplayName();
@@ -35,10 +35,8 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
   }
 
   public EditInspectionToolsSettingsAction(HighlightDisplayKey key) {
-    if (key != null) {
-      myDisplayName = HighlightDisplayKey.getDisplayNameByKey(key);
-      myShortName = key.toString();
-    }
+    myDisplayName = HighlightDisplayKey.getDisplayNameByKey(key);
+    myShortName = key.toString();
   }
 
   public String getText() {
@@ -58,7 +56,11 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
     editToolSettings(project, inspectionProfile, true);
   }
 
-  public boolean editToolSettings(final Project project, final InspectionProfileImpl inspectionProfile, final boolean editorHighlighting) {
+  public boolean editToolSettings(final Project project, final InspectionProfileImpl inspectionProfile, final boolean editorHighlighting){
+    return editToolSettings(project, inspectionProfile, editorHighlighting, myShortName);
+  }
+
+  public static boolean editToolSettings(final Project project, final InspectionProfileImpl inspectionProfile, final boolean editorHighlighting, final String selectedToolShortName) {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     final boolean isOK = ShowSettingsUtil.getInstance().editConfigurable(project,
                                                                          "#com.intellij.codeInsight.daemon.impl.EditInspectionToolsSettingsAction",
@@ -79,8 +81,8 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
                                                                            }
 
                                                                            public JComponent createComponent() {
-                                                                             if (myShortName != null) {
-                                                                               myPanel.selectInspectionTool(myShortName);
+                                                                             if (selectedToolShortName != null) {
+                                                                               myPanel.selectInspectionTool(selectedToolShortName);
                                                                              }
                                                                              return myPanel;
                                                                            }

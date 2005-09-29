@@ -1,6 +1,7 @@
 package com.intellij.find;
 
 import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
@@ -13,11 +14,11 @@ import java.util.ResourceBundle;
  * To change this template use File | Settings | File Templates.
  */
 public class FindBundle {
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.intellij.find.FindBundle");
+  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.FindBundle");
 
   private FindBundle() {}
 
-  public static String message(@PropertyKey(resourceBundle = "com.intellij.find.FindBundle") String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "messages.FindBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

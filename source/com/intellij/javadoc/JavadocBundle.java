@@ -1,10 +1,10 @@
 package com.intellij.javadoc;
 
+import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
-
-import com.intellij.CommonBundle;
 
 /**
  * Created by IntelliJ IDEA.
@@ -14,11 +14,11 @@ import com.intellij.CommonBundle;
  * To change this template use File | Settings | File Templates.
  */
 public class JavadocBundle {
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.intellij.javadoc.JavadocBundle");
+  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.JavadocBundle");
 
   private JavadocBundle() {}
 
-  public static String message(@PropertyKey(resourceBundle = "com.intellij.javadoc.JavadocBundle") String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "messages.JavadocBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

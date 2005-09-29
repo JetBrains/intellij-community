@@ -16,6 +16,7 @@
 package com.intellij.openapi.compiler;
 
 import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
@@ -25,12 +26,12 @@ import java.util.ResourceBundle;
  *         Date: Sep 9, 2005
  */
 public class CompilerBundle {
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.intellij.openapi.compiler.CompilerBundle");
+  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.CompilerBundle");
 
   private CompilerBundle() {
   }
 
-  public static String message(@PropertyKey(resourceBundle = "com.intellij.openapi.compiler.CompilerBundle") String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "messages.CompilerBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

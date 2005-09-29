@@ -17,11 +17,13 @@ import java.util.ResourceBundle;
  * To change this template use File | Settings | File Templates.
  */
 public class LocalVcsBundle {
-  @NonNls protected static final String PATH_TO_BUNDLE = "com.intellij.openapi.localVcs.LocalVcsBundle";
+  @NonNls protected static final String PATH_TO_BUNDLE = "messages.LocalVcsBundle";
   private final static ResourceBundle ourResourceBundle = ResourceBundle.getBundle(PATH_TO_BUNDLE);
 
-  public static String message(@PropertyKey(resourceBundle = "com.intellij.openapi.localVcs.LocalVcsBundle") String key, Object... params) {
-    return CommonBundle.message(ourResourceBundle, key, params);
+  private LocalVcsBundle() {
   }
 
+  public static String message(@PropertyKey(resourceBundle = "messages.LocalVcsBundle") String key, Object... params) {
+    return CommonBundle.message(ourResourceBundle, key, params);
+  }
 }

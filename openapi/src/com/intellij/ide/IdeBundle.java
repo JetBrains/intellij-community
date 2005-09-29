@@ -1,8 +1,8 @@
 package com.intellij.ide;
 
 import com.intellij.CommonBundle;
-import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
 
@@ -14,11 +14,11 @@ import java.util.ResourceBundle;
  * To change this template use File | Settings | File Templates.
  */
 public class IdeBundle {
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.intellij.ide.IdeBundle");
+  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.IdeBundle");
 
   private IdeBundle() {}
 
-  public static String message(@NonNls @PropertyKey(resourceBundle = "com.intellij.ide.IdeBundle") String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "messages.IdeBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

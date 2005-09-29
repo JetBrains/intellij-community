@@ -1,6 +1,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
@@ -9,11 +10,11 @@ import java.util.ResourceBundle;
  * @author ven
  */
 public class RefactoringBundle {
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.intellij.refactoring.RefactoringBundle");
+  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.RefactoringBundle");
 
   private RefactoringBundle() {}
 
-  public static String message(@PropertyKey(resourceBundle = "com.intellij.refactoring.RefactoringBundle") String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "messages.RefactoringBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 

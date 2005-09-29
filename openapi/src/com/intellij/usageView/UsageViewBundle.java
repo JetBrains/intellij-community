@@ -1,6 +1,7 @@
 package com.intellij.usageView;
 
 import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
@@ -13,22 +14,25 @@ import java.util.ResourceBundle;
  * To change this template use File | Settings | File Templates.
  */
 public class UsageViewBundle {
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.intellij.usageView.UsageView");
+  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.UsageView");
 
   private UsageViewBundle() {}
 
-  public static String message(@PropertyKey(resourceBundle = "com.intellij.usageView.UsageView")  String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "messages.UsageView")  String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 
+  @SuppressWarnings({"AutoBoxing"})
   public static String getUsagesString(int usagesCount, int filesCount) {
     return "( " + message("occurence.info.usage", usagesCount, filesCount) + " )";
   }
 
+  @SuppressWarnings({"AutoBoxing"})
   public static String getOccurencesString(int usagesCount, int filesCount) {
     return "( " + message("occurence.info.occurence", usagesCount, filesCount) + " )";
   }
 
+  @SuppressWarnings({"AutoBoxing"})
   public static String getReferencesString(int usagesCount, int filesCount) {
     return "( " + message("occurence.info.reference", usagesCount, filesCount) + " )";
   }

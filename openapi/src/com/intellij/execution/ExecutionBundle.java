@@ -18,10 +18,13 @@ import java.util.ResourceBundle;
  */
 public class ExecutionBundle {
   @NonNls
-  protected static final String PATH_TO_BUNDLE = "com.intellij.execution.ExecutionBundle";
+  protected static final String PATH_TO_BUNDLE = "messages.ExecutionBundle";
   private final static ResourceBundle ourResourceBundle = ResourceBundle.getBundle(PATH_TO_BUNDLE);
 
-  public static String message(@PropertyKey(resourceBundle = "com.intellij.execution.ExecutionBundle") String key, Object... params) {
+  private ExecutionBundle() {
+  }
+
+  public static String message(@PropertyKey(resourceBundle = "messages.ExecutionBundle") String key, Object... params) {
     return CommonBundle.message(ourResourceBundle, key, params);
   }
 

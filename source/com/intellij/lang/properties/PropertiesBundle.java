@@ -3,9 +3,9 @@
  */
 package com.intellij.lang.properties;
 
+import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.PropertyKey;
-import com.intellij.CommonBundle;
 
 /**
  * Created by IntelliJ IDEA.
@@ -15,11 +15,10 @@ import com.intellij.CommonBundle;
  * To change this template use File | Settings | File Templates.
  */
 public class PropertiesBundle {
-  @NonNls protected static final String PATH_TO_BUNDLE = "com.intellij.lang.properties.PropertiesBundle";
+  @NonNls protected static final String PATH_TO_BUNDLE = "messages.PropertiesBundle";
   private final static java.util.ResourceBundle ourResourceBundle = java.util.ResourceBundle.getBundle(PATH_TO_BUNDLE);
 
-  public static String message(@PropertyKey(resourceBundle = "com.intellij.lang.properties.PropertiesBundle") String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "messages.PropertiesBundle") String key, Object... params) {
     return CommonBundle.message(ourResourceBundle, key, params);
   }
-
 }

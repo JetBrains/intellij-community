@@ -4,6 +4,7 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
@@ -12,11 +13,11 @@ import java.util.ResourceBundle;
  * @author max
  */
 public class DaemonBundle {
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.intellij.codeInsight.daemon.DaemonBundle");
+  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.DaemonBundle");
 
   private DaemonBundle() {}
 
-  public static String message(@PropertyKey(resourceBundle = "com.intellij.codeInsight.daemon.DaemonBundle") String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "messages.DaemonBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

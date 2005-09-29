@@ -3,12 +3,11 @@
  */
 package com.intellij.xml;
 
+import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
-
-import com.intellij.CommonBundle;
 
 /**
  * Created by IntelliJ IDEA.
@@ -18,11 +17,13 @@ import com.intellij.CommonBundle;
  * To change this template use File | Settings | File Templates.
  */
 public class XmlBundle {
-  @NonNls
-  protected static final String PATH_TO_BUNDLE = "com.intellij.xml.XmlBundle";
+  @NonNls protected static final String PATH_TO_BUNDLE = "messages.XmlBundle";
   private final static ResourceBundle ourResourceBundle = ResourceBundle.getBundle(PATH_TO_BUNDLE);
 
-  public static String message(@PropertyKey(resourceBundle = "com.intellij.xml.XmlBundle") String key, Object... params) {
+  private XmlBundle() {
+  }
+
+  public static String message(@PropertyKey(resourceBundle = "messages.XmlBundle") String key, Object... params) {
     return CommonBundle.message(ourResourceBundle, key, params);
   }
 

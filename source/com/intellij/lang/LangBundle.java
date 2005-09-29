@@ -1,10 +1,10 @@
 package com.intellij.lang;
 
+import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
-
-import com.intellij.CommonBundle;
 
 /**
  * Created by IntelliJ IDEA.
@@ -14,9 +14,11 @@ import com.intellij.CommonBundle;
  * To change this template use File | Settings | File Templates.
  */
 public class LangBundle {
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.intellij.lang.LangBundle");
+  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.LangBundle");
 
-  public static String message(@PropertyKey(resourceBundle = "com.intellij.lang.LangBundle") String key, Object... params) {
+  private LangBundle() {}
+
+  public static String message(@PropertyKey(resourceBundle = "messages.LangBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }

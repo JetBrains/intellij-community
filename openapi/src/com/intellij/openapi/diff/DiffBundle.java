@@ -3,9 +3,9 @@
  */
 package com.intellij.openapi.diff;
 
+import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.PropertyKey;
-import com.intellij.CommonBundle;
 
 import java.util.ResourceBundle;
 
@@ -17,10 +17,13 @@ import java.util.ResourceBundle;
  * To change this template use File | Settings | File Templates.
  */
 public class DiffBundle {
-  @NonNls protected static final String PATH_TO_BUNDLE = "com.intellij.openapi.diff.DiffBundle";
+  @NonNls protected static final String PATH_TO_BUNDLE = "messages.DiffBundle";
   private final static ResourceBundle ourResourceBundle = ResourceBundle.getBundle(PATH_TO_BUNDLE);
 
-  public static String message(@PropertyKey(resourceBundle = "com.intellij.openapi.diff.DiffBundle") String key, Object... params) {
+  private DiffBundle() {
+  }
+
+  public static String message(@PropertyKey(resourceBundle = "messages.DiffBundle") String key, Object... params) {
     return CommonBundle.message(ourResourceBundle, key, params);
   }
 
