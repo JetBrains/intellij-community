@@ -1,16 +1,17 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
 
 public class SSRBundle {
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.intellij.structuralsearch.SSRBundle");
+  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.SSRBundle");
 
   private SSRBundle() {}
 
-  public static String message(@PropertyKey(resourceBundle = "com.intellij.structuralsearch.SSRBundle") String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "messages.SSRBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }
