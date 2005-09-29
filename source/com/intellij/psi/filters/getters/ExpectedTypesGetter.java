@@ -3,10 +3,7 @@ package com.intellij.psi.filters.getters;
 import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.CompletionContext;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -24,10 +21,29 @@ import java.util.List;
 public class ExpectedTypesGetter implements ContextGetter{
   public Object[] get(PsiElement context, CompletionContext completionContext){
     final List result = new ArrayList();
-    final PsiExpression expression = PsiTreeUtil.getContextOfType(context, PsiExpression.class, true);
-    if(expression == null) return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    ExpectedTypesProvider typesProvider = ExpectedTypesProvider.getInstance(context.getProject());
+    PsiExpression expression = PsiTreeUtil.getContextOfType(context, PsiExpression.class, true);
+    
+    if(expression == null) {
+      final PsiElement parent = context.getParent();
+      
+      if (!(parent instanceof PsiNameValuePair))
+        return ArrayUtil.EMPTY_OBJECT_ARRAY;
 
-    ExpectedTypesProvider typesProvider = ExpectedTypesProvider.getInstance(expression.getProject());
+      final PsiNameValuePair psiNameValuePair = ((PsiNameValuePair)parent);
+      final Object[] variants = psiNameValuePair.getReference().getVariants();
+      
+      if (variants != null && 
+          variants.length == 1 && 
+          variants[0] instanceof PsiMethod &&
+          ((PsiMethod)variants[0]).getReturnType() != null
+        ) {
+        return new PsiType[] { ((PsiMethod)variants[0]).getReturnType() };
+      }
+      
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    }
+
     ExpectedTypeInfo[] infos = typesProvider.getExpectedTypes(expression, true);
 
     infos = extractUnique(infos, typesProvider);
