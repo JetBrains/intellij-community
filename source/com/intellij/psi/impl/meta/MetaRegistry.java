@@ -56,6 +56,61 @@ public class MetaRegistry {
     {
       addMetadataBinding(
           new AndFilter(
+              new NamespaceFilter(SCHEMA_URIS),
+              new ClassFilter(XmlDocument.class)
+          ),
+          com.intellij.xml.impl.schema.XmlNSDescriptorImpl.class
+      );
+    }
+
+    {
+      addMetadataBinding(
+          new OrFilter(
+              new AndFilter(
+                  new ContentFilter(new ClassFilter(XmlElementDecl.class)),
+                  new ClassFilter(XmlDocument.class)
+              ),
+              new ClassFilter(XmlMarkupDecl.class)
+          ),
+          com.intellij.xml.impl.dtd.XmlNSDescriptorImpl.class
+      );
+    }
+
+    {
+      addMetadataBinding(new AndFilter(
+          new NamespaceFilter(SCHEMA_URIS),
+          new TextFilter("element")
+      ),
+          com.intellij.xml.impl.schema.XmlElementDescriptorImpl.class);
+    }
+
+    {
+      addMetadataBinding(
+          new AndFilter(
+              new NamespaceFilter(SCHEMA_URIS),
+              new TextFilter("attribute")
+          ),
+          com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl.class
+      );
+    }
+
+    {
+      addMetadataBinding(
+          new ClassFilter(XmlElementDecl.class),
+          com.intellij.xml.impl.dtd.XmlElementDescriptorImpl.class
+      );
+    }
+
+    {
+      addMetadataBinding(
+          new ClassFilter(XmlAttributeDecl.class),
+          com.intellij.xml.impl.dtd.XmlAttributeDescriptorImpl.class
+      );
+    }
+    
+    {
+      addMetadataBinding(
+          new AndFilter(
               new NamespaceFilter(TAGLIB_URIS),
               new TextFilter("taglib")
           ),
@@ -161,209 +216,14 @@ public class MetaRegistry {
     }
 
     {
-      addMetadataBinding(
-          new AndFilter(
-              new NamespaceFilter(SCHEMA_URIS),
-              new ClassFilter(XmlDocument.class)
-          ),
-          com.intellij.xml.impl.schema.XmlNSDescriptorImpl.class
-      );
-    }
-
-    RegisterInPsi.metaData();
-
-    {
-      addMetadataBinding(
-          new OrFilter(
-              new AndFilter(
-                  new ContentFilter(new ClassFilter(XmlElementDecl.class)),
-                  new ClassFilter(XmlDocument.class)
-              ),
-              new ClassFilter(XmlMarkupDecl.class)
-          ),
-          com.intellij.xml.impl.dtd.XmlNSDescriptorImpl.class
-      );
-    }
-
-    {
-      addMetadataBinding(new AndFilter(
-          new NamespaceFilter(SCHEMA_URIS),
-          new TextFilter("element")
-      ),
-          com.intellij.xml.impl.schema.XmlElementDescriptorImpl.class);
-    }
-    
-    {
       addMetadataBinding(new AndFilter(
           new NamespaceFilter(SCHEMA_URIS),
           new TextFilter(new String[] {"complexType","simpleType", "group","attributeGroup" })
       ),
           com.intellij.xml.impl.schema.NamedObjectDescriptor.class);
     }
-
-    {
-      addMetadataBinding(
-          new AndFilter(
-              new NamespaceFilter(SCHEMA_URIS),
-              new TextFilter("attribute")
-          ),
-          com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl.class
-      );
-    }
-
-    {
-      addMetadataBinding(
-          new ClassFilter(XmlElementDecl.class),
-          com.intellij.xml.impl.dtd.XmlElementDescriptorImpl.class
-      );
-    }
-
-    {
-      addMetadataBinding(
-          new ClassFilter(XmlAttributeDecl.class),
-          com.intellij.xml.impl.dtd.XmlAttributeDescriptorImpl.class
-      );
-    }
-
-    {
-      //// Ant related declarations
-      //{
-      //  addMetadataBinding(
-      //      new AndFilter(
-      //          new NamespaceFilter(XmlUtil.ANT_URI),
-      //          new TextFilter("property", true)
-      //      ),
-      //      PropertyPropertyDeclaration.class
-      //  );
-      //}
-      //{
-      //  addMetadataBinding(
-      //      new AndFilter(
-      //          new NamespaceFilter(XmlUtil.ANT_URI),
-      //          new TextFilter("loadfile", true)
-      //      ),
-      //      LoadFilePropertyDeclaration.class
-      //  );
-      //}
-      //{
-      //  addMetadataBinding(
-      //      new AndFilter(
-      //          new NamespaceFilter(XmlUtil.ANT_URI),
-      //          new TextFilter("param", true)
-      //      ),
-      //      ParamPropertyDeclaration.class
-      //  );
-      //}
-      //{
-      //  addMetadataBinding(
-      //      new AndFilter(
-      //          new NamespaceFilter(XmlUtil.ANT_URI),
-      //          new TextFilter("dirname", true)
-      //      ),
-      //      DirnamePropertyDeclaration.class
-      //  );
-      //}
-      //{
-      //  addMetadataBinding(
-      //      new AndFilter(
-      //          new NamespaceFilter(XmlUtil.ANT_URI),
-      //          new TextFilter("input", true)
-      //      ),
-      //      InputPropertyDeclaration.class
-      //  );
-      //}
-      //{
-      //  addMetadataBinding(
-      //      new AndFilter(
-      //          new NamespaceFilter(XmlUtil.ANT_URI),
-      //          new TextFilter("pathconvert", true)
-      //      ),
-      //      PathconvertPropertyDeclaration.class
-      //  );
-      //}
-      //{
-      //  addMetadataBinding(
-      //      new AndFilter(
-      //          new NamespaceFilter(XmlUtil.ANT_URI),
-      //          new TextFilter("condition", true)
-      //      ),
-      //      ConditionPropertyDeclaration.class
-      //  );
-      //}
-      //{
-      //  addMetadataBinding(
-      //      new AndFilter(
-      //          new NamespaceFilter(XmlUtil.ANT_URI),
-      //          new TextFilter("tempfile", true)
-      //      ),
-      //      TempFilePropertyDeclaration.class
-      //  );
-      //}
-      //{
-      //  addMetadataBinding(
-      //      new AndFilter(
-      //          new NamespaceFilter(XmlUtil.ANT_URI),
-      //          new TextFilter("loadfile", true)
-      //      ),
-      //      LoadFilePropertyDeclaration.class
-      //  );
-      //}
-      //{
-      //  addMetadataBinding(
-      //      new AndFilter(
-      //          new NamespaceFilter(XmlUtil.ANT_URI),
-      //          new TextFilter("buildnumber", true)
-      //      ),
-      //      BuildNumberPropertyDeclaration.class
-      //  );
-      //}
-      //{
-      //  addMetadataBinding(
-      //      new AndFilter(
-      //          new NamespaceFilter(XmlUtil.ANT_URI),
-      //          new TextFilter("format", true)
-      //      ),
-      //      FormatPropertyDeclaration.class
-      //  );
-      //}
-      //{
-      //  addMetadataBinding(
-      //      new AndFilter(
-      //          new NamespaceFilter(XmlUtil.ANT_URI),
-      //          new TextFilter("loadproperties", true)
-      //      ),
-      //      LoadpropertiesPropertyDeclaration.class
-      //  );
-      //}
-      //{
-      //  addMetadataBinding(
-      //      new AndFilter(
-      //          new NamespaceFilter(XmlUtil.ANT_URI),
-      //          new TextFilter("tstamp", true)
-      //      ),
-      //      TstampPropertyDeclaration.class
-      //  );
-      //}
-      //{
-      //  addMetadataBinding(
-      //      new AndFilter(
-      //          new NamespaceFilter(XmlUtil.ANT_URI),
-      //          new TextFilter("fail", true)
-      //      ),
-      //      FailPropertyDeclaration.class
-      //  );
-      //}
-
-      //{
-      //  addMetadataBinding(
-      //      new AndFilter(
-      //          new NamespaceFilter(XmlUtil.ANT_URI),
-      //          new TextFilter("target", true)
-      //      ),
-      //      AntTargetDeclaration.class
-      //  );
-      //}
-    }
+    
+    RegisterInPsi.metaData();
   }
 
   public static final Key<SoftReference<CachedValue<PsiMetaData>>> META_DATA_KEY = Key.create("META DATA KEY");
@@ -421,7 +281,7 @@ public class MetaRegistry {
   public static <T extends PsiMetaData> void addMetadataBinding(ElementFilter filter, Class<T> aMetadataClass) {
     LOG.assertTrue(filter != null);
     LOG.assertTrue(aMetadataClass != null);
-    ourBindings.add(new MyBinding(filter, aMetadataClass));
+    ourBindings.add(0, new MyBinding(filter, aMetadataClass));
   }
 
   public static void clearMetaForElement(PsiElement element) {
