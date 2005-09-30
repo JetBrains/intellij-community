@@ -15,8 +15,6 @@
  */
 package org.jetbrains.idea.svn.update;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -28,13 +26,13 @@ import com.intellij.openapi.vcs.update.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.WindowManager;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnWCRootCrawler;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.status.SvnStatusEnvironment;
 import org.jetbrains.idea.svn.actions.SvnMergeProvider;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.svn.status.SvnStatusEnvironment;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -88,26 +86,22 @@ public class SvnUpdateEnvironment implements UpdateEnvironment {
     final Collection conflictedFiles = updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).getFiles();
     return new UpdateSessionAdapter(exceptions, false) {
       public void onRefreshFilesCompleted() {
-        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-          public void run() {
-            if (conflictedFiles != null && !conflictedFiles.isEmpty()) {
-              List<VirtualFile> vfFiles = new ArrayList<VirtualFile>();
-              for (Iterator paths = conflictedFiles.iterator(); paths.hasNext();) {
-                @NonNls String path = (String)paths.next();
-                path = "file://" + path.replace(File.separatorChar, '/');
-                VirtualFile vf = VirtualFileManager.getInstance().findFileByUrl(path);
-                if (vf != null) {
-                  vfFiles.add(vf);
-                }
-              }
-              if (!vfFiles.isEmpty()) {
-                AbstractVcsHelper.getInstance(myVcs.getProject()).showMergeDialog(vfFiles,
-                                                                                  new SvnMergeProvider(myVcs.getProject()),
-                                                                                  null);
-              }
+        if (conflictedFiles != null && !conflictedFiles.isEmpty()) {
+          List<VirtualFile> vfFiles = new ArrayList<VirtualFile>();
+          for (Iterator paths = conflictedFiles.iterator(); paths.hasNext();) {
+            @NonNls String path = (String)paths.next();
+            path = "file://" + path.replace(File.separatorChar, '/');
+            VirtualFile vf = VirtualFileManager.getInstance().findFileByUrl(path);
+            if (vf != null) {
+              vfFiles.add(vf);
             }
           }
-        }, ModalityState.defaultModalityState());
+          if (!vfFiles.isEmpty()) {
+            AbstractVcsHelper.getInstance(myVcs.getProject()).showMergeDialog(vfFiles,
+                                                                              new SvnMergeProvider(myVcs.getProject()),
+                                                                              null);
+          }
+        }
       }
 
     };
