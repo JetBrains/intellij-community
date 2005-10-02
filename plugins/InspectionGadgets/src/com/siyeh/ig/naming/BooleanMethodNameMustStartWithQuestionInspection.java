@@ -22,7 +22,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
@@ -162,8 +161,8 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends MethodInsp
         }
 
         private boolean isOverrideOfLibraryMethod(PsiMethod method){
-            final PsiMethod[] superMethods =
-                    PsiSuperMethodUtil.findSuperMethods(method);
+          final PsiMethod[] superMethods =
+                  method.findSuperMethods();
 
             for(PsiMethod superMethod : superMethods){
                 final PsiClass containingClass =

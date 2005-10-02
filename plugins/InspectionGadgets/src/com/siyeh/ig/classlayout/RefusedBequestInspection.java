@@ -17,7 +17,6 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.MethodUtils;
@@ -66,8 +65,8 @@ public class RefusedBequestInspection extends MethodInspection{
                 return;
             }
             PsiMethod leastConcreteSuperMethod = null;
-            final PsiMethod[] superMethods =
-                    PsiSuperMethodUtil.findSuperMethods(method, true);
+          final PsiMethod[] superMethods =
+                  method.findSuperMethods(true);
             for(final PsiMethod superMethod : superMethods){
                 final PsiClass containingClass =
                         superMethod.getContainingClass();
