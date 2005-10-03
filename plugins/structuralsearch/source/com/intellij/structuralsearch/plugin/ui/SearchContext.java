@@ -55,6 +55,7 @@ public final class SearchContext implements DataProvider, Cloneable {
       (Project)_context.getData(DataConstants.PROJECT)
     );
 
+    //noinspection HardCodedStringLiteral
     setFile( (PsiFile) _context.getData("psi.File") );
     setCurrentFile((VirtualFile) _context.getData(DataConstants.VIRTUAL_FILE));
   }

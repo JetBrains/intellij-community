@@ -1,10 +1,15 @@
 package com.intellij.structuralsearch.plugin.ui;
 
+import com.intellij.openapi.MnemonicHelper;
+import com.intellij.CommonBundle;
+
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.InputEvent;
 import java.awt.*;
+
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Base dialog class
@@ -19,7 +24,7 @@ public abstract class DialogBase extends JDialog {
 
   class OkAction extends AbstractAction {
     OkAction() {
-      putValue(NAME,"Ok");
+      putValue(NAME, CommonBundle.getOkButtonText());
     }
     public void actionPerformed(ActionEvent e) {
       doOKAction();
@@ -28,7 +33,7 @@ public abstract class DialogBase extends JDialog {
 
   class CancelAction extends AbstractAction {
     CancelAction() {
-      putValue(NAME,"Cancel");
+      putValue(NAME,CommonBundle.getCancelButtonText());
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -43,9 +48,12 @@ public abstract class DialogBase extends JDialog {
   protected DialogBase(Frame frame) {
     this(frame,true);
   }
-  
+
   protected DialogBase(Frame frame,boolean modal) {
     super(frame,modal);
+
+    new MnemonicHelper().register(getContentPane());
+
     okAction = new OkAction();
     cancelAction = new CancelAction();
 
@@ -67,12 +75,12 @@ public abstract class DialogBase extends JDialog {
       }
     }
 
-    String cancelCommandName = "close";
+    @NonNls String cancelCommandName = "close";
     KeyStroke escKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE,0);
     ok.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(escKeyStroke, cancelCommandName);
     ok.getActionMap().put(cancelCommandName, cancelAction);
 
-    String startCommandName = "start";
+    @NonNls String startCommandName = "start";
     KeyStroke enterKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER,InputEvent.CTRL_MASK);
     ok.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(enterKeyStroke, startCommandName);
     ok.getActionMap().put(startCommandName, okAction);

@@ -7,6 +7,7 @@ import com.intellij.psi.search.SearchScope;
 import org.jdom.Element;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -16,7 +17,7 @@ import java.util.List;
  * match options
  */
 public class MatchOptions implements JDOMExternalizable, Cloneable {
-  private static final String TEXT_ATTRIBUTE_NAME = "text";
+  @NonNls private static final String TEXT_ATTRIBUTE_NAME = "text";
 
   private boolean looseMatching;
   private boolean distinct;
@@ -31,13 +32,14 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
   private String searchCriteria;
   private HashMap<String,MatchVariableConstraint> variableConstraints;
 
-  private static final String DISTINCT_ATTRIBUTE_NAME = "distinct";
-  private static final String RECURSIVE_ATTRIBUTE_NAME = "recursive";
-  private static final String CASESENSITIVE_ATTRIBUTE_NAME = "caseInsensitive";
-  private static final String MAXMATCHES_ATTRIBUTE_NAME = "maxMatches";
+  @NonNls private static final String DISTINCT_ATTRIBUTE_NAME = "distinct";
+  @NonNls private static final String RECURSIVE_ATTRIBUTE_NAME = "recursive";
+  @NonNls private static final String CASESENSITIVE_ATTRIBUTE_NAME = "caseInsensitive";
+  @NonNls private static final String MAXMATCHES_ATTRIBUTE_NAME = "maxMatches";
   //private static final String SCOPE_ATTRIBUTE_NAME = "scope";
-  private static final String CONSTRAINT_ATTR_NAME = "constraint";
-  private static final String FILE_TYPE_ATTR_NAME = "type";
+  @NonNls private static final String CONSTRAINT_ATTR_NAME = "constraint";
+  @NonNls private static final String FILE_TYPE_ATTR_NAME = "type";
+  @NonNls private static final String XML = "xml";
   //private static final String UNDEFINED_SCOPE = "undefined";
 
   public void addVariableConstraint(MatchVariableConstraint constraint) {
@@ -75,6 +77,7 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
     return caseSensitiveMatch;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     StringBuffer result = new StringBuffer();
 
@@ -213,7 +216,7 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
     attr = element.getAttribute(FILE_TYPE_ATTR_NAME);
     if (attr!=null) {
       String value = attr.getValue();
-      if (value.equalsIgnoreCase("xml")) {
+      if (value.equalsIgnoreCase(XML)) {
         myFileType = StdFileTypes.XML;
       } else {
         myFileType = StdFileTypes.JAVA;

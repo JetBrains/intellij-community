@@ -6,12 +6,14 @@ import com.intellij.psi.PsiElement;
 import java.util.Iterator;
 import java.util.List;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Class describing the match result
  */
 public abstract class MatchResult {
-  public static final String LINE_MATCH = "line";
-  public static final String MULTI_LINE_MATCH = "context";
+  @NonNls public static final String LINE_MATCH = "line";
+  @NonNls public static final String MULTI_LINE_MATCH = "context";
 
   public abstract String getMatchImage();
 

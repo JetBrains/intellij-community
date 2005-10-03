@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.MatchResultSink;
 import com.intellij.structuralsearch.MatchingProcess;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.ui.DialogBase;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
@@ -34,7 +35,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Navigates through the search results
+ * Navigates through the search results (not used)
  */
 public final class NavigateSearchResultsDialog extends DialogBase implements MatchResultSink {
   private List<ReplacementInfo> replacements = new LinkedList<ReplacementInfo>(); // replacements found
@@ -67,9 +68,8 @@ public final class NavigateSearchResultsDialog extends DialogBase implements Mat
   public NavigateSearchResultsDialog(final Project project, String replacementString) {
     super((Frame)WindowManager.getInstance().suggestParentWindow(project),true);
 
-    setTitle("Structural Replace Preview");
-    setOKButtonText("Replace");
-    getOkButton().setMnemonic('R');
+    setTitle(SSRBundle.message("structural.replace.preview.dialog.title"));
+    setOKButtonText(SSRBundle.message("replace.preview.oktext"));
     preview = true;
     replaceButton = getOkButton();
     this.project = project;
@@ -81,9 +81,8 @@ public final class NavigateSearchResultsDialog extends DialogBase implements Mat
   public NavigateSearchResultsDialog(final Project project, boolean isReplace) {
     super((Frame)WindowManager.getInstance().suggestParentWindow(project),false);
 
-    setTitle(isReplace ? "Structural Replace":"Structural Search");
-    setOKButtonText("Next");
-    getOkButton().setMnemonic('N');
+    setTitle(SSRBundle.message(isReplace ?"structural.replace.title" :"structural.search.title"));
+    setOKButtonText(SSRBundle.message("search.result.dialog.next.button"));
     this.project = project;
     index = -1;
 
@@ -107,15 +106,13 @@ public final class NavigateSearchResultsDialog extends DialogBase implements Mat
         }
       });
 
-      replaceButton.setText("Replace");
-      replaceButton.setMnemonic('R');
-      replaceAll.setText("Replace all");
-      replaceAll.setMnemonic('a');
+      replaceButton.setText(SSRBundle.message("replace.preview.oktext"));
+      replaceAll.setText(SSRBundle.message("search.result.dialog.replace.all.button"));
     }
 
     class PreviousMatchAction extends AbstractAction {
       PreviousMatchAction() {
-        super("Previous");
+        super(SSRBundle.message("search.result.dialog.previuos.button"));
         putValue(MNEMONIC_KEY,new Integer('P'));
       }
       public void actionPerformed(ActionEvent e) {
@@ -301,7 +298,7 @@ public final class NavigateSearchResultsDialog extends DialogBase implements Mat
 
         DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(file,false);
 
-        centerPanel.add(BorderLayout.NORTH,new JLabel("Replacement code") );
+        centerPanel.add(BorderLayout.NORTH,new JLabel(SSRBundle.message("search.result.dialog.replacement.code.label")) );
         centerPanel.add(BorderLayout.CENTER,replacement.getComponent() );
       }
       centerPanel.setMaximumSize(new Dimension(640,480));

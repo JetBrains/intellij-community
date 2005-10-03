@@ -38,6 +38,8 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import org.jetbrains.annotations.NonNls;
+
 // Class to show the user the request for search
 public class SearchDialog extends DialogWrapper implements ConfigurationCreator {
   protected SearchContext searchContext;
@@ -60,14 +62,14 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   protected SearchModel model;
   private JCheckBox openInNewTab;
 
-  protected static final String USER_DEFINED = "user defined";
+  protected static final String USER_DEFINED = SSRBundle.message("new.template.defaultname");
   protected final ExistingTemplatesComponent existingTemplatesComponent;
 
   private boolean useLastConfiguration;
 
   private static boolean ourOpenInNewTab;
   private static boolean ourUseMaxCount;
-  private static String ourFileType = "java";
+  @NonNls private static String ourFileType = "java";
 
   protected UsageViewContext createUsageViewContext(Configuration configuration) {
     return new UsageViewContext(searchContext, configuration);
@@ -126,22 +128,20 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   }
 
   protected void buildOptions(JPanel searchOptions) {
-    searchIncrementally = new JCheckBox("Find with prompt",false);
+    searchIncrementally = new JCheckBox(SSRBundle.message("find.with.prompt.checkbox"),false);
 
     if (isSearchOnDemandEnabled()) {
       searchOptions.add(
         UIUtil.createOptionLine(searchIncrementally )
       );
-      searchIncrementally.setMnemonic('p');
     }
 
-    recursiveMatching = new JCheckBox("Recursive matching",true);
+    recursiveMatching = new JCheckBox(SSRBundle.message("recursive.matching.checkbox"),true);
 
     if (isRecursiveSearchEnabled()) {
       searchOptions.add(
         UIUtil.createOptionLine(recursiveMatching )
       );
-      recursiveMatching.setMnemonic('R');
     }
 
     //searchOptions.add(
@@ -152,15 +152,14 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     //
     //distinctResults.setMnemonic('D');
 
-    caseSensitiveMatch = new JCheckBox("Case sensitive",true);
-    caseSensitiveMatch.setMnemonic('C');
+    caseSensitiveMatch = new JCheckBox(SSRBundle.message("case.sensitive.checkbox"),true);
 
     searchOptions.add( UIUtil.createOptionLine(caseSensitiveMatch) );
 
     searchOptions.add(
       UIUtil.createOptionLine(
         new JComponent[] {
-          maxMatchesSwitch = new JCheckBox("Maximum matches",false),
+          maxMatchesSwitch = new JCheckBox(SSRBundle.message("maximum.matches.checkbox"),false),
           maxMatches = new JTextField(
             Integer.toString(
               MatchOptions.DEFAULT_MAX_MATCHES_COUNT
@@ -172,15 +171,15 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       )
     );
 
-    maxMatchesSwitch.setMnemonic('x');
     maxMatches.setMaximumSize(new Dimension(50,25));
 
+    //noinspection HardCodedStringLiteral
     fileTypes = new JComboBox(new String[] {"java", "xml", "html"} );
     if (ourSupportDifferentFileTypes) {
       searchOptions.add(
         UIUtil.createOptionLine(
           new JComponent[] {
-            new JLabel("File type:"),
+            new JLabel(SSRBundle.message("search.dialog.file.type.label")),
             fileTypes,
             (JComponent)Box.createHorizontalGlue()
           }
@@ -189,13 +188,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     }
 
     fileTypes.setSelectedItem(ourFileType);
-
-    if (isSearchOnDemandEnabled()) {
-      searchOptions.add(
-        UIUtil.createOptionLine(searchIncrementally )
-      );
-      searchIncrementally.setMnemonic('p');
-    }
   }
 
   protected boolean isRecursiveSearchEnabled() {
@@ -205,7 +197,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   public void setValuesFromConfig(Configuration configuration) {
     //searchCriteriaEdit.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, configuration);
 
-    setTitle(getDefaultTitle()+" - " + configuration.getName());
+    setTitle(getDefaultTitle() + " - " + configuration.getName());
     final MatchOptions matchOptions = configuration.getMatchOptions();
 
     UIUtil.setContent(
@@ -306,9 +298,9 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     );
 
     processPresentation.addNotFoundAction(
-      new AbstractAction("Edit Query") {
+      new AbstractAction(SSRBundle.message("edit.query.button.description")) {
         {
-          putValue(FindUsagesProcessPresentation.NAME_WITH_MNEMONIC_KEY,"Edit &Query");
+          putValue(FindUsagesProcessPresentation.NAME_WITH_MNEMONIC_KEY,SSRBundle.message("edit.query.button"));
         }
         public void actionPerformed(ActionEvent e) {
           UIUtil.invokeActionAnotherTime(config,searchContext);
@@ -355,8 +347,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
           });
        }
       },
-      "Edit Query",
-      'Q'
+      SSRBundle.message("edit.query.button.description")
     );
   }
 
@@ -364,7 +355,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     super(_searchContext.getProject(),true);
     searchContext = (SearchContext)_searchContext.clone();
     setTitle(getDefaultTitle());
-    setOKButtonText("Find");
+    setOKButtonText(SSRBundle.message("ssdialog.find.botton"));
     setOKButtonIcon(IconLoader.getIcon("/actions/find.png"));
     getOKAction().putValue(Action.MNEMONIC_KEY,new Integer('F'));
 
@@ -374,13 +365,13 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   }
 
   protected String getDefaultTitle() {
-    return "Structural Search";
+    return SSRBundle.message("structural.search.title");
   }
 
   protected JComponent createEditorContent() {
     JPanel result = new JPanel(new BorderLayout());
 
-    result.add(BorderLayout.NORTH,new JLabel("Search template:"));
+    result.add(BorderLayout.NORTH,new JLabel(SSRBundle.message("search.template")));
     searchCriteriaEdit = createEditor(searchContext);
     result.add(BorderLayout.CENTER, searchCriteriaEdit.getComponent());
     result.setMinimumSize(new Dimension(150,100));
@@ -410,7 +401,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
     JPanel searchOptions = new JPanel();
     searchOptions.setLayout(new GridLayout(getRowsCount(),1,0,0) );
-    searchOptions.setBorder( IdeBorderFactory.createTitledBorder("Options"));
+    searchOptions.setBorder( IdeBorderFactory.createTitledBorder(SSRBundle.message("ssdialog.options.group.border")));
 
     JPanel allOptions = new JPanel( new BorderLayout() );
 
@@ -418,16 +409,15 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     JLabel label;
     scopePanel.add(Box.createVerticalStrut(8),BorderLayout.NORTH);
     scopePanel.add(
-      label = new JLabel("Scope: "), BorderLayout.WEST
+      label = new JLabel(SSRBundle.message("search.dialog.scope.label")), BorderLayout.WEST
     );
 
-    label.setDisplayedMnemonic('s');
     scopePanel.add(
       combo = new ScopeChooserCombo(
         searchContext.getProject(),
         true,
         false,
-        (isReplaceDialog())?"Current File":FindSettings.getInstance().getDefaultScopeName()
+        (isReplaceDialog())?SSRBundle.message("default.replace.scope") :FindSettings.getInstance().getDefaultScopeName()
       ),
       BorderLayout.CENTER
     );
@@ -445,8 +435,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
     JPanel _panel = new JPanel(new BorderLayout());
     _panel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
-    openInNewTab = new JCheckBox("Open in new tab");
-    openInNewTab.setMnemonic('t');
+    openInNewTab = new JCheckBox(SSRBundle.message("open.in.new.tab.checkbox"));
     openInNewTab.setSelected(ourOpenInNewTab);
     openInNewTab.setEnabled(
       ToolWindowManager.getInstance(searchContext.getProject()).getToolWindow(ToolWindowId.FIND).isAvailable()
@@ -466,13 +455,13 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     panel.add(
       createJButtonForAction(new AbstractAction() {
         {
-          putValue(NAME,"S&ave template...");
+          putValue(NAME,SSRBundle.message("save.template.text.button"));
         }
         public void actionPerformed(ActionEvent e) {
           String name = Messages.showInputDialog(
             searchContext.getProject(),
-            "Template name",
-            "Save template",
+            SSRBundle.message("template.name.button"),
+            SSRBundle.message("save.template.description.button"),
             IconLoader.getIcon("/general/questionDialog.png"),
             model.getShadowConfig()!=null ? model.getShadowConfig().getName():"",
             null
@@ -503,7 +492,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       createJButtonForAction(
         new AbstractAction() {
           {
-            putValue(NAME,"E&dit variables...");
+            putValue(NAME,SSRBundle.message("edit.variables.button"));
           }
           public void actionPerformed(ActionEvent e) {
             SubstitutionShortInfoHandler handler = searchCriteriaEdit.getUserData(UIUtil.LISTENER_KEY);
@@ -531,7 +520,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       createJButtonForAction(
         new AbstractAction() {
           {
-            putValue(NAME,"&History...");
+            putValue(NAME,SSRBundle.message("history.button"));
           }
           public void actionPerformed(ActionEvent e) {
             DialogWrapper wrapper = new SelectTemplateDialog(searchContext.getProject(),true, isReplaceDialog());
@@ -560,7 +549,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       createJButtonForAction(
         new AbstractAction() {
           {
-            putValue(NAME,"Co&py existing template...");
+            putValue(NAME,SSRBundle.message("copy.existing.template.button"));
           }
           public void actionPerformed(ActionEvent e) {
             DialogWrapper wrapper = new SelectTemplateDialog(searchContext.getProject(),false,isReplaceDialog());
@@ -637,16 +626,16 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     } catch(UnsupportedPatternException ex) {
       Messages.showMessageDialog(
         searchContext.getProject(),
-        "This pattern is malformed or unsupported",
-        "Information",
+        SSRBundle.message("this.pattern.is.malformed.or.unsupported.message"),
+        SSRBundle.message("information.message.title"),
         Messages.getInformationIcon()
       );
       return;
     } catch(MalformedPatternException ex) {
       Messages.showMessageDialog(
         searchContext.getProject(),
-        "This pattern is malformed or unsupported",
-        "Information",
+        SSRBundle.message("this.pattern.is.malformed.or.unsupported.message"),
+        SSRBundle.message("information.message.title"),
         Messages.getInformationIcon()
       );
       return;
@@ -677,8 +666,8 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     } catch(MalformedPatternException ex) {
       Messages.showMessageDialog(
         searchContext.getProject(),
-        "Incorrect pattern",
-        "Information",
+        SSRBundle.message("incorrect.pattern.message"),
+        SSRBundle.message("information.message.title"),
         Messages.getInformationIcon()
       );
     }
@@ -725,15 +714,17 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   }
 
   private FileType getFileTypeByString(String ourFileType) {
+    //noinspection HardCodedStringLiteral
     if (ourFileType.equals("java")) {
       return StdFileTypes.JAVA;
     }
-    else if (ourFileType.equals("html")) {
-      return StdFileTypes.HTML;
-    }
-    else {
-      return StdFileTypes.XML;
-    }
+    else //noinspection HardCodedStringLiteral
+      if (ourFileType.equals("html")) {
+        return StdFileTypes.HTML;
+      }
+      else {
+        return StdFileTypes.XML;
+      }
   }
 
   protected boolean isSearchOnDemandEnabled() {

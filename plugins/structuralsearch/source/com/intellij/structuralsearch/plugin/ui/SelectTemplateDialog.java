@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.structuralsearch.MatchOptions;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 
 import javax.swing.event.TreeSelectionListener;
@@ -60,7 +61,7 @@ class SelectTemplateDialog extends DialogWrapper {
     replace = _replace;
     existingTemplatesComponent = ExistingTemplatesComponent.getInstance(project);
 
-    setTitle((showHistory)?"Used Templates History":"Existing Templates");
+    setTitle((showHistory)? SSRBundle.message("used.templates.history.dialog.title") :SSRBundle.message("existing.templates.dialog.title"));
 
     getOKAction().putValue(Action.MNEMONIC_KEY,new Integer('O'));
     init();
@@ -129,7 +130,7 @@ class SelectTemplateDialog extends DialogWrapper {
     panel.add(BorderLayout.CENTER,centerComponent);
 
     panel.add(
-      BorderLayout.NORTH, new JLabel("Template preview:")
+      BorderLayout.NORTH, new JLabel(SSRBundle.message("selecttemplate.template.preview"))
     );
     return centerPanel;
   }

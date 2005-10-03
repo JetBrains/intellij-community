@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.structuralsearch.UnsupportedPatternException;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.ui.*;
 import com.intellij.structuralsearch.plugin.replace.*;
 import com.intellij.usageView.UsageInfo;
@@ -29,7 +30,7 @@ public class ReplaceDialog extends SearchDialog {
   private JCheckBox formatAccordingToStyle;
 
   protected String getDefaultTitle() {
-    return "Structural Replace";
+    return SSRBundle.message("structural.replace.title");
   }
 
   protected boolean isChanged(Configuration configuration) {
@@ -57,7 +58,7 @@ public class ReplaceDialog extends SearchDialog {
 
     JPanel replace = new JPanel( new BorderLayout() );
     replaceCriteriaEdit = createEditor(searchContext);
-    replace.add(BorderLayout.NORTH,new JLabel("Replacement template:"));
+    replace.add(BorderLayout.NORTH,new JLabel(SSRBundle.message("replacement.template.label")));
     replace.add(BorderLayout.CENTER, replaceCriteriaEdit.getComponent() );
     replaceCriteriaEdit.getComponent().setMinimumSize(new Dimension(150,100));
 
@@ -77,15 +78,13 @@ public class ReplaceDialog extends SearchDialog {
   protected void buildOptions(JPanel searchOptions) {
     super.buildOptions(searchOptions);
     searchOptions.add(
-      UIUtil.createOptionLine(shortenFQN = new JCheckBox("Shorten fully qualified names", true) )
+      UIUtil.createOptionLine(shortenFQN = new JCheckBox(SSRBundle.message("shorten.fully.qualified.names.checkbox"), true) )
     );
-    shortenFQN.setMnemonic('o');
-
+    
     searchOptions.add(
-      UIUtil.createOptionLine(formatAccordingToStyle = new JCheckBox("Format according to style", true) )
+      UIUtil.createOptionLine(formatAccordingToStyle = new JCheckBox(SSRBundle.message("format.according.to.style.checkbox"), true) )
     );
 
-    formatAccordingToStyle.setMnemonic('r');
   }
 
   protected NavigateSearchResultsDialog createResultsNavigator(final SearchContext searchContext,
@@ -110,7 +109,7 @@ public class ReplaceDialog extends SearchDialog {
     final Runnable replaceRunnable = new Runnable() {
           public void run() {
             LocalVcs instance = LocalVcs.getInstance(searchContext.getProject());
-            LvcsAction lvcsAction = instance.startAction("StructuralReplace",null,false);
+            LvcsAction lvcsAction = instance.startAction(getDefaultTitle(),null,false);
 
             doReplace(context);
             context.getUsageView().close();
@@ -118,9 +117,12 @@ public class ReplaceDialog extends SearchDialog {
           }
         };
 
+    //noinspection HardCodedStringLiteral
     context.getUsageView().addPerformOperationAction(
       replaceRunnable,
-      "Replace All",null,"Do Replace All", 'D'
+      "Replace All",
+      null,
+      SSRBundle.message("do.replace.all.button")
     );
 
     final Runnable replaceSelected = new Runnable() {
@@ -129,7 +131,7 @@ public class ReplaceDialog extends SearchDialog {
         if (infos == null || infos.isEmpty()) return;
 
         LocalVcs instance = LocalVcs.getInstance(searchContext.getProject());
-        LvcsAction lvcsAction = instance.startAction("StructuralReplace",null,false);
+        LvcsAction lvcsAction = instance.startAction(getDefaultTitle(),null,false);
 
         for (final Usage info : infos) {
           final UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)info;
@@ -155,7 +157,7 @@ public class ReplaceDialog extends SearchDialog {
 
     context.getUsageView().addButtonToLowerPane(
       replaceSelected,
-      "Replace Selected", 'e'
+      SSRBundle.message("replace.selected.button")
     );
 
     final Runnable previewReplacement = new Runnable() {
@@ -176,7 +178,7 @@ public class ReplaceDialog extends SearchDialog {
 
     context.getUsageView().addButtonToLowerPane(
       previewReplacement,
-      "Preview Replacement", 'r'
+      SSRBundle.message("preview.replacement.button")
     );
 
     super.configureActions(_context);
@@ -326,7 +328,11 @@ public class ReplaceDialog extends SearchDialog {
       );
       super.doOKAction();
     } catch(UnsupportedPatternException ex) {
-      Messages.showErrorDialog(searchContext.getProject(),ex.toString(),"Unsupported Replacement Pattern");
+      Messages.showErrorDialog(
+        searchContext.getProject(),
+        ex.toString(),
+        SSRBundle.message("unsupported.replacement.pattern.message")
+      );
     }
   }
 

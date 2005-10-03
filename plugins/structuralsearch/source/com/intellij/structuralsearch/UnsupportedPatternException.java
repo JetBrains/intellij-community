@@ -1,5 +1,7 @@
 package com.intellij.structuralsearch;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Exception about encountering yet unsupported pattern event.
  */

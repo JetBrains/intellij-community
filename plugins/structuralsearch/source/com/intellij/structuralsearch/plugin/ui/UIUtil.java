@@ -16,17 +16,20 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.MatchVariableConstraint;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.StructuralReplaceAction;
 import com.intellij.structuralsearch.plugin.StructuralSearchAction;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 
 import javax.swing.*;
 import java.awt.*;
+
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -37,8 +40,8 @@ import java.awt.*;
  */
 public class UIUtil {
   static Key<SubstitutionShortInfoHandler> LISTENER_KEY = Key.create("sslistener.key");
-  private static final String MODIFY_EDITOR_CONTENT = "modify editor content";
-  private static final String SS_GROUP = "structuralsearchgroup";
+  private static final String MODIFY_EDITOR_CONTENT = SSRBundle.message("modify.editor.content.command.name");
+  @NonNls private static final String SS_GROUP = "structuralsearchgroup";
 
   public static Editor createEditor(Document doc, final Project project,boolean editable) {
     return createEditor(doc, project, editable, false);
@@ -46,7 +49,7 @@ public class UIUtil {
 
   public static Editor createEditor(Document doc, final Project project, boolean editable, boolean addToolTipForVariableHandler) {
     final Editor editor = ( (editable)? EditorFactory.getInstance().createEditor(doc,project)
-      :EditorFactory.getInstance().createViewer(doc,project));
+                            :EditorFactory.getInstance().createViewer(doc,project));
 
     EditorSettings editorSettings = editor.getSettings();
     editorSettings.setVirtualSpace(false);
@@ -115,6 +118,7 @@ public class UIUtil {
     return tmp;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static String buildPatternFromElement(final PsiElement element) {
     if (element!=null) {
       String text;
@@ -207,44 +211,43 @@ public class UIUtil {
     final MatchOptions options = config.getMatchOptions();
 
     MatchVariableConstraint constraint = (options!=null)?options.getVariableConstraint(varname):null;
-    if (constraint==null) return "no constraints specified";
+    if (constraint==null) return SSRBundle.message("no.constraints.specified.tooltip.message");
     StringBuffer buf = new StringBuffer();
 
     if (constraint.getRegExp()!=null && constraint.getRegExp().length() > 0) {
-      if (constraint.isInvertRegExp()) {
-        buf.append("not ");
-      }
-      buf.append("like:");
-      buf.append(constraint.getRegExp());
-      if (constraint.isWithinHierarchy() || constraint.isStrictlyWithinHierarchy()) {
-        buf.append(" within hierarchy ");
-      }
-      buf.append(',');
+      buf.append(
+        SSRBundle.message(
+          "text.tooltip.message",
+          constraint.isInvertRegExp()?SSRBundle.message("not.tooltip.message"):"",
+          constraint.getRegExp(),
+          constraint.isWithinHierarchy() || constraint.isStrictlyWithinHierarchy() ? SSRBundle.message("within.hierarchy.tooltip.message"):""
+        )
+      );
     }
 
     if (constraint.getNameOfExprType()!=null && constraint.getNameOfExprType().length() > 0) {
-      if (constraint.isInvertExprType()) {
-        buf.append("not ");
-      }
-      buf.append("expr like:");
-      buf.append(constraint.getNameOfExprType());
-
-      if (constraint.isExprTypeWithinHierarchy()) {
-        buf.append(" within hierarchy ");
-      }
-      buf.append(',');
+      buf.append(
+        SSRBundle.message(
+          "exprtype.tooltip.message",
+          constraint.isInvertExprType() ? SSRBundle.message("not.tooltip.message"):"",
+          constraint.getNameOfExprType(),
+          constraint.isExprTypeWithinHierarchy()? SSRBundle.message("within.hierarchy.tooltip.message"):""
+        )
+      );
     }
 
     if(constraint.getMinCount()==constraint.getMaxCount()) {
-      buf.append("occurs:");
-      buf.append(constraint.getMinCount());
+      buf.append(SSRBundle.message("occurs.tooltip.message",constraint.getMinCount()));
     } else {
-      buf.append("min occurs:");
-      buf.append(constraint.getMinCount());
-      buf.append(", max occurs:");
-      buf.append(constraint.getMaxCount());
+      buf.append(
+        SSRBundle.message(
+          "min.occurs.tooltip.message",
+          constraint.getMinCount(),
+          constraint.getMaxCount() == Integer.MAX_VALUE ?
+          StringUtil.decapitalize(SSRBundle.message("editvarcontraints.unlimited")):constraint.getMaxCount()
+        )
+      );
     }
-    buf.append(" ...");
 
     return buf.toString();
   }
@@ -252,7 +255,7 @@ public class UIUtil {
   public static void navigate(PsiElement result) {
     FileEditorManager.getInstance(result.getProject()).openTextEditor(
       new OpenFileDescriptor(result.getProject(), result.getContainingFile().getVirtualFile(),
-        result.getTextOffset()
+                             result.getTextOffset()
       ),
       true
     );
@@ -263,7 +266,7 @@ public class UIUtil {
 
     FileEditorManager.getInstance(ref.getProject()).openTextEditor(
       new OpenFileDescriptor(ref.getProject(), ref.getFile(),
-        ref.getOffset()
+                             ref.getOffset()
       ),
       true
     );
@@ -285,20 +288,6 @@ public class UIUtil {
 
   public static PsiElement getNavigationElement(MatchResult result) {
     return getNavigationElement( result.getMatchRef().getElement() );
-  }
-
-  public static String createSearchResultsTitle(Configuration configuration) {
-    StringBuffer buf = new StringBuffer();
-
-    if (configuration!=null) {
-      buf.append(configuration.getName());
-      buf.append(" in ");
-      final SearchScope scope = configuration.getMatchOptions().getScope();
-
-      buf.append(scope.getDisplayName());
-    }
-
-    return buf.toString();
   }
 
   static void invokeActionAnotherTime(Configuration config, SearchContext context) {

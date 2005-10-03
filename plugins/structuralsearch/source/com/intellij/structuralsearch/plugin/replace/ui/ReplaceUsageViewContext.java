@@ -6,6 +6,7 @@ import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchCommand;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.Replacer;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.usages.Usage;
 
 import java.util.HashMap;
@@ -39,8 +40,10 @@ class ReplaceUsageViewContext extends UsageViewContext {
   }
 
   protected String _getPresentableText() {
-    return getConfiguration().getMatchOptions().getSearchPattern() +
-           " by " + ((ReplaceConfiguration)getConfiguration()).getOptions().getReplacement();
+    return SSRBundle.message("replaceusageview.text",
+                             getConfiguration().getMatchOptions().getSearchPattern(),
+                            ((ReplaceConfiguration)getConfiguration()).getOptions().getReplacement()
+    );
   }
 
   public HashMap<Usage, ReplacementInfo> getUsage2ReplacementInfo() {

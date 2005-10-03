@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.plugin.ui;
 import org.jdom.Element;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
+import org.jetbrains.annotations.NonNls;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.openapi.util.JDOMExternalizable;
 
@@ -14,13 +15,13 @@ import com.intellij.openapi.util.JDOMExternalizable;
  * To change this template use File | Settings | File Templates.
  */
 public abstract class Configuration implements JDOMExternalizable {
-  protected static final String NAME_ATTRIBUTE_NAME = "name";
+  @NonNls protected static final String NAME_ATTRIBUTE_NAME = "name";
   private String name = "";
   private boolean predefined;
 
   private boolean searchOnDemand;
 
-  private static final String DEMAND_ATTRIBUTE_NAME = "ondemand";
+  @NonNls private static final String DEMAND_ATTRIBUTE_NAME = "ondemand";
   private static ConfigurationCreator configurationCreator;
 
   public String getName() {

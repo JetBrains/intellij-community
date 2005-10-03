@@ -1,6 +1,7 @@
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -12,7 +13,7 @@ import com.intellij.psi.*;
 public class MatchUtils {
   public static final String SPECIAL_CHARS = "*(){}[]^$\\.-|";
 
-  public static final boolean compareWithNoDifferenceToPackage(final String typeImage, final String typeImage2) {
+  public static final boolean compareWithNoDifferenceToPackage(final String typeImage,@NonNls final String typeImage2) {
     return typeImage2.endsWith(typeImage) && (
       typeImage.length() == typeImage2.length() ||
       typeImage2.charAt(typeImage2.length()-typeImage.length()-1)=='.' // package separator
@@ -35,7 +36,7 @@ public class MatchUtils {
     }
 
     return (elementOffset >= start) &&
-      (end >= elementOffset + element.getTextLength());
+           (end >= elementOffset + element.getTextLength());
   }
 
   public static PsiElement getReferencedElement(final PsiElement element) {

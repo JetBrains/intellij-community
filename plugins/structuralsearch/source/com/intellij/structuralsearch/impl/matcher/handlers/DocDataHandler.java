@@ -8,12 +8,15 @@ import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Handler for doc nodes
  */
 public class DocDataHandler extends Handler {
+  @NonNls private static final String P_STR = "^\\s*((?:\\w|_|\\-|\\$)+)\\s*(?:=\\s*\"(.*)\"\\s*)?$";
   private static Pattern p = Pattern.compile(
-    "^\\s*((?:\\w|_|\\-|\\$)+)\\s*(?:=\\s*\"(.*)\"\\s*)?$",
+    P_STR,
     Pattern.CASE_INSENSITIVE
   );
 

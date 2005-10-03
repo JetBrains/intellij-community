@@ -9,6 +9,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.MatchResultSink;
 import com.intellij.structuralsearch.MatchingProcess;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.structuralsearch.plugin.ui.actions.DoSearchAction;
@@ -49,16 +50,16 @@ public class SearchCommand {
           findStarted();
         }
 
-        public void processFile(PsiFile element) {
-          final VirtualFile virtualFile = element.getVirtualFile();
-          if (virtualFile!=null)
-            progress.setText( "Looking in "+virtualFile.getPresentableName() );
-        }
+            public void processFile(PsiFile element) {
+              final VirtualFile virtualFile = element.getVirtualFile();
+              if (virtualFile!=null)
+                progress.setText( SSRBundle.message("looking.in.progress.message",virtualFile.getPresentableName()) );
+            }
 
-        public void matchingFinished() {
-          findEnded();
-          progress.setText( "Found " + count + " occurences" );
-        }
+            public void matchingFinished() {
+              findEnded();
+              progress.setText( SSRBundle.message("found.progress.message", count ) );
+            }
 
         public ProgressIndicator getProgressIndicator() {
           return progress;

@@ -16,12 +16,15 @@ import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.BinaryPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
 import com.intellij.structuralsearch.UnsupportedPatternException;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.util.containers.GenericHashMap;
 import com.intellij.util.Processor;
 
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -96,9 +99,9 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
   private final void handle(PsiElement element) {
 
     if ((!filter.accepts(element) ||
-      element instanceof PsiIdentifier) &&
-      (context.pattern.isRealTypedVar(element)) &&
-        context.pattern.getHandlerSimple(element)==null
+         element instanceof PsiIdentifier) &&
+                                           (context.pattern.isRealTypedVar(element)) &&
+                                           context.pattern.getHandlerSimple(element)==null
        ) {
       String name = SubstitutionHandler.getTypedVarString(element);
       // name is the same for named element (clazz,methods, etc) and token (name of ... itself)
@@ -117,7 +120,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
   }
 
   //@fixme
-  private static final String COMMENT = "\\s*(__\\$_\\w+)\\s*";
+  @NonNls private static final String COMMENT = "\\s*(__\\$_\\w+)\\s*";
   static Pattern pattern = Pattern.compile("//"+COMMENT, Pattern.DOTALL);
   static Pattern pattern2 = Pattern.compile("/\\*"+COMMENT+"\\*/", Pattern.DOTALL);
   static Pattern pattern3 = Pattern.compile("/\\*\\*"+COMMENT+"\\*/", Pattern.DOTALL);
@@ -192,7 +195,8 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     }
   }
 
-  private static Pattern wordSearchPattern = Pattern.compile(".*?\\b(.+?)\\b.*?");
+  @NonNls private static final String WORD_SEARCH_PATTERN_STR = ".*?\\b(.+?)\\b.*?";
+  private static Pattern wordSearchPattern = Pattern.compile(WORD_SEARCH_PATTERN_STR);
 
   static class WordTokenizer {
     private List<String> words = new LinkedList<String>();
@@ -232,7 +236,8 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     }
   }
 
-  static Pattern substitutionPattern = Pattern.compile("\\b(__\\$_\\w+)\\b");
+  @NonNls private static final String SUBSTITUTION_PATTERN_STR = "\\b(__\\$_\\w+)\\b";
+  static Pattern substitutionPattern = Pattern.compile(SUBSTITUTION_PATTERN_STR);
 
   public void visitLiteralExpression(PsiLiteralExpression expression) {
     String value = expression.getText();
@@ -303,7 +308,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
             buf.toString(),
             handlers
           ):
-          handler
+           handler
         );
       }
     }
@@ -351,7 +356,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
   public void visitReferenceExpression(PsiReferenceExpression reference) {
     visitElement(reference);
     if ((context.pattern.isRealTypedVar(reference)) &&
-      reference.getQualifierExpression() == null &&
+        reference.getQualifierExpression() == null &&
         !(reference.getParent() instanceof PsiExpressionStatement)
        ) {
       // typed var for expression (but not top level)
@@ -523,7 +528,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
       final PsiJavaCodeReferenceElement reference = ((PsiTypeElement)psiDeclarationStatement.getFirstChild()).getInnermostComponentReferenceElement();
 
       if (reference != null &&
-        (context.pattern.isRealTypedVar(reference.getReferenceNameElement())) &&
+          (context.pattern.isRealTypedVar(reference.getReferenceNameElement())) &&
           reference.getParameterList().getTypeParameterElements().length > 0
          ) {
         setHandler(psiDeclarationStatement,new TypedSymbolHandler());
@@ -536,7 +541,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
         final PsiTypeElement[] params = reference.getParameterList().getTypeParameterElements();
         for(int i=0;i<params.length;++i) {
           if (params[i].getInnermostComponentReferenceElement() != null &&
-             (context.pattern.isRealTypedVar(params[i].getInnermostComponentReferenceElement().getReferenceNameElement()))
+              (context.pattern.isRealTypedVar(params[i].getInnermostComponentReferenceElement().getReferenceNameElement()))
              ) {
             context.pattern.getHandler(params[i]).setFilter(
               TypeParameterFilter.getInstance()
@@ -622,7 +627,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
       final PsiElement reference = expr.getFirstChild();
 
       if ((context.pattern.isRealTypedVar(expr)) &&
-        (reference instanceof PsiReferenceExpression) &&
+          (reference instanceof PsiReferenceExpression) &&
           ((PsiReferenceExpression)reference).getQualifierExpression() == null
          ) {
         // symbol
@@ -646,7 +651,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
         handler.setFilter( ExpressionFilter.getInstance() );
       }
     } else if (expr.getExpression() instanceof PsiReferenceExpression &&
-      (context.pattern.isRealTypedVar(expr.getExpression()))) {
+               (context.pattern.isRealTypedVar(expr.getExpression()))) {
       // search for statement
       SubstitutionHandler handler = (SubstitutionHandler) context.pattern.getHandler(expr);
       handler.setFilter( new StatementFilter() );
@@ -689,7 +694,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
           else {
             if (strategy.getClass() != newstrategy.getClass()) {
               if (!(strategy instanceof CommentMatchingStrategy))
-                throw new UnsupportedPatternException("different strategies for top level nodes");
+                throw new UnsupportedPatternException(SSRBundle.message("different.strategies.for.top.level.nodes.error.message"));
               strategy = newstrategy;
             }
           }

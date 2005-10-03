@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.impl.matcher;
 import com.intellij.structuralsearch.MatchResultSink;
 import com.intellij.structuralsearch.MatchingProcess;
 import com.intellij.structuralsearch.MatchResult;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.psi.PsiFile;
 import com.intellij.openapi.progress.ProgressIndicator;
 
@@ -45,7 +46,7 @@ class MatchConstraintsSink implements MatchResultSink {
     ++matchCount;
 
     if (matchCount==maxMatches) {
-      JOptionPane.showMessageDialog(null,"Search produced too many results, stopping the search process");
+      JOptionPane.showMessageDialog(null, SSRBundle.message("search.produced.too.many.results.message"));
       process.stop();
     }
   }

@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Key;
 import org.jdom.Element;
 import org.jdom.DataConversionException;
 import org.jdom.Attribute;
+import org.jetbrains.annotations.NonNls;
 import gnu.trove.THashMap;
 
 /**
@@ -22,9 +23,9 @@ public class ReplaceOptions implements JDOMExternalizable, Cloneable, UserDataHo
   private boolean myToReformatAccordingToStyle;
   private MatchOptions matchOptions = new MatchOptions();
 
-  private static final String REFORMAT_ATTR_NAME = "reformatAccordingToStyle";
-  private static final String REPLACEMENT_ATTR_NAME = "replacement";
-  private static final String SHORTEN_FQN_ATTR_NAME = "shortenFQN";
+  @NonNls private static final String REFORMAT_ATTR_NAME = "reformatAccordingToStyle";
+  @NonNls private static final String REPLACEMENT_ATTR_NAME = "replacement";
+  @NonNls private static final String SHORTEN_FQN_ATTR_NAME = "shortenFQN";
 
   private THashMap myUserMap = null;
 

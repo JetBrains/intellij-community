@@ -1,14 +1,13 @@
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
-import com.intellij.structuralsearch.MatchOptions;
-import com.intellij.structuralsearch.MatchVariableConstraint;
-import com.intellij.structuralsearch.MalformedPatternException;
-import com.intellij.structuralsearch.UnsupportedPatternException;
+import com.intellij.structuralsearch.*;
 import com.intellij.openapi.util.text.StringUtil;
 
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.util.StringTokenizer;
+
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -19,9 +18,20 @@ import java.util.StringTokenizer;
  */
 class StringToConstraintsTransformer {
   private static StringBuffer buf = new StringBuffer();
-  private static Pattern p = Pattern.compile("(\\w+)\\('(\\w+)\\)");
-  private static Pattern p2 = Pattern.compile("(\\w+)");
-  private static Pattern p3 = Pattern.compile("(\\w+)\\(( ?[\\\"\\*<>\\.\\?\\:\\\\\\(\\)\\[\\]\\w\\|\\+]+ ?)\\)");
+  @NonNls private static final String P_STR = "(\\w+)\\('(\\w+)\\)";
+  private static Pattern p = Pattern.compile(P_STR);
+  @NonNls private static final String P2_STR = "(\\w+)";
+  private static Pattern p2 = Pattern.compile(P2_STR);
+  @NonNls private static final String P3_STR = "(\\w+)\\(( ?[\\\"\\*<>\\.\\?\\:\\\\\\(\\)\\[\\]\\w\\|\\+]+ ?)\\)";
+  private static Pattern p3 = Pattern.compile(P3_STR);
+  @NonNls private static final String REF = "ref";
+  @NonNls private static final String READ = "read";
+  @NonNls private static final String WRITE = "write";
+  @NonNls private static final String REGEX = "regex";
+  @NonNls private static final String REGEXW = "regexw";
+  @NonNls private static final String EXPRTYPE = "exprtype";
+  @NonNls private static final String FORMAL = "formal";
+  @NonNls private static final String SCRIPT = "script";
 
   static void transformOldPattern(MatchOptions options) {
       final String pattern = options.getSearchPattern();
@@ -42,15 +52,15 @@ class StringToConstraintsTransformer {
             // ignore next '
             index++;
           } else if (index + 2 < pattern.length() &&
-                pattern.charAt(index + 2)=='\''
+                     pattern.charAt(index + 2)=='\''
              ) {
             // eat simple character
             buf.append(ch);
             buf.append(pattern.charAt(++index));
             ch = pattern.charAt(++index);
           } else if (index + 3 < pattern.length() &&
-                pattern.charAt(index + 1)=='\\' &&
-                pattern.charAt(index + 3)=='\''
+                     pattern.charAt(index + 1)=='\\' &&
+                     pattern.charAt(index + 3)=='\''
           ) {
             // eat simple escape character
             buf.append(ch);
@@ -58,9 +68,9 @@ class StringToConstraintsTransformer {
             buf.append(pattern.charAt(++index));
             ch = pattern.charAt(++index);
           } else if (index + 7 < pattern.length() &&
-                pattern.charAt(index + 1)=='\\' &&
-                pattern.charAt(index + 2)=='u' &&
-                pattern.charAt(index + 7)=='\'') {
+                     pattern.charAt(index + 1)=='\\' &&
+                     pattern.charAt(index + 2)=='u' &&
+                     pattern.charAt(index + 7)=='\'') {
             // eat simple escape character
             buf.append(ch);
             buf.append(pattern.charAt(++index));
@@ -241,7 +251,7 @@ class StringToConstraintsTransformer {
     if (constraint.getRegExp()!=null &&
         constraint.getRegExp().length() > 0 &&
         !constraint.getRegExp().equals(regexp)) {
-      throw new MalformedPatternException("Two different type constraints");
+      throw new MalformedPatternException(SSRBundle.message("error.two.different.type.constraints"));
     } else {
       constraint.setRegExp(regexp);
     }
@@ -268,7 +278,7 @@ class StringToConstraintsTransformer {
         if (m.matches()) {
           option = m.group(1);
 
-          if (option.equalsIgnoreCase("ref")) {
+          if (option.equalsIgnoreCase(REF)) {
             String name = m.group(2);
 
             constraint.setReference(true);
@@ -282,11 +292,11 @@ class StringToConstraintsTransformer {
           if (m.matches()) {
             option = m.group(1);
 
-            if (option.equalsIgnoreCase("read")) {
+            if (option.equalsIgnoreCase(READ)) {
               constraint.setReadAccess(true);
               constraint.setInvertReadAccess(hasNot);
               consumed = true;
-            } else if (option.equalsIgnoreCase("write")) {
+            } else if (option.equalsIgnoreCase(WRITE)) {
               constraint.setWriteAccess(true);
               constraint.setInvertWriteAccess(hasNot);
               consumed = true;
@@ -297,10 +307,10 @@ class StringToConstraintsTransformer {
             if (m.matches()) {
               option = m.group(1);
 
-              if (option.equalsIgnoreCase("regex") ||
-                  option.equalsIgnoreCase("regexw")
+              if (option.equalsIgnoreCase(REGEX) ||
+                  option.equalsIgnoreCase(REGEXW)
                   ) {
-                String typePattern = getSingleParameter(m,"Reg exp should be delimited with spaces");
+                String typePattern = getSingleParameter(m, SSRBundle.message("reg.exp.should.be.delimited.with.spaces.error.message"));
 
                 if (StringUtil.startsWithChar(typePattern, '*')) {
                   typePattern = typePattern.substring(1);
@@ -309,11 +319,12 @@ class StringToConstraintsTransformer {
                 constraint.setRegExp( typePattern );
                 constraint.setInvertRegExp( hasNot );
                 consumed = true;
-                if (option.equalsIgnoreCase("regexw")) {
+                if (option.equalsIgnoreCase(REGEXW)) {
                   constraint.setWholeWordsOnly(true);
                 }
-              } else if (option.equalsIgnoreCase("exprtype")) {
-                String exprTypePattern = getSingleParameter(m, "Reg exp in expr type should be delimited with spaces");
+              } else if (option.equalsIgnoreCase(EXPRTYPE)) {
+                String exprTypePattern = getSingleParameter(m, SSRBundle.message(
+                  "reg.exp.in.expr.type.should.be.delimited.with.spaces.error.message"));
 
                 if (StringUtil.startsWithChar(exprTypePattern, '*')) {
                   exprTypePattern = exprTypePattern.substring(1);
@@ -322,8 +333,9 @@ class StringToConstraintsTransformer {
                 constraint.setNameOfExprType( exprTypePattern );
                 constraint.setInvertExprType( hasNot );
                 consumed = true;
-              } else if (option.equalsIgnoreCase("formal")) {
-                String exprTypePattern = getSingleParameter(m, "Reg exp in formal arg type should be delimited with spaces");
+              } else if (option.equalsIgnoreCase(FORMAL)) {
+                String exprTypePattern = getSingleParameter(m, SSRBundle.message(
+                  "reg.exp.in.formal.arg.type.should.be.delimited.with.spaces.error.message"));
 
                 if (StringUtil.startsWithChar(exprTypePattern, '*')) {
                   exprTypePattern = exprTypePattern.substring(1);
@@ -332,8 +344,8 @@ class StringToConstraintsTransformer {
                 constraint.setNameOfFormalArgType( exprTypePattern );
                 constraint.setInvertFormalType( hasNot );
                 consumed = true;
-              } else if (option.equalsIgnoreCase("script")) {
-                String script = getSingleParameter(m, "Script should be delimited with spaces");
+              } else if (option.equalsIgnoreCase(SCRIPT)) {
+                String script = getSingleParameter(m, SSRBundle.message("script.should.be.delimited.with.spaces.error.message"));
 
                 constraint.setScriptCodeConstraint( script );
                 consumed = true;
@@ -344,7 +356,7 @@ class StringToConstraintsTransformer {
 
         if (!consumed) {
           throw new UnsupportedPatternException(
-            token + " option is not recognized"
+            SSRBundle.message("option.is.not.recognized.error.message", token)
           );
         }
       }

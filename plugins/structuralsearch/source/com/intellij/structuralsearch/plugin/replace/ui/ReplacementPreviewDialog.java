@@ -18,6 +18,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.usageView.UsageInfo;
 
 import javax.swing.*;
@@ -41,8 +42,8 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
   public ReplacementPreviewDialog(final Project project, UsageInfo info, String replacementString) {
     super(project,true);
 
-    setTitle("Structural Replace Preview");
-    setOKButtonText("&Replace");
+    setTitle(SSRBundle.message("structural.replace.preview"));
+    setOKButtonText(SSRBundle.message("replace.preview.oktext"));
     this.project = project;
     init();
 
@@ -96,7 +97,7 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
 
     DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(file,false);
 
-    centerPanel.add(BorderLayout.NORTH,new JLabel("Replacement code") );
+    centerPanel.add(BorderLayout.NORTH,new JLabel(SSRBundle.message("replacement.code")) );
     centerPanel.add(BorderLayout.CENTER,replacement.getComponent() );
     centerPanel.setMaximumSize(new Dimension(640,480));
 

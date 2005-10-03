@@ -3,13 +3,14 @@ package com.intellij.structuralsearch.plugin;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.structuralsearch.plugin.ui.*;
+import com.intellij.structuralsearch.SSRBundle;
 
 public class StructuralSearchAction extends AnAction {
   // context of the search
   private SearchContext searchContext = new SearchContext();
 
   public StructuralSearchAction() {
-    super("StructuralSearchAction");
+    super(SSRBundle.message("structuralsearch.action"));
   }
 
   /** Handles IDEA action event

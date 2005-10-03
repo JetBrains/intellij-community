@@ -10,6 +10,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.structuralsearch.MatchVariableConstraint;
+import com.intellij.structuralsearch.SSRBundle;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -86,7 +87,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     variables = _variables;
     model = _model;
 
-    setTitle("Edit Variables");
+    setTitle(SSRBundle.message("editvarcontraints.edit.variables"));
 
     partOfSearchResults.setEnabled(!replaceContext);
     if (fileType == StdFileTypes.JAVA) {
@@ -313,7 +314,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
         Pattern.compile(field.getText());
       }
     } catch(PatternSyntaxException ex) {
-      Messages.showErrorDialog("Invalid regular expression", "Invalid regular expression");
+      Messages.showErrorDialog(SSRBundle.message("invalid.regular.expression"), SSRBundle.message("invalid.regular.expression"));
       field.requestFocus();
       return false;
     }
@@ -325,7 +326,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
       int a = Integer.parseInt(field.getText());
       if (a==-1) throw new NumberFormatException();
     } catch(NumberFormatException ex) {
-      Messages.showErrorDialog("Invalid occurence count", "Invalid occurence count");
+      Messages.showErrorDialog(SSRBundle.message("invalid.occurence.count"), SSRBundle.message("invalid.occurence.count"));
       field.requestFocus();
       return false;
     }

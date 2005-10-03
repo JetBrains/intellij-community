@@ -16,6 +16,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.Matcher;
 import com.intellij.structuralsearch.UnsupportedPatternException;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
@@ -125,6 +126,7 @@ public class ReplacerImpl {
 
     final PsiElement elementParent = element.getParent();
 
+    //noinspection HardCodedStringLiteral
     CommandProcessor.getInstance().executeCommand(
       project,
       new Runnable() {
@@ -530,9 +532,7 @@ public class ReplacerImpl {
 
         if (j==segmentCount2) {
           throw new UnsupportedPatternException(
-            "Replacement variable " +
-            replacementSegmentName +
-            " is not defined in search segment."
+            SSRBundle.message("replacement.variable.is.not.defined.in.search.segmen.error.message", replacementSegmentName)
           );
         }
       }
@@ -560,13 +560,13 @@ public class ReplacerImpl {
 
         if (searchIsExpression!=replaceIsExpression) {
           throw new UnsupportedPatternException(
-            (searchIsExpression) ? "The search template is a well formed expression, but the replacement template is not an expression.":
-            "The search template is not an expression, but the replacement template is a well formed expression."
+            (searchIsExpression) ? SSRBundle.message("replacement.template.is.not.expression.error.message") :
+            SSRBundle.message("search.template.is.not.expression.error.message")
           );
         }
       }
     } catch(IncorrectOperationException ex) {
-      throw new UnsupportedPatternException("Incorrect pattern");
+      throw new UnsupportedPatternException(SSRBundle.message("incorrect.pattern.message"));
     }
   }
 

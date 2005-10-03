@@ -4,6 +4,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import org.jdom.Element;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -40,28 +41,29 @@ public class MatchVariableConstraint implements JDOMExternalizable,Cloneable {
 
   private String scriptCodeConstraint = "";
 
-  private static final String NAME = "name";
-  private static final String NAME_OF_REFEENCE_VAR = "nameOfReferenceVar";
-  private static final String NAME_OF_EXPRTYPE = "nameOfExprType";
-  private static final String NAME_OF_FORMALTYPE = "nameOfFormalType";
-  private static final String REGEXP = "regexp";
-  private static final String EXPRTYPE_WITHIN_HIERARCHY = "exprTypeWithinHierarchy";
-  private static final String FORMALTYPE_WITHIN_HIERARCHY = "formalTypeWithinHierarchy";
+  @NonNls private static final String NAME = "name";
+  @NonNls private static final String NAME_OF_REFEENCE_VAR = "nameOfReferenceVar";
+  @NonNls private static final String NAME_OF_EXPRTYPE = "nameOfExprType";
+  @NonNls private static final String NAME_OF_FORMALTYPE = "nameOfFormalType";
+  @NonNls private static final String REGEXP = "regexp";
+  @NonNls private static final String EXPRTYPE_WITHIN_HIERARCHY = "exprTypeWithinHierarchy";
+  @NonNls private static final String FORMALTYPE_WITHIN_HIERARCHY = "formalTypeWithinHierarchy";
 
-  private static final String WITHIN_HIERARCHY = "withinHierarchy";
-  private static final String MAX_OCCURS = "maxCount";
-  private static final String MIN_OCCURS = "minCount";
+  @NonNls private static final String WITHIN_HIERARCHY = "withinHierarchy";
+  @NonNls private static final String MAX_OCCURS = "maxCount";
+  @NonNls private static final String MIN_OCCURS = "minCount";
 
-  private static final String NEGATE_NAME_CONDITION = "negateName";
-  private static final String NEGATE_EXPRTYPE_CONDITION = "negateExprType";
-  private static final String NEGATE_FORMALTYPE_CONDITION = "negateFormalType";
-  private static final String NEGATE_READ_CONDITION = "negateRead";
-  private static final String NEGATE_WRITE_CONDITION = "negateWrite";
-  private static final String READ = "readAccess";
-  private static final String WRITE = "writeAccess";
-  private static final String TARGET = "target";
-  private static final String SCRIPT = "script";
-  private static final String WHOLE_WORDS_ONLY = "wholeWordsOnly";
+  @NonNls private static final String NEGATE_NAME_CONDITION = "negateName";
+  @NonNls private static final String NEGATE_EXPRTYPE_CONDITION = "negateExprType";
+  @NonNls private static final String NEGATE_FORMALTYPE_CONDITION = "negateFormalType";
+  @NonNls private static final String NEGATE_READ_CONDITION = "negateRead";
+  @NonNls private static final String NEGATE_WRITE_CONDITION = "negateWrite";
+  @NonNls private static final String READ = "readAccess";
+  @NonNls private static final String WRITE = "writeAccess";
+  @NonNls private static final String TARGET = "target";
+  @NonNls private static final String SCRIPT = "script";
+  @NonNls private static final String WHOLE_WORDS_ONLY = "wholeWordsOnly";
+  @NonNls private static final String TRUE = Boolean.TRUE.toString();
 
   public boolean isGreedy() {
     return greedy;
@@ -485,23 +487,23 @@ public class MatchVariableConstraint implements JDOMExternalizable,Cloneable {
     if (nameOfFormalArgType.length() > 0) element.setAttribute(NAME_OF_FORMALTYPE,nameOfFormalArgType);
 
     if (scriptCodeConstraint.length() > 0) element.setAttribute(SCRIPT,scriptCodeConstraint);
-    if (withinHierarchy) element.setAttribute(WITHIN_HIERARCHY,"true");
-    if (exprTypeWithinHierarchy) element.setAttribute(EXPRTYPE_WITHIN_HIERARCHY,"true");
-    if (formalArgTypeWithinHierarchy) element.setAttribute(FORMALTYPE_WITHIN_HIERARCHY,"true");
+    if (withinHierarchy) element.setAttribute(WITHIN_HIERARCHY,TRUE);
+    if (exprTypeWithinHierarchy) element.setAttribute(EXPRTYPE_WITHIN_HIERARCHY,TRUE);
+    if (formalArgTypeWithinHierarchy) element.setAttribute(FORMALTYPE_WITHIN_HIERARCHY,TRUE);
 
     if (minCount!=1) element.setAttribute(MIN_OCCURS,String.valueOf(minCount));
     if (maxCount!=1) element.setAttribute(MAX_OCCURS,String.valueOf(maxCount));
-    if (partOfSearchResults) element.setAttribute(TARGET,"true");
-    if (readAccess) element.setAttribute(READ,"true");
-    if (writeAccess) element.setAttribute(WRITE,"true");
+    if (partOfSearchResults) element.setAttribute(TARGET,TRUE);
+    if (readAccess) element.setAttribute(READ,TRUE);
+    if (writeAccess) element.setAttribute(WRITE,TRUE);
 
-    if (invertRegExp) element.setAttribute(NEGATE_NAME_CONDITION,"true");
-    if (invertExprType) element.setAttribute(NEGATE_EXPRTYPE_CONDITION,"true");
-    if (invertFormalType) element.setAttribute(NEGATE_FORMALTYPE_CONDITION,"true");
-    if (invertReadAccess) element.setAttribute(NEGATE_READ_CONDITION,"true");
-    if (invertWriteAccess) element.setAttribute(NEGATE_WRITE_CONDITION,"true");
+    if (invertRegExp) element.setAttribute(NEGATE_NAME_CONDITION,TRUE);
+    if (invertExprType) element.setAttribute(NEGATE_EXPRTYPE_CONDITION,TRUE);
+    if (invertFormalType) element.setAttribute(NEGATE_FORMALTYPE_CONDITION,TRUE);
+    if (invertReadAccess) element.setAttribute(NEGATE_READ_CONDITION,TRUE);
+    if (invertWriteAccess) element.setAttribute(NEGATE_WRITE_CONDITION,TRUE);
 
-    if (wholeWordsOnly) element.setAttribute(WHOLE_WORDS_ONLY,"true");
+    if (wholeWordsOnly) element.setAttribute(WHOLE_WORDS_ONLY,TRUE);
   }
 
   public Object clone() {

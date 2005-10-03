@@ -2,6 +2,7 @@ package com.intellij.structuralsearch.plugin.ui;
 
 import org.jdom.Element;
 import org.jdom.Attribute;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 import java.util.LinkedList;
@@ -18,15 +19,15 @@ import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
  * To change this template use File | Settings | File Templates.
  */
 public class ConfigurationManager {
-  private static final String SAVE_TAG_NAME = "searchConfiguration";
-  private static final String SAVE_TAG_NAME2 = "replaceConfiguration";
-  private static final String SAVE_HISTORY_ATTR_NAME = "history";
+  @NonNls private static final String SAVE_TAG_NAME = "searchConfiguration";
+  @NonNls private static final String SAVE_TAG_NAME2 = "replaceConfiguration";
+  @NonNls private static final String SAVE_HISTORY_ATTR_NAME = "history";
 
-  private List configurations;
-  private LinkedList historyConfigurations;
+  private List<Configuration> configurations;
+  private LinkedList<Configuration> historyConfigurations;
 
   public void addHistoryConfiguration(Configuration configuration) {
-    if (historyConfigurations == null) historyConfigurations = new LinkedList();
+    if (historyConfigurations == null) historyConfigurations = new LinkedList<Configuration>();
 
     if (historyConfigurations.indexOf(configuration)==-1) {
       historyConfigurations.addFirst(configuration);
@@ -40,7 +41,7 @@ public class ConfigurationManager {
   }
 
   public void addConfiguration(Configuration configuration) {
-    if (configurations == null) configurations = new LinkedList();
+    if (configurations == null) configurations = new LinkedList<Configuration>();
 
     if (configurations.indexOf(configuration)==-1) {
       configurations.add( configuration );
@@ -55,14 +56,14 @@ public class ConfigurationManager {
 
   public void saveConfigurations(Element element) {
     if (configurations!=null) {
-      for(Iterator i = configurations.iterator();i.hasNext();) {
-        saveOneConfiguration(element, (Configuration)i.next());
+      for(Iterator<Configuration> i = configurations.iterator();i.hasNext();) {
+        saveOneConfiguration(element, i.next());
       }
     }
 
     if (historyConfigurations!=null) {
-      for(Iterator i = historyConfigurations.iterator();i.hasNext();) {
-        final Element infoElement = saveOneConfiguration(element, (Configuration)i.next());
+      for(Iterator<Configuration> i = historyConfigurations.iterator();i.hasNext();) {
+        final Element infoElement = saveOneConfiguration(element, i.next());
 
         infoElement.getAttributes().add(
           new Attribute(SAVE_HISTORY_ATTR_NAME,"1")
@@ -94,7 +95,7 @@ public class ConfigurationManager {
         config.readExternal( childElement );
 
         if (childElement.getAttribute(SAVE_HISTORY_ATTR_NAME)!=null) {
-          if (historyConfigurations==null) historyConfigurations = new LinkedList();
+          if (historyConfigurations==null) historyConfigurations = new LinkedList<Configuration>();
           historyConfigurations.add(config);
         } else {
           addConfiguration( config );
@@ -103,11 +104,11 @@ public class ConfigurationManager {
     }
   }
 
-  public Collection getConfigurations() {
+  public Collection<Configuration> getConfigurations() {
     return configurations;
   }
 
-  public Collection getHistoryConfigurations() {
+  public Collection<Configuration> getHistoryConfigurations() {
     return historyConfigurations;
   }
 }

@@ -1,5 +1,7 @@
 package com.intellij.structuralsearch;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Class to indicate incorrect pattern
  */

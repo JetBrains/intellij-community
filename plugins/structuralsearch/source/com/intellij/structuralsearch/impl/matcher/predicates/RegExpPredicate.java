@@ -8,10 +8,13 @@ import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.impl.matcher.MatchUtils;
 import com.intellij.structuralsearch.MalformedPatternException;
+import com.intellij.structuralsearch.SSRBundle;
 
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.regex.Matcher;
+
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Root of handlers for pattern node matching. Handles simpliest type of the match.
@@ -37,7 +40,7 @@ public final class RegExpPredicate extends Handler {
     this.caseSensitive = caseSensitive;
     this.wholeWords = _wholeWords;
     baseHandlerName = _baseHandlerName;
-    
+
     if (!simpleString) {
       compilePattern();
     }
@@ -56,7 +59,7 @@ public final class RegExpPredicate extends Handler {
 
   private void compilePattern() {
     try {
-      String realRegexp = regexp;
+      @NonNls String realRegexp = regexp;
       if (wholeWords) {
         realRegexp = ".*?\\b(?:" + realRegexp + ")\\b.*?";
       }
@@ -66,7 +69,7 @@ public final class RegExpPredicate extends Handler {
         (caseSensitive ? 0: Pattern.CASE_INSENSITIVE) | (multiline ? Pattern.DOTALL:0)
       );
     } catch(PatternSyntaxException ex) {
-      throw new MalformedPatternException("Incorrect reg exp constraint:"+regexp+" for " + baseHandlerName);
+      throw new MalformedPatternException(SSRBundle.message("error.incorrect.regexp.constraint", regexp, baseHandlerName));
     }
   }
 

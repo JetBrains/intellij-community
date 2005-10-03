@@ -9,6 +9,8 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.structuralsearch.SSRBundle;
 
 import javax.swing.*;
 import java.util.Set;
@@ -74,6 +76,7 @@ public class UsageViewContext {
         }
 
         public String getLocationString() {
+          //noinspection HardCodedStringLiteral
           return "Do Not Know Where";
         }
 
@@ -110,6 +113,7 @@ public class UsageViewContext {
       }
 
       public String getName() {
+        //noinspection HardCodedStringLiteral
         return "my name";
       }
 
@@ -138,7 +142,8 @@ public class UsageViewContext {
   public void configure(final UsageViewPresentation presentation) {
     String s = _getPresentableText();
     if (s.length() > 15) s = s.substring(0,15) + "...";
-    presentation.setUsagesString("occurences of " + s);
-    presentation.setTabText("Occurences of " + s);
+    final String usagesString = SSRBundle.message("occurences.of", s);
+    presentation.setUsagesString(usagesString);
+    presentation.setTabText(StringUtil.capitalize(usagesString));
   }
 }

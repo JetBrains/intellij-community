@@ -10,7 +10,7 @@ import java.util.ArrayList;
  */
 public class HierarchyNodeIterator extends NodeIterator {
   private int index;
-  private ArrayList remaining;
+  private ArrayList<PsiElement> remaining;
   private boolean objectTaken;
   private boolean acceptClasses;
   private boolean acceptInterfaces;
@@ -39,7 +39,7 @@ public class HierarchyNodeIterator extends NodeIterator {
         if (acceptClasses) {
           final PsiReferenceList clazzExtendsList = clazz.getExtendsList();
           final PsiElement[] extendsList = (clazzExtendsList != null)?clazzExtendsList.getReferenceElements():null;
-          
+
           if (extendsList!=null) {
             for(int i=0;i<extendsList.length;++i) {
               build(extendsList[i]);
@@ -68,7 +68,7 @@ public class HierarchyNodeIterator extends NodeIterator {
   }
 
   public HierarchyNodeIterator(PsiElement reference, boolean acceptClasses, boolean acceptInterfaces) {
-    remaining = new ArrayList();
+    remaining = new ArrayList<PsiElement>();
     this.acceptClasses = acceptClasses;
     this.acceptInterfaces = acceptInterfaces;
 
@@ -84,7 +84,7 @@ public class HierarchyNodeIterator extends NodeIterator {
   }
 
   public PsiElement current() {
-    return (PsiElement) remaining.get(index);
+    return remaining.get(index);
   }
 
   public void advance() {

@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.LinkedList;
 import java.util.Iterator;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Class describing the match result
  */
@@ -21,10 +23,11 @@ public final class MatchResultImpl extends MatchResult {
   private MatchResult parent;
   private boolean target;
 
-  public static final String DEFAULT_NAME2 = "end of context match";
-  public static final String DEFAULT_NAME = "start of context match";
+  @NonNls public static final String DEFAULT_NAME2 = "end of context match";
+  @NonNls public static final String DEFAULT_NAME = "start of context match";
   private boolean myScopeMatch;
   private boolean myMultipleMatch;
+  @NonNls private static final String NULL = "null";
 
   MatchResultImpl() {
   }
@@ -32,7 +35,7 @@ public final class MatchResultImpl extends MatchResult {
   public MatchResultImpl(String _name, String image, SmartPsiPointer ref, boolean _target) {
     this(_name,image,ref,0,-1,_target);
   }
-  
+
   public MatchResultImpl(String _name, String image, SmartPsiPointer ref, int _start, int _end,boolean _target) {
     matchRef = ref;
     name = _name;
@@ -44,7 +47,7 @@ public final class MatchResultImpl extends MatchResult {
 
   public String getMatchImage() {
     if (matchImage==null) {
-      matchImage = "null";
+      matchImage = NULL;
     }
     return matchImage;
   }

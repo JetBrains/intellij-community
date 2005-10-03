@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.util.ui.Tree;
 import com.intellij.ui.TreeSpeedSearch;
@@ -92,13 +93,13 @@ public class ExistingTemplatesComponent {
     }
 
     DefaultActionGroup group = new DefaultActionGroup();
-    AnAction addAction = new AnAction("Create Template", null, IconLoader.getIcon("/general/add.png")) {
+    AnAction addAction = new AnAction(SSRBundle.message("create.template.action.name"), null, IconLoader.getIcon("/general/add.png")) {
       public void actionPerformed(AnActionEvent e) {
         addSelectedTreeNodeAndClose();
       }
     };
 
-    AnAction removeAction = new AnAction("Remove Template", null, IconLoader.getIcon("/general/remove.png")) {
+    AnAction removeAction = new AnAction(SSRBundle.message("remove.template.action.name"), null, IconLoader.getIcon("/general/remove.png")) {
       public void actionPerformed(AnActionEvent e) {
         Object selection = patternTree.getLastSelectedPathComponent();
 
@@ -134,7 +135,7 @@ public class ExistingTemplatesComponent {
     historyPanel = new JPanel( new BorderLayout() );
     historyPanel.add(
       BorderLayout.NORTH,
-      new JLabel("Used templates")
+      new JLabel(SSRBundle.message("used.templates"))
     );
     historyPanel.add(
       BorderLayout.CENTER,
